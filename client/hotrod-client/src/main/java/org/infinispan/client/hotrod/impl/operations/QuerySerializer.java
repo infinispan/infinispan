@@ -14,6 +14,8 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.remote.client.BaseQueryResponse;
+import org.infinispan.query.remote.client.JsonClientQueryResponse;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
 
@@ -37,9 +39,9 @@ enum QuerySerializer {
       }
 
       @Override
-      Object readQueryResponse(Marshaller marshaller, RemoteQuery remoteQuery, byte[] bytesResponse) {
+      JsonClientQueryResponse readQueryResponse(Marshaller marshaller, RemoteQuery remoteQuery, byte[] bytesResponse) {
          try (JsonReader reader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(bytesResponse)))) {
-            return mapper.<JsonObject>fromJson(reader, JsonObject.class);
+            return new JsonClientQueryResponse(mapper.fromJson(reader, JsonObject.class));
          } catch (IOException e) {
             throw new HotRodClientException(e);
          }
@@ -71,7 +73,7 @@ enum QuerySerializer {
       }
 
       @Override
-      Object readQueryResponse(Marshaller marshaller, RemoteQuery remoteQuery, byte[] bytesResponse) {
+      QueryResponse readQueryResponse(Marshaller marshaller, RemoteQuery remoteQuery, byte[] bytesResponse) {
          SerializationContext serCtx = remoteQuery.getSerializationContext();
          if (serCtx != null) {
             try {
@@ -81,7 +83,7 @@ enum QuerySerializer {
             }
          } else {
             try {
-               return marshaller.objectFromByteBuffer(bytesResponse);
+               return (QueryResponse) marshaller.objectFromByteBuffer(bytesResponse);
             } catch (IOException | ClassNotFoundException e) {
                throw new HotRodClientException(e);
             }
@@ -106,5 +108,5 @@ enum QuerySerializer {
 
    abstract byte[] serializeQueryRequest(RemoteQuery remoteQuery, QueryRequest queryRequest);
 
-   abstract Object readQueryResponse(Marshaller marshaller, RemoteQuery remoteQuery, byte[] bytesResponse);
+   abstract BaseQueryResponse readQueryResponse(Marshaller marshaller, RemoteQuery remoteQuery, byte[] bytesResponse);
 }

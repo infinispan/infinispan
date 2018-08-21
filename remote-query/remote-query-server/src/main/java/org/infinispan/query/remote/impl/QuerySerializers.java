@@ -11,8 +11,8 @@ public final class QuerySerializers {
    public QuerySerializers() {
    }
 
-   public void addSerializer(MediaType mediaType, QuerySerializer<?> qQuerySerializer) {
-      serializers.put(mediaType.getTypeSubtype(), qQuerySerializer);
+   public void addSerializer(MediaType mediaType, QuerySerializer<?> querySerializer) {
+      serializers.put(mediaType.getTypeSubtype(), querySerializer);
    }
 
    public QuerySerializer<?> getSerializer(MediaType requestMediaType) {

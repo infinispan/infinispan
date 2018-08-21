@@ -2,10 +2,13 @@ package org.infinispan.query.remote.client;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 
 /**
@@ -13,7 +16,7 @@ import org.infinispan.protostream.WrappedMessage;
  * @since 6.0
  */
 @SerializeWith(Externalizers.QueryResponseExternalizer.class)
-public final class QueryResponse {
+public final class QueryResponse implements BaseQueryResponse {
 
    private int numResults;
 
@@ -45,6 +48,32 @@ public final class QueryResponse {
 
    public void setResults(List<WrappedMessage> results) {
       this.results = results;
+   }
+
+   @Override
+   public List<?> extractResults(SerializationContext serializationContext) throws IOException {
+      List<Object> unwrappedResults;
+      if (projectionSize > 0) {
+         unwrappedResults = new ArrayList<>(results.size() / projectionSize);
+         Iterator<WrappedMessage> it = results.iterator();
+         while (it.hasNext()) {
+            Object[] row = new Object[projectionSize];
+            for (int i = 0; i < row.length; i++) {
+               row[i] = it.next().getValue();
+            }
+            unwrappedResults.add(row);
+         }
+      } else {
+         unwrappedResults = new ArrayList<>(results.size());
+         for (WrappedMessage r : results) {
+            Object o = r.getValue();
+            if (serializationContext != null && o instanceof byte[]) {
+               o = ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) o);
+            }
+            unwrappedResults.add(o);
+         }
+      }
+      return unwrappedResults;
    }
 
    public long getTotalResults() {
