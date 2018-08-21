@@ -468,7 +468,7 @@ To use a Hibernate Search with a different version that is present in Wildfly, p
 Make sure that the chosen Hibernate Search optional slot for `org.infinispan.hibernate-search.directory-provider` matches the one distributed with {brandname}.
 
 ==== Usage
-There are two possible ways for your application to utilise infinispan within Wildfly: embedded mode and server mode.
+There are two possible ways for your application to utilize {brandname} within Wildfly: embedded mode and server mode.
 
 ===== Embedded Mode
 All CacheManagers and cache instances are created in your application logic.  The lifecycle of your EmbeddedCacheManager
