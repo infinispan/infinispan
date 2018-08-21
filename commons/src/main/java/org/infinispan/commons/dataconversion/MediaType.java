@@ -79,6 +79,7 @@ public final class MediaType {
    private static final String INVALID_TOKENS = "()<>@,;:/[]?=\\\"";
    private static final String WEIGHT_PARAM_NAME = "q";
    private static final String CHARSET_PARAM_NAME = "charset";
+   private static final String CLASS_TYPE_PARAM_NAME = "type";
    private static final double DEFAULT_WEIGHT = 1.0;
    private static final Charset DEFAULT_CHARSET = UTF_8;
 
@@ -201,6 +202,19 @@ public final class MediaType {
 
    public Charset getCharset() {
       return getParameter(CHARSET_PARAM_NAME).map(Charset::forName).orElse(DEFAULT_CHARSET);
+   }
+
+   public String getClassType() {
+      return getParameter(CLASS_TYPE_PARAM_NAME).orElse(null);
+   }
+
+   public MediaType withClassType(Class<?> clazz) {
+      return withParameter(CLASS_TYPE_PARAM_NAME, clazz.getName());
+   }
+
+   public boolean hasStringType() {
+      String classType = getClassType();
+      return classType != null && classType.equals(String.class.getName());
    }
 
    @Override

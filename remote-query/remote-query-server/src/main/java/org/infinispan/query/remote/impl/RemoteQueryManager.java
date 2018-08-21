@@ -22,7 +22,7 @@ import org.infinispan.query.remote.client.QueryRequest;
 public interface RemoteQueryManager {
 
    MediaType PROTOSTREAM_UNWRAPPED = APPLICATION_PROTOSTREAM.withParameter("wrapped", "false");
-   MediaType QUERY_REQUEST_TYPE = APPLICATION_OBJECT.withParameter("type", QueryRequest.class.getName());
+   MediaType QUERY_REQUEST_TYPE = APPLICATION_OBJECT.withClassType(QueryRequest.class);
 
    /**
     * @return {@link Matcher} to be used during non-indexed query and filter operations.
