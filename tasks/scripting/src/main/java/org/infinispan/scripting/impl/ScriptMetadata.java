@@ -1,5 +1,10 @@
 package org.infinispan.scripting.impl;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.util.CollectionFactory.makeSet;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,6 +37,7 @@ public class ScriptMetadata implements Metadata {
    private final Optional<String> collator;
    private final Optional<String> combiner;
    private final MediaType dataType;
+   private final Set<String> textBasedMedia = makeSet(TEXT_PLAIN_TYPE, APPLICATION_JSON_TYPE, APPLICATION_XML_TYPE);
 
    ScriptMetadata(String name, Optional<String> language, String extension, ExecutionMode mode, Set<String> parameters,
                   Optional<String> role, Optional<String> reducer, Optional<String> collator, Optional<String> combiner,
@@ -85,8 +91,10 @@ public class ScriptMetadata implements Metadata {
    }
 
    public MediaType dataType() {
-      if (!MediaType.TEXT_PLAIN.match(dataType)) return dataType;
-      return MediaType.TEXT_PLAIN.withParameter("type", String.class.getName()).withCharset(dataType.getCharset());
+      if (textBasedMedia.contains(dataType.getTypeSubtype())) {
+         return dataType.withClassType(String.class);
+      }
+      return dataType;
    }
 
    @Override

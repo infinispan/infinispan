@@ -9,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -42,10 +41,10 @@ public class ProtostreamJsonTranscoder implements Transcoder {
       try {
          if (destinationType.match(APPLICATION_JSON)) {
             String converted = ProtobufUtil.toCanonicalJSON(ctx, (byte[]) content);
-            Optional<String> optConvertType = destinationType.getParameter("type");
-            if (!optConvertType.isPresent())
+            String convertType = destinationType.getClassType();
+            if (convertType == null)
                return StandardConversions.convertCharset(converted, contentType.getCharset(), destinationType.getCharset());
-            if (String.class.getName().equals(optConvertType.get())) return converted;
+            if (destinationType.hasStringType()) return converted;
          }
          if (destinationType.match(APPLICATION_PROTOSTREAM)) {
             Reader reader;

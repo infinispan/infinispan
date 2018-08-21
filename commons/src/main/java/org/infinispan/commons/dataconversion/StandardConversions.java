@@ -16,7 +16,6 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Optional;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -44,8 +43,7 @@ public final class StandardConversions {
       if (sourceType == null) throw new NullPointerException("MediaType cannot be null!");
       if (!sourceType.match(MediaType.TEXT_PLAIN)) throw log.invalidMediaType(TEXT_PLAIN_TYPE, sourceType.toString());
 
-      String destinationClass = destinationType.getParameter("type").orElse(null);
-      boolean asString = String.class.getName().equalsIgnoreCase(destinationClass);
+      boolean asString = destinationType.hasStringType();
 
       Charset sourceCharset = sourceType.getCharset();
       Charset destinationCharset = destinationType.getCharset();
@@ -132,15 +130,13 @@ public final class StandardConversions {
       if (!destination.match(MediaType.APPLICATION_OBJECT)) {
          throw log.invalidMediaType(APPLICATION_OBJECT_TYPE, destination.toString());
       }
-      Optional<String> optType = destination.getParameter("type");
-      if (!optType.isPresent()) {
+      String classType = destination.getClassType();
+      if (classType == null) return source;
+
+      if (classType.equals("ByteArray")) {
          return source;
       }
-      String targetType = optType.get();
-      if (targetType.equals("ByteArray")) {
-         return source;
-      }
-      if (targetType.equals(String.class.getName())) {
+      if (destination.hasStringType()) {
          return new String(source, UTF_8);
       }
       try {
@@ -173,7 +169,7 @@ public final class StandardConversions {
    }
 
    private static boolean isJavaString(MediaType mediaType) {
-      return mediaType.match(MediaType.APPLICATION_OBJECT) && mediaType.getParameter("type").orElse("").equals(String.class.getName());
+      return mediaType.match(MediaType.APPLICATION_OBJECT) && mediaType.hasStringType();
    }
 
    /**
@@ -216,12 +212,10 @@ public final class StandardConversions {
             throw new NullPointerException("contentMediaType cannot be null!");
          }
          String strContent;
-         Optional<String> type = contentMediaType.getParameter("type");
-         if (!type.isPresent()) {
-            return content;
-         }
-         String sourceType = type.get();
-         if (sourceType.equals("ByteArray")) {
+         String type = contentMediaType.getClassType();
+         if (type == null) return content;
+
+         if (type.equals("ByteArray")) {
             if (content instanceof byte[]) return content;
             if (content instanceof String) return hexToBytes(content.toString());
             throw new EncodingException("Cannot read ByteArray!");
@@ -233,7 +227,7 @@ public final class StandardConversions {
             strContent = content.toString();
          }
 
-         Class<?> destinationType = Class.forName(sourceType);
+         Class<?> destinationType = Class.forName(type);
 
          if (destinationType == String.class) return content;
          if (destinationType == Boolean.class) return Boolean.parseBoolean(strContent);

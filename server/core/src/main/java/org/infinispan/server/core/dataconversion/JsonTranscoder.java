@@ -9,7 +9,6 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.Optional;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ClassWhiteList;
@@ -33,7 +32,6 @@ public class JsonTranscoder extends OneToManyTranscoder {
    protected final static Log logger = LogFactory.getLog(JsonTranscoder.class, Log.class);
 
    public static final String TYPE_PROPERTY = "_type";
-   private static final String MEDIA_CLASS_TYPE_PROPERTY = "type";
 
    private final ObjectMapper objectMapper;
 
@@ -70,34 +68,33 @@ public class JsonTranscoder extends OneToManyTranscoder {
       if (destinationType.match(APPLICATION_OCTET_STREAM) || destinationType.match(APPLICATION_UNKNOWN)) {
          return StandardConversions.convertTextToOctetStream(content, contentType);
       }
+      boolean outputString = destinationType.hasStringType();
+      Charset contentCharset = contentType.getCharset();
+      Charset destinationCharset = destinationType.getCharset();
       if (destinationType.match(APPLICATION_JSON)) {
          if (contentType.match(APPLICATION_JSON)) {
-            Charset sourceCharset = contentType.getCharset();
-            Charset destinationCharset = destinationType.getCharset();
-            if (!sourceCharset.equals(destinationCharset)) {
-               return StandardConversions.convertCharset(content, sourceCharset, destinationCharset);
-            }
-            return content;
+            return convertCharset(content, contentCharset, destinationCharset, outputString);
          }
          try {
             if (content instanceof byte[]) {
                try {
-                  return objectMapper.readTree((byte[]) content).toString().getBytes(destinationType.getCharset());
+                  String jsonTree = objectMapper.readTree((byte[]) content).toString();
+                  return outputString ? jsonTree : jsonTree.getBytes(destinationCharset);
                } catch (IOException e) {
-                  String contentAsString = new String((byte[]) content, destinationType.getCharset());
-                  return objectMapper.writeValueAsBytes(contentAsString);
+                  String contentAsString = new String((byte[]) content, destinationCharset);
+                  return outputString ? contentAsString : objectMapper.writeValueAsBytes(contentAsString);
                }
             }
-            return objectMapper.writeValueAsBytes(content);
+            return outputString ? objectMapper.writeValueAsString(content) : objectMapper.writeValueAsBytes(content);
          } catch (IOException e) {
             throw logger.cannotConvertContent(content, contentType, destinationType);
          }
       }
       if (destinationType.match(APPLICATION_OBJECT)) {
          try {
-            Optional<String> destinationClassName = destinationType.getParameter(MEDIA_CLASS_TYPE_PROPERTY);
+            String destinationClassName = destinationType.getClassType();
             Class<?> destinationClass = Object.class;
-            if (destinationClassName.isPresent()) destinationClass = Class.forName(destinationClassName.get());
+            if (destinationClassName != null) destinationClass = Class.forName(destinationClassName);
             if (content instanceof byte[]) {
                return objectMapper.readValue((byte[]) content, destinationClass);
             }
@@ -107,17 +104,14 @@ public class JsonTranscoder extends OneToManyTranscoder {
          }
       }
       if (destinationType.match(TEXT_PLAIN)) {
-         Optional<String> optDestinationCharset = destinationType.getParameter("charset");
-         if (!optDestinationCharset.isPresent()) return content;
-         if (content instanceof byte[]) {
-            Charset sourceCharset = contentType.getParameter("charset").map(Charset::forName).orElse(Charset.defaultCharset());
-            Charset destinationCharset = Charset.forName(optDestinationCharset.get());
-
-            byte[] byteContent = (byte[]) content;
-            return StandardConversions.convertCharset(byteContent, sourceCharset, destinationCharset);
-         }
+         return convertCharset(content, contentCharset, destinationCharset, outputString);
       }
       throw logger.unsupportedContent(content);
+   }
+
+   private Object convertCharset(Object content, Charset contentCharset, Charset destinationCharset, boolean outputAsString) {
+      byte[] bytes = StandardConversions.convertCharset(content, contentCharset, destinationCharset);
+      return outputAsString ? new String(bytes, destinationCharset) : bytes;
    }
 
 }

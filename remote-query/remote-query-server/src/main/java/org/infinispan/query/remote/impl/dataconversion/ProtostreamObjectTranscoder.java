@@ -37,11 +37,11 @@ public class ProtostreamObjectTranscoder implements Transcoder {
    public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
       try {
          if (destinationType.match(APPLICATION_OBJECT)) {
-            Optional<String> type = destinationType.getParameter("type");
-            if (!type.isPresent()) {
+            String type = destinationType.getClassType();
+            if (type == null) {
                return ProtobufUtil.fromWrappedByteArray(ctx, (byte[]) content);
             }
-            Class<?> destination = Util.loadClass(type.get(), classLoader);
+            Class<?> destination = Util.loadClass(type, classLoader);
             byte[] bytes = (byte[]) content;
             return ProtobufUtil.fromByteArray(ctx, bytes, 0, bytes.length, destination);
          }

@@ -19,7 +19,7 @@ import org.infinispan.tasks.TaskContext;
  */
 public final class ScriptConversions {
 
-   public static final MediaType APPLICATION_TEXT_STRING = MediaType.TEXT_PLAIN.withParameter("type", String.class.getName());
+   public static final MediaType APPLICATION_TEXT_STRING = MediaType.TEXT_PLAIN.withClassType(String.class);
 
    private final Map<String, OutputFormatter> formatterByMediaType = new HashMap<>(2);
    private final EncoderRegistry encoderRegistry;
