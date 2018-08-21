@@ -315,6 +315,12 @@
  *          <td>{@link org.infinispan.client.hotrod.configuration.TransactionMode#NONE NONE}</td>
  *          <td>The default {@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#transactionMode(TransactionMode) transaction&nbsp;mode}</td>
  *       </tr>
+ *        <tr>
+ *          <td><b>infinispan.client.hotrod.transaction.timeout</b></td>
+ *          <td>long</td>
+ *          <td>60000L</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder#timeout(long, java.util.concurrent.TimeUnit)} timeout.</td>
+ *       </tr>
  *       <tr>
  *          <th colspan="4">Near cache properties</th>
  *       </tr>

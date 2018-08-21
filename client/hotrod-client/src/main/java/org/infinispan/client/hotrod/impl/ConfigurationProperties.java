@@ -261,6 +261,10 @@ public class ConfigurationProperties {
       props.setProperty(KEY_STORE_PASSWORD, keyStorePassword);
    }
 
+   public void setKeyStoreCertificatePassword(String keyStoreCertificatePassword) {
+      props.setProperty(KEY_STORE_CERTIFICATE_PASSWORD, keyStoreCertificatePassword);
+   }
+
    public String getKeyAlias() {
       return props.getProperty(KEY_ALIAS);
    }
@@ -303,6 +307,10 @@ public class ConfigurationProperties {
 
    public String getSSLProtocol() {
       return props.getProperty(SSL_PROTOCOL);
+   }
+
+   public void setSSLProtocol(String sslProtocol) {
+      props.setProperty(SSL_PROTOCOL, sslProtocol);
    }
 
    public String getSniHostName() {
@@ -353,6 +361,10 @@ public class ConfigurationProperties {
       props.setProperty(AUTH_REALM, authRealm);
    }
 
+   public void setAuthServerName(String authServerName) {
+      props.setProperty(AUTH_SERVER_NAME, authServerName);
+   }
+
    public int getMaxRetries() {
       return props.getIntProperty(MAX_RETRIES, DEFAULT_MAX_RETRIES);
    }
@@ -383,6 +395,10 @@ public class ConfigurationProperties {
 
    public void setTransactionMode(String transactionMode) {
       props.setProperty(TRANSACTION_MODE, transactionMode);
+   }
+
+   public void setTransactionTimeout(long transactionTimeout) {
+      props.setProperty(TRANSACTION_TIMEOUT, transactionTimeout);
    }
 
    public NearCacheMode getNearCacheMode() {
@@ -471,5 +487,9 @@ public class ConfigurationProperties {
 
    public String getServerList(){
       return props.getProperty(SERVER_LIST);
+   }
+
+   public void setJavaSerialWhitelist(String javaSerialWhitelist) {
+      props.setProperty(JAVA_SERIAL_WHITELIST, javaSerialWhitelist);
    }
 }
