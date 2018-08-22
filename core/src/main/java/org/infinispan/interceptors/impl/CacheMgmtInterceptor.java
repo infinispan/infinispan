@@ -55,7 +55,7 @@ import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Units;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.util.concurrent.StripedCounters;
+import org.infinispan.commons.util.concurrent.StripedCounters;
 
 /**
  * Captures cache management statistics

@@ -4,6 +4,7 @@ import java.util.Set;
 
 import javax.management.MBeanServer;
 
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -29,7 +30,7 @@ public abstract class AbstractJmxRegistration {
     */
    protected boolean registerMBeans(Set<AbstractComponentRegistry.Component> components, GlobalConfiguration globalConfig) {
       try {
-         mBeanServer = JmxUtil.lookupMBeanServer(globalConfig);
+         mBeanServer = JmxUtil.lookupMBeanServer(globalConfig.globalJmxStatistics().mbeanServerLookup(), globalConfig.globalJmxStatistics().properties());
       } catch (Exception e) {
          mBeanServer = null;
       }

@@ -4,12 +4,12 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.cli.interpreter.logging.Log;
-import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.commons.jmx.JmxUtil;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.jmx.ComponentsJmxRegistration;
-import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.logging.LogFactory;
@@ -23,10 +23,9 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarted(GlobalComponentRegistry gcr) {
-      GlobalConfiguration globalCfg = gcr.getGlobalConfiguration();
-      MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
-      String groupName = getGroupName(globalCfg);
-      String jmxDomain = globalCfg.globalJmxStatistics().domain();
+      GlobalJmxStatisticsConfiguration globalCfg = gcr.getGlobalConfiguration().globalJmxStatistics();
+      MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg.mbeanServerLookup(), globalCfg.properties());
+      String groupName = getGroupName(globalCfg.cacheManagerName());
       Interpreter interpreter = new Interpreter();
 
       gcr.registerComponent(interpreter, Interpreter.class);
@@ -37,7 +36,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       // And use this metadata when registering the transport as a dynamic MBean
       try {
          ResourceDMBean mbean = new ResourceDMBean(interpreter, meta);
-         interpreterObjName = new ObjectName(String.format("%s:%s,component=Interpreter", jmxDomain, groupName));
+         interpreterObjName = new ObjectName(String.format("%s:%s,component=Interpreter", globalCfg.domain(), groupName));
          JmxUtil.registerMBean(mbean, interpreterObjName, mbeanServer);
       } catch (Exception e) {
          interpreterObjName = null;
@@ -45,16 +44,16 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       }
    }
 
-   private String getGroupName(GlobalConfiguration globalCfg) {
+   private String getGroupName(String name) {
       return CacheManagerJmxRegistration.CACHE_MANAGER_JMX_GROUP + "," + ComponentsJmxRegistration.NAME_KEY + "="
-            + ObjectName.quote(globalCfg.globalJmxStatistics().cacheManagerName());
+            + ObjectName.quote(name);
    }
 
    @Override
    public void cacheManagerStopping(GlobalComponentRegistry gcr) {
       if (interpreterObjName != null) {
-         GlobalConfiguration globalCfg = gcr.getGlobalConfiguration();
-         MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
+         GlobalJmxStatisticsConfiguration jmxConfig = gcr.getGlobalConfiguration().globalJmxStatistics();
+         MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
          try {
             JmxUtil.unregisterMBean(interpreterObjName, mbeanServer);
          } catch (Exception e) {

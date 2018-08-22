@@ -1,4 +1,4 @@
-package org.infinispan.util.concurrent;
+package org.infinispan.commons.util.concurrent;
 
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.function.Supplier;

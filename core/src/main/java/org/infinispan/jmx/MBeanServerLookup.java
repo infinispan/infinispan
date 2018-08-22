@@ -1,9 +1,5 @@
 package org.infinispan.jmx;
 
-import java.util.Properties;
-
-import javax.management.MBeanServer;
-
 /**
  * Implementors of this should return an MBeanServer to which MBeans will be registered.
  *
@@ -11,12 +7,8 @@ import javax.management.MBeanServer;
  * @see org.infinispan.jmx.PlatformMBeanServerLookup
  * @since 4.0
  * @public
+ * @deprecated Use {@link org.infinispan.commons.jmx.MBeanServerLookup} instead
  */
-public interface MBeanServerLookup {
-   /**
-    * Retrieves an {@link MBeanServer} instance.
-    * @param properties properties to configure the MBeanServer instance
-    * @return an MBeanServer instance
-    */
-   MBeanServer getMBeanServer(Properties properties);
+@Deprecated
+public interface MBeanServerLookup extends org.infinispan.commons.jmx.MBeanServerLookup {
 }

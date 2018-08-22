@@ -13,6 +13,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.commons.jmx.JmxUtil;
 
 /**
  * Registers a set of components on an MBean server.

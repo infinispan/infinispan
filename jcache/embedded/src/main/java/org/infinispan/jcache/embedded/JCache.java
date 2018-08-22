@@ -30,10 +30,12 @@ import javax.cache.processor.EntryProcessorResult;
 import javax.management.MBeanServer;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ExpirationConfiguration;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
@@ -58,7 +60,6 @@ import org.infinispan.jcache.embedded.functions.RemoveConditionally;
 import org.infinispan.jcache.embedded.functions.Replace;
 import org.infinispan.jcache.embedded.functions.ReplaceConditionally;
 import org.infinispan.jcache.embedded.logging.Log;
-import org.infinispan.jmx.JmxUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.util.logging.LogFactory;
@@ -577,8 +578,8 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    }
 
    protected MBeanServer getMBeanServer() {
-      return JmxUtil.lookupMBeanServer(
-            cache.getCacheManager().getCacheManagerConfiguration());
+      GlobalJmxStatisticsConfiguration jmxConfig = cache.getCacheManager().getCacheManagerConfiguration().globalJmxStatistics();
+      return JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
    }
 
    protected AbstractJCache<K, V> checkNotClosed() {

@@ -6,9 +6,11 @@ import javax.management.Descriptor;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 
+import org.infinispan.jmx.annotations.ManagedOperation;
+
 /**
  * Infinispan allows a different JMX operation name than the actual method name that gets invoked
- * (see {@link org.infinispan.jmx.annotations.ManagedOperation#name()}.
+ * (see {@link ManagedOperation#name()}.
  * This class extends {@link MBeanOperationInfo} adding support for the operation name.
  *
  * @author Mircea Markus

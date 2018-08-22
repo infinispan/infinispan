@@ -19,11 +19,11 @@ import javax.management.ReflectionException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.commons.jmx.JmxUtil;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutorService;
-import org.infinispan.jmx.JmxUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import io.netty.channel.group.ChannelGroup;
@@ -110,9 +110,9 @@ class NettyTransportConnectionStats {
 
       @Override
       public Integer call() throws Exception {
-         GlobalConfiguration globalCfg = cache.getCacheManager().getCacheManagerConfiguration();
-         String jmxDomain = globalCfg.globalJmxStatistics().domain();
-         MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
+         GlobalJmxStatisticsConfiguration globalCfg = cache.getCacheManager().getCacheManagerConfiguration().globalJmxStatistics();
+         String jmxDomain = globalCfg.domain();
+         MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg.mbeanServerLookup(), globalCfg.properties());
          try {
             ObjectName transportMBeanName = new ObjectName(
                   jmxDomain + ":type=Server,component=Transport,name=" + serverName);
