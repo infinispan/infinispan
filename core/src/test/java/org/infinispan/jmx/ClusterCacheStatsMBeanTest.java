@@ -9,6 +9,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.stats.impl.AbstractClusterStats;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;

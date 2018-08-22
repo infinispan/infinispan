@@ -5,8 +5,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
@@ -26,8 +28,10 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
 
    public ReplaceIfUnmodifiedOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
                                        AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
-                                       long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version, DataFormat dataFormat) {
-      super(REPLACE_IF_UNMODIFIED_REQUEST, REPLACE_IF_UNMODIFIED_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat);
+                                       long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
+                                       long version, DataFormat dataFormat, ClientStatistics clientStatistics) {
+      super(REPLACE_IF_UNMODIFIED_REQUEST, REPLACE_IF_UNMODIFIED_RESPONSE, codec, channelFactory, key, keyBytes, cacheName,
+            topologyId, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics);
       this.version = version;
    }
 
@@ -49,6 +53,9 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+      if (HotRodConstants.isSuccess(status)) {
+         statsDataStore();
+      }
       complete(returnVersionedOperationResponse(buf, status));
    }
 }

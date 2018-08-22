@@ -26,6 +26,7 @@ import javax.management.ObjectName;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;

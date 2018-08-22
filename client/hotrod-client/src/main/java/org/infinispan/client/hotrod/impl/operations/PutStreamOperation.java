@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.protocol.ChannelOutputStream;
 import org.infinispan.client.hotrod.impl.protocol.ChannelOutputStreamListener;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -41,9 +42,10 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
    public PutStreamOperation(Codec codec, ChannelFactory channelFactory,
                              Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                              int flags, Configuration cfg, long version,
-                             long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+                             long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
+                             ClientStatistics clientStatistics) {
       super(PUT_STREAM_REQUEST, PUT_STREAM_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
-            flags, cfg, null);
+            flags, cfg, null, clientStatistics);
       this.version = version;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
@@ -80,6 +82,9 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status) || HotRodConstants.isNotExecuted(status) && (version != VERSION_PUT)) {
+         if (HotRodConstants.isSuccess(status)) {
+            statsDataStore();
+         }
          closeFuture.complete(null);
       } else {
          closeFuture.completeExceptionally(new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status)));

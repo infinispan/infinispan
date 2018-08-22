@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultTimeService implements TimeService {
 
+   public static final DefaultTimeService INSTANCE = new DefaultTimeService();
+
    private final Clock clock;
 
    public DefaultTimeService() {

@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -33,8 +34,9 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
 
    public GetWithMetadataOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
                                    byte[] cacheName, AtomicInteger topologyId, int flags,
-                                   Configuration cfg, DataFormat dataFormat) {
-      super(GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat);
+                                   Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
+      super(GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
+            flags, cfg, dataFormat, clientStatistics);
    }
 
    @Override
@@ -46,6 +48,7 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isNotExist(status) || !HotRodConstants.isSuccess(status)) {
+         statsDataRead(false);
          complete(null);
          return;
       }
@@ -67,6 +70,7 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
          log.tracef("Received version: %d", version);
       }
       V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), cfg.getClassWhiteList());
+      statsDataRead(true);
       complete(new MetadataValueImpl<V>(creation, lifespan, lastUsed, maxIdle, version, value));
    }
 }

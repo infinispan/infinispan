@@ -12,7 +12,7 @@ import java.util.Properties;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
 
 /**
  * Configures whether global statistics are gathered and reported via JMX for all caches under this cache manager.

@@ -56,9 +56,10 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       }
 
       @Override
-      public void remove(K key) {
-         delegate.remove(key);
+      public boolean remove(K key) {
+         boolean removed = delegate.remove(key);
          events.add(new MockRemoveEvent<>(key));
+         return removed;
       }
 
       @Override
@@ -73,6 +74,11 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
          delegate.clear();
          events.clear();
          events.add(new MockClearEvent());
+      }
+
+      @Override
+      public int size() {
+         return delegate.size();
       }
    }
 

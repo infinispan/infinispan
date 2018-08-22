@@ -6,6 +6,7 @@ import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;

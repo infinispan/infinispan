@@ -45,7 +45,8 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    private String currentClusterName;
 
    protected RetryOnFailureOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
-                                     byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg, DataFormat dataFormat) {
+                                     byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                     DataFormat dataFormat) {
       super(requestCode, responseCode, codec, flags, cfg, cacheName, topologyId, channelFactory, dataFormat);
    }
 

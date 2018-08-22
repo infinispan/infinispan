@@ -7,6 +7,7 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -35,9 +36,12 @@ public class MultimapOperationsFactory {
    private final Codec codec;
 
    private final Configuration cfg;
+
    private final DataFormat dataFormat;
 
-   public MultimapOperationsFactory(ChannelFactory channelFactory, String cacheName, Codec codec, Configuration cfg, DataFormat dataFormat) {
+   private final ClientStatistics clientStatistics;
+
+   public MultimapOperationsFactory(ChannelFactory channelFactory, String cacheName, Codec codec, Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
       this.transportFactory = channelFactory;
       this.cacheNameBytes = cacheName == null ? null : RemoteCacheManager.cacheNameBytes(cacheName);
       this.topologyId = channelFactory != null
@@ -47,43 +51,44 @@ public class MultimapOperationsFactory {
       this.codec = codec;
       this.cfg = cfg;
       this.dataFormat = dataFormat;
+      this.clientStatistics = clientStatistics;
    }
 
    public <K, V> GetKeyMultimapOperation<V> newGetKeyMultimapOperation(K key, byte[] keyBytes) {
       return new GetKeyMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
    }
 
    public <K, V> GetKeyWithMetadataMultimapOperation<V> newGetKeyWithMetadataMultimapOperation(K key, byte[] keyBytes) {
       return new GetKeyWithMetadataMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
    }
 
    public <K> PutKeyValueMultimapOperation newPutKeyValueOperation(K key, byte[] keyBytes, byte[] value,
                                                                    long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new PutKeyValueMultimapOperation(
             codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, null);
+            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, null, clientStatistics);
    }
 
    public <K> RemoveKeyMultimapOperation newRemoveKeyOperation(K key, byte[] keyBytes) {
       return new RemoveKeyMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, clientStatistics);
    }
 
    public <K> RemoveEntryMultimapOperation newRemoveEntryOperation(K key, byte[] keyBytes, byte[] value) {
       return new RemoveEntryMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, value);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, value, clientStatistics);
    }
 
    public <K> ContainsEntryMultimapOperation newContainsEntryOperation(K key, byte[] keyBytes, byte[] value) {
       return new ContainsEntryMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, value);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, value, clientStatistics);
    }
 
    public <K> ContainsKeyMultimapOperation newContainsKeyOperation(K key, byte[] keyBytes) {
       return new ContainsKeyMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, clientStatistics);
    }
 
    public ContainsValueMultimapOperation newContainsValueOperation(byte[] value) {

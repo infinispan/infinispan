@@ -11,7 +11,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
-import org.infinispan.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 
 /**
  * Connection statistic tests that are common to all

@@ -37,6 +37,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    private Object listener;
    private byte[] listenerId;
    private NearCache<K, V> cache;
+   private Runnable invalidationCallback;
 
    protected NearCacheService(NearCacheConfiguration config, ClientListenerNotifier listenerNotifier) {
       this.config = config;
@@ -44,13 +45,15 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    public void start(RemoteCache<K, V> remote) {
-      // Create near cache
-      cache = createNearCache(config);
-      // Add a listener that updates the near cache
-      listener = createListener(remote);
-      remote.addClientListener(listener);
-      // Get the listener ID for faster listener connected lookups
-      listenerId = listenerNotifier.findListenerId(listener);
+      if (cache == null) {
+         // Create near cache
+         cache = createNearCache(config);
+         // Add a listener that updates the near cache
+         listener = createListener(remote);
+         remote.addClientListener(listener);
+         // Get the listener ID for faster listener connected lookups
+         listenerId = listenerNotifier.findListenerId(listener);
+      }
    }
 
    private Object createListener(RemoteCache<K, V> remote) {
@@ -99,11 +102,15 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    @Override
-   public void remove(K key) {
-      cache.remove(key);
+   public boolean remove(K key) {
+      boolean removed = cache.remove(key);
+      if (removed && invalidationCallback != null) {
+         invalidationCallback.run();
+      }
 
       if (trace)
          log.tracef("Removed key=%s from near cache (listenedId=%s)", key, Util.printArray(listenerId));
+      return removed;
    }
 
    @Override
@@ -130,8 +137,17 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       if (trace) log.tracef("Cleared near cache (listenerId=%s)", Util.printArray(listenerId));
    }
 
+   @Override
+   public int size() {
+      return cache.size();
+   }
+
    private boolean isConnected() {
       return listenerNotifier.isListenerConnected(listenerId);
+   }
+
+   public void setInvalidationCallback(Runnable r) {
+      this.invalidationCallback = r;
    }
 
    @ClientListener
@@ -168,7 +184,6 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
          if (trace) log.trace("Clear near cache after fail-over of server");
          cache.clear();
       }
-
 
       private void invalidate(K key) {
          cache.remove(key);

@@ -34,7 +34,7 @@ import org.infinispan.counter.impl.BaseCounterTest;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.globalstate.GlobalConfigurationManager;
-import org.infinispan.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;

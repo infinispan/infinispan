@@ -52,11 +52,11 @@ final class LinkedMapNearCache<K, V> implements NearCache<K, V> {
    }
 
    @Override
-   public void remove(K key) {
+   public boolean remove(K key) {
       Lock lock = rwlock.writeLock();
       try {
          lock.lock();
-         cache.remove(key);
+         return cache.remove(key) != null;
       } finally {
          lock.unlock();
       }
@@ -82,6 +82,11 @@ final class LinkedMapNearCache<K, V> implements NearCache<K, V> {
       } finally {
          lock.unlock();
       }
+   }
+
+   @Override
+   public int size() {
+      return cache.size();
    }
 
    public static <K, V> NearCache<K, V> create(final NearCacheConfiguration config) {

@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -405,7 +406,24 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    @Override
    void putAll(Map<? extends K, ? extends V> m);
 
-   ServerStatistics stats();
+   /**
+    * Returns server-side statistics for this cache.
+    * @deprecated use {@link #serverStatistics()} instead
+    */
+   @Deprecated
+   default ServerStatistics stats() {
+      return serverStatistics();
+   }
+
+   /**
+    * Returns client-side statistics for this cache.
+    */
+   RemoteCacheClientStatisticsMXBean clientStatistics();
+
+   /**
+    * Returns server-side statistics for this cache.
+    */
+   ServerStatistics serverStatistics();
 
    /**
     * Applies one or more {@link Flag}s to the scope of a single invocation.  See the {@link Flag} enumeration to for

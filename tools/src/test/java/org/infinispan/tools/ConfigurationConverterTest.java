@@ -119,7 +119,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertGlobalExecutorsConverted(globalConfiguration);
 
       assertTrue(globalConfiguration.globalJmxStatistics().allowDuplicateDomains());
-      assertTrue(globalConfiguration.globalJmxStatistics().mbeanServerLookup() instanceof org.infinispan.jmx.PerThreadMBeanServerLookup);
+      assertTrue(globalConfiguration.globalJmxStatistics().mbeanServerLookup() instanceof org.infinispan.commons.jmx.PerThreadMBeanServerLookup);
       assertTrue(globalConfiguration.globalJmxStatistics().enabled());
       assertEquals("funky_domain", globalConfiguration.globalJmxStatistics().domain());
       assertEquals("TestCacheManager", globalConfiguration.globalJmxStatistics().cacheManagerName());

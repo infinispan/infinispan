@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -27,13 +28,14 @@ import net.jcip.annotations.Immutable;
  * @since 7.2
  */
 @Immutable
-public class PutAllOperation extends RetryOnFailureOperation<Void> {
+public class PutAllOperation extends StatsAffectingRetryingOperation<Void> {
 
    public PutAllOperation(Codec codec, ChannelFactory channelFactory,
                           Map<byte[], byte[]> map, byte[] cacheName, AtomicInteger topologyId,
                           int flags, Configuration cfg,
-                          long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
-      super(PUT_ALL_REQUEST, PUT_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
+                          long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
+                          DataFormat dataFormat, ClientStatistics clientStatistics) {
+      super(PUT_ALL_REQUEST, PUT_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
       this.map = map;
       this.lifespan = lifespan;
       this.lifespanTimeUnit = lifespanTimeUnit;
@@ -77,6 +79,7 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status)) {
+         statsDataStore(map.size());
          complete(null);
          return;
       }

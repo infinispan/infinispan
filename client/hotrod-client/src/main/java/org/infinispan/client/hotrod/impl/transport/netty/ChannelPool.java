@@ -258,6 +258,19 @@ class ChannelPool {
       }
    }
 
+   @Override
+   public String toString() {
+      return "ChannelPool[" +
+            "address=" + address +
+            ", maxWait=" + maxWait +
+            ", maxConnections=" + maxConnections +
+            ", maxPendingRequests=" + maxPendingRequests +
+            ", created=" + created +
+            ", active=" + active +
+            ", terminated=" + terminated +
+            ']';
+   }
+
    private class TimeoutCallback implements ChannelOperation, Runnable {
       final ChannelOperation callback;
       volatile ScheduledFuture<?> timeoutFuture;

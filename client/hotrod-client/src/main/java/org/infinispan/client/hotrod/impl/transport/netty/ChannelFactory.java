@@ -133,7 +133,7 @@ public class ChannelFactory {
          }
          currentClusterName = DEFAULT_CLUSTER_NAME;
          topologyInfo = new TopologyInfo(defaultCacheTopologyId, Collections.unmodifiableCollection(servers), configuration);
-         operationsFactory = new OperationsFactory(this, codec, configuration, listenerNotifier);
+         operationsFactory = new OperationsFactory(this, codec, listenerNotifier, configuration);
          maxRetries = configuration.maxRetries();
 
          if (log.isDebugEnabled()) {

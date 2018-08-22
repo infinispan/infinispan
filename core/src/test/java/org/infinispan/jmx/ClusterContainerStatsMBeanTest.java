@@ -5,6 +5,7 @@ import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "jmx.ClusterContainerStatsMBeanTest")

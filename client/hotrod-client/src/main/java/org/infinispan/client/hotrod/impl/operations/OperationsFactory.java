@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -51,8 +52,10 @@ public class OperationsFactory implements HotRodConstants {
 
    private final Configuration cfg;
 
+   private final ClientStatistics clientStatistics;
+
    public OperationsFactory(ChannelFactory channelFactory, String cacheName, boolean forceReturnValue, Codec
-         codec, ClientListenerNotifier listenerNotifier, Configuration cfg) {
+         codec, ClientListenerNotifier listenerNotifier, Configuration cfg, ClientStatistics clientStatistics) {
       this.channelFactory = channelFactory;
       this.cacheNameBytes = cacheName == null ? DEFAULT_CACHE_NAME_BYTES : RemoteCacheManager.cacheNameBytes(cacheName);
       this.cacheName = cacheName;
@@ -63,10 +66,11 @@ public class OperationsFactory implements HotRodConstants {
       this.codec = codec;
       this.listenerNotifier = listenerNotifier;
       this.cfg = cfg;
+      this.clientStatistics = clientStatistics;
    }
 
-   public OperationsFactory(ChannelFactory channelFactory, Codec codec, Configuration cfg, ClientListenerNotifier listenerNotifier) {
-      this(channelFactory, null, false, codec, listenerNotifier, cfg);
+   public OperationsFactory(ChannelFactory channelFactory, Codec codec, ClientListenerNotifier listenerNotifier, Configuration cfg) {
+      this(channelFactory, null, false, codec, listenerNotifier, cfg, null);
    }
 
    public ClientListenerNotifier getListenerNotifier() {
@@ -83,39 +87,39 @@ public class OperationsFactory implements HotRodConstants {
 
    public <V> GetOperation<V> newGetKeyOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
       return new GetOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat);
+            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
    }
 
    public <K, V> GetAllParallelOperation<K, V> newGetAllOperation(Set<byte[]> keys, DataFormat dataFormat) {
       return new GetAllParallelOperation<>(codec, channelFactory, keys, cacheNameBytes, topologyId, flags(),
-            cfg, dataFormat);
+            cfg, dataFormat, clientStatistics);
    }
 
    public <V> RemoveOperation<V> newRemoveOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
       return new RemoveOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat);
+            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
    }
 
    public <V> RemoveIfUnmodifiedOperation<V> newRemoveIfUnmodifiedOperation(Object key, byte[] keyBytes, long version, DataFormat dataFormat) {
       return new RemoveIfUnmodifiedOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, version, dataFormat);
+            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, version, dataFormat, clientStatistics);
    }
 
    public ReplaceIfUnmodifiedOperation newReplaceIfUnmodifiedOperation(Object key, byte[] keyBytes,
                                                                        byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version, DataFormat dataFormat) {
       return new ReplaceIfUnmodifiedOperation(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version, dataFormat);
+            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version, dataFormat, clientStatistics);
    }
 
    public <V> GetWithVersionOperation<V> newGetWithVersionOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
       return new GetWithVersionOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat);
+            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
    }
 
    public <V> GetWithMetadataOperation<V> newGetWithMetadataOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
       return new GetWithMetadataOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat);
+            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
    }
 
    public StatsOperation newStatsOperation() {
@@ -128,14 +132,14 @@ public class OperationsFactory implements HotRodConstants {
                                                       TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new PutOperation<>(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat);
+            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics);
    }
 
    public PutAllParallelOperation newPutAllOperation(Map<byte[], byte[]> map,
                                                      long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new PutAllParallelOperation(
             codec, channelFactory, map, cacheNameBytes, topologyId, flags(lifespan, maxIdle), cfg,
-            lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat);
+            lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics);
    }
 
    public <V> PutIfAbsentOperation<V> newPutIfAbsentOperation(Object key, byte[] keyBytes, byte[] value,
@@ -143,19 +147,19 @@ public class OperationsFactory implements HotRodConstants {
                                                               TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new PutIfAbsentOperation<>(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdleTime),
-            cfg, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
+            cfg, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat, clientStatistics);
    }
 
    public <V> ReplaceOperation<V> newReplaceOperation(Object key, byte[] keyBytes, byte[] values,
                                                       long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new ReplaceOperation<>(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-            cfg, values, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat);
+            cfg, values, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics);
    }
 
    public ContainsKeyOperation newContainsKeyOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
       return new ContainsKeyOperation(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat);
+            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
    }
 
    public ClearOperation newClearOperation() {
@@ -165,12 +169,12 @@ public class OperationsFactory implements HotRodConstants {
 
    public <K, V> BulkGetOperation<K, V> newBulkGetOperation(int size, DataFormat dataFormat) {
       return new BulkGetOperation(
-            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, size, dataFormat);
+            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, size, dataFormat, clientStatistics);
    }
 
    public <K> BulkGetKeysOperation<K> newBulkGetKeysOperation(int scope, DataFormat dataFormat) {
       return new BulkGetKeysOperation<>(
-            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, scope, dataFormat);
+            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, scope, dataFormat, clientStatistics);
    }
 
    public AddClientListenerOperation newAddClientListenerOperation(Object listener, DataFormat dataFormat) {
@@ -289,19 +293,19 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public <K> GetStreamOperation newGetStreamOperation(K key, byte[] keyBytes, int offset) {
-      return new GetStreamOperation(codec, channelFactory, key, keyBytes, offset, cacheNameBytes, topologyId, flags(), cfg);
+      return new GetStreamOperation(codec, channelFactory, key, keyBytes, offset, cacheNameBytes, topologyId, flags(), cfg, clientStatistics);
    }
 
    public <K> PutStreamOperation newPutStreamOperation(K key, byte[] keyBytes, long version, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics);
    }
 
    public <K> PutStreamOperation newPutStreamOperation(K key, byte[] keyBytes, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, PutStreamOperation.VERSION_PUT, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, PutStreamOperation.VERSION_PUT, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics);
    }
 
    public <K> PutStreamOperation newPutIfAbsentStreamOperation(K key, byte[] keyBytes, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, PutStreamOperation.VERSION_PUT_IF_ABSENT, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, PutStreamOperation.VERSION_PUT_IF_ABSENT, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics);
    }
 
    public AuthMechListOperation newAuthMechListOperation(Channel channel) {

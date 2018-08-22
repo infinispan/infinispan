@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.multimap.metadata.MetadataCollectionImpl;
 import org.infinispan.client.hotrod.impl.operations.AbstractKeyOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -40,8 +41,8 @@ public class GetKeyWithMetadataMultimapOperation<V> extends AbstractKeyOperation
 
    public GetKeyWithMetadataMultimapOperation(Codec codec, ChannelFactory channelFactory,
                                               Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
-                                              Configuration cfg, DataFormat dataFormat) {
-      super(GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat);
+                                              Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
+      super(GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
    }
 
    @Override

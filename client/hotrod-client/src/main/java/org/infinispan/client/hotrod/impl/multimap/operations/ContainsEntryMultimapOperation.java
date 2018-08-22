@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.operations.AbstractKeyValueOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -27,8 +28,11 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class ContainsEntryMultimapOperation extends AbstractKeyValueOperation<Boolean> {
 
-   public ContainsEntryMultimapOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg, byte[] value) {
-      super(CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, null);
+   public ContainsEntryMultimapOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
+                                         byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                         byte[] value, ClientStatistics clientStatistics) {
+      super(CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
+            flags, cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, null, clientStatistics);
    }
 
    @Override

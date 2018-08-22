@@ -210,6 +210,11 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder batchSize(int batchSize);
 
    /**
+    * Configures client-side statistics.
+    */
+   StatisticsConfigurationBuilder statistics();
+
+   /**
     * Transaction configuration
     */
    TransactionConfigurationBuilder transaction();

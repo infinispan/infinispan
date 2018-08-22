@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
+import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
@@ -76,6 +77,7 @@ public class ConfigurationProperties {
          Pattern.compile('^' + ConfigurationProperties.SASL_PROPERTIES_PREFIX + '.');
    public static final String JAVA_SERIAL_WHITELIST = ICH + "java_serial_whitelist";
    public static final String BATCH_SIZE = ICH + "batch_size";
+   public static final String STATISTICS = ICH + "statistics";
    // Transaction properties
    public static final String TRANSACTION_MANAGER_LOOKUP = ICH + "transaction.transaction_manager_lookup";
    public static final String TRANSACTION_MODE = ICH + "transaction.transaction_mode";
@@ -379,6 +381,14 @@ public class ConfigurationProperties {
 
    public void setBatchSize(int batchSize) {
       props.setProperty(BATCH_SIZE, batchSize);
+   }
+
+   public void setStatistics(boolean statistics) {
+      props.setProperty(STATISTICS, statistics);
+   }
+
+   public boolean isStatistics() {
+      return props.getBooleanProperty(STATISTICS, StatisticsConfiguration.ENABLED.getDefaultValue());
    }
 
    public String getTransactionManagerLookup() {

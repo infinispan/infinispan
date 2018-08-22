@@ -278,6 +278,8 @@ public class HotRodRemoteStreamingIT {
 
       rcm1.start();
 
+      src1 = rcm1.getCache("streamingTestCache").streaming();
+
       assertEquals(null, src1.get(key));
    }
 

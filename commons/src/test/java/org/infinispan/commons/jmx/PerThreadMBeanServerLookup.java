@@ -1,4 +1,4 @@
-package org.infinispan.jmx;
+package org.infinispan.commons.jmx;
 
 import java.util.Properties;
 
@@ -13,7 +13,7 @@ import javax.management.MBeanServerFactory;
  */
 public class PerThreadMBeanServerLookup implements MBeanServerLookup {
 
-   static ThreadLocal<MBeanServer> threadMBeanServer = new ThreadLocal<MBeanServer>();
+   static ThreadLocal<MBeanServer> threadMBeanServer = new ThreadLocal<>();
 
    public MBeanServer getMBeanServer(Properties properties) {
       return getThreadMBeanServer();
