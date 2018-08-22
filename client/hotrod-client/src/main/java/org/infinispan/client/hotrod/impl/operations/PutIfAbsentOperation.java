@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -32,9 +33,10 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
    public PutIfAbsentOperation(Codec codec, ChannelFactory channelFactory,
                                Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                                int flags, Configuration cfg, byte[] value, long lifespan,
-                               TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
+                               TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit,
+                               DataFormat dataFormat, ClientStatistics clientStatistics) {
       super(PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value,
-            lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
+            lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit, dataFormat, clientStatistics);
    }
 
    @Override
@@ -47,11 +49,15 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isNotExecuted(status)) {
          V prevValue = returnPossiblePrevValue(buf, status);
+         if (HotRodConstants.hasPrevious(status)) {
+            statsDataRead(true);
+         }
          if (trace) {
             log.tracef("Returning from putIfAbsent: %s", prevValue);
          }
          complete(prevValue);
       } else {
+         statsDataStore();
          complete(null);
       }
    }

@@ -76,6 +76,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final List<String> whiteListRegExs = new ArrayList<>();
    private int batchSize = ConfigurationProperties.DEFAULT_BATCH_SIZE;
    private final TransactionConfigurationBuilder transaction;
+   private final StatisticsConfigurationBuilder statistics;
 
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<>();
 
@@ -86,6 +87,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.security = new SecurityConfigurationBuilder(this);
       this.nearCache = new NearCacheConfigurationBuilder(this);
       this.transaction = new TransactionConfigurationBuilder(this);
+      this.statistics = new StatisticsConfigurationBuilder(this);
    }
 
    @Override
@@ -317,6 +319,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public StatisticsConfigurationBuilder statistics() {
+      return statistics;
+   }
+
+   @Override
    public TransactionConfigurationBuilder transaction() {
       return transaction;
    }
@@ -396,6 +403,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       security.validate();
       nearCache.validate();
       transaction.validate();
+      statistics.validate();
       if (maxRetries < 0) {
          throw log.invalidMaxRetries(maxRetries);
       }
@@ -427,7 +435,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
             consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
-            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create());
+            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create());
    }
 
    @Override
@@ -472,6 +480,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.nearCache.read(template.nearCache());
       this.whiteListRegExs.addAll(template.serialWhitelist());
       this.transaction.read(template.transaction());
+      this.statistics.read(template.statistics());
 
       return this;
    }

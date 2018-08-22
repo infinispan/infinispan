@@ -11,7 +11,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.distributed.DistributedMassIndexingTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

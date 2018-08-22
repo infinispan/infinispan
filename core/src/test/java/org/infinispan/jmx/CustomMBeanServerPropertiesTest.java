@@ -7,6 +7,7 @@ import java.util.Properties;
 
 import javax.management.MBeanServer;
 
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;

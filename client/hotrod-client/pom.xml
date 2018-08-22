@@ -54,6 +54,14 @@
          <artifactId>infinispan-commons-test</artifactId>
          <scope>test</scope>
       </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>

@@ -5,6 +5,8 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketAddress;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -18,11 +20,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
+import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.counter.impl.RemoteCounterManager;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
@@ -41,14 +46,18 @@ import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
 import org.infinispan.client.hotrod.impl.transaction.TransactionalRemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transaction.XaModeTransactionTable;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.jmx.RemoteCacheManagerMXBean;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.time.DefaultTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
@@ -71,7 +80,7 @@ import org.infinispan.counter.api.CounterManager;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
+public class RemoteCacheManager implements RemoteCacheContainer, Closeable, RemoteCacheManagerMXBean {
 
    private static final Log log = LogFactory.getLog(RemoteCacheManager.class);
 
@@ -94,6 +103,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    private final RemoteCounterManager counterManager;
    private final TransactionTable syncTransactionTable;
    private final TransactionTable xaTransactionTable;
+   private ObjectName mbeanObjectName;
+   private TimeService timeService = DefaultTimeService.INSTANCE;
 
    /**
     * Create a new RemoteCacheManager using the supplied {@link Configuration}.
@@ -119,6 +130,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       this.counterManager = new RemoteCounterManager();
       this.syncTransactionTable = new SyncModeTransactionTable(configuration.transaction().timeout());
       this.xaTransactionTable = new XaModeTransactionTable(configuration.transaction().timeout());
+      registerMBean();
       if (start) start();
    }
 
@@ -159,6 +171,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       this.counterManager = new RemoteCounterManager();
       this.syncTransactionTable = new SyncModeTransactionTable(configuration.transaction().timeout());
       this.xaTransactionTable = new XaModeTransactionTable(configuration.transaction().timeout());
+      registerMBean();
       if (start) start();
    }
 
@@ -167,6 +180,33 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
     */
    public RemoteCacheManager() {
       this(true);
+   }
+
+   private void registerMBean() {
+      try {
+         StatisticsConfiguration configuration = this.configuration.statistics();
+         if (configuration.jmxEnabled()) {
+            MBeanServer mbeanServer = configuration.mbeanServerLookup().getMBeanServer();
+            String groupName = String.format("type=HotRodClient,name=%s", configuration.jmxName());
+            String jmxDomain = JmxUtil.buildJmxDomain(configuration.jmxDomain(), mbeanServer, groupName);
+            mbeanObjectName = new ObjectName(String.format("%s:%s", jmxDomain, groupName));
+            JmxUtil.registerMBean(this, mbeanObjectName, mbeanServer);
+         }
+      } catch (Exception e) {
+         log.warn("MBean registration failed", e);
+      }
+   }
+
+   private void unregisterMBean() {
+      try {
+         StatisticsConfiguration configuration = this.configuration.statistics();
+         if (configuration.jmxEnabled()) {
+            MBeanServer mbeanServer = configuration.mbeanServerLookup().getMBeanServer();
+            JmxUtil.unregisterMBean(mbeanObjectName, mbeanServer);
+         }
+      } catch (Exception e) {
+         log.warn("MBean unregistration failed", e);
+      }
    }
 
    /**
@@ -184,7 +224,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
 
    @Override
    public Set<String> getCacheNames() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, configuration, listenerNotifier);
+      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, listenerNotifier, configuration);
       String names = await(operationsFactory.newAdminOperation("@@cache@names", Collections.emptyMap()).execute());
       Set<String> cacheNames = new HashSet<>();
       // Simple pattern that matches the result which is represented as a JSON string array, e.g. ["cache1","cache2"]
@@ -292,10 +332,17 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    @Override
    public void stop() {
       if (isStarted()) {
+         synchronized (cacheName2RemoteCache) {
+            for(Map.Entry<RemoteCacheKey, RemoteCacheHolder> cache : cacheName2RemoteCache.entrySet()) {
+               cache.getValue().remoteCache().stop();
+            }
+            cacheName2RemoteCache.clear();
+         }
          listenerNotifier.stop();
          counterManager.stop();
          channelFactory.destroy();
       }
+      unregisterMBean();
       started = false;
    }
 
@@ -369,13 +416,13 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
                if (log.isTraceEnabled()) {
                   log.tracef("Enabling near-caching for cache '%s'", cacheName);
                }
-               return new InvalidatedNearRemoteCache<>(this, cacheName,
+               return new InvalidatedNearRemoteCache<>(this, cacheName, timeService,
                      createNearCacheService(configuration.nearCache()));
             }
             // else fallthrough
          case DISABLED:
          default:
-            return new RemoteCacheImpl<>(this, cacheName);
+            return new RemoteCacheImpl<>(this, cacheName, timeService);
       }
    }
 
@@ -387,9 +434,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache();
       OperationsFactory operationsFactory = new OperationsFactory(
             channelFactory, remoteCache.getName(), remoteCacheHolder.forceReturnValue, codec, listenerNotifier,
-            configuration);
+            configuration, remoteCache.getClientStatistics());
       remoteCache.init(marshaller, operationsFactory,
-            configuration.keySizeEstimate(), configuration.valueSizeEstimate(), configuration.batchSize());
+            configuration.keySizeEstimate(), configuration.valueSizeEstimate(), configuration.batchSize(), mbeanObjectName);
+      remoteCache.start();
    }
 
    @Override
@@ -408,7 +456,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    }
 
    public RemoteCacheManagerAdmin administration() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, configuration, listenerNotifier);
+      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, listenerNotifier, configuration);
       return new RemoteCacheManagerAdminImpl(this, operationsFactory, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
             name -> {
                synchronized (cacheName2RemoteCache) {
@@ -471,7 +519,36 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
          boolean forceReturnValues, boolean recoveryEnabled, TransactionMode transactionMode,
          TransactionManager transactionManager) {
       return new TransactionalRemoteCacheImpl<>(this, cacheName, forceReturnValues, recoveryEnabled, transactionManager,
-            getTransactionTable(transactionMode));
+            getTransactionTable(transactionMode), timeService);
+   }
+
+   /*
+    * The following methods are exposed through the MBean
+    */
+   @Override
+   public String[] getServers() {
+      Collection<SocketAddress> addresses = channelFactory.getServers();
+      return addresses.stream().map(SocketAddress::toString).toArray(String[]::new);
+   }
+
+   @Override
+   public int getActiveConnectionCount() {
+      return channelFactory.getNumActive();
+   }
+
+   @Override
+   public int getConnectionCount() {
+      int count = channelFactory.getNumActive() + channelFactory.getNumIdle();
+      int maxAllowed = configuration.connectionPool().maxTotal();
+      if (maxAllowed > 0)
+         return Math.min(maxAllowed, count);
+      else
+         return count;
+   }
+
+   @Override
+   public int getIdleConnectionCount() {
+      return channelFactory.getNumIdle();
    }
 
    private static class RemoteCacheKey {

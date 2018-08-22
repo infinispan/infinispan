@@ -8,6 +8,7 @@ import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.rehash.XAResourceAdapter;

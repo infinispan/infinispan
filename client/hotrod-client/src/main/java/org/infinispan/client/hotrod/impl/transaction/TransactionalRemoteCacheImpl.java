@@ -22,6 +22,7 @@ import org.infinispan.client.hotrod.impl.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.impl.transaction.entry.TransactionEntry;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.time.TimeService;
 
 /**
  * A {@link RemoteCache} implementation that handles {@link Transaction}.
@@ -69,8 +70,8 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
 
    public TransactionalRemoteCacheImpl(RemoteCacheManager rcm, String name, boolean forceReturnValue,
          boolean recoveryEnabled, TransactionManager transactionManager,
-         TransactionTable transactionTable) {
-      super(rcm, name);
+         TransactionTable transactionTable, TimeService timeService) {
+      super(rcm, name, timeService);
       this.forceReturnValue = forceReturnValue;
       this.recoveryEnabled = recoveryEnabled;
       this.transactionManager = transactionManager;

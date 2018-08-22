@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -24,15 +25,15 @@ import net.jcip.annotations.Immutable;
  * @since 7.2
  */
 @Immutable
-public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
+public class GetAllOperation<K, V> extends StatsAffectingRetryingOperation<Map<K, V>> {
 
    private Map<K, V> result;
    private int size = -1;
 
    public GetAllOperation(Codec codec, ChannelFactory channelFactory,
                           Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
-                          int flags, Configuration cfg, DataFormat dataFormat) {
-      super(GET_ALL_REQUEST, GET_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
+                          int flags, Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
+      super(GET_ALL_REQUEST, GET_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
       this.keys = keys;
    }
 
@@ -81,6 +82,8 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
          result.put(key, value);
          decoder.checkpoint();
       }
+      statsDataRead(true, size);
+      statsDataRead(false, keys.size() - size);
       complete(result);
    }
 }

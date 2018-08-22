@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
@@ -22,8 +23,8 @@ public class GetAllParallelOperation<K, V> extends ParallelHotRodOperation<Map<K
    private final Set<byte[]> keys;
 
    protected GetAllParallelOperation(Codec codec, ChannelFactory channelFactory, Set<byte[]> keys, byte[]
-         cacheName, AtomicInteger topologyId, int flags, Configuration cfg, DataFormat dataFormat) {
-      super(codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
+         cacheName, AtomicInteger topologyId, int flags, Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
+      super(codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
       this.keys = keys;
    }
 
@@ -39,7 +40,7 @@ public class GetAllParallelOperation<K, V> extends ParallelHotRodOperation<Map<K
 
       return splittedKeys.values().stream().map(
             keysSubset -> new GetAllOperation<K, V>(codec, channelFactory, keysSubset, cacheName, header.topologyId(),
-                  flags, cfg, dataFormat)).collect(Collectors.toList());
+                  flags, cfg, dataFormat, clientStatistics)).collect(Collectors.toList());
    }
 
    @Override

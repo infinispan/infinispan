@@ -28,6 +28,7 @@ import org.infinispan.commons.util.Util;
  */
 public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration> {
    private static final Log log = LogFactory.getLog(AuthenticationConfigurationBuilder.class);
+
    public static final String DEFAULT_REALM = "ApplicationRealm";
    private CallbackHandler callbackHandler;
    private boolean enabled = false;

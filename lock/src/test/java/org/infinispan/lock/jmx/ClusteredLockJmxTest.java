@@ -14,7 +14,7 @@ import javax.management.ReflectionException;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.lock.BaseClusteredLockTest;
 import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockManager;

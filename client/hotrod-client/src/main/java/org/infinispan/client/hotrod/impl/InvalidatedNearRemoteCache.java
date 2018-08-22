@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
+import org.infinispan.commons.time.TimeService;
 
 /**
  * Near {@link org.infinispan.client.hotrod.RemoteCache} implementation enabling
@@ -21,8 +22,8 @@ public class InvalidatedNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
    private static final Log log = LogFactory.getLog(InvalidatedNearRemoteCache.class);
    private final NearCacheService<K, V> nearcache;
 
-   public InvalidatedNearRemoteCache(RemoteCacheManager rcm, String name, NearCacheService<K, V> nearcache) {
-      super(rcm, name);
+   public InvalidatedNearRemoteCache(RemoteCacheManager rcm, String name, TimeService timeService, NearCacheService<K, V> nearcache) {
+      super(rcm, name, new ClientStatistics(rcm.getConfiguration().statistics().enabled(), timeService, nearcache));
       this.nearcache = nearcache;
    }
 
@@ -36,6 +37,7 @@ public class InvalidatedNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
    public CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key) {
       MetadataValue<V> nearValue = nearcache.get(key);
       if (nearValue == null) {
+         clientStatistics.incrementNearCacheMisses();
          CompletableFuture<MetadataValue<V>> remoteValue = super.getWithMetadataAsync(key);
          return remoteValue.thenApply(v -> {
             if (v != null) {
@@ -47,6 +49,7 @@ public class InvalidatedNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
             return v;
          });
       } else {
+         clientStatistics.incrementNearCacheHits();
          return CompletableFuture.completedFuture(nearValue);
       }
    }

@@ -182,6 +182,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public StatisticsConfigurationBuilder statistics() {
+      return builder.statistics();
+   }
+
+   @Override
    public TransactionConfigurationBuilder transaction() {
       return builder.transaction();
    }

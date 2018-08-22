@@ -43,7 +43,8 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
 
    protected IterationNextOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName,
                                     AtomicInteger topologyId, byte[] iterationId, Channel channel,
-                                    ChannelFactory channelFactory, KeyTracker segmentKeyTracker, DataFormat dataFormat) {
+                                    ChannelFactory channelFactory, KeyTracker segmentKeyTracker,
+                                    DataFormat dataFormat) {
       super(ITERATION_NEXT_REQUEST, ITERATION_NEXT_RESPONSE, codec, flags, cfg, cacheName, topologyId, channelFactory, dataFormat);
       this.iterationId = iterationId;
       this.channel = channel;

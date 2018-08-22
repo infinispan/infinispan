@@ -6,6 +6,7 @@ import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRod
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.operations.AbstractKeyOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -23,8 +24,10 @@ import io.netty.channel.Channel;
  * @since 9.2
  */
 public class RemoveKeyMultimapOperation extends AbstractKeyOperation<Boolean> {
-   public RemoveKeyMultimapOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(REMOVE_KEY_MULTIMAP_REQUEST, REMOVE_KEY_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, null);
+   public RemoveKeyMultimapOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
+                                     AtomicInteger topologyId, int flags, Configuration cfg, ClientStatistics clientStatistics) {
+      super(REMOVE_KEY_MULTIMAP_REQUEST, REMOVE_KEY_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName,
+            topologyId, flags, cfg, null, clientStatistics);
    }
 
    @Override

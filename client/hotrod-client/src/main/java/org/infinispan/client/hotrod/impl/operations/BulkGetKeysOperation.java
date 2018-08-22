@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -22,13 +23,13 @@ import io.netty.channel.Channel;
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  * @since 5.2
  */
-public class BulkGetKeysOperation<K> extends RetryOnFailureOperation<Set<K>> {
+public class BulkGetKeysOperation<K> extends StatsAffectingRetryingOperation<Set<K>> {
    private final int scope;
    private final Set<K> result = new HashSet<>();
 
    public BulkGetKeysOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
-                               AtomicInteger topologyId, int flags, Configuration cfg, int scope, DataFormat dataFormat) {
-      super(BULK_GET_KEYS_REQUEST, BULK_GET_KEYS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
+                               AtomicInteger topologyId, int flags, Configuration cfg, int scope, DataFormat dataFormat, ClientStatistics clientStatistics) {
+      super(BULK_GET_KEYS_REQUEST, BULK_GET_KEYS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
       this.scope = scope;
    }
 

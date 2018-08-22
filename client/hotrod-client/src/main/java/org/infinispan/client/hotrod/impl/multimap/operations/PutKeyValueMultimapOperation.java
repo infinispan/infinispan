@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.operations.AbstractKeyValueOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -33,8 +34,10 @@ public class PutKeyValueMultimapOperation extends AbstractKeyValueOperation<Void
                                        ChannelFactory channelFactory,
                                        Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                                        int flags, Configuration cfg, byte[] value, long lifespan,
-                                       TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
-      super(PUT_MULTIMAP_REQUEST, PUT_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat);
+                                       TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat,
+                                       ClientStatistics clientStatistics) {
+      super(PUT_MULTIMAP_REQUEST, PUT_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
+            flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics);
    }
 
    @Override

@@ -19,6 +19,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.ServiceNotFoundException;
 
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;

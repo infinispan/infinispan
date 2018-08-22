@@ -51,6 +51,7 @@ public class Configuration {
    private final List<String> serialWhitelist;
    private final int batchSize;
    private final ClassWhiteList classWhiteList;
+   private final StatisticsConfiguration statistics;
 
    private final TransactionConfiguration transaction;
 
@@ -60,7 +61,7 @@ public class Configuration {
                  ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
                  int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
                  List<ClusterConfiguration> clusters, List<String> serialWhitelist, int batchSize,
-                 TransactionConfiguration transaction) {
+                 TransactionConfiguration transaction, StatisticsConfiguration statistics) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
@@ -86,6 +87,7 @@ public class Configuration {
       this.classWhiteList = new ClassWhiteList(serialWhitelist);
       this.batchSize = batchSize;
       this.transaction = transaction;
+      this.statistics = statistics;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -232,6 +234,10 @@ public class Configuration {
       return batchSize;
    }
 
+   public StatisticsConfiguration statistics() {
+      return statistics;
+   }
+
    public TransactionConfiguration transaction() {
       return transaction;
    }
@@ -247,7 +253,9 @@ public class Configuration {
             + ", serialWhiteList=" + serialWhitelist
             + ", batchSize=" + batchSize
             + ", nearCache=" + nearCache
-            + ", transaction=" + transaction + "]";
+            + ", transaction=" + transaction
+            + ", statistics=" + statistics
+            + "]";
    }
 
    public Properties properties() {
@@ -280,6 +288,7 @@ public class Configuration {
       properties.setProperty(ConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive());
       properties.setProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, valueSizeEstimate());
       properties.setProperty(ConfigurationProperties.MAX_RETRIES, maxRetries());
+      properties.setProperty(ConfigurationProperties.STATISTICS, statistics().enabled());
 
       properties.setProperty(ConfigurationProperties.CONNECTION_POOL_EXHAUSTED_ACTION, connectionPool().exhaustedAction().name());
       properties.setProperty("exhaustedAction", connectionPool().exhaustedAction().ordinal());

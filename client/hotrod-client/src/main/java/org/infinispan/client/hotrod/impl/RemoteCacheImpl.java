@@ -17,7 +17,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.infinispan.client.hotrod.CacheTopologyInfo;
+import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -27,6 +31,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.filter.Filters;
@@ -54,7 +59,9 @@ import org.infinispan.client.hotrod.impl.operations.SizeOperation;
 import org.infinispan.client.hotrod.impl.operations.StatsOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
@@ -84,17 +91,45 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    private volatile boolean isObjectStorage;
    private final DataFormat defaultDataFormat;
    private DataFormat dataFormat;
+   protected ClientStatistics clientStatistics;
+   private ObjectName mbeanObjectName;
 
-   public RemoteCacheImpl(RemoteCacheManager rcm, String name) {
+   public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService) {
       if (trace) {
          log.tracef("Creating remote cache: %s", name);
       }
       this.name = name;
       this.remoteCacheManager = rcm;
       this.defaultDataFormat = DataFormat.builder().build();
+      this.clientStatistics = new ClientStatistics(rcm.getConfiguration().statistics().enabled(), timeService);
+   }
+
+   protected RemoteCacheImpl(RemoteCacheManager rcm, String name, ClientStatistics clientStatistics) {
+      if (trace) {
+         log.tracef("Creating remote cache: %s", name);
+      }
+      this.name = name;
+      this.remoteCacheManager = rcm;
+      this.defaultDataFormat = DataFormat.builder().build();
+      this.clientStatistics = clientStatistics;
    }
 
    public void init(Marshaller marshaller, OperationsFactory operationsFactory,
+                    int estimateKeySize, int estimateValueSize, int batchSize,
+                    ObjectName jmxParent) {
+      this.defaultMarshaller = marshaller;
+      this.operationsFactory = operationsFactory;
+      this.estimateKeySize = estimateKeySize;
+      this.estimateValueSize = estimateValueSize;
+      this.batchSize = batchSize;
+      this.dataFormat = defaultDataFormat;
+      registerMBean(jmxParent);
+   }
+
+   /**
+    * Used only by {@link #newInstance()}, does not register JMX, reuses statistics object
+    */
+   private void init(Marshaller marshaller, OperationsFactory operationsFactory,
                     int estimateKeySize, int estimateValueSize, int batchSize) {
       this.defaultMarshaller = marshaller;
       this.operationsFactory = operationsFactory;
@@ -102,6 +137,37 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       this.estimateValueSize = estimateValueSize;
       this.batchSize = batchSize;
       this.dataFormat = defaultDataFormat;
+      this.mbeanObjectName = null;
+   }
+
+   public ClientStatistics getClientStatistics() {
+      return clientStatistics;
+   }
+
+   private void registerMBean(ObjectName jmxParent) {
+      try {
+         StatisticsConfiguration configuration = getRemoteCacheManager().getConfiguration().statistics();
+         if (configuration.jmxEnabled()) {
+            MBeanServer mbeanServer = configuration.mbeanServerLookup().getMBeanServer();
+            String groupName = String.format("type=HotRodClient,name=%s", configuration.jmxName());
+            mbeanObjectName = new ObjectName(String.format("%s:%s,cache=%s", jmxParent.getDomain(), groupName, name.equals("") ? "org.infinispan.default" : name));
+            JmxUtil.registerMBean(clientStatistics, mbeanObjectName, mbeanServer);
+         }
+      } catch (Exception e) {
+         log.warn("MBean registration failed", e);
+      }
+   }
+
+   private void unregisterMBean() {
+      try {
+         if (mbeanObjectName != null) {
+            StatisticsConfiguration configuration = getRemoteCacheManager().getConfiguration().statistics();
+            MBeanServer mbeanServer = configuration.mbeanServerLookup().getMBeanServer();
+            JmxUtil.unregisterMBean(mbeanObjectName, mbeanServer);
+         }
+      } catch (Exception e) {
+         log.warn("MBean unregistration failed", e);
+      }
    }
 
    public OperationsFactory getOperationsFactory() {
@@ -248,7 +314,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @Override
-   public ServerStatistics stats() {
+   public RemoteCacheClientStatisticsMXBean clientStatistics() {
+      return clientStatistics;
+   }
+
+   @Override
+   public ServerStatistics serverStatistics() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
       Map<String, String> statsMap = await(op.execute());
@@ -397,9 +468,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public void stop() {
-      if (log.isDebugEnabled()) {
-         log.debugf("Stop called, nothing to do here(%s)", getName());
-      }
+      unregisterMBean();
    }
 
    @Override
@@ -477,6 +546,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       if (trace) {
          result.thenAccept(value -> log.tracef("For key(%s) returning %s", key, value));
       }
+
       return result;
    }
 
@@ -782,7 +852,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    private <T, U> RemoteCacheImpl<T, U> newInstance() {
-      RemoteCacheImpl<T, U> copy = new RemoteCacheImpl<>(this.remoteCacheManager, name);
+      RemoteCacheImpl<T, U> copy = new RemoteCacheImpl<>(this.remoteCacheManager, name, clientStatistics);
       copy.init(this.defaultMarshaller, this.operationsFactory, this.estimateKeySize, this.estimateValueSize, this.batchSize);
       return copy;
    }

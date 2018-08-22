@@ -1438,6 +1438,13 @@ to one of the clusters pre-defined in the Hot Rod client configuration.
 To switch to the initial servers defined in the client configuration, call
 `switchToDefaultCluster()`.
 
+==== Monitoring the Hot Rod client [[hotrod:java-client-monitoring]]
+
+The Hot Rod client can be monitored and managed via JMX similarly to what is described in  <<jmx:chapter>>.
+By enabling statistics, an MBean will be registered for the `RemoteCacheManager` as well as for each `RemoteCache` obtained
+through it.
+Through these MBeans it is possible to obtain statistics about remote and near-cache hits/misses and connection pool usage.
+
 ====  Concurrent Updates
 Data structures, such as {brandname} link:{javadocroot}/org/infinispan/Cache.html[Cache] , that are accessed and modified concurrently can suffer from data consistency issues unless there're mechanisms to guarantee data correctness. {brandname} Cache, since it implements link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[ConcurrentMap] , provides operations such as link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[conditional replace] , link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#putIfAbsent-K-V-[putIfAbsent] , and link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#remove-java.lang.Object-java.lang.Object-[conditional remove] to its clients in order to guarantee data correctness. It even allows clients to operate against cache instances within JTA transactions, hence providing the necessary data consistency guarantees.
 

@@ -86,7 +86,7 @@
             </advancedExternalizers>
         </serialization>
 
-        <globalJmxStatistics enabled="true" jmxDomain="funky_domain" mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup"
+        <globalJmxStatistics enabled="true" jmxDomain="funky_domain" mBeanServerLookup="org.infinispan.commons.jmx.PerThreadMBeanServerLookup"
                              allowDuplicateDomains="true" cacheManagerName="TestCacheManager">
             <properties>
                 <property name="testKey" value="testValue" />

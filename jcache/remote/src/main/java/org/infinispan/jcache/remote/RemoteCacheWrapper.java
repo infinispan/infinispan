@@ -8,6 +8,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
+import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -506,5 +507,15 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public DataFormat getDataFormat() {
       return delegate.getDataFormat();
+   }
+
+   @Override
+   public RemoteCacheClientStatisticsMXBean clientStatistics() {
+      return delegate.clientStatistics();
+   }
+
+   @Override
+   public ServerStatistics serverStatistics() {
+      return delegate.serverStatistics();
    }
 }

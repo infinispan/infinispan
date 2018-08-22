@@ -10,7 +10,8 @@ import org.infinispan.client.hotrod.MetadataValue;
 interface NearCache<K, V> {
    void put(K key, MetadataValue<V> value);
    void putIfAbsent(K key, MetadataValue<V> value);
-   void remove(K key);
+   boolean remove(K key);
    MetadataValue<V> get(K key);
    void clear();
+   int size();
 }

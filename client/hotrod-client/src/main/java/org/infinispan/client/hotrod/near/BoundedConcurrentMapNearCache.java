@@ -35,8 +35,8 @@ final class BoundedConcurrentMapNearCache<K, V> implements NearCache<K, V> {
    }
 
    @Override
-   public void remove(K key) {
-      cache.remove(key);
+   public boolean remove(K key) {
+      return cache.remove(key) != null;
    }
 
    @Override
@@ -49,4 +49,8 @@ final class BoundedConcurrentMapNearCache<K, V> implements NearCache<K, V> {
       cache.clear();
    }
 
+   @Override
+   public int size() {
+      return cache.size();
+   }
 }

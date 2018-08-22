@@ -24,7 +24,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
-import org.infinispan.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
