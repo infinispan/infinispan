@@ -21,7 +21,7 @@ import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigura
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 

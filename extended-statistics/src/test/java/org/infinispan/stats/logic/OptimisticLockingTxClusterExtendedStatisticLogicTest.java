@@ -52,9 +52,9 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;
-import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.EmbeddedTimeService;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -78,7 +78,7 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
    private static final Object VALUE_3 = "VALUE_3";
    private static final int NUM_NODES = 2;
    private static final int TX_TIMEOUT = 60;
-   private static final TimeService TEST_TIME_SERVICE = new DefaultTimeService() {
+   private static final TimeService TEST_TIME_SERVICE = new EmbeddedTimeService() {
       @Override
       public long time() {
          return 0;
@@ -378,7 +378,7 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
       }
    }
 
-   private class LockManagerTimeService extends DefaultTimeService {
+   private class LockManagerTimeService extends EmbeddedTimeService {
       private volatile boolean triggerTimeout = false;
 
       @Override

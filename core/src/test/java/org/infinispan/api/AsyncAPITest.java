@@ -14,13 +14,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
+import org.infinispan.util.ControlledTimeService;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.AsyncAPITest")
@@ -395,24 +395,6 @@ public class AsyncAPITest extends SingleCacheManagerTest {
          throw new RuntimeException(e);
       } finally {
          startTime = null;
-      }
-   }
-
-   private static class ControlledTimeService extends DefaultTimeService {
-      private long time = super.wallClockTime();
-
-      @Override
-      public long wallClockTime() {
-         return time;
-      }
-
-      @Override
-      public long time() {
-         return TimeUnit.MILLISECONDS.toNanos(time);
-      }
-
-      public void advance(long millis) {
-         time += millis;
       }
    }
 }

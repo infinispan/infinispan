@@ -9,8 +9,8 @@ import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
+import org.infinispan.util.EmbeddedTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.AfterClass;
@@ -36,7 +36,7 @@ public class JCacheLoaderAdapterTest extends AbstractInfinispanTest {
 
     @BeforeClass
     public static void setUpClass() {
-        TimeService timeService = new DefaultTimeService();
+        TimeService timeService = new EmbeddedTimeService();
         marshaller = new TestObjectStreamMarshaller();
         MarshalledEntryFactory marshalledEntryFactory = new MarshalledEntryFactoryImpl(marshaller);
         ctx = new DummyInitializationContext() {

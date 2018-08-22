@@ -68,7 +68,7 @@ import org.infinispan.stats.container.StatisticsSnapshot;
 import org.infinispan.stats.logging.Log;
 import org.infinispan.stats.percentiles.PercentileStatistic;
 import org.infinispan.stats.percentiles.ReservoirSampler;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 

@@ -16,7 +16,7 @@ import org.infinispan.stats.container.ConcurrentGlobalContainer;
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.container.ExtendedStatisticsContainer;
 import org.infinispan.stats.logging.Log;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 

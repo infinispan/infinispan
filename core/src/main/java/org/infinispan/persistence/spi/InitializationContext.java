@@ -8,7 +8,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 import net.jcip.annotations.ThreadSafe;
 

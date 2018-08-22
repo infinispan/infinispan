@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.hibernate.search.batchindexing.MassIndexerProgressMonitor;
 import org.infinispan.query.logging.Log;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 /**

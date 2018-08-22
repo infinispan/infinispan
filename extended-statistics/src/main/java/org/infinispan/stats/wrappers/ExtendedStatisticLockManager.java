@@ -16,7 +16,7 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.stats.CacheStatisticManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockState;

@@ -9,8 +9,8 @@ import java.util.List;
 import org.infinispan.stats.container.ConcurrentGlobalContainer;
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.container.StatisticsSnapshot;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
+import org.infinispan.util.EmbeddedTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "stats.ConcurrentContainerTest")
 public class ConcurrentContainerTest {
 
-   private static final TimeService TIME_SERVICE = new DefaultTimeService();
+   private static final TimeService TIME_SERVICE = new EmbeddedTimeService();
 
    public void testIsolationWithTransactionMerge() {
       final ConcurrentGlobalContainer globalContainer = new ConcurrentGlobalContainer(TIME_SERVICE);

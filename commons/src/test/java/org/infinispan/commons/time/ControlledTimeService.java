@@ -1,4 +1,4 @@
-package org.infinispan.util;
+package org.infinispan.commons.time;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * TimeService that allows for wall clock time to be adjust manually.
  */
-public class ControlledTimeService extends EmbeddedTimeService {
+public class ControlledTimeService extends DefaultTimeService {
    protected long currentMillis;
 
    public ControlledTimeService() {

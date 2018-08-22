@@ -23,8 +23,8 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
+import org.infinispan.util.EmbeddedTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -72,7 +72,7 @@ public class DataContainerStressTest {
 
    private void initializeDefaultDataContainer(DefaultDataContainer dc) {
       InternalEntryFactoryImpl entryFactory = new InternalEntryFactoryImpl();
-      TimeService timeService = new DefaultTimeService();
+      TimeService timeService = new EmbeddedTimeService();
       TestingUtil.inject(entryFactory, timeService);
       // Mockito cannot be used as it will run out of memory from keeping all the invocations, thus we use blank impls
       TestingUtil.inject(dc, (EvictionManager) evicted -> {}, new PassivationManager() {

@@ -52,7 +52,7 @@ import org.infinispan.stats.CacheStatisticManager;
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.logging.Log;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 /**

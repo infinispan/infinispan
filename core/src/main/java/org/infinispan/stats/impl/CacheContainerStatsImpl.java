@@ -18,7 +18,7 @@ import org.infinispan.jmx.annotations.Units;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.Stats;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 
 /**

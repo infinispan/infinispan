@@ -1,4 +1,4 @@
-package org.infinispan.util;
+package org.infinispan.commons.time;
 
 import java.time.Clock;
 import java.time.Instant;

@@ -1,7 +1,7 @@
 package org.infinispan.stats;
 
 import org.infinispan.stats.container.RemoteExtendedStatisticsContainer;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 /**
  * Represents the statistic collected for a remote transaction

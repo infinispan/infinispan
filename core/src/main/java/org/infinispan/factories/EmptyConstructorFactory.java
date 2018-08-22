@@ -20,8 +20,8 @@ import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.stream.impl.IteratorHandler;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
+import org.infinispan.util.EmbeddedTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
 import org.infinispan.xsite.BackupReceiverRepository;
@@ -55,7 +55,7 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
       else if (componentType.equals(RemoteCommandsFactory.class))
          return (T) new RemoteCommandsFactory();
       else if (componentType.equals(TimeService.class))
-         return (T) new DefaultTimeService();
+         return (T) new EmbeddedTimeService();
       else if (componentType.equals(EventLogManager.class))
          return (T) new EventLogManagerImpl();
       else if (componentType.equals(PersistentUUIDManager.class))

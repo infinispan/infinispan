@@ -17,7 +17,7 @@ import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_PUTS_W
 import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_SUCCESSFUL_EXECUTION_TIME;
 
 import org.infinispan.stats.container.LocalExtendedStatisticsContainer;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 /**
  * Represents the statistics collected for a local transaction

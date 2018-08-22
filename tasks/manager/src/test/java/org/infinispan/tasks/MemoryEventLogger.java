@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;

@@ -21,7 +21,7 @@ import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperat
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 

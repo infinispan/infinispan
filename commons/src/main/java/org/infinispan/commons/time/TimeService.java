@@ -1,10 +1,7 @@
-package org.infinispan.util;
+package org.infinispan.commons.time;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
-
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 
 /**
  * Encapsulates all the time related logic in this interface.
@@ -12,7 +9,6 @@ import org.infinispan.factories.scopes.Scopes;
  * @author Pedro Ruivo
  * @since 5.3
  */
-@Scope(Scopes.GLOBAL)
 public interface TimeService {
 
    /**
