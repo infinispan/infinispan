@@ -11,7 +11,7 @@ import org.infinispan.stats.logging.Log;
 import org.infinispan.stats.percentiles.PercentileStatistic;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 /**

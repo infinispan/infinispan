@@ -30,7 +30,7 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

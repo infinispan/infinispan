@@ -7,14 +7,15 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
 /**
  * @author Pedro Ruivo
  * @since 5.3
  */
-@Test(groups = "functional", testName = "util.DefaultTimeServiceTest")
-public class DefaultTimeServiceTest {
+@Test(groups = "functional", testName = "util.EmbeddedTimeServiceTest")
+public class EmbeddedTimeServiceTest {
 
    public void testMonotonicIncrement() {
       TimeService timeService = TIME_SERVICE;
@@ -25,7 +26,7 @@ public class DefaultTimeServiceTest {
    }
 
    public void testDuration() {
-      TimeService timeService = new DefaultTimeService() {
+      TimeService timeService = new EmbeddedTimeService() {
          @Override
          public long time() {
             return 10;
@@ -55,7 +56,7 @@ public class DefaultTimeServiceTest {
    }
 
    public void testExpired() {
-      TimeService timeService = new DefaultTimeService() {
+      TimeService timeService = new EmbeddedTimeService() {
          @Override
          public long time() {
             return 10;
@@ -70,7 +71,7 @@ public class DefaultTimeServiceTest {
    }
 
    public void testRemainingTime() {
-      TimeService timeService = new DefaultTimeService() {
+      TimeService timeService = new EmbeddedTimeService() {
          @Override
          public long time() {
             return 10;
@@ -87,7 +88,7 @@ public class DefaultTimeServiceTest {
    }
 
    public void testExpectedTime() {
-      TimeService timeService = new DefaultTimeService() {
+      TimeService timeService = new EmbeddedTimeService() {
          @Override
          public long time() {
             return 10;

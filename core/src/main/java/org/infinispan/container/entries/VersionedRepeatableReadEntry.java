@@ -11,7 +11,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

@@ -9,7 +9,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 /**
  * @author Mircea Markus

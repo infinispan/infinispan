@@ -48,7 +48,7 @@ import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a

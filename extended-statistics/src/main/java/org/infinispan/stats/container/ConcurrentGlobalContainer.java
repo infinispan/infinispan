@@ -12,7 +12,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 /**
  * Thread safe cache statistics that allows multiple writers and reader at the same time.

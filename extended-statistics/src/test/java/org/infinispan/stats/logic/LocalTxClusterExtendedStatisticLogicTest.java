@@ -104,8 +104,8 @@ import org.infinispan.stats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.stats.wrappers.ExtendedStatisticLockManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
+import org.infinispan.util.EmbeddedTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -117,7 +117,7 @@ import org.testng.annotations.Test;
 public class LocalTxClusterExtendedStatisticLogicTest extends SingleCacheManagerTest {
 
    private static final int SLEEP_TIME = 500;
-   private static final TimeService TEST_TIME_SERVICE = new DefaultTimeService() {
+   private static final TimeService TEST_TIME_SERVICE = new EmbeddedTimeService() {
       @Override
       public long time() {
          return 0;

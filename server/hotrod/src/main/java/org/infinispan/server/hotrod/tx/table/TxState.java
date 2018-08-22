@@ -20,7 +20,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.ExternalizerIds;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 import net.jcip.annotations.Immutable;
 

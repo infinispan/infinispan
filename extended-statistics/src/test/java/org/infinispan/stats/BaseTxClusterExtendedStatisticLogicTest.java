@@ -106,8 +106,8 @@ import org.infinispan.stats.wrappers.ExtendedStatisticLockManager;
 import org.infinispan.stats.wrappers.ExtendedStatisticRpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionProtocol;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
+import org.infinispan.util.EmbeddedTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -122,7 +122,7 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
 
    private static final int NUM_NODES = 2;
    private static final int TX_TIMEOUT = 60;
-   private static final TimeService TEST_TIME_SERVICE = new DefaultTimeService() {
+   private static final TimeService TEST_TIME_SERVICE = new EmbeddedTimeService() {
       @Override
       public long time() {
          return 0;

@@ -16,7 +16,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 /**
  * Encapsulates write skew logic in maintaining version maps, etc.

@@ -28,7 +28,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 /**
  * An implementation that generates non-versioned entries

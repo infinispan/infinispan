@@ -45,7 +45,7 @@ import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCache
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
 /**

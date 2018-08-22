@@ -43,8 +43,8 @@ import org.infinispan.test.fwk.ChainMethodInterceptor;
 import org.infinispan.test.fwk.NamedTestMethod;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
+import org.infinispan.util.EmbeddedTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.stack.Protocol;
@@ -81,7 +81,7 @@ public abstract class AbstractInfinispanTest {
                                                                                     new SynchronousQueue<>(),
                                                                                  defaultThreadFactory);
 
-   public static final TimeService TIME_SERVICE = new DefaultTimeService();
+   public static final TimeService TIME_SERVICE = new EmbeddedTimeService();
 
    public static class OrderByInstance implements IMethodInterceptor {
       @Override

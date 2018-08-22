@@ -15,7 +15,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.impl.StatsCollector;
 import org.infinispan.stats.impl.StatsImpl;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 
 /**
  * Wraps existing {@link AdvancedCache} to collect statistics

@@ -15,7 +15,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "expiration.impl.ExpirationFunctionalTest")

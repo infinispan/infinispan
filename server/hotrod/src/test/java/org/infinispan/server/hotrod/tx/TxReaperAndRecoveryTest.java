@@ -59,7 +59,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.util.TimeService;
+import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 

@@ -1,5 +1,7 @@
 package org.infinispan.container.entries;
 
+import org.infinispan.commons.time.TimeService;
+
 /**
  * Interface for internal cache entries that expose whether an entry has expired.
  *
@@ -11,7 +13,7 @@ public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
 
    /**
     * @param now the current time as defined by {@link System#currentTimeMillis()} or {@link
-    *            org.infinispan.util.TimeService#wallClockTime()}
+    *            TimeService#wallClockTime()}
     * @return true if the entry has expired; false otherwise
     * @since 5.1
     */
@@ -46,7 +48,7 @@ public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
    /**
     * Updates access timestamps on this instance to a specified time
     * @param currentTimeMillis the current time as defined by {@link System#currentTimeMillis()} or {@link
-    *                          org.infinispan.util.TimeService#wallClockTime()}
+    *                          TimeService#wallClockTime()}
     */
    void touch(long currentTimeMillis);
 
@@ -60,7 +62,7 @@ public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
    /**
     * "Reincarnates" an entry.  Essentially, resets the 'created' timestamp of the entry to the current time.
     * @param now the current time as defined by {@link System#currentTimeMillis()} or {@link
-    *            org.infinispan.util.TimeService#wallClockTime()}
+    *            TimeService#wallClockTime()}
     */
    void reincarnate(long now);
 
