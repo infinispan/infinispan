@@ -5,6 +5,7 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -70,7 +71,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
 
    protected void updateDomain(ComponentsJmxRegistration registrar, MBeanServer mBeanServer, String groupName) {
       if (jmxDomain == null) {
-         jmxDomain = JmxUtil.buildJmxDomain(globalConfig, mBeanServer, groupName);
+         jmxDomain = JmxUtil.buildJmxDomain(globalConfig.globalJmxStatistics().domain(), mBeanServer, groupName);
          String configJmxDomain = globalConfig.globalJmxStatistics().domain();
          if (!jmxDomain.equals(configJmxDomain) && !globalConfig.globalJmxStatistics().allowDuplicateDomains()) {
             throw log.jmxMBeanAlreadyRegistered(groupName, configJmxDomain);

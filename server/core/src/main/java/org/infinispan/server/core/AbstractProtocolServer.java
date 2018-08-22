@@ -7,10 +7,11 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.components.ManageableComponentMetadata;
-import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -104,9 +105,10 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
 
    protected void registerTransportMBean() {
       GlobalConfiguration globalCfg = cacheManager.getCacheManagerConfiguration();
-      mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
+      GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
+      mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
       String groupName = String.format("type=Server,name=%s", getQualifiedName());
-      String jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, groupName);
+      String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, groupName);
 
       // Pick up metadata from the component metadata repository
       ManageableComponentMetadata meta = LifecycleCallbacks.componentMetadataRepo

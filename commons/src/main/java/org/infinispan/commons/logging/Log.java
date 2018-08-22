@@ -5,6 +5,9 @@ import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.ObjectName;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.EncodingException;
@@ -189,6 +192,14 @@ public interface Log extends BasicLogger {
    @Message(value = "Error encoding content '%s' to '%s'", id = 941)
    EncodingException errorEncoding(Object content, MediaType mediaType);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to convert property [%s] to an enum! Using default value of %d", id = 942)
+   void unableToConvertStringPropertyToEnum(String value, String defaultValue);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not register object with name: %s", id = 943)
+   void couldNotRegisterObjectName(ObjectName objectName, @Cause InstanceAlreadyExistsException e);
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 28001)
@@ -202,10 +213,6 @@ public interface Log extends BasicLogger {
 
    @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 28022)
    CounterException invalidCounterTypeEncoded();
-
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to convert property [%s] to an enum! Using default value of %d", id = 28023)
-   void unableToConvertStringPropertyToEnum(String value, String defaultValue);
 
    //----- counters exceptions // don't use the same id range  ------
 }

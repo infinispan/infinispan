@@ -26,6 +26,7 @@ import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.commons.util.ServiceFinder;
@@ -36,6 +37,7 @@ import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ManageableComponentMetadata;
@@ -43,7 +45,6 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -268,13 +269,12 @@ public class LifecycleManager implements ModuleLifecycle {
    private void registerQueryMBeans(ComponentRegistry cr, Configuration cfg, SearchIntegrator sf) {
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       // Resolve MBean server instance
-      GlobalConfiguration globalCfg = cr.getGlobalComponentRegistry().getGlobalConfiguration();
-      mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
+      GlobalJmxStatisticsConfiguration jmxConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration().globalJmxStatistics();
+      mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
 
       // Resolve jmx domain to use for query mbeans
-      String cacheManagerName = globalCfg.globalJmxStatistics().cacheManagerName();
-      String queryGroupName = getQueryGroupName(cacheManagerName, cache.getName());
-      jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, queryGroupName);
+      String queryGroupName = getQueryGroupName(jmxConfig.cacheManagerName(), cache.getName());
+      jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, queryGroupName);
 
       // Register statistics MBean, but only enable if Infinispan config says so
       InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(sf);

@@ -13,6 +13,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.AbstractComponentRegistry.Component;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -134,7 +135,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
                                MBeanServer mBeanServer, String groupName) {
       CacheManagerJmxRegistration managerJmxReg = componentRegistry.getComponent(CacheManagerJmxRegistration.class);
       if (!globalConfig.globalJmxStatistics().enabled() && jmxDomain == null) {
-         String tmpJmxDomain = JmxUtil.buildJmxDomain(globalConfig, mBeanServer, groupName);
+         String tmpJmxDomain = JmxUtil.buildJmxDomain(globalConfig.globalJmxStatistics().domain(), mBeanServer, groupName);
          synchronized (managerJmxReg) {
             if (managerJmxReg.jmxDomain == null) {
                if (!tmpJmxDomain.equals(globalConfig.globalJmxStatistics().domain()) && !globalConfig.globalJmxStatistics().allowDuplicateDomains()) {

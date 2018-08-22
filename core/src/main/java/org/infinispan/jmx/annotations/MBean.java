@@ -8,8 +8,8 @@ import java.lang.annotation.Target;
 
 /**
  * Classes annotated with this will be exposed as MBeans. If you are looking for more fined grained way of exposing JMX
- * attributes/operations, take a look at {@link org.infinispan.jmx.annotations.ManagedAttribute} and {@link
- * org.infinispan.jmx.annotations.ManagedOperation}
+ * attributes/operations, take a look at {@link ManagedAttribute} and {@link
+ * ManagedOperation}
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0

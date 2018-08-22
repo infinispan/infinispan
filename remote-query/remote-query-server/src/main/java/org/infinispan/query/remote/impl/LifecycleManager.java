@@ -14,6 +14,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.ServiceFinder;
@@ -24,6 +25,7 @@ import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
@@ -31,7 +33,6 @@ import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.BatchingInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
-import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
@@ -120,11 +121,11 @@ public final class LifecycleManager implements ModuleLifecycle {
    }
 
    private void registerProtobufMetadataManagerMBean(ProtobufMetadataManager protobufMetadataManager, GlobalComponentRegistry gcr, String cacheManagerName) {
-      GlobalConfiguration globalCfg = gcr.getGlobalConfiguration();
-      MBeanServer mBeanServer = JmxUtil.lookupMBeanServer(globalCfg);
+      GlobalJmxStatisticsConfiguration jmxConfig = gcr.getGlobalConfiguration().globalJmxStatistics();
+      MBeanServer mBeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
 
       String groupName = "type=RemoteQuery,name=" + ObjectName.quote(cacheManagerName);
-      String jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mBeanServer, groupName);
+      String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mBeanServer, groupName);
       ComponentMetadataRepo metadataRepo = gcr.getComponentMetadataRepo();
       ManageableComponentMetadata metadata = metadataRepo.findComponentMetadata(ProtobufMetadataManagerImpl.class)
             .toManageableComponentMetadata();
@@ -146,7 +147,8 @@ public final class LifecycleManager implements ModuleLifecycle {
    private void unregisterProtobufMetadataManagerMBean(GlobalComponentRegistry gcr) {
       try {
          ObjectName objName = gcr.getComponent(ProtobufMetadataManager.class).getObjectName();
-         MBeanServer mBeanServer = JmxUtil.lookupMBeanServer(gcr.getGlobalConfiguration());
+         GlobalJmxStatisticsConfiguration jmxConfig = gcr.getGlobalConfiguration().globalJmxStatistics();
+         MBeanServer mBeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
          JmxUtil.unregisterMBean(objName, mBeanServer);
       } catch (Exception e) {
          throw new CacheException("Unable to unregister ProtobufMetadataManager MBean", e);
