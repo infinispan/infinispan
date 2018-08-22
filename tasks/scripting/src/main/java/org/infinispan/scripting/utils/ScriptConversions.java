@@ -67,12 +67,18 @@ public final class ScriptConversions {
    }
 
    private class TextPlainFormatter implements OutputFormatter {
+
+      private String quote(Object element) {
+         if (element == null) return "null";
+         return "\"" + element.toString() + "\"";
+      }
+
       @Override
       public Object formatCollection(Collection<?> elements, MediaType elementType, MediaType destinationType) {
          Transcoder transcoder = encoderRegistry.getTranscoder(elementType, APPLICATION_TEXT_STRING);
 
-         return elements.stream().map(s -> transcoder.transcode(s, elementType, APPLICATION_TEXT_STRING).toString())
-               .collect(Collectors.joining("\", \"", "[\"", "\"]"))
+         return elements.stream().map(s -> transcoder.transcode(s, elementType, APPLICATION_TEXT_STRING))
+               .map(this::quote).collect(Collectors.joining(", ", "[", "]"))
                .getBytes(destinationType.getCharset());
       }
    }

@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -99,6 +100,19 @@ public class ExecTypedTest extends MultiHotRodServersTest {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-null-return.js", scriptName -> {
          String result = execClient.getCache(NAME).execute(scriptName, new HashMap<>());
          assertEquals(null, result);
+      });
+   }
+
+   public void testDistTypedExecNullReturn() {
+      withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-dist-null-return.js", scriptName -> {
+         String result = execClient.getCache(NAME).execute(scriptName, new HashMap<>());
+         assertEquals("[null,null]", result.replaceAll("\\s", ""));
+
+         String resultAsJson = execClient.getCache(NAME)
+               .withDataFormat(DataFormat.builder().valueType(APPLICATION_JSON).build())
+               .execute(scriptName, new HashMap<>());
+
+         assertEquals("[null,null]", resultAsJson.replaceAll("\\s", ""));
       });
    }
 
