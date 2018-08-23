@@ -336,6 +336,19 @@
  *          <td>null (matches all cache names)</td>
  *          <td>A {@link org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder#cacheNamePattern(String) regex} which matches caches for which near-caching should be enabled.</td>
  *       </tr>
+ *       <tr>
+ *          <th colspan="4">XSite properties</th>
+ *       </tr>
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.cluster.SITE</b></td>
+ *          <td>String HOST and int PORT configuration</td>
+ *          <td>Example for siteA and siteB:<br/>
+ *           infinispan.client.hotrod.cluster.siteA=hostA1:11222; hostA2:11223`<br/>
+ *           infinispan.client.hotrod.cluster.siteB=hostB1:11222; hostB2:11223`
+ *          </td>
+ *          <td>Relates to {@link org.infinispan.client.hotrod.configuration.ClusterConfigurationBuilder#addCluster(java.lang.String)} and
+ *          {@link org.infinispan.client.hotrod.configuration.ClusterConfigurationBuilder#addClusterNode(java.lang.String, int)}</td>
+ *       </tr>
  *    </tbody>
  * </table>
  *
