@@ -107,7 +107,7 @@ builder.versioning()
 
 * `isolation` - configures the isolation level. Check section <<tx:isolation-levels>> for more details.
 Default is `REPEATABLE_READ`.
-* `write-skew` - enables the write skew check. Check section <<tx:write-skew>> for more details. Default is `false`.
+* `write-skew` - enables write skew checks. Check section <<tx:write-skew>> for more details. Default is `true`. Defaults to `false` automatically for the `READ_COMMITTED` isolation level. This attribute is deprecated.
 * `locking` - configures whether the cache uses optimistic or pessimistic locking. Check section <<tx:locking>> for more details.
 Default is `OPTIMISTIC`.
 * `auto-commit` - if enable, the user does not need to start a transaction manually for a single operation. The transaction is automatically started and committed.
@@ -235,34 +235,20 @@ That is because the optimistic transactions rollback if data has changed between
 On the other hand, pessimistic transactions might be a better fit when there is high contention on the keys and transaction rollbacks are less desirable.
 Pessimistic transactions are more costly by their nature: each write operation potentially involves a RPC for lock acquisition.
 
-=== Write Skew [[tx:write-skew]]
+=== Write Skews [[tx:write-skew]]
 
-The write skew anomaly occurs when 2 transactions read and update the same key and both of them can commit successfully without having seen the update performed by the other.
-To detect and rollback one of the transaction, `write-skew` should be enabled.
+Write skews occur when two transactions independently and simultaneously read and write to the same key. The result of a write skew is that both transactions successfully commit updates to the same key but with different values.
 
-NOTE: The write skew check is only performed for `REPEATABLE_READ` isolation.
+The `write-skew` attribute automatically detects and rolls back one of the transactions. However, write skew checks apply only to `REPEATABLE_READ` isolation levels in optimistic transactions.
 
-NOTE: Pessimistic transaction does not perform any write skew check.
-It can be avoided by locking the key at read time. Look how at the example below.
+[NOTE]
+====
+The `write-skew` attribute is deprecated.
+====
 
-.Locking key before read (Pessimitic Transaction)
-[source, java]
-----
-if (!cache.getAdvancedCache().lock(key)) {
-   //key not locked. abort transaction
-}
-cache.get(key);
-cache.put(key, value);
+When operating in `LOCAL` mode, write skew checks rely on Java object references to compare differences, which provides a reliable technique for checking for write skews.
 
-//this code is equivalent
-cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(key); //will throw an exception is not locked.
-cache.put(key, value);
-----
-
-When operating in `LOCAL` mode, write skew checks relies on Java object references to compare differences and this is adequate to provide a reliable write-skew check.
-However, this technique is useless in a cluster and a more reliable form of versioning is necessary to provide reliable write skew checks.
-
-Data version needs to be configured in order to support write skew check:
+In clustered environments, you should configure data versioning to ensure reliable write skew checks. {brandname} provides an implementation of the `EntryVersion` interface called `SIMPLE` versioning, which is backed by a long that is incremented each time the entry is updated.
 
 [source,xml]
 ----
@@ -276,7 +262,43 @@ Or
 new ConfigurationBuilder().versioning().scheme(SIMPLE);
 ----
 
-NOTE: `SIMPLE` versioning is an implementation of the proposed `EntryVersion` interface, backed by a long that is incremented each time the entry is updated.
+==== Forcing write locks on keys in pessimitic transactions
+
+Write-skews checks do not occur with pessimistic transactions. To avoid write-skews with pessimistic transactions, lock keys at read-time with `Flag.FORCE_WRITE_LOCK`.
+
+[NOTE]
+====
+* In non-transactional caches, `Flag.FORCE_WRITE_LOCK` does not work. The `get()` call reads the key value but does not acquire locks remotely.
+
+* You should use `Flag.FORCE_WRITE_LOCK` with transactions in which the entity is updated later in the same transaction.
+====
+
+Compare the following code snippets for an example of `Flag.FORCE_WRITE_LOCK`:
+
+[source, java]
+----
+// begin the transaction
+if (!cache.getAdvancedCache().lock(key)) {
+   // abort the transaction because the key was not locked
+} else {
+   cache.get(key);
+   cache.put(key, value);
+   // commit the transaction
+}
+----
+
+[source, java]
+----
+// begin the transaction
+try {
+   // throws an exception if the key is not locked.
+   cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(key);
+   cache.put(key, value);
+} catch (CacheException e) {
+   // mark the transaction rollback-only
+}
+// commit or rollback the transaction
+----
 
 === Deadlock detection
 Deadlocks can significantly (up to one order of magnitude) reduce the throughput of a system, especially when multiple transactions are operating against the same key set.
@@ -551,4 +573,3 @@ Also, you need to set the `protocol=TOTAL_ORDER` in the `<transaction>` element,
 
 Total order shows benefits when used in write intensive and high contented workloads.
 It mitigates the cost associated with deadlock detection and avoids contention in the lock keys.
-
