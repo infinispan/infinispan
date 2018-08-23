@@ -2,8 +2,8 @@ package org.infinispan.integrationtests.spring.boot.session.embedded;
 
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.integrationtests.spring.boot.session.configuration.WebConfig;
-import org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean;
-import org.infinispan.spring.session.configuration.EnableInfinispanEmbeddedHttpSession;
+import org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBean;
+import org.infinispan.spring.embedded.session.configuration.EnableInfinispanEmbeddedHttpSession;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

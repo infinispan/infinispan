@@ -125,10 +125,10 @@
       <module>all/embedded-query</module>
       <module>all/cli</module>
       <module>osgi</module>
-      <module>spring/spring4</module>
-      <module>spring/spring4/spring4-common</module>
-      <module>spring/spring4/spring4-embedded</module>
-      <module>spring/spring4/spring4-remote</module>
+      <module>spring/spring5</module>
+      <module>spring/spring5/spring5-common</module>
+      <module>spring/spring5/spring5-embedded</module>
+      <module>spring/spring5/spring5-remote</module>
       <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
       <module>tasks/api</module>
@@ -666,18 +666,18 @@
       <versionx.org.springframework.security.spring-security-config>${version.spring.security}</versionx.org.springframework.security.spring-security-config>
       <versionx.org.springframework.security.spring-security-core>${version.spring.security}</versionx.org.springframework.security.spring-security-core>
       <versionx.org.springframework.security.spring-security-web>${version.spring.security}</versionx.org.springframework.security.spring-security-web>
-      <versionx.org.springframework.session.spring-session>1.2.2.RELEASE</versionx.org.springframework.session.spring-session>
-      <versionx.org.springframework.spring-aop>${version.spring4}</versionx.org.springframework.spring-aop>
-      <versionx.org.springframework.spring-beans>${version.spring4}</versionx.org.springframework.spring-beans>
-      <versionx.org.springframework.spring-context>${version.spring4}</versionx.org.springframework.spring-context>
-      <versionx.org.springframework.spring-context-support>${version.spring4}</versionx.org.springframework.spring-context-support>
-      <versionx.org.springframework.spring-core>${version.spring4}</versionx.org.springframework.spring-core>
-      <versionx.org.springframework.spring-expression>${version.spring4}</versionx.org.springframework.spring-expression>
-      <versionx.org.springframework.spring-jdbc>${version.spring4}</versionx.org.springframework.spring-jdbc>
-      <versionx.org.springframework.spring-test>${version.spring4}</versionx.org.springframework.spring-test>
-      <versionx.org.springframework.spring-tx>${version.spring4}</versionx.org.springframework.spring-tx>
-      <versionx.org.springframework.spring-web>${version.spring4}</versionx.org.springframework.spring-web>
-      <versionx.org.springframework.spring-webmvc>${version.spring4}</versionx.org.springframework.spring-webmvc>
+      <versionx.org.springframework.session.spring-session>1.3.4.RELEASE</versionx.org.springframework.session.spring-session>
+      <versionx.org.springframework.spring-aop>${version.spring5}</versionx.org.springframework.spring-aop>
+      <versionx.org.springframework.spring-beans>${version.spring5}</versionx.org.springframework.spring-beans>
+      <versionx.org.springframework.spring-context>${version.spring5}</versionx.org.springframework.spring-context>
+      <versionx.org.springframework.spring-context-support>${version.spring5}</versionx.org.springframework.spring-context-support>
+      <versionx.org.springframework.spring-core>${version.spring5}</versionx.org.springframework.spring-core>
+      <versionx.org.springframework.spring-expression>${version.spring5}</versionx.org.springframework.spring-expression>
+      <versionx.org.springframework.spring-jdbc>${version.spring5}</versionx.org.springframework.spring-jdbc>
+      <versionx.org.springframework.spring-test>${version.spring5}</versionx.org.springframework.spring-test>
+      <versionx.org.springframework.spring-tx>${version.spring5}</versionx.org.springframework.spring-tx>
+      <versionx.org.springframework.spring-web>${version.spring5}</versionx.org.springframework.spring-web>
+      <versionx.org.springframework.spring-webmvc>${version.spring5}</versionx.org.springframework.spring-webmvc>
       <versionx.org.syslog4j.syslog4j>0.9.30</versionx.org.syslog4j.syslog4j>
       <versionx.org.testng.testng>6.9.9</versionx.org.testng.testng>
       <versionx.org.tukaani.xz>1.0</versionx.org.tukaani.xz>
@@ -2386,12 +2386,12 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring4-common</artifactId>
+            <artifactId>infinispan-spring5-common</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring4-common</artifactId>
+            <artifactId>infinispan-spring5-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
             <version>${version.infinispan}</version>
@@ -5635,9 +5635,9 @@
                               <source>${dir.ispn}/remote-query/remote-query-server/src/main/java</source>
                               <source>${dir.ispn}/scripting/src/main/java</source>
                               <source>${dir.ispn}/spring/spring/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring4/spring4-common/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring4/spring4-embedded/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring4/spring4-remote/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring5/spring5-common/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring5/spring5-embedded/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring5/spring5-remote/src/main/java</source>
                               <source>${dir.ispn}/tasks/src/main/java</source>
                               <source>${dir.ispn}/tasks-api/src/main/java</source>
                               <source>${dir.ispn}/tools/src/main/java</source>

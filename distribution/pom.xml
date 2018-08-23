@@ -44,12 +44,12 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-spring4-embedded</artifactId>
+         <artifactId>infinispan-spring5-embedded</artifactId>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-spring4-remote</artifactId>
+         <artifactId>infinispan-spring5-remote</artifactId>
       </dependency>
 
       <dependency>
@@ -213,7 +213,7 @@
                               <!-- make sure core comes first -->
                               <include name="core/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                               <include name="persistence/*/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
-                              <include name="spring/spring4/spring4-common/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
+                              <include name="spring/spring5/spring5-common/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                            </fileset>
                         </path>
                         <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path" />

@@ -275,7 +275,7 @@ Here is an example:
    </dependency>
    <dependency>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-spring4-embedded</artifactId>
+      <artifactId>infinispan-spring5-embedded</artifactId>
    </dependency>
    <dependency>
       <groupId>org.springframework</groupId>
@@ -358,7 +358,7 @@ Map reduce is now deprecated and will be removed in Infinispan 9.  This is repla
 CDI module (GroupId:ArtifactId `org.infinispan:infinispan-cdi`) has been split into `org.infinispan:infinispan-cdi-embedded` and `org.infinispan:infinispan-cdi-remote`. Please make sure that you use proper artifact.
 
 ==== Spring module split
-Spring module (GroupId:ArtifactId `org.infinispan:infinispan-spring4`) has been split into `org.infinispan:infinispan-spring4-embedded` and `org.infinispan:infinispan-spring4-remote`. Please make sure that you use proper artifact.
+Spring module (GroupId:ArtifactId `org.infinispan:infinispan-spring5`) has been split into `org.infinispan:infinispan-spring5-embedded` and `org.infinispan:infinispan-spring5-remote`. Please make sure that you use proper artifact.
 
 === Spring 3 support is deprecated
 Spring 3 support (GroupId:ArtifactId `org.infinispan:infinispan-spring`) is deprecated. Please consider migrating into Spring 4 support.

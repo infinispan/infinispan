@@ -49,8 +49,8 @@ public class Config {
 +
 . Add {brandname} and the Spring integration module to your `pom.xml`.
 +
-* Embedded mode: `infinispan-spring4-embedded`
-* Remote client-server mode: `infinispan-spring4-remote`
+* Embedded mode: `infinispan-spring5-embedded`
+* Remote client-server mode: `infinispan-spring5-remote`
 +
 .pom.xml for Spring 4 (embedded mode)
 [source,xml]
@@ -58,7 +58,7 @@ public class Config {
     <dependencies>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring4-embedded</artifactId>
+            <artifactId>infinispan-spring5-embedded</artifactId>
             <version>${version.infinispan}</version>
         </dependency>
         <!-- Use the Spring Boot Starter
@@ -200,8 +200,8 @@ To configure Spring Session integration in your application, do the following:
 
 . Add dependencies to your `pom.xml`.
 +
-* Embedded mode: `infinispan-spring4-embedded`
-* Remote client-server mode: `infinispan-spring4-remote`
+* Embedded mode: `infinispan-spring5-embedded`
+* Remote client-server mode: `infinispan-spring5-remote`
 +
 .pom.xml (embedded mode)
 ----
@@ -212,7 +212,7 @@ To configure Spring Session integration in your application, do the following:
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring4-embedded</artifactId>
+            <artifactId>infinispan-spring5-embedded</artifactId>
             <version>${version.infinispan}</version>
         </dependency>
         <dependency>
