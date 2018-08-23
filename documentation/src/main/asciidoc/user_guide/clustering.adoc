@@ -779,9 +779,7 @@ try {
 The correct way to implement this is to use
 `cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(k)`.
 
-In caches with optimistic locking writes can return a stale previous value as well, and
-the only way protect against it is to enable write-skew checks and to catch
-`WriteSkewException`.
+In caches with optimistic locking, writes can also return stale previous values. Write skew checks can avoid stale previous values. For more information, see <<tx:write-skew, Write Skews>>.
 
 === Partition handling
 
