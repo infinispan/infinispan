@@ -4,8 +4,8 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 
 import org.infinispan.integrationtests.spring.boot.session.configuration.WebConfig;
-import org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean;
-import org.infinispan.spring.session.configuration.EnableInfinispanRemoteHttpSession;
+import org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean;
+import org.infinispan.spring.remote.session.configuration.EnableInfinispanRemoteHttpSession;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

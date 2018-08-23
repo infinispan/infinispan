@@ -403,12 +403,12 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-spring4-embedded</artifactId>
+                <artifactId>infinispan-spring5-embedded</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-spring4-remote</artifactId>
+                <artifactId>infinispan-spring5-remote</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>

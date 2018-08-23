@@ -68,7 +68,7 @@
 * Move under an overarching Integrations chapter
 * Move to its own paragraph under Integrations
 * Do not mention EHCache… it’s not relevant
-* Mention proper artifacts (spring4)
+* Mention proper artifacts (spring5)
 
 ### Remote Protocols (Tristan)
 * The chapter is currently called “Server modules” but this is confusing as we are really discussing the remoting protocols and neither the WildFly modules nor Infinispan Server
