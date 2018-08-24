@@ -273,7 +273,8 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {
-            return resolvedProperty.propertyMetadata == null;
+            return resolvedProperty.propertyMetadata == null
+                  && !(resolvedProperty.documentFieldMetadata != null && resolvedProperty.documentFieldMetadata.isSpatial());
          }
       }
       return super.hasEmbeddedProperty(entityType, propertyPath);
@@ -300,13 +301,17 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
    private static final class ResolvedProperty {
 
+      // never null
       final TypeMetadata rootTypeMetadata;
 
+      // never null
       final List<EmbeddedTypeMetadata> embeddedTypeMetadataList;
 
-      final PropertyMetadata propertyMetadata;
-
+      // can be null
       final DocumentFieldMetadata documentFieldMetadata;
+
+      // can be null
+      final PropertyMetadata propertyMetadata;
 
       ResolvedProperty(TypeMetadata rootTypeMetadata, List<EmbeddedTypeMetadata> embeddedTypeMetadataList, DocumentFieldMetadata documentFieldMetadata, PropertyMetadata propertyMetadata) {
          this.rootTypeMetadata = rootTypeMetadata;
@@ -329,10 +334,18 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
             String propPath = StringHelper.join(propertyPath);
             DocumentFieldMetadata documentFieldMetadata = typeMetadata.getDocumentFieldMetadataFor(propPath);
             if (documentFieldMetadata != null) {
-               for (PropertyMetadata pm : typeMetadata.getAllPropertyMetadata()) {
-                  DocumentFieldMetadata fm = pm.getFieldMetadata(propPath);
+               if (documentFieldMetadata.isSpatial()) {
+                  //todo [anistor] hacks galore!
+                  DocumentFieldMetadata fm = typeMetadata.getFieldMetadataForClassBridgeField(propPath);
                   if (fm != null) {
-                     return new ResolvedProperty(rootTypeMetadata, embeddedTypeMetadataList, documentFieldMetadata, pm);
+                     return new ResolvedProperty(rootTypeMetadata, embeddedTypeMetadataList, documentFieldMetadata, fm.getSourceProperty());
+                  }
+               } else {
+                  for (PropertyMetadata pm : typeMetadata.getAllPropertyMetadata()) {
+                     DocumentFieldMetadata fm = pm.getFieldMetadata(propPath);
+                     if (fm != null) {
+                        return new ResolvedProperty(rootTypeMetadata, embeddedTypeMetadataList, documentFieldMetadata, pm);
+                     }
                   }
                }
                return null;
@@ -359,6 +372,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    }
 
    private final class HibernateSearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata {
+
       private final EntityIndexBinding entityIndexBinding;
 
       HibernateSearchFieldIndexingMetadata(EntityIndexBinding entityIndexBinding) {
