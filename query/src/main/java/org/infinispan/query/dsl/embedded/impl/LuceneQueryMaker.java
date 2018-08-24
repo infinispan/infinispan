@@ -148,6 +148,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
          }
       }
 
+      //todo [anistor] use the hibernate search sort dsl
       Sort sort = makeSort(parsingResult.getSortFields());
       return new LuceneQueryParsingResult<>(query, parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(), parsingResult.getProjections(), sort);
    }

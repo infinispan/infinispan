@@ -10,6 +10,9 @@ import org.hibernate.search.engine.metadata.impl.BackReference;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.hibernate.search.engine.nulls.codec.impl.LuceneStringNullMarkerCodec;
 import org.hibernate.search.engine.nulls.codec.impl.NullMarkerCodec;
+//import org.hibernate.search.spatial.impl.Point;
+//import org.hibernate.search.spatial.impl.SpatialHelper;
+//import org.hibernate.search.spatial.impl.SpatialNumericDocValueField;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -183,4 +186,38 @@ final class IndexingTagHandler implements TagHandler {
          }
       }
    }
+
+//   private void indexSpatial(String name, Object value, Document document, LuceneOptions luceneOptions) {
+//      if (value != null) {
+//
+//         Double latitude = getLatitude(value);
+//         Double longitude = getLongitude(value);
+//
+//         if ((latitude != null) && (longitude != null)) {
+//            Point point = Point.fromDegrees(latitude, longitude);
+//
+//            for (int i = topSpatialHashLevel; i <= bottomSpatialHashLevel; i++) {
+//               luceneOptions.addFieldToDocument(hashIndexedFieldNames[i], SpatialHelper.getSpatialHashCellId(point, i), document);
+//            }
+//
+//            luceneOptions.addNumericFieldToDocument(
+//                  latitudeIndexedFieldName,
+//                  latitude,
+//                  document
+//            );
+//
+//            luceneOptions.addNumericFieldToDocument(
+//                  longitudeIndexedFieldName,
+//                  longitude,
+//                  document
+//            );
+//
+//            Field latitudeDocValuesField = new SpatialNumericDocValueField(latitudeIndexedFieldName, latitude);
+//            document.add(latitudeDocValuesField);
+//
+//            Field longitudeDocValuesField = new SpatialNumericDocValueField(longitudeIndexedFieldName, longitude);
+//            document.add(longitudeDocValuesField);
+//         }
+//      }
+//   }
 }

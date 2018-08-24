@@ -161,6 +161,30 @@ public final class IndexingMetadata {
    public static final String STORE_NO = "Store.NO";
 
    /**
+    * Similar to org.hibernate.search.annotations.Spatials/Spatial.
+    */
+   public static final String SPATIALS_ANNOTATION = "Spatials";
+   public static final String SPATIAL_ANNOTATION = "Spatial";
+   public static final String SPATIAL_NAME_ATTRIBUTE = "name";
+   public static final String SPATIAL_STORE_ATTRIBUTE = "store";
+   public static final String SPATIAL_MODE_ATTRIBUTE = "spatialMode";
+
+   public static final String SPATIAL_MODE_RANGE = "SpatialMode.RANGE";
+   public static final String SPATIAL_MODE_HASH = "SpatialMode.HASH";
+
+   /**
+    * Similar to org.hibernate.search.annotations.Latitude.
+    */
+   public static final String LATITUDE_ANNOTATION = "Latitude";
+   public static final String LATITUDE_OF_ATTRIBUTE = "of";
+
+   /**
+    * Similar to org.hibernate.search.annotations.Longitude.
+    */
+   public static final String LONGITUDE_ANNOTATION = "Longitude";
+   public static final String LONGITUDE_OF_ATTRIBUTE = "of";
+
+   /**
     * A special placeholder value that is indexed if the actual field value is {@code null} and no explicit indexing
     * options were defined via protobuf annotations. This placeholder is needed because Lucene does not index actual null
     * values.
@@ -178,6 +202,9 @@ public final class IndexingMetadata {
    public static final String ANALYZER_ANNOTATION = "Analyzer";
    public static final String ANALYZER_DEFINITION_ATTRIBUTE = "definition";
 
+   /**
+    * Similar to org.hibernate.search.annotations.SortableField/SortableFields.
+    */
    public static final String SORTABLE_FIELD_ANNOTATION = "SortableField";
    public static final String SORTABLE_FIELDS_ANNOTATION = "SortableFields";
 
@@ -275,12 +302,10 @@ public final class IndexingMetadata {
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
                .metadataCreator(new IndexingMetadataCreator())
-               .parentBuilder()
             .annotation(ANALYZER_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE, AnnotationElement.AnnotationTarget.FIELD)
                .attribute(ANALYZER_DEFINITION_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
-               .parentBuilder()
             .annotation(INDEXED_FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .attribute(INDEXED_FIELD_INDEX_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.BOOLEAN)
@@ -288,7 +313,6 @@ public final class IndexingMetadata {
                .attribute(INDEXED_FIELD_STORE_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.BOOLEAN)
                   .defaultValue(true)
-               .parentBuilder()
             .annotation(FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .repeatable(FIELDS_ANNOTATION)
                .attribute(FIELD_NAME_ATTRIBUTE)
@@ -316,9 +340,27 @@ public final class IndexingMetadata {
                .attribute(FIELD_INDEX_NULL_AS_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue(DO_NOT_INDEX_NULL)
-               .parentBuilder()
             .annotation(SORTABLE_FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
-               .repeatable(SORTABLE_FIELDS_ANNOTATION);
+               .repeatable(SORTABLE_FIELDS_ANNOTATION)
+            .annotation(SPATIAL_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE)
+               .repeatable(SPATIALS_ANNOTATION)
+               .attribute(SPATIAL_NAME_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(SPATIAL_MODE_ATTRIBUTE)
+                  .allowedValues(SPATIAL_MODE_RANGE, SPATIAL_MODE_HASH)
+                  .defaultValue(SPATIAL_MODE_RANGE)
+               .attribute(SPATIAL_STORE_ATTRIBUTE)
+                  .allowedValues(STORE_YES, STORE_NO)
+                  .defaultValue(STORE_NO)
+            .annotation(LATITUDE_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .attribute(LATITUDE_OF_ATTRIBUTE)
+               .type(AnnotationElement.AttributeType.STRING)
+               .defaultValue("")
+            .annotation(LONGITUDE_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .attribute(LONGITUDE_OF_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("");
    }
 
    //TODO [anistor] to be removed in Infinispan 10
