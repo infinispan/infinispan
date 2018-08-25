@@ -113,7 +113,7 @@ tokens {
 package org.infinispan.objectfilter.impl.ql.parse;
 }
 
-WS: (' ' | '\t' | '\v' | '\f' | EOL)+ { $channel = HIDDEN; };
+WS: (' ' | '\t' | '\u000B' | '\f' | EOL)+ { $channel = HIDDEN; };
 
 fragment NL: ('\r' | '\n') ;
 
