@@ -399,6 +399,14 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals("testing 123", list.get(0).notIndexedField);
    }
 
+   /**
+    * See <a href="https://issues.jboss.org/browse/ISPN-7863">ISPN-7863</a>
+    */
+   public void testAliasContainingLetterV() {
+      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " vvvTestAlias where vvvTestAlias.description = 'Birthday present'");
+      assertEquals(1, q.list().size());
+   }
+
    protected Query createQueryFromString(String q) {
       return getQueryFactory().create(q);
    }
