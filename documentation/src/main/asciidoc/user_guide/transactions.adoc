@@ -106,7 +106,7 @@ builder.versioning()
 
 
 * `isolation` - configures the isolation level. Check section <<tx:isolation-levels>> for more details.
-Default is `READ_COMMITTED`.
+Default is `REPEATABLE_READ`.
 * `write-skew` - enables the write skew check. Check section <<tx:write-skew>> for more details. Default is `false`.
 * `locking` - configures whether the cache uses optimistic or pessimistic locking. Check section <<tx:locking>> for more details.
 Default is `OPTIMISTIC`.
