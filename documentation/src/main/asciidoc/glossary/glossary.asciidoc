@@ -284,8 +284,6 @@ return different results, and this phenomenon is known as
 link:http://en.wikipedia.org/wiki/Isolation_level#Non-repeatable_reads[non-repeatable reads].
 This issue is avoided with +REPETEABLE_READ+ isolation level.
 
-By default, {brandname} uses +READ_COMMITTED+ as isolation level.
-
 == Relational Database Management System (RDBMS)
 A relational database management system (RDBMS) is a database management system
  that is based on the relational model. Many popular databases currently in use
@@ -326,6 +324,8 @@ Thread1: tx1.commit()
 Thread2:                                       cache.get("B") // returns 2
 Thread2:                                       tx2.commit()
 ----
+
+By default, {brandname} uses +REPEATABLE_READ+ as isolation level.
 
 == Representational State Transfer (ReST)
 ReST is a software architectural style that promotes accessing resources via a
