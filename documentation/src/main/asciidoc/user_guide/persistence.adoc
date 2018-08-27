@@ -145,9 +145,9 @@ configured is used and all others are ignored.
 
 Due to the unique nature of passivation, it is not supported with some other store configurations.
 
-# Transactional store - Passivation writes/removes entries from the store outside
+* Transactional store - Passivation writes/removes entries from the store outside
 the scope of the actual Infinispan commit boundaries.
-# Shared store - Shared store requires entries always being in the store for other
+* Shared store - Shared store requires entries always being in the store for other
 owners. Thus passivation makes no sense as we can't remove the entry from the store.
 
 ==== Cache Loader Behavior with Passivation Disabled vs Enabled
