@@ -64,7 +64,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * // TODO: Document this
+ * Transaction Recovery and Reaper test.
  *
  * @author Pedro Ruivo
  * @since 9.4

@@ -31,7 +31,7 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * // TODO: Document this
+ * It commits a transaction in all involved caches.
  *
  * @author Pedro Ruivo
  * @since 9.4
@@ -41,6 +41,7 @@ public class CommitTransactionOperation extends BaseCompleteTransactionOperation
    private static final Log log = LogFactory.getLog(CommitTransactionOperation.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   //TODO check if this class can implement the BiFunction interface!
    private final BiFunction<?, Throwable, Void> handler = (ignored, throwable) -> {
       if (throwable != null) {
          while (throwable != null) {
@@ -56,6 +57,7 @@ public class CommitTransactionOperation extends BaseCompleteTransactionOperation
                return null;
             }
             throwable = throwable.getCause();
+            //TODO handle suspect/outdated topology exceptions
          }
          hasErrors = true;
       } else {
@@ -94,7 +96,7 @@ public class CommitTransactionOperation extends BaseCompleteTransactionOperation
          case PREPARING:
          case ACTIVE:
          case PREPARED:
-            //TODO this shouldn't happen!
+            //this shouldn't happen!
             hasErrors = true;
             break;
          case MARK_COMMIT:
@@ -134,7 +136,7 @@ public class CommitTransactionOperation extends BaseCompleteTransactionOperation
          //pessimistic locking commits in 1PC
          return commandsFactory.buildPrepareCommand(state.getGlobalTransaction(), state.getModifications(), true);
       } else if (Configurations.isTxVersioned(configuration)) {
-         //TODO we don't versioning support yet. But we need to store them in the TxState.
+         //TODO we don't support versioning yet (only used for optimistic tx). When we do, we need to store the versions in TxState.
          return commandsFactory.buildVersionedCommitCommand(state.getGlobalTransaction());
       } else {
          return commandsFactory.buildCommitCommand(state.getGlobalTransaction());

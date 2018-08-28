@@ -20,6 +20,7 @@ import org.infinispan.transaction.tm.EmbeddedTransaction;
  * @author Pedro Ruivo
  * @since 9.4
  */
+//TODO merge with org.infinispan.server.hotrod.tx.table.GlobalTxTable
 public class PerCacheTxTable {
 
    private static final Log log = LogFactory.getLog(PerCacheTxTable.class, Log.class);

@@ -15,7 +15,9 @@ import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
- * //TODO document this!
+ * It creates a new {@link TxState}.
+ * <p>
+ * It returns {@link Status#ERROR} if the {@link TxState} already exists.
  *
  * @author Pedro Ruivo
  * @since 9.4

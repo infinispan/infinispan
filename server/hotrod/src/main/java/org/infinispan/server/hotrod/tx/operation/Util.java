@@ -15,7 +15,7 @@ import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ByteString;
 
 /**
- * // TODO: Document this
+ * Util operations to handle client transactions in Hot Rod server.
  *
  * @author Pedro Ruivo
  * @since 9.4
@@ -39,7 +39,8 @@ public class Util {
    private static void completeLocalTransaction(AdvancedCache<?, ?> cache, XidImpl xid, long timeout, boolean commit)
          throws HeuristicRollbackException, HeuristicMixedException, RollbackException {
       PerCacheTxTable perCacheTxTable = cache.getComponentRegistry().getComponent(PerCacheTxTable.class);
-      GlobalTxTable globalTxTable = cache.getComponentRegistry().getGlobalComponentRegistry().getComponent(GlobalTxTable.class);
+      GlobalTxTable globalTxTable = cache.getComponentRegistry().getGlobalComponentRegistry()
+            .getComponent(GlobalTxTable.class);
       try {
          //local transaction
          EmbeddedTransaction tx = perCacheTxTable.getLocalTx(xid);

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.transaction.TransactionManager;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -20,7 +21,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 /**
- * //TODO
+ * A recovery request from the {@link TransactionManager}.
+ * <p>
+ * It returns all in-doubt transactions seen by the server.
  *
  * @author Pedro Ruivo
  * @since 9.4

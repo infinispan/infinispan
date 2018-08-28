@@ -19,7 +19,10 @@ import org.infinispan.server.hotrod.tx.table.Status;
 import org.infinispan.server.hotrod.tx.table.TxState;
 
 /**
- * //TODO document this!
+ * It updates the {@link TxState}'s status to {@link Status#MARK_ROLLBACK} if the current status is the expected.
+ * <p>
+ * It returns {@link Status#ERROR} if it fails to update the status and {@link Status#NO_TRANSACTION} if the {@link
+ * TxState} isn't found.
  *
  * @author Pedro Ruivo
  * @since 9.4

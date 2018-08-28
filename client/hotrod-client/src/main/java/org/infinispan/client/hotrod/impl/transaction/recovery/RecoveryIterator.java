@@ -12,13 +12,18 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
- * //TODO document this!
+ * The iterator return when {@link XAResource#recover(int)}  is invoked with {@link XAResource#TMSTARTRSCAN}.
+ * <p>
+ * Initially, it returns the in-doubt transaction stored locally while it sends the request to the server. When {@link
+ * XAResource#recover(int)} is invoked with {@link XAResource#TMENDRSCAN}, it waits for the server reply and return the
+ * remaining in-doubt transactions.
  *
  * @author Pedro Ruivo
  * @since 9.4
@@ -58,7 +63,9 @@ public class RecoveryIterator {
       try {
          remoteRequest.get(timeout, TimeUnit.MILLISECONDS);
       } catch (InterruptedException | ExecutionException | TimeoutException e) {
-         e.printStackTrace();
+         if (trace) {
+            log.trace("Exception while waiting for prepared transaction from server.", e);
+         }
       }
    }
 

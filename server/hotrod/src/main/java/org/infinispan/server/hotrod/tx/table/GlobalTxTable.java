@@ -56,7 +56,18 @@ import org.infinispan.util.logging.LogFactory;
 import net.jcip.annotations.GuardedBy;
 
 /**
- * //TODO document this!
+ * It is a transaction log that registers all the transaction decisions before changing the cache.
+ * <p>
+ * The transaction state is stored in {@link TxState}, and that is stored in a replicated cache. The {@link TxState}
+ * must be updated before performing any action in the transaction (prepare, commit, etc.).
+ * <p>
+ * In addition, since we don't have a client crash notification, it performs a reaper work, periodically, that cleanups
+ * idle transactions. The transaction is considered idle based on the timeout sent by the client. If no decision is made,
+ * it rollbacks the transaction. If the transaction is completed (committed or rolled-back), it is removed from the
+ * cache. If the transaction is decided (i.e. marked for commit or rollback), it completes the transaction.
+ * <p>
+ * Note that, recoverable transactions (transactions originated from FULL_XA support caches) aren't touched by the
+ * reaper. The recovery process is responsible to handle them.
  *
  * @author Pedro Ruivo
  * @since 9.4
@@ -211,7 +222,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
             log.tracef("Checking transaction xid=%s for recovery. TimedOut?=%s, Recoverable?=%s, Status=%s",
                   xid, state.hasTimedOut(currentTimestamp), state.isRecoverable(), state.getStatus());
          }
-         if (state.hasTimedOut(currentTimestamp) && state.isRecoverable() &&  state.getStatus() == Status.PREPARED) {
+         if (state.hasTimedOut(currentTimestamp) && state.isRecoverable() && state.getStatus() == Status.PREPARED) {
             preparedTx.add(xid);
          }
       }
