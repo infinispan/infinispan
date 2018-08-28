@@ -19,7 +19,12 @@ import org.infinispan.server.hotrod.tx.table.Status;
 import org.infinispan.server.hotrod.tx.table.TxState;
 
 /**
- * //TODO document this!
+ * It sets the transaction decision in {@link TxState}.
+ * <p>
+ * The decision can be {@link Status#MARK_ROLLBACK} or {@link Status#MARK_COMMIT} and the {@link TxState} status must be
+ * valid. If not, it returns the current {@link TxState} status.
+ * <p>
+ * If the {@link TxState} doesn't exists, it returns {@link Status#NO_TRANSACTION}.
  *
  * @author Pedro Ruivo
  * @since 9.4

@@ -33,7 +33,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
- * // TODO: Document this
+ * Tests Hot Rod client recovery
  *
  * @author Pedro Ruivo
  * @since 9.4

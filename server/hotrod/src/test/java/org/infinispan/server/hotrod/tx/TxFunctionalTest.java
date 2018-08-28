@@ -41,7 +41,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            //TODO add optimistic tests!
+            //TODO add optimistic tests when supported!
             new TxFunctionalTest()
                   .transactionMode(org.infinispan.configuration.cache.TransactionMode.NON_XA).lockingMode(
                   LockingMode.PESSIMISTIC),

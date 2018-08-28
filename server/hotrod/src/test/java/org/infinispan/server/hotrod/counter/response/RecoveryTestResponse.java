@@ -19,7 +19,7 @@ import org.infinispan.server.hotrod.test.TestResponse;
 import io.netty.buffer.ByteBuf;
 
 /**
- * //TODO
+ * A {@link TestResponse} extension that contains the list of {@link Xid} to recover.
  *
  * @author Pedro Ruivo
  * @since 9.4

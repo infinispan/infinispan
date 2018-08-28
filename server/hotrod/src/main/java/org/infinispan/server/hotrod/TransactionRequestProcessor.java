@@ -175,7 +175,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       //TODO because of ISPN-7672, optimistic and total order transactions needs versions. however, versioning is currently broken
       if (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC ||
             configuration.transaction().transactionProtocol() == TransactionProtocol.TOTAL_ORDER) {
-         //no Log. see TODO.
+         //no Log. see comment above
          throw new IllegalStateException(
                String.format("Cache '%s' cannot use Optimistic neither Total Order transactions.", cache.getName()));
       }

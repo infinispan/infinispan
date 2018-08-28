@@ -17,10 +17,14 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.functional.EntryView;
 import org.infinispan.server.core.ExternalizerIds;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
+import org.infinispan.server.hotrod.tx.table.Status;
 import org.infinispan.server.hotrod.tx.table.TxState;
 
 /**
- * //TODO document this!
+ * It changes the {@link TxState} status to {@link Status#PREPARING} and stores the transaction modifications.
+ * <p>
+ * It returns {@link Status#NO_TRANSACTION} if the {@link TxState} isn't found and the {@link TxState#getStatus()} if
+ * the current status isn't {@link Status#ACTIVE} or {@link Status#PREPARING}.
  *
  * @author Pedro Ruivo
  * @since 9.4

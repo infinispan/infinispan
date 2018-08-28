@@ -34,7 +34,19 @@ import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.util.ByteString;
 
 /**
- * // TODO: Document this
+ * A base class to complete a transaction (commit or rollback).
+ * <p>
+ * This class implements {@link Runnable} in order to be executed in a {@link ExecutorService}.
+ * <p>
+ * A transaction completion occurs in the following steps:
+ *
+ * <ul>
+ * <li>Search and collects all the cache involved in the transaction</li>
+ * <li>Finds the transaction originator (i.e. the node that replayed the transaction)</li>
+ * <li>If it is an originator of one or more caches, it completes the transaction in another thread</li>
+ * <li>If the originator is not in the topology, it completes the transaction by broadcasting the respective command</li>
+ * <li>If the originator is in the topology, it forwards the completion request</li>
+ * </ul>
  *
  * @author Pedro Ruivo
  * @since 9.4
@@ -80,20 +92,49 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
       reply.accept(header, XAException.XAER_NOTA);
    }
 
+   /**
+    * It returns the handler to handle the replies from remote nodes or from a forward request.
+    * <p>
+    * It is invoked when this node isn't the originator for a cache. If the originator isn't in the view, it handles the
+    * replies from the broadcast commit or rollback command. If the originator is in the view, it handles the reply from
+    * the forward command.
+    *
+    * @return The {@link BiFunction} to handle the remote replies.
+    */
    abstract <T> BiFunction<T, Throwable, Void> handler();
 
+   /**
+    * When all caches are completed, this method is invoked to reply to the Hot Rod client.
+    */
    abstract void sendReply();
 
-   abstract CacheRpcCommand buildRemoteCommand(Configuration configuration, CommandsFactory commandsFactory, TxState state);
+   /**
+    * When the originator is not in the cache topology, this method builds the command to broadcast to all the nodes.
+    *
+    * @return The completion command to broadcast to nodes in the cluster.
+    */
+   abstract CacheRpcCommand buildRemoteCommand(Configuration configuration, CommandsFactory commandsFactory,
+         TxState state);
 
+   /**
+    * When this node isn't the originator, it builds the forward command to send to the originator.
+    *
+    * @return The forward command to send to the originator.
+    */
    abstract CacheRpcCommand buildForwardCommand(ByteString cacheName, long timeout);
 
+   /**
+    * When this node is the originator, this method is invoked to complete the transaction in the specific cache.
+    */
    abstract CompletableFuture<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout);
 
    abstract Log log();
 
    abstract boolean isTraceEnabled();
 
+   /**
+    * Invoked every time a cache is found to be involved in a transaction.
+    */
    void notifyCacheCollected() {
       int result = expectedCaches.decrementAndGet();
       if (isTraceEnabled()) {
@@ -104,6 +145,9 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
       }
    }
 
+   /**
+    * Invoked when all caches are ready to complete the transaction.
+    */
    private void onCachesCollected() {
       if (isTraceEnabled()) {
          log().tracef("[%s] All caches collected: %s", xid, cacheNames);
@@ -126,6 +170,9 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
       CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(this::sendReply);
    }
 
+   /**
+    * Completes the transaction for a specific cache.
+    */
    private CompletableFuture<Void> completeCache(ByteString cacheName) throws Throwable {
       TxState state = globalTxTable.getState(new CacheXid(cacheName, xid));
       AdvancedCache<?, ?> cache = server.cache(header, subject, cacheName.toString());
@@ -148,7 +195,11 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
       }
    }
 
-   private CompletableFuture<Void> completeWithRemoteCommand(AdvancedCache<?, ?> cache, RpcManager rpcManager, TxState state)
+   /**
+    * Completes the transaction in the cache when the originator no longer belongs to the cache topology.
+    */
+   private CompletableFuture<Void> completeWithRemoteCommand(AdvancedCache<?, ?> cache, RpcManager rpcManager,
+         TxState state)
          throws Throwable {
       CommandsFactory commandsFactory = cache.getComponentRegistry().getCommandsFactory();
       CacheRpcCommand command = buildRemoteCommand(cache.getCacheConfiguration(), commandsFactory, state);
@@ -161,6 +212,9 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
       return CompletableFuture.allOf(remote, local);
    }
 
+   /**
+    * Completes the transaction in the cache when the originator is still in the cache topology.
+    */
    private CompletableFuture<Void> forwardCompleteCommand(ByteString cacheName, RpcManager rpcManager,
          TxState state) {
       //TODO what if the originator crashes in the meanwhile?

@@ -50,6 +50,7 @@ org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb = new org.inf
 //other client configuration parameters
 cb.transaction().transactionManagerLookup(GenericTransactionManagerLookup.getInstance());
 cb.transaction().transactionMode(TransactionMode.NON_XA);
+cb.transaction().timeout(1, TimeUnit.MINUTES)
 RemoteCacheManager rmc = new RemoteCacheManager(cb.build());
 ----
 
@@ -62,6 +63,7 @@ It is also possible to configure the Java Hot Rod client using a properties file
 # other client configuration properties
 infinispan.client.hotrod.transaction.transaction_manager_lookup = org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup
 infinispan.client.hotrod.transaction.transaction_mode = NON_XA
+infinispan.client.hotrod.transaction.timeout = 60000
 ----
 
 ====== The `TransactionManagerLookup` interface
@@ -94,7 +96,8 @@ This is the default mode.
 * `NON_DURABLE_XA`: The {rc} interacts via {xa} but without recovery capabilities enabled.
 
 * `FULL_XA`: Same as above but with recovery available.
-This mode isn't implemented yet.
+This mode is supported since version 9.4.
+The in-doubt transactions can be retrieved by invoking `XaResource.recover()` method.
 
 ===== The `RemoteCacheManager`
 
@@ -120,11 +123,92 @@ If `transactionManager` or `transactionMode` is null, it will use the configured
 * `getCache(String cacheName, boolean forceReturnValue, TransactionMode transactionMode, TransactionManager transactionManager)`:
 same as above but forcing (or not) a return value for write operations.
 
-NOTE: When `forceReturnValue` is `true`, it will force a return value for operation even if it isn't needed (example a put(k,v)).
-Conditional writes always need the current value and they ignore this parameter.
-
 The {rc} was extended with `getTransactionManager()` to return the {tm} used by the cache.
-It is `null` if the {rc} isn't transaction.
+It is `null` if the {rc} isn't transactional.
+
+===== Effect of `forceReturnValue` in transactions
+
+The `forceReturnValue` parameter affects what write operations return when a key is accessed for the first time.
+If set to `false`, the client optimizes and it doesn't fetch the current value from the server.
+Otherwise, the client fetches the most up-to-date value and performs the write operation.
+
+NOTE: It doesn't affect "conditional" writes (such as `replace` or `putIfAbsent`) since they need the most up-to-date
+value to perform properly.
+
+Each transaction keeps track of the values read in order to detect conflicts.
+As an example, if a transaction reads value `v` and, at prepare time, the value is `v1`, the transaction is rolled back.
+
+So, if `forceReturnValue` is set to `false`, the transaction doesn't have the information needed to detect conflicts,
+if the key wasn't previously read.
+
+*Lets see some examples:*
+
+.Transaction 1 (TX1)
+[source,java]
+----
+RemoteCache<String, String> cache = ...
+TransactionManager tm = ...
+
+tm.begin();
+cache.put("k", "v1");
+tm.commit();
+----
+
+.Transaction 2 (TX2)
+[source,java]
+----
+RemoteCache<String, String> cache = ...
+TransactionManager tm = ...
+
+tm.begin();
+cache.put("k", "v2");
+tm.commit();
+----
+
+Imagine both transactions are executed in parallel and the initial value of `k` is `v`.
+
+* `forceReturnValues = false`
+
+In this scenario, both `cache.put()` don't fetch the key from the server and they return null.
+During commit, both transactions commit successfully since none of them know the value of `k`.
+
+* `forceReturnValues = true`
+
+In this scenario, both `cache.put()` fetch the key from the server and return `v`.
+During commit, one transaction will commit (the first transaction that acquired the lock of `k` first),
+but the second will rollback (`k` is updated to a value different from `v`).
+
+NOTE: The transaction uses version to detect changes instead of checking the value equality.
+
+Lets assume another pair of transactions:
+
+.Transaction 1 (TX1)
+[source,java]
+----
+RemoteCache<String, String> cache = ...
+TransactionManager tm = ...
+
+tm.begin();
+cache.get("k");
+cache.put("k", "v1");
+tm.commit();
+----
+
+.Transaction 2 (TX2)
+[source,java]
+----
+RemoteCache<String, String> cache = ...
+TransactionManager tm = ...
+
+tm.begin();
+cache.get("k");
+cache.put("k", "v2");
+tm.commit();
+----
+
+In this scenario, both transaction read the key and its value `v`.
+The `forceReturnValues` doesn't affect these transactions.
+One of them will commit and the other will rollback.
 
 ===== Usage Example
 

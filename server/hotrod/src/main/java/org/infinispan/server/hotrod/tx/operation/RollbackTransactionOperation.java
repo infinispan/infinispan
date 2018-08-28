@@ -29,7 +29,7 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * // TODO: Document this
+ * It rollbacks a transaction in all involved caches.
  *
  * @author Pedro Ruivo
  * @since 9.4
@@ -39,6 +39,7 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
    private static final Log log = LogFactory.getLog(RollbackTransactionOperation.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   //TODO check if this class can implement the BiFunction interface!
    private final BiFunction<?, Throwable, Void> handler = (ignored, throwable) -> {
       if (throwable != null) {
          while (throwable != null) {
@@ -55,6 +56,7 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
             throwable = throwable.getCause();
          }
          //any other exception will fit here.
+         //note: we don't have to handle suspect/outdated topology exceptions. The reaper will rollback the tx later.
          hasErrors = true;
       } else {
          hasRollbacks = true;
@@ -91,7 +93,7 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
          case ACTIVE:
          case PREPARING:
          case NO_TRANSACTION:
-            //TODO this should happen!
+            //this should happen!
             hasErrors = true;
             break;
          case OK:

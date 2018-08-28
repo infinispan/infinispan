@@ -8,11 +8,12 @@ import javax.transaction.xa.Xid;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 
 /**
- * //TODO document this!
+ * It keeps the local in-doubt transactions.
  *
  * @author Pedro Ruivo
  * @since 9.4
  */
+//TODO merge with org.infinispan.client.hotrod.impl.transaction.XaModeTransactionTable ?
 public class RecoveryManager {
 
    private final Collection<Xid> preparedTransactions = new ConcurrentHashSet<>();

@@ -13,7 +13,7 @@ import org.infinispan.server.core.ExternalizerIds;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
 
 /**
- * //TODO document this!
+ * A {@link Predicate} to filter the {@link CacheXid} by its {@link XidImpl}.
  *
  * @author Pedro Ruivo
  * @since 9.4
