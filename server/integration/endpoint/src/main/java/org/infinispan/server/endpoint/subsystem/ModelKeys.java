@@ -40,6 +40,7 @@ public class ModelKeys {
    public static final String KEEP_ALIVE = "keep-alive"; // boolean
    public static final String CACHE = "cache"; // string
    public static final String CACHE_CONTAINER = "cache-container"; // string
+   public static final String CLIENT_ENCODING = "client-encoding"; // string
    public static final String IO_THREADS = "io-threads"; // integer
    public static final String WORKER_THREADS = "worker-threads"; // integer
    public static final String IDLE_TIMEOUT = "idle-timeout"; // integer

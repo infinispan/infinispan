@@ -16,9 +16,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -245,7 +243,7 @@ public class ExampleConfigsIT {
             assertArrayEquals("v1".getBytes(), EntityUtils.toByteArray(getResponse.getEntity()));
 
             // 3. Get with Memcached
-            assertArrayEquals("v1".getBytes(), readWithMemcachedAndDeserialize(key, memcachedClient));
+            assertArrayEquals("v1".getBytes(), memcachedClient.getBytes(key));
 
             key = "2";
 
@@ -259,7 +257,7 @@ public class ExampleConfigsIT {
             assertArrayEquals("<hey>ho</hey>".getBytes(), (byte[]) s1Cache.get(key));
 
             // 3. Get with Memcached
-            assertArrayEquals("<hey>ho</hey>".getBytes(), readWithMemcachedAndDeserialize(key, memcachedClient));
+            assertArrayEquals("<hey>ho</hey>".getBytes(), memcachedClient.getBytes(key));
         } finally {
             if (restClient != null) {
                 restClient.close();
@@ -674,15 +672,6 @@ public class ExampleConfigsIT {
         }
         File f = new File(ITestUtils.SERVER_DATA_DIR, filePath);
         assertTrue(f.isDirectory());
-    }
-
-    /*
-     * Need to de-serialize the object as the default JavaSerializationMarshaller is used by Memcached endpoint.
-     */
-    private byte[] readWithMemcachedAndDeserialize(String key, MemcachedClient memcachedClient) throws Exception {
-        ByteArrayInputStream bais = new ByteArrayInputStream(memcachedClient.getBytes(key));
-        ObjectInputStream ois = new ObjectInputStream(bais);
-        return (byte[]) ois.readObject();
     }
 
     protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans, ConfigurationBuilder configBuilder) {

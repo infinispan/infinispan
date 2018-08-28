@@ -12,12 +12,15 @@ Depending on the level of interoperability required of a single cache being acce
 
 In general REST clients are better suited to deal with text formats such as JSON, XML or plain text instead of binary, although the REST endpoint does support <<rest.key_content_type, representing binary values in hexadecimal or base64 format>>.
 
+Memcached text clients, due to how the protocol is defined, expect String based keys and byte[] values, and can't negotiate the data types
+with the server, so they have less flexibility when it comes to data formats than the other clients.
+
 Java Hot Rod clients usually deal with objects representing the entities stored in the cache, and through the marshalling operation, will have those entities mapped to/from bytes to be sent across the wire.
 
 Similarly, non-java Hot Rod clients (C++/C#/Javascript) are also better suited to deal with native objects in those languages. The caveat is, if they must interoperate with Java clients, a platform independent format must be chosen.
 
 
-=== Basic Interoperability between REST/Hot Rod using text
+=== Basic Interoperability between REST/Hot Rod/Memcached using text
 
 If querying/indexing is not required, and the cache will store only text, it's enough to configure the cache keys and values MediaType with `text/plain; charset=UTF-8` (or any other charset) or another text based format such as JSON and XML (optionally carrying a custom charset).
 
@@ -29,15 +32,17 @@ and reading:
 
  Accept: text/plain; charset=UTF-8 (or any other charset)
 
+Memcached clients will work without any specific configuration.
+
 In summary:
 
 |===
-|REST clients|Java Hot Rod clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
-|[green]*Y*|[green]*Y* |[red]*N*|[red]*N*|[red]*N* |[green]*Y*
+|REST clients|Java Hot Rod clients|Memcached clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
+|[green]*Y*|[green]*Y* |[green]*Y*|[red]*N*|[red]*N*|[red]*N* |[green]*Y*
 |===
 
 
-=== Interoperability between REST/Hot Rod using custom Java objects
+=== Interoperability between REST/Hot Rod/Memcached using custom Java objects
 
 If the storage is done using a marshalled, custom java object (this is the default behaviour when using the Java Hot Rod client) and no query is required, it's necessary to configure the cache with the MediaType of the marshalled storage.
 
@@ -55,15 +60,19 @@ By default, the Java Hot Rod client uses JBoss marshalling format to send data t
 
 If the protostream marshaller is used, the media type should be `application/x-protostream`, and for the UTF8Marshaller, `text/plain` should be used.
 
-TIP: When only Hot Rod clients are used to interact with a certain cache, it's not mandatory to configure the MediaType
+TIP: When only Hot Rod clients are used to interact with a certain cache, it's not mandatory to configure the MediaType.
 
 Since REST clients will probably deal with a text friendly format, it's recommended to use as keys `java.lang.String` or any primitive, otherwise they will need to handle byte[] as the key using one of the <<rest.key_content_type,supported binary encoding>> (Base64 or Hex).
 
 The values can be read from REST in XML or JSON format, but the <<entities.deploy,classes must be available in the server>>.
 
+To read and write data from memcached, the keys must be Strings (it will be stored as a marshalled java.lang.String) and the value by default will be returned as it is stored (marshalled objects).
+Some Java Memcached clients allow to plug-in data transformers to marshall and umarshall objects, or alternatively the
+memcached server can be configured to encode the response in a different format, potentially a language neutral format such as JSON, allowing non-java clients to interact even if the cache storage is Java specific. More details in <<memcached.client.encoding, Configuring memcached client encoding>>
+
 |===
-|REST clients|Java Hot Rod clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
-|[green]*Y*|[green]*Y*|[red]*N*|[red]*N*|[green]*Y* |[red]*N*
+|REST clients|Java Hot Rod clients|Memcached clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
+|[green]*Y*|[green]*Y*|[green]*Y*|[red]*N*|[red]*N*|[green]*Y* |[red]*N*
 |===
 
 
@@ -131,11 +140,14 @@ Hot Rod clients will need to use a marshaller that is supported by {brandname}, 
 
 REST clients need to use a format that can be converted to/from java objects, currently JSON or XML.
 
+Memcached clients will need to send and receive a serialized version of the stored Pojo, by default it will be a JBoss marshalled payload, but
+by configuring the <<memcached.client.encoding, client-encoding>> in the appropriated memcached connector, it is possible to change the format so that memcached clients can use a platform neutral format such as JSON.
+
 Querying and indexing will work provided that the entities are <<query.library,annotated>>.
 
 |===
-|REST clients|Java Hot Rod clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
-|[green]*Y*|[green]*Y*|[green]*Y*|[red]*N*|[green]*Y* |[red]*N*|
+|REST clients|Java Hot Rod clients|Memcached clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
+|[green]*Y*|[green]*Y*|[green]*Y*|[green]*Y*|[red]*N*|[green]*Y* |[red]*N*|
 |===
 
 === Deploying entities to the server[[entities.deploy]]

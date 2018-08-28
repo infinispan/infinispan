@@ -162,6 +162,13 @@
                         <xs:documentation>The name of the cache to use for the Memcached connector. Defaults to memcachedCache</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
+                <xs:attribute name="client-encoding" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>The client encoding for the values, only applicable to the memcached text
+                            protocol.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>

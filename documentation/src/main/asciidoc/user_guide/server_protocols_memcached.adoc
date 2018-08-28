@@ -1,6 +1,16 @@
 ===  Memcached Server
 The {brandname} Server distribution contains a server module that implements the link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol]. This allows Memcached clients to talk to one or several {brandname} backed Memcached servers. These servers could either be working standalone just like Memcached does where each server acts independently and does not communicate with the rest, or they could be clustered where servers replicate or distribute their contents to other {brandname} backed Memcached servers, thus providing clients with failover capabilities.
-Please refer to {brandname} Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a Memcached server.
+Please refer to {brandname} Server's link:../server_guide/server_guide.html#memcached[memcached server guide] for instructions on how to configure and run a Memcached server.
+
+==== Client encoding[[memcached.client.encoding]]
+
+The memcached text protocol assumes data values read and written by clients are raw bytes. The support for type negotiation will come
+with link:https://github.com/memcached/memcached/wiki/BinaryProtocolRevamped#data-types[the memcached binary protocol] implementation, as part
+of link:https://issues.jboss.org/browse/ISPN-8726[ISPN-8726].
+
+Although it's not possible for a memcached client to negotiate the data type to obtain data from the server or send data in different formats, the server can optionally be configured to handle values encoded with a certain Media Type. By setting the `client-encoding` attribute in the `memcached-connector` element, the server will return content in this configured format, and clients also send data in this format.
+
+The `client-encoding` is useful when a single cache is accessed from multiple remote endpoints (Rest, HotRod, Memcached) and it allows to tailor the responses/requests to memcached text clients. For more infomarmation on interoperability between endpoints, consult <<endpoint.interop, Endpoint Interop guide>>.
 
 ==== Command Clarifications
 ===== Flush All

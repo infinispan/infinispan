@@ -1,5 +1,6 @@
 package org.infinispan.server.test.util.jdbc;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 
 import java.sql.Connection;
@@ -11,6 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
+import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
+
 /**
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>
  * @author <a href="mailto:vchepeli@redhat.com">Vitalii Chepeliuk</a>
@@ -18,6 +23,8 @@ import java.util.concurrent.Callable;
  */
 public class DBServer {
     public static final long TIMEOUT = 15000;
+
+    private static final TwoWayKey2StringMapper STRING_MAPPER = new DefaultTwoWayKey2StringMapper();
 
     public static DBServer create() {
         return new DBServer();
@@ -112,6 +119,15 @@ public class DBServer {
             return identifierQuoteString;
         }
 
+        private String convertToStrWrappedArray(String keyAsString) {
+            WrappedByteArray wrappedByteArray = new WrappedByteArray(keyAsString.getBytes(UTF_8));
+            return STRING_MAPPER.getStringMapping(wrappedByteArray);
+        }
+
+        public Object getValueByByteArrayKeyAwait(String key) throws Exception {
+            return getValueByKeyAwait(convertToStrWrappedArray(key));
+        }
+
         public Object getValueByKeyAwait(String key) throws Exception {
             final Connection connection = factory.getConnection();
             final PreparedStatement ps = connection.prepareStatement(getRowByKeySql);
@@ -131,6 +147,10 @@ public class DBServer {
                 factory.releaseConnection(connection);
             }
             return toReturn;
+        }
+
+        public Object getValueByByteArrayKey(String key) throws Exception {
+            return getValueByKey(convertToStrWrappedArray(key));
         }
 
         public Object getValueByKey(String key) throws Exception {

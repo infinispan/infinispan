@@ -57,11 +57,11 @@ public class MemcachedEncodingTest extends SingleCacheManagerTest {
    }
 
    public void testMemcachedCodec() throws Exception {
-      Cache<String, byte[]> cache = cacheManager.getCache(MEMCACHED_CACHE);
+      Cache<byte[], byte[]> cache = cacheManager.getCache(MEMCACHED_CACHE);
 
       memcachedClient.set("k1", 3600, "v1").get();
 
-      assertTrue(cache.containsKey("k1"));
+      assertTrue(cache.containsKey("k1".getBytes()));
 
       String sessionId = interpreter.createSessionId(MEMCACHED_CACHE);
       Map<String, String> response = interpreter.execute(sessionId, "get --codec=memcached k1;");
@@ -73,11 +73,11 @@ public class MemcachedEncodingTest extends SingleCacheManagerTest {
    }
 
    public void testMemcachedEncoding() throws Exception {
-      Cache<String, byte[]> cache = cacheManager.getCache(MEMCACHED_CACHE);
+      Cache<byte[], byte[]> cache = cacheManager.getCache(MEMCACHED_CACHE);
 
       memcachedClient.set("k1", 3600, "v1").get();
 
-      assertTrue(cache.containsKey("k1"));
+      assertTrue(cache.containsKey("k1".getBytes()));
 
       String sessionId = interpreter.createSessionId(MEMCACHED_CACHE);
       interpreter.execute(sessionId, "encoding memcached;");

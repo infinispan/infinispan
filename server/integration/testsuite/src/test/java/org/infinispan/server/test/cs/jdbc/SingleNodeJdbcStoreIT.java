@@ -168,7 +168,7 @@ public class SingleNodeJdbcStoreIT {
         }
         eventually(() -> stringAsyncDB.stringTable.exists(), 10000);
         for (int i = 0; i != numEntries; i++) {
-            assertNotNull("key" + i + " was not found in DB in " + DBServer.TIMEOUT + " ms", stringAsyncDB.stringTable.getValueByKeyAwait("key" + i));
+            assertNotNull("key" + i + " was not found in DB in " + DBServer.TIMEOUT + " ms", stringAsyncDB.stringTable.getValueByByteArrayKeyAwait("key" + i));
         }
         for (int i = 0; i != numEntries; i++) {
             mc.delete("key" + i);

@@ -18,6 +18,8 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
@@ -48,7 +50,16 @@ public class MemcachedConnectorResource extends ProtocolServerConnectorResource 
                  .setDefaultValue(new ModelNode().set(MemcachedServerConfiguration.DEFAULT_MEMCACHED_CACHE))
                  .build();
 
-   static final SimpleAttributeDefinition[] MEMCACHED_CONNECTOR_ATTRIBUTES = { CACHE };
+   static final SimpleAttributeDefinition CLIENT_ENCODING =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.CLIENT_ENCODING, ModelType.STRING, true)
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.CLIENT_ENCODING)
+               .setRestartAllServices()
+               .setDefaultValue(new ModelNode().set(APPLICATION_OCTET_STREAM_TYPE))
+               .build();
+
+
+   static final SimpleAttributeDefinition[] MEMCACHED_CONNECTOR_ATTRIBUTES = {CACHE, CLIENT_ENCODING};
 
    public MemcachedConnectorResource(boolean isRuntimeRegistration) {
       super(MEMCACHED_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.MEMCACHED_CONNECTOR), MemcachedSubsystemAdd.INSTANCE,

@@ -151,6 +151,9 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          case CACHE:
             MemcachedConnectorResource.CACHE.parseAndSetParameter(value, connector, reader);
             break;
+            case CLIENT_ENCODING:
+               MemcachedConnectorResource.CLIENT_ENCODING.parseAndSetParameter(value, connector, reader);
+               break;
          default:
             name = parseConnectorAttributes(reader, connector, name, i, value, attribute);
             break;

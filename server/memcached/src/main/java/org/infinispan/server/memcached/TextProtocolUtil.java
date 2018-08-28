@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import org.infinispan.util.KeyValuePair;
 
@@ -75,9 +76,7 @@ public class TextProtocolUtil {
    }
 
    static String extractString(ByteArrayOutputStream byteBuffer) {
-      String string = new String(byteBuffer.toByteArray(), CHARSET);
-      byteBuffer.reset();
-      return string;
+      return new String(byteBuffer.toByteArray(), CHARSET);
    }
 
    static KeyValuePair<String, Boolean> readElement(ByteBuf buffer, StringBuilder sb) {
@@ -149,27 +148,38 @@ public class TextProtocolUtil {
       return data;
    }
 
-   static List<String> readSplitLine(ByteBuf buffer) {
-      List<String> r = new ArrayList<>(3);
+   private static <K> List<K> readSplitLine(ByteBuf buffer, Function<ByteArrayOutputStream, K> valueExtractor) {
+      List<K> r = new ArrayList<>(3);
       ByteArrayOutputStream sb = new ByteArrayOutputStream();
       for (; ; ) {
          byte next = buffer.readByte();
          if (next == CR) { // CR
             next = buffer.readByte();
             if (next == LF) { // LF
-               r.add(extractString(sb));
+               r.add(valueExtractor.apply(sb));
+               sb.reset();
                return r;
             } else {
                sb.write(next);
             }
          } else if (next == LF) { // LF
-            r.add(extractString(sb));
+            r.add(valueExtractor.apply(sb));
+            sb.reset();
             return r;
          } else if (next == SP) {
-            r.add(extractString(sb));
+            r.add(valueExtractor.apply(sb));
+            sb.reset();
          } else {
             sb.write(next);
          }
       }
+   }
+
+   static List<String> readSplitLine(ByteBuf buffer) {
+      return readSplitLine(buffer, TextProtocolUtil::extractString);
+   }
+
+   static List<byte[]> extractKeys(ByteBuf buffer) {
+      return readSplitLine(buffer, ByteArrayOutputStream::toByteArray);
    }
 }
