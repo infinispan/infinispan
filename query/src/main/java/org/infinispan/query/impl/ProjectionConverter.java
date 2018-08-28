@@ -1,7 +1,6 @@
 package org.infinispan.query.impl;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.ProjectionConstants;
@@ -12,23 +11,31 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  *
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  */
-public class ProjectionConverter {
+final class ProjectionConverter {
 
    private final AdvancedCache<?, ?> cache;
    private final KeyTransformationHandler keyTransformationHandler;
    private final String[] hibernateSearchFields;
-   private final List<Integer> indexesOfKey = new LinkedList<Integer>();
+   private final int[] indexesOfKey;
 
-   public ProjectionConverter(String[] fields, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
+   ProjectionConverter(String[] fields, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
       this.cache = cache;
       this.keyTransformationHandler = keyTransformationHandler;
 
       hibernateSearchFields = fields.clone();
+      ArrayList<Integer> positions = new ArrayList<>();
       for (int i = 0; i < hibernateSearchFields.length; i++) {
-         String field = hibernateSearchFields[i];
-         if (field.equals(ProjectionConstants.KEY)) {
+         if (ProjectionConstants.KEY.equals(hibernateSearchFields[i])) {
             hibernateSearchFields[i] = ProjectionConstants.ID;
-            indexesOfKey.add(i);
+            positions.add(i);
+         }
+      }
+      if (positions.isEmpty()) {
+         indexesOfKey = null;
+      } else {
+         indexesOfKey = new int[positions.size()];
+         for (int i = 0; i < indexesOfKey.length; i++) {
+            indexesOfKey[i] = positions.get(i);
          }
       }
    }
@@ -38,8 +45,10 @@ public class ProjectionConverter {
    }
 
    public Object[] convert(Object[] projection) {
-      for (Integer index : indexesOfKey) {
-         projection[index] = keyTransformationHandler.stringToKey((String) projection[index], cache.getClassLoader());
+      if (indexesOfKey != null) {
+         for (int i : indexesOfKey) {
+            projection[i] = keyTransformationHandler.stringToKey((String) projection[i], cache.getClassLoader());
+         }
       }
       return projection;
    }

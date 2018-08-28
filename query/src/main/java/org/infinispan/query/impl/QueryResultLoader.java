@@ -12,5 +12,4 @@ public interface QueryResultLoader {
    Object load(EntityInfo entityInfo);
 
    List<Object> load(List<EntityInfo> entityInfos);
-
 }

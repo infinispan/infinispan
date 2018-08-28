@@ -43,28 +43,28 @@ public class ProjectionTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void testQueryProjectionWithSingleField() throws Exception {
+   public void testQueryProjectionWithSingleField() {
       cache.put("1", new Foo("bar1", "baz1"));
       CacheQuery<?> cacheQuery = createProjectionQuery("bar");
       assertQueryReturns(cacheQuery, new Object[] { "bar1" });
    }
 
    @Test
-   public void testQueryProjectionWithMultipleFields() throws Exception {
+   public void testQueryProjectionWithMultipleFields() {
       cache.put("1", new Foo("bar1", "baz1"));
       CacheQuery<?> cacheQuery = createProjectionQuery("bar", "baz");
       assertQueryReturns(cacheQuery, new Object[] { "bar1", "baz1" });
    }
 
    @Test
-   public void testKeyProjectionConstant() throws Exception {
+   public void testKeyProjectionConstant() {
       cache.put("1", new Foo("bar1", "baz1"));
       CacheQuery<?> cacheQuery = createProjectionQuery(ProjectionConstants.KEY);
       assertQueryReturns(cacheQuery, new Object[] { "1" });
    }
 
    @Test
-   public void testValueProjectionConstant() throws Exception {
+   public void testValueProjectionConstant() {
       Foo foo = new Foo("bar1", "baz1");
       cache.put("1", foo);
       CacheQuery<?> cacheQuery = createProjectionQuery(ProjectionConstants.VALUE);
@@ -72,7 +72,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void testMixedProjections() throws Exception {
+   public void testMixedProjections() {
       Foo foo = new Foo("bar1", "baz4");
       cache.put("1", foo);
       CacheQuery<?> cacheQuery = createProjectionQuery(
@@ -143,13 +143,9 @@ public class ProjectionTest extends SingleCacheManagerTest {
             return false;
 
          Foo foo = (Foo) o;
-
          if (bar != null ? !bar.equals(foo.bar) : foo.bar != null)
             return false;
-         if (baz != null ? !baz.equals(foo.baz) : foo.baz != null)
-            return false;
-
-         return true;
+         return baz != null ? baz.equals(foo.baz) : foo.baz == null;
       }
 
       @Override
@@ -157,5 +153,4 @@ public class ProjectionTest extends SingleCacheManagerTest {
          return bar.hashCode();
       }
    }
-
 }
