@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.memcached.MemcachedDecoder;
@@ -44,10 +45,14 @@ public class MemcachedTestingUtil {
    }
 
    public static MemcachedServer startMemcachedTextServer(EmbeddedCacheManager cacheManager, int port) {
+      return startMemcachedTextServer(cacheManager, port, MediaType.APPLICATION_OCTET_STREAM);
+   }
+
+   public static MemcachedServer startMemcachedTextServer(EmbeddedCacheManager cacheManager, int port, MediaType valueMediaType) {
       MemcachedServer server = new MemcachedServer();
       String serverName = TestResourceTracker.getCurrentTestShortName();
-      server.start(new MemcachedServerConfigurationBuilder().name(serverName).host(host).port(port).build(),
-                   cacheManager);
+      server.start(new MemcachedServerConfigurationBuilder().name(serverName).host(host).port(port).clientEncoding(valueMediaType).build(),
+            cacheManager);
       return server;
    }
 
@@ -56,11 +61,15 @@ public class MemcachedTestingUtil {
    }
 
    public static MemcachedServer startMemcachedTextServer(EmbeddedCacheManager cacheManager, int port, String cacheName) {
+      return startMemcachedTextServer(cacheManager, port, cacheName, MediaType.APPLICATION_OCTET_STREAM);
+   }
+
+   public static MemcachedServer startMemcachedTextServer(EmbeddedCacheManager cacheManager, int port, String cacheName, MediaType valueMediaType) {
       MemcachedServer server = new MemcachedServer() {
          @Override
          public ChannelInboundHandler getDecoder() {
-            Cache<String, byte[]> cache = getCacheManager().getCache(cacheName);
-            return new MemcachedDecoder(cache.getAdvancedCache(), scheduler, transport, s -> false);
+            Cache<byte[], byte[]> cache = getCacheManager().getCache(cacheName);
+            return new MemcachedDecoder(cache.getAdvancedCache(), scheduler, transport, s -> false, valueMediaType);
          }
 
          @Override
@@ -71,7 +80,7 @@ public class MemcachedTestingUtil {
       };
       String serverName = TestResourceTracker.getCurrentTestShortName();
       server.start(new MemcachedServerConfigurationBuilder().name(serverName).host(host).port(port).build(),
-                   cacheManager);
+            cacheManager);
       return server;
    }
 

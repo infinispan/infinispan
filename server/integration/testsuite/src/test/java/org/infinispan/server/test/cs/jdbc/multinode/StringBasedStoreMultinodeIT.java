@@ -92,8 +92,8 @@ public class StringBasedStoreMultinodeIT extends AbstractJdbcStoreMultinodeIT {
             mc1.set("k1", "v1");
             mc1.set("k2", "v2");
             assertEquals(2, dbServer1.stringTable.getAllRows().size());
-            assertNotNull(dbServer1.stringTable.getValueByKey("k1"));
-            assertNotNull(dbServer1.stringTable.getValueByKey("k2"));
+            assertNotNull(dbServer1.stringTable.getValueByByteArrayKey("k1"));
+            assertNotNull(dbServer1.stringTable.getValueByByteArrayKey("k2"));
             startContainer(controller, CONTAINER2, CONFIG_SINGLETON_2);
             assertEquals(2, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
             //the cache store should NOT fetch state from the others as there is a singleton defined

@@ -22,6 +22,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -192,11 +193,12 @@ public class CompatibilityCacheFactory<K, V> {
    }
 
    private void createMemcachedCache() throws IOException {
+      MediaType clientEncoding = marshaller == null ? MediaType.APPLICATION_OCTET_STREAM : marshaller.mediaType();
       memcached = startProtocolServer(findFreePort(), p -> {
          if (memcachedWithDecoder) {
-            return startMemcachedTextServer(cacheManager, p, cacheName);
+            return startMemcachedTextServer(cacheManager, p, cacheName, clientEncoding);
          }
-         return startMemcachedTextServer(cacheManager, p);
+         return startMemcachedTextServer(cacheManager, p, clientEncoding);
       });
       memcachedClient = createMemcachedClient(60000, memcached.getPort());
    }

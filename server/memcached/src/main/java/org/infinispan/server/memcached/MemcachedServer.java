@@ -35,7 +35,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
 
    private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    protected ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-   private AdvancedCache<String, byte[]> memcachedCache;
+   private AdvancedCache<byte[], byte[]> memcachedCache;
 
    @Override
    protected void startInternal(MemcachedServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
@@ -47,7 +47,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
       ExpirationConfiguration expConfig = cacheManager.getCacheConfiguration(configuration.defaultCacheName()).expiration();
       if (expConfig.lifespan() >= 0 || expConfig.maxIdle() >= 0)
         throw log.invalidExpiration(configuration.defaultCacheName());
-      Cache<String, byte[]> cache = cacheManager.getCache(configuration.defaultCacheName());
+      Cache<byte[], byte[]> cache = cacheManager.getCache(configuration.defaultCacheName());
       memcachedCache = cache.getAdvancedCache();
 
       super.startInternal(configuration, cacheManager);
@@ -60,7 +60,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
 
    @Override
    public ChannelInboundHandler getDecoder() {
-      return new MemcachedDecoder(memcachedCache, scheduler, transport, this::isCacheIgnored);
+      return new MemcachedDecoder(memcachedCache, scheduler, transport, this::isCacheIgnored, configuration.clientEncoding());
    }
 
    @Override

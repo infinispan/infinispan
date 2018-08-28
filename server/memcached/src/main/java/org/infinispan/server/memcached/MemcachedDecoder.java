@@ -1,5 +1,7 @@
 package org.infinispan.server.memcached;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.server.core.transport.ExtendedByteBuf.buffer;
 import static org.infinispan.server.core.transport.ExtendedByteBuf.wrappedBuffer;
 import static org.infinispan.server.memcached.TextProtocolUtil.CLIENT_ERROR_BAD_FORMAT;
@@ -33,9 +35,10 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.ClosedChannelException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,12 +53,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.CompatModeEncoder;
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.commons.dataconversion.JavaCompatEncoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -86,25 +85,19 @@ import io.netty.util.CharsetUtil;
  */
 public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
 
-   public MemcachedDecoder(AdvancedCache<String, byte[]> memcachedCache, ScheduledExecutorService scheduler,
-                           NettyTransport transport, Predicate<? super String> ignoreCache) {
+   public MemcachedDecoder(AdvancedCache<byte[], byte[]> memcachedCache, ScheduledExecutorService scheduler,
+                           NettyTransport transport, Predicate<? super String> ignoreCache,
+                           MediaType valuePayload) {
+
       super(MemcachedDecoderState.DECODE_HEADER);
-      CompatibilityModeConfiguration compatibility = memcachedCache.getCacheConfiguration().compatibility();
-      boolean compat = compatibility.enabled();
-      AdvancedCache<?, ?> c = memcachedCache.getAdvancedCache();
-      if (compat) {
-         boolean hasCompatMarshaller = compatibility.marshaller() != null;
-         Class<? extends Encoder> valueEncoder = hasCompatMarshaller ? CompatModeEncoder.class : JavaCompatEncoder.class;
-         c = c.withEncoding(IdentityEncoder.class, valueEncoder);
-      }
-      cache = (AdvancedCache<String, byte[]>) c;
+      this.cache = (AdvancedCache<byte[], byte[]>) memcachedCache.withMediaType(TEXT_PLAIN_TYPE, valuePayload.toString());
       this.scheduler = scheduler;
       this.transport = transport;
       this.ignoreCache = ignoreCache;
       isStatsEnabled = cache.getCacheConfiguration().jmxStatistics().enabled();
    }
 
-   private final AdvancedCache<String, byte[]> cache;
+   private final AdvancedCache<byte[], byte[]> cache;
    private final ScheduledExecutorService scheduler;
    protected final NettyTransport transport;
    protected final Predicate<? super String> ignoreCache;
@@ -117,7 +110,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    long defaultLifespanTime;
    long defaultMaxIdleTime;
 
-   protected String key;
+   protected byte[] key;
    protected byte[] rawValue;
    protected Configuration cacheConfiguration;
 
@@ -158,7 +151,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    }
 
    protected Object replaceIfUnmodified() {
-      CacheEntry<String, byte[]> entry = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntry(key);
+      CacheEntry<byte[], byte[]> entry = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntry(key);
       if (entry != null) {
          byte[] prev = entry.getValue();
          NumericVersion streamVersion = new NumericVersion(params.streamVersion);
@@ -343,15 +336,15 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       return Optional.of(endOfOp);
    }
 
-   KeyValuePair<String, Boolean> readKey(ByteBuf b) throws IOException {
+   private KeyValuePair<byte[], Boolean> readKey(ByteBuf b) throws IOException {
       boolean endOfOp = readElement(b, byteBuffer);
-      String k = extractString(byteBuffer);
-      checkKeyLength(k, endOfOp, b);
+      byte[] keyBytes = byteBuffer.toByteArray();
+      byte[] k = checkKeyLength(keyBytes, endOfOp, b);
       return new KeyValuePair<>(k, endOfOp);
    }
 
-   private List<String> readKeys(ByteBuf b) {
-      return readSplitLine(b);
+   private List<byte[]> readKeys(ByteBuf b) {
+      return TextProtocolUtil.extractKeys(b);
    }
 
    @Override
@@ -376,25 +369,26 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    }
 
    protected Object get(ByteBuf buffer) throws StreamCorruptedException {
-      List<String> keys = readKeys(buffer);
+      List<byte[]> keys = readKeys(buffer);
       if (keys.size() > 1) {
-         Map<String, CacheEntry<String, byte[]>> map = new HashMap<>();
-         for (String key : keys) {
-            CacheEntry<String, byte[]> entry = cache.getCacheEntry(checkKeyLength(key, true, buffer));
+         Map<byte[], CacheEntry<byte[], byte[]>> map = new LinkedHashMap<>();
+         for (byte[] key : keys) {
+            CacheEntry<byte[], byte[]> entry = cache.getCacheEntry(checkKeyLength(key, true, buffer));
             if (entry != null) {
                map.put(key, entry);
             }
          }
          return createMultiGetResponse(map);
       } else {
-         String key = checkKeyLength(keys.get(0), true, buffer);
-         CacheEntry<String, byte[]> entry = cache.getCacheEntry(key);
+         byte[] key = checkKeyLength(keys.get(0), true, buffer);
+         CacheEntry<byte[], byte[]> entry = cache.getCacheEntry(key);
          return createGetResponse(key, entry);
       }
    }
 
-   private String checkKeyLength(String k, boolean endOfOp, ByteBuf b) throws StreamCorruptedException {
-      if (k.length() > 250) {
+   private byte[] checkKeyLength(byte[] k, boolean endOfOp, ByteBuf b) throws StreamCorruptedException {
+      CharBuffer keyCharBuffer = UTF_8.decode(ByteBuffer.wrap(k));
+      if (keyCharBuffer.length() > 250) {
          if (!endOfOp) skipLine(b); // Clear the rest of line
          throw new StreamCorruptedException("Key length over the 250 character limit");
       } else return k;
@@ -481,13 +475,10 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       return new MemcachedParameters(length, lifespan, -1, streamVersion, noReply, flags, "", 0);
    }
 
-   private EntryVersion generateVersion(Cache<String, byte[]> cache) {
+   private EntryVersion generateVersion(Cache<byte[], byte[]> cache) {
       ComponentRegistry registry = getCacheRegistry();
       VersionGenerator cacheVersionGenerator = registry.getComponent(VersionGenerator.class);
       if (cacheVersionGenerator == null) {
-         // It could be null, for example when not running in compatibility mode.
-         // The reason for that is that if no other component depends on the
-         // version generator, the factory does not get invoked.
          NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator()
                .clustered(registry.getComponent(RpcManager.class) != null);
          registry.registerComponent(newVersionGenerator, VersionGenerator.class);
@@ -744,7 +735,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
          return null;
    }
 
-   Object createGetResponse(String k, CacheEntry<String, byte[]> entry) {
+   Object createGetResponse(byte[] k, CacheEntry<byte[], byte[]> entry) {
       if (entry != null) {
          switch (header.operation) {
             case GetRequest:
@@ -758,13 +749,13 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
          return END;
    }
 
-   private ByteBuf buildSingleGetResponse(String k, CacheEntry<String, byte[]> entry) {
+   private ByteBuf buildSingleGetResponse(byte[] k, CacheEntry<byte[], byte[]> entry) {
       ByteBuf buf = buildGetHeaderBegin(k, entry, END_SIZE);
       writeGetHeaderData(entry.getValue(), buf);
       return writeGetHeaderEnd(buf);
    }
 
-   Object createMultiGetResponse(Map<String, CacheEntry<String, byte[]>> pairs) {
+   Object createMultiGetResponse(Map<byte[], CacheEntry<byte[], byte[]>> pairs) {
       Stream.Builder<ByteBuf> elements = Stream.builder();
       switch (header.operation) {
          case GetRequest:
@@ -778,7 +769,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    }
 
    void handleModification(Channel ch, ByteBuf buf) throws IOException {
-      KeyValuePair<String, Boolean> pair = readKey(buf);
+      KeyValuePair<byte[], Boolean> pair = readKey(buf);
       key = pair.getKey();
       if (pair.getValue()) {
          // If it's the end of the operation, it can only be a remove
@@ -957,16 +948,15 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       return buffer;
    }
 
-   private ByteBuf buildGetResponse(String k, CacheEntry<String, byte[]> entry) {
+   private ByteBuf buildGetResponse(byte[] k, CacheEntry<byte[], byte[]> entry) {
       ByteBuf buf = buildGetHeaderBegin(k, entry, 0);
       return writeGetHeaderData(entry.getValue(), buf);
    }
 
-   private ByteBuf buildGetHeaderBegin(String k, CacheEntry<String, byte[]> entry,
+   private ByteBuf buildGetHeaderBegin(byte[] key, CacheEntry<byte[], byte[]> entry,
                                        int extraSpace) {
       byte[] data = entry.getValue();
       byte[] dataSize = String.valueOf(data.length).getBytes();
-      byte[] key = k.getBytes(StandardCharsets.UTF_8);
 
       byte[] flags;
       Metadata metadata = entry.getMetadata();
@@ -1000,7 +990,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       return buf;
    }
 
-   private ByteBuf buildSingleGetWithVersionResponse(String k, CacheEntry<String, byte[]> entry) {
+   private ByteBuf buildSingleGetWithVersionResponse(byte[] k, CacheEntry<byte[], byte[]> entry) {
       byte[] v = entry.getValue();
       // TODO: Would be nice for EntryVersion to allow retrieving the version itself...
       byte[] version = String.valueOf(((NumericVersion) entry.getMetadata().version()).getVersion()).getBytes();

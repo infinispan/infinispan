@@ -43,7 +43,7 @@ public class StringBasedStoreInvalidationCacheSyncIT extends AbstractJdbcStoreMu
     public void testResurrectEntry() throws Exception {
         mc1.set("key", "value");
         assertEquals("value", mc1.get("key"));
-        assertNotNull(dbServer1.stringTable.getValueByKey("key")); //stored in DB
+        assertNotNull(dbServer1.stringTable.getValueByByteArrayKey("key")); //stored in DB
         assertEquals(0, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntriesInMemory()); //not replicated
         assertEquals("value", mc2.get("key")); //load from DB
 
