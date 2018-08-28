@@ -169,24 +169,13 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
       partitionHandlingSupport.checkCacheAvailable();
       HSQuery hSearchQuery = queryDefinition.getHsQuery();
       hSearchQuery.getTimeoutManager().start();
-      final List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
+      List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
       return (List<E>) getResultLoader(hSearchQuery).load(entityInfos);
    }
 
    private QueryResultLoader getResultLoader(HSQuery hSearchQuery) {
-      return isProjected(hSearchQuery) ? getProjectionLoader() : getEntityLoader();
-   }
-
-   private boolean isProjected(HSQuery hSearchQuery) {
-      return hSearchQuery.getProjectedFields() != null;
-   }
-
-   private ProjectionLoader getProjectionLoader() {
-      return new ProjectionLoader(projectionConverter, getEntityLoader());
-   }
-
-   private EntityLoader getEntityLoader() {
-      return new EntityLoader(cache, keyTransformationHandler);
+      EntityLoader entityLoader = new EntityLoader(cache, keyTransformationHandler);
+      return hSearchQuery.getProjectedFields() == null ? entityLoader : new ProjectionLoader(projectionConverter, entityLoader);
    }
 
    @Override
@@ -201,7 +190,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
 
    @Override
    public CacheQuery<Object[]> projection(String... fields) {
-      this.projectionConverter = new ProjectionConverter(fields, cache, keyTransformationHandler);
+      projectionConverter = new ProjectionConverter(fields, cache, keyTransformationHandler);
       queryDefinition.getHsQuery().projection(projectionConverter.getHSearchProjection());
       return (CacheQuery<Object[]>) this;
    }
@@ -211,5 +200,4 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
       queryDefinition.getHsQuery().getTimeoutManager().setTimeout(timeout, timeUnit);
       return this;
    }
-
 }
