@@ -59,7 +59,8 @@ import org.infinispan.query.backend.QueryKnownClasses;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.backend.TxQueryInterceptor;
 import org.infinispan.query.clustered.NodeTopDocs;
-import org.infinispan.query.clustered.QueryBox;
+import org.infinispan.query.clustered.QueryResponse;
+import org.infinispan.query.clustered.commandworkers.QueryBox;
 import org.infinispan.query.continuous.impl.ContinuousQueryResult;
 import org.infinispan.query.continuous.impl.IckleContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
@@ -133,9 +134,7 @@ public class LifecycleManager implements ModuleLifecycle {
             CommandInitializer initializer = cr.getComponent(CommandInitializer.class);
             initializer.setCacheManager(cache.getCacheManager());
 
-            QueryBox queryBox = new QueryBox();
-            queryBox.setCache(cache);
-            cr.registerComponent(queryBox, QueryBox.class);
+            cr.registerComponent(new QueryBox(), QueryBox.class);
          }
 
          registerMatcher(cr, searchFactory);
@@ -447,5 +446,6 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_WILDCARD, new LuceneWildcardQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_FUZZY, new LuceneFuzzyQueryExternalizer());
       externalizerMap.put(ExternalizerIds.QUERY_DEFINITION, new QueryDefinition.Externalizer());
+      externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_COMMAND_RESPONSE, new QueryResponse.Externalizer());
    }
 }

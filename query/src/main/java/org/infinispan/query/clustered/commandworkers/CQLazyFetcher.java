@@ -1,23 +1,21 @@
 package org.infinispan.query.clustered.commandworkers;
 
-import org.infinispan.query.clustered.QueryBox;
+import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.query.clustered.QueryResponse;
 
 /**
- * CQLazyFetcher.
- *
- * Fetch a new result for a lazy iterator
+ * Fetch a new result for a lazy iterator.
  *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class CQLazyFetcher extends ClusteredQueryCommandWorker {
+final class CQLazyFetcher extends CQWorker {
 
    @Override
-   public QueryResponse perform() {
-      QueryBox box = getQueryBox();
-      Object value = box.getValue(lazyQueryId, docIndex);
+   QueryResponse perform() {
+      DocumentExtractor extractor = getQueryBox().get(queryId);
+      Object key = extractKey(extractor, docIndex);
+      Object value = cache.get(key);
       return new QueryResponse(value);
    }
-
 }

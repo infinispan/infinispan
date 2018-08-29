@@ -10,6 +10,7 @@ import org.apache.lucene.search.TopDocs;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * A TopDocs with an array with keys of each result.
@@ -19,17 +20,20 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
  */
 public final class NodeTopDocs {
 
+   public final Address address;
    public final TopDocs topDocs;
    public final Object[] keys;
    public final Object[] projections;
 
-   public NodeTopDocs(TopDocs topDocs, Object[] keys, Object[] projections) {
+   public NodeTopDocs(Address address, TopDocs topDocs, Object[] keys, Object[] projections) {
+      this.address = address;
       this.topDocs = topDocs;
       this.keys = keys;
       this.projections = projections;
    }
 
-   public NodeTopDocs(TopDocs topDocs) {
+   public NodeTopDocs(Address address, TopDocs topDocs) {
+      this.address = address;
       this.topDocs = topDocs;
       this.keys = null;
       this.projections = null;
@@ -49,29 +53,31 @@ public final class NodeTopDocs {
 
       @Override
       public NodeTopDocs readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         final int keysNumber = UnsignedNumeric.readUnsignedInt(input);
-         final Object[] keys = new Object[keysNumber];
+         Address address = (Address) input.readObject();
+         int keysNumber = UnsignedNumeric.readUnsignedInt(input);
+         Object[] keys = new Object[keysNumber];
          for (int i = 0; i < keysNumber; i++) {
             keys[i] = input.readObject();
          }
-         final int projectionsNumber = UnsignedNumeric.readUnsignedInt(input);
-         final Object[] projections = new Object[projectionsNumber];
+         int projectionsNumber = UnsignedNumeric.readUnsignedInt(input);
+         Object[] projections = new Object[projectionsNumber];
          for (int i = 0; i < projectionsNumber; i++) {
             projections[i] = input.readObject();
          }
-         final TopDocs innerTopDocs = (TopDocs) input.readObject();
-         return new NodeTopDocs(innerTopDocs, keys, projections);
+         TopDocs innerTopDocs = (TopDocs) input.readObject();
+         return new NodeTopDocs(address, innerTopDocs, keys, projections);
       }
 
       @Override
       public void writeObject(ObjectOutput output, NodeTopDocs topDocs) throws IOException {
-         final Object[] keys = topDocs.keys;
+         output.writeObject(topDocs.address);
+         Object[] keys = topDocs.keys;
          int size = keys == null ? 0 : keys.length;
          UnsignedNumeric.writeUnsignedInt(output, size);
          for (int i = 0; i < size; i++) {
             output.writeObject(keys[i]);
          }
-         final Object[] projections = topDocs.projections;
+         Object[] projections = topDocs.projections;
          int projectionSize = projections == null ? 0 : projections.length;
          UnsignedNumeric.writeUnsignedInt(output, projectionSize);
          for (int i = 0; i < projectionSize; i++) {

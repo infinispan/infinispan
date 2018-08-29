@@ -6,12 +6,13 @@ import java.io.ObjectOutput;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
+import org.infinispan.query.clustered.commandworkers.CQCommandType;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.query.impl.QueryDefinition;
@@ -23,32 +24,31 @@ import org.infinispan.util.ByteString;
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableCommand, CustomQueryCommand {
+public final class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableCommand, CustomQueryCommand {
 
    public static final byte COMMAND_ID = ModuleCommandIds.CLUSTERED_QUERY;
-   private static final Integer ZERO = Integer.valueOf(0);
 
-   private ClusteredQueryCommandType commandType;
+   private CQCommandType commandType;
 
    private QueryDefinition queryDefinition;
 
    // local instance (set only when command arrives on target node)
-   private Cache<?, ?> cache;
+   private AdvancedCache<?, ?> cache;
 
    // identifies the query
-   private UUID lazyQueryId;
+   private UUID queryId;
 
    // for retrieve keys on a lazy query
-   private Integer docIndex = ZERO;
+   private int docIndex = 0;
 
-   private ClusteredQueryCommand(ClusteredQueryCommandType type, String cacheName) {
+   private ClusteredQueryCommand(CQCommandType commandType, String cacheName) {
       super(ByteString.fromString(cacheName));
-      commandType = type;
+      this.commandType = commandType;
    }
 
    /**
-    * For CommandFactory only. To create a ClusteredQueryCommand, use createLazyIterator(),
-    * destroyLazyQuery(), getResultSize() or retrieveKeyFromLazyQuery()
+    * For CommandFactory only. To create a ClusteredQueryCommand, use createLazyIterator(), destroyLazyQuery(),
+    * getResultSize() or retrieveKeyFromLazyQuery()
     */
    public ClusteredQueryCommand(ByteString cacheName) {
       super(cacheName);
@@ -56,39 +56,39 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
 
    @Override
    public void setCacheManager(EmbeddedCacheManager cm) {
-      this.cache = cm.getCache(cacheName.toString());
+      this.cache = cm.getCache(cacheName.toString()).getAdvancedCache();
    }
 
-   public static ClusteredQueryCommand createLazyIterator(QueryDefinition queryDefinition, Cache<?, ?> cache, UUID id) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.CREATE_LAZY_ITERATOR, cache.getName());
-      clQuery.queryDefinition = queryDefinition;
-      clQuery.lazyQueryId = id;
-      return clQuery;
+   static ClusteredQueryCommand createLazyIterator(QueryDefinition queryDefinition, Cache<?, ?> cache, UUID queryId) {
+      ClusteredQueryCommand cmd = new ClusteredQueryCommand(CQCommandType.CREATE_LAZY_ITERATOR, cache.getName());
+      cmd.queryDefinition = queryDefinition;
+      cmd.queryId = queryId;
+      return cmd;
    }
 
-   public static ClusteredQueryCommand getResultSize(QueryDefinition queryDefinition, Cache<?, ?> cache) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.GET_RESULT_SIZE, cache.getName());
-      clQuery.queryDefinition = queryDefinition;
-      return clQuery;
+   static ClusteredQueryCommand getResultSize(QueryDefinition queryDefinition, Cache<?, ?> cache) {
+      ClusteredQueryCommand cmd = new ClusteredQueryCommand(CQCommandType.GET_RESULT_SIZE, cache.getName());
+      cmd.queryDefinition = queryDefinition;
+      return cmd;
    }
 
-   public static ClusteredQueryCommand createEagerIterator(QueryDefinition queryDefinition, Cache<?, ?> cache) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.CREATE_EAGER_ITERATOR, cache.getName());
-      clQuery.queryDefinition = queryDefinition;
-      return clQuery;
+   static ClusteredQueryCommand createEagerIterator(QueryDefinition queryDefinition, Cache<?, ?> cache) {
+      ClusteredQueryCommand cmd = new ClusteredQueryCommand(CQCommandType.CREATE_EAGER_ITERATOR, cache.getName());
+      cmd.queryDefinition = queryDefinition;
+      return cmd;
    }
 
-   public static ClusteredQueryCommand destroyLazyQuery(Cache<?, ?> cache, UUID id) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.DESTROY_LAZY_ITERATOR, cache.getName());
-      clQuery.lazyQueryId = id;
-      return clQuery;
+   static ClusteredQueryCommand destroyLazyQuery(Cache<?, ?> cache, UUID queryId) {
+      ClusteredQueryCommand cmd = new ClusteredQueryCommand(CQCommandType.DESTROY_LAZY_ITERATOR, cache.getName());
+      cmd.queryId = queryId;
+      return cmd;
    }
 
-   public static ClusteredQueryCommand retrieveKeyFromLazyQuery(Cache<?, ?> cache, UUID id, int docIndex) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.GET_SOME_KEYS, cache.getName());
-      clQuery.lazyQueryId = id;
-      clQuery.docIndex = docIndex;
-      return clQuery;
+   static ClusteredQueryCommand retrieveKeyFromLazyQuery(Cache<?, ?> cache, UUID queryId, int docIndex) {
+      ClusteredQueryCommand cmd = new ClusteredQueryCommand(CQCommandType.GET_SOME_KEYS, cache.getName());
+      cmd.queryId = queryId;
+      cmd.docIndex = docIndex;
+      return cmd;
    }
 
    /**
@@ -101,9 +101,8 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       return CompletableFuture.completedFuture(perform(cache));
    }
 
-   public QueryResponse perform(Cache<?, ?> cache) {
-      ClusteredQueryCommandWorker worker = commandType.getCommand(cache, queryDefinition, lazyQueryId, docIndex);
-      return worker.perform();
+   public QueryResponse perform(AdvancedCache<?, ?> cache) {
+      return commandType.perform(cache, queryDefinition, queryId, docIndex);
    }
 
    @Override
@@ -115,15 +114,15 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    public void writeTo(ObjectOutput output) throws IOException {
       MarshallUtil.marshallEnum(commandType, output);
       output.writeObject(queryDefinition);
-      MarshallUtil.marshallUUID(lazyQueryId, output, true);
+      MarshallUtil.marshallUUID(queryId, output, true);
       output.writeInt(docIndex);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandType = MarshallUtil.unmarshallEnum(input, ClusteredQueryCommandType::valueOf);
+      commandType = MarshallUtil.unmarshallEnum(input, CQCommandType::valueOf);
       queryDefinition = (QueryDefinition) input.readObject();
-      lazyQueryId = MarshallUtil.unmarshallUUID(input, true);
+      queryId = MarshallUtil.unmarshallUUID(input, true);
       docIndex = input.readInt();
    }
 
@@ -134,33 +133,19 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
 
    @Override
    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((cacheName == null) ? 0 : cacheName.hashCode());
-      result = prime * result + ((queryDefinition == null) ? 0 : queryDefinition.hashCode());
-      return result;
+      int result = 31 + (cacheName == null ? 0 : cacheName.hashCode());
+      return 31 * result + (queryDefinition == null ? 0 : queryDefinition.hashCode());
    }
 
    @Override
    public boolean equals(Object obj) {
       if (this == obj)
          return true;
-      if (obj == null)
-         return false;
-      if (!(obj instanceof ClusteredQueryCommand))
+      if (obj.getClass() != ClusteredQueryCommand.class)
          return false;
       ClusteredQueryCommand other = (ClusteredQueryCommand) obj;
-      if (cacheName == null) {
-         if (other.cacheName != null)
-            return false;
-      } else if (!cacheName.equals(other.cacheName))
-         return false;
-      if (queryDefinition == null) {
-         if (other.queryDefinition != null)
-            return false;
-      } else if (!queryDefinition.equals(other.queryDefinition))
-         return false;
-      return true;
+      return (cacheName == null ? other.cacheName == null : cacheName.equals(other.cacheName)) &&
+            (queryDefinition == null ? other.queryDefinition == null : queryDefinition.equals(other.queryDefinition));
    }
 
    @Override

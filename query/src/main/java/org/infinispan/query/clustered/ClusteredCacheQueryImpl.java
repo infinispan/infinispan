@@ -3,12 +3,12 @@ package org.infinispan.query.clustered;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Sort;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.spi.CustomTypeMetadata;
 import org.hibernate.search.spi.IndexedTypeMap;
@@ -20,18 +20,19 @@ import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
+import org.infinispan.remoting.transport.Address;
 
 /**
- * A extension of CacheQueryImpl used for distributed queries.
+ * An extension of CacheQueryImpl used for distributed queries.
  *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
+public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
 
    private Integer resultSize;
 
-   private final ExecutorService asyncExecutor;
+   private final ClusteredQueryInvoker invoker;
 
    // like QueryHits.DEFAULT_TOP_DOC_RETRIEVAL_SIZE = 100;
    // (just to have the same default size of not clustered queries)
@@ -42,7 +43,7 @@ public class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory,
                                   ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, keyTransformationHandler, null, classes);
-      this.asyncExecutor = asyncExecutor;
+      this.invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
    }
 
    public ClusteredCacheQueryImpl(QueryDefinition queryDefinition, ExecutorService asyncExecutor, AdvancedCache<?, ?> cache,
@@ -52,48 +53,33 @@ public class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
          this.queryDefinition.setIndexedType(metadata.keySet().iterator().next().getPojoType());
          this.queryDefinition.setSortableField(metadata.values().iterator().next().getSortableFields());
       }
-      this.asyncExecutor = asyncExecutor;
+      this.invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
    }
 
    @Override
    public CacheQuery<E> maxResults(int maxResults) {
       this.maxResults = maxResults;
-      this.queryDefinition.setMaxResults(maxResults);
       return super.maxResults(maxResults);
    }
 
    @Override
    public CacheQuery<E> firstResult(int firstResult) {
       this.firstResult = firstResult;
-      this.queryDefinition.setFirstResult(firstResult);
-      return this;
-   }
-
-   @Override
-   public CacheQuery<E> sort(Sort sort) {
-      this.queryDefinition.setSort(sort);
-      return super.sort(sort);
+      return super.firstResult(firstResult);
    }
 
    @Override
    public int getResultSize() {
       partitionHandlingSupport.checkCacheAvailable();
-      int accumulator;
       if (resultSize == null) {
-         ClusteredQueryCommand command = ClusteredQueryCommand.getResultSize(queryDefinition, cache);
-
-         ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
-         List<QueryResponse> responses = invoker.broadcast(command);
-
-         accumulator = 0;
+         List<QueryResponse> responses = invoker.broadcast(ClusteredQueryCommand.getResultSize(queryDefinition, cache));
+         int accumulator = 0;
          for (QueryResponse response : responses) {
             accumulator += response.getResultSize();
          }
          resultSize = accumulator;
-      } else {
-         accumulator = resultSize;
       }
-      return accumulator;
+      return resultSize;
    }
 
    @Override
@@ -103,21 +89,21 @@ public class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
       switch (fetchOptions.getFetchMode()) {
          case EAGER: {
             ClusteredQueryCommand command = ClusteredQueryCommand.createEagerIterator(queryDefinition, cache);
-            HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
+            Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
             return new DistributedIterator<>(queryDefinition.getSort(),
-                  fetchOptions.getFetchSize(), this.resultSize, maxResults,
+                  fetchOptions.getFetchSize(), resultSize, maxResults,
                   firstResult, topDocsResponses, cache);
          }
          case LAZY: {
-            UUID lazyItId = UUID.randomUUID();
-            ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(queryDefinition, cache, lazyItId);
-            HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
+            UUID queryId = UUID.randomUUID();
+            ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(queryDefinition, cache, queryId);
+            Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
             // Make a sort copy to avoid reversed results
             return new DistributedLazyIterator<>(queryDefinition.getSort(),
-                  fetchOptions.getFetchSize(), this.resultSize, maxResults,
-                  firstResult, lazyItId, topDocsResponses, asyncExecutor, cache);
+                  fetchOptions.getFetchSize(), resultSize, maxResults,
+                  firstResult, queryId, topDocsResponses, invoker, cache);
          }
          default:
             throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
@@ -129,16 +115,14 @@ public class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
       return maxResults + firstResult;
    }
 
-   private HashMap<UUID, ClusteredTopDocs> broadcastQuery(ClusteredQueryCommand command) {
-      ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
-
-      HashMap<UUID, ClusteredTopDocs> topDocsResponses = new HashMap<>();
+   private Map<Address, NodeTopDocs> broadcastQuery(ClusteredQueryCommand command) {
+      Map<Address, NodeTopDocs> topDocsResponses = new HashMap<>();
       int resultSize = 0;
       List<QueryResponse> responses = invoker.broadcast(command);
 
       for (QueryResponse queryResponse : responses) {
-         if (queryResponse.nonEmpty()) {
-            topDocsResponses.put(queryResponse.getNodeUUID(), queryResponse.toClusteredTopDocs());
+         if (queryResponse.getResultSize() > 0) {
+            topDocsResponses.put(queryResponse.getNodeTopDocs().address, queryResponse.getNodeTopDocs());
             resultSize += queryResponse.getResultSize();
          }
       }
@@ -161,6 +145,7 @@ public class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
 
    @Override
    public CacheQuery<E> timeout(long timeout, TimeUnit timeUnit) {
-      throw new UnsupportedOperationException("Clustered queries do not support timeouts yet.");   // TODO
+      // TODO [anistor] see https://issues.jboss.org/browse/ISPN-9469
+      throw new UnsupportedOperationException("Clustered queries do not support timeouts yet.");
    }
 }
