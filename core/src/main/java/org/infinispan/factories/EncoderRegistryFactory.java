@@ -3,7 +3,6 @@ package org.infinispan.factories;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.BinaryEncoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
-import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.dataconversion.DefaultTranscoder;
 import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.commons.dataconversion.GlobalMarshallerEncoder;
@@ -48,7 +47,6 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       encoderRegistry.registerEncoder(new BinaryEncoder(globalMarshaller));
       encoderRegistry.registerEncoder(new GenericJbossMarshallerEncoder(jBossMarshaller));
       encoderRegistry.registerEncoder(new GlobalMarshallerEncoder(globalMarshaller));
-      encoderRegistry.registerEncoder(new CompatModeEncoder(globalMarshaller));
       encoderRegistry.registerTranscoder(new DefaultTranscoder(jBossMarshaller, javaSerializationMarshaller));
 
       encoderRegistry.registerWrapper(ByteArrayWrapper.INSTANCE);

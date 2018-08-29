@@ -96,8 +96,8 @@
            output-file="docs/examples/configs/clustered-xsite.xml"/>
         <standalone
            template="configuration/standalone/template.xml"
-           subsystems="configuration/examples/subsystems-compatibility-mode.xml"
-           output-file="docs/examples/configs/standalone-compatibility-mode.xml"/>
+           subsystems="configuration/examples/subsystems-endpoints-interoperability.xml"
+           output-file="docs/examples/configs/standalone-endpoints-interoperability.xml"/>
         <standalone
            template="configuration/standalone/template.xml"
            subsystems="configuration/examples/subsystems-rest-rolling-upgrade.xml"

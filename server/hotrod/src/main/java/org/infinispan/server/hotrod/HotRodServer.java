@@ -449,11 +449,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          String validCacheName = cacheName.isEmpty() ? configuration.defaultCacheName() : cacheName;
          cache = SecurityActions.getCache(cacheManager, validCacheName).getAdvancedCache();
          Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
-         Marshaller marshaller = cacheConfiguration.compatibility().marshaller();
-         ComponentRegistry cacheComponentRegistry = SecurityActions.getCacheComponentRegistry(cache);
-         if (marshaller != null) {
-            cacheComponentRegistry.wireDependencies(marshaller);
-         }
          // We don't need synchronization as long as we store the cache last
          knownCacheConfigurations.put(cacheName, cacheConfiguration);
          knownCacheRegistries.put(cacheName, SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()));
@@ -626,9 +621,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private EntryVersion generateVersion(ComponentRegistry registry) {
       VersionGenerator cacheVersionGenerator = registry.getVersionGenerator();
       if (cacheVersionGenerator == null) {
-         // It could be null, for example when not running in compatibility mode.
-         // The reason for that is that if no other component depends on the
-         // version generator, the factory does not get invoked.
          NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator()
                .clustered(registry.getComponent(RpcManager.class) != null);
          registry.registerVersionGenerator(newVersionGenerator);

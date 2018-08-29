@@ -1,18 +1,16 @@
 package org.infinispan.cli.interpreter;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Map;
 
-import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -35,7 +33,7 @@ import org.testng.annotations.Test;
 public class HotRodEncodingTest extends SingleCacheManagerTest {
 
    private static final String REGULAR_CACHE = "default";
-   private static final String COMPAT_CACHE = "compat";
+   private static final String OBJECT_CACHE = "object";
 
    HotRodServer hotrodServer;
    int port;
@@ -47,11 +45,12 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
       ConfigurationBuilder c = hotRodCacheConfiguration(
             getDefaultStandaloneCacheConfig(false));
       c.jmxStatistics().enable();
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createServerModeCacheManager(c);
-      ConfigurationBuilder compatBuilder = new ConfigurationBuilder();
-      compatBuilder.compatibility().enable();
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(c);
+      ConfigurationBuilder objectStorageBuilder = new ConfigurationBuilder();
+      objectStorageBuilder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE)
+            .encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       ConfigurationBuilder defaultBuilder = new ConfigurationBuilder();
-      cacheManager.defineConfiguration(COMPAT_CACHE, compatBuilder.build());
+      cacheManager.defineConfiguration(OBJECT_CACHE, objectStorageBuilder.build());
       cacheManager.defineConfiguration(REGULAR_CACHE, defaultBuilder.build());
       return cacheManager;
    }
@@ -79,25 +78,21 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
       testHotRodCodecWithCache(REGULAR_CACHE);
    }
 
-   public void testHotRodCodecWithCompat() throws Exception {
-      testHotRodCodecWithCache(COMPAT_CACHE);
+   public void testHotRodCodecWithObjects() throws Exception {
+      testHotRodCodecWithCache(OBJECT_CACHE);
    }
 
    public void testHotRodEncoding() throws Exception {
       testHotRodEncodingWithCache(REGULAR_CACHE);
    }
 
-   public void testHotRodEncodingWithCompat() throws Exception {
-      testHotRodEncodingWithCache(COMPAT_CACHE);
+   public void testHotRodEncodingWithObjects() throws Exception {
+      testHotRodEncodingWithCache(OBJECT_CACHE);
    }
 
    private void testHotRodCodecWithCache(String cacheName) throws Exception {
-      Cache<byte[], byte[]> cache = cacheManager.getCache(cacheName);
       RemoteCache<String, String> remoteCache = remoteCacheManager.getCache(cacheName);
       remoteCache.put("k1", "v1");
-      GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
-      byte[] k1 = marshaller.objectToByteBuffer("k1");
-      assertTrue(cache.containsKey(k1));
 
       String sessionId = interpreter.createSessionId(cacheName);
       Map<String, String> response = interpreter.execute(sessionId, "get --codec=hotrod k1;");
@@ -117,12 +112,8 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
    }
 
    private void testHotRodEncodingWithCache(String cacheName) throws Exception {
-      Cache<byte[], byte[]> cache = cacheManager.getCache(cacheName);
       RemoteCache<String, String> remoteCache = remoteCacheManager.getCache(cacheName);
       remoteCache.put("k1", "v1");
-      GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
-      byte[] k1 = marshaller.objectToByteBuffer("k1");
-      assertTrue(cache.containsKey(k1));
 
       String sessionId = interpreter.createSessionId(cacheName);
       interpreter.execute(sessionId, "encoding hotrod;");

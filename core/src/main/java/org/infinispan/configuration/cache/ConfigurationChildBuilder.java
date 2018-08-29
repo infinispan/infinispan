@@ -56,6 +56,10 @@ public interface ConfigurationChildBuilder {
 
    SitesConfigurationBuilder sites();
 
+   /**
+    * @deprecated since 9.4, replace with {@link ConfigurationBuilder#encoding()} to specify the key and value's {@link org.infinispan.commons.dataconversion.MediaType} as "application/x-java-object", or preferably, avoid storing unmarshalled content when using the server and use the new <a href="http://infinispan.org/docs/dev/user_guide/user_guide.html#embedded_remote_interoperability_a_id_endpoint_interop_a">endpoint interoperability mechanism</a>
+    */
+   @Deprecated
    CompatibilityModeConfigurationBuilder compatibility();
 
    MemoryConfigurationBuilder memory();

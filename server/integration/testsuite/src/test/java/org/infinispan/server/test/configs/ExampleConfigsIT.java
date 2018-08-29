@@ -9,7 +9,6 @@ import static org.infinispan.server.test.util.ITestUtils.eventually;
 import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
 import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 import static org.infinispan.server.test.util.ITestUtils.stopContainers;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -27,8 +26,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -217,13 +216,13 @@ public class ExampleConfigsIT {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = "standalone-compatibility-mode")})
-    public void testCompatibilityModeConfig() throws Exception {
+    @WithRunningServer({@RunningServer(name = "standalone-endpoints-interoperability")})
+    public void testEndpointInteroperability() throws Exception {
         MemcachedClient memcachedClient = null;
         CloseableHttpClient restClient = null;
         try {
-            RemoteInfinispanMBeans s1 = createRemotes("standalone-compatibility-mode", "local", DEFAULT_CACHE_NAME);
-            RemoteCache<Object, Object> s1Cache = createCache(s1);
+            RemoteInfinispanMBeans s1 = createRemotes("standalone-endpoints-interoperability", "local", DEFAULT_CACHE_NAME);
+            RemoteCache<String, String> s1Cache = createCache(s1);
             restClient = HttpClients.createDefault();
             String restUrl = "http://" + s1.server.getHotrodEndpoint().getInetAddress().getHostName() + ":8080"
                     + s1.server.getRESTEndpoint().getContextPath() + "/" + DEFAULT_CACHE_NAME;
@@ -232,32 +231,32 @@ public class ExampleConfigsIT {
             String key = "1";
 
             // 1. Put with Hot Rod
-            assertEquals(null, s1Cache.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1".getBytes()));
-            assertArrayEquals("v1".getBytes(), (byte[]) s1Cache.get(key));
+            assertNull(s1Cache.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
+            assertEquals("v1", s1Cache.get(key));
 
             // 2. Get with REST
             HttpGet get = new HttpGet(restUrl + "/" + key);
-            get.addHeader("Accept", ContentType.APPLICATION_OCTET_STREAM.toString());
+            get.addHeader("Accept", ContentType.TEXT_PLAIN.toString());
             HttpResponse getResponse = restClient.execute(get);
             assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
-            assertArrayEquals("v1".getBytes(), EntityUtils.toByteArray(getResponse.getEntity()));
+            assertEquals("v1", EntityUtils.toString(getResponse.getEntity()));
 
             // 3. Get with Memcached
-            assertArrayEquals("v1".getBytes(), memcachedClient.getBytes(key));
+            assertEquals("v1", memcachedClient.get(key));
 
             key = "2";
 
             // 1. Put with REST
             HttpPut put = new HttpPut(restUrl + "/" + key);
-            put.setEntity(new ByteArrayEntity("<hey>ho</hey>".getBytes(), ContentType.APPLICATION_OCTET_STREAM));
+            put.setEntity(new StringEntity("<hey>ho</hey>", ContentType.TEXT_PLAIN));
             HttpResponse putResponse = restClient.execute(put);
             assertEquals(HttpStatus.SC_OK, putResponse.getStatusLine().getStatusCode());
 
             // 2. Get with Hot Rod
-            assertArrayEquals("<hey>ho</hey>".getBytes(), (byte[]) s1Cache.get(key));
+            assertEquals("<hey>ho</hey>", s1Cache.get(key));
 
             // 3. Get with Memcached
-            assertArrayEquals("<hey>ho</hey>".getBytes(), memcachedClient.getBytes(key));
+            assertEquals("<hey>ho</hey>", memcachedClient.get(key));
         } finally {
             if (restClient != null) {
                 restClient.close();
@@ -678,7 +677,7 @@ public class ExampleConfigsIT {
         return rcmFactory.createCache(configBuilder, cacheBeans.cacheName);
     }
 
-    protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans) {
+    protected <K, V> RemoteCache<K, V> createCache(RemoteInfinispanMBeans cacheBeans) {
         return rcmFactory.createCache(cacheBeans);
     }
 

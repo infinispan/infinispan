@@ -139,7 +139,7 @@
       <module>integrationtests</module>
       <module>integrationtests/wildfly-modules</module>
       <module>integrationtests/as-lucene-directory</module>
-      <module>integrationtests/compatibility-mode-it</module>
+      <module>integrationtests/endpoints-interop-it</module>
       <module>integrationtests/cdi-jcache-it</module>
       <module>integrationtests/security-it</module>
       <module>integrationtests/security-manager-it</module>
@@ -415,7 +415,7 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-compatibility-mode-it</artifactId>
+            <artifactId>infinispan-endpoint-interop-it</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>

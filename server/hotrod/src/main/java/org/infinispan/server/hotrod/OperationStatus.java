@@ -53,8 +53,8 @@ public enum OperationStatus {
       return intMap.get(code);
    }
 
-   static OperationStatus withLegacyStorageHint(OperationStatus st, boolean isCompatibilityEnabled) {
-      if (isCompatibilityEnabled) {
+   static OperationStatus withLegacyStorageHint(OperationStatus st, boolean isObjectStorage) {
+      if (isObjectStorage) {
          switch (st) {
             case Success:
                return SuccessObjStorage;

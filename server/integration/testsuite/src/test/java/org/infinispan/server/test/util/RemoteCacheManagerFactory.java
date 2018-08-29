@@ -26,11 +26,11 @@ public class RemoteCacheManagerFactory {
         return createManager(configBuilder).getCache(cacheName);
     }
 
-    public RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans beans) {
+    public <K, V> RemoteCache<K, V> createCache(RemoteInfinispanMBeans beans) {
         return createCache(beans, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
     }
 
-    public RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans beans, String protocolVersion) {
+    public <K, V> RemoteCache<K, V> createCache(RemoteInfinispanMBeans beans, String protocolVersion) {
         return createManager(beans.server, protocolVersion).getCache(beans.cacheName);
     }
 

@@ -75,12 +75,8 @@ public interface MetaParam<T> {
     * }</pre>
     *
     * <p>A user that queries meta parameters can never assume that the
-    * meta parameter will always exist because there are scenarios, such as
-    * when compatibility mode is enabled, when meta parameters that are
-    * assumed to be present are not due to the API multiplexing that occurs.
-    * For example, when compatibility mode is enabled, the REST server can't
-    * assume that MIME metadata will be present since data might have been
-    * stored with embedded or remote (Hot Rod) API.
+    * meta parameter will always exist because some of them depends on the
+    * cache usage.
     *
     * @since 8.0
     */
