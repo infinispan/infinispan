@@ -3,7 +3,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-license</artifactId>
-   <version>9.3.1-SNAPSHOT</version>
+   <version>9.3.2.Final</version>
    <name>Infinispan License Bundle</name>
    <description>Infinispan License Bundle module</description>
    <url>http://www.infinispan.org</url>
