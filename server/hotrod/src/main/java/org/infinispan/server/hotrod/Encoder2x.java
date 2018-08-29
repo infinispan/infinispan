@@ -442,7 +442,7 @@ class Encoder2x implements VersionedEncoder {
          if (configuration != null) {
             keyMediaType = configuration.encoding().keyDataType().mediaType();
             valueMediaType = configuration.encoding().valueDataType().mediaType();
-            objectStorage = configuration.compatibility().enabled() || APPLICATION_OBJECT.match(keyMediaType);
+            objectStorage = APPLICATION_OBJECT.match(keyMediaType);
          }
       }
 
@@ -494,11 +494,11 @@ class Encoder2x implements VersionedEncoder {
       buffer.writeByte(0); // no topology change
    }
 
-   private void writeStatus(HotRodHeader header, ByteBuf buf, HotRodServer server, boolean compatibilityEnabled, OperationStatus status) {
+   private void writeStatus(HotRodHeader header, ByteBuf buf, HotRodServer server, boolean objStorage, OperationStatus status) {
       if (server == null || HotRodVersion.HOTROD_24.isOlder(header.version) || HotRodVersion.HOTROD_29.isAtLeast(header.version))
          buf.writeByte(status.getCode());
       else {
-         OperationStatus st = OperationStatus.withLegacyStorageHint(status, compatibilityEnabled);
+         OperationStatus st = OperationStatus.withLegacyStorageHint(status, objStorage);
          buf.writeByte(st.getCode());
       }
    }

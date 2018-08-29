@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
 public class RestEncodingTest extends SingleCacheManagerTest {
 
    private static final String REGULAR_CACHE = "default";
-   private static final String COMPAT_CACHE = "compat";
+   private static final String OBJ_CACHE = "object";
 
    private CloseableHttpClient restClient = HttpClients.createMinimal();
    private RestServer restServer;
@@ -45,14 +45,15 @@ public class RestEncodingTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder c = hotRodCacheConfiguration(getDefaultStandaloneCacheConfig(false));
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createServerModeCacheManager(c);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(c);
 
-      ConfigurationBuilder compatBuilder = new ConfigurationBuilder();
-      compatBuilder.compatibility().enable();
+      ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
+      cfgBuilder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
+            .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
 
       ConfigurationBuilder defaultBuilder = new ConfigurationBuilder();
 
-      cacheManager.defineConfiguration(COMPAT_CACHE, compatBuilder.build());
+      cacheManager.defineConfiguration(OBJ_CACHE, cfgBuilder.build());
       cacheManager.defineConfiguration(REGULAR_CACHE, defaultBuilder.build());
 
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder().port(findFreePort());
@@ -70,16 +71,16 @@ public class RestEncodingTest extends SingleCacheManagerTest {
       testRestCodecWithCache(REGULAR_CACHE);
    }
 
-   public void testRestCodecWithCompat() throws Exception {
-      testRestCodecWithCache(COMPAT_CACHE);
+   public void testRestCodecWithObjects() throws Exception {
+      testRestCodecWithCache(OBJ_CACHE);
    }
 
    public void testRestEncoding() throws Exception {
       testRestEncodingWithCache(REGULAR_CACHE);
    }
 
-   public void testRestEncodingWithCompat() throws Exception {
-      testRestEncodingWithCache(COMPAT_CACHE);
+   public void testRestEncodingWithObjects() throws Exception {
+      testRestEncodingWithCache(OBJ_CACHE);
    }
 
    private String getRestEndpoint(String cache, String key) {

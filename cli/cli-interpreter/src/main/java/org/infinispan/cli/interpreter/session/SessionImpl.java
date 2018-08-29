@@ -1,5 +1,7 @@
 package org.infinispan.cli.interpreter.session;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+
 import java.util.Collection;
 
 import javax.transaction.TransactionManager;
@@ -15,6 +17,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -166,8 +169,13 @@ public class SessionImpl implements Session {
 
    @Override
    public Codec getCodec() {
-      if(cache.getCacheConfiguration().compatibility().enabled()) return NO_OP_CODEC;
+      if (isObjectStorage()) return NO_OP_CODEC;
       return codec;
+   }
+
+   boolean isObjectStorage() {
+      MediaType storageMediaType = cache.getAdvancedCache().getValueDataConversion().getStorageMediaType();
+      return APPLICATION_OBJECT.match(storageMediaType);
    }
 
    @Override
@@ -176,7 +184,7 @@ public class SessionImpl implements Session {
       if (c == null) {
          throw log.noSuchCodec(codec);
       } else {
-         if(cache.getCacheConfiguration().compatibility().enabled()) return NO_OP_CODEC;
+         if (isObjectStorage()) return NO_OP_CODEC;
          return c;
       }
    }

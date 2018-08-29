@@ -307,13 +307,16 @@
          </cache-container>
       </replacement>
    </supplement>
-   <supplement name="compatibility-mode">
+   <supplement name="endpoint-interoperability">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <global-state />
             <local-cache name="default">
-               <compatibility enabled="true" />
+               <encoding>
+                  <key media-type="text/plain"/>
+                  <value media-type="text/plain"/>
+               </encoding>
             </local-cache>
          </cache-container>
       </replacement>

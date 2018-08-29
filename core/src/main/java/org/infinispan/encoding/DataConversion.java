@@ -6,10 +6,8 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.BinaryEncoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
-import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.GlobalMarshallerEncoder;
@@ -20,10 +18,7 @@ import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
@@ -32,7 +27,6 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 
 /**
@@ -64,7 +58,6 @@ public final class DataConversion {
    private boolean isKey;
    private Transcoder transcoder;
    private transient EncoderRegistry encoderRegistry;
-   private ClassWhiteList classWhiteList;
 
    private DataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass,
                           MediaType requestMediaType, MediaType storageMediaType, boolean isKey) {
@@ -156,13 +149,10 @@ public final class DataConversion {
    }
 
    @Inject
-   public void injectDependencies(GlobalConfiguration gcr, EncoderRegistry encoderRegistry, Configuration configuration, EmbeddedCacheManager cacheManager) {
+   public void injectDependencies(GlobalConfiguration gcr, EncoderRegistry encoderRegistry, Configuration configuration) {
       this.encoderRegistry = encoderRegistry;
-      this.classWhiteList = cacheManager.getClassWhiteList();
       boolean embeddedMode = Configurations.isEmbeddedMode(gcr);
       this.storageMediaType = getStorageMediaType(configuration, embeddedMode);
-      CompatibilityModeConfiguration compatibility = configuration.compatibility();
-      boolean compat = compatibility.enabled();
 
       StorageType storageType = configuration.memory().storageType();
       boolean offheap = storageType == StorageType.OFF_HEAP;
@@ -178,13 +168,9 @@ public final class DataConversion {
          if (binary) {
             encoderClass = BinaryEncoder.class;
          }
-         if (compat) {
-            boolean requestMatchStorage = storageMediaType.equals(requestMediaType);
-            this.encoderClass = embeddedMode || requestMatchStorage ? IdentityEncoder.class : CompatModeEncoder.class;
-         }
       }
       this.lookupWrapper();
-      this.lookupEncoder(compatibility, gcr);
+      this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
       this.lookupTranscoder();
    }
 
@@ -210,19 +196,6 @@ public final class DataConversion {
          } else {
             transcoder = encoderRegistry.getTranscoder(requestMediaType, storageMediaType);
          }
-      }
-   }
-
-   private void lookupEncoder(CompatibilityModeConfiguration compatConfig, GlobalConfiguration globalConfiguration) {
-      ClassLoader classLoader = globalConfiguration.classLoader();
-      this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
-      if (compatConfig.enabled() && CompatModeEncoder.class == encoder.getClass()) {
-         this.encoderClass = CompatModeEncoder.class;
-         Marshaller compatMarshaller = compatConfig.marshaller();
-         if (compatMarshaller == null) {
-            compatMarshaller = new GenericJBossMarshaller(classLoader, classWhiteList);
-         }
-         this.encoder = new CompatModeEncoder(compatMarshaller);
       }
    }
 

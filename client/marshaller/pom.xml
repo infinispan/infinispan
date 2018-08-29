@@ -48,7 +48,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-compatibility-mode-it</artifactId>
+            <artifactId>infinispan-endpoint-interop-it</artifactId>
             <scope>test</scope>
             <type>test-jar</type>
         </dependency>

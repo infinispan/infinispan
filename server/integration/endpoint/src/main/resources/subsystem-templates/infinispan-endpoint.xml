@@ -89,7 +89,7 @@
          </hotrod-connector>
       </replacement>
    </supplement>
-   <supplement name="compatibility-mode">
+   <supplement name="endpoint-interoperability">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CONNECTORS">
          <hotrod-connector socket-binding="hotrod" cache-container="local">

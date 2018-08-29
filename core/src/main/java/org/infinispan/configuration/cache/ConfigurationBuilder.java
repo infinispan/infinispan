@@ -183,6 +183,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    }
 
    @Override
+   @Deprecated
    public CompatibilityModeConfigurationBuilder compatibility() {
       return compatibility;
    }

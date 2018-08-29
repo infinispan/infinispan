@@ -37,7 +37,11 @@ public final class DataFormat {
    }
 
    public DataFormat withoutValueType() {
-      return new DataFormat(keyType, null, keyMarshaller, null);
+      DataFormat dataFormat = new DataFormat(keyType, null, keyMarshaller, null);
+      dataFormat.marshallerRegistry = this.marshallerRegistry;
+      dataFormat.defaultMarshaller = this.defaultMarshaller;
+      dataFormat.isObjectStorage = this.isObjectStorage;
+      return dataFormat;
    }
 
    public MediaType getKeyType() {

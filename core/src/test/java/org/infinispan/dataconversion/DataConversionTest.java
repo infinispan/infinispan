@@ -12,7 +12,6 @@ import static org.testng.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,8 +19,6 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.configuration.ClassWhiteList;
-import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
@@ -50,7 +47,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -163,54 +159,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
          }
       });
 
-   }
-
-   @Test
-   public void testCompatModeEncoder() {
-      ConfigurationBuilder cfg = new ConfigurationBuilder();
-
-      JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller(new ClassWhiteList(
-            Arrays.asList("java.lang.*", ".*Person.*")));
-
-      cfg.compatibility().marshaller(marshaller).enable();
-
-      withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createServerModeCacheManager(cfg)) {
-
-         private byte[] marshall(Object o) throws IOException, InterruptedException {
-            return marshaller.objectToByteBuffer(o);
-         }
-
-         @Override
-         public void call() throws IOException, InterruptedException {
-            cm.getClassWhiteList().addClasses(Person.class);
-            Cache<byte[], byte[]> cache = cm.getCache();
-
-            Cache c = cache.getAdvancedCache().withEncoding(CompatModeEncoder.class);
-
-            // Write encoded content to the cache
-            int key1 = 2017;
-            Person value1 = new Person();
-            byte[] encodedKey = marshall(key1);
-            byte[] encodedValue = marshall(value1);
-            c.put(encodedKey, encodedValue);
-
-            // Read encoded content
-            assertEquals(c.get(encodedKey), encodedValue);
-
-            // Read without encoding
-            Cache noEncodingCache = cache.getAdvancedCache().withEncoding(IdentityEncoder.class);
-            assertEquals(noEncodingCache.get(key1), value1);
-
-            // Write unencoded content and read encoded
-            int key2 = 2019;
-            Person value2 = new Person("another");
-            noEncodingCache.put(key2, value2);
-
-
-            assertEquals(c.get(marshall(key2)), marshall(value2));
-         }
-      });
    }
 
    @Test

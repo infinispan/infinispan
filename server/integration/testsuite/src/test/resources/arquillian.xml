@@ -65,6 +65,20 @@
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
+        <container qualifier="standalone-endpoints-interoperability" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">examples/standalone-endpoints-interoperability.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
+                <property name="waitForPorts">11222 8080 11211</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
         <container qualifier="example-hotrod-rolling-upgrade-2" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
@@ -100,7 +114,7 @@
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
-                <property name="serverConfig">examples/standalone-compatibility-mode.xml</property>
+                <property name="serverConfig">testsuite/standalone-compatibility-mode.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
@@ -380,20 +394,6 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="waitForPorts">11222 8080</property>
-                <property name="jmxDomain">${server.jmx.domain}</property>
-            </configuration>
-        </container>
-        <container qualifier="standalone-compatibility-mode" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">examples/standalone-compatibility-mode.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
-                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Djgroups.join_timeout=2000
-                </property>
-                <property name="waitForPorts">11222 8080 11211</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>

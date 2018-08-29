@@ -702,7 +702,7 @@
       </xs:element>
       <xs:element name="compatibility" type="tns:compatibility" minOccurs="0">
         <xs:annotation>
-          <xs:documentation>The cache compatibility mode configuration.</xs:documentation>
+          <xs:documentation>Deprecated. The cache compatibility mode configuration.</xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="store-as-binary" type="tns:store-as-binary" minOccurs="0">

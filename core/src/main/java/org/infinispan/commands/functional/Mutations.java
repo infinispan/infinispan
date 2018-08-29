@@ -13,7 +13,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 
 /**
@@ -89,9 +88,8 @@ final class Mutations {
          GlobalConfiguration globalConfiguration = registry.getGlobalComponentRegistry().getGlobalConfiguration();
          EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
          Configuration configuration = registry.getComponent(Configuration.class);
-         EmbeddedCacheManager cacheManager = registry.getComponent(EmbeddedCacheManager.class);
-         keyDataConversion.injectDependencies(globalConfiguration, encoderRegistry, configuration, cacheManager);
-         valueDataConversion.injectDependencies(globalConfiguration, encoderRegistry, configuration, cacheManager);
+         keyDataConversion.injectDependencies(globalConfiguration, encoderRegistry, configuration);
+         valueDataConversion.injectDependencies(globalConfiguration, encoderRegistry, configuration);
       }
    }
 

@@ -114,6 +114,7 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
+   @Deprecated
    public CompatibilityModeConfigurationBuilder compatibility() {
       return builder.compatibility();
    }

@@ -182,7 +182,6 @@
                    removeRestSecurity="true"/>
         <transform templateFile="${examples.transform}" in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rest-remote-destination.xml" removeRestSecurity="true"/>
-        <transform templateFile="${examples.transform}" in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml" removeRestSecurity="true"/>
     </target>
 
     <target name="transform-distro1-configs" depends="create-distro1">
@@ -200,6 +199,7 @@
         <transform in="clustered.xml" out="testsuite/clustered-filters-repl.xml" modifyInfinispan="${infinispan.parts}/filters-repl.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-filters-dist.xml" modifyInfinispan="${infinispan.parts}/filters-dist.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-filters-local.xml" modifyInfinispan="${infinispan.parts}/filters-local.xml" filtering="true"/>
+        <transform in="standalone.xml" out="testsuite/standalone-compatibility-mode.xml" modifyInfinispan="${infinispan.parts}/compatibility-mode.xml" filtering="true" infinispanServerEndpoint="${infinispan.parts}/all-endpoints-local.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-remote-iterator-local.xml" modifyInfinispan="${infinispan.parts}/remote-iterator.xml" filtering="true"/>
         <transform in="examples/standalone-rcs-local.xml" out="testsuite/standalone-rcs-local.xml"
                    modifyInfinispan="${infinispan.parts}/rcs-local.xml"
