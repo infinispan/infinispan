@@ -1,79 +1,98 @@
 package org.infinispan.query.clustered;
 
-import java.io.Serializable;
-import java.util.UUID;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
 
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.query.impl.externalizers.ExternalizerIds;
 
 /**
- * QueryResponse.
- *
- * A response of a request to create a new distributed lazy iterator
+ * The response for a {@link ClusteredQueryCommand}.
  *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class QueryResponse implements Serializable {
+public final class QueryResponse {
 
-   private static final long serialVersionUID = -2113889511877165954L;
+   private final NodeTopDocs nodeTopDocs;
 
-   private UUID nodeUUID;
+   private final Integer resultSize;
 
-   private NodeTopDocs nodeTopDocs;
+   private final Object fetchedValue;
 
-   private Address address;
-
-   private Integer resultSize;
-
-   private Object fetchedValue;
-
-   public NodeTopDocs getTopDocs() {
-      return nodeTopDocs;
+   public QueryResponse() {
+      nodeTopDocs = null;
+      resultSize = null;
+      fetchedValue = null;
    }
 
-   public QueryResponse(Object value) {
-      fetchedValue = value;
+   public QueryResponse(Object fetchedValue) {
+      this.fetchedValue = fetchedValue;
+      nodeTopDocs = null;
+      resultSize = null;
    }
 
    public QueryResponse(int resultSize) {
       this.resultSize = resultSize;
+      nodeTopDocs = null;
+      fetchedValue = null;
    }
 
-   public QueryResponse(NodeTopDocs nodeTopDocs, UUID nodeUUid, int resultSize) {
-      this.nodeUUID = nodeUUid;
+   public QueryResponse(NodeTopDocs nodeTopDocs) {
       this.nodeTopDocs = nodeTopDocs;
-      this.resultSize = resultSize;
+      this.resultSize = nodeTopDocs.topDocs.totalHits;
+      fetchedValue = null;
    }
 
-   public boolean nonEmpty() {
-      return resultSize > 0;
+   public NodeTopDocs getNodeTopDocs() {
+      return nodeTopDocs;
    }
 
-   public ClusteredTopDocs toClusteredTopDocs() {
-      if(nodeTopDocs == null) throw new IllegalStateException("ClusteredTopDocs can't be created from an empty QueryResponse");
-      ClusteredTopDocs clusteredTopDocs = new ClusteredTopDocs(this.getTopDocs(), this.getNodeUUID());
-      clusteredTopDocs.setNodeAddress(this.getAddress());
-      return clusteredTopDocs;
-   }
-
-   public int getResultSize() {
+   public Integer getResultSize() {
       return resultSize;
-   }
-
-   public UUID getNodeUUID() {
-      return nodeUUID;
-   }
-
-   public void setAddress(Address address) {
-      this.address = address;
-   }
-
-   public Address getAddress() {
-      return address;
    }
 
    public Object getFetchedValue() {
       return fetchedValue;
    }
 
+   public static final class Externalizer implements AdvancedExternalizer<QueryResponse> {
+
+      @Override
+      public Set<Class<? extends QueryResponse>> getTypeClasses() {
+         return Collections.singleton(QueryResponse.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return ExternalizerIds.CLUSTERED_QUERY_COMMAND_RESPONSE;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, QueryResponse queryResponse) throws IOException {
+         output.writeObject(queryResponse.nodeTopDocs);
+         if (queryResponse.nodeTopDocs == null) {
+            output.writeObject(queryResponse.resultSize);
+            if (queryResponse.resultSize == null) {
+               output.writeObject(queryResponse.fetchedValue);
+            }
+         }
+      }
+
+      @Override
+      public QueryResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         NodeTopDocs nodeTopDocs = (NodeTopDocs) input.readObject();
+         if (nodeTopDocs != null) {
+            return new QueryResponse(nodeTopDocs);
+         }
+         Integer resultSize = (Integer) input.readObject();
+         if (resultSize != null) {
+            return new QueryResponse(resultSize.intValue());
+         }
+         return new QueryResponse(input.readObject());
+      }
+   }
 }

@@ -3,21 +3,18 @@ package org.infinispan.query.clustered.commandworkers;
 import org.infinispan.query.clustered.QueryResponse;
 
 /**
- * CQKillLazyIterator.
- *
  * Close a distributed lazy iterator...
  *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class CQKillLazyIterator extends ClusteredQueryCommandWorker {
+final class CQKillLazyIterator extends CQWorker {
 
    @Override
-   public QueryResponse perform() {
-      getQueryBox().kill(lazyQueryId);
+   QueryResponse perform() {
+      getQueryBox().kill(queryId);
 
       // Not ideal, but more sane
-      return new QueryResponse(null);
+      return new QueryResponse();
    }
-
 }

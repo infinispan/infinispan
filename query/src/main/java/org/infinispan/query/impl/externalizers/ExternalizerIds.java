@@ -54,4 +54,6 @@ public interface ExternalizerIds {
    Integer LUCENE_QUERY_FUZZY = 1620;
 
    Integer QUERY_DEFINITION = 1621;
+
+   Integer CLUSTERED_QUERY_COMMAND_RESPONSE = 1622;
 }

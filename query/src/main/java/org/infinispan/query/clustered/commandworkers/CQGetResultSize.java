@@ -5,17 +5,15 @@ import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.query.clustered.QueryResponse;
 
 /**
- * CQGetResultSize.
- *
  * Get the result size of this query on current node
  *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class CQGetResultSize extends ClusteredQueryCommandWorker {
+final class CQGetResultSize extends CQWorker {
 
    @Override
-   public QueryResponse perform() {
+   QueryResponse perform() {
       HSQuery query = queryDefinition.getHsQuery();
       query.afterDeserialise(getSearchFactory());
       try (DocumentExtractor ignored = query.queryDocumentExtractor()) {
@@ -23,5 +21,4 @@ public class CQGetResultSize extends ClusteredQueryCommandWorker {
          return new QueryResponse(resultSize);
       }
    }
-
 }
