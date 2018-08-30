@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * AsyncCache. This interface is implemented by caches which support asynchronous variants of the various
@@ -312,4 +314,12 @@ public interface AsyncCache<K, V> {
          return map;
       });
    }
+
+   CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
+
+   CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K,? extends V> mappingFunction);
+
+   CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
+
+   CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V,? super V,? extends V> remappingFunction);
 }

@@ -3,6 +3,7 @@ package org.infinispan.security;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -849,4 +850,23 @@ public class SecureCacheTestDriver {
       cache.addStorageFormatFilteredListener(listener, keyValueFilter, converter, Collections.emptySet());
    }
 
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfAbsentAsync_Object_SerializableFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+      cache.computeIfAbsentAsync("b", k -> "no").get();
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testMergeAsync_Object_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+      cache.mergeAsync("a", "b", (k, v) -> "no", metadata).get();
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfPresentAsync_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+      cache.computeIfPresentAsync("a", (k, v) -> "yes", metadata).get();
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeAsync_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
+      cache.computeAsync("a", (k, v) -> "yes", metadata).get();
+   }
 }

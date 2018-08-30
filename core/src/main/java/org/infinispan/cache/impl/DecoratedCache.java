@@ -635,6 +635,26 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       return merge(key, value, remappingFunction, cacheImplementation.defaultMetadata);
    }
 
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return computeAsync(key, remappingFunction, cacheImplementation.defaultMetadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return computeIfPresentAsync(key, remappingFunction, cacheImplementation.defaultMetadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
+      return computeIfAbsentAsync(key, mappingFunction, cacheImplementation.defaultMetadata);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return mergeAsync(key, value, remappingFunction, cacheImplementation.defaultMetadata);
+   }
+
    //Not exposed on interface
    public long getFlagsBitSet() {
       return flags;

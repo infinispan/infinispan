@@ -366,7 +366,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return executeCommandAndCommitIfNeeded(contextBuilder, command, 1);
    }
 
-
    @Override
    public final CompletableFuture<V> putAsync(K key, V value) {
       return putAsync(key, value, defaultMetadata);
@@ -1633,6 +1632,104 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       assertKeyNotNull(key);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, keyPartitioner.getSegment(key), explicitFlags);
       return (CompletableFuture<V>) invoker.invokeAsync(ctx, command);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return computeAsync(key, remappingFunction, false);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return computeAsyncInternal(key, remappingFunction, false, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return computeAsync(key, remappingFunction, true);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return computeAsyncInternal(key, remappingFunction, true, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   private CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent) {
+      return computeAsyncInternal(key, remappingFunction, computeIfPresent, applyDefaultMetadata(defaultMetadata), addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   private CompletableFuture<V> computeAsyncInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent, Metadata metadata, long flags) {
+      return computeAsyncInternal(key, remappingFunction, computeIfPresent, metadata, flags, contextBuilder);
+   }
+
+   CompletableFuture<V> computeAsyncInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent,
+                                             Metadata metadata, long flags, ContextBuilder contextBuilder) {
+      assertKeyNotNull(key);
+      assertFunctionNotNull(remappingFunction);
+      ComputeCommand command = commandsFactory.buildComputeCommand(key, remappingFunction, computeIfPresent,
+            keyPartitioner.getSegment(key), metadata, flags);
+      return executeCommandAndCommitIfNeededAsync(contextBuilder, command, 1);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
+      return computeIfAbsentAsync(key, mappingFunction, defaultMetadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return computeIfAbsentAsyncInternal(key, mappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
+            contextBuilder);
+   }
+
+   CompletableFuture<V> computeIfAbsentAsyncInternal(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata, long flags,
+                             ContextBuilder contextBuilder) {
+      assertKeyNotNull(key);
+      assertFunctionNotNull(mappingFunction);
+      ComputeIfAbsentCommand command = commandsFactory.buildComputeIfAbsentCommand(key, mappingFunction,
+            keyPartitioner.getSegment(key), metadata, flags);
+      return executeCommandAndCommitIfNeededAsync(contextBuilder, command, 1);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return mergeInternalAsync(key, value, remappingFunction, defaultMetadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
+            contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(defaultMetadata.maxIdle(), MILLISECONDS).build();
+      return mergeInternalAsync(key, value, remappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
+            contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, idleTimeUnit).build();
+      return mergeInternalAsync(key, value, remappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
+            contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return mergeInternalAsync(key, value, remappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
+            contextBuilder);
+   }
+
+   CompletableFuture<V> mergeInternalAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata,
+                   long flags, ContextBuilder contextBuilder) {
+      assertKeyNotNull(key);
+      assertValueNotNull(value);
+      assertFunctionNotNull(remappingFunction);
+      ReadWriteKeyCommand<K, V, V> command = commandsFactory.buildReadWriteKeyCommand(key,
+            new MergeFunction<>(value, remappingFunction, metadata), keyPartitioner.getSegment(key),
+            Params.fromFlagsBitSet(flags), getKeyDataConversion(), getValueDataConversion());
+      return executeCommandAndCommitIfNeededAsync(contextBuilder, command, 1);
    }
 
    @Override

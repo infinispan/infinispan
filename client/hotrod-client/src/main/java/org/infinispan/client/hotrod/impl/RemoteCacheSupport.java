@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.client.hotrod.RemoteCache;
 
@@ -184,5 +185,25 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan,
                   TimeUnit lifespanUnit) {
       return merge(key, value, remappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      throw new UnsupportedOperationException();
    }
 }

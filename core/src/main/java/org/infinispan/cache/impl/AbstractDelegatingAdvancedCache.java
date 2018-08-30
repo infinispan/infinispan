@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -413,6 +414,58 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return cache.merge(key, value, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.computeAsync(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.computeIfPresentAsync(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return cache.computeIfAbsentAsync(key, mappingFunction, metadata);
+   }
+
+
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return cache.mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return cache.mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.mergeAsync(key, value, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return cache.computeAsync(key, remappingFunction);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
+      return cache.computeIfAbsentAsync(key, mappingFunction);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return cache.computeIfPresentAsync(key, remappingFunction);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return cache.mergeAsync(key, value, remappingFunction);
    }
 
    @Override
