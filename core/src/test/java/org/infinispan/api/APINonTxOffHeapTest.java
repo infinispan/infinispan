@@ -34,6 +34,11 @@ public class APINonTxOffHeapTest extends APINonTxTest {
       return this;
    }
 
+   @Override
+   protected String parameters() {
+      return "[" + storageType + "]";
+   }
+
    @Factory
    public Object[] factory() {
       return new Object[]{
@@ -77,7 +82,7 @@ public class APINonTxOffHeapTest extends APINonTxTest {
       assertEquals("K", cache.getOrDefault("Not there", "K"));
    }
 
-   public void testMerge() throws Exception {
+   public void testMerge() {
       cache.put("A", "B");
 
       // replace
@@ -225,27 +230,4 @@ public class APINonTxOffHeapTest extends APINonTxTest {
          this.value = value;
       }
    }
-
-   static class FalseEqualsKey implements Serializable, ExternalPojo {
-      private static final long serialVersionUID = 1L;
-
-      final String name;
-      final int value;
-
-      FalseEqualsKey(String name, int value) {
-         this.name = name;
-         this.value = value;
-      }
-
-      @Override
-      public int hashCode() {
-         return 0;
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-         return false;
-      }
-   }
-
 }

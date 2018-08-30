@@ -78,6 +78,16 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "StorageType");
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), storageType);
+   }
+
    public Object[] factory() {
       return new Object[]{
             new ClusteredCacheTest().storageType(StorageType.OFF_HEAP),
@@ -684,7 +694,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
             .buildQueryBuilderForClass(Person.class)
             .get();
       Query allQuery = queryBuilder.all().createQuery();
-      assertTrue(searchManager.getQuery(allQuery, Person.class).list().size() == 3);
+      assertEquals(3, searchManager.getQuery(allQuery, Person.class).list().size());
 
       String key = "newGoat";
       person4 = new Person(key, "eats something", 42);

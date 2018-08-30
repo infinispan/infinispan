@@ -93,7 +93,7 @@ import org.testng.annotations.Factory;
 })
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
-   protected List<EmbeddedCacheManager> cacheManagers = Collections.synchronizedList(new ArrayList<EmbeddedCacheManager>());
+   protected List<EmbeddedCacheManager> cacheManagers = Collections.synchronizedList(new ArrayList<>());
    protected IdentityHashMap<Cache<?, ?>, ReplListener> listeners = new IdentityHashMap<>();
    // the cache mode set in configuration is shared in many tests, therefore we'll place the field,
    // fluent setter cacheMode(...) and parameters() to this class.
@@ -569,10 +569,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
             modifiers[mi].accept((MultipleCacheManagersTest) tests[i + j]);
          }
       }
-   }
-
-   public List<MultipleCacheManagersTest> expand() {
-      return new ArrayList<>();
    }
 
    private <Mode, A extends Annotation> Consumer<MultipleCacheManagersTest>[] getModifiers(Class<A> annotationClass, Function<A, Mode[]> methodRetriever, BiConsumer<MultipleCacheManagersTest, Mode> applier) {

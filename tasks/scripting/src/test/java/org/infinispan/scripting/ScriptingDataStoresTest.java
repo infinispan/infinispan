@@ -23,7 +23,13 @@ import org.testng.annotations.Test;
 public class ScriptingDataStoresTest extends AbstractScriptingTest {
 
    static final String CACHE_NAME = "script-exec";
+
    protected StorageType storageType;
+
+   @Override
+   protected String parameters() {
+      return "[" + storageType + "]";
+   }
 
    @Factory
    public Object[] factory() {

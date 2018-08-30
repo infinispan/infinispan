@@ -33,13 +33,12 @@ public class SingleClusterExecutorTest extends AllClusterExecutorTest {
    }
 
    @Override
-   public String toString() {
-      return "SingleClusterExecutorTest{ local = " + local + "}";
+   protected String parameters() {
+      return "[" + local + "]";
    }
 
    @Factory
    public Object[] factory() {
-      System.currentTimeMillis();
       return new Object[] {
             new SingleClusterExecutorTest().executeLocal(true),
             new SingleClusterExecutorTest().executeLocal(false)

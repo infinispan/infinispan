@@ -25,6 +25,11 @@ public class SingleFileStoreTest extends BaseStoreTest {
    protected String tmpDirectory;
    protected StorageType storage;
 
+   @Override
+   protected String parameters() {
+      return "[" + storage + "]";
+   }
+
    @Factory
    public Object[] factory() {
       return new Object[]{
@@ -41,7 +46,7 @@ public class SingleFileStoreTest extends BaseStoreTest {
 
    @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = TestingUtil.tmpDirectory(getClass());
    }
 
    @AfterClass(alwaysRun = true)
@@ -50,7 +55,7 @@ public class SingleFileStoreTest extends BaseStoreTest {
    }
 
    @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
+   protected AdvancedLoadWriteStore createStore() {
       clearTempDir();
       SingleFileStore store = new SingleFileStore();
       ConfigurationBuilder configurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);

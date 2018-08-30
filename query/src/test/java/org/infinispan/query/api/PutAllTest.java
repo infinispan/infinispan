@@ -28,6 +28,11 @@ public class PutAllTest extends SingleCacheManagerTest {
 
    private StorageType storageType;
 
+   @Override
+   protected String parameters() {
+      return "[" + storageType + "]";
+   }
+
    @Factory
    public Object[] factory() {
       return new Object[] {

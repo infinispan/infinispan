@@ -20,6 +20,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "container.offheap.OffHeapSingleNodeExpirationEvictionTest")
 public class OffHeapSingleNodeExpirationEvictionTest extends OffHeapSingleNodeTest {
+
    private enum EXPIRE_TYPE {
       MORTAL,
       TRANSIENT,
@@ -37,6 +38,16 @@ public class OffHeapSingleNodeExpirationEvictionTest extends OffHeapSingleNodeTe
    private OffHeapSingleNodeExpirationEvictionTest eviction(boolean enable) {
       eviction = enable;
       return this;
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "EXPIRE_TYPE", "eviction");
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), expirationType, eviction);
    }
 
    @Override
@@ -79,8 +90,7 @@ public class OffHeapSingleNodeExpirationEvictionTest extends OffHeapSingleNodeTe
 
       DataConversion dataConversion = cache.getAdvancedCache().getKeyDataConversion();
 
-      CacheEntry<String, String> entry = cache.getAdvancedCache().getDataContainer().get(
-            dataConversion.toStorage("k"));
+      CacheEntry<String, String> entry = cache.getAdvancedCache().getDataContainer().get(dataConversion.toStorage("k"));
 
       assertNotNull(entry);
       long storedTime = TimeUnit.MINUTES.toMillis(10);
