@@ -34,9 +34,9 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
       ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(cacheMode, false);
       createClusteredCaches(3, defaultConfig, new TransportFlags().withFD(true).withMerge(true));
 
-      DISCARD d1 = TestingUtil.getDiscardForCache(cache(0));
-      DISCARD d2 = TestingUtil.getDiscardForCache(cache(1));
-      DISCARD d3 = TestingUtil.getDiscardForCache(cache(2));
+      DISCARD d1 = TestingUtil.getDiscardForCache(manager(0));
+      DISCARD d2 = TestingUtil.getDiscardForCache(manager(1));
+      DISCARD d3 = TestingUtil.getDiscardForCache(manager(2));
       discard = new DISCARD[]{d1, d2, d3};
    }
 

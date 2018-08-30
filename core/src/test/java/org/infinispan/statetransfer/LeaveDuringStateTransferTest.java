@@ -70,7 +70,7 @@ public class LeaveDuringStateTransferTest extends MultipleCacheManagersTest {
          // Block rebalance that could follow even if the previous rebalance was not completed
 
          log.debug("Isolating node " + cacheManagers.get(1));
-         TestingUtil.getDiscardForCache(cache(1)).setDiscardAll(true);
+         TestingUtil.getDiscardForCache(manager(1)).setDiscardAll(true);
          TestingUtil.blockUntilViewsReceived(60000, true, cacheManagers);
 
          log.debug("Waiting for topology update from view change");
