@@ -290,6 +290,56 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return CompletableFuture.completedFuture(compute(key, remappingFunction, metadata));
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return CompletableFuture.completedFuture(computeIfPresent(key, remappingFunction, metadata));
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return CompletableFuture.completedFuture(computeIfAbsent(key, mappingFunction, metadata));
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return CompletableFuture.completedFuture(merge(key, value, remappingFunction, lifespan, lifespanUnit));
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return CompletableFuture.completedFuture(merge(key, value, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return CompletableFuture.completedFuture(merge(key, value, remappingFunction, metadata));
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return CompletableFuture.completedFuture(compute(key, remappingFunction));
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
+      return CompletableFuture.completedFuture(computeIfAbsent(key, mappingFunction));
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return CompletableFuture.completedFuture(computeIfPresent(key, remappingFunction));
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return CompletableFuture.completedFuture(merge(key, value, remappingFunction));
+   }
+
+   @Override
    public Map<K, V> getGroup(String groupName) {
       return Collections.emptyMap();
    }

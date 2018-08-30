@@ -436,6 +436,66 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeAsync(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfPresentAsync(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfAbsentAsync(key, mappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.mergeAsync(key, value, remappingFunction, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeAsync(key, remappingFunction);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfAbsentAsync(key, mappingFunction);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfPresentAsync(key, remappingFunction);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.mergeAsync(key, value, remappingFunction);
+   }
+
+   @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit unit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       delegate.putForExternalRead(key, value);

@@ -590,6 +590,123 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    CompletableFuture<V> putAsync(K key, V value, Metadata metadata);
 
+   /**
+    * Overloaded {@link #computeAsync(K, BiFunction)}, which stores metadata alongside the value.  This
+    * method does not block on remote calls, even if your cache mode is synchronous.
+    *
+    * @param key               key with which the specified value is associated
+    * @param remappingFunction function to be applied to the specified key/value
+    * @param metadata          information to store alongside the new value
+    * @return the previous value associated with the specified key, or <tt>null</tt> if remapping function is gives
+    * null.
+    * @since 9.4
+    */
+   CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata);
+
+   /**
+    * Overloaded {@link #computeAsync(Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
+    * @since 9.4
+    */
+   default CompletableFuture<V> computeAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return this.computeAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, metadata);
+   }
+
+   /**
+    * Overloaded {@link #computeIfPresentAsync(K, BiFunction)}, which takes in an instance of {@link Metadata}
+    * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
+    * value...etc. The {@link Metadata} is only stored if the call is successful.
+    *
+    * @param key               key with which the specified value is associated
+    * @param remappingFunction function to be applied to the specified key/value
+    * @param metadata          information to store alongside the new value
+    * @return the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the
+    * key.
+    * @since 9.4
+    */
+   CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata);
+
+   /**
+    * Overloaded {@link #computeIfPresentAsync(Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
+    * @since 9.4
+    */
+   default CompletableFuture<V> computeIfPresentAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return this.computeIfPresentAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, metadata);
+   }
+
+   /**
+    * Overloaded {@link #computeIfAbsentAsync(K, Function)}, which takes in an instance of {@link Metadata} which
+    * can be used to provide metadata information for the entry being stored, such as lifespan, version of value...etc.
+    * The {@link Metadata} is only stored if the call is successful.
+    *
+    * @param key             key with which the specified value is associated
+    * @param mappingFunction function to be applied to the specified key
+    * @param metadata        information to store alongside the new value
+    * @return the value created with the mapping function associated with the specified key, or the previous value
+    * associated with the specified key if the key is not absent.
+    * @since 9.4
+    */
+   CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata);
+
+   /**
+    * Overloaded {@link #computeIfAbsentAsync(Object, Function, Metadata)} with {@link SerializableFunction}
+    * @since 9.4
+    */
+   default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return this.computeIfAbsentAsync(key, (Function<? super K, ? extends V>) mappingFunction, metadata);
+   }
+
+   /**
+    * Overloaded {@link #mergeAsync(Object, Object, BiFunction)} which takes in lifespan parameters.
+    *
+    * @param key                key to use
+    * @param value              new value to merge with existing value
+    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @return the merged value that was stored under key
+    * @since 9.4
+    */
+   CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit);
+
+   /**
+    * Overloaded {@link #mergeAsync(Object, Object, BiFunction)} which takes in lifespan parameters.
+    *
+    * @param key                key to use
+    * @param value              new value to merge with existing value
+    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @param maxIdleTime        the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                           expired
+    * @param maxIdleTimeUnit    time unit for max idle time
+    * @return the merged value that was stored under key
+    * @since 9.4
+    */
+   CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
+
+   /**
+    * Overloaded {@link #mergeAsync(Object, Object, BiFunction)}, which takes in an instance of {@link Metadata}
+    * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
+    * value...etc. The {@link Metadata} is only stored if the call is successful.
+    *
+    * @param key,               key with which the resulting value is to be associated
+    * @param value,             the non-null value to be merged with the existing value associated with the key or, if
+    *                           no existing value or a null value is associated with the key, to be associated with the
+    *                           key
+    * @param remappingFunction, the function to recompute a value if present
+    * @param metadata,          information to store alongside the new value
+    * @return the new value associated with the specified key, or null if no value is associated with the key
+    * @since 9.4
+    */
+   CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata);
+
+   /**
+    * Overloaded {@link #mergeAsync(Object, Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
+    */
+   default CompletableFuture<V> mergeAsync(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return this.mergeAsync(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, metadata);
+   }
+
    // TODO: Even better: add replace/remove calls that apply the changes if a given function is successful
    // That way, you could do comparison not only on the cache value, but also based on version...etc
 

@@ -265,6 +265,26 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return cache.computeAsync(key, remappingFunction);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
+      return cache.computeIfAbsentAsync(key, mappingFunction);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return cache.computeIfPresentAsync(key, remappingFunction);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return cache.mergeAsync(key, value, remappingFunction);
+   }
+
+   @Override
    public AdvancedCache<K, V> getAdvancedCache() {
       return cache.getAdvancedCache();
    }
