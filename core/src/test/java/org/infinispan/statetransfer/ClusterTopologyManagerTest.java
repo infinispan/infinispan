@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -62,9 +61,9 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       c1 = cache(0, CACHE_NAME);
       c2 = cache(1, CACHE_NAME);
       c3 = cache(2, CACHE_NAME);
-      d1 = TestingUtil.getDiscardForCache(c1);
-      d2 = TestingUtil.getDiscardForCache(c2);
-      d3 = TestingUtil.getDiscardForCache(c3);
+      d1 = TestingUtil.getDiscardForCache(c1.getCacheManager());
+      d2 = TestingUtil.getDiscardForCache(c2.getCacheManager());
+      d3 = TestingUtil.getDiscardForCache(c3.getCacheManager());
    }
 
    @Override
@@ -461,16 +460,5 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       long endTime = System.currentTimeMillis();
       log.debugf("Recovery took %s", Util.prettyPrintTime(endTime - startTime));
       assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
-   }
-
-   public void testJoinerBecomesOnlyMember() {
-      // Keep only 2 nodes for this test
-      killMember(2, CACHE_NAME);
-      defineConfigurationOnAllManagers(OTHER_CACHE_NAME, new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration()));
-
-      d2.setDiscardAll(true);
-      fork((Callable<Object>) () -> cache(1, OTHER_CACHE_NAME));
-      TestingUtil.blockUntilViewsReceived(30000, false, manager(1));
-      TestingUtil.waitForNoRebalance(cache(1, OTHER_CACHE_NAME));
    }
 }

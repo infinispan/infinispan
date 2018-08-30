@@ -79,7 +79,7 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
       assertEquals(numKeys, c0.entrySet().size());
       assertEquals(numKeys, c1.entrySet().size());
 
-      DISCARD d1 = TestingUtil.getDiscardForCache(c1);
+      DISCARD d1 = TestingUtil.getDiscardForCache(c1.getCacheManager());
       GlobalConfigurationBuilder gcb2 = new GlobalConfigurationBuilder();
       gcb2.transport().transport(new JGroupsTransport() {
          @Override

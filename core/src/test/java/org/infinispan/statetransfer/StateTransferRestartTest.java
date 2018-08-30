@@ -112,7 +112,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
          fork((Callable<Void>) () -> {
             log.info("KILLING the c1 cache");
             try {
-               DISCARD d3 = TestingUtil.getDiscardForCache(c1);
+               DISCARD d3 = TestingUtil.getDiscardForCache(c1.getCacheManager());
                d3.setDiscardAll(true);
                TestingUtil.killCacheManagers(manager(c1));
             } catch (Exception e) {

@@ -516,7 +516,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          setCurrentTopology(null);
          setStableTopology(null);
          rebalanceConfirmationCollector = null;
-         // TODO Remove the cache from the cache status map in ClusterTopologyManagerImpl instead
+         status = ComponentStatus.INSTANTIATED;
+
          return;
       }
 

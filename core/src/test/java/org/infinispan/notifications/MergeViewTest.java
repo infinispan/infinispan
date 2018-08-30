@@ -33,7 +33,7 @@ public class MergeViewTest extends MultipleCacheManagersTest {
       ml0 = new MergeListener();
       manager(0).addListener(ml0);
 
-      discard = TestingUtil.getDiscardForCache(cache(0));
+      discard = TestingUtil.getDiscardForCache(manager(0));
       discard.setDiscardAll(true);
 
       addClusterEnabledCacheManager(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true),
