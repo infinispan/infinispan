@@ -1320,8 +1320,8 @@ public class TestingUtil {
       return values;
    }
 
-   public static DISCARD getDiscardForCache(Cache<?, ?> c) throws Exception {
-      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
+   public static DISCARD getDiscardForCache(EmbeddedCacheManager cacheManager) throws Exception {
+      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractGlobalComponent(cacheManager, Transport.class);
       JChannel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
       DISCARD discard = new DISCARD();
