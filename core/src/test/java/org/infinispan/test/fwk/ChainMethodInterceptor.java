@@ -1,14 +1,19 @@
 package org.infinispan.test.fwk;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.IMethodInstance;
 import org.testng.IMethodInterceptor;
 import org.testng.ITestContext;
+import org.testng.TestNGException;
+import org.testng.internal.MethodInstance;
 
 /**
  * This is a workaround for TestNG limitation allowing only single IMethodInterceptor instance.
@@ -25,39 +30,46 @@ import org.testng.ITestContext;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class ChainMethodInterceptor implements IMethodInterceptor {
+   private static final Log log = LogFactory.getLog(ChainMethodInterceptor.class);
+
    @Override
    public List<IMethodInstance> intercept(List<IMethodInstance> methods, ITestContext context) {
-      Set<Class<? extends IMethodInterceptor>> interceptorSet = new HashSet<>();
-      List<Class<? extends IMethodInterceptor>> interceptorList = new ArrayList<>();
-      Set<Class<? extends Predicate<IMethodInstance>>> filters = new HashSet<>();
-      for (IMethodInstance method : methods) {
-         findInterceptors(method.getInstance().getClass(), interceptorSet, interceptorList, filters);
-      }
-      if (!filters.isEmpty()) {
-         Predicate<IMethodInstance>[] filterInstances = filters.stream().map(clazz -> {
-            try {
-               return clazz.newInstance();
-            } catch (Exception e) {
-               throw new IllegalStateException("Cannot construct filter", e);
-            }
-         }).toArray(Predicate[]::new);
-         ArrayList<IMethodInstance> filteredMethods = new ArrayList<>(methods.size());
-         METHODS: for (IMethodInstance m : methods) {
-            for (Predicate<IMethodInstance> filter : filterInstances) {
-               if (hasFilter(m.getInstance().getClass(), filter.getClass()) && !filter.test(m)) continue METHODS;
-            }
-            filteredMethods.add(m);
+      try {
+         Set<Class<? extends IMethodInterceptor>> interceptorSet = new HashSet<>();
+         List<Class<? extends IMethodInterceptor>> interceptorList = new ArrayList<>();
+         Set<Class<? extends Predicate<IMethodInstance>>> filters = new HashSet<>();
+         for (IMethodInstance method : methods) {
+            findInterceptors(method.getInstance().getClass(), interceptorSet, interceptorList, filters);
          }
-         methods = filteredMethods;
-      }
-      for (Class<? extends IMethodInterceptor> interceptor : interceptorList) {
-         try {
+         if (!filters.isEmpty()) {
+            Predicate<IMethodInstance>[] filterInstances = filters.stream().map(clazz -> {
+               try {
+                  return clazz.newInstance();
+               } catch (Exception e) {
+                  throw new IllegalStateException("Cannot construct filter", e);
+               }
+            }).toArray(Predicate[]::new);
+            ArrayList<IMethodInstance> filteredMethods = new ArrayList<>(methods.size());
+METHODS:
+            for (IMethodInstance m : methods) {
+               for (Predicate<IMethodInstance> filter : filterInstances) {
+                  if (hasFilter(m.getInstance().getClass(), filter.getClass()) && !filter.test(m))
+                     continue METHODS;
+               }
+               filteredMethods.add(m);
+            }
+            methods = filteredMethods;
+         }
+         for (Class<? extends IMethodInterceptor> interceptor : interceptorList) {
             methods = interceptor.newInstance().intercept(methods, context);
-         } catch (Exception e) {
-            throw new RuntimeException(e);
          }
+         return methods;
+      } catch (Throwable t) {
+         MethodInstance methodInstance =
+            FakeTestClass.newFailureMethodInstance(new TestNGException(t), context.getCurrentXmlTest(), context);
+
+         return Collections.singletonList(methodInstance);
       }
-      return methods;
    }
 
    private boolean hasFilter(Class<?> clazz, Class<? extends Predicate> filter) {
@@ -88,4 +100,5 @@ public class ChainMethodInterceptor implements IMethodInterceptor {
          }
       }
    }
+
 }

@@ -21,7 +21,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -45,6 +44,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestFrameworkFailure;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.test.fwk.TransportFlags;
@@ -516,12 +516,15 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
             Object[] instances = factory();
             for (int i = 0; i < instances.length; i++) {
                if (instances[i].getClass() != getClass()) {
-                  instances[i] = new FactoryError(getClass().getName() + ".factory() creates instances of " + instances[i].getClass());
+                  instances[i] = new TestFrameworkFailure("%s.factory() creates instances of %s",
+                                                          getClass().getName(), instances[i].getClass().getName());
                }
             }
             return instances;
          } else if (factory.getDeclaringClass() != MultipleCacheManagersTest.class) {
-            return new Object[]{new FactoryError(getClass().getName() + ".factory() override is missing, inherited factory() creates instances of " + factory.getDeclaringClass())};
+            return new Object[]{new TestFrameworkFailure(
+               "%s.factory() override is missing, inherited factory() creates instances of %s",
+               getClass().getName(), factory.getDeclaringClass().getName())};
          }
       } catch (NoSuchMethodException e) {
          throw new IllegalStateException("Every class should have factory method, at least inherited", e);
@@ -535,7 +538,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
                      (t, m) -> t.transactional(m.isTransactional()));
          allModifiers = asList(cacheModeModifiers, transactionModifiers);
       } catch (Exception e) {
-         return new Object[]{new FactoryError(e.getMessage())};
+         return new Object[]{new TestFrameworkFailure(e)};
       }
 
       int numTests = allModifiers.stream().mapToInt(m -> m.length).reduce(1, (m1, m2) -> m1 * m2);
@@ -545,13 +548,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       try {
          ctor = getClass().getConstructor();
       } catch (NoSuchMethodException e) {
-         return new Object[]{new FactoryError("Missing no-arg constructor in " + getClass())};
+         return new Object[]{new TestFrameworkFailure("Missing no-arg constructor in %s", getClass().getName())};
       }
       for (int i = 1; i < tests.length; ++i) {
          try {
             tests[i] = ctor.newInstance();
          } catch (Exception e) {
-            return new Object[]{new FactoryError("Cannot create test instances")};
+            return new Object[]{new TestFrameworkFailure(e)};
          }
       }
       int stride = 1;
@@ -972,7 +975,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       private final String txModeString = System.getProperty("test.infinispan.transactional");
 
       public TransactionalModeFilter() {
-         super(InTransactionMode.class, InTransactionMode::value, (m, b) -> m.isTransactional() == b);
+         super(InTransactionMode.class, InTransactionMode::value, (m, b) -> b == Boolean.valueOf(m.isTransactional()));
       }
 
       @Override
