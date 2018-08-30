@@ -448,38 +448,38 @@ public interface ClusteringDependentLogic {
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          Object key = entry.getKey();
          int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
+
+         Commit doCommit;
+         Object previousValue = null;
+         Metadata previousMetadata = null;
+
          // Don't allow the CH to change (and state transfer to invalidate entries)
          // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            Commit doCommit = commitType(command, ctx, segment, entry.isRemoved());
+            doCommit = commitType(command, ctx, segment, entry.isRemoved());
             if (doCommit.isCommit()) {
-               boolean created = false;
-               boolean removed = false;
-               boolean expired = false;
-               if (doCommit.isLocal()) {
-                  created = entry.isCreated();
-                  removed = entry.isRemoved();
-                  if (removed && entry instanceof MVCCEntry) {
-                     expired = ((MVCCEntry) entry).isExpired();
-                  }
-               }
-
                InternalCacheEntry previousEntry = dataContainer.peek(segment, key);
-               Object previousValue = null;
-               Metadata previousMetadata = null;
                if (previousEntry != null) {
                   previousValue = previousEntry.getValue();
                   previousMetadata = previousEntry.getMetadata();
                }
                commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
-               if (doCommit.isLocal()) {
-                  NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
-                        entry, ctx, command, previousValue, previousMetadata);
-               }
             }
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
+         }
+
+         if (doCommit.isCommit() && doCommit.isLocal()) {
+            boolean created = entry.isCreated();
+            boolean removed = entry.isRemoved();
+            boolean expired = false;
+            if (removed && entry instanceof MVCCEntry) {
+               expired = ((MVCCEntry) entry).isExpired();
+            }
+
+            NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+                                        entry, ctx, command, previousValue, previousMetadata);
          }
       }
 
@@ -517,11 +517,16 @@ public interface ClusteringDependentLogic {
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          Object key = entry.getKey();
          int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
+
+         Commit doCommit;
+         Object previousValue = null;
+         Metadata previousMetadata = null;
+
          // Don't allow the CH to change (and state transfer to invalidate entries)
          // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            Commit doCommit = commitType(command, ctx, segment, entry.isRemoved());
+            doCommit = commitType(command, ctx, segment, entry.isRemoved());
 
             boolean isL1Write = false;
             if (!doCommit.isCommit() && configuration.clustering().l1().enabled()) {
@@ -530,8 +535,8 @@ public interface ClusteringDependentLogic {
                   long lifespan = entry.getLifespan();
                   if (lifespan < 0 || lifespan > configuration.clustering().l1().lifespan()) {
                      Metadata metadata = entry.getMetadata().builder()
-                        .lifespan(configuration.clustering().l1().lifespan())
-                        .build();
+                                              .lifespan(configuration.clustering().l1().lifespan())
+                                              .build();
                      entry.setMetadata(new L1Metadata(metadata));
                   }
                }
@@ -542,39 +547,34 @@ public interface ClusteringDependentLogic {
             }
 
             if (doCommit.isCommit()) {
-               boolean created = false;
-               boolean removed = false;
-               boolean expired = false;
-               if (doCommit.isLocal()) {
-                  created = entry.isCreated();
-                  removed = entry.isRemoved();
-                  if (removed && entry instanceof MVCCEntry) {
-                     expired = ((MVCCEntry) entry).isExpired();
-                  }
-               }
-
                // TODO use value from the entry
                InternalCacheEntry previousEntry = dataContainer.peek(segment, key);
-
-               Object previousValue = null;
-               Metadata previousMetadata = null;
                if (previousEntry != null) {
                   previousValue = previousEntry.getValue();
                   previousMetadata = previousEntry.getMetadata();
                }
-               if (isL1Write && previousEntry != null && !previousEntry.isL1Entry()) {
-                  // don't overwrite non-L1 entry with L1 (e.g. when originator == backup
-                  // and therefore we have two contexts on one node)
-               } else {
+
+               // don't overwrite non-L1 entry with L1 (e.g. when originator == backup
+               // and therefore we have two contexts on one node)
+               boolean skipL1Write = isL1Write && previousEntry != null && !previousEntry.isL1Entry();
+               if (!skipL1Write) {
                   commitManager.commit(entry, trackFlag, segment, l1Invalidation || isL1Write, ctx);
-                  if (doCommit.isLocal()) {
-                     NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
-                           entry, ctx, command, previousValue, previousMetadata);
-                  }
                }
             }
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
+         }
+
+         if (doCommit.isCommit() && doCommit.isLocal()) {
+            boolean created = entry.isCreated();
+            boolean removed = entry.isRemoved();
+            boolean expired = false;
+            if (removed && entry instanceof MVCCEntry) {
+               expired = ((MVCCEntry) entry).isExpired();
+            }
+
+            NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+                                        entry, ctx, command, previousValue, previousMetadata);
          }
       }
 
