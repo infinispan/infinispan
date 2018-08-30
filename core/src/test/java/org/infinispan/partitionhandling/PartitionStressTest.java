@@ -62,7 +62,7 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
    public void testWriteDuringPartition() throws Exception {
       DISCARD[] discards = new DISCARD[NUM_NODES];
       for (int i = 0; i < NUM_NODES; i++) {
-         discards[i] = TestingUtil.getDiscardForCache(cache(i));
+         discards[i] = TestingUtil.getDiscardForCache(manager(i));
       }
 
       final List<Future<Object>> futures = new ArrayList<>(NUM_NODES);

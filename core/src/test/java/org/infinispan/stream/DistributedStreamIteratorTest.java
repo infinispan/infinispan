@@ -399,7 +399,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache0, KeyPartitioner.class);
       ConsistentHash ch = cache0.getAdvancedCache().getDistributionManager().getWriteConsistentHash();
-      Set<Integer> segmentsCache0 = ch.getSegmentsForOwner(cache0.getCacheManager().getAddress());
+      Set<Integer> segmentsCache0 = ch.getSegmentsForOwner(address(0));
 
       CacheStream<Map.Entry<Object, String>> stream = cache0.entrySet().stream();
       if (!rehashAware) stream = stream.disableRehashAware();

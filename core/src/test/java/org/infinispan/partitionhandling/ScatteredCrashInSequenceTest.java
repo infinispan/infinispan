@@ -111,8 +111,8 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
 
       StateSequencer ss = new StateSequencer().logicalThread("main", "st_begin", "check", "new_topology", /* "st_end",*/ "degraded");
 
-      DISCARD discard1 = TestingUtil.getDiscardForCache(cache(c1));
-      DISCARD discard2 = TestingUtil.getDiscardForCache(cache(c2));
+      DISCARD discard1 = TestingUtil.getDiscardForCache(manager(c1));
+      DISCARD discard2 = TestingUtil.getDiscardForCache(manager(c2));
 
       Cache coordinator = c1 == 0 ? cache(1) : cache(0);
       // This doesn't go through RpcManager, so we can't mock this and we can't mock ClusterTopologyManager either

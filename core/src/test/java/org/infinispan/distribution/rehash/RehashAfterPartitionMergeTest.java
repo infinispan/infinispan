@@ -27,8 +27,8 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
       c1 = caches.get(0);
       c2 = caches.get(1);
-      d1 = TestingUtil.getDiscardForCache(c1);
-      d2 = TestingUtil.getDiscardForCache(c2);
+      d1 = TestingUtil.getDiscardForCache(c1.getCacheManager());
+      d2 = TestingUtil.getDiscardForCache(c2.getCacheManager());
    }
 
    public void testCachePartition() {
