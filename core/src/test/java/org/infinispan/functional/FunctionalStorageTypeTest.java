@@ -26,4 +26,11 @@ public class FunctionalStorageTypeTest extends FunctionalMapTest {
       this.storageType = storageType;
       return this;
    }
+   protected String[] parameterNames() {
+      return new String[]{"storage"};
+   }
+
+   protected Object[] parameterValues() {
+      return new Object[]{storageType};
+   }
 }

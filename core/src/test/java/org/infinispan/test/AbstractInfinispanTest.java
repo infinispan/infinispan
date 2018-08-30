@@ -40,6 +40,7 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.test.fwk.ChainMethodInterceptor;
+import org.infinispan.test.fwk.FakeTestClass;
 import org.infinispan.test.fwk.NamedTestMethod;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
@@ -51,6 +52,7 @@ import org.jgroups.stack.Protocol;
 import org.testng.IMethodInstance;
 import org.testng.IMethodInterceptor;
 import org.testng.ITestContext;
+import org.testng.TestNGException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -98,8 +100,12 @@ public abstract class AbstractInfinispanTest {
                String instanceName = ((AbstractInfinispanTest) instance).getTestName();
                Object otherInstance = instancesByName.putIfAbsent(instanceName, instance);
                if (otherInstance != null) {
-                  System.err.printf("ERROR: Duplicate test name: %s, classes %s and %s", instanceName,
-                        instance.getClass().getName(), otherInstance.getClass().getName());
+                  String message = String.format("Duplicate test name: %s, classes %s and %s", instanceName,
+                                                 instance.getClass().getName(), otherInstance.getClass().getName());
+                  MethodInstance methodInstance =
+                     FakeTestClass.newFailureMethodInstance(new TestNGException(message), context.getCurrentXmlTest(),
+                                                            context);
+                  newOrder.add(methodInstance);
                }
                String parameters = ((AbstractInfinispanTest) instance).parameters();
                if (parameters != null) {
