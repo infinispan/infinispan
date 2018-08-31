@@ -29,6 +29,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.api.BasicCache;
@@ -50,7 +51,6 @@ import org.jgroups.stack.Protocol;
 import org.testng.IMethodInstance;
 import org.testng.IMethodInterceptor;
 import org.testng.ITestContext;
-import org.testng.TestNGException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -68,6 +68,7 @@ import org.testng.internal.MethodInstance;
 @Listeners({ChainMethodInterceptor.class, TestNGLongTestsHook.class})
 @TestSelector(interceptors = AbstractInfinispanTest.OrderByInstance.class)
 public abstract class AbstractInfinispanTest {
+
    protected interface Condition {
       boolean isSatisfied() throws Exception;
    }
@@ -97,9 +98,8 @@ public abstract class AbstractInfinispanTest {
                String instanceName = ((AbstractInfinispanTest) instance).getTestName();
                Object otherInstance = instancesByName.putIfAbsent(instanceName, instance);
                if (otherInstance != null) {
-                  throw new TestNGException(
-                        "Duplicate test name: " + instanceName + ", classes " + instance.getClass().getName() +
-                              " and " + otherInstance.getClass().getName());
+                  System.err.printf("ERROR: Duplicate test name: %s, classes %s and %s", instanceName,
+                        instance.getClass().getName(), otherInstance.getClass().getName());
                }
                String parameters = ((AbstractInfinispanTest) instance).parameters();
                if (parameters != null) {
@@ -149,7 +149,6 @@ public abstract class AbstractInfinispanTest {
       String parameters = parameters();
       return parameters == null ? className : className + parameters;
    }
-
 
    protected void killSpawnedThreads() {
       List<Runnable> runnables = defaultExecutorService.shutdownNow();
@@ -537,6 +536,4 @@ public abstract class AbstractInfinispanTest {
          }
       }
    }
-
-
 }

@@ -19,6 +19,11 @@ public class LocalCacheStorageTypeTest extends LocalCacheTest {
 
    protected StorageType storageType;
 
+   @Override
+   protected String parameters() {
+      return "[" + storageType + "]";
+   }
+
    @Factory
    public Object[] factory() {
       return new Object[]{
@@ -48,5 +53,4 @@ public class LocalCacheStorageTypeTest extends LocalCacheTest {
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
-
 }

@@ -32,6 +32,16 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
    }
 
    @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "StorageType");
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), storageType);
+   }
+
+   @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       configure(cfg);

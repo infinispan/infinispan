@@ -275,7 +275,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       }
       StringBuilder result = new StringBuilder();
       while (idx != -1) {
-         result.append(str.substring(start, idx));
+         result.append(str, start, idx);
          if (pattern.matcher(str.substring(idx)).matches()) {
             // do nothing it is an entity;
             result.append("&");
@@ -391,8 +391,8 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       report.addComment("Environment variables");
       for (String key : System.getenv().keySet()) {
          Properties property = new Properties();
-         property.setProperty(XMLConstants.ATTR_NAME, key.toString());
-         property.setProperty(XMLConstants.ATTR_VALUE, System.getenv(key.toString()));
+         property.setProperty(XMLConstants.ATTR_NAME, key);
+         property.setProperty(XMLConstants.ATTR_VALUE, System.getenv(key));
          report.addEmptyElement(XMLConstants.PROPERTY, property);
       }
 
@@ -420,7 +420,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
          itrList.add(tr);
          m_allTests.put(key, itrList);
       } else {
-         ArrayList<ITestResult> itrList = new ArrayList<ITestResult>();
+         ArrayList<ITestResult> itrList = new ArrayList<>();
          itrList.add(tr);
          m_allTests.put(key, itrList);
       }
