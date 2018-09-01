@@ -38,7 +38,7 @@ public class LuceneScoreDocExternalizer extends AbstractExternalizer<ScoreDoc> {
       output.writeInt(sortField.shardIndex);
    }
 
-   private  static ScoreDoc readObjectStatic(final ObjectInput input) throws IOException, ClassNotFoundException {
+   private static ScoreDoc readObjectStatic(final ObjectInput input) throws IOException {
       final float score = input.readFloat();
       final int doc = UnsignedNumeric.readUnsignedInt(input);
       final int shardId = input.readInt();

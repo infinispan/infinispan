@@ -38,21 +38,20 @@ public class LuceneFieldDocExternalizer extends AbstractExternalizer<FieldDoc> {
       output.writeInt(sortField.shardIndex);
       final Object[] fields = sortField.fields;
       UnsignedNumeric.writeUnsignedInt(output, fields.length);
-      for (int i=0; i<fields.length; i++) {
+      for (int i = 0; i < fields.length; i++) {
          output.writeObject(fields[i]);
       }
    }
 
-   public static FieldDoc readObjectStatic(final ObjectInput input) throws IOException, ClassNotFoundException {
+   static FieldDoc readObjectStatic(final ObjectInput input) throws IOException, ClassNotFoundException {
       final float score = input.readFloat();
       final int doc = UnsignedNumeric.readUnsignedInt(input);
       final int shardId = input.readInt();
       final int fieldsArrayLenght = UnsignedNumeric.readUnsignedInt(input);
       Object[] fields = new Object[fieldsArrayLenght];
-      for (int i=0; i<fieldsArrayLenght; i++) {
+      for (int i = 0; i < fieldsArrayLenght; i++) {
          fields[i] = input.readObject();
       }
       return new FieldDoc(doc, score, fields, shardId);
    }
-
 }

@@ -23,7 +23,7 @@ public class LuceneSortExternalizer extends AbstractExternalizer<Sort> {
    public Sort readObject(final ObjectInput input) throws IOException, ClassNotFoundException {
       final int count = UnsignedNumeric.readUnsignedInt(input);
       SortField[] sortfields = new SortField[count];
-      for (int i=0; i<count; i++) {
+      for (int i = 0; i < count; i++) {
          sortfields[i] = LuceneSortFieldExternalizer.readObjectStatic(input);
       }
       Sort sort = new Sort();
@@ -36,7 +36,7 @@ public class LuceneSortExternalizer extends AbstractExternalizer<Sort> {
       final SortField[] sortFields = sort.getSort();
       final int count = sortFields.length;
       UnsignedNumeric.writeUnsignedInt(output, count);
-      for (int i=0; i<count; i++) {
+      for (int i = 0; i < count; i++) {
          LuceneSortFieldExternalizer.writeObjectStatic(output, sortFields[i]);
       }
    }
@@ -45,5 +45,4 @@ public class LuceneSortExternalizer extends AbstractExternalizer<Sort> {
    public Integer getId() {
       return ExternalizerIds.LUCENE_SORT;
    }
-
 }

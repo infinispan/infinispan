@@ -9,7 +9,6 @@ package org.infinispan.query.remote.impl;
  * @author anistor@redhat.com
  * @since 6.0
  */
-@SuppressWarnings("boxing")
 public interface ExternalizerIds {
 
    Integer PROTOBUF_VALUE_WRAPPER = 1700;

@@ -81,9 +81,8 @@ public class LuceneBooleanQueryExternalizer extends AbstractExternalizer<Boolean
     */
    private static void assureNumberOfClausesLimit(int numberOfClauses) {
       final int maxClauseLimit = BooleanQuery.getMaxClauseCount();
-      if (numberOfClauses>maxClauseLimit) {
+      if (numberOfClauses > maxClauseLimit) {
          BooleanQuery.setMaxClauseCount(numberOfClauses);
       }
    }
-
 }

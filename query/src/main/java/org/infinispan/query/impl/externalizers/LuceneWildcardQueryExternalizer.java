@@ -14,6 +14,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
  * @since 9.1
  */
 public class LuceneWildcardQueryExternalizer implements AdvancedExternalizer<WildcardQuery> {
+
    @Override
    public Set<Class<? extends WildcardQuery>> getTypeClasses() {
       return Collections.singleton(WildcardQuery.class);
