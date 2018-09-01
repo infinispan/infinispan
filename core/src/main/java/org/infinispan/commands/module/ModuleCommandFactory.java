@@ -10,20 +10,19 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.ByteString;
 
 /**
- * Modules which wish to implement their own commands and visitors must also provide an implementation of this interface
- * and declare it in their <tt>infinispan-module.properties</tt> file under key <tt>infinispan.module.command.factory</tt>.
- * <p />
- * Implementations <b>must</b> be public classes with a public, no-arg constructor for instantiation.
- * <p />
+ * Modules which wish to implement their own commands and visitors must also provide an implementation of this
+ * interface.
+ * <p>
  * Note that this is a {@link Scopes#GLOBAL} component and as such cannot have {@link Inject} methods referring to
- * {@link Scopes#NAMED_CACHE} scoped components.  For such components, use a corresponding {@link Scopes#NAMED_CACHE}-scoped
- * {@link ModuleCommandInitializer}.
- * <p />
+ * {@link Scopes#NAMED_CACHE} scoped components.  For such components, use a corresponding {@link
+ * Scopes#NAMED_CACHE}-scoped {@link ModuleCommandInitializer}.
+ *
  * @author Manik Surtani
  * @since 5.0
  */
 @Scope(Scopes.GLOBAL)
 public interface ModuleCommandFactory {
+
    /**
     * Provides a map of command IDs to command types of all the commands handled by the command factory instance.
     * Unmarshalling requests for these command IDs will be dispatched to this implementation.

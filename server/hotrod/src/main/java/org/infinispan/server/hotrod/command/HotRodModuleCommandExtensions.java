@@ -12,7 +12,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
  * @author Pedro Ruivo
  * @since 9.1
  */
-public class HotRodModuleCommandExtensions implements ModuleCommandExtensions {
+public final class HotRodModuleCommandExtensions implements ModuleCommandExtensions {
 
    @Override
    public ModuleCommandFactory getModuleCommandFactory() {

@@ -130,7 +130,7 @@ public class LifecycleManager implements ModuleLifecycle {
             addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
 
             // initializing the query module command initializer.
-            // we can t inject Cache and CacheManager with @inject in there
+            // we can't inject Cache and CacheManager with @Inject in there
             CommandInitializer initializer = cr.getComponent(CommandInitializer.class);
             initializer.setCacheManager(cache.getCacheManager());
 
