@@ -1,11 +1,13 @@
 package org.infinispan.all.embeddedquery;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -15,7 +17,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.PrefixFilter;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
@@ -86,7 +87,7 @@ public class LocalCacheTest extends AbstractQueryTest {
       try {
          assertTrue(found.hasNext());
          found.next();
-         assertTrue(!found.hasNext());
+         assertFalse(found.hasNext());
       } finally {
          found.close();
       }
@@ -118,7 +119,7 @@ public class LocalCacheTest extends AbstractQueryTest {
       try {
          assertTrue(found.hasNext());
          found.next();
-         assertTrue(!found.hasNext());
+         assertFalse(found.hasNext());
          found.next();
       } finally {
          found.close();
@@ -274,7 +275,7 @@ public class LocalCacheTest extends AbstractQueryTest {
       try {
          assertTrue(found.hasNext());
          found.next();
-         assertTrue(!found.hasNext());
+         assertFalse(found.hasNext());
       } finally {
          found.close();
       }
@@ -286,8 +287,8 @@ public class LocalCacheTest extends AbstractQueryTest {
       loadTestingData();
       CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing");
 
-      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions(){
-         public FetchOptions fetchMode(FetchMode fetchMode) {
+      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions() {
+         public FetchMode getFetchMode() {
             return null;
          }
       });
@@ -295,7 +296,7 @@ public class LocalCacheTest extends AbstractQueryTest {
       try {
          assertTrue(found.hasNext());
          found.next();
-         assertTrue(!found.hasNext());
+         assertFalse(found.hasNext());
       } finally {
          found.close();
       }
@@ -311,7 +312,7 @@ public class LocalCacheTest extends AbstractQueryTest {
       try {
          assertTrue(found.hasNext());
          found.next();
-         assertTrue(!found.hasNext());
+         assertFalse(found.hasNext());
       } finally {
          found.close();
       }
@@ -387,10 +388,7 @@ public class LocalCacheTest extends AbstractQueryTest {
 
    @Test(expected = IllegalArgumentException.class)
    public void testSearchManagerWithNullCache() {
-      loadTestingData();
-      Query luceneQuery = new BooleanQuery();
-
-      CacheQuery<?> cacheQuery = Search.getSearchManager(null).getQuery(luceneQuery).firstResult(1);
+      Search.getSearchManager(null);
    }
 
    @Test(expected = IllegalArgumentException.class)
@@ -467,7 +465,7 @@ public class LocalCacheTest extends AbstractQueryTest {
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
-   private int countElements(ResultIterator<?> iterator) {
+   private int countElements(Iterator<?> iterator) {
       int count = 0;
       while (iterator.hasNext()) {
          iterator.next();
@@ -484,7 +482,7 @@ public class LocalCacheTest extends AbstractQueryTest {
       Term navin = new Term("name", "navin");
 
       // Create a term that I know will return me everything with name goat.
-      Term goat = new Term ("name", "goat");
+      Term goat = new Term("name", "goat");
 
       BooleanQuery luceneQuery = new BooleanQuery();
       luceneQuery.add(new TermQuery(goat), Occur.SHOULD);
@@ -550,5 +548,4 @@ public class LocalCacheTest extends AbstractQueryTest {
       assertTrue("Result doesn't match expected result. Expected: <" + expectedList + ">, was: <" + actualList + ">",
                  !Collections.disjoint(actualList, expectedList));
    }
-
 }
