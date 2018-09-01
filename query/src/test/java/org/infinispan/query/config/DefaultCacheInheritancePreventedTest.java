@@ -65,7 +65,8 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
       try {
          searchManager = Search.getSearchManager(cache);
       }
-      catch (IllegalArgumentException e) {
+      catch (IllegalStateException e) {
+         // ignored here, we deal with it later
       }
       if (expected && searchManager == null) {
          Assert.fail("SearchManager not found but expected for cache " + cache.getName());
@@ -74,21 +75,21 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
          Assert.fail("SearchManager not expected but found for cache " + cache.getName());
       }
       //verify as well that the indexing interceptor is (not) there:
-      QueryInterceptor component = null;
+      QueryInterceptor queryInterceptor = null;
       try {
-         component = ComponentRegistryUtils.getComponent(cache, QueryInterceptor.class);
+         queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       }
-      catch (IllegalArgumentException e) {
+      catch (IllegalStateException e) {
+         // ignored here, we deal with it later
       }
-      if (expected && component == null) {
+      if (expected && queryInterceptor == null) {
          Assert.fail("QueryInterceptor not found but expected for cache " + cache.getName());
       }
-      if (!expected && component != null) {
+      if (!expected && queryInterceptor != null) {
          Assert.fail("QueryInterceptor not expected but found for cache " + cache.getName());
       }
       if (expected) {
-         Assert.assertEquals(component.getIndexModificationMode(), expectedModificationMode);
+         Assert.assertEquals(queryInterceptor.getIndexModificationMode(), expectedModificationMode);
       }
    }
-
 }

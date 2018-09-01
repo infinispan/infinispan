@@ -47,6 +47,9 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       return Search.getQueryFactory(remoteCache);
    }
 
+   /**
+    * Both populating the cache and querying are done via remote cache.
+    */
    @Override
    protected RemoteCache<Object, Object> getCacheForQuery() {
       return remoteCache;

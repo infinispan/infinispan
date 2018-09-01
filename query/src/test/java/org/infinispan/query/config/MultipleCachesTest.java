@@ -59,7 +59,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
       return cm;
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class)
+   @Test(expectedExceptions = IllegalStateException.class)
    public void queryNotIndexedCache() throws ParseException {
       cacheManager.defineConfiguration("notIndexedA", cacheManager.getDefaultCacheConfiguration());
       final Cache<Object, Object> notIndexedCache = cacheManager.getCache("notIndexedA");

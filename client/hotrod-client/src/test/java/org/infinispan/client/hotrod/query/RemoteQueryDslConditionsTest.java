@@ -77,6 +77,9 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       return ModelFactoryPB.INSTANCE;
    }
 
+   /**
+    * Both populating the cache and querying are done via remote cache.
+    */
    @Override
    protected RemoteCache<Object, Object> getCacheForQuery() {
       return remoteCache;

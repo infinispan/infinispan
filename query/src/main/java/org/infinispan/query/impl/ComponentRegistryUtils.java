@@ -1,36 +1,43 @@
 package org.infinispan.query.impl;
 
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
 
 /**
- * Component registry utilities
+ * Lookup methods for various internal components of search module.
  *
  * @author Marko Luksa
  * @author Galder Zamarreño
  */
-public class ComponentRegistryUtils {
+public final class ComponentRegistryUtils {
 
    private ComponentRegistryUtils() {
    }
 
-   public static <T> T getComponent(Cache<?, ?> cache, Class<T> class1) {
-      return getComponent(cache, class1, class1.getName());
-   }
-
-   public static <T> T getComponent(Cache<?, ?> cache, Class<T> class1, String name) {
+   private static <T> T getRequiredComponent(Cache<?, ?> cache, Class<T> clazz) {
       ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
-      T component = componentRegistry.getComponent(class1, name);
+      T component = componentRegistry.getComponent(clazz, clazz.getName());
       if (component == null) {
-         throw new IllegalArgumentException("Indexing was not enabled on this cache. " + class1 + " not found in registry");
+         throw new IllegalStateException("Indexing was not enabled on cache " + cache.getName()
+               + ". " + clazz.getName() + " not found in component registry");
       }
       return component;
    }
 
+   public static SearchIntegrator getSearchIntegrator(Cache<?, ?> cache) {
+      return getRequiredComponent(cache, SearchIntegrator.class);
+   }
+
+   public static EmbeddedQueryEngine getEmbeddedQueryEngine(Cache<?, ?> cache) {
+      return getRequiredComponent(cache, EmbeddedQueryEngine.class);
+   }
+
    public static QueryInterceptor getQueryInterceptor(Cache<?, ?> cache) {
-      return getComponent(cache, QueryInterceptor.class);
+      return getRequiredComponent(cache, QueryInterceptor.class);
    }
 
    public static QueryCache getQueryCache(Cache<?, ?> cache) {

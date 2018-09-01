@@ -23,7 +23,7 @@ public class JBMARRemoteNonIndexedQueryDslConditionsTest extends JBMARRemoteQuer
       return builder;
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Indexing was not enabled on this cache.*")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Indexing was not enabled on cache.*")
    @Override
    public void testIndexPresence() {
       org.infinispan.query.Search.getSearchManager(getEmbeddedCache());
