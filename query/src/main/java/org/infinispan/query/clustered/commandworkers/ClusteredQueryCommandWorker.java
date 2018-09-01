@@ -5,9 +5,9 @@ import java.util.UUID;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.query.QueryDefinition;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.clustered.QueryResponse;
+import org.infinispan.query.impl.QueryDefinition;
 
 /**
  * ClusteredQueryCommandWorker.

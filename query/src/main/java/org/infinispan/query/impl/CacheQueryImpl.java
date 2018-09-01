@@ -19,7 +19,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.FetchOptions.FetchMode;
-import org.infinispan.query.QueryDefinition;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 

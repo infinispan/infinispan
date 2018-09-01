@@ -16,10 +16,10 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
-import org.infinispan.query.QueryDefinition;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
+import org.infinispan.query.impl.QueryDefinition;
 
 /**
  * A extension of CacheQueryImpl used for distributed queries.

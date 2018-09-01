@@ -11,10 +11,10 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.QueryDefinition;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.impl.ModuleCommandIds;
+import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.util.ByteString;
 
 /**
