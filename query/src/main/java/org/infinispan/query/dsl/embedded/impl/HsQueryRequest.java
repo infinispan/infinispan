@@ -8,7 +8,7 @@ import org.hibernate.search.query.engine.spi.HSQuery;
  *
  * @since 9.2
  */
-public class HsQueryRequest {
+public final class HsQueryRequest {
 
    private final HSQuery hsQuery;
    private final Sort sort;

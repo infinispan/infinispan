@@ -59,7 +59,6 @@ import org.infinispan.query.backend.QueryKnownClasses;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.backend.TxQueryInterceptor;
 import org.infinispan.query.clustered.QueryBox;
-import org.infinispan.query.clustered.QueryDefinitionExternalizer;
 import org.infinispan.query.continuous.impl.ContinuousQueryResult;
 import org.infinispan.query.continuous.impl.IckleContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
@@ -447,7 +446,7 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_PREFIX, new LucenePrefixQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_WILDCARD, new LuceneWildcardQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_FUZZY, new LuceneFuzzyQueryExternalizer());
-      externalizerMap.put(ExternalizerIds.QUERY_DEFINITION, new QueryDefinitionExternalizer());
+      externalizerMap.put(ExternalizerIds.QUERY_DEFINITION, new QueryDefinition.Externalizer());
    }
 
 }

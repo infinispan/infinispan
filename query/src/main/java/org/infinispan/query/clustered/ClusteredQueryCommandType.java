@@ -3,13 +3,13 @@ package org.infinispan.query.clustered;
 import java.util.UUID;
 
 import org.infinispan.Cache;
-import org.infinispan.query.QueryDefinition;
 import org.infinispan.query.clustered.commandworkers.CQCreateEagerQuery;
 import org.infinispan.query.clustered.commandworkers.CQCreateLazyQuery;
 import org.infinispan.query.clustered.commandworkers.CQGetResultSize;
 import org.infinispan.query.clustered.commandworkers.CQKillLazyIterator;
 import org.infinispan.query.clustered.commandworkers.CQLazyFetcher;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
+import org.infinispan.query.impl.QueryDefinition;
 
 /**
  * Types of ClusteredQueryCommandWorker. Each type defines a different behavior for a
