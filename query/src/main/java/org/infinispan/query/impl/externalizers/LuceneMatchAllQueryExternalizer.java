@@ -10,11 +10,16 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 
 /**
- *
  * @author gustavonalle
  * @since 7.1
  */
 public class LuceneMatchAllQueryExternalizer extends AbstractExternalizer<MatchAllDocsQuery> {
+
+   @Override
+   public Integer getId() {
+      return ExternalizerIds.LUCENE_QUERY_MATCH_ALL;
+   }
+
    @Override
    public Set<Class<? extends MatchAllDocsQuery>> getTypeClasses() {
       return Collections.singleton(MatchAllDocsQuery.class);

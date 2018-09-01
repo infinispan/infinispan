@@ -24,7 +24,7 @@ public class LuceneTopDocsExternalizer extends AbstractExternalizer<TopDocs> {
       final float maxScore = input.readFloat();
       final int scoreCount = UnsignedNumeric.readUnsignedInt(input);
       final ScoreDoc[] scoreDocs = new ScoreDoc[scoreCount];
-      for (int i=0; i<scoreCount; i++) {
+      for (int i = 0; i < scoreCount; i++) {
          scoreDocs[i] = (ScoreDoc) input.readObject();
       }
       return new TopDocs(totalHits, scoreDocs, maxScore);
@@ -46,5 +46,4 @@ public class LuceneTopDocsExternalizer extends AbstractExternalizer<TopDocs> {
    public Integer getId() {
       return ExternalizerIds.LUCENE_TOPDOCS;
    }
-
 }

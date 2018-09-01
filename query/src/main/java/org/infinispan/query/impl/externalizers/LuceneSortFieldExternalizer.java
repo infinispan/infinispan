@@ -45,11 +45,10 @@ public class LuceneSortFieldExternalizer extends AbstractExternalizer<SortField>
       output.writeBoolean(sortField.getReverse());
    }
 
-   public static SortField readObjectStatic(final ObjectInput input) throws IOException, ClassNotFoundException {
+   static SortField readObjectStatic(final ObjectInput input) throws IOException, ClassNotFoundException {
       final String fieldName = input.readUTF();
       final Type sortType = (Type) input.readObject();
       final boolean reverseSort = input.readBoolean();
       return new SortField(fieldName, sortType, reverseSort);
    }
-
 }

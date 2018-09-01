@@ -39,5 +39,4 @@ public class LuceneTermExternalizer extends AbstractExternalizer<Term> {
    public Integer getId() {
       return ExternalizerIds.LUCENE_TERM;
    }
-
 }

@@ -14,6 +14,7 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
  * @since 9.1
  */
 public class LucenePrefixQueryExternalizer extends AbstractExternalizer<PrefixQuery> {
+
    @Override
    public Set<Class<? extends PrefixQuery>> getTypeClasses() {
       return Collections.singleton(PrefixQuery.class);

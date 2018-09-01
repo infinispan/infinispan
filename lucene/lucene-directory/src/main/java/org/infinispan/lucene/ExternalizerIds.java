@@ -9,52 +9,50 @@ package org.infinispan.lucene;
  * @author Sanne Grinovero
  * @since 5.0
  */
-@SuppressWarnings("boxing")
 public interface ExternalizerIds {
 
    /**
     * @see org.infinispan.lucene.FileListCacheKey.Externalizer
     */
-   static final Integer FILE_LIST_CACHE_KEY = 1300;
+   Integer FILE_LIST_CACHE_KEY = 1300;
 
    /**
     * @see org.infinispan.lucene.FileMetadata.Externalizer
     */
-   static final Integer FILE_METADATA = 1301;
+   Integer FILE_METADATA = 1301;
 
    /**
     * @see org.infinispan.lucene.FileCacheKey.Externalizer
     */
-   static final Integer FILE_CACHE_KEY = 1302;
+   Integer FILE_CACHE_KEY = 1302;
 
    /**
     * @see org.infinispan.lucene.ChunkCacheKey.Externalizer
     */
-   static final Integer CHUNK_CACHE_KEY = 1303;
+   Integer CHUNK_CACHE_KEY = 1303;
 
    /**
     * @see org.infinispan.lucene.FileReadLockKey.Externalizer
     */
-   static final Integer FILE_READLOCK_KEY = 1304;
+   Integer FILE_READLOCK_KEY = 1304;
 
    /**
     * @see org.infinispan.lucene.FileListCacheKey.Externalizer
     */
-   static final Integer FILE_LIST_CACHE_VALUE = 1305;
+   Integer FILE_LIST_CACHE_VALUE = 1305;
 
    /**
     * @see org.infinispan.lucene.impl.FileListCacheValueDelta.Externalizer
     */
-   static final Integer FILE_LIST_VALUE_DELTA = 1306;
+   Integer FILE_LIST_VALUE_DELTA = 1306;
 
    /**
     * @see org.infinispan.lucene.impl.AddOperation.AddOperationExternalizer
     */
-   static final Integer FILE_LIST_DELTA_ADD = 1307;
+   Integer FILE_LIST_DELTA_ADD = 1307;
 
    /**
     * @see org.infinispan.lucene.impl.DeleteOperation
     */
-   static final Integer FILE_LIST_DELTA_DEL = 1308;
-
+   Integer FILE_LIST_DELTA_DEL = 1308;
 }

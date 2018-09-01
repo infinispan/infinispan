@@ -12,6 +12,12 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 
 public class LuceneBytesRefExternalizer extends AbstractExternalizer<BytesRef> {
+
+   @Override
+   public Integer getId() {
+      return ExternalizerIds.LUCENE_BYTES_REF;
+   }
+
    @Override
    public Set<Class<? extends BytesRef>> getTypeClasses() {
       return Collections.singleton(BytesRef.class);
