@@ -27,7 +27,7 @@ public interface SearchManager {
    <E> CacheQuery<E> getQuery(Query luceneQuery, IndexedQueryMode indexedQueryMode, Class<?>... classes);
 
    /**
-    * Builds a {@link CacheQuery} from a query string.
+    * Builds a {@link CacheQuery} from an Ickle query string.
     *
     * @throws org.hibernate.search.exception.SearchException if the queryString cannot be converted to an indexed query,
     *                                                        due to lack of indexes to resolve it fully or if contains
@@ -42,6 +42,8 @@ public interface SearchManager {
    <E> CacheQuery<E> getQuery(Query luceneQuery, Class<?>... classes);
 
    /**
+    * Provides the Hibernate Search DSL entrypoint to build full text queries.
+    *
     * @return {@link EntityContext}
     */
    EntityContext buildQueryBuilderForClass(Class<?> entityType);
@@ -50,29 +52,17 @@ public interface SearchManager {
     * @param luceneQuery
     * @param classes
     * @return
-    * @deprecated since 9.2, use {@link #getQuery(Query, IndexedQueryMode, Class[])} with QueryMode.BROADCAST
+    * @deprecated since 9.2, to be removed in 10.0; equivalent to {@code getQuery(luceneQuery, IndexedQueryMode.BROADCAST, classes)}
     */
    @Deprecated
    <E> CacheQuery<E> getClusteredQuery(Query luceneQuery, Class<?>... classes);
 
    /**
-    * The MassIndexer can be used to rebuild the Lucene indexes from
-    * the entries stored in Infinispan.
+    * The MassIndexer can be used to rebuild the Lucene indexes from the entries stored in Infinispan.
+    *
     * @return the MassIndexer component
     */
    MassIndexer getMassIndexer();
-
-   /**
-    * Retrieve an analyzer instance by its definition name
-    *
-    * @param name the name of the analyzer
-    *
-    * @return analyzer with the specified name
-    *
-    * @throws org.hibernate.search.exception.SearchException if the definition name is unknown
-    * @since 7.0
-    */
-   Analyzer getAnalyzer(String name);
 
    /**
     * Get access to the Query specific statistics for this SearchManager instance
@@ -83,15 +73,22 @@ public interface SearchManager {
    Statistics getStatistics();
 
    /**
+    * Retrieve an analyzer instance by its definition name
+    *
+    * @param name the name of the analyzer
+    * @return analyzer with the specified name
+    * @throws org.hibernate.search.exception.SearchException if the definition name is unknown
+    * @since 7.0
+    */
+   Analyzer getAnalyzer(String name);
+
+   /**
     * Retrieves the scoped analyzer for a given class type.
     *
     * @param clazz The class for which to retrieve the analyzer.
-    *
     * @return The scoped analyzer for the specified class.
-    *
     * @throws java.lang.IllegalArgumentException in case {@code clazz == null} or the specified
     * class is not an indexed entity.
-    *
     * @since 7.0
     */
    Analyzer getAnalyzer(Class<?> clazz);
@@ -104,9 +101,9 @@ public interface SearchManager {
    void purge(Class<?> entityType);
 
    /**
-    * This method gives access to internal Infinispan types, and should not be normally needed.
-    * The API of the internal types can (and probably will) change without notice.
+    * This method gives access to internal Infinispan implementation details, and should not be normally needed. The
+    * interface of the internal types does not constitute a public API and can (and probably will) change without
+    * notice.
     */
    <T> T unwrap(Class<T> cls);
-
 }

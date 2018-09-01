@@ -34,7 +34,7 @@ import org.infinispan.query.spi.SearchManagerImplementor;
  * @author Marko Luksa
  * @since 4.0
  */
-public class SearchManagerImpl implements SearchManagerImplementor {
+public final class SearchManagerImpl implements SearchManagerImplementor {
 
    private final AdvancedCache<?, ?> cache;
    private final SearchIntegrator searchFactory;
@@ -64,8 +64,8 @@ public class SearchManagerImpl implements SearchManagerImplementor {
    public <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode, Class<?>... classes) {
       queryInterceptor.enableClasses(classes);
       KeyTransformationHandler keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
+      ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       try {
-         ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
          return queryEngine.buildCacheQuery(queryString, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor, classes);
       } catch (SearchException se) {
          throw new SearchException(queryString + " cannot be converted to an indexed Query", se);
@@ -79,9 +79,6 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor, indexedTypeMap);
    }
 
-   /* (non-Javadoc)
-       * @see org.infinispan.query.SearchManager#getQuery(org.apache.lucene.search.Query, java.lang.Class)
-       */
    @Override
    public <E> CacheQuery<E> getQuery(Query luceneQuery, Class<?>... classes) {
       return getQuery(luceneQuery, IndexedQueryMode.FETCH, classes);
@@ -108,14 +105,6 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       }
    }
 
-   /**
-    *
-    * This probably should be hided in the getQuery method.
-    *
-    * @param luceneQuery
-    * @param classes
-    * @return
-    */
    @Override
    public <E> CacheQuery<E> getClusteredQuery(Query luceneQuery, Class<?>... classes) {
       return getQuery(luceneQuery, IndexedQueryMode.BROADCAST, classes);
@@ -131,9 +120,6 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       this.timeoutExceptionFactory = timeoutExceptionFactory;
    }
 
-   /* (non-Javadoc)
-    * @see org.infinispan.query.SearchManager#buildQueryBuilderForClass(java.lang.Class)
-    */
    @Override
    public EntityContext buildQueryBuilderForClass(Class<?> entityType) {
       queryInterceptor.enableClasses(new Class[]{entityType});
@@ -175,8 +161,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       if (SearchManagerImplementor.class.isAssignableFrom(cls)) {
          return (T) this;
       } else {
-         throw new IllegalArgumentException("Can not unwrap a SearchManagerImpl into a '" + cls + "'");
+         throw new IllegalArgumentException("Cannot unwrap a SearchManagerImpl into a '" + cls.getName() + "'");
       }
    }
-
 }
