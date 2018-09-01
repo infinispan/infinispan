@@ -48,9 +48,9 @@ public class SearchManagerImpl implements SearchManagerImplementor {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }
       this.cache = cache;
-      this.searchFactory = ComponentRegistryUtils.getComponent(cache, SearchIntegrator.class);
+      this.searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
-      this.queryEngine = ComponentRegistryUtils.getComponent(cache, EmbeddedQueryEngine.class);
+      this.queryEngine = ComponentRegistryUtils.getEmbeddedQueryEngine(cache);
    }
 
    @Override

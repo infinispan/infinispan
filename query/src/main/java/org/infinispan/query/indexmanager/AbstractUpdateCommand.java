@@ -12,15 +12,13 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.CustomQueryCommand;
-import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.util.ByteString;
 
 /**
- * Base class for index commands
+ * Base class for index commands.
  *
  * @author gustavonalle
  * @since 7.0
@@ -54,7 +52,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(ObjectInput input) throws IOException {
       boolean hasIndexName = input.readBoolean();
       if (hasIndexName) {
          indexName = input.readUTF();
@@ -75,8 +73,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
       String name = cacheName.toString();
       if (cm.cacheExists(name)) {
          Cache cache = cm.getCache(name);
-         SearchManager searchManager = new SearchManagerImpl(cache.getAdvancedCache());
-         searchFactory = searchManager.unwrap(SearchIntegrator.class);
+         searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
          queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       } else {
          throw new CacheException("Cache named '" + name + "' does not exist on this CacheManager, or was not started");

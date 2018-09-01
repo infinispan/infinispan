@@ -88,6 +88,9 @@ public class RemoteQueryStringTest extends QueryStringTest {
       return ModelFactoryPB.INSTANCE;
    }
 
+   /**
+    * Both populating the cache and querying are done via remote cache.
+    */
    @Override
    protected RemoteCache<Object, Object> getCacheForQuery() {
       return remoteCache;
