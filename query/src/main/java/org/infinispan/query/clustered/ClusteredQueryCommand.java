@@ -10,15 +10,15 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.QueryDefinition;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
-import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.util.ByteString;
 
 /**
- * Encapsulates all rpc calls for distributed queries actions
+ * Encapsulates all rpc calls for distributed queries actions.
  *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
@@ -55,8 +55,8 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    }
 
    @Override
-   public void fetchExecutionContext(CommandInitializer ci) {
-      this.cache = ci.getCacheManager().getCache(cacheName.toString());
+   public void setCacheManager(EmbeddedCacheManager cm) {
+      this.cache = cm.getCache(cacheName.toString());
    }
 
    public static ClusteredQueryCommand createLazyIterator(QueryDefinition queryDefinition, Cache<?, ?> cache, UUID id) {
@@ -94,7 +94,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    /**
     * Invokes a query on a (remote) cache and returns results (list of keys).
     *
-    * @return returns a <code>CompletableFuture</code> with a <code>List<Object></code>.
+    * @return returns a {@code CompletableFuture} with a {@code List<Object>}.
     */
    @Override
    public CompletableFuture<Object> invokeAsync() {
@@ -129,7 +129,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
 
    @Override
    public String toString() {
-      return "ClusteredQuery{ cache=" + getCacheName() + '}';
+      return "ClusteredQueryCommand{cache=" + getCacheName() + '}';
    }
 
    @Override

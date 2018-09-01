@@ -18,10 +18,11 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 9.1
  */
-public class HotRodCommandFactory implements ModuleCommandFactory {
+final class HotRodCommandFactory implements ModuleCommandFactory {
+
    @Override
    public Map<Byte, Class<? extends ReplicableCommand>> getModuleCommands() {
-      Map<Byte, Class<? extends ReplicableCommand>> moduleCommands = new HashMap<>();
+      Map<Byte, Class<? extends ReplicableCommand>> moduleCommands = new HashMap<>(2);
       moduleCommands.put(Ids.FORWARD_COMMIT, ForwardCommitCommand.class);
       moduleCommands.put(Ids.FORWARD_ROLLBACK, ForwardRollbackCommand.class);
       return moduleCommands;

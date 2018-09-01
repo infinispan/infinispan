@@ -11,9 +11,9 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.impl.SearchManagerImpl;
@@ -26,6 +26,7 @@ import org.infinispan.util.ByteString;
  * @since 7.0
  */
 public abstract class AbstractUpdateCommand extends BaseRpcCommand implements ReplicableCommand, CustomQueryCommand {
+
    protected SearchIntegrator searchFactory;
    protected String indexName;
    protected byte[] serializedModel;
@@ -70,10 +71,10 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
     * This is invoked only on the receiving node, before {@link #perform(org.infinispan.context.InvocationContext)}.
     */
    @Override
-   public void fetchExecutionContext(CommandInitializer ci) {
+   public void setCacheManager(EmbeddedCacheManager cm) {
       String name = cacheName.toString();
-      if (ci.getCacheManager().cacheExists(name)) {
-         Cache cache = ci.getCacheManager().getCache(name);
+      if (cm.cacheExists(name)) {
+         Cache cache = cm.getCache(name);
          SearchManager searchManager = new SearchManagerImpl(cache.getAdvancedCache());
          searchFactory = searchManager.unwrap(SearchIntegrator.class);
          queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);

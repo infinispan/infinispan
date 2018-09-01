@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Objects;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandExtensions;
@@ -19,16 +19,14 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * The <code>ModuleProperties</code> class represents Infinispan's module service extensions
+ * The <code>ModuleProperties</code> class represents Infinispan's module service extensions.
  *
  * @author Vladimir Blagojevic
  * @author Sanne Grinovero
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ModuleProperties extends Properties {
-
-   private static final long serialVersionUID = 2558131508076199744L;
+public final class ModuleProperties {
 
    private static final Log log = LogFactory.getLog(ModuleProperties.class);
 
@@ -49,21 +47,20 @@ public class ModuleProperties extends Properties {
       return ServiceFinder.load(ModuleMetadataFileFinder.class, cl);
    }
 
-   @SuppressWarnings("unchecked")
    public void loadModuleCommandHandlers(ClassLoader cl) {
-      Collection<ModuleCommandExtensions> moduleCmdExtLoader =
-            ServiceFinder.load(ModuleCommandExtensions.class, cl);
+      Collection<ModuleCommandExtensions> moduleCmdExtLoader = ServiceFinder.load(ModuleCommandExtensions.class, cl);
 
       if (moduleCmdExtLoader.iterator().hasNext()) {
-         commandFactories = new HashMap<Byte, ModuleCommandFactory>(1);
-         commandInitializers = new HashMap<Byte, ModuleCommandInitializer>(1);
-         moduleCommands = new HashSet<Class<? extends ReplicableCommand>>(1);
+         commandFactories = new HashMap<>(1);
+         commandInitializers = new HashMap<>(1);
+         moduleCommands = new HashSet<>(1);
          for (ModuleCommandExtensions extension : moduleCmdExtLoader) {
             log.debugf("Loading module command extension SPI class: %s", extension);
             ModuleCommandFactory cmdFactory = extension.getModuleCommandFactory();
+            Objects.requireNonNull(cmdFactory);
             ModuleCommandInitializer cmdInitializer = extension.getModuleCommandInitializer();
-            for (Map.Entry<Byte, Class<? extends ReplicableCommand>> command :
-                  cmdFactory.getModuleCommands().entrySet()) {
+            Objects.requireNonNull(cmdInitializer);
+            for (Map.Entry<Byte, Class<? extends ReplicableCommand>> command : cmdFactory.getModuleCommands().entrySet()) {
                byte id = command.getKey();
                if (commandFactories.containsKey(id))
                   throw new IllegalArgumentException(String.format(
@@ -76,7 +73,7 @@ public class ModuleProperties extends Properties {
             }
          }
       } else {
-         log.debugf("No module command extensions to load");
+         log.debug("No module command extensions to load");
          commandInitializers = Collections.emptyMap();
          commandFactories = Collections.emptyMap();
       }
@@ -100,7 +97,7 @@ public class ModuleProperties extends Properties {
       if (cmds == null || cmds.isEmpty())
          return Collections.emptySet();
 
-      Collection<Class<? extends CacheRpcCommand>> cacheRpcCmds = new HashSet<Class<? extends CacheRpcCommand>>(2);
+      Collection<Class<? extends CacheRpcCommand>> cacheRpcCmds = new HashSet<>(2);
       for (Class<? extends ReplicableCommand> moduleCmdClass : cmds) {
          if (CacheRpcCommand.class.isAssignableFrom(moduleCmdClass))
             cacheRpcCmds.add((Class<? extends CacheRpcCommand>) moduleCmdClass);
@@ -114,8 +111,7 @@ public class ModuleProperties extends Properties {
       if (cmds == null || cmds.isEmpty())
          return Collections.emptySet();
 
-      Collection<Class<? extends ReplicableCommand>> replicableOnlyCmds =
-            new HashSet<Class<? extends ReplicableCommand>>(2);
+      Collection<Class<? extends ReplicableCommand>> replicableOnlyCmds = new HashSet<>(2);
       for (Class<? extends ReplicableCommand> moduleCmdClass : cmds) {
          if (!CacheRpcCommand.class.isAssignableFrom(moduleCmdClass)) {
             replicableOnlyCmds.add(moduleCmdClass);
@@ -123,5 +119,4 @@ public class ModuleProperties extends Properties {
       }
       return replicableOnlyCmds;
    }
-
 }

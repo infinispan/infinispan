@@ -40,7 +40,7 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletableFuture<Object> invokeAsync() {
       if (queryInterceptor.isStopping()) {
          throw log.cacheIsStoppingNoCommandAllowed(cacheName.toString());
       }
@@ -90,5 +90,4 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
    public boolean isReturnValueExpected() {
       return true;
    }
-
 }

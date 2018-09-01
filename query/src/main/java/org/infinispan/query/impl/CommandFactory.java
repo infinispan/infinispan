@@ -13,16 +13,16 @@ import org.infinispan.query.indexmanager.IndexUpdateStreamCommand;
 import org.infinispan.util.ByteString;
 
 /**
-* Remote commands factory implementation
+* Remote commands factory implementation.
 *
 * @author Israel Lacerra <israeldl@gmail.com>
 * @since 5.1
 */
-public class CommandFactory implements ModuleCommandFactory {
+final class CommandFactory implements ModuleCommandFactory {
 
    @Override
    public Map<Byte, Class<? extends ReplicableCommand>> getModuleCommands() {
-      Map<Byte, Class<? extends ReplicableCommand>> map = new HashMap<Byte, Class<? extends ReplicableCommand>>(1);
+      Map<Byte, Class<? extends ReplicableCommand>> map = new HashMap<>(4);
       map.put(ClusteredQueryCommand.COMMAND_ID, ClusteredQueryCommand.class);
       map.put(IndexUpdateCommand.COMMAND_ID, IndexUpdateCommand.class);
       map.put(IndexUpdateStreamCommand.COMMAND_ID, IndexUpdateStreamCommand.class);
@@ -32,8 +32,7 @@ public class CommandFactory implements ModuleCommandFactory {
 
    @Override
    public ReplicableCommand fromStream(byte commandId) {
-      // Should not be called while this factory only
-      // provides cache specific replicable commands.
+      // Should never be called because this factory only provides cache specific replicable commands.
       return null;
    }
 
@@ -58,5 +57,4 @@ public class CommandFactory implements ModuleCommandFactory {
       }
       return c;
    }
-
 }

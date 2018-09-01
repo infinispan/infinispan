@@ -16,7 +16,7 @@ import org.infinispan.util.ByteString;
  * @author anistor@redhat.com
  * @since 5.3
  */
-public class TestModuleCommandExtensions implements ModuleCommandExtensions {
+public final class TestModuleCommandExtensions implements ModuleCommandExtensions {
 
    @Override
    public ModuleCommandFactory getModuleCommandFactory() {

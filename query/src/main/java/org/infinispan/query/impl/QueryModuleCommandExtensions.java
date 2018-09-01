@@ -6,7 +6,7 @@ import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
-public class QueryModuleCommandExtensions implements ModuleCommandExtensions {
+public final class QueryModuleCommandExtensions implements ModuleCommandExtensions {
 
    @Override
    public ModuleCommandFactory getModuleCommandFactory() {
@@ -17,5 +17,4 @@ public class QueryModuleCommandExtensions implements ModuleCommandExtensions {
    public ModuleCommandInitializer getModuleCommandInitializer() {
       return new CommandInitializer();
    }
-
 }

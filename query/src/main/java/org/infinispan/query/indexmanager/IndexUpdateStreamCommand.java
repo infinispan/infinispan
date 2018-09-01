@@ -20,6 +20,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @since 7.0
  */
 public class IndexUpdateStreamCommand extends AbstractUpdateCommand {
+
    private static final Log log = LogFactory.getLog(IndexUpdateStreamCommand.class, Log.class);
 
    public static final byte COMMAND_ID = ModuleCommandIds.UPDATE_INDEX_STREAM;
@@ -29,7 +30,7 @@ public class IndexUpdateStreamCommand extends AbstractUpdateCommand {
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletableFuture<Object> invokeAsync() {
       if (queryInterceptor.isStopping()) {
          throw log.cacheIsStoppingNoCommandAllowed(cacheName.toString());
       }
@@ -48,5 +49,4 @@ public class IndexUpdateStreamCommand extends AbstractUpdateCommand {
    public byte getCommandId() {
       return COMMAND_ID;
    }
-
 }
