@@ -5,14 +5,9 @@ package org.infinispan.query;
  */
 public class FetchOptions {
 
-   private FetchMode fetchMode;
+   private FetchMode fetchMode = FetchMode.LAZY;
 
-   private int fetchSize;
-
-   public FetchOptions() {
-      fetchMode(FetchMode.LAZY);
-      fetchSize(1);
-   }
+   private int fetchSize = 1;
 
    /**
     * Set the fetch mode to be used to fetch matching results
@@ -55,26 +50,20 @@ public class FetchOptions {
    }
 
    /**
-    * Specifies the fetching strategy
-    * for query results.
+    * Specifies the fetching strategy for query results.
     */
-    public static enum FetchMode {
+   public enum FetchMode {
 
-        /**
-         * With eager mode all results are loaded as
-         * soon as the query is performed; this results
-         * in a larger initial transfer of entries but no
-         * remote operations during iteration of the resultset.
-         */
-        EAGER,
+      /**
+       * With eager mode all results are loaded as soon as the query is performed; this results in a larger initial
+       * transfer of entries but no remote operations during iteration of the resultset.
+       */
+      EAGER,
 
-        /**
-         * With lazy loading the entries are not loaded
-         * until each one is specifically requested.
-         * If iterating on very larger result sets this
-         * is recommended to avoid loading too many entries
-         * in the VM performing the iteration.
-         */
-        LAZY
-    }
+      /**
+       * With lazy loading the entries are not loaded until each one is specifically requested. If iterating on very
+       * larger result sets this is recommended to avoid loading too many entries in the VM performing the iteration.
+       */
+      LAZY
+   }
 }

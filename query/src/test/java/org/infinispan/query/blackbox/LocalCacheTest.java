@@ -6,8 +6,10 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -33,7 +35,6 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.query.test.AnotherGrassEater;
@@ -92,9 +93,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
 
       try {
-         assert found.hasNext();
+         assertTrue(found.hasNext());
          found.next();
-         assert !found.hasNext();
+         assertFalse(found.hasNext());
       } finally {
          found.close();
       }
@@ -109,7 +110,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
 
       try {
-         assert found.hasNext();
+         assertTrue(found.hasNext());
          found.remove();
       } finally {
          found.close();
@@ -124,9 +125,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
 
       try {
-         assert found.hasNext();
+         assertTrue(found.hasNext());
          found.next();
-         assert !found.hasNext();
+         assertFalse(found.hasNext());
          found.next();
       } finally {
          found.close();
@@ -323,9 +324,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
 
       try {
-         assert found.hasNext();
+         assertTrue(found.hasNext());
          found.next();
-         assert !found.hasNext();
+         assertFalse(found.hasNext());
       } finally {
          found.close();
       }
@@ -339,16 +340,16 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       Query luceneQuery = queryParser.parse("playing");
       CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
-      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions(){
-         public FetchOptions fetchMode(FetchMode fetchMode) {
+      ResultIterator<?> found = cacheQuery.iterator(new FetchOptions() {
+         public FetchMode getFetchMode() {
             return null;
          }
       });
 
       try {
-         assert found.hasNext();
+         assertTrue(found.hasNext());
          found.next();
-         assert !found.hasNext();
+         assertFalse(found.hasNext());
       } finally {
          found.close();
       }
@@ -363,9 +364,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       ResultIterator<?> found = cacheQuery.iterator();
 
       try {
-         assert found.hasNext();
+         assertTrue(found.hasNext());
          found.next();
-         assert !found.hasNext();
+         assertFalse(found.hasNext());
       } finally {
          found.close();
       }
@@ -460,11 +461,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testSearchManagerWithNullCache() throws ParseException {
-      loadTestingData();
-      queryParser = createQueryParser("blurb");
-      Query luceneQuery = queryParser.parse("fish");
-      Search.getSearchManager(null).getQuery(luceneQuery).firstResult(1);
+   public void testSearchManagerWithNullCache() {
+      Search.getSearchManager(null);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -529,11 +527,11 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testSearchWithWrongCache() throws ParseException {
+   public void testSearchWithWrongCache() {
       Cache cache = mock(CacheImpl.class);
       when(cache.getAdvancedCache()).thenReturn(null);
 
-      SearchManager manager = Search.getSearchManager(cache);
+      Search.getSearchManager(cache);
    }
 
    //Another test just for covering Search.java instantiation, although it is unnecessary. As well as covering the
@@ -548,9 +546,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.valueOf("LAZY")));
 
       try {
-         assert found.hasNext();
+         assertTrue(found.hasNext());
          found.next();
-         assert !found.hasNext();
+         assertFalse(found.hasNext());
       } finally {
          found.close();
       }
@@ -598,7 +596,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
-   private int countElements(ResultIterator<?> iterator) {
+   private int countElements(Iterator<?> iterator) {
       int count = 0;
       while (iterator.hasNext()) {
          iterator.next();
@@ -705,7 +703,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
-   protected void prepareTestingData() {
+   private void prepareTestingData() {
       person1 = new Person();
       person1.setName("Navin Surtani");
       person1.setAge(20);
@@ -731,5 +729,4 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    protected void enhanceConfig(ConfigurationBuilder c) {
       // no op, meant to be overridden
    }
-
 }
