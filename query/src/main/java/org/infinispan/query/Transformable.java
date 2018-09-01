@@ -8,7 +8,8 @@ import java.lang.annotation.Target;
 import org.infinispan.query.impl.DefaultTransformer;
 
 /**
- * If you annotate your object with this, it can be used as a valid key for Infinispan to index.
+ * If you annotate your object with this, it can be used as a valid key for Infinispan to index (unless your key type is
+ * a boxed primitive, a String or a byte array in which case it can be used without a transformer).
  *
  * @author Manik Surtani
  * @since 4.0
@@ -17,9 +18,9 @@ import org.infinispan.query.impl.DefaultTransformer;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Transformable {
 
-   // This should really be Class<? extends Transformer> however, since
-   // migrating to JBoss Logging and using annotation processor for generating
-   // log objects, if the previous definition is used, a compiler bug is hit.
-   // You can find more info in https://issues.jboss.org/browse/ISPN-380
-   Class transformer() default DefaultTransformer.class;
+   /**
+    * The {@link Transformer} to use. Please specify your custom transformer instead of relying on the default one which
+    * is slow.
+    */
+   Class<? extends Transformer> transformer() default DefaultTransformer.class;
 }
