@@ -58,6 +58,7 @@ import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.QueryKnownClasses;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.backend.TxQueryInterceptor;
+import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.continuous.impl.ContinuousQueryResult;
 import org.infinispan.query.continuous.impl.IckleContinuousQueryCacheEventFilterConverter;
@@ -66,7 +67,6 @@ import org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper;
 import org.infinispan.query.dsl.embedded.impl.IckleCacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
-import org.infinispan.query.impl.externalizers.ClusteredTopDocsExternalizer;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.query.impl.externalizers.LuceneBooleanQueryExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneBytesRefExternalizer;
@@ -435,7 +435,7 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_TERM, new LuceneTermExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_SORT, new LuceneSortExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_SORT_FIELD, new LuceneSortFieldExternalizer());
-      externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_TOPDOCS, new ClusteredTopDocsExternalizer());
+      externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_TOPDOCS, new NodeTopDocs.Externalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_TOPDOCS, new LuceneTopDocsExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_FIELD_SCORE_DOC, new LuceneFieldDocExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_SCORE_DOC, new LuceneScoreDocExternalizer());
@@ -448,5 +448,4 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_FUZZY, new LuceneFuzzyQueryExternalizer());
       externalizerMap.put(ExternalizerIds.QUERY_DEFINITION, new QueryDefinition.Externalizer());
    }
-
 }
