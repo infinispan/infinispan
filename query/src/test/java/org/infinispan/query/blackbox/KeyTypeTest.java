@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import static org.testng.Assert.assertEquals;
+
 import java.util.List;
 
 import org.apache.lucene.index.Term;
@@ -51,7 +53,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   public void testPrimitiveAndStringKeys(){
+   public void testPrimitiveAndStringKeys() {
       String key1 = "key1";
       int key2 = 2;
       byte key3 = 3;
@@ -61,7 +63,6 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       boolean key7 = true;
       double key8 = 8;
       char key9 = '9';
-
 
       cache.put(key1, person1);
       cache.put(key2, person1);
@@ -76,16 +77,15 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       // Going to search the 'blurb' field for 'owns'
       Term term = new Term("blurb", "owns");
       CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
-      assert cacheQuery.getResultSize() == 9;
+      assertEquals(cacheQuery.getResultSize(), 9);
 
       List<Person> found = cacheQuery.list();
-      for (int i = 0; i < 9; i++){
-         assert found.get(i).equals(person1);
+      for (int i = 0; i < 9; i++) {
+         assertEquals(found.get(i), person1);
       }
-
    }
 
-   public void testCustomKeys(){
+   public void testCustomKeys() {
       CustomKey key1 = new CustomKey(1, 2, 3);
       CustomKey key2 = new CustomKey(900, 800, 700);
       CustomKey key3 = new CustomKey(1024, 2048, 4096);
@@ -96,7 +96,6 @@ public class KeyTypeTest extends SingleCacheManagerTest {
 
       Term term = new Term("blurb", "owns");
       CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
-      int i;
-      assert (i = cacheQuery.getResultSize()) == 3 : "Expected 3, was " + i;
+      assertEquals(cacheQuery.getResultSize(), 3);
    }
 }
