@@ -19,20 +19,21 @@ import org.infinispan.protostream.SerializationContext;
  * @since 9.2
  */
 class ProtobufRemoteQueryManager extends BaseRemoteQueryManager {
-   private final BaseRemoteQueryEngine queryEngine;
+
+   private final RemoteQueryEngine queryEngine;
    private final Transcoder protobufTranscoder;
 
    ProtobufRemoteQueryManager(SerializationContext serCtx, ComponentRegistry cr, QuerySerializers querySerializers) {
       super(cr, querySerializers);
       Matcher matcher = new ProtobufMatcher(serCtx, ProtobufFieldIndexingMetadata::new);
-      Configuration configuration = cache.getCacheConfiguration();
       cr.registerComponent(matcher, ProtobufMatcher.class);
 
+      Configuration configuration = cache.getCacheConfiguration();
       boolean isIndexed = configuration.indexing().index().isEnabled();
-      boolean customStorage = cache.getCacheConfiguration().encoding().valueDataType().isMediaTypeChanged();
+      boolean customStorage = configuration.encoding().valueDataType().isMediaTypeChanged();
       MediaType valueMediaType = valueDataConversion.getStorageMediaType();
       boolean isProtoBuf = valueMediaType.match(APPLICATION_PROTOSTREAM);
-      if (isProtoBuf || (!customStorage && isIndexed)) {
+      if (isProtoBuf || !customStorage && isIndexed) {
          valueDataConversion.overrideWrapper(ProtobufWrapper.class, cr);
       }
       this.queryEngine = new RemoteQueryEngine(cache, isIndexed);
@@ -54,5 +55,4 @@ class ProtobufRemoteQueryManager extends BaseRemoteQueryManager {
    public Object encodeFilterResult(Object filterResult) {
       return protobufTranscoder.transcode(filterResult, APPLICATION_OBJECT, APPLICATION_PROTOSTREAM);
    }
-
 }
