@@ -16,11 +16,11 @@ import net.jcip.annotations.NotThreadSafe;
  * @author Marko Luksa
  */
 @NotThreadSafe
-public class EagerIterator<E> extends AbstractIterator<E> {
+final class EagerIterator<E> extends AbstractIterator<E> {
 
-   private List<EntityInfo> entityInfos;
+   private final List<EntityInfo> entityInfos;
 
-   public EagerIterator(List<EntityInfo> entityInfos, QueryResultLoader resultLoader, int fetchSize) {
+   EagerIterator(List<EntityInfo> entityInfos, QueryResultLoader resultLoader, int fetchSize) {
       super(resultLoader, 0, entityInfos.size() - 1, fetchSize);
       this.entityInfos = entityInfos;
    }
@@ -31,8 +31,8 @@ public class EagerIterator<E> extends AbstractIterator<E> {
       // created, the iterator() method in CacheQueryImpl closes everything that needs to be closed.
    }
 
+   @Override
    protected EntityInfo loadEntityInfo(int index) {
       return entityInfos.get(index);
    }
-
 }
