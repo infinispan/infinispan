@@ -15,7 +15,7 @@ import org.infinispan.query.ResultIterator;
  * @see org.infinispan.query.impl.LazyIterator
  * @since 4.0
  */
-public abstract class AbstractIterator<E> implements ResultIterator<E> {
+abstract class AbstractIterator<E> implements ResultIterator<E> {
 
    private final Object[] buffer;
 
@@ -38,7 +38,7 @@ public abstract class AbstractIterator<E> implements ResultIterator<E> {
 
    protected AbstractIterator(QueryResultLoader resultLoader, int firstIndex, int lastIndex, int fetchSize) {
       if (fetchSize < 1) {
-         throw new IllegalArgumentException("Incorrect value for fetchSize passed. Your fetchSize is less than 1");
+         throw new IllegalArgumentException("fetchSize should be greater than 0");
       }
       this.resultLoader = resultLoader;
       this.index = firstIndex;
@@ -53,17 +53,11 @@ public abstract class AbstractIterator<E> implements ResultIterator<E> {
       return index <= lastIndex;
    }
 
-   /**
-    * This method is not supported and should not be used. Use cache.remove() instead.
-    */
-   @Override
-   public void remove() {
-      throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
-   }
-
    @Override
    public E next() {
-      if (!hasNext()) throw new NoSuchElementException("Out of boundaries. There is no next");
+      if (!hasNext()) {
+         throw new NoSuchElementException();
+      }
 
       if (mustInitializeBuffer()) {
          fillBuffer(index);
@@ -84,13 +78,9 @@ public abstract class AbstractIterator<E> implements ResultIterator<E> {
       bufferIndex = startIndex;
       int resultsToLoad = Math.min(buffer.length, lastIndex + 1 - bufferIndex);
       for (int i = 0; i < resultsToLoad; i++) {
-         buffer[i] = loadResult(bufferIndex + i);
+         EntityInfo entityInfo = loadEntityInfo(bufferIndex + i);
+         buffer[i] = resultLoader.load(entityInfo);
       }
-   }
-
-   private Object loadResult(int index) {
-      EntityInfo entityInfo = loadEntityInfo(index);
-      return resultLoader.load(entityInfo);
    }
 
    protected abstract EntityInfo loadEntityInfo(int index);

@@ -5,17 +5,14 @@ import org.infinispan.query.ResultIterator;
 /**
  * @author Marko Luksa
  */
-public class NullFilteringResultIterator<E> extends NullFilteringIterator<E> implements ResultIterator<E> {
+final class NullFilteringResultIterator<E> extends NullFilteringIterator<E> implements ResultIterator<E> {
 
-   private final ResultIterator<E> delegate;
-
-   public NullFilteringResultIterator(ResultIterator<E> delegate) {
+   NullFilteringResultIterator(ResultIterator<E> delegate) {
       super(delegate);
-      this.delegate = delegate;
    }
 
    @Override
    public void close() {
-      delegate.close();
+      ((ResultIterator<E>) delegate).close();
    }
 }

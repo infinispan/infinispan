@@ -16,8 +16,6 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * DistributedIterator.
- *
  * Iterates on a distributed query.
  *
  * @author Israel Lacerra <israeldl@gmail.com>
@@ -25,7 +23,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero
  * @since 5.1
  */
-public class DistributedIterator<E> implements ResultIterator<E> {
+class DistributedIterator<E> implements ResultIterator<E> {
 
    private static final Log log = LogFactory.getLog(DistributedIterator.class, Log.class);
 
@@ -41,7 +39,7 @@ public class DistributedIterator<E> implements ResultIterator<E> {
    private final int[] partialPositionNext;
    private final TopDocs mergedResults;
 
-   public DistributedIterator(Sort sort, int fetchSize, int resultSize, int maxResults, int firstResult, HashMap<UUID, ClusteredTopDocs> topDocsResponses, AdvancedCache<?, ?> cache) {
+   DistributedIterator(Sort sort, int fetchSize, int resultSize, int maxResults, int firstResult, HashMap<UUID, ClusteredTopDocs> topDocsResponses, AdvancedCache<?, ?> cache) {
       this.fetchSize = fetchSize;
       this.resultSize = resultSize;
       this.maxResults = maxResults;
@@ -75,8 +73,10 @@ public class DistributedIterator<E> implements ResultIterator<E> {
 
    @Override
    public E next() {
-      if (!hasNext())
-         throw new NoSuchElementException("Out of boundaries");
+      if (!hasNext()) {
+         throw new NoSuchElementException();
+      }
+
       currentIndex++;
       // fetch and return the value
       ScoreDoc scoreDoc = mergedResults.scoreDocs[currentIndex];
@@ -106,18 +106,8 @@ public class DistributedIterator<E> implements ResultIterator<E> {
    }
 
    @Override
-   public final void remove() {
-      //TODO implement it?
-      throw new UnsupportedOperationException("This Iterator is read only");
-   }
-
-   @Override
    public final boolean hasNext() {
       int nextIndex = currentIndex + 1;
-      if (firstResult + nextIndex >= resultSize || nextIndex >= maxResults) {
-         return false;
-      }
-      return true;
+      return firstResult + nextIndex < resultSize && nextIndex < maxResults;
    }
-
 }

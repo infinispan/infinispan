@@ -17,11 +17,11 @@ import net.jcip.annotations.NotThreadSafe;
  * @author Ales Justin
  */
 @NotThreadSafe
-public class LazyIterator<E> extends AbstractIterator<E> {
+final class LazyIterator<E> extends AbstractIterator<E> {
 
    private final DocumentExtractor extractor;
 
-   public LazyIterator(DocumentExtractor extractor, QueryResultLoader resultLoader, int fetchSize) {
+   LazyIterator(DocumentExtractor extractor, QueryResultLoader resultLoader, int fetchSize) {
       super(resultLoader, extractor.getFirstIndex(), extractor.getMaxIndex(), fetchSize);
       this.extractor = extractor;
    }

@@ -3,17 +3,21 @@ package org.infinispan.query.impl;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import net.jcip.annotations.NotThreadSafe;
+
 /**
  * An iterator wrapper that filters out (skips over) any null values returned by the wrapped iterator.
  *
  * @author Marko Luksa
  */
-public class NullFilteringIterator<E> implements Iterator<E> {
+@NotThreadSafe
+class NullFilteringIterator<E> implements Iterator<E> {
 
-   private Iterator<E> delegate;
+   protected final Iterator<E> delegate;
+
    private E next;
 
-   public NullFilteringIterator(Iterator<E> delegate) {
+   NullFilteringIterator(Iterator<E> delegate) {
       this.delegate = delegate;
    }
 
@@ -42,10 +46,5 @@ public class NullFilteringIterator<E> implements Iterator<E> {
       } finally {
          next = null;
       }
-   }
-
-   @Override
-   public void remove() {
-      throw new UnsupportedOperationException("remove() is not supported");
    }
 }
