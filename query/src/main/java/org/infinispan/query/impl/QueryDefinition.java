@@ -6,7 +6,6 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.apache.lucene.search.Filter;
@@ -19,11 +18,11 @@ import org.hibernate.search.spi.impl.IndexedTypeMaps;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
 import org.infinispan.query.dsl.embedded.impl.HsQueryRequest;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.query.logging.Log;
+import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -32,11 +31,12 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @since 9.2
  */
-public class QueryDefinition {
+public final class QueryDefinition {
 
    private static final Log log = LogFactory.getLog(QueryDefinition.class, Log.class);
 
-   private String queryString;
+   private final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider;
+   private final String queryString;
    private HSQuery hsQuery;
    private int maxResults = 100;
    private int firstResult;
@@ -46,24 +46,43 @@ public class QueryDefinition {
    private final Map<String, Object> namedParameters = new HashMap<>();
    private transient Sort sort;
 
-   public QueryDefinition(String queryString) {
+   public QueryDefinition(String queryString, SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider) {
+      if (queryString == null) {
+         throw new IllegalArgumentException("queryString cannot be null");
+      }
+      if (queryEngineProvider == null) {
+         throw new IllegalArgumentException("queryEngineProvider cannot be null");
+      }
       this.queryString = queryString;
+      this.queryEngineProvider = queryEngineProvider;
    }
 
    public QueryDefinition(HSQuery hsQuery) {
+      if (hsQuery == null) {
+         throw new IllegalArgumentException("hsQuery cannot be null");
+      }
       this.hsQuery = hsQuery;
+      this.queryString = null;
+      this.queryEngineProvider = null;
    }
 
-   public Optional<String> getQueryString() {
-      return Optional.ofNullable(queryString);
+   public String getQueryString() {
+      return queryString;
    }
 
    private IndexedTypeMap<CustomTypeMetadata> createMetadata() {
       return IndexedTypeMaps.singletonMapping(PojoIndexedTypeIdentifier.convertFromLegacy(indexedType), () -> sortableFields);
    }
 
-   protected QueryEngine getQueryEngine(AdvancedCache<?, ?> cache) {
-      return cache.getComponentRegistry().getComponent(EmbeddedQueryEngine.class);
+   private QueryEngine getQueryEngine(AdvancedCache<?, ?> cache) {
+      if (queryEngineProvider == null) {
+         throw new IllegalStateException("No query engine provider specified");
+      }
+      QueryEngine queryEngine = queryEngineProvider.apply(cache);
+      if (queryEngine == null) {
+         throw new IllegalStateException("The provider could not locate a suitable query engine");
+      }
+      return queryEngine;
    }
 
    public void initialize(AdvancedCache<?, ?> cache) {
@@ -168,7 +187,7 @@ public class QueryDefinition {
       this.indexedType = indexedType;
    }
 
-   public static class Externalizer implements AdvancedExternalizer<QueryDefinition> {
+   public static final class Externalizer implements AdvancedExternalizer<QueryDefinition> {
 
       @Override
       public Set<Class<? extends QueryDefinition>> getTypeClasses() {
@@ -181,24 +200,27 @@ public class QueryDefinition {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, QueryDefinition object) throws IOException {
-         if (object.getQueryString().isPresent()) {
+      public void writeObject(ObjectOutput output, QueryDefinition queryDefinition) throws IOException {
+         if (queryDefinition.queryString != null) {
             output.writeBoolean(true);
-            output.writeUTF(object.getQueryString().get());
+            output.writeUTF(queryDefinition.queryString);
+            output.writeObject(queryDefinition.queryEngineProvider);
          } else {
             output.writeBoolean(false);
-            output.writeObject(object.getHsQuery());
+            output.writeObject(queryDefinition.hsQuery);
          }
-         output.writeInt(object.getFirstResult());
-         output.writeInt(object.getMaxResults());
-         output.writeObject(object.getSortableFields());
-         output.writeObject(object.getIndexedType());
-         Map<String, Object> namedParameters = object.getNamedParameters();
-         int size = namedParameters.size();
-         output.writeShort(size);
-         for (Map.Entry<String, Object> param : namedParameters.entrySet()) {
-            output.writeUTF(param.getKey());
-            output.writeObject(param.getValue());
+         output.writeInt(queryDefinition.firstResult);
+         output.writeInt(queryDefinition.maxResults);
+         output.writeObject(queryDefinition.sortableFields);
+         output.writeObject(queryDefinition.indexedType);
+         Map<String, Object> namedParameters = queryDefinition.namedParameters;
+         int paramSize = namedParameters.size();
+         output.writeShort(paramSize);
+         if (paramSize != 0) {
+            for (Map.Entry<String, Object> param : namedParameters.entrySet()) {
+               output.writeUTF(param.getKey());
+               output.writeObject(param.getValue());
+            }
          }
       }
 
@@ -206,9 +228,11 @@ public class QueryDefinition {
       public QueryDefinition readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          QueryDefinition queryDefinition;
          if (input.readBoolean()) {
-            queryDefinition = createQueryDefinition(input.readUTF());
+            String queryString = input.readUTF();
+            SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
+            queryDefinition = new QueryDefinition(queryString, queryEngineProvider);
          } else {
-            queryDefinition = createQueryDefinition((HSQuery) input.readObject());
+            queryDefinition = new QueryDefinition((HSQuery) input.readObject());
          }
          queryDefinition.setFirstResult(input.readInt());
          queryDefinition.setMaxResults(input.readInt());
@@ -217,7 +241,7 @@ public class QueryDefinition {
          queryDefinition.setSortableField(sortableField);
          queryDefinition.setIndexedType(indexedTypes);
          short paramSize = input.readShort();
-         if (paramSize > 0) {
+         if (paramSize != 0) {
             Map<String, Object> params = new HashMap<>(paramSize);
             for (int i = 0; i < paramSize; i++) {
                String key = input.readUTF();
@@ -227,14 +251,6 @@ public class QueryDefinition {
             queryDefinition.setNamedParameters(params);
          }
          return queryDefinition;
-      }
-
-      protected QueryDefinition createQueryDefinition(String queryString) {
-         return new QueryDefinition(queryString);
-      }
-
-      protected QueryDefinition createQueryDefinition(HSQuery hsQuery) {
-         return new QueryDefinition(hsQuery);
       }
    }
 }
