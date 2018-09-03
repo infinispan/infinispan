@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 public class QueryFacadeImplTest {
 
    /**
-    * Test there is exactly one loadable provider.
+    * Ensure there is exactly one loadable provider for QueryFacade.
     */
    public void testProvider() {
       List<QueryFacade> implementations = new ArrayList<>();
