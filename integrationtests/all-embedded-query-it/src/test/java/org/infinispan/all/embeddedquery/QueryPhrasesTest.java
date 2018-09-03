@@ -23,6 +23,7 @@ import org.junit.Test;
  * @author Anna Manukyan
  */
 public class QueryPhrasesTest extends AbstractQueryTest {
+
    private Person person1;
    private Person person2;
    private Person person3;

@@ -2,6 +2,7 @@ package org.infinispan.query.queries.phrases;
 
 import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;
 
@@ -18,7 +19,6 @@ import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = {"functional"}, testName = "query.queries.phrases.QueryPhrasesTest")
 public class QueryPhrasesTest extends SingleCacheManagerTest {
+
    private Person person1;
    private Person person2;
    private Person person3;
@@ -63,8 +64,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().bool()
             .must(createQueryParser("name").parse("Goat")).not().createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(1, found.size());
       assert found.contains(person1);
@@ -92,8 +93,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(AnotherGrassEater.class).get().bool()
             .should(createQueryParser("name").parse("grass")).should(subQuery).createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(2, found.size());
       assert found.contains(person1);
@@ -108,8 +109,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().bool()
             .should(createQueryParser("name").parse("Goat")).should(subQuery).createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.contains(person1);
@@ -130,7 +131,7 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       assert found.contains(person3);
    }
 
-   public void testBooleanQueriesShouldNot() throws ParseException {
+   public void testBooleanQueriesShouldNot() {
       loadTestingData();
 
       Query subQuery1 = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get()
@@ -143,8 +144,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().bool()
             .should(subQuery1).should(subQuery2).createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.get(0).equals(person1);
@@ -173,8 +174,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword().fuzzy().
             onField("name").matching("Goat").createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(2, found.size());
       assert found.contains(person2);
@@ -218,17 +219,16 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
             .fuzzy().withEditDistanceUpTo(1).withPrefixLength(2).onField("name").matching("yyJohny").createQuery();
       List<Object> found = Search.getSearchManager(cache).getQuery(query).list();
       assertEquals(1, found.size());
-      AssertJUnit.assertTrue(found.contains(person1));
+      assertTrue(found.contains(person1));
 
       //return all as edit distance excluding the prefix fit all documents
       Query queryReturnAll = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword()
             .fuzzy().withEditDistanceUpTo(2).withPrefixLength(2).onField("name").matching("yyJohn").createQuery();
       List<Object> foundWithLowerThreshold = Search.getSearchManager(cache).getQuery(queryReturnAll).list();
       assertEquals(2, foundWithLowerThreshold.size());
-      AssertJUnit.assertTrue(foundWithLowerThreshold.contains(person1));
-      AssertJUnit.assertTrue(foundWithLowerThreshold.contains(person2));
+      assertTrue(foundWithLowerThreshold.contains(person1));
+      assertTrue(foundWithLowerThreshold.contains(person2));
    }
-
 
    public void testQueryingRangeWithAnd() {
       NumericType type1 = new NumericType(10, 20);
@@ -242,8 +242,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(NumericType.class)
             .get().range().onField("num1").andField("num2").below(20).excludeLimit().createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());  //<------ All entries should be here, because andField is executed as SHOULD;
       assert found.contains(type1);
@@ -272,8 +272,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword().wildcard()
             .onField("wrongname").matching("Goat").createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(2, found.size());
    }
@@ -284,8 +284,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(NumericType.class).get().keyword().wildcard()
             .onField("name").matching("*wildcard*").createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.contains(type1);
@@ -327,8 +327,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword().onField("name")
             .andField("blurb").matching("Eats").createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(2, found.size());
 
@@ -353,8 +353,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().phrase()
             .onField("blurb").sentence("Eats grass").createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(1, found.size());
       assert found.contains(person2);
@@ -376,8 +376,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(NumericType.class).get().phrase()
             .onField("name").sentence("Some string").createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(0, found.size());
 
@@ -396,8 +396,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().phrase().withSlop(3)
             .onField("blurb").sentence("Eats grass").createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(1, found.size());
       assert found.contains(person2);
@@ -445,8 +445,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(NumericType.class).get().phrase().withSlop(1)
             .onField("name").sentence("Some string").createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(0, found.size());
 
@@ -475,8 +475,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
 
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().all().except().createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.contains(person2);
@@ -507,8 +507,8 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
 
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(NumericType.class).get().all().except().createQuery();
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(query);
-      List<?> found = cacheQuery.list();
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(query);
+      List<Person> found = cacheQuery.list();
 
       assertEquals(3, found.size());
       assert found.contains(type1);
@@ -523,7 +523,7 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       assertEquals(0, found.size());
    }
 
-   protected void loadTestingData() {
+   private void loadTestingData() {
       person1 = new Person();
       person1.setName("Navin Surtani");
       person1.setBlurb("Likes playing WoW");
