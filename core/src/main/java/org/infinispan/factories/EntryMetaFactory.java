@@ -11,12 +11,12 @@ public class EntryMetaFactory extends AbstractNamedCacheComponentFactory impleme
 
    @Override
    @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
 
-      if (componentType.equals(EntryFactory.class)) {
-         return (T) new EntryFactoryImpl();
+      if (componentName.equals(EntryFactory.class.getName())) {
+         return new EntryFactoryImpl();
       } else {
-         return (T) new InternalEntryFactoryImpl();
+         return new InternalEntryFactoryImpl();
       }
    }
 }

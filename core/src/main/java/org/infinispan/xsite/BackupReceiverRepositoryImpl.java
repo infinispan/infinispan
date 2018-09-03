@@ -11,6 +11,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.util.logging.Log;
@@ -28,15 +29,16 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
    private final ConcurrentMap<SiteCachePair, BackupReceiver> backupReceivers = new ConcurrentHashMap<>();
 
    @Inject public EmbeddedCacheManager cacheManager;
+   @Inject public CacheManagerNotifier cacheManagerNotifier;
 
    @Start
    public void start() {
-      cacheManager.addListener(this);
+      cacheManagerNotifier.addListener(this);
    }
 
    @Stop
    public void stop() {
-      cacheManager.removeListener(this);
+      cacheManagerNotifier.removeListener(this);
    }
 
    @CacheStopped

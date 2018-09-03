@@ -10,7 +10,8 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.jmx.annotations.MBean;
@@ -34,8 +35,11 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
 
    public static final int DEFAULT_TOP_KEY = 10;
    private static final Log log = LogFactory.getLog(CacheUsageInterceptor.class, Log.class);
+
+   @Inject private BasicComponentRegistry componentRegistry;
+   @Inject private DistributionManager distributionManager;
+
    private StreamSummaryContainer streamSummaryContainer;
-   private DistributionManager distributionManager;
 
    private final InvocationFinallyAction writeSkewReturnHandler = new InvocationFinallyAction() {
       @Override
@@ -211,13 +215,11 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
       log.startStreamSummaryInterceptor();
       streamSummaryContainer = StreamSummaryContainer.getOrCreateStreamLibContainer(cache);
       streamSummaryContainer.setEnabled(true);
-      distributionManager = cache.getAdvancedCache().getDistributionManager();
 
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-      LockManager oldLockManager = componentRegistry.getComponent(LockManager.class);
+      LockManager oldLockManager = componentRegistry.getComponent(LockManager.class).running();
       LockManager newLockManager = new TopKeyLockManager(oldLockManager, streamSummaryContainer);
       log.replaceComponent("LockManager", oldLockManager, newLockManager);
-      componentRegistry.registerComponent(newLockManager, LockManager.class);
+      componentRegistry.replaceComponent(LockManager.class.getName(), newLockManager, false);
       componentRegistry.rewire();
    }
 

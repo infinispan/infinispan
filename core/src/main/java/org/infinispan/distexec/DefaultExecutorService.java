@@ -45,10 +45,9 @@ import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -57,6 +56,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -102,12 +102,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    protected final AtomicBoolean isShutdown = new AtomicBoolean(false);
    protected final AdvancedCache cache;
    protected final RpcManager rpc;
-   protected final AsyncInterceptorChain invoker;
    protected final CommandsFactory factory;
    protected final Marshaller marshaller;
    protected final ExecutorService localExecutorService;
    protected final CancellationService cancellationService;
-   protected final ClusteringDependentLogic clusterDependentLogic;
    protected final boolean takeExecutorOwnership;
    private final TimeService timeService;
 
@@ -185,22 +183,23 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
       this.cache = masterCacheNode.getAdvancedCache();
-      ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(cache);
 
       ensureAccessPermissions(cache);
       ensureProperCacheState(cache);
       ensureFullCache(cache);
 
 
-      this.rpc = SecurityActions.getCacheRpcManager(cache);
-      this.invoker = registry.getComponent(AsyncInterceptorChain.class);
-      this.factory = registry.getComponent(CommandsFactory.class);
-      this.marshaller = registry.getComponent(StreamingMarshaller.class);
-      this.cancellationService = registry.getComponent(CancellationService.class);
       this.localExecutorService = localExecutorService;
       this.takeExecutorOwnership = takeExecutorOwnership;
+
+      ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(cache);
+      BasicComponentRegistry basicComponentRegistry = registry.getComponent(BasicComponentRegistry.class);
       this.timeService = registry.getTimeService();
-      this.clusterDependentLogic = registry.getComponent(ClusteringDependentLogic.class);
+      this.rpc = basicComponentRegistry.getComponent(RpcManager.class).running();
+      this.marshaller = basicComponentRegistry.getComponent(StreamingMarshaller.class).running();
+      this.cancellationService = basicComponentRegistry.getComponent(CancellationService.class).running();
+      // running() would create a cycle
+      this.factory = basicComponentRegistry.getComponent(CommandsFactory.class).wired();
    }
 
    @Override
@@ -240,7 +239,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    private Address getAddress() {
-      return clusterDependentLogic.getAddress();
+      return rpc != null ? rpc.getAddress() : LocalModeAddress.INSTANCE;
    }
 
    private List<Runnable> realShutdown(boolean interrupt) {

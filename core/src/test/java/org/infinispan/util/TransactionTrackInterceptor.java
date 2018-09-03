@@ -17,6 +17,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -49,6 +50,7 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
       }
       TransactionTrackInterceptor interceptor = new TransactionTrackInterceptor();
       cache.getAdvancedCache().getComponentRegistry().wireDependencies(interceptor);
+      TestingUtil.startComponent(interceptor);
       chain.addInterceptor(interceptor, 0);
       return interceptor;
    }

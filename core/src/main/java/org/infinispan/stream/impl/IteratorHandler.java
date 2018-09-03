@@ -18,6 +18,8 @@ import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -32,6 +34,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author wburns
  * @since 9.2
  */
+@Scope(Scopes.GLOBAL)
 @Listener(observation = Listener.Observation.POST)
 public class IteratorHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());

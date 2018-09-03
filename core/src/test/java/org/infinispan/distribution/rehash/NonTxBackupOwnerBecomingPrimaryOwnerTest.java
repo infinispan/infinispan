@@ -256,7 +256,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
          return invocation.callRealMethod();
       }).when(spyLtm).handleTopologyUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
                                            any(AvailabilityMode.class), anyInt(), any(Address.class));
-      TestingUtil.extractGlobalComponentRegistry(manager).registerComponent(spyLtm, LocalTopologyManager.class);
+      TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLtm, true);
    }
 
    private class StateTransferLatchInterceptor extends DDAsyncInterceptor {

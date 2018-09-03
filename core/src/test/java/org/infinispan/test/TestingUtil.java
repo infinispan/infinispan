@@ -18,6 +18,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.security.Principal;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -52,7 +55,6 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
@@ -62,6 +64,7 @@ import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
+import io.reactivex.Flowable;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.Version;
@@ -91,6 +94,10 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -136,8 +143,6 @@ import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.AssertJUnit;
-
-import io.reactivex.Flowable;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -875,8 +880,9 @@ public class TestingUtil {
    private static Set<String> getOrderedCacheNames(EmbeddedCacheManager cacheContainer) {
       Set<String> caches = new LinkedHashSet<>();
       try {
-         DependencyGraph<String> graph = TestingUtil.extractGlobalComponentRegistry(cacheContainer)
-                                            .getComponent(KnownComponentNames.CACHE_DEPENDENCY_GRAPH);
+         DependencyGraph<String> graph =
+            TestingUtil.extractGlobalComponentRegistry(cacheContainer)
+                       .getComponent(DependencyGraph.class, KnownComponentNames.CACHE_DEPENDENCY_GRAPH);
          caches.addAll(graph.topologicalSort());
       } catch (Exception ignored) {
       }
@@ -1212,10 +1218,12 @@ public class TestingUtil {
          throw new UnsupportedOperationException();
       }
       ComponentRegistry cr = extractComponentRegistry(cache);
-      T old = cr.getComponent(componentType);
-      cr.registerComponent(replacementComponent, componentType);
+      BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+      ComponentRef<? extends T> old = bcr.getComponent(componentType);
+      bcr.replaceComponent(componentType.getName(), replacementComponent, true);
+      cr.cacheComponents();
       if (rewire) cr.rewire();
-      return old;
+      return old != null ? old.wired() : null;
    }
 
    /**
@@ -1247,15 +1255,9 @@ public class TestingUtil {
     *
     * @return the original component that was replaced
     */
-   public static <T> T replaceComponent(CacheContainer cacheContainer, Class<? extends T> componentType, T replacementComponent, boolean rewire) {
-      GlobalComponentRegistry cr = extractGlobalComponentRegistry(cacheContainer);
-      T old = cr.getComponent(componentType);
-      cr.registerComponent(replacementComponent, componentType);
-      if (rewire) {
-         cr.rewire();
-         cr.rewireNamedRegistries();
-      }
-      return old;
+   public static <T> T replaceComponent(CacheContainer cacheContainer, Class<T> componentType, T replacementComponent,
+                                        boolean rewire) {
+      return replaceComponent(cacheContainer, componentType, componentType.getName(), replacementComponent, rewire);
    }
 
    /**
@@ -1272,13 +1274,14 @@ public class TestingUtil {
     */
    public static <T> T replaceComponent(CacheContainer cacheContainer, Class<T> componentType, String name, T replacementComponent, boolean rewire) {
       GlobalComponentRegistry cr = extractGlobalComponentRegistry(cacheContainer);
-      T old = cr.getComponent(componentType, name);
-      cr.registerComponent(replacementComponent, name);
+      BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+      ComponentRef<T> old = bcr.getComponent(componentType);
+      bcr.replaceComponent(name, replacementComponent, true);
       if (rewire) {
          cr.rewire();
          cr.rewireNamedRegistries();
       }
-      return old;
+      return old != null ? old.wired() : null;
    }
 
    public static <K, V> CacheLoader<K, V> getCacheLoader(Cache<K, V> cache) {
@@ -1805,7 +1808,6 @@ public class TestingUtil {
       PerCacheInboundInvocationHandler current = extractComponent(cache, PerCacheInboundInvocationHandler.class);
       T wrap = ctor.apply(current);
       replaceComponent(cache, PerCacheInboundInvocationHandler.class, wrap, true);
-      replaceField(wrap, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
       return wrap;
    }
 
@@ -1868,31 +1870,79 @@ public class TestingUtil {
     */
    public static void inject(Object instance, Object... components) {
       List<Field> fields = ReflectionUtil.getAllFields(instance.getClass(), Inject.class);
+      Map<Object, Object> unmatchedComponents = new IdentityHashMap<>();
+      for (Object component : components) {
+         unmatchedComponents.put(component, component);
+      }
       for (Field f : fields) {
-         Object matching = null;
+         boolean lazy = f.getType() == ComponentRef.class;
+         Class<?> componentType = getFieldComponentType(f, lazy);
+
+         Object previousMatch = null;
          for (Object component : components) {
             Object currentMatch = null;
+            Object componentInstance = null;
+            String componentName = null;
             if (component instanceof NamedComponent) {
                NamedComponent nc = (NamedComponent) component;
-               if (!f.getType().isInstance(nc.component)) {
-                  continue;
+               ComponentName nameAnnotation = f.getAnnotation(ComponentName.class);
+               if (nameAnnotation != null && nameAnnotation.value().equals(nc.name)) {
+                  currentMatch = nc;
+                  componentInstance = nc.component;
+                  componentName = nc.name;
                }
-               ComponentName componentName = f.getAnnotation(ComponentName.class);
-               if (componentName != null && componentName.value().equals(nc.name)) {
-                  currentMatch = nc.component;
+            } else {
+               if (componentType.isInstance(component)) {
+                  currentMatch = component;
+                  componentInstance = component;
+                  componentName = componentType.getName();
                }
-            } else if (f.getType().isInstance(component)) {
-               currentMatch = component;
             }
             if (currentMatch != null) {
-               if (matching != null) {
-                  throw new IllegalArgumentException("Two components match the field " + f + ": " + matching + " and " + component);
+               if (previousMatch != null) {
+                  throw new IllegalArgumentException(
+                     "Two components match the field " + f.getName() + ": " + previousMatch + " and " + component);
                }
-               ReflectionUtil.setAccessibly(instance, f, currentMatch);
-               matching = currentMatch;
+               Object value = lazy ? new RunningComponentRef(componentName, componentType, componentInstance) : componentInstance;
+               ReflectionUtil.setAccessibly(instance, f, value);
+               previousMatch = currentMatch;
+               unmatchedComponents.remove(currentMatch);
             }
          }
       }
+      if (!unmatchedComponents.isEmpty()) {
+         throw new IllegalArgumentException("No fields match components " + unmatchedComponents.values());
+      }
+   }
+
+   private static Class<?> getFieldComponentType(Field f, boolean lazy) {
+      Class<?> componentType;
+      if (lazy) {
+         Type lazyType = ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0];
+         String typeName;
+         if (lazyType instanceof ParameterizedType) {
+            // Ignore any generic parameters on the component type
+            typeName = ((ParameterizedType) lazyType).getRawType().getTypeName();
+         } else {
+            typeName = lazyType.getTypeName();
+         }
+         try {
+            componentType = Class.forName(typeName);
+         } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Field class cannot be loaded: " + f, e);
+         }
+      } else {
+         componentType = f.getType();
+      }
+      return componentType;
+   }
+
+   public static void startComponent(Object component) {
+      invokeLifecycle(component, Start.class);
+   }
+
+   public static void stopComponent(Object component) {
+      invokeLifecycle(component, Stop.class);
    }
 
    public static void invokeLifecycle(Object component, Class<? extends Annotation> lifecycle) {
@@ -1914,5 +1964,14 @@ public class TestingUtil {
          this.name = name;
          this.component = component;
       }
+
+      @Override
+      public String toString() {
+         return "NamedComponent{" +
+                "name='" + name + '\'' +
+                ", component=" + component +
+                '}';
+      }
    }
+
 }

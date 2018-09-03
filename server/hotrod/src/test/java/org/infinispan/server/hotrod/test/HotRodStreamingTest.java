@@ -2,11 +2,12 @@ package org.infinispan.server.hotrod.test;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import org.infinispan.server.hotrod.HotRodSingleNodeTest;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "server.hotrod.test.HotRodStreamingTest")
-public class HotRodStreamingTest extends org.infinispan.server.hotrod.test.HotRodSingleNodeTest {
+public class HotRodStreamingTest extends HotRodSingleNodeTest {
    private final byte[] K1 = "K1".getBytes();
    private final byte[] V1;
    private final byte[] V2;

@@ -10,7 +10,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -26,6 +25,8 @@ import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -33,7 +34,9 @@ import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -56,7 +59,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private static final Log log = LogFactory.getLog(StateTransferManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private Cache<?, ?> cache;
+   @ComponentName(KnownComponentNames.CACHE_NAME)
+   @Inject protected String cacheName;
    @Inject private StateConsumer stateConsumer;
    @Inject private StateProvider stateProvider;
    @Inject private PartitionHandlingManager partitionHandlingManager;
@@ -68,8 +72,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Inject private LocalTopologyManager localTopologyManager;
    @Inject private KeyPartitioner keyPartitioner;
    @Inject private GlobalStateManager globalStateManager;
+   // Only join the cluster after preloading
+   @Inject private PreloadManager preloadManager;
+   // Make sure we can handle incoming requests before joining
+   @Inject private PerCacheInboundInvocationHandler inboundInvocationHandler;
 
-   private String cacheName;
    private Optional<Integer> persistentStateChecksum;
 
    private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
@@ -88,7 +95,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
          log.tracef("Starting StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
 
-      this.cacheName = cache.getName();
       if (globalStateManager != null) {
          persistentStateChecksum = globalStateManager.readScopedState(cacheName).map(ScopedPersistentState::getChecksum);
       } else {
@@ -220,18 +226,25 @@ public class StateTransferManagerImpl implements StateTransferManager {
       partitionHandlingManager.onTopologyUpdate(newCacheTopology);
    }
 
-   @Start(priority = 1000)
-   @SuppressWarnings("unused")
-   public void waitForInitialStateTransferToComplete() throws Exception {
+   @Override
+   public void waitForInitialStateTransferToComplete() {
       if (configuration.clustering().stateTransfer().awaitInitialTransfer()) {
-         if (!localTopologyManager.isCacheRebalancingEnabled(cacheName)) {
-            initialStateTransferComplete.countDown();
-         }
-         if (trace) log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName, rpcManager.getAddress());
-         boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
-         if (!success) {
-            throw new CacheException(String.format("Initial state transfer timed out for cache %s on %s",
-                  cacheName, rpcManager.getAddress()));
+         try {
+            if (!localTopologyManager.isCacheRebalancingEnabled(cacheName)) {
+               initialStateTransferComplete.countDown();
+            }
+            if (trace)
+               log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName,
+                          rpcManager.getAddress());
+            boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
+            if (!success) {
+               throw new CacheException(String.format("Initial state transfer timed out for cache %s on %s",
+                                                      cacheName, rpcManager.getAddress()));
+            }
+         } catch (CacheException e) {
+            throw e;
+         } catch (Exception e) {
+            throw new CacheException(e);
          }
       }
    }

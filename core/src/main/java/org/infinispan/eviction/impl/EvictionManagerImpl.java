@@ -8,6 +8,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -17,7 +18,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
    @Inject private CacheNotifier<K, V> cacheNotifier;
-   @Inject private AsyncInterceptorChain interceptorChain;
+   @Inject private ComponentRef<AsyncInterceptorChain> interceptorChain;
    @Inject private Configuration cfg;
 
    @Override
@@ -41,7 +42,7 @@ public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
 
    private void updateEvictionStatistics(Map<? extends K, InternalCacheEntry<? extends K, ? extends V>> evicted) {
       CacheMgmtInterceptor mgmtInterceptor =
-            interceptorChain.findInterceptorExtending(CacheMgmtInterceptor.class);
+            interceptorChain.running().findInterceptorExtending(CacheMgmtInterceptor.class);
       if (mgmtInterceptor != null) {
          mgmtInterceptor.addEvictions(evicted.size());
       }

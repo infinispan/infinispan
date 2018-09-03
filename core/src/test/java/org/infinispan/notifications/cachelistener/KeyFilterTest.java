@@ -1,30 +1,30 @@
 package org.infinispan.notifications.cachelistener;
 
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.infinispan.cache.impl.EncoderCache;
+import org.infinispan.commands.CancellationService;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.MockBasicComponentRegistry;
 import org.infinispan.test.TestingUtil;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -41,18 +41,19 @@ public class KeyFilterTest extends AbstractInfinispanTest {
 
       n = new CacheNotifierImpl();
       mockCache = mock(EncoderCache.class, RETURNS_DEEP_STUBS);
-      when(mockCache.getAdvancedCache().getKeyDataConversion()).thenReturn(DataConversion.DEFAULT_KEY);
-      when(mockCache.getAdvancedCache().getValueDataConversion()).thenReturn(DataConversion.DEFAULT_VALUE);
+      when(mockCache.getAdvancedCache()).thenReturn(mockCache);
+      when(mockCache.getKeyDataConversion()).thenReturn(DataConversion.DEFAULT_KEY);
+      when(mockCache.getValueDataConversion()).thenReturn(DataConversion.DEFAULT_VALUE);
+      when(mockCache.getStatus()).thenReturn(ComponentStatus.RUNNING);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
-      when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
-      Answer answer = (Answer<Object>) invocationOnMock -> Mockito.mock((Class) invocationOnMock.getArguments()[0]);
-      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
-      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
+      MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
+      when(mockCache.getComponentRegistry().getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
+      mockRegistry.registerMocks(RpcManager.class, StreamingMarshaller.class, CancellationService.class,
+                                 CommandsFactory.class);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
-      cdl.init(null, mock(Configuration.class, RETURNS_DEEP_STUBS), mock(KeyPartitioner.class));
-      TestingUtil.inject(n, mockCache, cdl, config,
-            mock(DistributionManager.class), mock(InternalEntryFactory.class),
-            mock(ClusterEventManager.class), mock(ComponentRegistry.class), mock(KeyPartitioner.class));
+      cdl.init(null, config, mock(KeyPartitioner.class));
+      TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
+                         mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(KeyPartitioner.class));
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);

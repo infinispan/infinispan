@@ -36,6 +36,7 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -201,21 +202,18 @@ public class DataConversionTest extends AbstractInfinispanTest {
    private static class TestInterceptor extends BaseCustomAsyncInterceptor {
 
       private final int i;
-      private DataConversion valueDataConversion;
+
+      @Inject private ComponentRef<AdvancedCache<?, ?>> cache;
 
       TestInterceptor(int i) {
          this.i = i;
-      }
-
-      @Inject
-      protected void injectDependencies(Cache<?, ?> cache) {
-         this.valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
       }
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
             throws Throwable {
 
+         DataConversion valueDataConversion = cache.wired().getValueDataConversion();
          assertNotNull(valueDataConversion);
          Object value = command.getValue();
          assertEquals(i, valueDataConversion.fromStorage(value));

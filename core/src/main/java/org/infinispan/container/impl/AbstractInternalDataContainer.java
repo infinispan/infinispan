@@ -19,7 +19,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.infinispan.Cache;
+import com.github.benmanes.caffeine.cache.CacheWriter;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.AbstractIterator;
@@ -29,6 +31,7 @@ import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.PeekableMap;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -38,15 +41,12 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.util.CoreImmutables;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
-
-import com.github.benmanes.caffeine.cache.CacheWriter;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalCause;
 
 /**
  * Abstract class implemenation for a segmented data container. All methods delegate to
@@ -64,8 +64,8 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    @Inject protected InternalExpirationManager<K, V> expirationManager;
    @Inject protected InternalEntryFactory entryFactory;
    @Inject protected ActivationManager activator;
-   @Inject protected PassivationManager passivator;
-   @Inject protected Cache<K, V> cache;
+   @Inject protected ComponentRef<PassivationManager> passivator;
+   @Inject protected Configuration configuration;
    @Inject protected KeyPartitioner keyPartitioner;
 
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
@@ -205,7 +205,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
       if (entries != null) {
          entries.computeIfPresent(key, (o, entry) -> {
-            passivator.passivate(entry);
+            passivator.running().passivate(entry);
             computeEntryRemoved(o, entry);
             return null;
          });
@@ -512,7 +512,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
       @Override
       public void onEntryChosenForEviction(Map.Entry<K, InternalCacheEntry<K, V>> entry) {
-         passivator.passivate(entry.getValue());
+         passivator.running().passivate(entry.getValue());
       }
 
       @Override

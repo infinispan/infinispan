@@ -39,7 +39,7 @@ public class ReflectionUtil {
     * @return List of Method objects that require injection.
     */
    public static List<Method> getAllMethods(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Method> annotated = new LinkedList<>();
+      List<Method> annotated = new ArrayList<>();
       inspectRecursively(c, annotated, annotationType);
       return annotated;
    }
@@ -53,7 +53,7 @@ public class ReflectionUtil {
     * @return List of Method objects that require injection.
     */
    public static List<Method> getAllMethodsShallow(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Method> annotated = new LinkedList<>();
+      List<Method> annotated = new ArrayList<>();
       for (Method m : c.getDeclaredMethods()) {
          if (m.isAnnotationPresent(annotationType))
             annotated.add(m);
@@ -97,7 +97,7 @@ public class ReflectionUtil {
       }
    }
 
-   public static Method findMethod(Class<?> type, String methodName, Class<?>[] parameters) throws ClassNotFoundException {
+   public static Method findMethod(Class<?> type, String methodName, Class<?>[] parameters) {
       try {
          return type.getDeclaredMethod(methodName, parameters);
       } catch (NoSuchMethodException e) {
@@ -111,10 +111,6 @@ public class ReflectionUtil {
    /**
     * Inspects a class and its superclasses (all the way to {@link Object} for method instances that contain a given
     * annotation. This even identifies private, package and protected methods, not just public ones.
-    *
-    * @param c
-    * @param s
-    * @param annotationType
     */
    private static void inspectRecursively(Class<?> c, List<Method> s, Class<? extends Annotation> annotationType) {
 
@@ -190,8 +186,8 @@ public class ReflectionUtil {
          field.setAccessible(true);
          field.set(instance, value);
       } catch (Exception e) {
-         throw new CacheException("Unable to set field " + field + " on object of type " +
-               (instance == null ? "null" : instance.getClass().getSimpleName()) + "to " + value, e);
+         throw new CacheException("Unable to set field " + field.getName() + " on object of type " +
+               (instance == null ? "null" : instance.getClass().getName()) + " to " + value, e);
       }
    }
 

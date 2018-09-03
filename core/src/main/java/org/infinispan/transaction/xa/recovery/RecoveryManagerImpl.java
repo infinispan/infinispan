@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 
@@ -21,6 +20,7 @@ import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -57,12 +57,10 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    private final String cacheName;
 
-
-   private volatile RecoveryAwareTransactionTable txTable;
-
+   private ComponentRef<TransactionTable> txTable;
    private TransactionCoordinator txCoordinator;
-
    private TransactionFactory txFactory;
+
    /**
     * we only broadcast the first time when node is started, then we just return the local cached prepared
     * transactions.
@@ -75,11 +73,11 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    @Inject
-   public void init(RpcManager rpcManager, CommandsFactory commandsFactory, TransactionTable txTable,
+   public void init(RpcManager rpcManager, CommandsFactory commandsFactory, ComponentRef<TransactionTable> txTable,
                     TransactionCoordinator txCoordinator, TransactionFactory txFactory) {
       this.rpcManager = rpcManager;
       this.commandFactory = commandsFactory;
-      this.txTable = (RecoveryAwareTransactionTable)txTable;
+      this.txTable = txTable;
       this.txCoordinator = txCoordinator;
       this.txFactory = txFactory;
    }
@@ -93,7 +91,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       //is mandated by the recovery process according to the JTA spec: "The transaction manager calls this [i.e. recover]
       // method during recovery to obtain the list of transaction branches that are currently in prepared or heuristically
       // completed states."
-      iterator.add(txTable.getLocalPreparedXids());
+      iterator.add((recoveryAwareTxTable()).getLocalPreparedXids());
 
       //2. now also add the in-doubt transactions.
       iterator.add(getInDoubtTransactions());
@@ -149,14 +147,14 @@ public class RecoveryManagerImpl implements RecoveryManager {
       RecoveryAwareTransaction remove = inDoubtTransactions.remove(new RecoveryInfoKey(xid, cacheName));
       log.tracef("removed in doubt xid: %s", xid);
       if (remove == null) {
-         return (RecoveryAwareTransaction) txTable.removeRemoteTransaction(xid);
+         return (RecoveryAwareTransaction) recoveryAwareTxTable().removeRemoteTransaction(xid);
       }
       return remove;
    }
 
    @Override
    public RecoveryAwareTransaction removeRecoveryInformation(Long internalId) {
-      Xid remoteTransactionXid = txTable.getRemoteTransactionXid(internalId);
+      Xid remoteTransactionXid = recoveryAwareTxTable().getRemoteTransactionXid(internalId);
       if (remoteTransactionXid != null) {
          return removeRecoveryInformation(remoteTransactionXid);
       } else {
@@ -189,7 +187,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    @Override
    public Set<InDoubtTxInfo> getInDoubtTransactionInfo() {
       List<Xid> txs = getInDoubtTransactions();
-      Set<RecoveryAwareLocalTransaction> localTxs = txTable.getLocalTxThatFailedToComplete();
+      Set<RecoveryAwareLocalTransaction> localTxs = recoveryAwareTxTable().getLocalTxThatFailedToComplete();
       log.tracef("Local transactions that failed to complete is %s", localTxs);
       Set<InDoubtTxInfo> result = new HashSet<InDoubtTxInfo>();
       for (RecoveryAwareLocalTransaction r : localTxs) {
@@ -267,7 +265,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    @Override
    public String forceTransactionCompletion(Xid xid, boolean commit) {
       //this means that we have this as a local transaction that originated here
-      LocalXaTransaction localTransaction = txTable.getLocalTransaction(xid);
+      LocalXaTransaction localTransaction = recoveryAwareTxTable().getLocalTransaction(xid);
       if (localTransaction != null) {
          localTransaction.clearRemoteLocksAcquired();
          return completeTransaction(localTransaction, commit, xid);
@@ -322,12 +320,16 @@ public class RecoveryManagerImpl implements RecoveryManager {
    @Override
    public boolean isTransactionPrepared(GlobalTransaction globalTx) {
       Xid xid = ((RecoverableTransactionIdentifier) globalTx).getXid();
-      RecoveryAwareRemoteTransaction remoteTransaction = (RecoveryAwareRemoteTransaction) txTable.getRemoteTransaction(globalTx);
+      RecoveryAwareRemoteTransaction remoteTransaction = (RecoveryAwareRemoteTransaction) recoveryAwareTxTable().getRemoteTransaction(globalTx);
       boolean remotePrepared = remoteTransaction != null && remoteTransaction.isPrepared();
-      boolean result = inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName)) != null //if it is in doubt must be prepared
-            || txTable.getLocalPreparedXids().contains(xid) || remotePrepared;
+      boolean result = inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName)) != null//if it is in doubt must be prepared
+                       || recoveryAwareTxTable().getLocalPreparedXids().contains(xid) || remotePrepared;
       if (trace) log.tracef("Is tx %s prepared? %s", xid, result);
       return result;
+   }
+
+   private RecoveryAwareTransactionTable recoveryAwareTxTable() {
+      return (RecoveryAwareTransactionTable) txTable.running();
    }
 
    private boolean isSuccessful(Response thisResponse) {

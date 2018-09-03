@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -47,9 +48,10 @@ public class BiasLeaseTest extends MultipleCacheManagersTest {
       // Scan biases frequently
       builder.expiration().wakeUpInterval(100);
       createCluster(builder, 3);
+      waitForClusterToForm();
 
-      IntStream.of(0, 1, 2).mapToObj(this::cache).forEach(
-            c -> TestingUtil.replaceComponent(c, TimeService.class, timeService, true));
+      Arrays.stream(managers()).forEach(
+            cm -> TestingUtil.replaceComponent(cm, TimeService.class, timeService, true));
       rpcManager0 = ControlledRpcManager.replaceRpcManager(cache(0));
       rpcManager1 = CountingRpcManager.replaceRpcManager(cache(1));
       TestingUtil.wrapInboundInvocationHandler(cache(0), handler -> handler0 = new RenewWaitingInvocationHandler(handler));

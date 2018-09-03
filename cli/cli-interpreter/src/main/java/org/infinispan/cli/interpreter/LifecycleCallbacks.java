@@ -23,6 +23,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      // This works because the interpreter is not yet used internally, otherwise it would have to be in cacheManagerStarting
       GlobalJmxStatisticsConfiguration globalCfg = gcr.getGlobalConfiguration().globalJmxStatistics();
       MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg.mbeanServerLookup(), globalCfg.properties());
       String groupName = getGroupName(globalCfg.cacheManagerName());

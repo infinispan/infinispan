@@ -3,6 +3,7 @@ package org.infinispan.counter;
 import static java.util.Objects.requireNonNull;
 
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
@@ -21,7 +22,9 @@ public final class EmbeddedCounterManagerFactory {
     */
    public static CounterManager asCounterManager(EmbeddedCacheManager cacheManager) {
       return requireNonNull(cacheManager, "EmbeddedCacheManager can't be null.")
-            .getGlobalComponentRegistry()
-            .getComponent(CounterManager.class);
+                .getGlobalComponentRegistry()
+                .getComponent(BasicComponentRegistry.class)
+                .getComponent(CounterManager.class)
+                .running();
    }
 }

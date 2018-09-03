@@ -5,17 +5,18 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
+import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -45,7 +46,7 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
    private final LongAdder removeHits = new LongAdder();
    private final LongAdder removeMisses = new LongAdder();
 
-   @Inject private AdvancedCache cache;
+   @Inject private ComponentRef<AdvancedCache> cache;
    @Inject private TimeService timeService;
    @Inject private InternalDataContainer dataContainer;
    @Inject private OffHeapMemoryAllocator allocator;
@@ -229,7 +230,7 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
 
    @Override
    public int getRequiredMinimumNumberOfNodes() {
-      return CacheMgmtInterceptor.calculateRequiredMinimumNumberOfNodes(cache);
+      return CacheMgmtInterceptor.calculateRequiredMinimumNumberOfNodes(cache.wired());
    }
 
    @Override
@@ -253,7 +254,7 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
          displayType = DisplayType.SUMMARY
    )
    public int getNumberOfEntries() {
-      return cache.withFlags(Flag.CACHE_MODE_LOCAL).size();
+      return cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size();
    }
 
    @Override
@@ -367,13 +368,13 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
 
    @DefaultFactoryFor(classes = StatsCollector.class)
    @SurvivesRestarts
-   public static class Factory extends AbstractNamedCacheComponentFactory {
+   public static class Factory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
       @Override
-      public <T> T construct(Class<T> componentType) {
-         if (componentType.isAssignableFrom(StatsCollector.class)) {
-            return componentType.cast(new StatsCollector());
+      public Object construct(String componentName) {
+         if (componentName.equals(StatsCollector.class.getName())) {
+            return new StatsCollector();
          } else {
-            throw new CacheException("Don't know how to handle type " + componentType);
+            throw log.factoryCannotConstructComponent(componentName);
          }
       }
    }

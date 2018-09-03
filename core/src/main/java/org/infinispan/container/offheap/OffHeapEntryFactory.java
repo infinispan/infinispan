@@ -23,11 +23,12 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
 
    /**
     * Returns how many bytes in memory this address location uses assuming it is an {@link InternalCacheEntry}.
-    * This will estimate the size assuming 8 byte alignment and 16 byte allocation overhead
+    *
     * @param address the address of the entry
+    * @param includeAllocationOverhead if true, align to 8 bytes and add 16 bytes allocation overhead
     * @return how many bytes this address was estimated to be
     */
-   long getSize(long address);
+   long getSize(long address, boolean includeAllocationOverhead);
 
    /**
     * Returns the address to the next linked pointer if there is one for this bucket or 0 if there isn't one

@@ -46,6 +46,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -65,7 +66,7 @@ import org.infinispan.commons.util.concurrent.StripedCounters;
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
-   @Inject private AdvancedCache cache;
+   @Inject private ComponentRef<AdvancedCache> cache;
    @Inject private InternalDataContainer dataContainer;
    @Inject private TimeService timeService;
    @Inject private OffHeapMemoryAllocator allocator;
@@ -635,7 +636,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public int getNumberOfEntries() {
-      return cache.withFlags(Flag.CACHE_MODE_LOCAL).size();
+      return cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size();
    }
 
    @ManagedAttribute(
@@ -674,7 +675,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public int getRequiredMinimumNumberOfNodes() {
-      return calculateRequiredMinimumNumberOfNodes(cache);
+      return calculateRequiredMinimumNumberOfNodes(cache.wired());
    }
 
    public static int calculateRequiredMinimumNumberOfNodes(AdvancedCache<?, ?> cache) {

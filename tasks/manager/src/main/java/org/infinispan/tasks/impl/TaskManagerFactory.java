@@ -11,8 +11,7 @@ public class TaskManagerFactory extends AbstractComponentFactory implements
 
    @SuppressWarnings("unchecked")
    @Override
-   public <T> T construct(Class<T> componentType) {
-      T result = (T) new TaskManagerImpl();
-      return result;
+   public Object construct(String componentName) {
+      return new TaskManagerImpl();
    }
 }

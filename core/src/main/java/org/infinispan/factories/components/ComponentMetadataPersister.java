@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.PostStart;
@@ -21,7 +19,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.ScopeDetector;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -52,7 +49,7 @@ public class ComponentMetadataPersister {
       ComponentMetadataRepo repo = new ComponentMetadataRepo();
 
       File f = new File(path);
-      process(repo, path, f);
+      process(repo, f.getAbsolutePath(), f);
 
       // Test that all dependencies now exist in the component metadata map.
       Map<String, String> dependencies = new HashMap<>(128);
@@ -60,30 +57,12 @@ public class ComponentMetadataPersister {
          if (md.getDependencies() != null) dependencies.putAll(md.getDependencies());
       }
 
-      ClassLoader cl = ComponentMetadataRepo.class.getClassLoader();
-      for (String s : dependencies.keySet()) {
-         if (!repo.componentMetadataMap.containsKey(s)) {
-            // See if anything we already have is assignable from here.
-            try {
-               Class<?> dependencyType = Util.loadClass(s, cl);
-               ComponentMetadata equivalent = null;
-               for (ComponentMetadata cm : repo.componentMetadataMap.values()) {
-                  if (dependencyType.isAssignableFrom(cm.getClazz())) {
-                     equivalent = cm;
-                     break;
-                  }
-               }
-               if (equivalent != null) repo.componentMetadataMap.put(s, equivalent);
-            } catch (Exception e) {
-            }
-         }
-      }
       if (Boolean.getBoolean("infinispan.isCoreModule")) {
          // Perform this sanity check
          boolean hasErrors = false;
          for (Map.Entry<String, String> e : dependencies.entrySet()) {
             if (!repo.componentMetadataMap.containsKey(e.getKey())) {
-               if (!repo.hasFactory(e.getKey()) && !repo.hasFactory(e.getValue()) && !KnownComponentNames.ALL_KNOWN_COMPONENT_NAMES.contains(e.getKey())) {
+               if (!repo.hasFactory(e.getKey())) {
                   System.out.printf(" [ComponentMetadataPersister]     **** WARNING!!!  Missing components or factories for dependency on %s%n", e.getKey());
                   hasErrors = true;
                }
@@ -119,11 +98,9 @@ public class ComponentMetadataPersister {
    private static void processClass(ComponentMetadataRepo repo, Class<?> clazz, String className) {
       MBean mbean = ReflectionUtil.getAnnotation(clazz, MBean.class);
 
-      boolean survivesRestarts;
-      boolean isGlobal;
-      // Could still be a valid component.
-      isGlobal = ScopeDetector.detectScope(clazz) == Scopes.GLOBAL;
-      survivesRestarts = ReflectionUtil.getAnnotation(clazz, SurvivesRestarts.class) != null;
+      Scope scope = ReflectionUtil.getAnnotation(clazz, Scope.class);
+      boolean isGlobal = scope != null && scope.value() == Scopes.GLOBAL;
+      boolean survivesRestarts = ReflectionUtil.getAnnotation(clazz, SurvivesRestarts.class) != null;
 
       List<Field> injectFields = ReflectionUtil.getAllFields(clazz, Inject.class);
       List<Method> injectMethods = ReflectionUtil.getAllMethods(clazz, Inject.class);
@@ -152,9 +129,9 @@ public class ComponentMetadataPersister {
 
       // and also lets check if this class is a factory for anything.
       DefaultFactoryFor dff = ReflectionUtil.getAnnotation(clazz, DefaultFactoryFor.class);
-
       if (dff != null) {
          for (Class<?> target : dff.classes()) repo.factories.put(target.getName(), className);
+         for (String target : dff.names()) repo.factories.put(target, className);
       }
    }
 
@@ -164,7 +141,7 @@ public class ComponentMetadataPersister {
 
    private static void writeMetadata(ComponentMetadataRepo repo, String metadataFile) throws IOException {
       File file = new File(metadataFile);
-      File parent = file.getParentFile();
+      File parent = file.getAbsoluteFile().getParentFile();
       if(!parent.exists() && !parent.mkdirs()){
          throw new IllegalStateException("Couldn't create dir: " + parent);
       }

@@ -8,15 +8,12 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.StorageType;
@@ -33,6 +30,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -53,9 +51,9 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
    private final AtomicLong currentSize = new AtomicLong();
    private final ConcurrentMap<GlobalTransaction, Long> pendingSize = new ConcurrentHashMap<>();
    private MemoryConfiguration memoryConfiguration;
-   private Cache cache;
+   private CacheNotifier cacheNotifier;
    private InternalDataContainer container;
-   DistributionManager dm;
+   private DistributionManager dm;
    private long maxSize;
    private long minSize;
    private KeyValueMetadataSizeCalculator calculator;
@@ -79,10 +77,10 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
    }
 
    @Inject
-   public void inject(Configuration config, Cache cache,
-         InternalDataContainer dataContainer, KeyValueMetadataSizeCalculator calculator, DistributionManager dm) {
+   public void inject(Configuration config, CacheNotifier cacheNotifier,
+                      InternalDataContainer dataContainer, KeyValueMetadataSizeCalculator calculator, DistributionManager dm) {
       this.memoryConfiguration = config.memory();
-      this.cache = cache;
+      this.cacheNotifier = cacheNotifier;
       this.container = dataContainer;
       this.maxSize = config.memory().size();
       this.calculator = calculator;
@@ -100,10 +98,9 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
       container.addRemovalListener(listener);
 
       // Local caches just remove the entry, so we have to listen for those events
-      if (!cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
+      if (!cacheConfiguration.clustering().cacheMode().isClustered()) {
          // We want the raw values and no transformations for our listener
-         // We can't use AbstractDelegatingCache.unwrapCache(cache) as this would give us byte[] instead of WrappedByteArray
-         cache.getAdvancedCache().withEncoding(IdentityEncoder.class).withWrapping(IdentityWrapper.class).addListener(this);
+         cacheNotifier.addListener(this);
       }
    }
 

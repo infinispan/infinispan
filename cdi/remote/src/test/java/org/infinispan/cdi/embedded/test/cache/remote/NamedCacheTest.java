@@ -65,8 +65,8 @@ public class NamedCacheTest extends Arquillian {
 
    @AfterClass(alwaysRun = true)
    public void afterMethod() {
-      if (embeddedCacheManager != null) embeddedCacheManager.stop();
       if (hotRodServer != null) hotRodServer.stop();
+      if (embeddedCacheManager != null) embeddedCacheManager.stop();
    }
 
    public void testNamedCache() {

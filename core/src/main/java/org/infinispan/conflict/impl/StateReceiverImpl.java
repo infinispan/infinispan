@@ -1,5 +1,6 @@
 package org.infinispan.conflict.impl;
 
+import static org.infinispan.factories.KnownComponentNames.CACHE_NAME;
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 
 import java.util.ArrayList;
@@ -12,7 +13,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
@@ -28,6 +28,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -46,23 +47,23 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    private static final Log log = LogFactory.getLog(StateReceiverImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private Cache<K, V> cache;
+   @ComponentName(CACHE_NAME)
+   @Inject private String cacheName;
+   @Inject private CacheNotifier cacheNotifier;
    @Inject private CommandsFactory commandsFactory;
    @Inject private InternalDataContainer<K, V> dataContainer;
    @Inject private RpcManager rpcManager;
    @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
    private ExecutorService stateTransferExecutor;
 
-   private String cacheName;
    private LimitedExecutor stateReceiverExecutor;
 
    private final ConcurrentHashMap<Integer, SegmentRequest> requestMap = new ConcurrentHashMap<>();
 
    @Start
    public void start() {
-      this.cache.addListener(this);
-      this.cacheName = cache.getName();
-      this.stateReceiverExecutor = new LimitedExecutor("StateReceiver-" + cacheName, stateTransferExecutor, 1);
+      cacheNotifier.addListener(this);
+      stateReceiverExecutor = new LimitedExecutor("StateReceiver-" + cacheName, stateTransferExecutor, 1);
    }
 
    @Stop

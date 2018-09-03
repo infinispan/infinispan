@@ -5,25 +5,24 @@ import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.TestingUtil.getMethodSpecificJmxDomain;
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManagerEnforceJmxDomain;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
-
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -37,7 +36,7 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
+      cacheManager = createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
       registerCacheManager(cacheManager);
       // Create the default cache and register its JMX beans
       cacheManager.getCache();
@@ -83,7 +82,7 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       ObjectName defaultOn = getCacheObjectName(otherJmxDomain);
       ObjectName galderOn = getCacheObjectName(otherJmxDomain, "galder(local)");
       ObjectName managerON = getCacheManagerObjectName(otherJmxDomain);
-      EmbeddedCacheManager otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
+      EmbeddedCacheManager otherContainer = createCacheManagerEnforceJmxDomain(otherJmxDomain);
       otherContainer.defineConfiguration("galder", new ConfigurationBuilder().build());
       registerCacheManager(otherContainer);
       server.invoke(managerON, "startCache", new Object[]{}, new String[]{});
@@ -110,22 +109,14 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
 
 
    public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() throws Exception {
-      CacheContainer otherContainer = null;
-      try {
-         otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true, false);
-         otherContainer.getCache();
-         assert false : "Failure expected, " + JMX_DOMAIN + " is a duplicate!";
-      } catch (CacheException e) {
-         assert e instanceof JmxDomainConflictException;
-      } finally {
-         TestingUtil.killCacheManagers(otherContainer);
-      }
+      Exceptions.expectException(EmbeddedCacheManagerStartupException.class, JmxDomainConflictException.class,
+                                 () -> createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true, false));
    }
 
    public void testAvoidLeakOfCacheMBeanWhenCacheStatisticsDisabled(Method m) {
       final String jmxDomain = "jmx_" + m.getName();
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain, false, false, true)) {
+            createCacheManagerEnforceJmxDomain(jmxDomain, false, false, true)) {
          @Override
          public void call() throws Exception {
             cm.getCache();

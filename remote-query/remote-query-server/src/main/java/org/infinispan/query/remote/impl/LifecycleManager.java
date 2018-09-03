@@ -5,7 +5,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 
 import java.util.Collection;
 import java.util.Map;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -30,6 +29,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.ManageableComponentMetadata;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.BatchingInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
@@ -85,27 +85,32 @@ public final class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.ICKLE_BINARY_PROTOBUF_FILTER_AND_CONVERTER, new IckleBinaryProtobufFilterAndConverter.Externalizer());
       externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_RESULT, new ContinuousQueryResultExternalizer());
       externalizerMap.put(ExternalizerIds.ICKLE_FILTER_RESULT, new FilterResultExternalizer());
-   }
 
-   @Override
-   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
       EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       encoderRegistry.registerWrapper(ProtobufWrapper.INSTANCE);
-      initProtobufMetadataManager((DefaultCacheManager) cacheManager, gcr);
+
+      initProtobufMetadataManager((DefaultCacheManager) cacheManager, gcr, encoderRegistry);
       ClassWhiteList classWhiteList = cacheManager.getClassWhiteList();
       classWhiteList.addClasses(QueryRequest.class, QueryRequestExternalizer.class);
    }
 
-   private void initProtobufMetadataManager(DefaultCacheManager cacheManager, GlobalComponentRegistry gcr) {
+   @Override
+   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      // It's too late to register components here, internal caches have already started
+   }
+
+   private void initProtobufMetadataManager(DefaultCacheManager cacheManager, GlobalComponentRegistry gcr,
+                                            EncoderRegistry encoderRegistry) {
       ProtobufMetadataManagerImpl protobufMetadataManager = new ProtobufMetadataManagerImpl();
-      gcr.registerComponent(protobufMetadataManager, ProtobufMetadataManager.class);
+      BasicComponentRegistry basicComponentRegistry = gcr.getComponent(BasicComponentRegistry.class);
+      basicComponentRegistry.registerComponent(ProtobufMetadataManager.class, protobufMetadataManager, true)
+                            .running();
       registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr);
       ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
       processContextInitializers(classLoader, protobufMetadataManager);
 
       SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
-      EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       encoderRegistry.registerTranscoder(new ProtostreamJsonTranscoder(serCtx));
       encoderRegistry.registerTranscoder(new ProtostreamTextTranscoder(serCtx));
       encoderRegistry.registerTranscoder(new ProtostreamObjectTranscoder(serCtx, classLoader));
@@ -167,15 +172,16 @@ public final class LifecycleManager implements ModuleLifecycle {
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
-      GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
-      InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class);
+      BasicComponentRegistry gcr = cr.getGlobalComponentRegistry().getComponent(BasicComponentRegistry.class);
+      InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class).running();
       if (!icr.isInternalCache(cacheName)) {
-         ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class);
+         ProtobufMetadataManagerImpl protobufMetadataManager =
+            (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class).running();
          protobufMetadataManager.addCacheDependency(cacheName);
 
          if (cfg.indexing().index().isEnabled()) {
             log.infof("Registering ProtobufValueWrapperInterceptor for cache %s", cacheName);
-            EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
+            EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class).running();
             createProtobufValueWrapperInterceptor(cr, cfg, cacheManager);
          }
       }

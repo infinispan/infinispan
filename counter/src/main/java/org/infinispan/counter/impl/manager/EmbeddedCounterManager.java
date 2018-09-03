@@ -33,7 +33,6 @@ import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.PostStart;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -73,8 +72,7 @@ public class EmbeddedCounterManager implements CounterManager {
             new PersistedCounterConfigurationStorage() :
             new VolatileCounterConfigurationStorage();
       storage.initialize(cacheManager);
-      this.configurationManager = new CounterConfigurationManager(cacheManager, storage
-      );
+      this.configurationManager = new CounterConfigurationManager(cacheManager, storage);
    }
 
    private static boolean isGlobalStateEnabled(EmbeddedCacheManager cacheManager) {
@@ -87,13 +85,7 @@ public class EmbeddedCounterManager implements CounterManager {
          log.trace("Starting EmbeddedCounterManager");
       }
       notificationManager.useExecutor(asyncExecutor);
-   }
 
-   @PostStart(priority = 11) //after org.infinispan.globalstate.GlobalConfigurationManager
-   public void startCaches() {
-      if (trace) {
-         log.trace("Post-Starting EmbeddedCounterManager");
-      }
       configurationManager.start();
       started = true;
    }

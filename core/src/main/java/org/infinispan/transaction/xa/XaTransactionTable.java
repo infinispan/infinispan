@@ -1,16 +1,16 @@
 package org.infinispan.transaction.xa;
 
 import java.util.concurrent.ConcurrentMap;
-
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -30,16 +30,15 @@ public class XaTransactionTable extends TransactionTable {
    private static final boolean trace = log.isTraceEnabled();
 
    @Inject protected RecoveryManager recoveryManager;
-   @Inject private Cache<?, ?> cache;
+   @ComponentName(KnownComponentNames.CACHE_NAME)
+   @Inject protected String cacheName;
 
    protected ConcurrentMap<Xid, LocalXaTransaction> xid2LocalTx;
-   private String cacheName;
    private boolean onePhaseTotalOrder;
 
    @Start(priority = 9) // Start before cache loader manager
    @SuppressWarnings("unused")
    public void startXidMapping() {
-      this.cacheName = cache.getName();
       //in distributed mode with write skew check, we only allow 2 phases!!
       this.onePhaseTotalOrder = Configurations.isOnePhaseTotalOrderCommit(configuration);
 

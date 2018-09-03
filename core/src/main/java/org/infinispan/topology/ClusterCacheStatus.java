@@ -360,8 +360,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                "for cache %s, we don't have a rebalance in progress", member, cacheName));
       }
 
-      LogFactory.CLUSTER.rebalancePhaseConfirmedOnNode(currentTopology.getPhase(), cacheName, member,
-                                                       receivedTopologyId);
+      log.rebalancePhaseConfirmedOnNode(currentTopology.getPhase(), cacheName, member, receivedTopologyId);
       rebalanceConfirmationCollector.confirmPhase(member, receivedTopologyId);
    }
 

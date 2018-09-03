@@ -18,6 +18,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -38,7 +39,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    protected ScheduledExecutorService executor;
    @Inject protected Configuration configuration;
    @Inject protected PersistenceManager persistenceManager;
-   @Inject protected InternalDataContainer<K, V> dataContainer;
+   @Inject protected ComponentRef<InternalDataContainer<K, V>> dataContainer;
    @Inject protected CacheNotifier<K, V> cacheNotifier;
    @Inject protected TimeService timeService;
    @Inject protected KeyPartitioner keyPartitioner;
@@ -90,7 +91,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
                start = timeService.time();
             }
             long currentTimeMillis = timeService.wallClockTime();
-            for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = dataContainer.iteratorIncludingExpired();
+            for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = dataContainer.running().iteratorIncludingExpired();
                  purgeCandidates.hasNext();) {
                InternalCacheEntry<K, V> e = purgeCandidates.next();
                if (e.isExpired(currentTimeMillis)) {
@@ -121,7 +122,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       // We ignore the return from this method. It is possible for the entry to no longer be expired, but this means
       // it was updated by another thread. In that case it is a completely valid value for it to be expired then not.
       // So for this we just tell the caller it was expired.
-      dataContainer.compute(entry.getKey(), ((k, oldEntry, factory) -> {
+      dataContainer.running().compute(entry.getKey(), ((k, oldEntry, factory) -> {
          if (oldEntry != null) {
             synchronized (oldEntry) {
                if (oldEntry.isExpired(currentTime)) {
@@ -162,7 +163,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    private void handleInStoreExpiration(K key, V value, Metadata metadata) {
-      dataContainer.compute(key, (oldKey, oldEntry, factory) -> {
+      dataContainer.running().compute(key, (oldKey, oldEntry, factory) -> {
          boolean shouldRemove = false;
          if (oldEntry == null) {
             shouldRemove = true;
@@ -211,7 +212,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    protected Long localLastAccess(Object key, Object value, int segment) {
-      InternalCacheEntry ice = dataContainer.peek(segment, key);
+      InternalCacheEntry ice = dataContainer.running().peek(segment, key);
       if (ice != null && (value == null || value.equals(ice.getValue())) &&
             !ice.isExpired(timeService.wallClockTime())) {
          return ice.getLastUsed();

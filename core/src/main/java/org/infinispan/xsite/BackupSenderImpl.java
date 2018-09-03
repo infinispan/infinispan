@@ -52,6 +52,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.remoting.transport.AggregateBackupResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
@@ -75,7 +76,7 @@ public class BackupSenderImpl implements BackupSender {
    private static Log log = LogFactory.getLog(BackupSenderImpl.class);
    private static final BackupResponse EMPTY_RESPONSE = new EmptyBackupResponse();
 
-   @Inject private Cache cache;
+   @Inject private ComponentRef<Cache> cache;
    @Inject private Transport transport;
    @Inject private Configuration config;
    @Inject private TransactionTable txTable;
@@ -98,7 +99,7 @@ public class BackupSenderImpl implements BackupSender {
 
    @Start
    public void start() {
-      this.cacheName = cache.getName();
+      this.cacheName = cache.wired().getName();
       for (BackupConfiguration bc : config.sites().enabledBackups()) {
          final String siteName = bc.site();
          if (bc.backupFailurePolicy() == BackupFailurePolicy.CUSTOM) {
@@ -107,7 +108,7 @@ public class BackupSenderImpl implements BackupSender {
                throw new IllegalStateException("Backup policy class missing for custom failure policy!");
             }
             CustomFailurePolicy instance = Util.getInstance(backupPolicy, globalConfig.classLoader());
-            instance.init(cache);
+            instance.init(cache.wired());
             siteFailurePolicy.put(bc.site(), instance);
          }
          OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService,

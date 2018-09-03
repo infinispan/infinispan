@@ -1,15 +1,15 @@
 package org.infinispan.scattered;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -37,9 +37,9 @@ public abstract class BaseScatteredTest extends MultipleCacheManagersTest {
 
       svms = caches().stream().map(c -> {
          ControlledScatteredVersionManager csvm = new ControlledScatteredVersionManager();
-         ComponentRegistry componentRegistry = c.getAdvancedCache().getComponentRegistry();
-         componentRegistry.registerComponent(csvm, ScatteredVersionManager.class);
-         componentRegistry.rewire();
+         BasicComponentRegistry bcr = c.getAdvancedCache().getComponentRegistry().getComponent(BasicComponentRegistry.class);
+         bcr.replaceComponent(ScatteredVersionManager.class.getName(), csvm, true);
+         bcr.rewire();
          return csvm;
       }).toArray(ControlledScatteredVersionManager[]::new);
    }

@@ -21,5 +21,7 @@ public @interface DefaultFactoryFor {
     *
     * @return classes that can be constructed by this factory
     */
-   Class<?>[] classes();
+   Class<?>[] classes() default {};
+
+   String[] names() default {};
 }

@@ -50,7 +50,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.NumericVersionGenerator;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DefaultExecutorService;
@@ -77,7 +76,6 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.QueryFacade;
@@ -119,7 +117,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       super("HotRod");
    }
 
-   private boolean isClustered;
    private Address clusterAddress;
    private ServerAddress address;
    private Cache<Address, ServerAddress> addressCache;
@@ -637,14 +634,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    private EntryVersion generateVersion(ComponentRegistry registry) {
       VersionGenerator cacheVersionGenerator = registry.getVersionGenerator();
-      if (cacheVersionGenerator == null) {
-         NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator()
-               .clustered(registry.getComponent(RpcManager.class) != null);
-         registry.registerVersionGenerator(newVersionGenerator);
-         return newVersionGenerator.generateNew();
-      } else {
-         return cacheVersionGenerator.generateNew();
-      }
+      return cacheVersionGenerator.generateNew();
    }
 
    /**

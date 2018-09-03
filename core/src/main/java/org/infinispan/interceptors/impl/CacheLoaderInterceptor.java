@@ -58,6 +58,7 @@ import org.infinispan.distribution.group.impl.GroupFilter;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -102,14 +103,14 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Inject private InternalEntryFactory iceFactory;
    @Inject private InternalDataContainer<K, V> dataContainer;
    @Inject private GroupManager groupManager;
-   @Inject private Cache<K, V> cache;
+   @Inject private ComponentRef<Cache<K, V>> cache;
    @Inject private KeyPartitioner partitioner;
 
    private boolean activation;
 
    @Start
    public void start() {
-      this.activation = cache.getCacheConfiguration().persistence().passivation();
+      this.activation = cacheConfiguration.persistence().passivation();
    }
 
    @Override
@@ -489,7 +490,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       @Override
       public void clear() {
-         cache.clear();
+         cache.wired().clear();
       }
 
       @Override
@@ -533,7 +534,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       public WrappedEntrySet(EntrySetCommand command, boolean isRemoteIteration, CacheSet<CacheEntry<K, V>> entrySet) {
          super(entrySet);
-         this.cache = Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache, command);
+         this.cache = Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache.wired(), command);
          this.isRemoteIteration = isRemoteIteration;
       }
 
@@ -615,7 +616,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       public WrappedKeySet(KeySetCommand command, boolean isRemoteIteration, CacheSet<K> keySet) {
          super(keySet);
-         this.cache = Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache, command);
+         this.cache = Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache.wired(), command);
          this.isRemoteIteration = isRemoteIteration;
       }
 

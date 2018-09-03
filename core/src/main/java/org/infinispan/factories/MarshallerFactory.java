@@ -1,9 +1,9 @@
 package org.infinispan.factories;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.impl.ComponentAlias;
 import org.infinispan.marshall.core.GlobalMarshaller;
 
 /**
@@ -13,25 +13,15 @@ import org.infinispan.marshall.core.GlobalMarshaller;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {StreamingMarshaller.class, Marshaller.class})
-public class MarshallerFactory extends EmptyConstructorFactory implements AutoInstantiableFactory {
+public class MarshallerFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
    @Override
-   public <T> T construct(Class<T> componentType) {
-      Object comp;
-      Marshaller configMarshaller =
-            globalConfiguration.serialization().marshaller();
-
-      if (configMarshaller == null) {
-         comp = new GlobalMarshaller();
-      } else {
-         comp = new GlobalMarshaller(configMarshaller);
+   public Object construct(String componentName) {
+      if (componentName.equals(Marshaller.class.getName())) {
+         return ComponentAlias.of(StreamingMarshaller.class);
       }
 
-      try {
-         return componentType.cast(comp);
-      } catch (Exception e) {
-         throw new CacheException("Problems casting bootstrap component " + comp.getClass() + " to type " + componentType, e);
-      }
+      Marshaller configMarshaller = globalConfiguration.serialization().marshaller();
+      return new GlobalMarshaller(configMarshaller);
    }
-
 }

@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.infinispan.Cache;
-import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
@@ -40,21 +40,20 @@ public class NumericVersionGenerator implements VersionGenerator {
    final AtomicLong versionPrefix = new AtomicLong();
    private static final NumericVersion NON_EXISTING = new NumericVersion(0);
 
-   @Inject private Cache<?, ?> cache;
+   @Inject private Configuration configuration;
+   @Inject private CacheManagerNotifier cacheManagerNotifier;
+   @Inject private Transport transport;
 
    private boolean isClustered;
 
    @Start(priority = 11) // after Transport
    public void start() {
-      SecurityActions.addCacheManagerListener(cache.getCacheManager(), new RankCalculator());
+      cacheManagerNotifier.addListener(new RankCalculator());
 
-      isClustered = SecurityActions.getCacheConfiguration(cache.getAdvancedCache()).clustering().cacheMode().isClustered();
+      isClustered = configuration.clustering().cacheMode().isClustered();
 
       if (isClustered) {
          // Use component registry to avoid keeping an instance ref simply used on start
-         ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
-         Transport transport = componentRegistry
-               .getGlobalComponentRegistry().getComponent(Transport.class);
          calculateRank(transport.getAddress(), transport.getMembers(), transport.getViewId());
       }
    }

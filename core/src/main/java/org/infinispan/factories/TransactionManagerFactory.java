@@ -22,7 +22,7 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
    private static final Log log = LogFactory.getLog(TransactionManagerFactory.class);
 
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       if (!configuration.transaction().transactionMode().isTransactional()) {
          return null;
       }
@@ -50,6 +50,6 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
                                         "Configure the transaction manager lookup properly.");
       }
 
-      return componentType.cast(transactionManager);
+      return transactionManager;
    }
 }

@@ -1,7 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -27,18 +26,20 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.CacheStream;
 import org.infinispan.cache.impl.EncoderCache;
+import org.infinispan.commands.CancellationService;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
@@ -52,12 +53,12 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.MockBasicComponentRegistry;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -119,20 +120,21 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
    public void setUp() {
       n = new CacheNotifierImpl();
       mockCache = mock(EncoderCache.class, RETURNS_DEEP_STUBS);
-      when(mockCache.getAdvancedCache().getKeyDataConversion()).thenReturn(DataConversion.DEFAULT_KEY);
-      when(mockCache.getAdvancedCache().getValueDataConversion()).thenReturn(DataConversion.DEFAULT_VALUE);
+      when(mockCache.getAdvancedCache()).thenReturn(mockCache);
+      when(mockCache.getKeyDataConversion()).thenReturn(DataConversion.DEFAULT_KEY);
+      when(mockCache.getValueDataConversion()).thenReturn(DataConversion.DEFAULT_VALUE);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(cacheMode);
-      when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
+      when(mockCache.getStatus()).thenReturn(ComponentStatus.INITIALIZING);
 
-      Answer answer = i -> Mockito.mock(i.getArgument(0));
-      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
-      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
+      MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
+      when(mockCache.getComponentRegistry().getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
+      mockRegistry.registerMocks(RpcManager.class, StreamingMarshaller.class, CancellationService.class,
+                                 CommandsFactory.class);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
-      cdl.init(null, mock(Configuration.class, RETURNS_DEEP_STUBS), mock(KeyPartitioner.class));
-      TestingUtil.inject(n, mockCache, cdl, config,
-            mock(DistributionManager.class), new InternalEntryFactoryImpl(),
-            mock(ClusterEventManager.class), mock(ComponentRegistry.class), mock(KeyPartitioner.class));
+      cdl.init(null, config, mock(KeyPartitioner.class));
+      TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
+                         new InternalEntryFactoryImpl(), mock(ClusterEventManager.class), mock(KeyPartitioner.class));
       n.start();
       ctx = new NonTxInvocationContext(null);
    }
@@ -158,7 +160,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       doReturn(initialValues.iterator()).when(mockStream).iterator();
 
-      when(mockCache.getAdvancedCache().withEncoding(any(Class.class), any(Class.class)).cacheEntrySet().stream()).thenReturn(mockStream);
+      when(mockCache.withEncoding(any(Class.class), any(Class.class)).cacheEntrySet().stream()).thenReturn(mockStream);
 
       n.addListener(listener);
       verifyEvents(isClustered(listener), listener, initialValues);
@@ -183,7 +185,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       doReturn(initialValues.iterator()).when(mockStream).iterator();
 
-      when(mockCache.getAdvancedCache().withEncoding(any(Class.class), any(Class.class)).cacheEntrySet().stream()).thenReturn(mockStream);
+      when(mockCache.withEncoding(any(Class.class), any(Class.class)).cacheEntrySet().stream()).thenReturn(mockStream);
 
       CacheEventFilter filter = mock(CacheEventFilter.class, withSettings().serializable());
       CacheEventConverter converter = mock(CacheEventConverter.class, withSettings().serializable());
@@ -210,7 +212,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       doReturn(initialValues.iterator()).when(mockStream).iterator();
 
-      when(mockCache.getAdvancedCache().withEncoding(any(Class.class), any(Class.class)).cacheEntrySet().stream()).thenReturn(mockStream);
+      when(mockCache.withEncoding(any(Class.class), any(Class.class)).cacheEntrySet().stream()).thenReturn(mockStream);
 
       CacheEventFilter filter = mock(CacheEventFilter.class, withSettings().serializable());
       CacheEventConverter converter = mock(CacheEventConverter.class, withSettings().serializable());
@@ -312,7 +314,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          return initialValues.iterator();
       }).when(mockStream).iterator();
 
-      when(mockCache.getAdvancedCache().withEncoding(any(Class.class), any(Class.class)).cacheEntrySet().stream()).thenReturn(mockStream);
+      when(mockCache.withEncoding(any(Class.class), any(Class.class)).cacheEntrySet().stream()).thenReturn(mockStream);
 
       Future<Void> future = fork(() -> {
          n.addListener(listener);
@@ -418,7 +420,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          return null;
       }).when(mockStream).close();
 
-      when(mockCache.getAdvancedCache().withEncoding(any(Class.class), any(Class.class)).cacheEntrySet().stream()).thenReturn(mockStream);
+      when(mockCache.withEncoding(any(Class.class), any(Class.class)).cacheEntrySet().stream()).thenReturn(mockStream);
 
       Future<Void> future = fork(() -> {
          n.addListener(listener);

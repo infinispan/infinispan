@@ -13,7 +13,6 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
 import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
@@ -90,7 +89,6 @@ import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -107,12 +105,14 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -167,35 +167,36 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Inject private InternalDataContainer dataContainer;
    @Inject private CacheNotifier<Object, Object> notifier;
-   @Inject private Cache<Object, Object> cache;
-   @Inject private AsyncInterceptorChain interceptorChain;
+   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject private ComponentRef<Cache<Object, Object>> cache;
+   @Inject private ComponentRef<AsyncInterceptorChain> interceptorChain;
    @Inject private DistributionManager distributionManager;
-   @Inject private InvocationContextFactory icf;
-   @Inject private TransactionTable txTable;
+   @Inject private ComponentRef<InvocationContextFactory> icf;
+   @Inject private ComponentRef<TransactionTable> txTable;
    @Inject private Configuration configuration;
-   @Inject private RecoveryManager recoveryManager;
-   @Inject private StateProvider stateProvider;
-   @Inject private StateConsumer stateConsumer;
+   @Inject private ComponentRef<RecoveryManager> recoveryManager;
+   @Inject private ComponentRef<StateProvider> stateProvider;
+   @Inject private ComponentRef<StateConsumer> stateConsumer;
    @Inject private LockManager lockManager;
    @Inject private InternalEntryFactory entryFactory;
-   @Inject private StateTransferManager stateTransferManager;
-   @Inject private BackupSender backupSender;
+   @Inject private ComponentRef<StateTransferManager> stateTransferManager;
+   @Inject private ComponentRef<BackupSender> backupSender;
    @Inject private CancellationService cancellationService;
-   @Inject private XSiteStateProvider xSiteStateProvider;
-   @Inject private XSiteStateConsumer xSiteStateConsumer;
-   @Inject private XSiteStateTransferManager xSiteStateTransferManager;
+   @Inject private ComponentRef<XSiteStateProvider> xSiteStateProvider;
+   @Inject private ComponentRef<XSiteStateConsumer> xSiteStateConsumer;
+   @Inject private ComponentRef<XSiteStateTransferManager> xSiteStateTransferManager;
    @Inject private GroupManager groupManager;
-   @Inject private LocalStreamManager localStreamManager;
+   @Inject private ComponentRef<LocalStreamManager> localStreamManager;
    @Inject private IteratorHandler iteratorHandler;
-   @Inject private ClusterStreamManager clusterStreamManager;
+   @Inject private ComponentRef<ClusterStreamManager> clusterStreamManager;
    @Inject private ClusteringDependentLogic clusteringDependentLogic;
    @Inject private CommandAckCollector commandAckCollector;
-   @Inject private StateReceiver stateReceiver;
+   @Inject private ComponentRef<StateReceiver> stateReceiver;
    @Inject private ComponentRegistry componentRegistry;
    @Inject private OrderedUpdatesManager orderedUpdatesManager;
    @Inject private StateTransferLock stateTransferLock;
    @Inject private StreamingMarshaller marshaller;
-   @Inject private BiasManager biasManager;
+   @Inject private ComponentRef<BiasManager> biasManager;
    @Inject private RpcManager rpcManager;
    @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS)
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
@@ -204,15 +205,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Inject private TimeService timeService;
 
    private ByteString cacheName;
-   private CacheMode cacheMode;
    private boolean transactional;
    private boolean totalOrderProtocol;
 
    @Start(priority = 1)
    // needs to happen early on
    public void start() {
-      cacheName = ByteString.fromString(cache.getName());
-      cacheMode = configuration.clustering().cacheMode();
+      cacheName = ByteString.fromString(cache.wired().getName());
       this.transactional = configuration.transaction().transactionMode().isTransactional();
       this.totalOrderProtocol = configuration.transaction().transactionProtocol().isTotalOrder();
    }
@@ -290,17 +289,17 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public SizeCommand buildSizeCommand(long flagsBitSet) {
-      return new SizeCommand(cache, flagsBitSet);
+      return new SizeCommand(cache.wired(), flagsBitSet);
    }
 
    @Override
    public KeySetCommand buildKeySetCommand(long flagsBitSet) {
-      return new KeySetCommand<>(cache, dataContainer, keyPartitioner, flagsBitSet);
+      return new KeySetCommand<>(cache.wired(), dataContainer, keyPartitioner, flagsBitSet);
    }
 
    @Override
    public EntrySetCommand buildEntrySetCommand(long flagsBitSet) {
-      return new EntrySetCommand<>(cache, dataContainer, keyPartitioner, flagsBitSet);
+      return new EntrySetCommand<>(cache.wired(), dataContainer, keyPartitioner, flagsBitSet);
    }
 
    @Override
@@ -394,7 +393,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case SingleRpcCommand.COMMAND_ID:
             SingleRpcCommand src = (SingleRpcCommand) c;
-            src.init(interceptorChain, icf);
+            src.init(interceptorChain.running(), icf.running());
             if (src.getCommand() != null)
                initializeReplicableCommand(src.getCommand(), false);
             break;
@@ -411,8 +410,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
          case TotalOrderVersionedPrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;
-            pc.init(interceptorChain, icf, txTable);
-            pc.initialize(notifier, recoveryManager);
+            pc.init(interceptorChain.running(), icf.running(), txTable.running());
+            pc.initialize(notifier, recoveryManager.running());
             if (pc.getModifications() != null)
                for (ReplicableCommand nested : pc.getModifications())  {
                   initializeReplicableCommand(nested, false);
@@ -424,13 +423,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case TotalOrderCommitCommand.COMMAND_ID:
          case TotalOrderVersionedCommitCommand.COMMAND_ID:
             CommitCommand commitCommand = (CommitCommand) c;
-            commitCommand.init(interceptorChain, icf, txTable);
+            commitCommand.init(interceptorChain.running(), icf.running(), txTable.running());
             commitCommand.markTransactionAsRemote(isRemote);
             break;
          case RollbackCommand.COMMAND_ID:
          case TotalOrderRollbackCommand.COMMAND_ID:
             RollbackCommand rollbackCommand = (RollbackCommand) c;
-            rollbackCommand.init(interceptorChain, icf, txTable);
+            rollbackCommand.init(interceptorChain.running(), icf.running(), txTable.running());
             rollbackCommand.markTransactionAsRemote(isRemote);
             break;
          case ClearCommand.COMMAND_ID:
@@ -439,48 +438,47 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
-            clusteredGetCommand.initialize(icf, this, entryFactory,
-                                           interceptorChain
-            );
+            clusteredGetCommand.initialize(icf.running(), this, entryFactory,
+                                           interceptorChain.running());
             break;
          case LockControlCommand.COMMAND_ID:
             LockControlCommand lcc = (LockControlCommand) c;
-            lcc.init(interceptorChain, icf, txTable);
+            lcc.init(interceptorChain.running(), icf.running(), txTable.running());
             lcc.markTransactionAsRemote(isRemote);
             break;
          case StateRequestCommand.COMMAND_ID:
-            ((StateRequestCommand) c).init(stateProvider, biasManager);
+            ((StateRequestCommand) c).init(stateProvider.running(), biasManager.running());
             break;
          case StateResponseCommand.COMMAND_ID:
-            ((StateResponseCommand) c).init(stateConsumer, stateReceiver);
+            ((StateResponseCommand) c).init(stateConsumer.running(), stateReceiver.running());
             break;
          case GetInDoubtTransactionsCommand.COMMAND_ID:
             GetInDoubtTransactionsCommand gptx = (GetInDoubtTransactionsCommand) c;
-            gptx.init(recoveryManager);
+            gptx.init(recoveryManager.running());
             break;
          case TxCompletionNotificationCommand.COMMAND_ID:
             TxCompletionNotificationCommand ftx = (TxCompletionNotificationCommand) c;
-            ftx.init(txTable, lockManager, recoveryManager, stateTransferManager);
+            ftx.init(txTable.running(), lockManager, recoveryManager.running(), stateTransferManager.wired());
             break;
          case DistributedExecuteCommand.COMMAND_ID:
             DistributedExecuteCommand dec = (DistributedExecuteCommand)c;
-            dec.init(cache);
+            dec.init(cache.wired());
             break;
          case GetInDoubtTxInfoCommand.COMMAND_ID:
             GetInDoubtTxInfoCommand gidTxInfoCommand = (GetInDoubtTxInfoCommand)c;
-            gidTxInfoCommand.init(recoveryManager);
+            gidTxInfoCommand.init(recoveryManager.running());
             break;
          case CompleteTransactionCommand.COMMAND_ID:
             CompleteTransactionCommand ccc = (CompleteTransactionCommand)c;
-            ccc.init(recoveryManager);
+            ccc.init(recoveryManager.running());
             break;
          case CreateCacheCommand.COMMAND_ID:
             CreateCacheCommand createCacheCommand = (CreateCacheCommand)c;
-            createCacheCommand.init(cache.getCacheManager());
+            createCacheCommand.init(cacheManager);
             break;
          case XSiteAdminCommand.COMMAND_ID:
             XSiteAdminCommand xSiteAdminCommand = (XSiteAdminCommand)c;
-            xSiteAdminCommand.init(backupSender);
+            xSiteAdminCommand.init(backupSender.running());
             break;
          case CancelCommand.COMMAND_ID:
             CancelCommand cancelCommand = (CancelCommand)c;
@@ -488,11 +486,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case XSiteStateTransferControlCommand.COMMAND_ID:
             XSiteStateTransferControlCommand xSiteStateTransferControlCommand = (XSiteStateTransferControlCommand) c;
-            xSiteStateTransferControlCommand.initialize(xSiteStateProvider, xSiteStateConsumer, xSiteStateTransferManager);
+            xSiteStateTransferControlCommand.initialize(xSiteStateProvider.running(), xSiteStateConsumer.running(), xSiteStateTransferManager.running());
             break;
          case XSiteStatePushCommand.COMMAND_ID:
             XSiteStatePushCommand xSiteStatePushCommand = (XSiteStatePushCommand) c;
-            xSiteStatePushCommand.initialize(xSiteStateConsumer);
+            xSiteStatePushCommand.initialize(xSiteStateConsumer.running());
             break;
          case GetKeysInGroupCommand.COMMAND_ID:
             GetKeysInGroupCommand getKeysInGroupCommand = (GetKeysInGroupCommand) c;
@@ -500,23 +498,23 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClusteredGetAllCommand.COMMAND_ID:
             ClusteredGetAllCommand clusteredGetAllCommand = (ClusteredGetAllCommand) c;
-            clusteredGetAllCommand.init(icf, this, entryFactory, interceptorChain, txTable);
+            clusteredGetAllCommand.init(icf.running(), this, entryFactory, interceptorChain.running(), txTable.running());
             break;
          case StreamRequestCommand.COMMAND_ID:
             StreamRequestCommand streamRequestCommand = (StreamRequestCommand) c;
-            streamRequestCommand.inject(localStreamManager);
+            streamRequestCommand.inject(localStreamManager.running());
             break;
          case StreamResponseCommand.COMMAND_ID:
             StreamResponseCommand streamResponseCommand = (StreamResponseCommand) c;
-            streamResponseCommand.inject(clusterStreamManager);
+            streamResponseCommand.inject(clusterStreamManager.running());
             break;
          case StreamIteratorRequestCommand.COMMAND_ID:
             StreamIteratorRequestCommand streamIteratorRequestCommand = (StreamIteratorRequestCommand) c;
-            streamIteratorRequestCommand.inject(localStreamManager);
+            streamIteratorRequestCommand.inject(localStreamManager.running());
             break;
          case StreamIteratorNextCommand.COMMAND_ID:
             StreamIteratorNextCommand streamIteratorNextCommand = (StreamIteratorNextCommand) c;
-            streamIteratorNextCommand.inject(localStreamManager);
+            streamIteratorNextCommand.inject(localStreamManager.running());
             break;
          case StreamIteratorCloseCommand.COMMAND_ID:
             StreamIteratorCloseCommand streamIteratorCloseCommand = (StreamIteratorCloseCommand) c;
@@ -540,19 +538,19 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case SingleKeyBackupWriteCommand.COMMAND_ID:
             ((SingleKeyBackupWriteCommand) c)
-                  .init(icf, interceptorChain, notifier, componentRegistry, versionGenerator);
+                  .init(icf.running(), interceptorChain.running(), notifier, componentRegistry, versionGenerator);
             break;
          case SingleKeyFunctionalBackupWriteCommand.COMMAND_ID:
-            ((SingleKeyFunctionalBackupWriteCommand) c).init(icf, interceptorChain, componentRegistry);
+            ((SingleKeyFunctionalBackupWriteCommand) c).init(icf.running(), interceptorChain.running(), componentRegistry);
             break;
          case PutMapBackupWriteCommand.COMMAND_ID:
-            ((PutMapBackupWriteCommand) c).init(icf, interceptorChain, notifier);
+            ((PutMapBackupWriteCommand) c).init(icf.running(), interceptorChain.running(), notifier);
             break;
          case MultiEntriesFunctionalBackupWriteCommand.COMMAND_ID:
-            ((MultiEntriesFunctionalBackupWriteCommand) c).init(icf, interceptorChain, componentRegistry);
+            ((MultiEntriesFunctionalBackupWriteCommand) c).init(icf.running(), interceptorChain.running(), componentRegistry);
             break;
          case MultiKeyFunctionalBackupWriteCommand.COMMAND_ID:
-            ((MultiKeyFunctionalBackupWriteCommand) c).init(icf, interceptorChain, componentRegistry);
+            ((MultiKeyFunctionalBackupWriteCommand) c).init(icf.running(), interceptorChain.running(), componentRegistry);
             break;
          case BackupMultiKeyAckCommand.COMMAND_ID:
             ((BackupMultiKeyAckCommand) c).setCommandAckCollector(commandAckCollector);
@@ -562,7 +560,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case InvalidateVersionsCommand.COMMAND_ID:
             InvalidateVersionsCommand invalidateVersionsCommand = (InvalidateVersionsCommand) c;
-            invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager, stateTransferLock, distributionManager, biasManager);
+            invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager, stateTransferLock, distributionManager, biasManager.running());
             break;
 
          // === Functional commands ====
@@ -590,10 +588,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
             ((AbstractWriteManyCommand) c).init(componentRegistry);
             break;
          case RevokeBiasCommand.COMMAND_ID:
-            ((RevokeBiasCommand) c).init(biasManager, this, rpcManager);
+            ((RevokeBiasCommand) c).init(biasManager.running(), this, rpcManager);
             break;
          case RenewBiasCommand.COMMAND_ID:
-            ((RenewBiasCommand) c).init(biasManager);
+            ((RenewBiasCommand) c).init(biasManager.running());
             break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
@@ -652,7 +650,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys) {
-      return new DistributedExecuteCommand<>(cacheName, keys, callable);
+      return  new DistributedExecuteCommand<>(cacheName, keys, callable);
    }
 
    @Override
@@ -711,14 +709,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream,
            StreamRequestCommand.Type type, IntSet segments, Set<K> keys, Set<K> excludedKeys,
            boolean includeLoader, boolean entryStream, Object terminalOperation) {
-      return new StreamRequestCommand<>(cacheName, cache.getCacheManager().getAddress(), id, parallelStream, type,
+      return new StreamRequestCommand<>(cacheName, cacheManager.getAddress(), id, parallelStream, type,
               segments, keys, excludedKeys, includeLoader, entryStream, terminalOperation);
    }
 
    @Override
    public <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete,
            IntSet lostSegments, R response) {
-      return new StreamResponseCommand<>(cacheName, cache.getCacheManager().getAddress(), identifier, complete,
+      return new StreamResponseCommand<>(cacheName, cacheManager.getAddress(), identifier, complete,
               lostSegments, response);
    }
 
@@ -726,7 +724,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public <K> StreamIteratorRequestCommand<K> buildStreamIteratorRequestCommand(Object id, boolean parallelStream,
          IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
          Iterable<IntermediateOperation> intOps, long batchSize) {
-      return new StreamIteratorRequestCommand<>(cacheName, cache.getCacheManager().getAddress(), id, parallelStream,
+      return new StreamIteratorRequestCommand<>(cacheName, cacheManager.getAddress(), id, parallelStream,
             segments, keys, excludedKeys, includeLoader, entryStream, intOps, batchSize);
    }
 
@@ -737,7 +735,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public StreamIteratorCloseCommand buildStreamIteratorCloseCommand(Object id) {
-      return new StreamIteratorCloseCommand(cacheName, cache.getCacheManager().getAddress(), id);
+      return new StreamIteratorCloseCommand(cacheName, cacheManager.getAddress(), id);
    }
 
    @Override

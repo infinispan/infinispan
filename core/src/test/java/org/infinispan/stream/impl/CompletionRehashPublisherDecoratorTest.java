@@ -59,7 +59,8 @@ public class CompletionRehashPublisherDecoratorTest {
          when(ch.getPrimarySegmentsForOwner(eq(address))).thenReturn(primarySegmentsForOwner);
       }
 
-      DistributionManager dm = when(mock(DistributionManager.class).getReadConsistentHash()).thenReturn(ch).getMock();
+      DistributionManager dm = mock(DistributionManager.class);
+      when(dm.getReadConsistentHash()).thenReturn(ch);
 
       return new CompletionRehashPublisherDecorator<>(AbstractCacheStream.IteratorOperation.NO_MAP, dm, address,
             // Just ignore early completed segments and lost ones

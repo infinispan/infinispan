@@ -88,11 +88,13 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -107,7 +109,6 @@ import org.infinispan.stats.logging.Log;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -125,14 +126,16 @@ import org.infinispan.util.logging.LogFactory;
 @MBean(objectName = "ExtendedStatistics", description = "Component that manages and exposes extended statistics " +
       "relevant to transactions.")
 public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
-
    private static final Log log = LogFactory.getLog(ExtendedStatisticInterceptor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
-   private TransactionTable transactionTable;
+
+   @Inject private BasicComponentRegistry componentRegistry;
+   @Inject private TimeService timeService;
+   @Inject private TransactionTable transactionTable;
+   @Inject private DistributionManager distributionManager;
+
    private RpcManager rpcManager;
-   private DistributionManager distributionManager;
    private CacheStatisticManager cacheStatisticManager;
-   private TimeService timeService;
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
@@ -767,10 +770,8 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    protected void start() {
       super.start();
       log.startExtendedStatisticInterceptor();
-      this.timeService = cache.getAdvancedCache().getComponentRegistry().getTimeService();
       this.cacheStatisticManager = new CacheStatisticManager(cacheConfiguration, timeService);
-      this.transactionTable = cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
-      this.distributionManager = cache.getAdvancedCache().getDistributionManager();
+
       replace();
    }
 
@@ -832,30 +833,28 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
 
    private void replace() {
       log.replaceComponents();
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-
-      replaceRpcManager(componentRegistry);
-      replaceLockManager(componentRegistry);
+      replaceRpcManager();
+      replaceLockManager();
       componentRegistry.rewire();
    }
 
-   private void replaceLockManager(ComponentRegistry componentRegistry) {
-      LockManager oldLockManager = componentRegistry.getComponent(LockManager.class);
+   private void replaceLockManager() {
+      LockManager oldLockManager = componentRegistry.getComponent(LockManager.class).running();
       LockManager newLockManager = new ExtendedStatisticLockManager(oldLockManager, cacheStatisticManager, timeService);
       log.replaceComponent("LockManager", oldLockManager, newLockManager);
-      componentRegistry.registerComponent(newLockManager, LockManager.class);
+      componentRegistry.replaceComponent(LockManager.class.getName(), newLockManager, false);
    }
 
-   private void replaceRpcManager(ComponentRegistry componentRegistry) {
-      RpcManager oldRpcManager = componentRegistry.getComponent(RpcManager.class);
-      StreamingMarshaller marshaller = componentRegistry.getCacheMarshaller();
+   private void replaceRpcManager() {
+      RpcManager oldRpcManager = componentRegistry.getComponent(RpcManager.class).running();
+      StreamingMarshaller marshaller = componentRegistry.getComponent(StreamingMarshaller.class).running();
       if (oldRpcManager == null) {
          //local mode
          return;
       }
       RpcManager newRpcManager = new ExtendedStatisticRpcManager(oldRpcManager, cacheStatisticManager, timeService, marshaller);
       log.replaceComponent("RpcManager", oldRpcManager, newRpcManager);
-      componentRegistry.registerComponent(newRpcManager, RpcManager.class);
+      componentRegistry.replaceComponent(RpcManager.class.getName(), newRpcManager, false);
       this.rpcManager = newRpcManager;
    }
 

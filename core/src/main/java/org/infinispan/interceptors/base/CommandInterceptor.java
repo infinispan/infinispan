@@ -15,6 +15,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -54,7 +55,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class CommandInterceptor extends AbstractVisitor implements AsyncInterceptor {
 
-   @Inject private AsyncInterceptorChain interceptorChain;
+   @Inject private ComponentRef<AsyncInterceptorChain> interceptorChain;
    @Inject protected Configuration cacheConfiguration;
 
    private static final Log log = LogFactory.getLog(CommandInterceptor.class);
@@ -71,7 +72,7 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
     * @return the next interceptor in the chain.
     */
    public final CommandInterceptor getNext() {
-      List<AsyncInterceptor> interceptors = interceptorChain.getInterceptors();
+      List<AsyncInterceptor> interceptors = interceptorChain.wired().getInterceptors();
       int myIndex = interceptors.indexOf(this);
       if (myIndex < interceptors.size() - 1) {
          AsyncInterceptor asyncInterceptor = interceptors.get(myIndex + 1);
@@ -88,7 +89,7 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
     * @return true if there is another interceptor in the chain after this; false otherwise.
     */
    public final boolean hasNext() {
-      List<AsyncInterceptor> interceptors = interceptorChain.getInterceptors();
+      List<AsyncInterceptor> interceptors = interceptorChain.wired().getInterceptors();
       int myIndex = interceptors.indexOf(this);
       return myIndex < interceptors.size();
    }

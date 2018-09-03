@@ -30,15 +30,18 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
+import io.reactivex.Flowable;
+import io.reactivex.internal.functions.Functions;
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
@@ -56,6 +59,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
@@ -91,14 +95,10 @@ import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
 import org.infinispan.persistence.support.SingletonCacheWriter;
-import org.infinispan.commons.time.TimeService;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
-
-import io.reactivex.Flowable;
-import io.reactivex.internal.functions.Functions;
-import net.jcip.annotations.GuardedBy;
 
 public class PersistenceManagerImpl implements PersistenceManager {
 
@@ -107,7 +107,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Inject private Configuration configuration;
    @Inject private GlobalConfiguration globalConfiguration;
-   @Inject private AdvancedCache<Object, Object> cache;
+   @Inject private ComponentRef<AdvancedCache<Object, Object>> cache;
    @Inject private StreamingMarshaller m;
    @Inject private TransactionManager transactionManager;
    @Inject private TimeService timeService;
@@ -116,9 +116,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject private ByteBufferFactory byteBufferFactory;
    @Inject private MarshalledEntryFactory marshalledEntryFactory;
    @Inject private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
-   @Inject private InternalExpirationManager<Object, Object> expirationManager;
+   @Inject private ComponentRef<InternalExpirationManager<Object, Object>> expirationManager;
    @Inject private CacheNotifier cacheNotifier;
    @Inject private KeyPartitioner keyPartitioner;
+   @Inject private Transport transport;
 
    @GuardedBy("storesMutex")
    private final List<CacheLoader> loaders = new ArrayList<>();
@@ -145,7 +146,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    @Start()
    public void start() {
-      advancedListener = new AdvancedPurgeListener<>(expirationManager);
+      advancedListener = new AdvancedPurgeListener<>(expirationManager.wired());
       preloaded = false;
       enabled = configuration.persistence().usingStores();
       if (!enabled)
@@ -277,7 +278,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   @Start(priority = 56)
    public void preload() {
       if (!enabled)
          return;
@@ -344,7 +344,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
          if (noMoreStores) {
             availabilityFuture.cancel(true);
-            AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
+            AsyncInterceptorChain chain = cache.wired().getAsyncInterceptorChain();
             AsyncInterceptor loaderInterceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
             if (loaderInterceptor == null) {
                log.persistenceWithoutCacheLoaderInterceptor();
@@ -445,7 +445,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             checkStoreAvailability();
             Consumer<CacheWriter> purgeWriter = writer -> {
                // ISPN-6711 Shared stores should only be purged by the coordinator
-               if (getStoreConfig(writer).shared() && !cache.getCacheManager().isCoordinator())
+               if (getStoreConfig(writer).shared() && !transport.isCoordinator())
                   return;
 
                if (writer instanceof AdvancedCacheExpirationWriter) {
@@ -898,8 +898,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          writer = postProcessWriter(processedConfiguration, writer);
          loader = postProcessReader(processedConfiguration, writer, loader);
 
-         InitializationContextImpl ctx = new InitializationContextImpl(processedConfiguration, cache, keyPartitioner, m,
-               timeService, byteBufferFactory, marshalledEntryFactory, persistenceExecutor);
+         InitializationContextImpl ctx =
+            new InitializationContextImpl(processedConfiguration, cache.wired(), keyPartitioner, m, timeService,
+                                          byteBufferFactory, marshalledEntryFactory, persistenceExecutor);
          initializeLoader(processedConfiguration, loader, ctx);
          initializeWriter(processedConfiguration, writer, ctx);
          initializeBareInstance(bareInstance, ctx);
@@ -1092,8 +1093,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          flags.add(SKIP_INDEXING);
       }
 
-      return cache.getAdvancedCache()
-            .withFlags(flags.toArray(new Flag[flags.size()]));
+      return cache.wired().withFlags(flags.toArray(new Flag[flags.size()]));
    }
 
    private boolean indexShareable() {

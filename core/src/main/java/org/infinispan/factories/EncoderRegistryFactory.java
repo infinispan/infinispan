@@ -15,6 +15,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.core.EncoderRegistryImpl;
@@ -26,14 +27,14 @@ import org.infinispan.marshall.core.EncoderRegistryImpl;
  */
 @DefaultFactoryFor(classes = {EncoderRegistry.class})
 public class EncoderRegistryFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
-
+   // Must not start the global marshaller or it will be too late for modules to register their externalizers
    @Inject
-   private StreamingMarshaller globalMarshaller;
+   private ComponentRef<StreamingMarshaller> globalMarshaller;
    @Inject
    private EmbeddedCacheManager embeddedCacheManager;
 
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       EncoderRegistryImpl encoderRegistry = new EncoderRegistryImpl();
       ClassWhiteList classWhiteList = embeddedCacheManager.getClassWhiteList();
 
@@ -44,13 +45,13 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
       encoderRegistry.registerEncoder(UTF8Encoder.INSTANCE);
       encoderRegistry.registerEncoder(new JavaSerializationEncoder(classWhiteList));
-      encoderRegistry.registerEncoder(new BinaryEncoder(globalMarshaller));
+      encoderRegistry.registerEncoder(new BinaryEncoder(globalMarshaller.wired()));
       encoderRegistry.registerEncoder(new GenericJbossMarshallerEncoder(jBossMarshaller));
-      encoderRegistry.registerEncoder(new GlobalMarshallerEncoder(globalMarshaller));
+      encoderRegistry.registerEncoder(new GlobalMarshallerEncoder(globalMarshaller.wired()));
       encoderRegistry.registerTranscoder(new DefaultTranscoder(jBossMarshaller, javaSerializationMarshaller));
 
       encoderRegistry.registerWrapper(ByteArrayWrapper.INSTANCE);
       encoderRegistry.registerWrapper(IdentityWrapper.INSTANCE);
-      return componentType.cast(encoderRegistry);
+      return encoderRegistry;
    }
 }

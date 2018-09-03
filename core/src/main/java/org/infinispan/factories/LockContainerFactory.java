@@ -16,9 +16,9 @@ public class LockContainerFactory extends AbstractNamedCacheComponentFactory imp
 
    @SuppressWarnings("unchecked")
    @Override
-   public <T> T construct(Class<T> componentType) {
-      return (T) (configuration.locking().useLockStriping() ?
-                        new StripedLockContainer(configuration.locking().concurrencyLevel()) :
-                        new PerKeyLockContainer());
+   public Object construct(String componentName) {
+      return configuration.locking().useLockStriping() ?
+             new StripedLockContainer(configuration.locking().concurrencyLevel()) :
+             new PerKeyLockContainer();
    }
 }

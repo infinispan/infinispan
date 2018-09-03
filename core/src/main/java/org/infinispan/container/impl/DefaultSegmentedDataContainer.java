@@ -62,7 +62,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       }
       // Distributed is the only mode that allows for dynamic addition/removal of maps as others own all segments
       // in some fashion
-      shouldStopSegments = cache.getCacheConfiguration().clustering().cacheMode().isDistributed();
+      shouldStopSegments = configuration.clustering().cacheMode().isDistributed();
    }
 
    // Priority has to be higher than the clear priority - which is currently 999

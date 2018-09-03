@@ -7,8 +7,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
@@ -24,11 +24,11 @@ public abstract class BaseLockingAction implements Action {
    private static final AtomicReferenceFieldUpdater<BaseLockingAction, InternalState> UPDATER =
          newUpdater(BaseLockingAction.class, InternalState.class, "internalState");
 
-   private final ClusteringDependentLogic clusteringDependentLogic;
+   private final DistributionManager distributionManager;
    private volatile InternalState internalState;
 
-   public BaseLockingAction(ClusteringDependentLogic clusteringDependentLogic) {
-      this.clusteringDependentLogic = clusteringDependentLogic;
+   public BaseLockingAction(DistributionManager distributionManager) {
+      this.distributionManager = distributionManager;
       this.internalState = InternalState.INIT;
    }
 
@@ -58,7 +58,7 @@ public abstract class BaseLockingAction implements Action {
    }
 
    private void filterByLockOwner(Collection<?> keys, Collection<Object> toAdd) {
-      LocalizedCacheTopology cacheTopology = clusteringDependentLogic.getCacheTopology();
+      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
       for (Object key : keys) {
          if (cacheTopology.getDistribution(key).isPrimary()) {
             toAdd.add(key);

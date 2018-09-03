@@ -9,6 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
@@ -32,8 +33,9 @@ public class CountingRpcManager extends AbstractDelegatingRpcManager {
    public static CountingRpcManager replaceRpcManager(Cache c) {
       AdvancedCache advancedCache = c.getAdvancedCache();
       CountingRpcManager crm = new CountingRpcManager(advancedCache.getRpcManager());
-      advancedCache.getComponentRegistry().registerComponent(crm, RpcManager.class);
-      advancedCache.getComponentRegistry().rewire();
+      BasicComponentRegistry bcr = advancedCache.getComponentRegistry().getComponent(BasicComponentRegistry.class);
+      bcr.replaceComponent(RpcManager.class.getName(), crm, false);
+      bcr.rewire();
       assert advancedCache.getRpcManager().equals(crm);
       return crm;
    }

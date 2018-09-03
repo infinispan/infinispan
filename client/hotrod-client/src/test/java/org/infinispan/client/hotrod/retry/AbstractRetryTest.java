@@ -19,6 +19,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 
 /**
@@ -92,6 +93,16 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
          HotRodClientTestingUtil.killServers(hotRodServer1, hotRodServer2, hotRodServer3);
       }
       super.clearContent();
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      if (cleanupAfterTest()) {
+         HotRodClientTestingUtil.killRemoteCacheManagers(remoteCacheManager);
+         HotRodClientTestingUtil.killServers(hotRodServer1, hotRodServer2, hotRodServer3);
+      }
+      super.destroy();
    }
 
    protected abstract ConfigurationBuilder getCacheConfig();

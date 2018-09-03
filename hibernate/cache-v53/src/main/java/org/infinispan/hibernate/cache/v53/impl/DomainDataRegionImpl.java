@@ -33,7 +33,8 @@ import org.infinispan.context.Flag;
 import org.infinispan.expiration.impl.ClusterExpirationManager;
 import org.infinispan.expiration.impl.ExpirationManagerImpl;
 import org.infinispan.expiration.impl.InternalExpirationManager;
-import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.functional.MetaParam;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
@@ -201,19 +202,21 @@ public class DomainDataRegionImpl
    }
 
    private void prepareCommon(CacheMode cacheMode) {
-      ComponentRegistry registry = cache.getComponentRegistry();
+      BasicComponentRegistry registry = cache.getComponentRegistry().getComponent(BasicComponentRegistry.class);
       if (cacheMode.isReplicated() || cacheMode.isDistributed()) {
          AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
 
          LockingInterceptor lockingInterceptor = new LockingInterceptor();
-         registry.registerComponent(lockingInterceptor, LockingInterceptor.class);
+         registry.registerComponent(LockingInterceptor.class, lockingInterceptor, true);
+         registry.getComponent(LockingInterceptor.class).running();
          if (!chain.addInterceptorBefore(lockingInterceptor, NonTransactionalLockingInterceptor.class)) {
             throw new IllegalStateException("Misconfigured cache, interceptor chain is " + chain);
          }
          chain.removeInterceptor(NonTransactionalLockingInterceptor.class);
 
          UnorderedDistributionInterceptor distributionInterceptor = new UnorderedDistributionInterceptor();
-         registry.registerComponent(distributionInterceptor, UnorderedDistributionInterceptor.class);
+         registry.registerComponent(UnorderedDistributionInterceptor.class, distributionInterceptor, true);
+         registry.getComponent(UnorderedDistributionInterceptor.class).running();
          if (!chain.addInterceptorBefore(distributionInterceptor, NonTxDistributionInterceptor.class) &&
                !chain.addInterceptorBefore( distributionInterceptor, TriangleDistributionInterceptor.class)) {
             throw new IllegalStateException("Misconfigured cache, interceptor chain is " + chain);
@@ -227,12 +230,14 @@ public class DomainDataRegionImpl
       // undesired overhead. When get() triggers a RemoteExpirationCommand executed in async executor
       // this locks the entry for the duration of RPC, and putFromLoad with ZERO_LOCK_ACQUISITION_TIMEOUT
       // fails as it finds the entry being blocked.
-      InternalExpirationManager expirationManager = registry.getComponent(InternalExpirationManager.class);
-      if ((expirationManager instanceof ClusterExpirationManager)) {
+      ComponentRef<InternalExpirationManager> ref = registry.getComponent(InternalExpirationManager.class);
+      InternalExpirationManager expirationManager = ref.running();
+      if (expirationManager instanceof ClusterExpirationManager) {
+         registry.replaceComponent(InternalExpirationManager.class.getName(), new ExpirationManagerImpl<>(), true);
+         registry.getComponent(InternalExpirationManager.class).running();
+         registry.rewire();
          // re-registering component does not stop the old one
          ((ClusterExpirationManager) expirationManager).stop();
-         registry.registerComponent(new ExpirationManagerImpl<>(), InternalExpirationManager.class);
-         registry.rewire();
       }
       else if (expirationManager instanceof ExpirationManagerImpl) {
          // do nothing
@@ -241,11 +246,12 @@ public class DomainDataRegionImpl
          throw new IllegalStateException("Expected clustered expiration manager, found " + expirationManager);
       }
 
-      registry.registerComponent(this, InfinispanDataRegion.class);
+      registry.registerComponent(InfinispanDataRegion.class, this, true);
 
       if (cacheMode.isClustered()) {
          UnorderedReplicationLogic replLogic = new UnorderedReplicationLogic();
-         registry.registerComponent( replLogic, ClusteringDependentLogic.class );
+         registry.replaceComponent(ClusteringDependentLogic.class.getName(), replLogic, true);
+         registry.getComponent(ClusteringDependentLogic.class).running();
          registry.rewire();
       }
    }

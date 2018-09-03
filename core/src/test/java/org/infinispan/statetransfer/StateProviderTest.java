@@ -29,9 +29,9 @@ import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -94,7 +94,7 @@ public class StateProviderTest {
    private CommandsFactory commandsFactory;
    private ClusterCacheNotifier cacheNotifier;
    private PersistenceManager persistenceManager;
-   private DataContainer dataContainer;
+   private InternalDataContainer dataContainer;
    private TransactionTable transactionTable;
    private StateTransferLock stateTransferLock;
    private DistributionManager distributionManager;
@@ -120,7 +120,7 @@ public class StateProviderTest {
       commandsFactory = mock(CommandsFactory.class);
       cacheNotifier = mock(ClusterCacheNotifier.class);
       persistenceManager = mock(PersistenceManager.class);
-      dataContainer = mock(DataContainer.class);
+      dataContainer = mock(InternalDataContainer.class);
       transactionTable = mock(TransactionTable.class);
       stateTransferLock = mock(StateTransferLock.class);
       distributionManager = mock(DistributionManager.class);
@@ -156,7 +156,7 @@ public class StateProviderTest {
 
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
-      TestingUtil.inject(stateProvider, cache, mockExecutorService,
+      TestingUtil.inject(stateProvider, mockExecutorService,
                          configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
                          dataContainer, transactionTable, stateTransferLock, distributionManager, ef, keyPartitioner, TransactionOriginatorChecker.LOCAL);
       stateProvider.start();
@@ -263,7 +263,7 @@ public class StateProviderTest {
 
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
-      TestingUtil.inject(stateProvider, cache, mockExecutorService,
+      TestingUtil.inject(stateProvider, mockExecutorService,
                          configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
                          dataContainer, transactionTable, stateTransferLock, distributionManager, ef, keyPartitioner, TransactionOriginatorChecker.LOCAL);
       stateProvider.start();

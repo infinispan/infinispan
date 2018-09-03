@@ -15,13 +15,13 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 public class TransactionSynchronizationRegistryFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       // See if we had a TransactionSynchronizationRegistry injected into our config
       TransactionSynchronizationRegistryLookup lookup = configuration.transaction().transactionSynchronizationRegistryLookup();
 
       try {
          if (lookup != null) {
-            return componentType.cast(lookup.getTransactionSynchronizationRegistry());
+            return lookup.getTransactionSynchronizationRegistry();
          }
       }
       catch (Exception e) {

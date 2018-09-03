@@ -8,9 +8,9 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 public class DistributionManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       if (configuration.clustering().cacheMode().isClustered())
-         return (T) new DistributionManagerImpl();
+         return new DistributionManagerImpl();
       else
          return null;
    }

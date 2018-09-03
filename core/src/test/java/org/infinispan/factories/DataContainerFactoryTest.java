@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 
 @Test(testName = "factories.DataContainerFactoryTest", groups = "functional")
 public class DataContainerFactoryTest extends AbstractInfinispanTest {
+   private static final String COMPONENT_NAME = "";
 
    private DataContainerFactory dataContainerFactory;
 
@@ -42,14 +43,14 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
    @Test
    public void testDefaultConfigurationDataContainer() {
       dataContainerFactory.configuration = new ConfigurationBuilder().build();
-      assertEquals(DefaultDataContainer.class, dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(DefaultDataContainer.class, dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 
    @Test
    public void testOffHeap() {
       dataContainerFactory.configuration = new ConfigurationBuilder()
             .memory().storageType(StorageType.OFF_HEAP).build();
-      assertEquals(OffHeapDataContainer.class, dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(OffHeapDataContainer.class, dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 
    @Test
@@ -58,7 +59,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .memory().storageType(StorageType.OFF_HEAP).build();
 
       assertTrue(dataContainerFactory.globalConfiguration.features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE));
-      assertEquals(DefaultSegmentedDataContainer.class, dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(DefaultSegmentedDataContainer.class, dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 
    @Test
@@ -74,7 +75,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .l1().enable()
             .memory().storageType(StorageType.OFF_HEAP).build();
 
-      assertEquals(L1SegmentedDataContainer.class, this.dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(L1SegmentedDataContainer.class, this.dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 
    @Test
@@ -82,7 +83,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
             .cacheMode(CacheMode.DIST_ASYNC).build();
 
-      assertEquals(DefaultSegmentedDataContainer.class, this.dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(DefaultSegmentedDataContainer.class, this.dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 
    @Test
@@ -91,7 +92,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .cacheMode(CacheMode.DIST_ASYNC)
             .l1().enable().build();
 
-      assertEquals(L1SegmentedDataContainer.class, this.dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(L1SegmentedDataContainer.class, this.dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 
    @Test
@@ -99,7 +100,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
             .memory().evictionStrategy(EvictionStrategy.REMOVE).size(1000).build();
 
-      assertEquals(DefaultDataContainer.class, this.dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(DefaultDataContainer.class, this.dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 
    @Test
@@ -108,7 +109,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .memory().evictionStrategy(EvictionStrategy.REMOVE).size(1000)
             .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
 
-      assertEquals(BoundedSegmentedDataContainer.class, this.dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(BoundedSegmentedDataContainer.class, this.dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 
    @Test
@@ -117,7 +118,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .memory().storageType(StorageType.OFF_HEAP).evictionStrategy(EvictionStrategy.REMOVE).size(1000)
             .build();
 
-      assertEquals(BoundedOffHeapDataContainer.class, this.dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(BoundedOffHeapDataContainer.class, this.dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 
    @Test
@@ -126,7 +127,8 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .memory().storageType(StorageType.OFF_HEAP).evictionStrategy(EvictionStrategy.REMOVE).size(1000)
             .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
 
-      assertEquals(SegmentedBoundedOffHeapDataContainer.class, this.dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(SegmentedBoundedOffHeapDataContainer.class, this.dataContainerFactory.construct(
+         COMPONENT_NAME).getClass());
    }
 
    @Test
@@ -140,6 +142,6 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .memory().storageType(StorageType.OFF_HEAP).evictionStrategy(EvictionStrategy.REMOVE).size(1000)
             .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
 
-      assertEquals(BoundedOffHeapDataContainer.class, this.dataContainerFactory.construct(Object.class).getClass());
+      assertEquals(BoundedOffHeapDataContainer.class, this.dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 }

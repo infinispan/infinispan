@@ -7,11 +7,14 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CommandsFactoryImpl;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.container.offheap.OffHeapEntryFactory;
+import org.infinispan.container.offheap.OffHeapEntryFactoryImpl;
+import org.infinispan.container.offheap.OffHeapMemoryAllocator;
+import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.NonTransactionalInvocationContextFactory;
 import org.infinispan.context.TransactionalInvocationContextFactory;
@@ -26,6 +29,7 @@ import org.infinispan.eviction.impl.ActivationManagerImpl;
 import org.infinispan.eviction.impl.EvictionManagerImpl;
 import org.infinispan.eviction.impl.PassivationManagerImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.impl.ComponentAlias;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.functional.impl.FunctionalNotifierImpl;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -38,6 +42,7 @@ import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.persistence.manager.OrderedUpdatesManagerImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.scattered.impl.BiasManagerImpl;
@@ -69,9 +74,8 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, CacheConfigurationMBean.class, ClusterCacheNotifier.class, CommandsFactory.class,
-                              PersistenceManager.class,
-                              PassivationManager.class, ActivationManager.class,
-                              BatchContainer.class, EvictionManager.class,
+                              PersistenceManager.class, PassivationManager.class, ActivationManager.class,
+                              PreloadManager.class, BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
                               ClusteringDependentLogic.class, L1Manager.class, TransactionFactory.class, BackupSender.class,
                               TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class,
@@ -79,123 +83,128 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
                               OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
-                              BiasManager.class})
+                              BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
    @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       Class<?> componentImpl;
-      if (componentType.equals(ClusteringDependentLogic.class)) {
+      if (componentName.equals(ClusteringDependentLogic.class.getName())) {
          CacheMode cacheMode = configuration.clustering().cacheMode();
          if (!cacheMode.isClustered()) {
-            return componentType.cast(new ClusteringDependentLogic.LocalLogic());
+            return new ClusteringDependentLogic.LocalLogic();
          } else if (cacheMode.isInvalidation()) {
-            return componentType.cast(new ClusteringDependentLogic.InvalidationLogic());
+            return new ClusteringDependentLogic.InvalidationLogic();
          } else if (cacheMode.isReplicated()) {
-            return componentType.cast(new ClusteringDependentLogic.ReplicationLogic());
+            return new ClusteringDependentLogic.ReplicationLogic();
          } else if (cacheMode.isDistributed()){
-            return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
+            return new ClusteringDependentLogic.DistributionLogic();
          } else if (cacheMode.isScattered()) {
-            return componentType.cast(new ClusteringDependentLogic.ScatteredLogic());
+            return new ClusteringDependentLogic.ScatteredLogic();
          } else {
-            throw new UnsupportedOperationException();
+            throw log.factoryCannotConstructComponent(componentName);
          }
       } else {
          boolean isTransactional = configuration.transaction().transactionMode().isTransactional();
-         if (componentType.equals(InvocationContextFactory.class)) {
+         if (componentName.equals(InvocationContextFactory.class.getName())) {
             componentImpl = isTransactional ? TransactionalInvocationContextFactory.class
                   : NonTransactionalInvocationContextFactory.class;
-            return componentType.cast(getInstance(componentImpl));
-         } else if (componentType.equals(CacheNotifier.class)) {
-            return (T) new CacheNotifierImpl();
-         } else if (componentType.equals(CacheConfigurationMBean.class)) {
-            return (T) new CacheConfigurationMBean();
-         } else if (componentType.equals(CommandsFactory.class)) {
-            return (T) new CommandsFactoryImpl();
-         } else if (componentType.equals(PersistenceManager.class)) {
-            return (T) new PersistenceManagerImpl();
-         } else if (componentType.equals(PassivationManager.class)) {
-            return (T) new PassivationManagerImpl();
-         } else if (componentType.equals(ActivationManager.class)) {
-            return (T) new ActivationManagerImpl();
-         } else if (componentType.equals(BatchContainer.class)) {
-            return (T) new BatchContainer();
-         } else if (componentType.equals(TransactionCoordinator.class)) {
-            return (T) new TransactionCoordinator();
-         } else if (componentType.equals(RecoveryAdminOperations.class)) {
-            return (T) new RecoveryAdminOperations();
-         } else if (componentType.equals(StateTransferLock.class)) {
-            return (T) new StateTransferLockImpl();
-         } else if (componentType.equals(EvictionManager.class)) {
-            return (T) new EvictionManagerImpl();
-         } else if (componentType.equals(L1Manager.class)) {
-            return (T) new L1ManagerImpl();
-         } else if (componentType.equals(TransactionFactory.class)) {
-            return (T) new TransactionFactory();
-         } else if (componentType.equals(BackupSender.class)) {
-            return (T) new BackupSenderImpl(globalConfiguration.sites().localSite());
-         } else if (componentType.equals(TotalOrderManager.class)) {
+            return getInstance(componentImpl);
+         } else if (componentName.equals(CacheNotifier.class.getName())) {
+            return new CacheNotifierImpl();
+         } else if (componentName.equals(CacheConfigurationMBean.class.getName())) {
+            return new CacheConfigurationMBean();
+         } else if (componentName.equals(CommandsFactory.class.getName())) {
+            return new CommandsFactoryImpl();
+         } else if (componentName.equals(PersistenceManager.class.getName())) {
+            return new PersistenceManagerImpl();
+         } else if (componentName.equals(PassivationManager.class.getName())) {
+            return new PassivationManagerImpl();
+         } else if (componentName.equals(ActivationManager.class.getName())) {
+            return new ActivationManagerImpl();
+         } else if (componentName.equals(PreloadManager.class.getName())) {
+            return new PreloadManager();
+         } else if (componentName.equals(BatchContainer.class.getName())) {
+            return new BatchContainer();
+         } else if (componentName.equals(TransactionCoordinator.class.getName())) {
+            return new TransactionCoordinator();
+         } else if (componentName.equals(RecoveryAdminOperations.class.getName())) {
+            return new RecoveryAdminOperations();
+         } else if (componentName.equals(StateTransferLock.class.getName())) {
+            return new StateTransferLockImpl();
+         } else if (componentName.equals(EvictionManager.class.getName())) {
+            return new EvictionManagerImpl();
+         } else if (componentName.equals(L1Manager.class.getName())) {
+            return new L1ManagerImpl();
+         } else if (componentName.equals(TransactionFactory.class.getName())) {
+            return new TransactionFactory();
+         } else if (componentName.equals(BackupSender.class.getName())) {
+            return new BackupSenderImpl(globalConfiguration.sites().localSite());
+         } else if (componentName.equals(TotalOrderManager.class.getName())) {
             return isTransactional && configuration.transaction().transactionProtocol().isTotalOrder() ?
-                  (T) new TotalOrderManager() : null;
-         } else if (componentType.equals(ByteBufferFactory.class)) {
-            return (T) new ByteBufferFactoryImpl();
-         } else if (componentType.equals(MarshalledEntryFactory.class)) {
-            return (T) new MarshalledEntryFactoryImpl();
-         } else if (componentType.equals(RemoteValueRetrievedListener.class)) {
-            // L1Manager is currently only listener for remotely retrieved values
-            return (T) componentRegistry.getComponent(L1Manager.class);
-         } else if (componentType.equals(ClusterCacheNotifier.class)) {
-            return (T) componentRegistry.getComponent(CacheNotifier.class);
-         } else if (componentType.equals(CommitManager.class)) {
-            return (T) new CommitManager();
-         } else if (componentType.equals(XSiteStateTransferManager.class)) {
-            return (T) (configuration.sites().allBackups().isEmpty() ? null : new XSiteStateTransferManagerImpl());
-         } else if (componentType.equals(XSiteStateConsumer.class)) {
-            return (T) new XSiteStateConsumerImpl();
-         } else if (componentType.equals(XSiteStateProvider.class)) {
-            return (T) new XSiteStateProviderImpl();
-         } else if (componentType.equals(FunctionalNotifier.class)) {
-            return (T) new FunctionalNotifierImpl<>();
-         } else if (componentType.equals(CommandAckCollector.class)) {
+                  new TotalOrderManager() : null;
+         } else if (componentName.equals(ByteBufferFactory.class.getName())) {
+            return new ByteBufferFactoryImpl();
+         } else if (componentName.equals(MarshalledEntryFactory.class.getName())) {
+            return new MarshalledEntryFactoryImpl();
+         } else if (componentName.equals(CommitManager.class.getName())) {
+            return new CommitManager();
+         } else if (componentName.equals(XSiteStateTransferManager.class.getName())) {
+            return (new XSiteStateTransferManagerImpl());
+         } else if (componentName.equals(XSiteStateConsumer.class.getName())) {
+            return new XSiteStateConsumerImpl();
+         } else if (componentName.equals(XSiteStateProvider.class.getName())) {
+            return new XSiteStateProviderImpl();
+         } else if (componentName.equals(FunctionalNotifier.class.getName())) {
+            return new FunctionalNotifierImpl<>();
+         } else if (componentName.equals(CommandAckCollector.class.getName())) {
             if (configuration.clustering().cacheMode().isClustered()) {
-               return componentType.cast(new CommandAckCollector());
+               return new CommandAckCollector();
             } else {
                return null;
             }
-         } else if (componentType.equals(TriangleOrderManager.class)) {
+         } else if (componentName.equals(TriangleOrderManager.class.getName())) {
             if (configuration.clustering().cacheMode().isClustered()) {
-               return componentType.cast(new TriangleOrderManager(configuration.clustering().hash().numSegments()));
+               return new TriangleOrderManager(configuration.clustering().hash().numSegments());
             } else {
                return null;
             }
-         } else if (componentType.equals(OrderedUpdatesManager.class)) {
+         } else if (componentName.equals(OrderedUpdatesManager.class.getName())) {
             if (configuration.clustering().cacheMode().isScattered()) {
-               return componentType.cast(new OrderedUpdatesManagerImpl());
+               return new OrderedUpdatesManagerImpl();
             } else {
                return null;
             }
-         } else if (componentType.equals(ScatteredVersionManager.class)) {
+         } else if (componentName.equals(ScatteredVersionManager.class.getName())) {
             if (configuration.clustering().cacheMode().isScattered()) {
-               return componentType.cast(new ScatteredVersionManagerImpl());
+               return new ScatteredVersionManagerImpl();
             } else {
                return null;
             }
-         } else if (componentType.equals(TransactionOriginatorChecker.class)) {
+         } else if (componentName.equals(TransactionOriginatorChecker.class.getName())) {
             return configuration.clustering().cacheMode() == CacheMode.LOCAL ?
-                  componentType.cast(TransactionOriginatorChecker.LOCAL) :
-                  componentType.cast(new ClusteredTransactionOriginatorChecker());
-         } else if (componentType.equals(BiasManager.class)) {
+                  TransactionOriginatorChecker.LOCAL :
+                  new ClusteredTransactionOriginatorChecker();
+         } else if (componentName.equals(BiasManager.class.getName())) {
             if (configuration.clustering().cacheMode().isScattered() &&
                   configuration.clustering().biasAcquisition() != BiasAcquisition.NEVER) {
-               return componentType.cast(new BiasManagerImpl());
+               return new BiasManagerImpl();
             } else {
                return null;
             }
+         } else if (componentName.equals(OffHeapEntryFactory.class.getName())) {
+            return new OffHeapEntryFactoryImpl();
+         } else if (componentName.equals(OffHeapMemoryAllocator.class.getName())) {
+            return new UnpooledOffHeapMemoryAllocator();
+         } else if (componentName.equals(ClusterCacheNotifier.class.getName())) {
+            return ComponentAlias.of(CacheNotifier.class);
+         } else if (componentName.equals(RemoteValueRetrievedListener.class.getName())) {
+            // L1Manager is currently only listener for remotely retrieved values
+            return ComponentAlias.of(L1Manager.class);
          }
       }
 
-      throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
-
+      throw log.factoryCannotConstructComponent(componentName);
    }
 }

@@ -36,15 +36,19 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
 
    public static final String SEGMENTATION_FEATURE = "data-segmentation";
 
+   private final static String SUB_COMPONENT_NAME = "DataContainerDelegate";
+
    @Override
    @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       DataContainer customDataContainer = configuration.dataContainer().dataContainer();
       if (customDataContainer != null) {
          if (customDataContainer instanceof InternalDataContainer) {
-            return (T) customDataContainer;
+            return customDataContainer;
          }
-         return (T) new InternalDataContainerAdapter<>(customDataContainer);
+         basicComponentRegistry.registerComponent(SUB_COMPONENT_NAME, customDataContainer, true);
+         basicComponentRegistry.addDynamicDependency(InternalDataContainer.class.getName(), SUB_COMPONENT_NAME);
+         return new InternalDataContainerAdapter<>(customDataContainer);
       } else {
          ClusteringConfiguration clusteringConfiguration = configuration.clustering();
 
@@ -63,21 +67,21 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                   int segments = clusteringConfiguration.hash().numSegments();
                   Supplier mapSupplier = () -> createAndStartOffHeapConcurrentMap(addressCount, segments);
                   if (clusteringConfiguration.l1().enabled()) {
-                     return (T) new L1SegmentedDataContainer<>(mapSupplier, segments);
+                     return new L1SegmentedDataContainer<>(mapSupplier, segments);
                   }
-                  return (T) new DefaultSegmentedDataContainer<>(mapSupplier, segments);
+                  return new DefaultSegmentedDataContainer<>(mapSupplier, segments);
                } else {
-                  return (T) new OffHeapDataContainer(addressCount);
+                  return new OffHeapDataContainer(addressCount);
                }
             } else if (shouldSegment) {
                Supplier mapSupplier = ConcurrentHashMap::new;
                int segments = clusteringConfiguration.hash().numSegments();
                if (clusteringConfiguration.l1().enabled()) {
-                  return (T) new L1SegmentedDataContainer<>(mapSupplier, segments);
+                  return new L1SegmentedDataContainer<>(mapSupplier, segments);
                }
-               return (T) new DefaultSegmentedDataContainer<>(mapSupplier, segments);
+               return new DefaultSegmentedDataContainer<>(mapSupplier, segments);
             } else {
-               return (T) DefaultDataContainer.unBoundedDataContainer(level);
+               return DefaultDataContainer.unBoundedDataContainer(level);
             }
          }
 
@@ -106,7 +110,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                memoryConfiguration.size(newSize.get()));
          memoryConfiguration.attributes().attribute(MemoryConfiguration.SIZE).addListener((newSize, old) ->
                dataContainer.resize(newSize.get()));
-         return (T) dataContainer;
+         return dataContainer;
       }
    }
 

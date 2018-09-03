@@ -1,5 +1,6 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.existsDomains;
 import static org.infinispan.test.TestingUtil.existsObject;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
@@ -7,7 +8,6 @@ import static org.infinispan.test.TestingUtil.getCacheObjectName;
 
 import java.lang.reflect.Method;
 import java.util.Properties;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -162,11 +163,8 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       cm.getCache("local_cache");
       assert existsObject(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics"));
 
-      try {
-         TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(jmxDomain, false);
-         assert false : "Failure expected, '" + jmxDomain + "' duplicate!";
-      } catch (JmxDomainConflictException e) {
-      }
+      expectException(EmbeddedCacheManagerStartupException.class, JmxDomainConflictException.class,
+                      () -> TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(jmxDomain, false));
 
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       CacheContainer duplicateAllowedContainer =TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(jmxDomain, true);
@@ -190,11 +188,8 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       cm.getCache("local_cache");
       assert existsObject(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics"));
 
-      try {
-         TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(jmxDomain, false);
-         assert false : "Failure expected!";
-      } catch (JmxDomainConflictException e) {
-      }
+      expectException(EmbeddedCacheManagerStartupException.class, JmxDomainConflictException.class,
+                      () -> TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(jmxDomain, false));
    }
 
    public void testMultipleManagersOnSameServer() throws Exception {

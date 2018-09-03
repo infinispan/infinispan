@@ -53,6 +53,7 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      // This works because locks are not yet used internally, otherwise it would have to be in cacheManagerStarting
       final EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
       final InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
 

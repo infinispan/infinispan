@@ -4,7 +4,6 @@ import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.UUID;
-
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
@@ -15,7 +14,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.TransactionalInvocationContextFactory;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
@@ -50,7 +49,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       txCoordinator = new TransactionCoordinator();
 
 
-      TestingUtil.inject(txTable, configuration, txCoordinator, mockCache, TransactionOriginatorChecker.LOCAL);
+      TestingUtil.inject(txTable, configuration, txCoordinator, TransactionOriginatorChecker.LOCAL);
       txTable.start();
       txTable.startXidMapping();
       TransactionFactory gtf = new TransactionFactory();
@@ -62,7 +61,7 @@ public class TransactionXaAdapterTmIntegrationTest {
 
       InvocationContextFactory icf = new TransactionalInvocationContextFactory();
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
-      InterceptorChain invoker = mock(InterceptorChain.class);
+      AsyncInterceptorChain invoker = mock(AsyncInterceptorChain.class);
 
       TestingUtil.inject(txCoordinator, commandsFactory, icf, invoker, txTable, configuration);
       xaAdapter = new TransactionXaAdapter(localTx, txTable);

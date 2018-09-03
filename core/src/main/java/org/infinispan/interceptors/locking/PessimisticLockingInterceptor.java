@@ -16,7 +16,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
-import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockPromise;
@@ -48,7 +48,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          (rCtx, rCommand, rv) -> releaseLockOnTxCompletion((TxInvocationContext) rCtx);
 
    @Inject private CommandsFactory cf;
-   @Inject private StateTransferManager stateTransferManager;
 
    @Override
    protected Log getLog() {
@@ -253,7 +252,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    private boolean isStateTransferInProgress() {
-      return stateTransferManager != null && stateTransferManager.isStateTransferInProgress();
+      return cdl.getCacheTopology().getPhase() == CacheTopology.Phase.READ_OLD_WRITE_ALL;
    }
 
    private Object lockAndRecordForManyKeysCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys)

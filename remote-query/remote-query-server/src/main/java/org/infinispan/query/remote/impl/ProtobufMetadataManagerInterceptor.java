@@ -24,6 +24,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -51,7 +52,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
    private CommandsFactory commandsFactory;
 
-   private AsyncInterceptorChain invoker;
+   private ComponentRef<AsyncInterceptorChain> invoker;
 
    private SerializationContext serializationContext;
 
@@ -86,7 +87,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             Object key = fileName + ERRORS_KEY_SUFFIX;
             VisitableCommand cmd = commandsFactory.buildPutKeyValueCommand(key, exception.getMessage(),
                   keyPartitioner.getSegment(key), DEFAULT_METADATA, flagsBitSet);
-            invoker.invoke(ctx, cmd);
+            invoker.running().invoke(ctx, cmd);
          }
       }
 
@@ -94,7 +95,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       public void handleSuccess(String fileName) {
          Object key = fileName + ERRORS_KEY_SUFFIX;
          VisitableCommand cmd = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), flagsBitSet);
-         invoker.invoke(ctx, cmd);
+         invoker.running().invoke(ctx, cmd);
       }
    }
 
@@ -174,7 +175,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    };
 
    @Inject
-   public void init(CommandsFactory commandsFactory, AsyncInterceptorChain invoker, KeyPartitioner keyPartitioner,
+   public void init(CommandsFactory commandsFactory, ComponentRef<AsyncInterceptorChain> invoker, KeyPartitioner keyPartitioner,
          ProtobufMetadataManager protobufMetadataManager) {
       this.commandsFactory = commandsFactory;
       this.invoker = invoker;
@@ -214,7 +215,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
                // lock .errors key
                LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-               invoker.invoke(ctx, cmd);
+               invoker.running().invoke(ctx, cmd);
             }
          } else {
             return invokeNext(ctx, command);
@@ -280,7 +281,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       // lock .errors key
       VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-      invoker.invoke(ctx, cmd);
+      invoker.running().invoke(ctx, cmd);
 
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          long flagsBitSet = copyFlags(((PutMapCommand) rCommand));
@@ -315,12 +316,12 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             // lock .errors key
             long flagsBitSet = copyFlags(command);
             LockControlCommand lockCommand = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, flagsBitSet, null);
-            invoker.invoke(ctx, lockCommand);
+            invoker.running().invoke(ctx, lockCommand);
 
             Object keyWithSuffix = key + ERRORS_KEY_SUFFIX;
             WriteCommand writeCommand = commandsFactory.buildRemoveCommand(keyWithSuffix, null,
                   keyPartitioner.getSegment(keyWithSuffix), flagsBitSet);
-            invoker.invoke(ctx, writeCommand);
+            invoker.running().invoke(ctx, writeCommand);
 
             if (serializationContext.getFileDescriptors().containsKey(key)) {
                serializationContext.unregisterProtoFile(key);
@@ -333,7 +334,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                if (fd.isResolved()) {
                   writeCommand = commandsFactory.buildRemoveCommand(errorFileName, null,
                         keyPartitioner.getSegment(errorFileName), flagsBitSet);
-                  invoker.invoke(ctx, writeCommand);
+                  invoker.running().invoke(ctx, writeCommand);
                } else {
                   if (sb.length() > 0) {
                      sb.append('\n');
@@ -343,7 +344,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                         "One of the imported files is missing or has errors", keyPartitioner.getSegment(errorFileName),
                         DEFAULT_METADATA, flagsBitSet);
                   put.setPutIfAbsent(true);
-                  invoker.invoke(ctx, put);
+                  invoker.running().invoke(ctx, put);
                }
             }
 
@@ -354,7 +355,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                writeCommand = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null,
                      keyPartitioner.getSegment(ERRORS_KEY_SUFFIX), flagsBitSet);
             }
-            invoker.invoke(ctx, writeCommand);
+            invoker.running().invoke(ctx, writeCommand);
          }
       }
 
@@ -384,7 +385,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       // lock .errors key
       LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-      invoker.invoke(ctx, cmd);
+      invoker.running().invoke(ctx, cmd);
 
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          if (rCommand.isSuccessful()) {
@@ -443,6 +444,6 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(),
                keyPartitioner.getSegment(ERRORS_KEY_SUFFIX), DEFAULT_METADATA, flagsBitSet);
       }
-      invoker.invoke(ctx, cmd);
+      invoker.running().invoke(ctx, cmd);
    }
 }

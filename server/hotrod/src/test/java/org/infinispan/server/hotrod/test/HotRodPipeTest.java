@@ -8,15 +8,8 @@ import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsign
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
-
-import org.infinispan.commons.util.Either;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.Test;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -32,6 +25,14 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.ReplayingDecoder;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import org.infinispan.commons.util.Either;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "server.hotrod.test.HotRodPipeTest")
 public class HotRodPipeTest extends SingleCacheManagerTest {
@@ -49,26 +50,25 @@ public class HotRodPipeTest extends SingleCacheManagerTest {
       server = HotRodTestingUtil.startHotRodServer(cacheManager);
    }
 
-   @AfterClass(alwaysRun = true)
-   public void destroyAfterClass() {
-      log.debug("Test finished, close cache and Hot Rod server");
-      super.destroyAfterClass();
+   @Override
+   protected void teardown() {
+      log.debug("Killing Hot Rod server");
       killServer(server);
    }
 
-   public void testPipeRequests() {
+   public void testPipeRequests() throws InterruptedException {
       final int numPipeReqs = 10_000;
       BatchingClient client = new BatchingClient(server.getPort());
       try {
          client.start();
          client.writeN(numPipeReqs);
-         eventually(() -> {
-            Either<List<String>, Integer> either = client.readN(numPipeReqs);
+         eventuallyEquals(numPipeReqs, () -> {
+            Either<List<String>, Integer> either = client.readN();
             switch (either.type()) {
                case LEFT:
                   throw new AssertionError(either.left().get(0));
                case RIGHT:
-                  return either.right() == numPipeReqs;
+                  return either.right();
                default:
                   throw new IllegalStateException("Either can only be left or right");
             }
@@ -80,13 +80,15 @@ public class HotRodPipeTest extends SingleCacheManagerTest {
 
    static final class BatchingClient {
 
-      final EventLoopGroup group = new NioEventLoopGroup();
+      final EventLoopGroup group;
       final int port;
 
       Channel ch;
 
       BatchingClient(int port) {
          this.port = port;
+         DefaultThreadFactory threadFactory = new DefaultThreadFactory(TestResourceTracker.getCurrentTestShortName());
+         group = new NioEventLoopGroup(0, threadFactory);
       }
 
       void start() {
@@ -112,15 +114,15 @@ public class HotRodPipeTest extends SingleCacheManagerTest {
          }
       }
 
-      void stop() {
-         group.shutdownGracefully();
+      void stop() throws InterruptedException {
+         group.shutdownGracefully().await(10, TimeUnit.SECONDS);
       }
 
       void writeN(int n) {
          ch.writeAndFlush(n);
       }
 
-      Either<List<String>, Integer> readN(int n) {
+      Either<List<String>, Integer> readN() {
          BatchingClientHandler last = (BatchingClientHandler) ch.pipeline().last();
          return last.errors.isEmpty()
                ? Either.newRight(last.n)

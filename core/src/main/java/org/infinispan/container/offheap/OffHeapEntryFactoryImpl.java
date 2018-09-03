@@ -166,7 +166,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    }
 
    @Override
-   public long getSize(long entryAddress) {
+   public long getSize(long entryAddress, boolean includeAllocationOverhead) {
       int headerOffset = evictionEnabled ? 24 : 8;
 
       byte type = MEMORY.getByte(entryAddress, headerOffset);
@@ -186,7 +186,8 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       int valueLength = MEMORY.getInt(entryAddress, headerOffset);
       headerOffset += 4;
 
-      return UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(headerOffset + keyLength + metadataLength + valueLength);
+      int size = headerOffset + keyLength + metadataLength + valueLength;
+      return includeAllocationOverhead ? UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(size) : size;
    }
 
    @Override

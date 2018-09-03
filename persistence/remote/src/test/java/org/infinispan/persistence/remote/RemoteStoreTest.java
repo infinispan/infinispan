@@ -10,9 +10,11 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.function.ToIntBiFunction;
 
+import io.reactivex.Flowable;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
@@ -20,7 +22,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -29,11 +30,8 @@ import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import io.reactivex.Flowable;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -59,9 +57,7 @@ public class RemoteStoreTest extends BaseStoreTest {
       localCacheManager = TestCacheManagerFactory.createClusteredCacheManager(
             globalConfig, hotRodCacheConfiguration(localBuilder));
       localCacheManager.getCache(REMOTE_CACHE);
-      GlobalComponentRegistry gcr = localCacheManager.getGlobalComponentRegistry();
-      gcr.registerComponent(timeService, TimeService.class);
-      gcr.rewire();
+      TestingUtil.replaceComponent(localCacheManager, TimeService.class, timeService, true);
       localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
       hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
       // In case if the server has to unmarshall the value, make sure to use the same marshaller

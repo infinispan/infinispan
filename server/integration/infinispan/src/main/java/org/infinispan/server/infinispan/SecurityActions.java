@@ -90,8 +90,8 @@ public final class SecurityActions {
     public static boolean stopAndUnregisterContainer(final EmbeddedCacheManager container, final Object listener) {
         PrivilegedAction<Boolean> action = () -> {
             if (container.getStatus().allowInvocations()) {
-                container.stop();
                 container.removeListener(listener);
+                container.stop();
                 return true;
             } else {
                 return false;

@@ -18,11 +18,11 @@ public class LocalTopologyManagerFactory extends AbstractComponentFactory implem
 
    @Override
    @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       if (globalConfiguration.transport().transport() == null)
          return null;
 
-      return (T) new LocalTopologyManagerImpl();
+      return new LocalTopologyManagerImpl();
    }
 
 }

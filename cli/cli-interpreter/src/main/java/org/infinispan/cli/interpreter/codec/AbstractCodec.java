@@ -2,12 +2,10 @@ package org.infinispan.cli.interpreter.codec;
 
 import org.infinispan.Cache;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.NumericVersionGenerator;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.remoting.rpc.RpcManager;
 
 /**
  * AbstractCodec.
@@ -33,14 +31,6 @@ public abstract class AbstractCodec implements Codec {
     protected EntryVersion generateVersion(Cache<?, ?> cache) {
         ComponentRegistry registry = cache.getAdvancedCache().getComponentRegistry();
         VersionGenerator versionGenerator = registry.getVersionGenerator();
-        if (versionGenerator == null) {
-            // This is now superfluous, as the component registry always creates the VersionGenerator on startup
-           VersionGenerator newVersionGenerator = new NumericVersionGenerator().clustered(registry.getComponent(RpcManager.class) != null);
-           registry.registerComponent(newVersionGenerator, VersionGenerator.class);
-           registry.cacheComponents();
-           return newVersionGenerator.generateNew();
-        } else {
-           return versionGenerator.generateNew();
-        }
-     }
+       return versionGenerator.generateNew();
+    }
 }

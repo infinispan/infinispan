@@ -124,7 +124,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
       for (int i = 0; i < numServers; i++) {
          EmbeddedCacheManager cm = cacheManagers.get(i);
          hotrodServers[i] = HotRodClientTestingUtil.startHotRodServer(cm);
-         TestingUtil.replaceComponent(cm.getCache(), TimeService.class, timeService, true);
+         TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
       }
 
       String servers = HotRodClientTestingUtil.getServersString(hotrodServers);

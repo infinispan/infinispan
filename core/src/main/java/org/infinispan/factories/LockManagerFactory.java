@@ -17,14 +17,14 @@ import org.infinispan.util.concurrent.locks.impl.NoOpPendingLockManager;
 public class LockManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
-   public <T> T construct(Class<T> componentType) {
-      if (PendingLockManager.class.equals(componentType)) {
-         return componentType.cast(configuration.clustering().cacheMode().isClustered() ?
-                                         new DefaultPendingLockManager() :
-                                         NoOpPendingLockManager.getInstance());
-      } else if (LockManager.class.equals(componentType)) {
-         return componentType.cast(new DefaultLockManager());
+   public Object construct(String componentName) {
+      if (PendingLockManager.class.getName().equals(componentName)) {
+         return configuration.clustering().cacheMode().isClustered() ?
+                new DefaultPendingLockManager() :
+                NoOpPendingLockManager.getInstance();
+      } else if (LockManager.class.getName().equals(componentName)) {
+         return new DefaultLockManager();
       }
-      throw new IllegalArgumentException("Unexpected component type " + componentType + ".");
+      throw log.factoryCannotConstructComponent(componentName);
    }
 }

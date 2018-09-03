@@ -32,23 +32,23 @@ public class KeyPartitionerFactory extends AbstractNamedCacheComponentFactory
    }
 
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
 
       if (configuration.clustering().cacheMode().needsStateTransfer()) {
          KeyPartitioner partitioner = getConfiguredPartitioner();
          if (groupManager == null)
-            return componentType.cast(partitioner);
+            return partitioner;
 
          // Grouping is enabled. Since the configured partitioner will not be registered in the component
          // registry, we need to inject dependencies explicitly.
          componentRegistry.wireDependencies(partitioner);
          GroupingPartitioner groupingPartitioner = new GroupingPartitioner(partitioner, groupManager);
-         return componentType.cast(groupingPartitioner);
+         return groupingPartitioner;
       } else if (configuration.persistence().stores().stream().filter(StoreConfiguration::segmented).findFirst().isPresent()) {
          // If store is segmented we still have to find consistent hashes
-         return componentType.cast(getConfiguredPartitioner());
+         return getConfiguredPartitioner();
       } else {
-         return componentType.cast(SingleSegmentKeyPartitioner.getInstance());
+         return SingleSegmentKeyPartitioner.getInstance();
       }
    }
 }

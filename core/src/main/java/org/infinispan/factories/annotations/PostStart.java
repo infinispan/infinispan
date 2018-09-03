@@ -13,9 +13,11 @@ import java.lang.annotation.Target;
  *
  * @author Tristan Tarrant
  * @since 9.2
+ * @deprecated Since 9.4, please use {@link Start} instead.
  */
 @Target(METHOD)
 @Retention(RetentionPolicy.RUNTIME)
+@Deprecated
 public @interface PostStart {
    /**
     * Optional parameter which defines the order in which this method will be called.  Defaults to 10.

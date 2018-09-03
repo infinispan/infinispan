@@ -8,9 +8,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -26,7 +26,6 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    private static final Log log = LogFactory.getLog(ClusteredCacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private StateTransferManager stateTransferManager;
    @Inject private DistributionManager distributionManager;
 
    private boolean transactional;
@@ -81,10 +80,8 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    @Override
    protected boolean canLoad(Object key) {
       // Don't load the value if we are using distributed mode and aren't in the read CH
-      return stateTransferManager.isJoinComplete() && isKeyLocal(key);
+      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
+      return cacheTopology != null && cacheTopology.isReadOwner(key);
    }
 
-   private boolean isKeyLocal(Object key) {
-      return distributionManager.getCacheTopology().isReadOwner(key);
-   }
 }

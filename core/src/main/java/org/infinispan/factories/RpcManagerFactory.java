@@ -15,7 +15,7 @@ import org.infinispan.remoting.rpc.RpcManagerImpl;
 public class RpcManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       if (!configuration.clustering().cacheMode().isClustered())
          return null;
 
@@ -23,7 +23,7 @@ public class RpcManagerFactory extends AbstractNamedCacheComponentFactory implem
       if (!globalConfiguration.isClustered())
          throw new CacheConfigurationException("Transport should be configured in order to use clustered caches");
 
-      return componentType.cast(new RpcManagerImpl());
+      return new RpcManagerImpl();
    }
 
 }

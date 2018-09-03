@@ -47,7 +47,7 @@ abstract class CQWorker {
 
    QueryBox getQueryBox() {
       if (queryBox == null) {
-         queryBox = cache.getComponentRegistry().getLocalComponent(QueryBox.class);
+         queryBox = cache.getComponentRegistry().getComponent(QueryBox.class);
       }
       return queryBox;
    }

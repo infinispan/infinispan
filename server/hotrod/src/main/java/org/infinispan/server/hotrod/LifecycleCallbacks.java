@@ -18,6 +18,7 @@ import static org.infinispan.server.core.ExternalizerIds.XID_PREDICATE;
 import java.util.EnumSet;
 import java.util.Map;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.CacheMode;
@@ -26,6 +27,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -46,8 +48,6 @@ import org.infinispan.server.hotrod.tx.table.functions.SetPreparedFunction;
 import org.infinispan.server.hotrod.tx.table.functions.XidPredicate;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
-
-import net.jcip.annotations.GuardedBy;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific {@link AdvancedExternalizer} implementations
@@ -83,15 +83,17 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       externalizers.put(PREPARED_FUNCTION, SetPreparedFunction.EXTERNALIZER);
       externalizers.put(XID_PREDICATE, XidPredicate.EXTERNALIZER);
       externalizers.put(CONDITIONAL_MARK_ROLLBACK_FUNCTION, ConditionalMarkAsRollbackFunction.EXTERNALIZER);
-   }
 
-   @Override
-   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
       registerGlobalTxTable(gcr);
    }
 
    @Override
-   public void cacheStarted(ComponentRegistry cr, String cacheName) {
+   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      // It's too late to register components here, internal caches have already started
+   }
+
+   @Override
+   public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
       registerServerTransactionTable(cr, cacheName);
    }
 
@@ -107,9 +109,11 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       EmbeddedCacheManager cacheManager = componentRegistry.getGlobalComponentRegistry()
             .getComponent(EmbeddedCacheManager.class);
       createGlobalTxTable(cacheManager);
-      componentRegistry.registerComponent(new PerCacheTxTable(cacheManager.getAddress()), PerCacheTxTable.class);
-      componentRegistry.registerComponent(new ServerTransactionOriginatorChecker(), TransactionOriginatorChecker.class);
-      componentRegistry.rewire();
+      // TODO We need a way for a module to install a factory before the default implementation is instantiated
+      BasicComponentRegistry basicComponentRegistry = componentRegistry.getComponent(BasicComponentRegistry.class);
+      basicComponentRegistry.replaceComponent(PerCacheTxTable.class.getName(), new PerCacheTxTable(cacheManager.getAddress()), true);
+      basicComponentRegistry.replaceComponent(TransactionOriginatorChecker.class.getName(), new ServerTransactionOriginatorChecker(), true);
+      basicComponentRegistry.rewire();
    }
 
    /**

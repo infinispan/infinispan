@@ -1,5 +1,7 @@
 package org.infinispan.factories;
 
+import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,14 +11,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 
+import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
 import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -31,7 +34,6 @@ import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
@@ -44,13 +46,10 @@ import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.ModuleProperties;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
-
-import net.jcip.annotations.ThreadSafe;
 
 /**
  * A global component registry where shared components are stored.
@@ -84,9 +83,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private final ModuleProperties moduleProperties = new ModuleProperties();
 
-   private final ComponentMetadataRepo componentMetadataRepo;
-
    final Collection<ModuleLifecycle> moduleLifecycles;
+   boolean modulesStarted;
 
    final ConcurrentMap<ByteString, ComponentRegistry> namedComponents = new ConcurrentHashMap<>(4);
 
@@ -100,50 +98,68 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public GlobalComponentRegistry(GlobalConfiguration configuration,
                                   EmbeddedCacheManager cacheManager,
                                   Set<String> createdCaches) {
-      globalConfiguration = configuration;
-      classLoader = configuration.classLoader();
+      super(new ComponentMetadataRepo(), configuration.classLoader(), Scopes.GLOBAL, null);
 
-      moduleLifecycles = ModuleProperties.resolveModuleLifecycles(classLoader);
+      ClassLoader configuredClassLoader = configuration.classLoader();
+      moduleLifecycles = ModuleProperties.resolveModuleLifecycles(configuredClassLoader);
 
       // Load up the component metadata
-      componentMetadataRepo = new ComponentMetadataRepo();
-      componentMetadataRepo.initialize(ModuleProperties.getModuleMetadataFiles(classLoader), classLoader);
+      componentMetadataRepo.initialize(ModuleProperties.getModuleMetadataFiles(configuredClassLoader), configuredClassLoader);
 
+      classLoader = configuredClassLoader;
 
       try {
-         registerComponent(classLoader, ClassLoader.class);
-
          // this order is important ...
+         globalConfiguration = configuration;
+
+         registerComponent(componentMetadataRepo, ComponentMetadataRepo.class);
          registerComponent(this, GlobalComponentRegistry.class);
          registerComponent(configuration, GlobalConfiguration.class);
          registerComponent(cacheManager, EmbeddedCacheManager.class);
-         registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
-         registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
-         registerComponent(new InternalCacheRegistryImpl(), InternalCacheRegistry.class);
-         registerComponent(new CacheStoreFactoryRegistry(), CacheStoreFactoryRegistry.class);
-         registerComponent(new EntryMergePolicyFactoryRegistry(), EntryMergePolicyFactoryRegistry.class);
-         registerComponent(new GlobalXSiteAdminOperations(), GlobalXSiteAdminOperations.class);
+         basicComponentRegistry.registerComponent(CacheManagerJmxRegistration.class.getName(), new CacheManagerJmxRegistration(), true);
+         basicComponentRegistry.registerComponent(CacheManagerNotifier.class.getName(), new CacheManagerNotifierImpl(), true);
+         basicComponentRegistry.registerComponent(InternalCacheRegistry.class.getName(), new InternalCacheRegistryImpl(), true);
+         basicComponentRegistry.registerComponent(CacheStoreFactoryRegistry.class.getName(), new CacheStoreFactoryRegistry(), true);
+         basicComponentRegistry.registerComponent(EntryMergePolicyFactoryRegistry.class.getName(), new EntryMergePolicyFactoryRegistry(), true);
+         basicComponentRegistry.registerComponent(GlobalXSiteAdminOperations.class.getName(), new GlobalXSiteAdminOperations(), true);
 
-         moduleProperties.loadModuleCommandHandlers(classLoader);
+         moduleProperties.loadModuleCommandHandlers(configuredClassLoader);
          Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories();
-         if (factories != null && !factories.isEmpty())
+         if (factories != null && !factories.isEmpty()) {
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
-         else
+         } else {
             registerNonVolatileComponent(Collections.emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
+         }
+
+         // register any module-specific command initializers
+         // Modules are on the same classloader as Infinispan
+         Map<Byte, ModuleCommandInitializer> initializers = moduleProperties.moduleCommandInitializers();
+         if (initializers != null && !initializers.isEmpty()) {
+            registerNonVolatileComponent(initializers, MODULE_COMMAND_INITIALIZERS);
+            for (ModuleCommandInitializer mci : initializers.values()) {
+               if (basicComponentRegistry.getComponent(mci.getClass()) == null) {
+                  basicComponentRegistry.registerComponent(mci.getClass(), mci, false);
+               }
+            }
+         } else {
+            registerNonVolatileComponent(
+               Collections.emptyMap(), MODULE_COMMAND_INITIALIZERS);
+         }
+
+
          this.createdCaches = createdCaches;
 
-         getOrCreateComponent(EventLogManager.class);
-         // This is necessary to make sure the transport has been started and is available to other components that
-         // may need it.  This is a messy approach though - a proper fix will be in ISPN-1698
-         getOrCreateComponent(Transport.class);
-         // These two should not be necessary, but they are here as a workaround for ISPN-2371
-         getOrCreateComponent(LocalTopologyManager.class);
-         getOrCreateComponent(ClusterTopologyManager.class);
-         getOrCreateComponent(ClusterContainerStats.class);
-         getOrCreateComponent(EncoderRegistry.class);
-         getOrCreateComponent(GlobalConfigurationManager.class);
+         // Initialize components that do not have strong references from the cache manager
+         basicComponentRegistry.getComponent(EventLogManager.class);
+         basicComponentRegistry.getComponent(Transport.class);
+         basicComponentRegistry.getComponent(LocalTopologyManager.class);
+         basicComponentRegistry.getComponent(ClusterTopologyManager.class);
+         basicComponentRegistry.getComponent(ClusterContainerStats.class);
+         basicComponentRegistry.getComponent(EncoderRegistry.class);
+         basicComponentRegistry.getComponent(GlobalConfigurationManager.class);
+         basicComponentRegistry.getComponent(CacheManagerJmxRegistration.class);
 
-         getOrCreateComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
+         basicComponentRegistry.getComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, ScheduledExecutorService.class);
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
       }
@@ -229,54 +245,29 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   public void start() {
-      try {
-         boolean needToNotify;
-         synchronized (this) {
-            // Do nothing if the global components are already running
-            if (!state.startAllowed())
-               return;
-
-            needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
-            if (needToNotify) {
-               for (ModuleLifecycle l : moduleLifecycles) {
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Invoking %s.cacheManagerStarting()", l);
-                  }
-                  l.cacheManagerStarting(this, globalConfiguration);
-               }
-            }
-            super.start();
+   protected void preStart() {
+      for (ModuleLifecycle l : moduleLifecycles) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Invoking %s.cacheManagerStarting()", l);
          }
-
-         if (versionLogged.compareAndSet(false, true)) {
-            log.version(Version.printVersion());
-         }
-
-         if (needToNotify && state == ComponentStatus.RUNNING) {
-            for (ModuleLifecycle l : moduleLifecycles) {
-               if (log.isTraceEnabled()) {
-                  log.tracef("Invoking %s.cacheManagerStarted()", l);
-               }
-               l.cacheManagerStarted(this);
-            }
-         }
-
-         // Now invoke all post start events
-         super.postStart();
-
-         warnAboutUberJarDuplicates();
-      } catch (RuntimeException rte) {
-         EmbeddedCacheManagerStartupException exception = new EmbeddedCacheManagerStartupException(rte);
-         state = ComponentStatus.FAILED;
-
-         try {
-            super.stop();
-         } catch (Exception e) {
-            exception.addSuppressed(e);
-         }
-         throw exception;
+         l.cacheManagerStarting(this, globalConfiguration);
       }
+
+      if (versionLogged.compareAndSet(false, true)) {
+         log.version(Version.printVersion());
+      }
+   }
+
+   @Override
+   protected void postStart() {
+      for (ModuleLifecycle l : moduleLifecycles) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Invoking %s.cacheManagerStarted()", l);
+         }
+         l.cacheManagerStarted(this);
+      }
+
+      warnAboutUberJarDuplicates();
    }
 
    private void warnAboutUberJarDuplicates() {
@@ -289,20 +280,18 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   public synchronized void stop() {
-      boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
-      if (needToNotify) {
-         for (ModuleLifecycle l : moduleLifecycles) {
-            if (log.isTraceEnabled()) {
-               log.tracef("Invoking %s.cacheManagerStopping()", l);
-            }
-            l.cacheManagerStopping(this);
+   protected void preStop() {
+      for (ModuleLifecycle l : moduleLifecycles) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Invoking %s.cacheManagerStopping()", l);
          }
+         l.cacheManagerStopping(this);
       }
+   }
 
-      super.stop();
-
-      if (state == ComponentStatus.TERMINATED && needToNotify) {
+   @Override
+   protected void postStop() {
+      if (state == ComponentStatus.TERMINATED) {
          for (ModuleLifecycle l : moduleLifecycles) {
             if (log.isTraceEnabled()) {
                log.tracef("Invoking %s.cacheManagerStopped()", l);

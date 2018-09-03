@@ -339,7 +339,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    private long toSeconds(long millis, Object key, String desc) {
       if (millis > 0 && millis < 1000) {
          if (trace) {
-            log.tracef("Adjusting %s time for (k,v): (%s, %s) from %d millis to 1 sec, as milliseconds are not supported by HotRod",
+            log.tracef("Adjusting %s time for key %s from %d millis to 1 sec, as milliseconds are not supported by HotRod",
                   desc, key, millis);
          }
          return 1;
