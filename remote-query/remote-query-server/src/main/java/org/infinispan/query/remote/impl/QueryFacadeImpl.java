@@ -35,12 +35,12 @@ public final class QueryFacadeImpl implements QueryFacade {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
       }
       RemoteQueryManager remoteQueryManager = SecurityActions.getRemoteQueryManager(cache);
-      MediaType requestMediaType = cache.getValueDataConversion().getRequestMediaType();
       if (!remoteQueryManager.isQueryEnabled(cache)) {
          throw log.queryingNotEnabled(cache.getName());
       }
 
       try {
+         MediaType requestMediaType = cache.getValueDataConversion().getRequestMediaType();
          QueryRequest request = remoteQueryManager.decodeQueryRequest(query, requestMediaType);
 
          int startOffset = request.getStartOffset().intValue();
@@ -58,5 +58,4 @@ public final class QueryFacadeImpl implements QueryFacade {
          throw e;
       }
    }
-
 }
