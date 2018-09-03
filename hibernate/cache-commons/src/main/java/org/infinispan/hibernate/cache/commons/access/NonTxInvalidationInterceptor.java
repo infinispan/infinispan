@@ -99,7 +99,7 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 		if (!isLocalModeForced(command)) {
 			if (isTransactional) {
 				invalidateCommand = commandInitializer.buildBeginInvalidationCommand(
-                  EnumUtil.EMPTY_BIT_SET, new Object[] { key }, keyLockOwner);
+               EnumUtil.EMPTY_BIT_SET, new Object[] { key }, keyLockOwner);
 			}
 			else {
             invalidateCommand = commandsFactory.buildInvalidateCommand(EnumUtil.EMPTY_BIT_SET, new Object[] {key });

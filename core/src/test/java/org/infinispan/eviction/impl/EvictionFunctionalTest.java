@@ -71,7 +71,7 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
       cache = cm.getCache();
       evictionListener = new EvictionListener();
       cache.addListener(evictionListener);
-      TestingUtil.replaceComponent(cache, TimeService.class, timeService = new ControlledTimeService(), true);
+      TestingUtil.replaceComponent(cm, TimeService.class, timeService = new ControlledTimeService(), true);
       return cm;
    }
 

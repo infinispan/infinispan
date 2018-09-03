@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
@@ -32,6 +31,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -54,28 +54,15 @@ public class BiasManagerImpl implements BiasManager {
    private ConcurrentMap<Object, RemoteBias> remoteBias = new ConcurrentHashMap<>();
    private long renewLeasePeriod;
 
-   private AdvancedCache cache;
-   private Configuration configuration;
-   private TimeService timeService;
-   private DistributionManager distributionManager;
-   private CommandsFactory commandsFactory;
-   private RpcManager rpcManager;
-   private KeyPartitioner keyPartitioner;
-   private ScheduledExecutorService executor;
-
-   @Inject
-   public void init(AdvancedCache cache, Configuration configuration, TimeService timeService, DistributionManager distributionManager,
-                    CommandsFactory commandsFactory, RpcManager rpcManager, KeyPartitioner keyPartitioner,
-                    @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR) ScheduledExecutorService executor) {
-      this.cache = cache;
-      this.configuration = configuration;
-      this.timeService = timeService;
-      this.distributionManager = distributionManager;
-      this.commandsFactory = commandsFactory;
-      this.rpcManager = rpcManager;
-      this.keyPartitioner = keyPartitioner;
-      this.executor = executor;
-   }
+   @Inject private CacheNotifier cacheNotifier;
+   @Inject private Configuration configuration;
+   @Inject private TimeService timeService;
+   @Inject private DistributionManager distributionManager;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private RpcManager rpcManager;
+   @Inject private KeyPartitioner keyPartitioner;
+   @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
+   @Inject private ScheduledExecutorService executor;
 
    @Start
    public void start() {
@@ -83,7 +70,7 @@ public class BiasManagerImpl implements BiasManager {
       executor.scheduleAtFixedRate(this::removeOldBiasses, 0, configuration.expiration().wakeUpInterval(), TimeUnit.MILLISECONDS);
       executor.scheduleAtFixedRate(this::renewLocalBiasses, 0, configuration.expiration().wakeUpInterval(), TimeUnit.MILLISECONDS);
       renewLeasePeriod = configuration.clustering().biasLifespan() - configuration.clustering().remoteTimeout();
-      cache.addListener(this);
+      cacheNotifier.addListener(this);
    }
 
    @TopologyChanged

@@ -53,6 +53,7 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    private boolean persistentState;
    FileOutputStream globalLockFile;
    private FileLock globalLock;
+   private ScopedPersistentState globalState;
 
    @Start(priority = 1) // Must start before everything else
    public void start() {
@@ -95,9 +96,9 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
 
    private void loadGlobalState() {
       File stateFile = getStateFile(GLOBAL_SCOPE);
-      Optional<ScopedPersistentState> globalState = readScopedState(GLOBAL_SCOPE);
-      if (globalState.isPresent()) {
-         ScopedPersistentState state = globalState.get();
+      globalState = readScopedState(GLOBAL_SCOPE).orElse(null);
+      if (globalState != null) {
+         ScopedPersistentState state = globalState;
          // We proceed only if we can write to the file
          if (!stateFile.canWrite()) {
             throw log.nonWritableStateFile(stateFile);
@@ -181,5 +182,8 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    @Override
    public void registerStateProvider(GlobalStateProvider provider) {
       this.stateProviders.add(provider);
+      if (globalState != null) {
+         provider.prepareForRestore(globalState);
+      }
    }
 }

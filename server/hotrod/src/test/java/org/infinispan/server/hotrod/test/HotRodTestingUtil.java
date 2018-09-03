@@ -25,6 +25,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
@@ -55,10 +57,6 @@ import org.infinispan.server.hotrod.transport.SingleByteFrameDecoderChannelIniti
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.KeyValuePair;
-
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.util.concurrent.Future;
 
 /**
  * Test utils for Hot Rod tests.
@@ -461,14 +459,15 @@ public class HotRodTestingUtil {
       return cm.getCache(cacheName).getAdvancedCache().getRpcManager().getTopologyId();
    }
 
-   public static Future<?> killClient(HotRodClient client) {
+   public static void killClient(HotRodClient client) {
       try {
-         if (client != null) return client.stop();
+         if (client != null) {
+            client.stop().await();
+         }
       }
       catch (Throwable t) {
          log.error("Error stopping client", t);
       }
-      return null;
    }
 
    public static ConfigurationBuilder hotRodCacheConfiguration() {

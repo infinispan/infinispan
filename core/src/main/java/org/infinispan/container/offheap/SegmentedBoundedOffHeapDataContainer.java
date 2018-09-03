@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.LongUnaryOperator;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.marshall.WrappedBytes;
@@ -21,6 +20,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -42,11 +42,11 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
    @Inject protected OffHeapEntryFactory offHeapEntryFactory;
 
    @Inject protected EvictionManager evictionManager;
-   @Inject protected PassivationManager passivator;
+   @Inject protected ComponentRef<PassivationManager> passivator;
 
    protected final long maxSize;
    protected final Lock lruLock;
-   protected final LongUnaryOperator sizeCalculator;
+   protected final boolean useCount;
 
    protected long currentSize;
    protected long firstAddress;
@@ -59,13 +59,11 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
       offHeapListener = new OffHeapListener();
 
       this.maxSize = maxSize;
-      if (type == EvictionType.COUNT) {
+      this.useCount = type == EvictionType.COUNT;
+      if (useCount) {
          offHeapMapSupplier = new OffHeapMapSupplier(false, sizePerSegment);
-         sizeCalculator = i -> 1;
       } else {
          offHeapMapSupplier = new OffHeapMapSupplier(true, sizePerSegment);
-         // Use size of entry plus 16 for our LRU pointers
-         sizeCalculator = i -> offHeapEntryFactory.getSize(i);
       }
       this.lruLock = new ReentrantLock();
       firstAddress = 0;
@@ -228,7 +226,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             }
             try {
                InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(addressToRemove);
-               passivator.passivate(ice);
+               passivator.running().passivate(ice);
                map.remove(ice.getKey(), addressToRemove);
                evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice));
             } finally {
@@ -288,7 +286,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
 
       @Override
       public void entryCreated(long newAddress) {
-         long newSize = sizeCalculator.applyAsLong(newAddress);
+         long newSize = getSize(newAddress);
          lruLock.lock();
          try {
             currentSize += newSize;
@@ -300,13 +298,13 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
 
       @Override
       public void entryRemoved(long removedAddress) {
-         long removedSize = sizeCalculator.applyAsLong(removedAddress);
+         long removedSize = getSize(removedAddress);
          lruLock.lock();
          try {
             // Current size has to be updated in the lock
             currentSize -=  removedSize;
             removeNode(removedAddress);
-            allocator.deallocate(removedAddress);
+            allocator.deallocate(removedAddress, offHeapEntryFactory.getSize(removedAddress, false));
          } finally {
             lruLock.unlock();
          }
@@ -314,8 +312,8 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
 
       @Override
       public void entryReplaced(long newAddress, long oldAddress) {
-         long oldSize = sizeCalculator.applyAsLong(oldAddress);
-         long newSize = sizeCalculator.applyAsLong(newAddress);
+         long oldSize = getSize(oldAddress);
+         long newSize = getSize(newAddress);
          lruLock.lock();
          try {
             removeNode(oldAddress);
@@ -324,7 +322,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             currentSize += newSize;
             currentSize -= oldSize;
             // Must only remove entry while holding lru lock now
-            allocator.deallocate(oldAddress);
+            allocator.deallocate(oldAddress, offHeapEntryFactory.getSize(oldAddress, false));
          } finally {
             lruLock.unlock();
          }
@@ -442,6 +440,15 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             OffHeapLruNode.setNext(lruNode, 0);
             lastAddress = lruNode;
          }
+      }
+   }
+
+   public long getSize(long address) {
+      if (useCount) {
+         return 1;
+      } else {
+         // Use size of entry plus 16 for our LRU pointers
+         return offHeapEntryFactory.getSize(address, true);
       }
    }
 

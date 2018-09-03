@@ -18,9 +18,9 @@ import org.infinispan.security.GlobalSecurityManager;
 public class GlobalSecurityManagerFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       if (globalConfiguration.security().authorization().enabled())
-         return componentType.cast(new GlobalSecurityManagerImpl());
+         return new GlobalSecurityManagerImpl();
       else
          return null;
    }

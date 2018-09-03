@@ -5,10 +5,10 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.server.hotrod.HotRodSingleNodeTest;
 import org.infinispan.server.hotrod.HotRodVersion;
 import org.infinispan.server.hotrod.counter.impl.StrongCounterImplTestStrategy;
 import org.infinispan.server.hotrod.counter.impl.TestCounterManager;
-import org.infinispan.server.hotrod.test.HotRodSingleNodeTest;
 import org.testng.annotations.Test;
 
 /**

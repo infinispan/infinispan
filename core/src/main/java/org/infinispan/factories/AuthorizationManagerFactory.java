@@ -8,9 +8,9 @@ import org.infinispan.security.impl.AuthorizationManagerImpl;
 public class AuthorizationManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       if (configuration.security().authorization().enabled())
-         return (T) new AuthorizationManagerImpl();
+         return new AuthorizationManagerImpl();
       else
          return null;
    }

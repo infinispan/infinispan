@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
@@ -23,6 +22,8 @@ import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -36,7 +37,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -50,10 +50,10 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private final Map<GlobalTransaction, TransactionInfo> partialTransactions;
    private volatile AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
 
-   @Inject private Cache cache;
+   @ComponentName(KnownComponentNames.CACHE_NAME)
+   @Inject private String cacheName;
    @Inject private DistributionManager distributionManager;
    @Inject private LocalTopologyManager localTopologyManager;
-   @Inject private StateTransferManager stateTransferManager;
    @Inject private CacheNotifier notifier;
    @Inject private CommandsFactory commandsFactory;
    @Inject private Configuration configuration;
@@ -61,7 +61,6 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    @Inject private LockManager lockManager;
    @Inject private Transport transport;
 
-   private String cacheName;
    private boolean isVersioned;
    private PartitionHandling partitionHandling;
 
@@ -71,7 +70,6 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    @Start
    public void start() {
-      cacheName = cache.getName();
       isVersioned = Configurations.isTxVersioned(configuration);
       partitionHandling = configuration.clustering().partitionHandling().whenSplit();
    }

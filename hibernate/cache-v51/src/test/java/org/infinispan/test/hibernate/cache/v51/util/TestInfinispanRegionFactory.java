@@ -1,22 +1,23 @@
 package org.infinispan.test.hibernate.cache.v51.util;
 
+import java.util.Properties;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import org.hibernate.cache.spi.CacheDataDescription;
+import org.hibernate.service.ServiceRegistry;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.hibernate.cache.commons.DataType;
 import org.infinispan.hibernate.cache.commons.DefaultCacheManagerProvider;
-import org.hibernate.service.ServiceRegistry;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.hibernate.cache.v51.InfinispanRegionFactory;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.hibernate.cache.commons.util.TestConfigurationHook;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
-import org.infinispan.commons.time.TimeService;
-
-import java.util.Properties;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Factory that should be overridden in tests.
@@ -60,8 +61,10 @@ public class TestInfinispanRegionFactory extends InfinispanRegionFactory {
          afterManagerCreated.accept(cacheManager);
       }
       if (timeService != null) {
-         cacheManager.getGlobalComponentRegistry().registerComponent(timeService, TimeService.class);
-         cacheManager.getGlobalComponentRegistry().rewire();
+         BasicComponentRegistry globalComponentRegistry =
+            cacheManager.getGlobalComponentRegistry().getComponent(BasicComponentRegistry.class);
+         globalComponentRegistry.replaceComponent(TimeService.class.getName(), timeService, false);
+         globalComponentRegistry.rewire();
       }
       return cacheManager;
    }

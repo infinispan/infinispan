@@ -8,11 +8,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -37,7 +37,7 @@ public class ActivationManagerImpl implements ActivationManager {
 
    @Inject private PersistenceManager persistenceManager;
    @Inject private Configuration cfg;
-   @Inject private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject private DistributionManager distributionManager;
    @Inject private KeyPartitioner keyPartitioner;
 
    private boolean passivation;
@@ -72,7 +72,7 @@ public class ActivationManagerImpl implements ActivationManager {
          return;
       }
       //if we are the primary owner, we need to remove from the shared store,
-      final boolean primaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
+      final boolean primaryOwner = distributionManager != null && distributionManager.getCacheTopology().getDistribution(key).isPrimary();
       try {
          if (newEntry) {
             //the entry does not exists in data container. We need to remove from private and shared stores.

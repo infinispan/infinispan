@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +19,9 @@ import org.infinispan.factories.annotations.PostStart;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * This class contains all of the metadata and implications expressed via the {@link Scope}, {@link SurvivesRestarts},
@@ -42,31 +46,38 @@ import org.infinispan.factories.scopes.Scope;
 public class ComponentMetadata implements Serializable {
    private static final long serialVersionUID = 0xC0119011E7ADA7AL;
    private static final InjectFieldMetadata[] EMPTY_INJECT_FIELDS = {};
-   public static final InjectMetadata[] EMPTY_INJECT_METHODS = {};
+   public static final InjectMethodMetadata[] EMPTY_INJECT_METHODS = {};
    public static final PrioritizedMethodMetadata[] EMPTY_PRIORITIZED_METHODS = {};
 
    private String name;
    private transient Map<String, String> dependencies;
    private InjectFieldMetadata[] injectFields;
-   private InjectMetadata[] injectMetadata;
+   private InjectMethodMetadata[] injectMethodMetadata;
    private PrioritizedMethodMetadata[] startMethods;
    private PrioritizedMethodMetadata[] postStartMethods;
    private PrioritizedMethodMetadata[] stopMethods;
-   private boolean globalScope = false;
-   private boolean survivesRestarts = false;
-   private transient Class<?> clazz;
+   private Scopes scope;
+   private boolean survivesRestarts;
+   transient volatile Class<?> clazz;
 
    ComponentMetadata() {
-      globalScope = false;
       survivesRestarts = true;
    }
 
    public ComponentMetadata(Class<?> component, List<Field> injectFields, List<Method> injectMethods, List<Method> startMethods,
                             List<Method> postStartMethods, List<Method> stopMethods, boolean global,
                             boolean survivesRestarts) {
+      this(component, injectFields, injectMethods, startMethods, postStartMethods, stopMethods,
+           global ? Scopes.GLOBAL : Scopes.NAMED_CACHE, survivesRestarts);
+   }
+
+   public ComponentMetadata(Class<?> component, List<Field> injectFields, List<Method> injectMethods,
+                            List<Method> startMethods,
+                            List<Method> postStartMethods, List<Method> stopMethods, Scopes scope,
+                            boolean survivesRestarts) {
       clazz = component;
       name = component.getName();
-      globalScope = global;
+      this.scope = scope;
       this.survivesRestarts = survivesRestarts;
 
       if (startMethods != null && !startMethods.isEmpty()) {
@@ -105,8 +116,9 @@ public class ComponentMetadata implements Serializable {
          this.injectFields = new InjectFieldMetadata[injectFields.size()];
          int j = 0;
          for (Field f : injectFields) {
+            boolean lazy = f.getType() == ComponentRef.class;
             ComponentName[] cn = f.getAnnotationsByType(ComponentName.class);
-            String componentType = f.getType().getName();
+            String componentType = extractDependencyType(f.getType(), f.getGenericType(), lazy);
             String componentName = null;
             if (cn.length > 1) {
                throw new IllegalStateException("Only one name expected");
@@ -120,28 +132,31 @@ public class ComponentMetadata implements Serializable {
             }
 
             this.injectFields[j++] = new InjectFieldMetadata(
-                  f.getDeclaringClass().getName(), f.getName(), componentType, componentName);
+               f.getDeclaringClass().getName(), f.getName(), componentType, componentName, lazy);
          }
       }
 
       if (injectMethods != null && !injectMethods.isEmpty()) {
-         this.injectMetadata = new InjectMetadata[injectMethods.size()];
+         this.injectMethodMetadata = new InjectMethodMetadata[injectMethods.size()];
          int j=0;
          for (Method m : injectMethods) {
-
-            InjectMetadata injectMetadata = new InjectMetadata(m.getName());
+            InjectMethodMetadata injectMethodMetadata = new InjectMethodMetadata(m.getName());
 
             Class<?>[] parameterTypes = m.getParameterTypes();
+            Type[] genericParameterTypes = m.getGenericParameterTypes();
 
             // Need to use arrays instead of Map due to JDK bug see ISPN-3611
             String[] params = new String[parameterTypes.length];
             String[] paramNames = new String[parameterTypes.length];
+            boolean[] paramLazy = new boolean[parameterTypes.length];
 
             // Add this to our dependencies map
             Annotation[][] annotations = m.getParameterAnnotations();
             for (int i=0; i<parameterTypes.length; i++) {
                String componentName = findComponentName(annotations, i);
-               String parameterType = parameterTypes[i].getName();
+               boolean lazy = parameterTypes[i] == ComponentRef.class;
+               paramLazy[i] = lazy;
+               String parameterType = extractDependencyType(parameterTypes[i], genericParameterTypes[i], lazy);
                params[i] = parameterType;
                if (componentName == null) {
                   dependencies.put(parameterType, parameterType);
@@ -150,11 +165,28 @@ public class ComponentMetadata implements Serializable {
                   dependencies.put(componentName, parameterType);
                }
             }
-            injectMetadata.parameters = params;
-            injectMetadata.parameterNames = paramNames;
-            this.injectMetadata[j++] = injectMetadata;
+            injectMethodMetadata.parameters = params;
+            injectMethodMetadata.parameterNames = paramNames;
+            injectMethodMetadata.parameterLazy = paramLazy;
+            this.injectMethodMetadata[j++] = injectMethodMetadata;
          }
       }
+   }
+
+   public String extractDependencyType(Type erasedType, Type genericType, boolean lazy) {
+      String componentType;
+      if (lazy) {
+         Type actualComponentType = ((ParameterizedType) genericType).getActualTypeArguments()[0];
+         if (actualComponentType instanceof ParameterizedType) {
+            // Ignore any generic parameters on the component type
+            componentType = ((ParameterizedType) actualComponentType).getRawType().getTypeName();
+         } else {
+            componentType = actualComponentType.getTypeName();
+         }
+      } else {
+         componentType = erasedType.getTypeName();
+      }
+      return componentType;
    }
 
    private String findComponentName(Annotation[][] annotations, int position) {
@@ -183,9 +215,9 @@ public class ComponentMetadata implements Serializable {
       return injectFields == null ? EMPTY_INJECT_FIELDS : injectFields;
    }
 
-   public InjectMetadata[] getInjectMethods() {
-      if (injectMetadata == null) return EMPTY_INJECT_METHODS;
-      return injectMetadata;
+   public InjectMethodMetadata[] getInjectMethods() {
+      if (injectMethodMetadata == null) return EMPTY_INJECT_METHODS;
+      return injectMethodMetadata;
    }
 
    public PrioritizedMethodMetadata[] getStartMethods() {
@@ -204,7 +236,7 @@ public class ComponentMetadata implements Serializable {
    }
 
    public boolean isGlobalScope() {
-      return globalScope;
+      return scope == Scopes.GLOBAL;
    }
 
    public boolean isSurvivesRestarts() {
@@ -226,15 +258,19 @@ public class ComponentMetadata implements Serializable {
    @Override
    public String toString() {
       return "ComponentMetadata{" +
-            "name='" + name + '\'' +
-            ", dependencies=" + dependencies +
-            ", injectMetadata=" + Arrays.toString(injectMetadata) +
-            ", startMethods=" + Arrays.toString(startMethods) +
-            ", postStartMethods=" + Arrays.toString(postStartMethods) +
-            ", stopMethods=" + Arrays.toString(stopMethods) +
-            ", globalScope=" + globalScope +
-            ", survivesRestarts=" + survivesRestarts +
-            '}';
+             "name='" + name + '\'' +
+             ", dependencies=" + dependencies +
+             ", injectMethods=" + Arrays.toString(injectMethodMetadata) +
+             ", startMethods=" + Arrays.toString(startMethods) +
+             ", postStartMethods=" + Arrays.toString(postStartMethods) +
+             ", stopMethods=" + Arrays.toString(stopMethods) +
+             ", scope=" + scope +
+             ", survivesRestarts=" + survivesRestarts +
+             '}';
+   }
+
+   public Scopes getScope() {
+      return scope;
    }
 
    /**
@@ -269,25 +305,42 @@ public class ComponentMetadata implements Serializable {
 
       @Override
       public String toString() {
-         return method.getName() + "(priority=" + priority + ")";
+         StringBuilder sb = new StringBuilder();
+         sb.append(methodName);
+         if (method != null) {
+            sb.append("(");
+            boolean comma = false;
+            for (Class<?> paramClass : method.getParameterTypes()) {
+               if (comma) {
+                  sb.append(", ");
+               } else {
+                  comma = true;
+               }
+               sb.append(paramClass.getName());
+            }
+            sb.append(")");
+         }
+         sb.append("(priority=").append(priority).append(")");
+         return sb.toString();
       }
    }
 
    /**
     * This class encapsulates metadata on an inject method, such as one annotated with {@link Inject}
     */
-   public static class InjectMetadata implements Serializable {
+   public static class InjectMethodMetadata implements Serializable {
 
       //To avoid mismatches during development like as created by Maven vs IDE compiled classes:
-      private static final long serialVersionUID = 4848856551345751894L;
+      private static final long serialVersionUID = 3662286908891061057L;
 
       String methodName;
       transient Method method;
       String[] parameters;
       transient Class<?>[] parameterClasses;
       String[] parameterNames;
+      boolean[] parameterLazy;
 
-      private InjectMetadata(String methodName) {
+      private InjectMethodMetadata(String methodName) {
          this.methodName = methodName;
       }
 
@@ -299,7 +352,15 @@ public class ComponentMetadata implements Serializable {
          return parameters;
       }
 
+      /**
+       * @deprecated Singe 9.4, please use {@link #getDependencyName(int)} instead.
+       */
+      @Deprecated
       public String getParameterName(int subscript) {
+         return getDependencyName(subscript);
+      }
+
+      public String getDependencyName(int subscript) {
          String name = parameterNames == null ? null : parameterNames[subscript];
          return name == null ? parameters[subscript] : name;
       }
@@ -324,6 +385,10 @@ public class ComponentMetadata implements Serializable {
          this.parameterClasses = parameterClasses;
       }
 
+      public boolean getParameterLazy(int i) {
+         return parameterLazy[i];
+      }
+
       @Override
       public String toString() {
          return methodName + "(" + String.join(", ", parameters) + ")";
@@ -331,19 +396,22 @@ public class ComponentMetadata implements Serializable {
    }
 
    public class InjectFieldMetadata implements Serializable {
-      private static final long serialVersionUID = 7523698423843422884L;
+      private static final long serialVersionUID = 1040295625623725061L;
       private final String fieldClassName;
       private final String fieldName;
       private final String componentName;
       private final String componentType;
+      private final boolean lazy;
       private transient Field field;
       private transient Class<?> componentClass;
 
-      public InjectFieldMetadata(String fieldClassName, String fieldName, String componentType, String componentName) {
+      public InjectFieldMetadata(String fieldClassName, String fieldName, String componentType, String componentName,
+                                 boolean lazy) {
          this.fieldClassName = fieldClassName;
          this.fieldName = fieldName;
          this.componentName = componentName;
          this.componentType = componentType;
+         this.lazy = lazy;
       }
 
       public Field getField() {
@@ -376,6 +444,25 @@ public class ComponentMetadata implements Serializable {
 
       public String getComponentName() {
          return componentName;
+      }
+
+      public String getDependencyName() {
+         return componentName != null ? componentName : componentType;
+      }
+
+      public boolean isLazy() {
+         return lazy;
+      }
+
+      @Override
+      public String toString() {
+         return "InjectFieldMetadata{" +
+                "fieldName='" + fieldName + '\'' +
+                ", componentType='" + componentType + '\'' +
+                ", componentName='" + componentName + '\'' +
+                ", lazy=" + lazy +
+                ", fieldClassName='" + fieldClassName + '\'' +
+                '}';
       }
    }
 }

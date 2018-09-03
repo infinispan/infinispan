@@ -12,7 +12,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.PostStart;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.LocalConfigurationStorage;
@@ -71,10 +70,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             EnumSet.of(InternalCacheRegistry.Flag.GLOBAL));
       parserRegistry = new ParserRegistry();
       cacheManager.getGlobalComponentRegistry().wireDependencies(localConfigurationManager);
-   }
 
-   @PostStart
-   public void postStart() {
       localConfigurationManager.initialize(cacheManager);
       // Initialize caches which are present in the initial state. We do this before installing the listener.
       for (Map.Entry<ScopedState, Object> e : getStateCache().entrySet()) {

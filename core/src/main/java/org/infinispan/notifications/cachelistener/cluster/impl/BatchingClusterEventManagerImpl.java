@@ -10,7 +10,9 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.distexec.DistributedExecutionCompletionService;
 import org.infinispan.distexec.DistributedExecutorService;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
@@ -18,19 +20,15 @@ import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCalla
 import org.infinispan.remoting.transport.Address;
 
 public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManager<K, V> {
-   private final Cache<K, V> cache;
+   @Inject private ComponentRef<Cache<K, V>> cache;
 
    private DistributedExecutorService distExecService;
 
    private final ThreadLocal<EventContext<K, V>> localContext = new ThreadLocal<>();
 
-   public BatchingClusterEventManagerImpl(Cache<K, V> cache) {
-      this.cache = cache;
-   }
-
    @Start
    public void start() {
-      distExecService = SecurityActions.getDefaultExecutorService(cache);
+      distExecService = SecurityActions.getDefaultExecutorService(cache.wired());
    }
 
    @Override

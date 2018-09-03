@@ -13,6 +13,7 @@ import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.AsyncInterceptorChainImpl;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -35,7 +36,8 @@ public class InterceptorChainTest extends AbstractInfinispanTest {
       AsyncInterceptorChainImpl asyncInterceptorChain =
             new AsyncInterceptorChainImpl(componentMetadataRepo);
       GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
-      InterceptorChain ic = new InterceptorChain(asyncInterceptorChain);
+      InterceptorChain ic = new InterceptorChain();
+      TestingUtil.inject(ic, asyncInterceptorChain);
       ic.setFirstInChain(new DummyCallInterceptor());
       ic.addInterceptor(new DummyActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);

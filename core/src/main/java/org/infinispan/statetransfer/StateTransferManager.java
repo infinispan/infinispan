@@ -52,6 +52,8 @@ public interface StateTransferManager {
 
    void start() throws Exception;
 
+   void waitForInitialStateTransferToComplete();
+
    void stop();
 
    /**

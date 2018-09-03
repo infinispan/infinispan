@@ -316,7 +316,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    protected void waitUntilListenerInstalled(final Cache<?, ?> cache, final CheckPoint checkPoint) {
       CacheNotifier cn = TestingUtil.extractComponent(cache, CacheNotifier.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(cn);
-      CacheNotifier mockNotifier = mock(CacheNotifier.class, withSettings().defaultAnswer(forwardedAnswer));
+      ClusterCacheNotifier mockNotifier = mock(ClusterCacheNotifier.class, withSettings().defaultAnswer(forwardedAnswer));
       doAnswer(invocation -> {
          // Wait for main thread to sync up
          checkPoint.trigger("pre_add_listener_invoked_" + cache);
@@ -338,7 +338,9 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    protected void waitUntilNotificationRaised(final Cache<?, ?> cache, final CheckPoint checkPoint) {
       CacheNotifier cn = TestingUtil.extractComponent(cache, CacheNotifier.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(cn);
-      CacheNotifier mockNotifier = mock(CacheNotifier.class, withSettings().defaultAnswer(forwardedAnswer));
+      CacheNotifier mockNotifier = mock(CacheNotifier.class,
+                                        withSettings().extraInterfaces(ClusterCacheNotifier.class)
+                                                      .defaultAnswer(forwardedAnswer));
       Answer answer = invocation -> {
          // Wait for main thread to sync up
          checkPoint.trigger("pre_raise_notification_invoked");

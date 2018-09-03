@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.util.concurrent.locks.PendingLockListener;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.concurrent.locks.PendingLockPromise;
@@ -28,8 +28,8 @@ public class PendingTxAction extends BaseLockingAction implements PendingLockLis
    private final CompletableFuture<Void> notifier;
    private volatile PendingLockPromise pendingLockPromise;
 
-   public PendingTxAction(PendingLockManager pendingLockManager, ClusteringDependentLogic clusteringDependentLogic) {
-      super(clusteringDependentLogic);
+   public PendingTxAction(PendingLockManager pendingLockManager, DistributionManager distributionManager) {
+      super(distributionManager);
       this.pendingLockManager = pendingLockManager;
       notifier = new CompletableFuture<>();
    }

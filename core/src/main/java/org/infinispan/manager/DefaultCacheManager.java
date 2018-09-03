@@ -21,6 +21,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -55,7 +56,6 @@ import org.infinispan.health.Health;
 import org.infinispan.health.impl.HealthImpl;
 import org.infinispan.health.impl.jmx.HealthJMXExposerImpl;
 import org.infinispan.health.jmx.HealthJMXExposer;
-import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -142,8 +142,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private final String defaultCacheName;
 
    private final Lock lifecycleLock = new ReentrantLock();
+   private final Condition lifecycleCondition = lifecycleLock.newCondition();
+   private volatile ComponentStatus status = ComponentStatus.INSTANTIATED;
+
    private final DefaultCacheManagerAdmin cacheManagerAdmin;
-   private volatile boolean stopping;
    private final ClassWhiteList classWhiteList = new ClassWhiteList();
 
    /**
@@ -465,6 +467,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    public <K, V> Cache<K, V> internalGetCache(String cacheName, String configurationName) {
       assertIsNotTerminated();
+      internalStart(false);
+
       CompletableFuture<Cache<?, ?>> cacheFuture = caches.get(cacheName);
       if (cacheFuture != null) {
          try {
@@ -499,8 +503,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public EmbeddedCacheManager startCaches(final String... cacheNames) {
       authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
+
+      internalStart(false);
+
       Map<String, Thread> threads = new HashMap<>(cacheNames.length);
-      final AtomicReference<RuntimeException> exception = new AtomicReference<RuntimeException>(null);
+      final AtomicReference<RuntimeException> exception = new AtomicReference<>(null);
       for (final String cacheName : cacheNames) {
          if (!threads.containsKey(cacheName)) {
             String threadName = "CacheStartThread," + configurationManager.getGlobalConfiguration().transport().nodeName() + "," + cacheName;
@@ -637,7 +644,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
 
          if (cache.getAdvancedCache().getAuthorizationManager() != null) {
-            cache = new SecureCacheImpl<K, V>(cache.getAdvancedCache());
+            cache = new SecureCacheImpl<>(cache.getAdvancedCache());
          }
 
          boolean notStartedYet =
@@ -663,22 +670,52 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public void start() {
       authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
+      internalStart(true);
+   }
+
+   private void internalStart(boolean block) {
       lifecycleLock.lock();
       try {
-         stopping = false;
+         while (block && status == ComponentStatus.INITIALIZING) {
+            lifecycleCondition.await();
+         }
+         if (status != ComponentStatus.INSTANTIATED) {
+            return;
+         }
+
+         log.debugf("Starting cache manager %s", configurationManager.getGlobalConfiguration().transport().nodeName());
+         updateStatus(ComponentStatus.INITIALIZING);
+      } catch (InterruptedException e) {
+         throw new CacheException("Interrupted waiting for the cache manager to start");
+      } finally {
+         lifecycleLock.unlock();
+      }
+
+      try {
          final GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
          if (globalConfiguration.security().authorization().enabled() && System.getSecurityManager() == null) {
             log.authorizationEnabledWithoutSecurityManager();
          }
          globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
-         String clusterName = globalConfiguration.transport().clusterName();
          String nodeName = globalConfiguration.transport().nodeName();
          if (globalConfiguration.security().authorization().enabled()) {
             globalConfiguration.security().authorization().principalRoleMapper().setContext(
-                  new PrincipalRoleMapperContextImpl(this));
+               new PrincipalRoleMapperContextImpl(this));
          }
          globalComponentRegistry.start();
-         log.debugf("Started cache manager %s on %s", clusterName, nodeName);
+         log.debugf("Started cache manager %s on %s", nodeName, getAddress());
+      } catch (Exception e) {
+         throw new EmbeddedCacheManagerStartupException(e);
+      } finally {
+         updateStatus(globalComponentRegistry.getStatus());
+      }
+   }
+
+   private void updateStatus(ComponentStatus status) {
+      lifecycleLock.lock();
+      try {
+         this.status = status;
+         lifecycleCondition.signalAll();
       } finally {
          lifecycleLock.unlock();
       }
@@ -703,18 +740,30 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
       lifecycleLock.lock();
       try {
-         if (stopping) {
+         while (status == ComponentStatus.STOPPING) {
+            lifecycleCondition.await();
+         }
+         if (status != ComponentStatus.RUNNING) {
             log.trace("Ignore call to stop as the cache manager is not running");
             return;
          }
 
-         log.debugf("Stopping cache manager %s on %s", configurationManager.getGlobalConfiguration().transport().clusterName(), getAddress());
-         stopping = true;
+         // We can stop the manager
+         log.debugf("Stopping cache manager %s on %s", configurationManager.getGlobalConfiguration().transport().nodeName(), getAddress());
+         updateStatus(ComponentStatus.STOPPING);
+      } catch (InterruptedException e) {
+         throw new CacheException("Interrupted waiting for the cache manager to stop");
+      } finally {
+         lifecycleLock.unlock();
+      }
+
+      try {
          stopCaches();
          globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
          globalComponentRegistry.stop();
+         log.debugf("Stopped cache manager %s", configurationManager.getGlobalConfiguration().transport().nodeName());
       } finally {
-         lifecycleLock.unlock();
+         updateStatus(ComponentStatus.TERMINATED);
       }
    }
 
@@ -742,8 +791,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    private void unregisterCacheMBean(Cache<?, ?> cache) {
       // Unregister cache mbean regardless of jmx statistics setting
-      cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class)
-            .unregisterCacheMBean();
+      globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class)
+         .unregisterCacheMBean(cache.getName(), cache.getCacheConfiguration().clustering().cacheModeString());
    }
 
    @Override
@@ -949,15 +998,17 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    }
 
    private void assertIsNotTerminated() {
-      if (stopping)
+      if (status == ComponentStatus.STOPPING ||
+          status == ComponentStatus.TERMINATED ||
+          status == ComponentStatus.FAILED)
          throw new IllegalLifecycleStateException(
                "Cache container has been stopped and cannot be reused. Recreate the cache container.");
    }
 
    @Override
    public Transport getTransport() {
-      if (globalComponentRegistry == null) return null;
-      return globalComponentRegistry.getComponent(Transport.class);
+      return status == ComponentStatus.INITIALIZING || status == ComponentStatus.RUNNING ?
+             globalComponentRegistry.getComponent(Transport.class) : null;
    }
 
    @Override

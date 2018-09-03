@@ -80,7 +80,10 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    protected void notify(InvocationContext ctx, MVCCEntry e, boolean pre) {
-      notifier.notifyCacheEntryInvalidated(e.getKey(), e.getValue(), e.getMetadata(), pre, ctx, this);
+      // notifier is null for remote BeginInvalidationCommands
+      if (notifier != null) {
+         notifier.notifyCacheEntryInvalidated(e.getKey(), e.getValue(), e.getMetadata(), pre, ctx, this);
+      }
    }
 
    @Override

@@ -21,10 +21,10 @@ import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.inboundhandler.action.Action;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.ActionStatus;
@@ -59,7 +59,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private static final boolean trace = log.isTraceEnabled();
 
    @Inject private LockManager lockManager;
-   @Inject private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject private DistributionManager distributionManager;
    @Inject private TriangleOrderManager triangleOrderManager;
    @Inject private RpcManager rpcManager;
    @Inject private CommandAckCollector commandAckCollector;
@@ -348,7 +348,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
 
       DefaultReadyAction action = new DefaultReadyAction(new ActionState(command, topologyId, timeoutMillis),
             this,
-            new LockAction(lockManager, clusteringDependentLogic));
+            new LockAction(lockManager, distributionManager));
       action.registerListener();
       return action;
    }

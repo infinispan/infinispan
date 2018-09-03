@@ -13,7 +13,7 @@ import org.infinispan.remoting.responses.ResponseGenerator;
 @DefaultFactoryFor(classes = ResponseGenerator.class)
 public class ResponseGeneratorFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
-   public <T> T construct(Class<T> componentType) {
-      return componentType.cast(new DefaultResponseGenerator());
+   public Object construct(String componentName) {
+      return new DefaultResponseGenerator();
    }
 }

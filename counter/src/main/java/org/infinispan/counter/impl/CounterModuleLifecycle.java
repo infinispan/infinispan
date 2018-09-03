@@ -34,6 +34,7 @@ import org.infinispan.counter.impl.strong.StrongCounterKey;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -90,23 +91,13 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       return config == null ? CounterManagerConfigurationBuilder.defaultConfiguration() : config;
    }
 
-   private static void registerCounterManager(EmbeddedCacheManager cacheManager,
-         GlobalComponentRegistry registry) {
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (registry) {
-         CounterManager counterManager = registry.getComponent(CounterManager.class);
-         if (trace) {
-            log.tracef("Registering counter manager. Existing: %s", counterManager);
-         }
-         if (counterManager == null || !(counterManager instanceof EmbeddedCounterManager)) {
-            counterManager = new EmbeddedCounterManager(cacheManager);
-            registry.registerComponent(counterManager, CounterManager.class);
-            //this start() is only invoked when the DefaultCacheManager.start() is invoked
-            //it is invoked here again to force it to check the managed global components
-            // and register them in the MBeanServer, if they are missing.
-            registry.getComponent(CacheManagerJmxRegistration.class).start(); //HACK!
-         }
-      }
+   private static void registerCounterManager(EmbeddedCacheManager cacheManager, BasicComponentRegistry registry) {
+      if (trace)
+         log.tracef("Registering counter manager.");
+      EmbeddedCounterManager counterManager = new EmbeddedCounterManager(cacheManager);
+      // This must happen before CacheManagerJmxRegistration starts
+      registry.registerComponent(CounterManager.class, counterManager, true);
+      registry.getComponent(CacheManagerJmxRegistration.class).running().registerMBean(counterManager);
    }
 
    private static void registerCounterCache(InternalCacheRegistry registry, CounterManagerConfiguration config) {
@@ -139,14 +130,12 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, CreateAndCASFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CreateAndAddFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, RemoveFunction.EXTERNALIZER);
-   }
 
-   @Override
-   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
-      final EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
-      final InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
-      final CounterManagerConfiguration counterManagerConfiguration = extractConfiguration(gcr);
+      BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
+      EmbeddedCacheManager cacheManager = bcr.getComponent(EmbeddedCacheManager.class).wired();
+      InternalCacheRegistry internalCacheRegistry = bcr.getComponent(InternalCacheRegistry.class).running();
 
+      CounterManagerConfiguration counterManagerConfiguration = extractConfiguration(gcr);
       if (gcr.getGlobalConfiguration().transport().transport() != null) {
          //only attempts to create the caches if the cache manager is clustered.
          registerCounterCache(internalCacheRegistry, counterManagerConfiguration);
@@ -154,7 +143,6 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
          //local only cache manager.
          registerLocalCounterCache(internalCacheRegistry);
       }
-      registerCounterManager(cacheManager, gcr);
+      registerCounterManager(cacheManager, bcr);
    }
-
 }

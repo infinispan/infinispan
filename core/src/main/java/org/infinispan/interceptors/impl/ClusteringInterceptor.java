@@ -16,7 +16,6 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.AllOwnersLostException;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 /**
@@ -31,7 +30,6 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    @Inject protected EntryFactory entryFactory;
    @Inject protected LockManager lockManager;
    @Inject protected InternalDataContainer dataContainer;
-   @Inject protected StateTransferManager stateTransferManager;
    @Inject protected DistributionManager distributionManager;
 
    protected static Response getSingleResponse(Map<Address, Response> responseMap) {

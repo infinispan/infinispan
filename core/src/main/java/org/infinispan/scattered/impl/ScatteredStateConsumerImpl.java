@@ -166,7 +166,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                log.failedToRequestSegments(cacheName, null, addedSegments, t);
             }
          } else {
-            if (cache.getAdvancedCache().getComponentRegistry().getStatus() == ComponentStatus.RUNNING) {
+            if (cache.wired().getStatus() == ComponentStatus.RUNNING) {
                log.failedConfirmingRevokedSegments(throwable);
             } else {
                // reduce verbosity for stopping cache
@@ -510,7 +510,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          try {
             interceptorChain.invoke(icf.createSingleKeyNonTxInvocationContext(), put);
          } catch (Exception e) {
-            if (!cache.getStatus().allowInvocations()) {
+            if (!cache.wired().getStatus().allowInvocations()) {
                log.debugf("Cache %s is shutting down, stopping state transfer", cacheName);
                break;
             } else {

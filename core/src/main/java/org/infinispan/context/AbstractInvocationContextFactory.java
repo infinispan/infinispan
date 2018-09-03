@@ -9,7 +9,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.ClearInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -23,7 +22,6 @@ import org.infinispan.remoting.transport.Address;
 public abstract class AbstractInvocationContextFactory implements InvocationContextFactory {
 
    @Inject protected Configuration config;
-   @Inject protected AsyncInterceptorChain interceptorChain;
 
    @Override
    public InvocationContext createRemoteInvocationContextForCommand(
@@ -45,7 +43,7 @@ public abstract class AbstractInvocationContextFactory implements InvocationCont
    }
 
    private ClearInvocationContext createClearInvocationContext(Address origin) {
-      ClearInvocationContext context = new ClearInvocationContext(origin, interceptorChain);
+      ClearInvocationContext context = new ClearInvocationContext(origin);
       return context;
    }
 }

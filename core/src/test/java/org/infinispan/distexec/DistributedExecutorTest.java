@@ -342,7 +342,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
       @Override
       public Integer call() throws Exception {
-         CyclicBarrier barrier = cache.getAdvancedCache().getComponentRegistry().getComponent("barrier");
+         CyclicBarrier barrier = cache.getAdvancedCache().getComponentRegistry().getComponent(CyclicBarrier.class, "barrier");
 
          barrier.await(10, TimeUnit.SECONDS);
          try {

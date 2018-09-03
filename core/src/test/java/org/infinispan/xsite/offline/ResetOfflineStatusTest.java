@@ -9,7 +9,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.BaseSiteUnreachableTest;
@@ -34,12 +36,13 @@ public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
 
    public void testPutWithFailures() {
       populateKeys(cache("LON", 0));
-      ComponentRegistry registry = cache("LON", 0).getAdvancedCache().getComponentRegistry();
-      Transport transport= registry.getComponent(Transport.class);
+      EmbeddedCacheManager manager = cache("LON", 0).getCacheManager();
+      Transport transport = manager.getGlobalComponentRegistry().getComponent(Transport.class);
       DelegatingTransport delegatingTransport = new DelegatingTransport(transport);
-      registry.getGlobalComponentRegistry().registerComponent(delegatingTransport, Transport.class);
+      TestingUtil.replaceComponent(manager, Transport.class, delegatingTransport, true);
+
+      ComponentRegistry registry = cache("LON", 0).getAdvancedCache().getComponentRegistry();
       BackupSenderImpl bs = (BackupSenderImpl) registry.getComponent(BackupSender.class);
-      registry.rewire();
       OfflineStatus offlineStatus = bs.getOfflineStatus("NYC");
 
       delegatingTransport.fail = true;

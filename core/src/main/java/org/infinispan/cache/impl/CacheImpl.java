@@ -24,7 +24,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.security.auth.Subject;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -115,10 +114,12 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.impl.StatsImpl;
 import org.infinispan.stream.StreamMarshalling;
@@ -156,6 +157,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject protected AsyncInterceptorChain invoker;
    @Inject protected Configuration config;
    @Inject protected CacheNotifier notifier;
+   @Inject protected CacheManagerNotifier cacheManagerNotifier;
    @Inject protected BatchContainer batchContainer;
    @Inject protected ComponentRegistry componentRegistry;
    @Inject protected TransactionManager transactionManager;
@@ -173,6 +175,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject private PartitionHandlingManager partitionHandlingManager;
    @Inject private GlobalConfiguration globalCfg;
    @Inject private LocalTopologyManager localTopologyManager;
+   @Inject private StateTransferManager stateTransferManager;
 
    protected Metadata defaultMetadata;
    private final String name;
@@ -1096,6 +1099,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    )
    public void start() {
       componentRegistry.start();
+
+      if (stateTransferManager != null) {
+         stateTransferManager.waitForInitialStateTransferToComplete();
+      }
       if (log.isDebugEnabled()) log.debugf("Started cache %s on %s", getName(), getCacheManager().getAddress());
    }
 
@@ -1351,7 +1358,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public String toString() {
-      return "Cache '" + name + "'@" + (config != null && config.clustering().cacheMode().isClustered() ? getCacheManager().getAddress() : Util.hexIdHashCode(getCacheManager()));
+      return "Cache '" + name + "'@" + (config != null && config.clustering().cacheMode().isClustered() ? getRpcManager().getAddress() : Util.hexIdHashCode(getCacheManager()));
    }
 
    @Override

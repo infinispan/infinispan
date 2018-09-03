@@ -19,15 +19,15 @@ public class ExpirationManagerFactory extends AbstractNamedCacheComponentFactory
 
    @Override
    @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       CacheMode cacheMode = configuration.clustering().cacheMode();
       if (cacheMode.needsStateTransfer()) {
          if (configuration.transaction().transactionMode().isTransactional()) {
-            return componentType.cast(new TxClusterExpirationManager<>());
+            return new TxClusterExpirationManager<>();
          }
-         return componentType.cast(new ClusterExpirationManager<>());
+         return new ClusterExpirationManager<>();
       } else {
-         return componentType.cast(new ExpirationManagerImpl<>());
+         return new ExpirationManagerImpl<>();
       }
    }
 }

@@ -72,12 +72,12 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
          Future<Object> repl1Future = fork(() -> manager(eagerManager).getCache(CACHE_NAME));
 
          // If eagerManager == 0, the coordinator broadcasts a GET_STATUS command.
-         // If eagerManager == 1, the non-coordinator sends a POLICY_GET_STATUS command to the coordinator.
+         // If eagerManager == 1, the non-coordinator sends a JOIN command to the coordinator.
          // We want to start the lazyManager without receiving these commands, then the eagerManager should
          // retry and succeed.
          // Bundling and retransmission in NAKACK2 mean we need an extra wait after lazyManager sent its
          // command, so we don't try to wait for a precise amount of time.
-         Thread.sleep(500);
+         Thread.sleep(1000);
 
          Future<Object> repl2Future = fork(() -> manager(lazyManager).getCache(CACHE_NAME));
 

@@ -160,8 +160,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    public static ControlledCommandFactory registerControlledCommandFactory(Cache cache, Class<? extends ReplicableCommand> toBlock) {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       final ControlledCommandFactory ccf = new ControlledCommandFactory(componentRegistry.getCommandsFactory(), toBlock);
-      TestingUtil.replaceField(ccf, "commandsFactory", componentRegistry, ComponentRegistry.class);
-      componentRegistry.registerComponent(ccf, CommandsFactory.class);
+      TestingUtil.replaceComponent(cache, CommandsFactory.class, ccf, true);
 
       //hack: re-add the component registry to the GlobalComponentRegistry's "namedComponents" (CHM) in order to correctly publish it for
       // when it will be read by the InboundInvocationHandlder. InboundInvocationHandlder reads the value from the GlobalComponentRegistry.namedComponents before using it

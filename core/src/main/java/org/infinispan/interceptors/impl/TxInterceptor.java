@@ -61,6 +61,7 @@ import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.jmx.JmxStatisticsExposer;
@@ -104,7 +105,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    private final AtomicLong rollbacks = new AtomicLong(0);
 
    @Inject private CommandsFactory commandsFactory;
-   @Inject private Cache<K, V> cache;
+   @Inject private ComponentRef<Cache<K, V>> cache;
    @Inject private RecoveryManager recoveryManager;
    @Inject private TransactionTable txTable;
 
@@ -719,7 +720,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       private final InvocationContext rCtx;
 
       TxKeyCacheSet(VisitableCommand rCommand, CacheSet<K> set, InvocationContext rCtx, boolean isRemoteIteration) {
-         super(Caches.getCacheWithFlags(TxInterceptor.this.cache, (FlagAffectedCommand) rCommand), set);
+         super(Caches.getCacheWithFlags(TxInterceptor.this.cache.wired(), (FlagAffectedCommand) rCommand), set);
          this.isRemoteIteration = isRemoteIteration;
          this.rCtx = rCtx;
       }
@@ -730,17 +731,17 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             return innerIterator();
          }
          // Need to support remove of iterator
-         return new RemovableCloseableIterator<>(innerIterator(), cache::remove);
+         return new RemovableCloseableIterator<>(innerIterator(), k -> cache.wired().remove(k));
       }
 
       CloseableIterator<K> innerIterator() {
          return new TransactionAwareKeyCloseableIterator<>(super.iterator(),
-                                                           (TxInvocationContext<LocalTransaction>) rCtx, cache);
+                                                           (TxInvocationContext<LocalTransaction>) rCtx, cache.wired());
       }
 
       @Override
       public void clear() {
-         cache.clear();
+         cache.wired().clear();
       }
 
       @Override
@@ -761,7 +762,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       public boolean remove(Object o) {
          boolean removed = false;
          if (o != null) {
-            removed = cache.remove(o) != null;
+            removed = cache.wired().remove(o) != null;
          }
          return removed;
       }
@@ -796,14 +797,14 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
 
       TxEntryCacheSet(VisitableCommand rCommand, CacheSet<CacheEntry<K, V>> set, InvocationContext rCtx,
                       boolean isRemoteIteration) {
-         super(Caches.getCacheWithFlags(TxInterceptor.this.cache, (FlagAffectedCommand) rCommand), set);
+         super(Caches.getCacheWithFlags(TxInterceptor.this.cache.wired(), (FlagAffectedCommand) rCommand), set);
          this.rCtx = rCtx;
          this.isRemoteIteration = isRemoteIteration;
       }
 
       @Override
       public void clear() {
-         cache.clear();
+         cache.wired().clear();
       }
 
       @Override
@@ -826,7 +827,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          boolean removed = false;
          Map.Entry entry = toEntry(o);
          if (entry != null) {
-            V value = cache.remove(o);
+            V value = cache.wired().remove(o);
             removed = value != null && value.equals(entry.getValue());
          }
          return removed;
@@ -838,12 +839,12 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             return innerIterator();
          }
          return new IteratorMapper<>(new RemovableCloseableIterator<>(innerIterator(),
-               e -> cache.remove(e.getKey(), e.getValue())), e -> new EntryWrapper<>(cache, e));
+               e -> cache.wired().remove(e.getKey(), e.getValue())), e -> new EntryWrapper<>(cache.wired(), e));
       }
 
       CloseableIterator<CacheEntry<K, V>> innerIterator() {
          return new TransactionAwareEntryCloseableIterator<>(super.iterator(),
-                                                             (TxInvocationContext<LocalTransaction>) rCtx, cache);
+                                                             (TxInvocationContext<LocalTransaction>) rCtx, cache.wired());
       }
 
       @Override

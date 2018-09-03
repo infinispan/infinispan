@@ -19,17 +19,17 @@ import org.infinispan.stream.impl.PartitionAwareClusterStreamManager;
 @DefaultFactoryFor(classes = {LocalStreamManager.class, ClusterStreamManager.class})
 public class StreamManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       CacheMode cacheMode = configuration.clustering().cacheMode();
       if (cacheMode.needsStateTransfer()) {
-         if (componentType.equals(LocalStreamManager.class)) {
-            return componentType.cast(new LocalStreamManagerImpl<>());
+         if (componentName.equals(LocalStreamManager.class.getName())) {
+            return new LocalStreamManagerImpl<>();
          }
-         if (componentType.equals(ClusterStreamManager.class)) {
+         if (componentName.equals(ClusterStreamManager.class.getName())) {
             if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
-               return componentType.cast(new PartitionAwareClusterStreamManager<>());
+               return new PartitionAwareClusterStreamManager<>();
             } else {
-               return componentType.cast(new ClusterStreamManagerImpl<>());
+               return new ClusterStreamManagerImpl<>();
             }
          }
       }

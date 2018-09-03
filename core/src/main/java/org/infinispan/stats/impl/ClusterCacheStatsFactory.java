@@ -18,8 +18,7 @@ public class ClusterCacheStatsFactory extends AbstractNamedCacheComponentFactory
 
    @SuppressWarnings("unchecked")
    @Override
-   public <T> T construct(Class<T> componentType) {
-      T result = (T) new ClusterCacheStatsImpl();
-      return result;
+   public Object construct(String componentName) {
+      return new ClusterCacheStatsImpl();
    }
 }

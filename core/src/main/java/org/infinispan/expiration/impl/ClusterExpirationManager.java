@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import net.jcip.annotations.ThreadSafe;
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
@@ -18,6 +19,7 @@ import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.remoting.responses.ValidResponse;
@@ -28,8 +30,6 @@ import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import net.jcip.annotations.ThreadSafe;
 
 /**
  * Allows for cluster based expirations to occur.  This provides guarantees that when an entry is expired that it will
@@ -52,16 +52,18 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    private static final int MAX_ASYNC_EXPIRATIONS = 5;
 
-   @Inject protected AdvancedCache<K, V> cache;
-   @Inject protected CommandsFactory cf;
+   @Inject protected ComponentRef<AdvancedCache<K, V>> cacheRef;
+   @Inject protected ComponentRef<CommandsFactory> cf;
    @Inject protected RpcManager rpcManager;
    @Inject protected DistributionManager distributionManager;
+
+   private AdvancedCache<K, V> cache;
 
    @Override
    public void start() {
       super.start();
       // Data container entries are retrieved directly, so we don't need to worry about an encodings
-      this.cache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache();
+      this.cache = AbstractDelegatingCache.unwrapCache(cacheRef.wired()).getAdvancedCache();
    }
 
    @Override
@@ -76,7 +78,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             // We limit it so there is only so many async expiration removals done at the same time
             List<CompletableFuture> futures = new ArrayList<>(MAX_ASYNC_EXPIRATIONS);
             long currentTimeMillis = timeService.wallClockTime();
-            dataContainer.forEachIncludingExpired((ice, segment) -> {
+            dataContainer.running().forEachIncludingExpired((ice, segment) -> {
                if (ice.canExpire()) {
                   // Have to synchronize on the entry to make sure we see the value and metadata at the same time
                   boolean expiredMortal;
@@ -254,7 +256,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
 
       // Need to gather last access times
-      RetrieveLastAccessCommand rlac = cf.buildRetrieveLastAccessCommand(key, value, segment);
+      RetrieveLastAccessCommand rlac = cf.running().buildRetrieveLastAccessCommand(key, value, segment);
       rlac.setTopologyId(topology.getTopologyId());
 
       // In scattered cache read owners will only contain primary

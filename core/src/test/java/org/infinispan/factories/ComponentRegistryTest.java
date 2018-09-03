@@ -2,11 +2,11 @@ package org.infinispan.factories;
 
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -59,39 +59,31 @@ public class ComponentRegistryTest extends AbstractInfinispanTest {
       assertNotNull(c2);
    }
 
-   public void testConcurrentLookupSameComponentRegistry() throws InterruptedException, ExecutionException {
-
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            return cr1.getOrCreateComponent(TestDelayFactory.Component.class);
-         }
-      });
-
-      // getComponent doesn't wait for the getOrCreateComponent call on the forked thread to finish
-      // It returns null instead, but that's ok because getComponent doesn't guarantee anything
-      Thread.sleep(500);
-      assertNull(cr1.getComponent(TestDelayFactory.Component.class));
-
-      control.unblock();
-      assertNotNull(future.get());
-      // now that getOrCreateComponent has finished, getComponent works as well
-      assertNotNull(cr1.getComponent(TestDelayFactory.Component.class));
+   public void testConcurrentLookupSameComponentRegistry() throws Exception {
+      testConcurrentLookup(cr1, cr2);
    }
 
-   public void testConcurrentLookupDifferentComponentRegistries() throws InterruptedException, ExecutionException {
+   public void testConcurrentLookupDifferentComponentRegistries() throws Exception {
+      testConcurrentLookup(cr1, cr2);
+   }
 
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            return cr1.getOrCreateComponent(TestDelayFactory.Component.class);
-         }
-      });
+   private void testConcurrentLookup(ComponentRegistry cr1, ComponentRegistry cr2) throws Exception {
+      Future<TestDelayFactory.Component> future1 = fork(
+         () -> cr1.getOrCreateComponent(TestDelayFactory.Component.class));
+      Future<TestDelayFactory.Component> future2 = fork(
+         () -> cr2.getOrCreateComponent(TestDelayFactory.Component.class));
 
       Thread.sleep(500);
-      assertNotNull(cr2.getOrCreateComponent(TestDelayFactory.Component.class));
+      assertFalse(future1.isDone());
+      assertFalse(future2.isDone());
 
       control.unblock();
-      assertNotNull(future.get());
+      assertNotNull(future1.get());
+      assertNotNull(future2.get());
+   }
+
+   public void testGetLocalComponent() {
+      GlobalComponentRegistry localGcr = cr1.getLocalComponent(GlobalComponentRegistry.class);
+      assertNull(localGcr);
    }
 }

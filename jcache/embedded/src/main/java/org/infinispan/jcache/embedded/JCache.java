@@ -100,7 +100,9 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
       addConfigurationListeners();
 
-      cache.getComponentRegistry().registerComponent(expiryPolicy, ExpiryPolicy.class);
+      if (cache.getComponentRegistry().getComponent(ExpiryPolicy.class) == null) {
+         cache.getComponentRegistry().registerComponent(expiryPolicy, ExpiryPolicy.class);
+      }
 
       setCacheLoader(configuration);
       setCacheWriter(configuration);

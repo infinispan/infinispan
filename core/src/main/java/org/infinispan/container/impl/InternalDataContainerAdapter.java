@@ -15,9 +15,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -30,15 +28,12 @@ import org.infinispan.metadata.Metadata;
  */
 public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataContainer<K, V>
       implements InternalDataContainer<K, V> {
-   private final static String SUB_COMPONENT_NAME = "DataContainerDelegate";
    private final DataContainer<K, V> container;
 
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
 
    @Inject
    private KeyPartitioner keyPartitioner;
-   @Inject
-   private ComponentRegistry registry;
 
    public InternalDataContainerAdapter(DataContainer<K, V> container) {
       this.container = container;
@@ -47,11 +42,6 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
    @Override
    public DataContainer<K, V> delegate() {
       return container;
-   }
-
-   @Start
-   public void start() {
-      registry.registerComponent(container, SUB_COMPONENT_NAME, false);
    }
 
    @Override

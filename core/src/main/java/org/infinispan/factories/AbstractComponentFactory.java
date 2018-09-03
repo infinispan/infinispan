@@ -1,10 +1,13 @@
 package org.infinispan.factories;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Factory that creates components used internally within Infinispan, and also wires dependencies into the components.
@@ -20,24 +23,41 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
-public abstract class AbstractComponentFactory {
+public abstract class AbstractComponentFactory implements ComponentFactory {
+   protected static final Log log = LogFactory.getLog(AbstractComponentFactory.class);
+
    @Inject protected GlobalComponentRegistry globalComponentRegistry;
    @Inject protected GlobalConfiguration globalConfiguration;
+
+   @Override
+   public Object construct(String name) {
+      Class<?> componentType;
+      try {
+         componentType = ReflectionUtil.getClassForName(name, globalComponentRegistry.getClassLoader());
+      } catch (ClassNotFoundException e) {
+         throw new CacheConfigurationException(e);
+      }
+      return construct(componentType);
+   }
 
    /**
     * Constructs a component.
     *
     * @param componentType type of component
     * @return a component
+    * @deprecated Since 9.4, please override {@link ComponentFactory#construct(String)} instead.
     */
-   public abstract <T> T construct(Class<T> componentType);
+   @Deprecated
+   public <T> T construct(Class<T> componentType) {
+      throw new UnsupportedOperationException();
+   }
 
    protected void assertTypeConstructable(Class<?> requestedType, Class<?>... ableToConstruct) {
       boolean canConstruct = false;
       for (Class<?> c : ableToConstruct) {
          canConstruct = canConstruct || requestedType.isAssignableFrom(c);
       }
-      if (!canConstruct) throw new CacheConfigurationException("Don't know how to construct " + requestedType);
+      if (!canConstruct) throw log.factoryCannotConstructComponent(requestedType.getName());
    }
 
 }

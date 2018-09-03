@@ -8,6 +8,7 @@ import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.container.offheap.OffHeapEntryFactory;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.impl.ComponentAlias;
 import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
 
 /**
@@ -18,15 +19,15 @@ import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
 @DefaultFactoryFor(classes = KeyValueMetadataSizeCalculator.class)
 public class SizeCalculatorFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       MemoryConfiguration memory = configuration.memory();
       if (memory.evictionStrategy().isEnabled() && memory.evictionType() == EvictionType.MEMORY) {
          StorageType type = memory.storageType();
          switch (type) {
             case BINARY:
-               return componentType.cast(CacheEntrySingleton.INSTANCE);
+               return CacheEntrySingleton.INSTANCE;
             case OFF_HEAP:
-               return componentType.cast(componentRegistry.getComponent(OffHeapEntryFactory.class));
+               return ComponentAlias.of(OffHeapEntryFactory.class);
             case OBJECT:
                /**
                 * We can't have object based when eviction is memory based. The
@@ -37,7 +38,7 @@ public class SizeCalculatorFactory extends AbstractNamedCacheComponentFactory im
                throw new UnsupportedOperationException();
          }
       } else {
-         return componentType.cast((KeyValueMetadataSizeCalculator) (k, v, m) -> 1);
+         return (KeyValueMetadataSizeCalculator) (k, v, m) -> 1;
       }
    }
 

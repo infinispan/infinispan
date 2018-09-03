@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.util.concurrent.locks.LockListener;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockPromise;
@@ -28,8 +28,8 @@ public class LockAction extends BaseLockingAction implements LockListener {
    private final CompletableFuture<Void> notifier;
    private volatile LockPromise lockPromise;
 
-   public LockAction(LockManager lockManager, ClusteringDependentLogic clusteringDependentLogic) {
-      super(clusteringDependentLogic);
+   public LockAction(LockManager lockManager, DistributionManager distributionManager) {
+      super(distributionManager);
       this.lockManager = lockManager;
       notifier = new CompletableFuture<>();
    }

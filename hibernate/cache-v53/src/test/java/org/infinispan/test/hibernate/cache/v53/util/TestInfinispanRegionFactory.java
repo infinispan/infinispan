@@ -9,6 +9,7 @@ import org.hibernate.service.ServiceRegistry;
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.hibernate.cache.commons.DataType;
 import org.infinispan.hibernate.cache.commons.DefaultCacheManagerProvider;
 import org.infinispan.hibernate.cache.v53.InfinispanRegionFactory;
@@ -60,8 +61,10 @@ public class TestInfinispanRegionFactory extends InfinispanRegionFactory {
          afterManagerCreated.accept(cacheManager);
       }
       if (timeService != null) {
-         cacheManager.getGlobalComponentRegistry().registerComponent(timeService, TimeService.class);
-         cacheManager.getGlobalComponentRegistry().rewire();
+         BasicComponentRegistry basicComponentRegistry =
+            cacheManager.getGlobalComponentRegistry().getComponent(BasicComponentRegistry.class);
+         basicComponentRegistry.replaceComponent(TimeService.class.getName(), timeService, false);
+         basicComponentRegistry.rewire();
       }
       return cacheManager;
    }

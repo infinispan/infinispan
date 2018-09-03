@@ -2,6 +2,7 @@ package org.infinispan.test;
 
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.InvocationTargetException;
@@ -12,6 +13,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
+import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.test.fwk.CheckPoint;
 import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
@@ -109,7 +111,7 @@ public class Mocks {
          Cache<?, ?> cache, Function<? super Mock, Answer> answerFunction, BiConsumer<? super Stubber, ? super Mock> mockStubConsumer) {
       Mock realObject = TestingUtil.extractComponent(cache, classToMock);
       Answer forwardedAnswer = answerFunction.apply(realObject);
-      Mock mock = mock(classToMock, forwardedAnswer);
+      Mock mock = mock(classToMock, withSettings().extraInterfaces(ClusterCacheNotifier.class).defaultAnswer(forwardedAnswer));
       mockStubConsumer.accept(doAnswer(blockingAnswer(forwardedAnswer, checkPoint)), mock);
       TestingUtil.replaceComponent(cache, classToMock, mock, true);
       return realObject;

@@ -342,11 +342,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
             return deployedMergePolicyRegistry;
         }
 
-        public ServerTaskRegistry getDeployedTaskRegistry() {
-            return deployedTaskRegistry.getValue();
-        }
-
-        @Override
+       @Override
         public EmbeddedCacheManager getCacheContainer() {
             return this.container.getValue();
         }

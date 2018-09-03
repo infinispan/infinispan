@@ -1,9 +1,9 @@
 package org.infinispan.container.versioning;
 
-import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 
@@ -22,11 +22,11 @@ public class SimpleClusteredVersionGenerator implements VersionGenerator {
 
    private static final SimpleClusteredVersion NON_EXISTING = new SimpleClusteredVersion(0, 0);
 
-   @Inject private Cache<?, ?> cache;
+   @Inject private CacheNotifier<?, ?> cacheNotifier;
 
    @Start(priority = 11)
    public void start() {
-      cache.addListener(new TopologyIdUpdater());
+      cacheNotifier.addListener(new TopologyIdUpdater());
    }
 
    @Override

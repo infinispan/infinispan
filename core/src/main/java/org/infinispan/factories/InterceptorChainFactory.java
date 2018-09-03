@@ -90,6 +90,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          Class<? extends AsyncInterceptor> interceptorType) {
       AsyncInterceptor chainedInterceptor = componentRegistry.getComponent(interceptorType);
       if (chainedInterceptor == null) {
+         // TODO Dan: could use wireDependencies, as dependencies on interceptors won't trigger a call to the chain factory anyway
          register(interceptorType, interceptor);
          chainedInterceptor = interceptor;
       }
@@ -99,7 +100,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
    private void register(Class<? extends AsyncInterceptor> clazz, AsyncInterceptor chainedInterceptor) {
       try {
-         componentRegistry.registerComponent(chainedInterceptor, clazz);
+         basicComponentRegistry.registerComponent(clazz.getName(), chainedInterceptor, true);
+         basicComponentRegistry.addDynamicDependency(AsyncInterceptorChain.class.getName(), clazz.getName());
       } catch (RuntimeException e) {
          log.unableToCreateInterceptor(clazz, e);
          throw e;
@@ -113,10 +115,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       AsyncInterceptorChain interceptorChain =
             new AsyncInterceptorChainImpl(componentRegistry.getComponentMetadataRepo());
-      // add the interceptor chain to the registry first, since some interceptors may ask for it.
-      // Add both the old class and the new interface
-      componentRegistry.registerComponent(interceptorChain, AsyncInterceptorChain.class);
-      componentRegistry.registerComponent(new InterceptorChain(interceptorChain), InterceptorChain.class);
 
       boolean invocationBatching = configuration.invocationBatching().enabled();
       boolean isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
@@ -374,13 +372,16 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       try {
-         AsyncInterceptorChain asyncInterceptorChain = buildInterceptorChain();
-         if (componentType == InterceptorChain.class) {
-            return componentType.cast(componentRegistry.getComponent(InterceptorChain.class));
+         if (configuration.simpleCache())
+            return null;
+
+         if (componentName.equals(AsyncInterceptorChain.class.getName())) {
+            AsyncInterceptorChain asyncInterceptorChain = buildInterceptorChain();
+            return asyncInterceptorChain;
          } else {
-            return componentType.cast(asyncInterceptorChain);
+            return new InterceptorChain();
          }
       } catch (CacheException ce) {
          throw ce;
@@ -389,6 +390,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
    }
 
+   /**
+    * @deprecated Since 9.4, not used.
+    */
+   @Deprecated
    public static InterceptorChainFactory getInstance(ComponentRegistry componentRegistry, Configuration configuration) {
       InterceptorChainFactory icf = new InterceptorChainFactory();
       icf.componentRegistry = componentRegistry;

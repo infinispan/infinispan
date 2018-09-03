@@ -9,7 +9,6 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -43,7 +42,7 @@ public class AffinityTest extends BaseAffinityTest {
       createClusteredCaches(3, getDefaultCacheConfigBuilder());
    }
 
-   public void testConcurrentWrites() throws InterruptedException {
+   public void testConcurrentWrites() throws Exception {
       int numThreads = 2;
       AtomicInteger counter = new AtomicInteger(0);
       ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
@@ -57,24 +56,20 @@ public class AffinityTest extends BaseAffinityTest {
             }))).collect(Collectors.toList());
 
       log.info("Waiting for threads");
-      futures.forEach(f -> {
-         try {
-            f.get();
-         } catch (InterruptedException | ExecutionException e) {
-            log.error("Error while waiting for thread.", e);
-         }
-      });
+      for (Future<?> f : futures) {
+         f.get();
+      }
 
       log.info("Checking cache size");
-      assertEquals(pickCache().size(), numThreads * getNumEntries());
       cacheList.forEach(c -> {
+         assertEquals(c.size(), numThreads * getNumEntries());
          CacheQuery<Entity> q = Search.getSearchManager(c).getQuery(new MatchAllDocsQuery(), Entity.class);
          eventuallyEquals(numThreads * getNumEntries(), () -> q.list().size());
       });
 
    }
 
-   public void shouldHaveIndexAffinity() throws Exception {
+   public void shouldHaveIndexAffinity() {
       populate(1, getNumEntries() / 2);
       checkAffinity();
 

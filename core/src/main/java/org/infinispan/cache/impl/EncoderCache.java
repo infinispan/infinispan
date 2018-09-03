@@ -34,8 +34,8 @@ import org.infinispan.container.entries.ForwardingCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
@@ -59,7 +59,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Inject
    private InternalEntryFactory entryFactory;
    @Inject
-   private ComponentRegistry componentRegistry;
+   private BasicComponentRegistry componentRegistry;
 
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
@@ -121,9 +121,9 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Inject
    public void wireRealCache() {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
-      componentRegistry.wireDependencies(cache);
+      componentRegistry.wireDependencies(keyDataConversion, false);
+      componentRegistry.wireDependencies(valueDataConversion, false);
+      componentRegistry.wireDependencies(cache, false);
    }
 
    private Map<K, V> encodeMapForWrite(Map<? extends K, ? extends V> map) {
@@ -495,8 +495,8 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    private void lookupEncoderWrapper() {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
+      componentRegistry.wireDependencies(keyDataConversion, true);
+      componentRegistry.wireDependencies(valueDataConversion, true);
    }
 
    private void initState(EncoderCache<K, V> encoderCache, EncoderCache<K, V> template) {

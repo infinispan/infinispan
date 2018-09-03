@@ -121,18 +121,18 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       cchf.setMembersToUse(advancedCache(a0).getRpcManager().getTransport().getMembers());
       cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, c0}, {c0, a1}, {c0, a0}});
 
-      Address missing = address(c1);
-      log.tracef("Before killing node %s", missing);
+      Address address1 = address(c1);
+      log.tracef("Before killing node %s", address1);
       crashCacheManagers(manager(c1));
-      installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1)
+      installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), address1, manager(a0), manager(a1)
             , manager(c0));
 
       ss.enter("main:2nd_node_left");
 
-      missing = address(c0);
-      log.tracef("Killing 2nd node %s", missing);
+      Address address0 = address(c0);
+      log.tracef("Killing 2nd node %s", address0);
       crashCacheManagers(manager(c0));
-      installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1));
+      installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), address0, manager(a0), manager(a1));
 
       final PartitionHandlingManager phm0 = TestingUtil.extractComponent(cache(a0), PartitionHandlingManager.class);
       final PartitionHandlingManager phm1 = TestingUtil.extractComponent(cache(a1), PartitionHandlingManager.class);
@@ -151,14 +151,14 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
          Collection<Address> owners = ch.locateOwners(k);
          try {
             cache(a0).get(k);
-            if (owners.contains(address(c0)) || owners.contains(address(c1))) {
+            if (owners.contains(address0) || owners.contains(address1)) {
                fail("get(" + k + ") should have failed on cache " + address(a0));
             }
          } catch (AvailabilityException e) {
          }
          try {
             cache(a1).put(k, k);
-            if (owners.contains(address(c0)) || owners.contains(address(c1))) {
+            if (owners.contains(address0) || owners.contains(address1)) {
                fail("put(" + k + ", v) should have failed on cache " + address(a0));
             }
          } catch (AvailabilityException e) {

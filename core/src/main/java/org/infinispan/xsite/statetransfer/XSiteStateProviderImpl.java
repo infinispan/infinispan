@@ -26,6 +26,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -63,7 +64,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    @Inject @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR)
    private ExecutorService executorService;
    @Inject private Configuration configuration;
-   @Inject private XSiteStateTransferManager stateTransferManager;
+   @Inject private ComponentRef<XSiteStateTransferManager> stateTransferManager;
    @Inject private StateTransferLock stateTransferLock;
 
    public XSiteStateProviderImpl() {
@@ -96,7 +97,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
       //in case of the coordinator leaves before the command is processed!
       if (rpcManager.getAddress().equals(rpcManager.getMembers().get(0)) && !rpcManager.getMembers().contains(origin)) {
-         stateTransferManager.becomeCoordinator(siteName);
+         stateTransferManager.running().becomeCoordinator(siteName);
       }
    }
 
@@ -134,7 +135,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
       if (rpcManager.getAddress().equals(origin)) {
          executorService.submit((Callable<Void>) () -> {
             try {
-               stateTransferManager.notifyStatePushFinished(siteName, origin, !error);
+               stateTransferManager.running().notifyStatePushFinished(siteName, origin, !error);
             } catch (Throwable throwable) {
                //ignored
             }

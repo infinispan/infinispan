@@ -36,6 +36,7 @@ import org.infinispan.eviction.impl.ActivationManagerStub;
 import org.infinispan.eviction.impl.PassivationManagerStub;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -47,7 +48,6 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerStub;
-import org.infinispan.stats.impl.StatsCollector;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.commons.time.TimeService;
@@ -155,12 +155,10 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
       this.configuration = configuration;
 
-      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry,
+                                                globalComponentRegistry.getClassLoader()) {
          @Override
          protected void bootstrapComponents() {
-            if (statisticsAvailable) {
-               registerComponent(new StatsCollector.Factory(), StatsCollector.Factory.class);
-            }
             registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
             registerComponent(new PassivationManagerStub(), PassivationManager.class);
             registerComponent(new ActivationManagerStub(), ActivationManager.class);
@@ -173,9 +171,12 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          }
       };
 
-      componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
-      componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class.getName(), true);
-      componentRegistry.registerComponent(cache, Cache.class.getName(), true);
+      basicComponentRegistry = componentRegistry.getComponent(BasicComponentRegistry.class);
+      basicComponentRegistry.registerAlias(Cache.class.getName(), AdvancedCache.class.getName(), AdvancedCache.class);
+      basicComponentRegistry.registerComponent(AdvancedCache.class, cache, false);
+
+      componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class);
+      componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class);
 
       return cache;
    }
@@ -212,7 +213,10 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          dependencies, in turn.
          --------------------------------------------------------------------------------------------------------------
        */
-      componentRegistry.registerComponent(cache, Cache.class.getName(), true);
+      basicComponentRegistry = componentRegistry.getComponent(BasicComponentRegistry.class);
+      basicComponentRegistry.registerAlias(Cache.class.getName(), AdvancedCache.class.getName(), AdvancedCache.class);
+      basicComponentRegistry.registerComponent(AdvancedCache.class.getName(), cache, false);
+
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
       if (configuration.transaction().recovery().enabled()) {
          componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class.getName(), true);
@@ -225,7 +229,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    }
 
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       throw new UnsupportedOperationException("Should never be invoked - this is a bootstrap factory.");
    }
 

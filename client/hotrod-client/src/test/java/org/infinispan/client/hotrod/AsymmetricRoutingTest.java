@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -72,6 +73,7 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
    @AfterClass
    @Override
    protected void destroy() {
+      killRemoteCacheManager(rcm);
       killServers(server1, server2);
       super.destroy();
    }

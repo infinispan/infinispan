@@ -47,7 +47,7 @@ public class StatsMinNodeTest extends MultipleCacheManagersTest {
       timeService = new ControlledTimeService();
 
       for (int i = 0; i < NUM_NODES; ++i) {
-         TestingUtil.replaceComponent(cache(i), TimeService.class, timeService, true);
+         TestingUtil.replaceComponent(manager(i), TimeService.class, timeService, true);
       }
    }
 

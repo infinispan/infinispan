@@ -6,10 +6,10 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -17,7 +17,6 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -45,9 +44,7 @@ public class RemoteStoreRawValuesTest extends BaseStoreTest {
             hotRodCacheConfiguration(localBuilder));
 
       localCacheManager.getCache(REMOTE_CACHE);
-      GlobalComponentRegistry gcr = localCacheManager.getGlobalComponentRegistry();
-      gcr.registerComponent(timeService, TimeService.class);
-      gcr.rewire();
+      TestingUtil.replaceComponent(localCacheManager, TimeService.class, timeService, true);
       localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
       hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
 

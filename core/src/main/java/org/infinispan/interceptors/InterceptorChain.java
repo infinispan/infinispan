@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -21,11 +22,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 @Scope(Scopes.NAMED_CACHE)
 @Deprecated
 public class InterceptorChain {
-   private AsyncInterceptorChain asyncInterceptorChain;
-
-   public InterceptorChain(AsyncInterceptorChain asyncInterceptorChain) {
-      this.asyncInterceptorChain = asyncInterceptorChain;
-   }
+   @Inject private AsyncInterceptorChain asyncInterceptorChain;
 
    /**
     * Inserts the given interceptor at the specified position in the chain (o based indexing).

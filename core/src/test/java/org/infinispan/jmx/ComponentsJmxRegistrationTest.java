@@ -1,19 +1,20 @@
 package org.infinispan.jmx;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import static java.util.Collections.singleton;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.factories.AbstractComponentRegistry;
+import org.infinispan.factories.components.ComponentMetadata;
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -33,7 +34,7 @@ import org.testng.annotations.Test;
 public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    public static final String JMX_DOMAIN = ComponentsJmxRegistrationTest.class.getSimpleName();
    private MBeanServer mBeanServer;
-   private List<EmbeddedCacheManager> cacheContainers = new ArrayList<EmbeddedCacheManager>();
+   private List<EmbeddedCacheManager> cacheContainers = new ArrayList<>();
 
    @BeforeMethod
    public void setUp() {
@@ -64,21 +65,24 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       cm.defineConfiguration("first", configuration.build());
       Cache first = cm.getCache("first");
 
+      ComponentMetadataRepo metadataRepo = cm.getGlobalComponentRegistry().getComponentMetadataRepo();
+      ComponentMetadata metadata = metadataRepo.getComponentMetadata(first.getClass());
+      ResourceDMBean mbean = new ResourceDMBean(first, metadata.toManageableComponentMetadata());
+      Collection<ResourceDMBean> mbeans = singleton(mbean);
+
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
-      regComponents.registerMBeans();
-      String name = regComponents.getObjectName("Statistics").toString();
+      regComponents.registerMBeans(mbeans);
+      String name = regComponents.getObjectName("Cache").toString();
       ObjectName name1 = new ObjectName(name);
       assert mBeanServer.isRegistered(name1);
-      regComponents.unregisterMBeans();
+      regComponents.unregisterMBeans(mbeans);
       assert !mBeanServer.isRegistered(name1);
       assertCorrectJmxName(name1, first);
    }
 
    private ComponentsJmxRegistration buildRegistrator(Cache cache) {
-      AdvancedCache ac = (AdvancedCache) cache;
-      Set<AbstractComponentRegistry.Component> components = ac.getComponentRegistry().getRegisteredComponents();
       String groupName = "name=" + ObjectName.quote(cache.getName());
-      ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(mBeanServer, components, groupName);
+      ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(mBeanServer, groupName);
       registrator.setJmxDomain(JMX_DOMAIN);
       return registrator;
    }
@@ -94,13 +98,18 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       cm.defineConfiguration("first", configurationOverride.build());
       Cache first = cm.getCache("first");
 
+      ComponentMetadataRepo metadataRepo = cm.getGlobalComponentRegistry().getComponentMetadataRepo();
+      ComponentMetadata metadata = metadataRepo.getComponentMetadata(first.getClass());
+      ResourceDMBean mbean = new ResourceDMBean(first, metadata.toManageableComponentMetadata());
+      Collection<ResourceDMBean> mbeans = singleton(mbean);
+
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
-      regComponents.registerMBeans();
-      String name = regComponents.getObjectName("Statistics").toString();
+      regComponents.registerMBeans(mbeans);
+      String name = regComponents.getObjectName("Cache").toString();
       ObjectName name1 = new ObjectName(name);
       assertCorrectJmxName(name1, first);
       assert mBeanServer.isRegistered(name1);
-      regComponents.unregisterMBeans();
+      regComponents.unregisterMBeans(mbeans);
       assert !mBeanServer.isRegistered(name1);
    }
 
@@ -119,13 +128,18 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       Cache replicatedCache = cm.getCache("replicated");
       Cache localCache = cm.getCache("local");
 
+      ComponentMetadataRepo metadataRepo = cm.getGlobalComponentRegistry().getComponentMetadataRepo();
+      ComponentMetadata metadata = metadataRepo.getComponentMetadata(replicatedCache.getClass());
+      ResourceDMBean replicatedMBean = new ResourceDMBean(replicatedCache, metadata.toManageableComponentMetadata());
+      ResourceDMBean localMBean = new ResourceDMBean(localCache, metadata.toManageableComponentMetadata());
+
       ComponentsJmxRegistration replicatedRegComponents = buildRegistrator(replicatedCache);
       ComponentsJmxRegistration localRegComponents = buildRegistrator(localCache);
-      replicatedRegComponents.registerMBeans();
-      localRegComponents.registerMBeans();
+      replicatedRegComponents.registerMBeans(singleton(replicatedMBean));
+      localRegComponents.registerMBeans(singleton(localMBean));
 
-      String replicatedtCMgmtIntName = replicatedRegComponents.getObjectName("Statistics").toString();
-      String localCMgmtIntName = localRegComponents.getObjectName("Statistics").toString();
+      String replicatedtCMgmtIntName = replicatedRegComponents.getObjectName("Cache").toString();
+      String localCMgmtIntName = localRegComponents.getObjectName("Cache").toString();
       ObjectName replObjectName = new ObjectName(replicatedtCMgmtIntName);
       ObjectName localObjName = new ObjectName(localCMgmtIntName);
       assertCorrectJmxName(replObjectName, replicatedCache);
@@ -134,8 +148,8 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       assert mBeanServer.isRegistered(localObjName);
       assert !localCMgmtIntName.equals(replicatedtCMgmtIntName);
 
-      replicatedRegComponents.unregisterMBeans();
-      localRegComponents.unregisterMBeans();
+      replicatedRegComponents.unregisterMBeans(singleton(replicatedMBean));
+      localRegComponents.unregisterMBeans(singleton(localMBean));
       assert !mBeanServer.isRegistered(new ObjectName(localCMgmtIntName));
       assert !mBeanServer.isRegistered(new ObjectName(replicatedtCMgmtIntName));
    }

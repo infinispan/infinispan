@@ -36,9 +36,9 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
 
    @AfterClass
    public void afterClass() {
-      embeddedCacheManager.stop();
       remoteCacheManager.stop();
       hotrodServer.stop();
+      embeddedCacheManager.stop();
    }
 
    @BeforeMethod

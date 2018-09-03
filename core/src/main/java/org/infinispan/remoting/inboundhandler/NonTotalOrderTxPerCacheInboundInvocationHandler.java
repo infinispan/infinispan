@@ -6,9 +6,9 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.CheckTopologyAction;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
@@ -38,7 +38,7 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
    private final CheckTopologyAction checkTopologyAction;
 
    @Inject private LockManager lockManager;
-   @Inject private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject private DistributionManager distributionManager;
    @Inject private PendingLockManager pendingLockManager;
 
    private boolean pessimisticLocking;
@@ -130,8 +130,8 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
 
       DefaultReadyAction action = new DefaultReadyAction(new ActionState(replicableCommand, topologyId, timeoutMillis),
                                                          checkTopologyAction,
-                                                         new PendingTxAction(pendingLockManager, clusteringDependentLogic),
-                                                         new LockAction(lockManager, clusteringDependentLogic));
+                                                         new PendingTxAction(pendingLockManager, distributionManager),
+                                                         new LockAction(lockManager, distributionManager));
       action.registerListener();
       return action;
    }

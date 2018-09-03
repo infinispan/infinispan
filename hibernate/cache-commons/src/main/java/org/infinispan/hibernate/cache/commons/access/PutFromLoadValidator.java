@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.hibernate.engine.spi.SessionImplementor;
-import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.hibernate.cache.commons.TimeSource;
 import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
@@ -194,34 +194,43 @@ public class PutFromLoadValidator {
 			position++;
 		}
 		boolean transactional = cache.getCacheConfiguration().transaction().transactionMode().isTransactional();
-		if (transactional) {
+      BasicComponentRegistry componentRegistry =
+         cache.getComponentRegistry().getComponent(BasicComponentRegistry.class);
+      if (transactional) {
 			TxInvalidationInterceptor txInvalidationInterceptor = new TxInvalidationInterceptor();
-			cache.getComponentRegistry().registerComponent(txInvalidationInterceptor, TxInvalidationInterceptor.class);
+			// We have to use replaceComponent because tests call addToCache more than once
+         componentRegistry.replaceComponent(TxInvalidationInterceptor.class.getName(), txInvalidationInterceptor, true);
+         componentRegistry.getComponent(TxInvalidationInterceptor.class).running();
 			chain.replaceInterceptor(txInvalidationInterceptor, InvalidationInterceptor.class);
 
 			// Note that invalidation does *NOT* acquire locks; therefore, we have to start invalidating before
 			// wrapping the entry, since if putFromLoad was invoked between wrap and beginInvalidatingKey, the invalidation
 			// would not commit the entry removal (as during wrap the entry was not in cache)
          TxPutFromLoadInterceptor txPutFromLoadInterceptor = new TxPutFromLoadInterceptor(validator, ByteString.fromString(cache.getName()));
-         cache.getComponentRegistry().registerComponent(txPutFromLoadInterceptor, TxPutFromLoadInterceptor.class);
+         componentRegistry.replaceComponent(TxPutFromLoadInterceptor.class.getName(), txPutFromLoadInterceptor, true);
+         componentRegistry.getComponent(TxPutFromLoadInterceptor.class).running();
          chain.addInterceptor(txPutFromLoadInterceptor, entryWrappingPosition);
 		}
 		else {
 			NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor = new NonTxPutFromLoadInterceptor(validator, ByteString.fromString(cache.getName()));
-			cache.getComponentRegistry().registerComponent(nonTxPutFromLoadInterceptor, NonTxPutFromLoadInterceptor.class);
+         componentRegistry.replaceComponent(NonTxPutFromLoadInterceptor.class.getName(), nonTxPutFromLoadInterceptor, true);
+         componentRegistry.getComponent(NonTxPutFromLoadInterceptor.class).running();
          chain.addInterceptor(nonTxPutFromLoadInterceptor, entryWrappingPosition);
 
 			NonTxInvalidationInterceptor nonTxInvalidationInterceptor = new NonTxInvalidationInterceptor();
-			cache.getComponentRegistry().registerComponent(nonTxInvalidationInterceptor, NonTxInvalidationInterceptor.class);
+         componentRegistry.replaceComponent(NonTxInvalidationInterceptor.class.getName(), nonTxInvalidationInterceptor, true);
+         componentRegistry.getComponent(NonTxInvalidationInterceptor.class).running();
 			chain.replaceInterceptor(nonTxInvalidationInterceptor, InvalidationInterceptor.class);
 
 			LockingInterceptor lockingInterceptor = new LockingInterceptor();
-			cache.getComponentRegistry().registerComponent(lockingInterceptor, LockingInterceptor.class);
+         componentRegistry.replaceComponent(LockingInterceptor.class.getName(), lockingInterceptor, true);
+         componentRegistry.getComponent(LockingInterceptor.class).running();
 			chain.replaceInterceptor(lockingInterceptor, NonTransactionalLockingInterceptor.class);
 		}
 		log.debugf("New interceptor chain is: ", cache.getAsyncInterceptorChain());
 
-		CacheCommandInitializer cacheCommandInitializer = cache.getComponentRegistry().getComponent(CacheCommandInitializer.class);
+      CacheCommandInitializer cacheCommandInitializer =
+         componentRegistry.getComponent(CacheCommandInitializer.class).running();
 		cacheCommandInitializer.addPutFromLoadValidator(cache.getName(), validator);
 	}
 
@@ -233,7 +242,7 @@ public class PutFromLoadValidator {
 	 */
 	public static PutFromLoadValidator removeFromCache(AdvancedCache cache) {
       AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
-      ComponentRegistry cr = cache.getComponentRegistry();
+      BasicComponentRegistry cr = cache.getComponentRegistry().getComponent(BasicComponentRegistry.class);
 
 		chain.removeInterceptor(TxPutFromLoadInterceptor.class);
 		chain.removeInterceptor(NonTxPutFromLoadInterceptor.class);
@@ -242,7 +251,8 @@ public class PutFromLoadValidator {
             .filter(BaseInvalidationInterceptor.class::isInstance).findFirst().map(AsyncInterceptor::getClass)
             .ifPresent(invalidationClass -> {
                InvalidationInterceptor invalidationInterceptor = new InvalidationInterceptor();
-               cr.registerComponent(invalidationInterceptor, InvalidationInterceptor.class);
+               cr.replaceComponent(InvalidationInterceptor.class.getName(), invalidationInterceptor, true);
+               cr.getComponent(InvalidationInterceptor.class).running();
                chain.replaceInterceptor(invalidationInterceptor, invalidationClass);
             });
 
@@ -250,11 +260,12 @@ public class PutFromLoadValidator {
             .filter(LockingInterceptor.class::isInstance).findFirst().map(AsyncInterceptor::getClass)
             .ifPresent(invalidationClass -> {
                NonTransactionalLockingInterceptor lockingInterceptor = new NonTransactionalLockingInterceptor();
-               cr.registerComponent(lockingInterceptor, NonTransactionalLockingInterceptor.class);
+               cr.replaceComponent(NonTransactionalLockingInterceptor.class.getName(), lockingInterceptor, true);
+               cr.getComponent(NonTransactionalLockingInterceptor.class).running();
                chain.replaceInterceptor(lockingInterceptor, LockingInterceptor.class);
             });
 
-		CacheCommandInitializer cci = cr.getComponent(CacheCommandInitializer.class);
+		CacheCommandInitializer cci = cr.getComponent(CacheCommandInitializer.class).running();
 		return cci.removePutFromLoadValidator(cache.getName());
 	}
 

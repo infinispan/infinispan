@@ -20,19 +20,19 @@ public class InboundInvocationHandlerFactory extends AbstractNamedCacheComponent
       AutoInstantiableFactory {
 
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       if (!configuration.clustering().cacheMode().isClustered()) {
          return null;
       } else if (configuration.transaction().transactionMode().isTransactional()) {
          return configuration.transaction().transactionProtocol().isTotalOrder() ?
-               componentType.cast(new TotalOrderTxPerCacheInboundInvocationHandler()) :
-               componentType.cast(new NonTotalOrderTxPerCacheInboundInvocationHandler());
+                new TotalOrderTxPerCacheInboundInvocationHandler() :
+                new NonTotalOrderTxPerCacheInboundInvocationHandler();
       } else {
          if (configuration.clustering().cacheMode().isDistributed() && Configurations.isEmbeddedMode(globalConfiguration)
                || configuration.clustering().cacheMode().isScattered() && configuration.clustering().biasAcquisition() != BiasAcquisition.NEVER) {
-            return componentType.cast(new TrianglePerCacheInboundInvocationHandler());
+            return new TrianglePerCacheInboundInvocationHandler();
          } else {
-            return componentType.cast(new NonTotalOrderPerCacheInboundInvocationHandler());
+            return new NonTotalOrderPerCacheInboundInvocationHandler();
          }
       }
    }

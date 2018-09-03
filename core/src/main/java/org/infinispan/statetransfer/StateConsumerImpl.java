@@ -28,10 +28,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
-
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
+import io.reactivex.Flowable;
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
@@ -62,6 +63,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -90,9 +92,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import net.jcip.annotations.GuardedBy;
-
 /**
  * {@link StateConsumer} implementation.
  *
@@ -108,8 +107,7 @@ public class StateConsumerImpl implements StateConsumer {
                                                                       SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK,
                                                                       SKIP_XSITE_BACKUP);
 
-   @Inject protected Cache cache;
-   @Inject protected StateTransferManager stateTransferManager;
+   @Inject protected ComponentRef<Cache> cache;
    @Inject protected LocalTopologyManager localTopologyManager;
    @Inject protected Configuration configuration;
    @Inject protected RpcManager rpcManager;
@@ -452,7 +450,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isScattered()) {
          Collection<DistributedCallable> callables = getClusterListeners(cacheTopology);
          for (DistributedCallable callable : callables) {
-            callable.setEnvironment(cache, null);
+            callable.setEnvironment(cache.wired(), null);
             try {
                callable.call();
             } catch (Exception e) {
@@ -616,7 +614,7 @@ public class StateConsumerImpl implements StateConsumer {
 
          inboundTransfer.onStateReceived(stateChunk.getSegmentId(), stateChunk.isLastChunk());
       } else {
-         if (cache.getStatus().allowInvocations()) {
+         if (cache.wired().getStatus().allowInvocations()) {
             log.ignoringUnsolicitedState(sender, stateChunk.getSegmentId(), cacheName);
          }
       }
@@ -649,7 +647,7 @@ public class StateConsumerImpl implements StateConsumer {
                transactionManager.commit();
             }
          } catch (Exception ex) {
-            if (!cache.getStatus().allowInvocations()) {
+            if (!cache.wired().getStatus().allowInvocations()) {
                log.debugf("Cache %s is shutting down, stopping state transfer", cacheName);
                break;
             } else {
@@ -730,13 +728,13 @@ public class StateConsumerImpl implements StateConsumer {
       try {
          synchronized (transferMapsLock) {
             // cancel all inbound transfers
-            // make a copy, cancel might remove the transfers
+            // make a copy and then clear both maps so that cancel doesn't interfere with the iteration
             Collection<List<InboundTransferTask>> transfers = new ArrayList<>(transfersBySource.values());
+            transfersBySource.clear();
+            transfersBySegment.clear();
             for (List<InboundTransferTask> inboundTransfers : transfers) {
                inboundTransfers.forEach(InboundTransferTask::cancel);
             }
-            transfersBySource.clear();
-            transfersBySegment.clear();
          }
 
          stateRequestExecutor.shutdownNow();
@@ -777,7 +775,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private void findSources(IntSet segments, Map<Address, IntSet> sources, Set<Address> excludedSources) {
-      if (cache.getStatus().isTerminated())
+      if (cache.wired().getStatus().isTerminated())
          return;
 
       int numSegments = configuration.clustering().hash().numSegments();
@@ -844,7 +842,7 @@ public class StateConsumerImpl implements StateConsumer {
                failed = true;
                exclude = true;
             } catch (Exception e) {
-               if (cache.getStatus().isTerminated()) {
+               if (cache.wired().getStatus().isTerminated()) {
                   log.debugf("Cache %s has stopped while requesting transactions", cacheName);
                   sources.clear();
                   return;

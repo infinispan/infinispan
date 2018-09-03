@@ -9,13 +9,13 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.List;
 
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.Listener;
@@ -33,14 +33,14 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
 
    private CacheNotifierImpl newNotifier() {
       CacheNotifierImpl notifier = new CacheNotifierImpl();
-      Cache mockCache = mock(Cache.class, RETURNS_DEEP_STUBS);
+      AdvancedCache mockCache = mock(AdvancedCache.class, RETURNS_DEEP_STUBS);
       ComponentRegistry registry = mock(ComponentRegistry.class);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(CacheMode.LOCAL);
       when(config.memory().storageType()).thenReturn(StorageType.OBJECT);
       TestingUtil.inject(notifier, mockCache, new ClusteringDependentLogic.LocalLogic(), config,
-            mock(DistributionManager.class), new InternalEntryFactoryImpl(),
-            mock(ClusterEventManager.class), mock(ComponentRegistry.class));
+                         new InternalEntryFactoryImpl(), mock(ClusterEventManager.class),
+                         mock(BasicComponentRegistry.class));
       return notifier;
    }
 

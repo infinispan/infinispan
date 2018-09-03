@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -42,7 +43,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    @Inject @ComponentName(REMOTE_COMMAND_EXECUTOR)
    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
    @Inject private StateTransferLock stateTransferLock;
-   @Inject protected StateTransferManager stateTransferManager;
+   @Inject protected ComponentRef<StateTransferManager> stateTransferManager;
    @Inject private ResponseGenerator responseGenerator;
    @Inject private CancellationService cancellationService;
    @Inject protected Configuration configuration;
@@ -144,7 +145,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    public final boolean isCommandSentBeforeFirstTopology(int commandTopologyId) {
-      if (0 <= commandTopologyId && commandTopologyId < stateTransferManager.getFirstTopologyAsMember()) {
+      if (0 <= commandTopologyId && commandTopologyId < stateTransferManager.wired().getFirstTopologyAsMember()) {
          if (isTraceEnabled()) {
             getLog().tracef("Ignoring command sent before the local node was a member (command topology id is %d)", commandTopologyId);
          }

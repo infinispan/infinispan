@@ -57,8 +57,8 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
    }
 
    private static void wrapAndApplyFilter(Cache<?, ?> cache, Filter filter) {
-      ControlledInboundHandler controlledInboundHandler = wrapInboundInvocationHandler(cache, ControlledInboundHandler::new);
-      controlledInboundHandler.filter = filter;
+      ControlledInboundHandler controlledInboundHandler =
+         wrapInboundInvocationHandler(cache, delegate -> new ControlledInboundHandler(delegate, filter));
    }
 
    FilterCollection createFilters(String cacheName, boolean discard, Class<? extends CacheRpcCommand> commandClass,
@@ -198,10 +198,11 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
    private static class ControlledInboundHandler implements PerCacheInboundInvocationHandler {
 
       private final PerCacheInboundInvocationHandler delegate;
-      private volatile Filter filter;
+      private final Filter filter;
 
-      private ControlledInboundHandler(PerCacheInboundInvocationHandler delegate) {
+      private ControlledInboundHandler(PerCacheInboundInvocationHandler delegate, Filter filter) {
          this.delegate = delegate;
+         this.filter = filter;
       }
 
       @Override

@@ -508,7 +508,7 @@ public interface Log extends BasicLogger {
 //   void unableToInvokeGetterOnConfiguration(Method getter, @Cause Exception e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Attempted to stop() from FAILED state, but caught exception; try calling destroy()", id = 126)
+   @Message(value = "Attempted to stop() from FAILED state, but caught exception", id = 126)
    void failedToCallStopAfterFailure(@Cause Throwable t);
 
 //   @LogMessage(level = WARN)
@@ -1830,4 +1830,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Cache '%s' uses the deprecated compatibility mode configuration. See 'Embedded/Remote Interoperability' in the user guide for a replacement", id = 536)
    void warnCompatibilityDeprecated(String cacheName);
+
+   @Message(value = "Factory doesn't know how to construct component %s", id = 537)
+   CacheConfigurationException factoryCannotConstructComponent(String componentName);
 }

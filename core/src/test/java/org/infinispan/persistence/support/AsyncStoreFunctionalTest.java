@@ -312,8 +312,8 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
          extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
       @Override
-      public <T> T construct(Class<T> componentType) {
-         return (T) new CustomPersistenceManager();
+      public Object construct(String componentName) {
+         return new CustomPersistenceManager();
       }
 
    }

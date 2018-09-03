@@ -70,6 +70,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Inject private TimeService timeService;
    @Inject private GlobalStateManager globalStateManager;
    @Inject private PersistentUUIDManager persistentUUIDManager;
+   // Not used directly, but we have to start the ClusterTopologyManager before sending the join request
+   @Inject private ClusterTopologyManager clusterTopologyManager;
 
    private final WithinThreadExecutor withinThreadExecutor = new WithinThreadExecutor();
 

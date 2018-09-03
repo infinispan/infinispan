@@ -18,6 +18,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.util.logging.TraceException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeListener;
@@ -68,7 +69,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Inject private Transport t;
    @Inject private Configuration configuration;
-   @Inject private CommandsFactory cf;
+   @Inject private ComponentRef<CommandsFactory> cf;
    @Inject private DistributionManager distributionManager;
    @Inject private TimeService timeService;
 
@@ -281,8 +282,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
                                                                         RpcOptions options) {
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(rpc);
-      CacheRpcCommand cacheRpc =
-            rpc instanceof CacheRpcCommand ? (CacheRpcCommand) rpc : cf.buildSingleRpcCommand(rpc);
+      CacheRpcCommand cacheRpc = toCacheRpcCommand(rpc);
 
       long startTimeNanos = statisticsEnabled ? timeService.time() : 0;
       CompletableFuture<Map<Address, Response>> invocation;
@@ -355,7 +355,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       checkTopologyId(command);
       return command instanceof CacheRpcCommand ?
             (CacheRpcCommand) command :
-            cf.buildSingleRpcCommand(command);
+            cf.wired().buildSingleRpcCommand(command);
    }
 
    @Override

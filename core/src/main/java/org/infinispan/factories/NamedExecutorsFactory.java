@@ -11,7 +11,6 @@ import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXEC
 import static org.infinispan.factories.KnownComponentNames.getDefaultThreadPrio;
 import static org.infinispan.factories.KnownComponentNames.shortened;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -37,9 +36,9 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
  * @author Pedro Ruivo
  * @since 4.0
  */
-@DefaultFactoryFor(classes = {ExecutorService.class, Executor.class, ScheduledExecutorService.class,
-                              BlockingTaskAwareExecutorService.class})
-public class NamedExecutorsFactory extends NamedComponentFactory implements AutoInstantiableFactory {
+@DefaultFactoryFor(names = {ASYNC_TRANSPORT_EXECUTOR, ASYNC_NOTIFICATION_EXECUTOR, PERSISTENCE_EXECUTOR, ASYNC_OPERATIONS_EXECUTOR,
+                             EXPIRATION_SCHEDULED_EXECUTOR, REMOTE_COMMAND_EXECUTOR, STATE_TRANSFER_EXECUTOR, TIMEOUT_SCHEDULE_EXECUTOR})
+public class NamedExecutorsFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
    private ExecutorService notificationExecutor;
    private ExecutorService asyncTransportExecutor;
@@ -52,7 +51,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
 
    @Override
    @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType, String componentName) {
+   public Object construct(String componentName) {
       try {
          // Construction happens only on startup of either CacheManager, or Cache, so
          // using synchronized protection does not have a great impact on app performance.
@@ -65,7 +64,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                         ExecutorServiceType.DEFAULT);
                }
             }
-            return (T) notificationExecutor;
+            return notificationExecutor;
          } else if (componentName.equals(PERSISTENCE_EXECUTOR)) {
             synchronized (this) {
                if (persistenceExecutor == null) {
@@ -75,7 +74,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                         ExecutorServiceType.SCHEDULED);
                }
             }
-            return (T) persistenceExecutor;
+            return persistenceExecutor;
          } else if (componentName.equals(ASYNC_TRANSPORT_EXECUTOR)) {
             synchronized (this) {
                if (asyncTransportExecutor == null) {
@@ -85,7 +84,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                         ExecutorServiceType.DEFAULT);
                }
             }
-            return (T) asyncTransportExecutor;
+            return asyncTransportExecutor;
          } else if (componentName.equals(EXPIRATION_SCHEDULED_EXECUTOR)) {
             synchronized (this) {
                if (expirationExecutor == null) {
@@ -95,7 +94,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                         ExecutorServiceType.SCHEDULED);
                }
             }
-            return (T) expirationExecutor;
+            return expirationExecutor;
          } else if (componentName.equals(REMOTE_COMMAND_EXECUTOR)) {
             synchronized (this) {
                if (remoteCommandsExecutor == null) {
@@ -105,7 +104,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                         ExecutorServiceType.BLOCKING);
                }
             }
-            return (T) remoteCommandsExecutor;
+            return remoteCommandsExecutor;
          } else if (componentName.equals(STATE_TRANSFER_EXECUTOR)) {
             synchronized (this) {
                if (stateTransferExecutor == null) {
@@ -115,7 +114,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                         ExecutorServiceType.DEFAULT);
                }
             }
-            return (T) stateTransferExecutor;
+            return stateTransferExecutor;
          } else if (componentName.equals(ASYNC_OPERATIONS_EXECUTOR)) {
             synchronized (this) {
                if (asyncOperationsExecutor == null) {
@@ -124,14 +123,14 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                         ASYNC_OPERATIONS_EXECUTOR, ExecutorServiceType.DEFAULT);
                }
             }
-            return (T) asyncOperationsExecutor;
+            return asyncOperationsExecutor;
          } else if (componentName.endsWith(TIMEOUT_SCHEDULE_EXECUTOR)) {
             synchronized (this) {
                if (timeoutExecutor == null) {
                   timeoutExecutor = createExecutorService(null, TIMEOUT_SCHEDULE_EXECUTOR, ExecutorServiceType.SCHEDULED);
                }
             }
-            return (T) timeoutExecutor;
+            return timeoutExecutor;
          } else {
             throw new CacheConfigurationException("Unknown named executor " + componentName);
          }
@@ -144,6 +143,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
 
    @Stop(priority = 999)
    public void stop() {
+      // TODO Dan: awaitTermination()?
       if (remoteCommandsExecutor != null) remoteCommandsExecutor.shutdownNow();
       if (notificationExecutor != null) notificationExecutor.shutdownNow();
       if (persistenceExecutor != null) persistenceExecutor.shutdownNow();
@@ -178,8 +178,8 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
             final String controllerName = "Controller-" + shortened(componentName) + "-" +
                   globalConfiguration.transport().nodeName();
             return (T) new LazyInitializingBlockingTaskAwareExecutorService(executorFactory, threadFactory,
-                                                                            globalComponentRegistry.getTimeService(),
-                                                                            controllerName);
+                                                                        globalComponentRegistry.getTimeService(),
+                                                                        controllerName);
          default:
             return (T) new LazyInitializingExecutorService(executorFactory, threadFactory);
       }

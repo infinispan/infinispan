@@ -18,11 +18,11 @@ public class ClusterTopologyManagerFactory extends AbstractComponentFactory impl
 
    @Override
    @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       if (globalConfiguration.transport().transport() == null)
          return null;
 
-      return (T) new ClusterTopologyManagerImpl();
+      return new ClusterTopologyManagerImpl();
    }
 
 }

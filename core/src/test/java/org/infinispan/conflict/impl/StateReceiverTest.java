@@ -22,21 +22,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -131,12 +130,10 @@ public class StateReceiverTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    private void createAndInitStateReceiver() {
-      Cache cache = mock(Cache.class);
-      when(cache.getName()).thenReturn("testCache");
-
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
-      DataContainer dataContainer = mock(DataContainer.class);
+      InternalDataContainer dataContainer = mock(InternalDataContainer.class);
       RpcManager rpcManager = mock(RpcManager.class);
+      CacheNotifier cacheNotifier = mock(CacheNotifier.class);
       ExecutorService stateTransferExecutor = Executors.newSingleThreadExecutor();
 
       when(rpcManager.invokeRemotely(any(Collection.class), any(StateRequestCommand.class), any(RpcOptions.class)))
@@ -156,12 +153,9 @@ public class StateReceiverTest extends AbstractInfinispanTest {
          Object[] args = invocation.getArguments();
          return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], DeliverOrder.PER_SENDER);
       });
-      ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().clustering().cacheMode(CacheMode.DIST_SYNC);
-      when(cache.getCacheConfiguration()).thenReturn(cb.build());
 
       StateReceiverImpl stateReceiver = new StateReceiverImpl();
-      TestingUtil.inject(stateReceiver, cache, commandsFactory, dataContainer, rpcManager, stateTransferExecutor);
+      TestingUtil.inject(stateReceiver, cacheNotifier, commandsFactory, dataContainer, rpcManager, stateTransferExecutor);
       stateReceiver.start();
       stateReceiver.onDataRehash(createEventImpl(2, 4, Event.Type.DATA_REHASHED));
       this.localizedCacheTopology = createLocalizedCacheTopology(4);

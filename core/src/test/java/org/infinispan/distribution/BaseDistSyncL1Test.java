@@ -569,7 +569,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
    protected L1Manager waitUntilL1Registration(final Cache<?, ?> cache, final CheckPoint checkPoint) {
       L1Manager l1Manager = TestingUtil.extractComponent(cache, L1Manager.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(l1Manager);
-      L1Manager mockL1 = mock(L1Manager.class, withSettings().defaultAnswer(forwardedAnswer));
+      L1Manager mockL1 = mock(L1Manager.class, withSettings().defaultAnswer(forwardedAnswer).extraInterfaces(RemoteValueRetrievedListener.class));
       doAnswer(invocation -> {
          // Wait for main thread to sync up
          checkPoint.trigger("pre_acquire_shared_topology_lock_invoked");

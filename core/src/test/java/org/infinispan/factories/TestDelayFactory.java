@@ -30,6 +30,7 @@ public class TestDelayFactory extends AbstractComponentFactory implements AutoIn
       injectionDone = true;
    }
 
+   // Implement the old construct method for testing
    public <T> T construct(Class<T> componentType) {
       if (!injectionDone) {
          throw new IllegalStateException("GlobalConfiguration reference is null");
@@ -37,7 +38,7 @@ public class TestDelayFactory extends AbstractComponentFactory implements AutoIn
       return componentType.cast(new Component());
    }
 
-   @Scope(Scopes.NAMED_CACHE)
+   @Scope(Scopes.GLOBAL)
    public static class Component {
    }
 

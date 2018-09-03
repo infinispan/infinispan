@@ -179,6 +179,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
 
    @AfterClass(alwaysRun = true)
    protected void destroy() {
+      clients.forEach(HotRodClientTestingUtil::killRemoteCacheManager);
       addr2hrServer.values().forEach(HotRodClientTestingUtil::killServers);
       super.destroy();
    }

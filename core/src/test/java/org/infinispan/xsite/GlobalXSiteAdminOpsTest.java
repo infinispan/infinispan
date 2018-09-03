@@ -327,9 +327,7 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
             blockingTransportList.add((BlockingTransport) transport);
          } else if (createIfAbsent) {
             BlockingTransport blockingTransport = new BlockingTransport(transport);
-            cacheManager.getGlobalComponentRegistry().registerComponent(blockingTransport, Transport.class);
-            cacheManager.getGlobalComponentRegistry().rewire();
-            cacheManager.getGlobalComponentRegistry().rewireNamedRegistries();
+            TestingUtil.replaceComponent(cacheManager, Transport.class, blockingTransport, true);
             blockingTransportList.add(blockingTransport);
          }
       });

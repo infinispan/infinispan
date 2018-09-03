@@ -37,9 +37,9 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
 
    @AfterClass
    public void afterClass() {
-      embeddedCacheManager.stop();
       remoteCacheManager.stop();
       hotrodServer.stop();
+      embeddedCacheManager.stop();
    }
 
    @BeforeMethod

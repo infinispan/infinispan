@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -47,7 +48,8 @@ public class PushTransferTest extends AbstractStateTransferTest {
       CountDownLatch stateAppliedLatch = new CountDownLatch(1);
       TestingUtil.addCacheStartingHook(cm4, (name, cr) -> {
          PerCacheInboundInvocationHandler originalHandler = cr.getComponent(PerCacheInboundInvocationHandler.class);
-         cr.registerComponent((PerCacheInboundInvocationHandler) (command, reply, order) -> {
+         BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+         bcr.replaceComponent(PerCacheInboundInvocationHandler.class.getName(), (PerCacheInboundInvocationHandler) (command, reply, order) -> {
             // StateResponseCommand is topology-aware, so handle() just queues it on the remote executor
             if (command instanceof StateResponseCommand) {
                log.tracef("State received on %s", cm4.getAddress());
@@ -58,7 +60,7 @@ public class PushTransferTest extends AbstractStateTransferTest {
                stateAppliedLatch.countDown();
                reply.reply(response);
             }, order);
-         }, PerCacheInboundInvocationHandler.class);
+         }, false);
          cr.rewire();
          cr.cacheComponents();
       });

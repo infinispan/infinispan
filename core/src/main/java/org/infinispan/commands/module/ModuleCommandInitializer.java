@@ -12,7 +12,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @author Manik Surtani
  * @since 5.0
  */
-@Scope(Scopes.NAMED_CACHE)
+@Scope(Scopes.GLOBAL)
 @SurvivesRestarts
 public interface ModuleCommandInitializer {
 

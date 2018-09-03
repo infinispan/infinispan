@@ -18,6 +18,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
@@ -59,7 +60,8 @@ public class PersistenceMockUtil {
       EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
       when(cm.getCacheManagerConfiguration()).thenReturn(gc);
       GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cm, cachesSet);
-      gcr.registerComponent(timeService, TimeService.class);
+      BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
+      gbcr.replaceComponent(TimeService.class.getName(), timeService, true);
       ComponentRegistry registry = new ComponentRegistry(cacheName, configuration, cache, gcr,
                                                          configuration.getClass().getClassLoader());
 

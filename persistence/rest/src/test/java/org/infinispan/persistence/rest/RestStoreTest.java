@@ -5,10 +5,10 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.io.IOException;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
@@ -18,7 +18,6 @@ import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -41,9 +40,7 @@ public class RestStoreTest extends BaseStoreTest {
       localCacheManager = TestCacheManagerFactory.createServerModeCacheManager(localBuilder);
       localCacheManager.defineConfiguration(REMOTE_CACHE, localCacheManager.getDefaultCacheConfiguration());
       localCacheManager.getCache(REMOTE_CACHE);
-      GlobalComponentRegistry gcr = localCacheManager.getGlobalComponentRegistry();
-      gcr.registerComponent(timeService, TimeService.class);
-      gcr.rewire();
+      TestingUtil.replaceComponent(localCacheManager, TimeService.class, timeService, true);
       localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
 
       RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();

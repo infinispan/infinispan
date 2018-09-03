@@ -13,7 +13,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.jmx.CacheJmxRegistration;
+import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.util.logging.Log;
@@ -28,6 +28,7 @@ import org.infinispan.util.logging.LogFactory;
 public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    @Inject private EmbeddedCacheManager cacheManager;
+   @Inject private CacheManagerJmxRegistration cacheManagerJmxRegistration;
    private final ConcurrentMap<String, EnumSet<Flag>> internalCaches = new ConcurrentHashMap<>();
    private final Set<String> privateCaches = new ConcurrentHashSet<>();
 
@@ -73,7 +74,8 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
          Cache<Object, Object> cache = cacheManager.getCache(name, false);
          if (cache != null) {
             cache.stop();
-            cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class).unregisterCacheMBean();
+            String cacheMode = cache.getCacheConfiguration().clustering().cacheModeString();
+            cacheManagerJmxRegistration.unregisterCacheMBean(name, cacheMode);
          }
          internalCaches.remove(name);
          privateCaches.remove(name);

@@ -196,7 +196,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
       TestingUtil.inject(stateConsumer, cache, TestingUtil.named(STATE_TRANSFER_EXECUTOR, pooledExecutorService),
-                         stateTransferManager, localTopologyManager, interceptorChain, icf, configuration, rpcManager, null,
+                         localTopologyManager, interceptorChain, icf, configuration, rpcManager,
                          commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
                          totalOrderManager, TestingUtil.named(REMOTE_COMMAND_EXECUTOR, remoteCommandsExecutor),
                          new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0),

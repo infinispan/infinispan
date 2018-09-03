@@ -16,18 +16,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -59,7 +59,8 @@ public class StateProviderImpl implements StateProvider {
    private static final Log log = LogFactory.getLog(StateProviderImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private Cache cache;
+   @ComponentName(KnownComponentNames.CACHE_NAME)
+   @Inject protected String cacheName;
    @Inject private Configuration configuration;
    @Inject protected RpcManager rpcManager;
    @Inject protected CommandsFactory commandsFactory;
@@ -75,7 +76,6 @@ public class StateProviderImpl implements StateProvider {
    @Inject protected DistributionManager distributionManager;
    @Inject private TransactionOriginatorChecker transactionOriginatorChecker;
 
-   protected String cacheName;
    protected long timeout;
    protected int chunkSize;
 
@@ -119,7 +119,6 @@ public class StateProviderImpl implements StateProvider {
    @Start(priority = 50)
    @Override
    public void start() {
-      this.cacheName = cache.getName();
       timeout = configuration.clustering().stateTransfer().timeout();
       chunkSize = configuration.clustering().stateTransfer().chunkSize();
    }

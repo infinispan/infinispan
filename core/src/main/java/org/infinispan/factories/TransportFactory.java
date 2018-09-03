@@ -14,8 +14,8 @@ public class TransportFactory extends AbstractComponentFactory implements AutoIn
 
    @Override
    @SuppressWarnings("unchecked")
-   public <T> T construct(Class<T> componentType) {
-      return (T) globalConfiguration.transport().transport();
+   public Object construct(String componentName) {
+      return globalConfiguration.transport().transport();
    }
 
 }

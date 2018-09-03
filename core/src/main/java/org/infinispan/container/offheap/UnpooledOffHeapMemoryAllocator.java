@@ -1,12 +1,9 @@
 package org.infinispan.container.offheap;
 
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.LongUnaryOperator;
 
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
 import sun.misc.Unsafe;
 
 /**
@@ -19,12 +16,6 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
    private static final boolean trace = log.isTraceEnabled();
    private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
    private final LongAdder amountAllocated = new LongAdder();
-   private LongUnaryOperator sizeCalculator;
-
-   @Inject
-   public void inject(OffHeapEntryFactory offHeapEntryFactory) {
-      sizeCalculator = offHeapEntryFactory::getSize;
-   }
 
    @Override
    public long allocate(long memoryLength) {
@@ -36,12 +27,6 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
                estimatedMemoryLength, amountAllocated.sum());
       }
       return memoryLocation;
-   }
-
-   @Override
-   public void deallocate(long memoryAddress) {
-      // Size calculator already takes care of size estimate
-      innerDeallocate(memoryAddress, sizeCalculator.applyAsLong(memoryAddress));
    }
 
    @Override

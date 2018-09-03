@@ -15,12 +15,6 @@ public interface OffHeapMemoryAllocator {
    long allocate(long memoryLength);
 
    /**
-    * Deallocates the memory allocated at the given address
-    * @param memoryAddress the address returned from the allocator to deallocate
-    */
-   void deallocate(long memoryAddress);
-
-   /**
     * Deallocates the memory at the given address assuming a given size. This size is the size that was provided
     * to allocate.
     * @param memoryAddress the address to deallocate from

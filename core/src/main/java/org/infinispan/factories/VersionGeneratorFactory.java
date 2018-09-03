@@ -1,12 +1,10 @@
 package org.infinispan.factories;
 
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.versioning.NumericVersionGenerator;
 import org.infinispan.container.versioning.SimpleClusteredVersionGenerator;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -18,22 +16,20 @@ import org.infinispan.factories.scopes.Scopes;
  * @author Galder Zamarreño
  * @since 5.1
  */
-@DefaultFactoryFor(classes = VersionGenerator.class)
+@DefaultFactoryFor(classes = VersionGenerator.class, names = KnownComponentNames.TRANSACTION_VERSION_GENERATOR)
 @Scope(Scopes.NAMED_CACHE)
-public class VersionGeneratorFactory extends NamedComponentFactory implements AutoInstantiableFactory {
-   @Inject private Configuration configuration;
-
+public class VersionGeneratorFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
-   public <T> T construct(Class<T> componentType, String componentName) {
-      if (KnownComponentNames.TRANSACTION_VERSION_GENERATOR.endsWith(componentName)) {
-         return componentType.cast(new NumericVersionGenerator());
+   public Object construct(String componentName) {
+      if (KnownComponentNames.TRANSACTION_VERSION_GENERATOR.equals(componentName)) {
+         return new NumericVersionGenerator();
       }
       if (Configurations.isTxVersioned(configuration)) {
          return configuration.clustering().cacheMode().isClustered() ?
-               componentType.cast(new SimpleClusteredVersionGenerator()) :
-               componentType.cast(new NumericVersionGenerator());
+                new SimpleClusteredVersionGenerator() :
+                new NumericVersionGenerator();
       } else {
-         return componentType.cast(new NumericVersionGenerator());
+         return new NumericVersionGenerator();
       }
    }
 }

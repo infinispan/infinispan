@@ -34,6 +34,7 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
@@ -53,6 +54,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -79,15 +81,16 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private static final Flag[] userMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES};
    private static final Flag[] autoMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES, Flag.PUT_FOR_STATE_TRANSFER, Flag.SKIP_REMOTE_LOOKUP};
 
-   @Inject private AsyncInterceptorChain interceptorChain;
-   @Inject private AdvancedCache<K, V> cache;
+   @Inject private ComponentRef<AsyncInterceptorChain> interceptorChain;
+   @Inject private ComponentRef<AdvancedCache<K, V>> cache;
+   @Inject private Configuration cacheConfiguration;
    @Inject private CommandsFactory commandsFactory;
    @Inject private DistributionManager distributionManager;
    @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
    private ExecutorService stateTransferExecutor;
    @Inject private InvocationContextFactory invocationContextFactory;
    @Inject private RpcManager rpcManager;
-   @Inject private StateConsumer stateConsumer;
+   @Inject private ComponentRef<StateConsumer> stateConsumer;
    @Inject private StateReceiver<K, V> stateReceiver;
    @Inject private EntryMergePolicyFactoryRegistry mergePolicyRegistry;
    @Inject private TimeService timeService;
@@ -109,11 +112,11 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       this.cacheName = cache.getName();
       this.localAddress = rpcManager.getAddress();
 
-      PartitionHandlingConfiguration config = cache.getCacheConfiguration().clustering().partitionHandling();
+      PartitionHandlingConfiguration config = cacheConfiguration.clustering().partitionHandling();
       this.entryMergePolicy = mergePolicyRegistry.createInstance(config);
 
       // TODO make this an explicit configuration param in PartitionHandlingConfiguration
-      this.conflictTimeout = cache.getCacheConfiguration().clustering().stateTransfer().timeout();
+      this.conflictTimeout = cacheConfiguration.clustering().stateTransfer().timeout();
 
       // Limit the number of concurrent tasks to ensure that internal CR operations can never overlap
       this.resolutionExecutor = new LimitedExecutor("ConflictManager-", stateTransferExecutor, 1);
@@ -162,7 +165,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
       final VersionRequest request;
       synchronized (versionRequestMap) {
-         request = versionRequestMap.computeIfAbsent(key, k -> new VersionRequest(k, stateConsumer.isStateTransferInProgress()));
+         request = versionRequestMap.computeIfAbsent(key, k -> new VersionRequest(k, stateConsumer.running().isStateTransferInProgress()));
       }
 
       try {
@@ -189,8 +192,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    }
 
    private Stream<Map<Address, CacheEntry<K, V>>> getConflicts(LocalizedCacheTopology topology) {
-      if (topology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION && stateConsumer.isStateTransferInProgress()) {
-         if (trace) log.tracef("getConflictsStateTransferInProgress isStateTransferInProgress=%s, topology=%s", stateConsumer.isStateTransferInProgress(), topology);
+      if (trace) log.tracef("getConflicts isStateTransferInProgress=%s, topology=%s", stateConsumer.running().isStateTransferInProgress(), topology);
+      if (topology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION && stateConsumer.running().isStateTransferInProgress()) {
          throw log.getConflictsStateTransferInProgress(cacheName);
       }
 
@@ -261,7 +264,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                                    final Set<Address> preferredNodes) {
       boolean userCall = preferredNodes == null;
       final Set<Address> preferredPartition = userCall ? new HashSet<>(topology.getCurrentCH().getMembers()) : preferredNodes;
-      final AdvancedCache<K, V> cache = this.cache.withFlags(userCall ? userMergeFlags : autoMergeFlags);
+      final AdvancedCache<K, V> cache = this.cache.wired().withFlags(userCall ? userMergeFlags : autoMergeFlags);
 
       if (trace)
          log.tracef("Cache %s attempting to resolve conflicts.  All Members %s, Installed topology %s, Preferred Partition %s",
@@ -330,7 +333,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    @Override
    public boolean isStateTransferInProgress() {
-      return stateConsumer.isStateTransferInProgress();
+      return stateConsumer.running().isStateTransferInProgress();
    }
 
    private void checkIsRunning() {
@@ -382,7 +385,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          if (keyOwners.contains(localAddress)) {
             GetCacheEntryCommand cmd = commandsFactory.buildGetCacheEntryCommand(key, info.segmentId(), localFlags);
             InvocationContext ctx = invocationContextFactory.createNonTxInvocationContext();
-            InternalCacheEntry<K, V> internalCacheEntry = (InternalCacheEntry<K, V>) interceptorChain.invoke(ctx, cmd);
+            InternalCacheEntry<K, V> internalCacheEntry = (InternalCacheEntry<K, V>) interceptorChain.running().invoke(ctx, cmd);
             InternalCacheValue<V> icv = internalCacheEntry == null ? null : internalCacheEntry.toInternalCacheValue();
             synchronized (versionsMap) {
                versionsMap.put(localAddress, icv);

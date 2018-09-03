@@ -48,7 +48,7 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
          switch (command.getCommandId()) {
             case TotalOrderVersionedPrepareCommand.COMMAND_ID:
             case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
-               if (!stateTransferManager.ownsData()) {
+               if (!stateTransferManager.wired().ownsData()) {
                   log.debugf("No Data in local node.");
                   reply.reply(null);
                   return;

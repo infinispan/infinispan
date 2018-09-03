@@ -1,6 +1,5 @@
 package org.infinispan.factories;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.conflict.ConflictManager;
 import org.infinispan.conflict.impl.DefaultConflictManager;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -30,30 +29,30 @@ import org.infinispan.statetransfer.StateTransferManagerImpl;
       ConflictManager.class, InternalConflictManager.class})
 public class StateTransferComponentFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
-   public <T> T construct(Class<T> componentType) {
+   public Object construct(String componentName) {
       if (!configuration.clustering().cacheMode().isClustered())
          return null;
 
-      if (componentType.equals(StateTransferManager.class)) {
-         return componentType.cast(new StateTransferManagerImpl());
-      } else if (componentType.equals(StateProvider.class)) {
+      if (componentName.equals(StateTransferManager.class.getName())) {
+         return new StateTransferManagerImpl();
+      } else if (componentName.equals(StateProvider.class.getName())) {
          if (configuration.clustering().cacheMode().isScattered()) {
-            return componentType.cast(new ScatteredStateProviderImpl());
+            return new ScatteredStateProviderImpl();
          } else {
-            return componentType.cast(new StateProviderImpl());
+            return new StateProviderImpl();
          }
-      } else if (componentType.equals(StateConsumer.class)) {
+      } else if (componentName.equals(StateConsumer.class.getName())) {
          if (configuration.clustering().cacheMode().isScattered()) {
-            return componentType.cast(new ScatteredStateConsumerImpl());
+            return new ScatteredStateConsumerImpl();
          } else {
-            return componentType.cast(new StateConsumerImpl());
+            return new StateConsumerImpl();
          }
-      } else if (componentType.equals(StateReceiver.class)) {
-         return componentType.cast(new StateReceiverImpl<>());
-      } else if (componentType.isAssignableFrom(InternalConflictManager.class)) {
-         return componentType.cast(new DefaultConflictManager<>());
+      } else if (componentName.equals(StateReceiver.class.getName())) {
+         return new StateReceiverImpl<>();
+      } else if (componentName.equals(InternalConflictManager.class.getName())) {
+         return new DefaultConflictManager<>();
       }
 
-      throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
+      throw log.factoryCannotConstructComponent(componentName);
    }
 }

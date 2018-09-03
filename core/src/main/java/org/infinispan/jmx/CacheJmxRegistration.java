@@ -1,26 +1,20 @@
 package org.infinispan.jmx;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
+import java.util.ArrayList;
+import java.util.Collection;
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commons.jmx.JmxUtil;
-import org.infinispan.factories.AbstractComponentRegistry;
-import org.infinispan.factories.AbstractComponentRegistry.Component;
-import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -38,8 +32,12 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheJmxRegistration.class);
    public static final String CACHE_JMX_GROUP = "type=Cache";
 
-   @Inject private AdvancedCache<?, ?> cache;
-   private Set<Component> nonCacheComponents;
+   @Inject private Configuration cacheConfiguration;
+   @Inject public CacheManagerJmxRegistration globalJmxRegistration;
+   @ComponentName(KnownComponentNames.CACHE_NAME)
+   @Inject private String cacheName;
+
+   private Collection<ResourceDMBean> nonCacheDMBeans;
 
    private boolean needToUnregister = false;
 
@@ -50,19 +48,16 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
     */
    @Start(priority = 14)
    public void start() {
-      if (cache == null)
-         throw new IllegalStateException("The cache should had been injected before a call to this method");
-      Set<Component> components = cache.getComponentRegistry().getRegisteredComponents();
-      nonCacheComponents = getNonCacheComponents(components);
-      if (registerMBeans(components, cache.getCacheManager().getCacheManagerConfiguration())) {
+      initMBeanServer(globalConfig);
+
+      if (mBeanServer != null) {
+         Collection<ComponentRef<?>> components = basicComponentRegistry.getRegisteredComponents();
+         Collection<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents(components);
+         nonCacheDMBeans = getNonCacheComponents(resourceDMBeans);
+
+         registrar.registerMBeans(resourceDMBeans);
          needToUnregister = true;
          log.mbeansSuccessfullyRegistered();
-      } else {
-         if (cache.getName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME)) {
-            log.unableToRegisterMBeans();
-         } else {
-            log.unableToRegisterMBeans(cache.getName());
-         }
       }
    }
 
@@ -71,13 +66,10 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
     */
    @Stop
    public void stop() {
-      // This method might get called several times.
-      // After the first call the cache will become null, so we guard this
-      if (cache == null) return;
       if (needToUnregister) {
          // Only unregister the non cache MBean so that it can be restarted
          try {
-            unregisterMBeans(nonCacheComponents);
+            unregisterMBeans(nonCacheDMBeans);
             needToUnregister = false;
          } catch (Exception e) {
             log.problemsUnregisteringMBeans(e);
@@ -86,31 +78,10 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
 
       // If removing cache, also remove cache MBean
       if (unregisterCacheMBean)
-         unregisterCacheMBean();
+         globalJmxRegistration.unregisterCacheMBean(this.cacheName, this.cacheConfiguration
+            .clustering().cacheModeString());
 
       // make sure we don't set cache to null, in case it needs to be restarted via JMX.
-   }
-
-   public void unregisterCacheMBean() {
-      if (mBeanServer != null) {
-         String groupName = CACHE_JMX_GROUP + "," + getCacheJmxName() + ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
-         String pattern = jmxDomain + ":" + groupName + ",*";
-         try {
-            Set<ObjectName> names = SecurityActions.queryNames(new ObjectName(pattern), null, mBeanServer);
-            for (ObjectName name : names) {
-               JmxUtil.unregisterMBean(name, mBeanServer);
-            }
-         } catch (MBeanRegistrationException e) {
-            log.unableToUnregisterMBeanWithPattern(pattern, e);
-         } catch (InstanceNotFoundException e) {
-            // Ignore if Cache MBeans not present
-         } catch (MalformedObjectNameException e) {
-            String message = "Malformed pattern " + pattern;
-            throw new CacheException(message, e);
-         } catch (Exception e) {
-            throw new CacheException(e);
-         }
-      }
    }
 
    public void setUnregisterCacheMBean(boolean unregisterCacheMBean) {
@@ -118,50 +89,45 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    }
 
    @Override
-   protected ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components) {
+   protected ComponentsJmxRegistration buildRegistrar() {
       // Quote group name, to handle invalid ObjectName characters
-      String groupName = CACHE_JMX_GROUP + "," + getCacheJmxName() + ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
-      ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, components, groupName);
-      updateDomain(registrar, cache.getComponentRegistry().getGlobalComponentRegistry(), mBeanServer, groupName);
+      String groupName = CACHE_JMX_GROUP + "," + globalJmxRegistration.getCacheJmxName(cacheName,
+                                                                                       cacheConfiguration.clustering().cacheModeString()) + ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
+      ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, groupName);
+      updateDomain(registrar, mBeanServer, groupName, globalJmxRegistration);
       return registrar;
    }
 
-   private String getCacheJmxName() {
-      return ComponentsJmxRegistration.NAME_KEY + "="
-                  + ObjectName.quote(cache.getName() + "(" + cache.getCacheConfiguration().clustering().cacheModeString().toLowerCase() + ")");
-   }
-
-   protected void updateDomain(ComponentsJmxRegistration registrar, GlobalComponentRegistry componentRegistry,
-                               MBeanServer mBeanServer, String groupName) {
-      CacheManagerJmxRegistration managerJmxReg = componentRegistry.getComponent(CacheManagerJmxRegistration.class);
+   protected void updateDomain(ComponentsJmxRegistration registrar,
+                               MBeanServer mBeanServer, String groupName,
+                               CacheManagerJmxRegistration globalJmxRegistration) {
       if (!globalConfig.globalJmxStatistics().enabled() && jmxDomain == null) {
          String tmpJmxDomain = JmxUtil.buildJmxDomain(globalConfig.globalJmxStatistics().domain(), mBeanServer, groupName);
-         synchronized (managerJmxReg) {
-            if (managerJmxReg.jmxDomain == null) {
+         synchronized (globalJmxRegistration) {
+            if (globalJmxRegistration.jmxDomain == null) {
                if (!tmpJmxDomain.equals(globalConfig.globalJmxStatistics().domain()) && !globalConfig.globalJmxStatistics().allowDuplicateDomains()) {
                   throw log.jmxMBeanAlreadyRegistered(tmpJmxDomain, globalConfig.globalJmxStatistics().domain());
                }
                // Set manager component's jmx domain so that other caches under same manager
                // can see it, particularly important when jmx is only enabled at the cache level
-               managerJmxReg.jmxDomain = tmpJmxDomain;
+               globalJmxRegistration.jmxDomain = tmpJmxDomain;
             }
             // So that all caches share the same domain, regardless of whether dups are
             // allowed or not, simply assign the manager's calculated jmxDomain
-            jmxDomain = managerJmxReg.jmxDomain;
+            jmxDomain = globalJmxRegistration.jmxDomain;
          }
       } else {
          // If global stats were enabled, manager's jmxDomain would have been populated
          // when cache manager was started, so no need for synchronization here.
-         jmxDomain = managerJmxReg.jmxDomain == null ? globalConfig.globalJmxStatistics().domain() : managerJmxReg.jmxDomain;
+         jmxDomain = globalJmxRegistration.jmxDomain == null ? globalConfig.globalJmxStatistics().domain() : globalJmxRegistration.jmxDomain;
       }
       registrar.setJmxDomain(jmxDomain);
    }
 
-   protected Set<Component> getNonCacheComponents(Set<Component> components) {
-      Set<Component> componentsExceptCache = new HashSet<AbstractComponentRegistry.Component>(64);
-      for (AbstractComponentRegistry.Component component : components) {
-         String name = component.getName();
-         if (!name.equals(Cache.class.getName()) && !name.equals(AdvancedCache.class.getName())) {
+   protected Collection<ResourceDMBean> getNonCacheComponents(Collection<ResourceDMBean> components) {
+      Collection<ResourceDMBean> componentsExceptCache = new ArrayList<>(64);
+      for (ResourceDMBean component : components) {
+         if (!CacheImpl.OBJECT_NAME.equals(component.getObjectName())) {
             componentsExceptCache.add(component);
          }
       }

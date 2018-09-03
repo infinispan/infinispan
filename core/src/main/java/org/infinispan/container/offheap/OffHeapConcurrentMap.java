@@ -106,7 +106,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       if (listener != null) {
          listener.entryRemoved(removedAddress);
       } else {
-         allocator.deallocate(removedAddress);
+         allocator.deallocate(removedAddress, offHeapEntryFactory.getSize(removedAddress, false));
       }
    }
 
@@ -114,7 +114,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       if (listener != null) {
          listener.entryReplaced(newAddress, oldAddress);
       } else {
-         allocator.deallocate(oldAddress);
+         allocator.deallocate(oldAddress, offHeapEntryFactory.getSize(oldAddress, false));
       }
    }
 

@@ -77,6 +77,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
@@ -107,7 +108,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected CommandsFactory commandsFactory;
    @Inject protected RpcManager rpcManager;
-   @Inject protected Cache<K, V> cache;
+   @Inject protected ComponentRef<AdvancedCache<K, V>> cache;
    @Inject protected EntryFactory entryFactory;
    @Inject protected InternalDataContainer dataContainer;
 
@@ -478,7 +479,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
 
    public AdvancedCache getCacheWithFlags(FlagAffectedCommand command) {
       Set<Flag> flags = command.getFlags();
-      return cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+      return cache.wired().withFlags(flags.toArray(new Flag[flags.size()]));
    }
 
    @Override
@@ -528,7 +529,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       private final boolean ignoreOwnership;
 
       public BackingEntrySet(boolean ignoreOwnership, CacheSet<CacheEntry<K, V>> entrySet) {
-         super(cache, entrySet);
+         super(cache.wired(), entrySet);
          this.ignoreOwnership = ignoreOwnership;
          this.entrySet = entrySet;
       }
@@ -536,7 +537,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
          // Here we use stream because plain .iterator() would return non-serializable EntryWrapper entries
-         return new BackingIterator<>(cache, ignoreOwnership, () -> entrySet.stream().iterator(), Map.Entry::getKey);
+         return new BackingIterator<>(cache.wired(), ignoreOwnership, () -> entrySet.stream().iterator(), Map.Entry::getKey);
       }
 
       @Override
@@ -683,13 +684,13 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       private final boolean ignoreOwnership;
 
       public BackingKeySet(boolean ignoreOwnership, CacheSet<K> keySet) {
-         super(cache, keySet);
+         super(cache.wired(), keySet);
          this.ignoreOwnership = ignoreOwnership;
       }
 
       @Override
       public CloseableIterator<K> iterator() {
-         return new BackingIterator<>(cache, ignoreOwnership, delegate()::iterator, Function.identity());
+         return new BackingIterator<>(cache.wired(), ignoreOwnership, delegate()::iterator, Function.identity());
       }
 
       @Override

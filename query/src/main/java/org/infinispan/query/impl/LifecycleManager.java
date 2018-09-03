@@ -12,7 +12,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -39,6 +38,8 @@ import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ManageableComponentMetadata;
+import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
@@ -121,7 +122,7 @@ public class LifecycleManager implements ModuleLifecycle {
          if (isIndexed) {
             cr.registerComponent(new ShardAllocationManagerImpl(), ShardAllocatorManager.class);
             searchFactory = createSearchIntegrator(cfg.indexing(), cr, aggregatedClassLoader);
-            createQueryInterceptorIfNeeded(cr, cfg, cache, searchFactory);
+            createQueryInterceptorIfNeeded(cr.getComponent(BasicComponentRegistry.class), cfg, cache, searchFactory);
             addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
 
             cr.registerComponent(new QueryBox(), QueryBox.class);
@@ -163,22 +164,23 @@ public class LifecycleManager implements ModuleLifecycle {
       }
    }
 
-   private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache, SearchIntegrator searchIntegrator) {
+   private void createQueryInterceptorIfNeeded(BasicComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache,
+                                               SearchIntegrator searchIntegrator) {
       log.registeringQueryInterceptor(cache.getName());
 
-      QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
-      if (queryInterceptor != null) {
+      ComponentRef<QueryInterceptor> queryInterceptorRef = cr.getComponent(QueryInterceptor.class);
+      if (queryInterceptorRef != null) {
          // could be already present when two caches share a config
          return;
       }
 
       ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues = new ConcurrentHashMap<>();
       IndexModificationStrategy indexingStrategy = IndexModificationStrategy.configuredStrategy(searchIntegrator, cfg);
-      queryInterceptor = new QueryInterceptor(searchIntegrator, indexingStrategy, txOldValues, cache);
+      QueryInterceptor queryInterceptor = new QueryInterceptor(searchIntegrator, indexingStrategy, txOldValues, cache);
 
       // Interceptor registration not needed, core configuration handling
       // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
-      AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class);
+      AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class).wired();
 
       ConfigurationBuilder builder = new ConfigurationBuilder().read(cfg);
 
@@ -188,17 +190,20 @@ public class LifecycleManager implements ModuleLifecycle {
          lastLoadingInterceptor = wrappingInterceptor;
       }
 
+      ic.addInterceptorAfter(queryInterceptor, lastLoadingInterceptor.getClass());
+      cr.registerComponent(QueryInterceptor.class, queryInterceptor, true);
+      cr.addDynamicDependency(AsyncInterceptorChain.class.getName(), QueryInterceptor.class.getName());
+
       // add the interceptor to the configuration also
       builder.customInterceptors().addInterceptor()
-            .interceptor(queryInterceptor).after(lastLoadingInterceptor.getClass());
-
-      ic.addInterceptorAfter(queryInterceptor, lastLoadingInterceptor.getClass());
-      cr.registerComponent(queryInterceptor, QueryInterceptor.class);
-      cr.registerComponent(queryInterceptor, queryInterceptor.getClass().getName(), true);
+             .interceptor(queryInterceptor).after(lastLoadingInterceptor.getClass());
 
       if (cfg.transaction().transactionMode().isTransactional()) {
          TxQueryInterceptor txQueryInterceptor = new TxQueryInterceptor(txOldValues, queryInterceptor);
          ic.addInterceptorBefore(txQueryInterceptor, wrappingInterceptor.getClass());
+         cr.registerComponent(TxQueryInterceptor.class, txQueryInterceptor, true);
+         cr.addDynamicDependency(AsyncInterceptorChain.class.getName(), TxQueryInterceptor.class.getName());
+
          // add the interceptor to the configuration also
          builder.customInterceptors().addInterceptor()
                .interceptor(txQueryInterceptor).before(wrappingInterceptor.getClass());

@@ -60,6 +60,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationSuccessAction;
@@ -70,7 +71,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -91,12 +91,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Inject protected ClusteringDependentLogic cdl;
    @Inject private VersionGenerator versionGenerator;
    @Inject protected DistributionManager distributionManager;
-   @Inject private StateConsumer stateConsumer;       // optional
+   @Inject private ComponentRef<StateConsumer> stateConsumer;
    @Inject private StateTransferLock stateTransferLock;
-   @Inject private XSiteStateConsumer xSiteStateConsumer;
+   @Inject private ComponentRef<XSiteStateConsumer> xSiteStateConsumer;
    @Inject private GroupManager groupManager;
    @Inject private CacheNotifier notifier;
-   @Inject private StateTransferManager stateTransferManager;
    @Inject private KeyPartitioner keyPartitioner;
 
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
@@ -158,7 +157,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean ignoreOwnership(FlagAffectedCommand command) {
-      return stateTransferManager == null || command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK);
+      return distributionManager == null || command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK);
    }
 
    protected boolean canRead(DataCommand command) {
@@ -265,11 +264,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          // If we are committing a ClearCommand now then no keys should be written by state transfer from
          // now on until current rebalance ends.
-         if (stateConsumer != null) {
-            stateConsumer.stopApplyingState(((ClearCommand) rCommand).getTopologyId());
+         if (stateConsumer.running() != null) {
+            stateConsumer.running().stopApplyingState(((ClearCommand) rCommand).getTopologyId());
          }
-         if (xSiteStateConsumer != null) {
-            xSiteStateConsumer.endStateTransfer(null);
+         if (xSiteStateConsumer.running() != null) {
+            xSiteStateConsumer.running().endStateTransfer(null);
          }
 
          if (!rCtx.isInTxScope()) {
