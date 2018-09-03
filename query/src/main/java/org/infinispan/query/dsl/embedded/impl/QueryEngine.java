@@ -63,6 +63,7 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.SearchManagerImplementor;
+import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -106,6 +107,8 @@ public class QueryEngine<TypeMetadata> {
    private SearchIntegrator searchFactory;
 
    private static final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
+
+   private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(EmbeddedQueryEngine.class);
 
    protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass, LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider) {
       this.cache = wrapCache(cache, isIndexed);
@@ -735,10 +738,10 @@ public class QueryEngine<TypeMetadata> {
       SearchIntegrator searchFactory = getSearchFactory();
       HSQuery hsQuery = metadata == null ? searchFactory.createHSQuery(luceneQuery) : searchFactory.createHSQuery(luceneQuery, metadata);
       Sort sort = luceneParsingResult.getSort();
-      String[] projections = luceneParsingResult.getProjections();
       if (sort != null) {
          hsQuery.sort(sort);
       }
+      String[] projections = luceneParsingResult.getProjections();
       if (projections != null) {
          hsQuery.projection(projections);
       }
@@ -753,8 +756,7 @@ public class QueryEngine<TypeMetadata> {
          return new ClusteredCacheQueryImpl<>(queryDefinition, asyncExecutor, cache, keyTransformationHandler, indexedTypeMap);
       } else {
          queryDefinition.initialize(cache);
-         HSQuery hsQuery = queryDefinition.getHsQuery();
-         return new CacheQueryImpl<>(hsQuery, cache, keyTransformationHandler);
+         return new CacheQueryImpl<>(queryDefinition.getHsQuery(), cache, keyTransformationHandler);
       }
    }
 
@@ -779,7 +781,8 @@ public class QueryEngine<TypeMetadata> {
       org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
 
       if (indexedQueryMode == IndexedQueryMode.BROADCAST) {
-         return new ClusteredCacheQueryImpl<>(new QueryDefinition(queryString), asyncExecutor, cache, keyTransformationHandler, null);
+         return new ClusteredCacheQueryImpl<>(new QueryDefinition(queryString, queryEngineProvider),
+               asyncExecutor, cache, keyTransformationHandler, null);
       } else {
 
          if (log.isDebugEnabled()) {
@@ -802,7 +805,6 @@ public class QueryEngine<TypeMetadata> {
    protected <E> CacheQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       return buildLuceneQuery(ickleParsingResult, namedParameters, startOffset, maxResults, IndexedQueryMode.FETCH);
    }
-
 
    /**
     * Build a Lucene index query.
@@ -854,6 +856,11 @@ public class QueryEngine<TypeMetadata> {
             .transform(parsingResult, namedParameters, getTargetedClass(parsingResult));
    }
 
+   /**
+    * Enhances the give query with an extra condition to discriminate on entity type. This is a no-op in embedded mode
+    * but other query engines could use it to discriminate if more types are stored in the same index. To be overridden
+    * by subclasses as needed.
+    */
    protected org.apache.lucene.search.Query makeTypeQuery(org.apache.lucene.search.Query query, String targetEntityName) {
       return query;
    }
@@ -864,7 +871,7 @@ public class QueryEngine<TypeMetadata> {
 
    protected CacheQuery<?> makeCacheQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, org.apache.lucene.search.Query luceneQuery, IndexedQueryMode queryMode, Map<String, Object> namedParameters) {
       if (queryMode == IndexedQueryMode.BROADCAST) {
-         QueryDefinition queryDefinition = new QueryDefinition(ickleParsingResult.getQueryString());
+         QueryDefinition queryDefinition = new QueryDefinition(ickleParsingResult.getQueryString(), queryEngineProvider);
          queryDefinition.setNamedParameters(namedParameters);
          return getSearchManager().getQuery(queryDefinition, queryMode, null);
       }

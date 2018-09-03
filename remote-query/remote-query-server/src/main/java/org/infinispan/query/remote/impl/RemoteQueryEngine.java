@@ -21,16 +21,21 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.impl.RowProcessor;
+import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
+import org.infinispan.util.function.SerializableFunction;
 
 /**
  * @author anistor@redhat.com
  * @since 8.0
  */
 final class RemoteQueryEngine extends BaseRemoteQueryEngine {
+
+   private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(RemoteQueryManager.class).getQueryEngine(c);
 
    RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
       super(isIndexed ? cache.withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class) : cache,
@@ -93,11 +98,11 @@ final class RemoteQueryEngine extends BaseRemoteQueryEngine {
       IndexingMetadata indexingMetadata = ickleParsingResult.getTargetEntityMetadata().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
       Set<String> sortableFields = indexingMetadata != null ? indexingMetadata.getSortableFields() : Collections.emptySet();
       IndexedTypeMap<CustomTypeMetadata> queryMetadata = IndexedTypeMaps.singletonMapping(ProtobufValueWrapper.INDEXING_TYPE, () -> sortableFields);
-      RemoteQueryDefinition queryDefinition;
+      QueryDefinition queryDefinition;
       if (queryMode == IndexedQueryMode.BROADCAST) {
-         queryDefinition = new RemoteQueryDefinition(ickleParsingResult.getQueryString());
+         queryDefinition = new QueryDefinition(ickleParsingResult.getQueryString(), queryEngineProvider);
       } else {
-         queryDefinition = new RemoteQueryDefinition(getSearchFactory().createHSQuery(luceneQuery, queryMetadata));
+         queryDefinition = new QueryDefinition(getSearchFactory().createHSQuery(luceneQuery, queryMetadata));
       }
       queryDefinition.setNamedParameters(namedParameters);
       return getSearchManager().getQuery(queryDefinition, queryMode, queryMetadata);
