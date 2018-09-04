@@ -9,6 +9,7 @@ import java.util.Set;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.SortField.Type;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
 
 
 /**
@@ -19,18 +20,20 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
  */
 public class LuceneSortFieldExternalizer extends AbstractExternalizer<SortField> {
 
+   private static final SortField.Type[] SORTFIELD_TYPE_VALUES = SortField.Type.values();
+
    @Override
    public Set<Class<? extends SortField>> getTypeClasses() {
       return Collections.singleton(SortField.class);
    }
 
    @Override
-   public SortField readObject(final ObjectInput input) throws IOException, ClassNotFoundException {
+   public SortField readObject(ObjectInput input) throws IOException {
       return readObjectStatic(input);
    }
 
    @Override
-   public void writeObject(final ObjectOutput output, final SortField sortField) throws IOException {
+   public void writeObject(ObjectOutput output, SortField sortField) throws IOException {
       writeObjectStatic(output, sortField);
    }
 
@@ -39,16 +42,16 @@ public class LuceneSortFieldExternalizer extends AbstractExternalizer<SortField>
       return ExternalizerIds.LUCENE_SORT_FIELD;
    }
 
-   static void writeObjectStatic(final ObjectOutput output, final SortField sortField) throws IOException {
+   static void writeObjectStatic(ObjectOutput output, SortField sortField) throws IOException {
       output.writeUTF(sortField.getField());
-      output.writeObject(sortField.getType());
+      MarshallUtil.marshallEnum(sortField.getType(), output);
       output.writeBoolean(sortField.getReverse());
    }
 
-   static SortField readObjectStatic(final ObjectInput input) throws IOException, ClassNotFoundException {
-      final String fieldName = input.readUTF();
-      final Type sortType = (Type) input.readObject();
-      final boolean reverseSort = input.readBoolean();
+   static SortField readObjectStatic(ObjectInput input) throws IOException {
+      String fieldName = input.readUTF();
+      Type sortType = MarshallUtil.unmarshallEnum(input, (ordinal) -> SORTFIELD_TYPE_VALUES[ordinal]);
+      boolean reverseSort = input.readBoolean();
       return new SortField(fieldName, sortType, reverseSort);
    }
 }
