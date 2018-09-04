@@ -563,9 +563,10 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    /**
     * If encoders and wrappers are all identity we should just return the normal cache and avoid all wrappings
-    * @param keyEncoderClass the key encoder class
+    *
+    * @param keyEncoderClass   the key encoder class
     * @param valueEncoderClass the value encoder class
-    * @param keyWrapperClass the key wrapper class
+    * @param keyWrapperClass   the key wrapper class
     * @param valueWrapperClass the value wrapper class
     * @return true if all classes are identity oness
     */
@@ -788,6 +789,14 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          storageEntry.setValue((B) valueToStorage(value));
          return entry.setValue(value);
       }
+
+      @Override
+      public String toString() {
+         return "EntryWrapper{" +
+               "key=" + entry.getKey() +
+               ", value=" + entry.getValue() +
+               "}";
+      }
    }
 
    private class CacheEntryWrapper<A, B> extends ForwardingCacheEntry<A, B> {
@@ -887,7 +896,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
             new BiFunctionMapper(biFunction, keyDataConversion, valueDataConversion);
    }
 
-   private FunctionMapper wrapFunction(Function<?,?> function) {
+   private FunctionMapper wrapFunction(Function<?, ?> function) {
       return function == null ?
             null :
             new FunctionMapper(function, keyDataConversion, valueDataConversion);
