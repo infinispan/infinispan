@@ -159,6 +159,14 @@ class AssertsNearCache<K, V> {
       return this;
    }
 
+   public AssertsNearCache<K, V> expectNearPreemptiveRemove(K key, AssertsNearCache<K, V>... affected) {
+      // Preemptive remove
+      MockRemoveEvent preemptiveRemove = pollEvent(events);
+      assertEquals(key, preemptiveRemove.key);
+      expectNoNearEvents();
+      return this;
+   }
+
    @SafeVarargs
    final AssertsNearCache<K, V> expectNearRemove(K key, AssertsNearCache<K, V>... affected) {
       expectLocalNearRemoveInClient(this, key);
@@ -187,11 +195,9 @@ class AssertsNearCache<K, V> {
    }
 
    private static <K, V> void expectLocalNearRemoveInClient(AssertsNearCache<K, V> client, K key) {
-      if (client.nearCacheMode.invalidated()) {
-         // Preemptive remove
-         MockRemoveEvent preemptiveRemove = pollEvent(client.events);
-         assertEquals(key, preemptiveRemove.key);
-      }
+      // Preemptive remove
+      MockRemoveEvent preemptiveRemove = pollEvent(client.events);
+      assertEquals(key, preemptiveRemove.key);
       // Remote event remove
       MockRemoveEvent remoteRemove = pollEvent(client.events);
       assertEquals(key, remoteRemove.key);
@@ -225,5 +231,4 @@ class AssertsNearCache<K, V> {
       assertEquals(value, get.value == null ? null : get.value.getValue());
       return get;
    }
-
 }

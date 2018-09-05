@@ -4,6 +4,9 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 
 class KeyValueVersionConverterFactory implements CacheEventConverterFactory {
+
+   public static final String NAME = "___eager-key-value-version-converter";
+
    private KeyValueVersionConverterFactory() {
    }
 
