@@ -157,6 +157,7 @@ public class TEST_PING extends Discovery {
 
       if (rsps != null) {
          rsps.addResponse(pingRsp, true);
+         addResponse(pingRsp, true);
       }
    }
 
