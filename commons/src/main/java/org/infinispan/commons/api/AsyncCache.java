@@ -315,11 +315,58 @@ public interface AsyncCache<K, V> {
       });
    }
 
+   /**
+    * Asynchronous version of {@link BasicCache#compute(Object, BiFunction)}. This method does not block on remote
+    * calls, even if your cache mode is synchronous. Has no benefit over {@link BasicCache#compute(Object, BiFunction)}
+    * )} if used in LOCAL mode.
+    *
+    * @since 9.4
+    */
    CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
 
-   CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K,? extends V> mappingFunction);
+   /**
+    * Asynchronous version of {@link BasicCache#computeIfAbsent(Object, Function)}. This method does not block on remote
+    * calls, even if your cache mode is synchronous. Has no benefit over {@link BasicCache#computeIfAbsent(Object,
+    * Function)} if used in LOCAL mode.
+    *
+    * @since 9.4
+    */
+   CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction);
 
+   /**
+    * Asynchronous version of {@link BasicCache#computeIfPresent(Object, BiFunction)}. This method does not block on
+    * remote calls, even if your cache mode is synchronous. Has no benefit over {@link
+    * BasicCache#computeIfPresent(Object, BiFunction)} if used in LOCAL mode.
+    *
+    * @since 9.4
+    */
    CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
 
-   CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V,? super V,? extends V> remappingFunction);
+   /**
+    * Asynchronous version of {@link BasicCache#merge(Object, Object, BiFunction)}. This method does not block on remote
+    * calls, even if your cache mode is synchronous. Has no benefit over {@link BasicCache#merge(Object, Object,
+    * BiFunction)} if used in LOCAL mode.
+    *
+    * @since 9.4
+    */
+   CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction);
+
+   /**
+    * Asynchronous version of {@link BasicCache#merge(Object, Object, BiFunction, long, TimeUnit)}. This method does not
+    * block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
+    * BasicCache#merge(Object, Object, BiFunction, long, TimeUnit)} if used in LOCAL mode.
+    *
+    * @since 9.4
+    */
+   CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit);
+
+   /**
+    * Asynchronous version of {@link BasicCache#merge(Object, Object, BiFunction, long, TimeUnit, long, TimeUnit)}. This
+    * method does not block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
+    * BasicCache#merge(Object, Object, BiFunction, long, TimeUnit, long, TimeUnit)} if used in LOCAL mode.
+    *
+    * @since 9.4
+    */
+   CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+
 }

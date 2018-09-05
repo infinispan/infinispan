@@ -285,6 +285,16 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return cache.mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   @Override
    public AdvancedCache<K, V> getAdvancedCache() {
       return cache.getAdvancedCache();
    }
