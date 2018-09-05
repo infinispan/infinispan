@@ -1,5 +1,6 @@
 package org.infinispan.api;
 
+import static org.infinispan.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -8,10 +9,15 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.time.TimeService;
@@ -21,6 +27,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ControlledTimeService;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.AsyncAPITest")
@@ -30,6 +37,11 @@ public class AsyncAPITest extends SingleCacheManagerTest {
    private ControlledTimeService timeService = new ControlledTimeService();
    private Long startTime;
 
+   @BeforeMethod
+   public void clearCache() {
+      c.clear();
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
@@ -38,145 +50,219 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       return cm;
    }
 
-   public void testAsyncMethods() throws Exception {
-      // get
-      Future<String> f = c.getAsync("k");
-      assert f != null;
-      assert !f.isCancelled();
-      assertNull(f.get());
-      assert f.isDone();
-      assert c.get("k") == null;
-
-      // put
-      f = c.putAsync("k", "v");
-      assert f != null;
-      assert !f.isCancelled();
-      assertEquals(f.get(), null);
-      assert f.isDone();
-      assert c.get("k").equals("v");
-
-      f = c.putAsync("k", "v2");
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get().equals("v");
-      assert f.isDone();
-      assert c.get("k").equals("v2");
-
-      // putAll
-      Future<Void> f2 = c.putAllAsync(Collections.singletonMap("k", "v3"));
-      assert f2 != null;
-      assert !f2.isCancelled();
-      assert f2.get() == null;
-      assert f2.isDone();
-      assert c.get("k").equals("v3");
-
-      // putIfAbsent
-      f = c.putIfAbsentAsync("k", "v4");
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get().equals("v3");
-      assert f.isDone();
-      assert c.get("k").equals("v3");
-
-      // remove
-      f = c.removeAsync("k");
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get().equals("v3");
-      assert f.isDone();
-      assert c.get("k") == null;
-
-      // putIfAbsent again
-      f = c.putIfAbsentAsync("k", "v4");
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get() == null;
-      assert f.isDone();
-      assert c.get("k").equals("v4");
-
-      // get
-      f = c.getAsync("k");
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get().equals("v4");
-      assert f.isDone();
-      assert c.get("k").equals("v4");
-
-      // removecond
-      Future<Boolean> f3 = c.removeAsync("k", "v_nonexistent");
-      assert f3 != null;
-      assert !f3.isCancelled();
-      assert f3.get().equals(false);
-      assert f3.isDone();
-      assert c.get("k").equals("v4");
-
-      f3 = c.removeAsync("k", "v4");
-      assert f3 != null;
-      assert !f3.isCancelled();
-      assert f3.get().equals(true);
-      assert f3.isDone();
-      assert c.get("k") == null;
-
-      // replace
-      f = c.replaceAsync("k", "v5");
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get() == null;
-      assert f.isDone();
-      assert c.get("k") == null;
-
-      // putAllAsync
-      Map<String, String> map = new HashMap<>();
-      map.put("k", "v");
-      map.put("other-key", "other-value");
-      CompletableFuture<Void> putAllF = c.putAllAsync(map);
-      assertNotNull(putAllF);
-      assertFalse(putAllF.isCancelled());
-      assertEquals(null, putAllF.get());
-      assertTrue(putAllF.isDone());
-      assertEquals("v", c.get("k"));
-      assertEquals("other-value", c.get("other-key"));
-
-      // getAllAsync
-      CompletableFuture<Map<String, String>> getAllF = c.getAllAsync(map.keySet());
-      assertNotNull(getAllF);
-      assertFalse(getAllF.isCancelled());
-      assertEquals(map, getAllF.get());
-      assertTrue(getAllF.isDone());
-
-      // replace2
-      f = c.replaceAsync("k", "v5");
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get().equals("v");
-      assert f.isDone();
-      assert c.get("k").equals("v5");
-
-      // replace3
-      f3 = c.replaceAsync("k", "v_nonexistent", "v6");
-      assert f3 != null;
-      assert !f3.isCancelled();
-      assert f3.get().equals(false);
-      assert f3.isDone();
-      assert c.get("k").equals("v5");
-
-      f3 = c.replaceAsync("k", "v5", "v6");
-      assert f3 != null;
-      assert !f3.isCancelled();
-      assert f3.get().equals(true);
-      assert f3.isDone();
-      assert c.get("k").equals("v6");
+   public void testGetAsyncWhenKeyIsNotPresent() throws Exception {
+      CompletableFuture<String> f = c.getAsync("k");
+      assertFutureResult(f, null);
+      assertNull(c.get("k"));
    }
 
-   public void testAsyncMethodWithLifespanAndMaxIdle() throws Exception {
+   public void testGetAsyncAfterPut() throws Exception {
+      c.put("k", "v");
+      CompletableFuture<String> f = c.getAsync("k");
+      assertFutureResult(f, "v");
+   }
 
+   public void testGetAllAsync() throws Exception {
+      c.put("key-one-get", "one");
+      c.put("key-two-get", "two");
+      c.put("key-three-get", "three");
+      Set<String> keys = new HashSet<>();
+      keys.add("key-one-get");
+      keys.add("key-two-get");
+      keys.add("key-three-get");
+      CompletableFuture<Map<String, String>> getAllF = c.getAllAsync(keys);
+      assertNotNull(getAllF);
+      assertFalse(getAllF.isCancelled());
+      Map<String, String> resultAsMap = getAllF.get();
+      assertNotNull(resultAsMap);
+      assertEquals("one", resultAsMap.get("key-one-get"));
+      assertEquals("two", resultAsMap.get("key-two-get"));
+      assertEquals("three", resultAsMap.get("key-three-get"));
+      assertTrue(getAllF.isDone());
+   }
+
+   public void testPutAsync() throws Exception {
+      CompletableFuture<String> f = c.putAsync("k", "v1");
+      assertFutureResult(f, null);
+      assertEquals("v1", c.get("k"));
+
+      f = c.putAsync("k", "v2");
+      assertFutureResult(f, "v1");
+      assertEquals("v2", c.get("k"));
+   }
+
+   public void testPutAllAsyncSingleKeyValue() throws Exception {
+      CompletableFuture<Void> f = c.putAllAsync(Collections.singletonMap("k", "v"));
+      assertFutureResult(f, null);
+      assertEquals("v", c.get("k"));
+   }
+
+   public void testPutAllAsyncMultipleKeyValue() throws Exception {
+      Map<String, String> map = new HashMap<>();
+      map.put("one-key", "one");
+      map.put("two-key", "two");
+      CompletableFuture<Void> putAllF = c.putAllAsync(map);
+      assertFutureResult(putAllF, null);
+      assertEquals("one", c.get("one-key"));
+      assertEquals("two", c.get("two-key"));
+   }
+
+   public void testPutIfAbsentAsync() throws Exception {
+      CompletableFuture<String> f = c.putIfAbsentAsync("k", "v1");
+      assertFutureResult(f, null);
+      assertEquals("v1", c.get("k"));
+
+      f = c.putIfAbsentAsync("k", "v2");
+      assertFutureResult(f, "v1");
+      assertEquals("v1", c.get("k"));
+   }
+
+   public void testRemoveAsync() throws Exception {
+      c.put("k", "v");
+      assertEquals("v", c.get("k"));
+
+      CompletableFuture<String> f = c.removeAsync("k");
+      assertFutureResult(f, "v");
+      assertNull(c.get("k"));
+   }
+
+   public void testRemoveConditionalAsync() throws Exception {
+      c.put("k", "v");
+      Future<Boolean> f = c.removeAsync("k", "v_nonexistent");
+      assertFutureResult(f, false);
+      assertEquals("v", c.get("k"));
+
+      f = c.removeAsync("k", "v");
+      assertFutureResult(f, true);
+      assertNull(c.get("k"));
+   }
+
+   public void testReplaceAsyncNonExistingKey() throws Exception {
+      CompletableFuture<String> f = c.replaceAsync("k", "v");
+      assertFutureResult(f, null);
+      assertNull(c.get("k"));
+   }
+
+   public void testReplaceAsyncExistingKey() throws Exception {
+      c.put("k", "v");
+      CompletableFuture<String> f = c.replaceAsync("k", "v2");
+      assertFutureResult(f, "v");
+      assertEquals("v2", c.get("k"));
+   }
+
+   public void testReplaceAsyncConditionalOnOldValueNonExisting() throws Exception {
+      c.put("k", "v");
+      CompletableFuture<Boolean> f = c.replaceAsync("k", "v_nonexistent", "v2");
+      assertFutureResult(f, false);
+      assertEquals("v", c.get("k"));
+   }
+
+   public void testReplaceAsyncConditionalOnOldValue() throws Exception {
+      c.put("k", "v");
+      CompletableFuture<Boolean> f = c.replaceAsync("k", "v", "v2");
+      assertFutureResult(f, true);
+      assertEquals("v2", c.get("k"));
+   }
+
+   public void testComputeIfAbsentAsync() throws Exception {
+      Function<Object, String> mappingFunction = k -> k + " world";
+      assertEquals("hello world", c.computeIfAbsentAsync("hello", mappingFunction).get());
+      assertEquals("hello world", c.get("hello"));
+
+      Function<Object, String> functionAfterPut = k -> k + " happy";
+      // hello already exists so nothing should happen
+      assertEquals("hello world", c.computeIfAbsentAsync("hello", functionAfterPut).get());
+      assertEquals("hello world", c.get("hello"));
+
+      int cacheSizeBeforeNullValueCompute = c.size();
+      Function<Object, String> functionMapsToNull = k -> null;
+      assertNull("with function mapping to null returns null", c.computeIfAbsentAsync("kaixo", functionMapsToNull).get());
+      assertNull("the key does not exist", c.get("kaixo"));
+      assertEquals(cacheSizeBeforeNullValueCompute, c.size());
+
+      RuntimeException computeRaisedException = new RuntimeException("hi there");
+      Function<Object, String> functionMapsToException = k -> {
+         throw computeRaisedException;
+      };
+      expectException(ExecutionException.class, RuntimeException.class, "hi there", () -> c.computeIfAbsentAsync("es", functionMapsToException).get());
+   }
+
+   public void testComputeIfPresentAsync() throws Exception {
+      BiFunction<Object, Object, String> mappingFunction = (k, v) -> "hello_" + k + ":" + v;
+      c.put("es", "hola");
+
+      assertEquals("hello_es:hola", c.computeIfPresentAsync("es", mappingFunction).get());
+      assertEquals("hello_es:hola", c.get("es"));
+
+      RuntimeException computeRaisedException = new RuntimeException("hi there");
+      BiFunction<Object, Object, String> mappingToException = (k, v) -> {
+         throw computeRaisedException;
+      };
+      expectException(ExecutionException.class, RuntimeException.class, "hi there", () -> c.computeIfPresentAsync("es", mappingToException).get());
+
+      BiFunction<Object, Object, String> mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
+      assertNull("unexisting key should return null", c.computeIfPresentAsync("fr", mappingForNotPresentKey).get());
+      assertNull("unexisting key should return null", c.get("fr"));
+
+      BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
+      assertNull("mapping to null returns null", c.computeIfPresentAsync("es", mappingToNull).get());
+      assertNull("the key is removed", c.get("es"));
+   }
+
+   public void testComputeAsync() throws Exception {
+      BiFunction<Object, Object, String> mappingFunction = (k, v) -> "hello_" + k + ":" + v;
+      c.put("es", "hola");
+
+      assertEquals("hello_es:hola", c.computeAsync("es", mappingFunction).get());
+      assertEquals("hello_es:hola", c.get("es"));
+
+      BiFunction<Object, Object, String> mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
+      assertEquals("absent_fr:null", c.computeAsync("fr", mappingForNotPresentKey).get());
+      assertEquals("absent_fr:null", c.get("fr"));
+
+      BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
+      assertNull("mapping to null returns null", c.computeAsync("es", mappingToNull).get());
+      assertNull("the key is removed", c.get("es"));
+
+      int cacheSizeBeforeNullValueCompute = c.size();
+      assertNull("mapping to null returns null", c.computeAsync("eus", mappingToNull).get());
+      assertNull("the key does not exist", c.get("eus"));
+      assertEquals(cacheSizeBeforeNullValueCompute, c.size());
+
+      RuntimeException computeRaisedException = new RuntimeException("hi there");
+      BiFunction<Object, Object, String> mappingToException = (k, v) -> {
+         throw computeRaisedException;
+      };
+      expectException(ExecutionException.class, RuntimeException.class, "hi there", () -> c.computeAsync("es", mappingToException).get());
+   }
+
+   public void testMergeAsync() throws Exception {
+      c.put("k", "v");
+
+      // replace
+      c.mergeAsync("k", "v", (oldValue, newValue) -> "" + oldValue + newValue).get();
+      assertEquals("vv", c.get("k"));
+
+      // remove if null value after remapping
+      c.mergeAsync("k", "v2", (oldValue, newValue) -> null).get();
+      assertEquals(null, c.get("k"));
+
+      // put if absent
+      c.mergeAsync("k2", "42", (oldValue, newValue) -> "" + oldValue + newValue).get();
+      assertEquals("42", c.get("k2"));
+
+      c.put("k", "v");
+      RuntimeException mergeRaisedException = new RuntimeException("hi there");
+      expectException(ExecutionException.class, RuntimeException.class, "hi there", () -> cache.mergeAsync("k", "v1", (k, v) -> {
+         throw mergeRaisedException;
+      }).get());
+   }
+
+   public void testPutAsyncWithLifespanAndMaxIdle() throws Exception {
       // lifespan only
       Future<String> f = c.putAsync("k", "v", 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get() == null;
-      assert f.isDone();
+      assertFutureResult(f, null);
       verifyEviction("k", "v", 1000, 500, true);
 
       log.warn("STARTING FAILING ONE");
@@ -184,170 +270,174 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       // lifespan and max idle (test max idle)
       f = c.putAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get() == null;
-      assert f.isDone();
+      assertFutureResult(f, null);
       verifyEviction("k", "v", 1000, 500, false);
 
       // lifespan and max idle (test lifespan)
       f = c.putAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get() == null;
-      assert f.isDone();
+      assertFutureResult(f, null);
       verifyEviction("k", "v", 3000, 500, true);
+   }
 
+   public void testPutAllAsyncWithLifespanAndMaxIdle() throws Exception {
       // putAll lifespan only
-      Future<Void> f2 = c.putAllAsync(Collections.singletonMap("k", "v3"), 1000, TimeUnit.MILLISECONDS);
+      Future<Void> f = c.putAllAsync(Collections.singletonMap("k", "v1"), 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f2 != null;
-      assert !f2.isCancelled();
-      assert f2.get() == null;
-      assert f2.isDone();
-      verifyEviction("k", "v3", 1000, 500, true);
+      assertFutureResult(f, null);
+      verifyEviction("k", "v1", 1000, 500, true);
 
       // putAll lifespan and max idle (test max idle)
-      f2 = c.putAllAsync(Collections.singletonMap("k", "v4"), 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      f = c.putAllAsync(Collections.singletonMap("k", "v2"), 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f2 != null;
-      assert !f2.isCancelled();
-      assert f2.get() == null;
-      assert f2.isDone();
-      verifyEviction("k", "v4", 1000, 500, false);
+      assertFutureResult(f, null);
+      verifyEviction("k", "v2", 1000, 500, false);
 
       // putAll lifespan and max idle (test lifespan)
-      f2 = c.putAllAsync(Collections.singletonMap("k", "v5"), 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      f = c.putAllAsync(Collections.singletonMap("k", "v3"), 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f2 != null;
-      assert !f2.isCancelled();
-      assert f2.get() == null;
-      assert f2.isDone();
-      verifyEviction("k", "v5", 3000, 500, true);
+      assertFutureResult(f, null);
+      verifyEviction("k", "v3", 3000, 500, true);
+   }
 
+   public void testPutIfAbsentAsyncWithLifespanAndMaxIdle() throws Exception {
       // putIfAbsent lifespan only
-      f = c.putAsync("k", "v3");
-      assertNull(f.get());
-      f = c.putIfAbsentAsync("k", "v4", 1000, TimeUnit.MILLISECONDS);
+      c.put("k", "v1");
+      CompletableFuture<String> f = c.putIfAbsentAsync("k", "v2", 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assertEquals("v3", f.get());
-      assert f.isDone();
-      assert c.get("k").equals("v3");
-      assert !c.get("k").equals("v4");
+      assertFutureResult(f, "v1");
+      assertEquals("v1", c.get("k"));
       Thread.sleep(300);
-      assert c.get("k").equals("v3");
-      f = c.removeAsync("k");
-      assert f.get().equals("v3");
-      assert c.get("k") == null;
+      assertEquals("v1", c.get("k"));
+      assertEquals("v1", c.remove("k"));
+      assertNull(c.get("k"));
 
       // now really put (k removed) lifespan only
       f = c.putIfAbsentAsync("k", "v", 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get() == null;
-      assert f.isDone();
+      assertFutureResult(f, null);
       verifyEviction("k", "v", 1000, 500, true);
 
       // putIfAbsent lifespan and max idle (test max idle)
       f = c.putIfAbsentAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get() == null;
-      assert f.isDone();
+      assertFutureResult(f, null);
       verifyEviction("k", "v", 1000, 500, false);
 
       // putIfAbsent lifespan and max idle (test lifespan)
       f = c.putIfAbsentAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get() == null;
-      assert f.isDone();
+      assertFutureResult(f, null);
       verifyEviction("k", "v", 3000, 500, true);
+   }
 
-      // replace
-      f = c.replaceAsync("k", "v5", 1000, TimeUnit.MILLISECONDS);
+   public void testReplaceAsyncWithLifespan() throws Exception {
+
+      CompletableFuture<String> f = c.replaceAsync("k", "v", 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get() == null;
-      assert f.isDone();
-      assert c.get("k") == null;
+      assertFutureResult(f, null);
+      assertNull(c.get("k"));
 
-      // replace lifespan only
       c.put("k", "v");
-      f = c.replaceAsync("k", "v5", 1000, TimeUnit.MILLISECONDS);
+      f = c.replaceAsync("k", "v1", 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get().equals("v");
-      assert f.isDone();
-      verifyEviction("k", "v5", 1000, 500, true);
+      assertFutureResult(f, "v");
+      verifyEviction("k", "v1", 1000, 500, true);
+
+      //replace2
+      c.put("k", "v1");
+      Future<Boolean> f3 = c.replaceAsync("k", "v_nonexistent", "v2", 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f3, false);
+      Thread.sleep(300);
+      assertEquals("v1", c.get("k"));
+
+      f3 = c.replaceAsync("k", "v1", "v2", 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f3, true);
+      verifyEviction("k", "v2", 1000, 500, true);
+   }
+
+   public void testReplaceAsyncWithLifespanAndMaxIdle() throws Exception {
 
       // replace lifespan and max idle (test max idle)
       c.put("k", "v");
-      f = c.replaceAsync("k", "v5", 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      CompletableFuture f = c.replaceAsync("k", "v1", 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get().equals("v");
-      assert f.isDone();
-      verifyEviction("k", "v5", 1000, 500, false);
+      assertFutureResult(f, "v");
+      verifyEviction("k", "v1", 1000, 500, false);
 
       // replace lifespan and max idle (test lifespan)
       c.put("k", "v");
-      f = c.replaceAsync("k", "v5", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      f = c.replaceAsync("k", "v1", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f != null;
-      assert !f.isCancelled();
-      assert f.get().equals("v");
-      assert f.isDone();
-      verifyEviction("k", "v5", 3000, 500, true);
+      assertFutureResult(f, "v");
+      verifyEviction("k", "v1", 3000, 500, true);
 
-      //replace2
-      c.put("k", "v5");
-      Future<Boolean> f3 = c.replaceAsync("k", "v_nonexistent", "v6", 1000, TimeUnit.MILLISECONDS);
+      //replace2 ifespan and max idle (test max idle)
+      c.put("k", "v1");
+      f = c.replaceAsync("k", "v1", "v2", 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f3 != null;
-      assert !f3.isCancelled();
-      assert f3.get().equals(false);
-      assert f3.isDone();
-      Thread.sleep(300);
-      assert c.get("k").equals("v5");
-
-      // replace2 lifespan only
-      f3 = c.replaceAsync("k", "v5", "v6", 1000, TimeUnit.MILLISECONDS);
-      markStartTime();
-      assert f3 != null;
-      assert !f3.isCancelled();
-      assert f3.get().equals(true);
-      assert f3.isDone();
-      verifyEviction("k", "v6", 1000, 500, true);
-
-      // replace2 lifespan and max idle (test max idle)
-      c.put("k", "v5");
-      f3 = c.replaceAsync("k", "v5", "v6", 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
-      markStartTime();
-      assert f3 != null;
-      assert !f3.isCancelled();
-      assert f3.get().equals(true);
-      assert f3.isDone();
-      verifyEviction("k", "v6", 1000, 500, false);
+      assertFutureResult(f, true);
+      verifyEviction("k", "v2", 1000, 500, false);
 
       // replace2 lifespan and max idle (test lifespan)
-      c.put("k", "v5");
-      f3 = c.replaceAsync("k", "v5", "v6", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      c.put("k", "v1");
+      f = c.replaceAsync("k", "v1", "v2", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
       markStartTime();
-      assert f3 != null;
-      assert !f3.isCancelled();
-      assert f3.get().equals(true);
-      assert f3.isDone();
-      verifyEviction("k", "v6", 3000, 500, true);
+      assertFutureResult(f, true);
+      verifyEviction("k", "v2", 3000, 500, true);
+   }
+
+   public void testMergeAsyncWithLifespan() throws Exception {
+      c.put("k", "v");
+      CompletableFuture<String> f = c.mergeAsync("k", "v1", (oldValue, newValue) -> "" + oldValue + newValue, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "vv1");
+      verifyEviction("k", "vv1", 1000, 500, true);
+
+      f = c.mergeAsync("k2", "42", (oldValue, newValue) -> "" + oldValue + newValue, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "42");
+      verifyEviction("k2", "42", 1000, 500, true);
+   }
+
+   public void testMergeAsyncWithLifespanAndMaxIdle() throws Exception {
+      c.put("k", "v");
+      CompletableFuture<String> f = c.mergeAsync("k", "v1", (oldValue, newValue) -> "" + oldValue + newValue, 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "vv1");
+      verifyEviction("k", "vv1", 1000, 500, false);
+
+      c.put("k", "v");
+      f = c.mergeAsync("k", "v1", (oldValue, newValue) -> "" + oldValue + newValue, 500, TimeUnit.MILLISECONDS, 5000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "vv1");
+      verifyEviction("k", "vv1", 500, 500, false);
+
+      f = c.mergeAsync("k2", "v", (oldValue, newValue) -> "" + oldValue + newValue, 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "v");
+      verifyEviction("k2", "v", 1000, 500, false);
+
+      f = c.mergeAsync("k2", "v", (oldValue, newValue) -> "" + oldValue + newValue, 500, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "v");
+      verifyEviction("k2", "v", 500, 500, false);
+   }
+
+   /**
+    * Verifies the common assertions for the obtained Future object
+    *
+    * @param f,        the future
+    * @param expected, expected result after get
+    * @throws Exception
+    */
+   private void assertFutureResult(Future<?> f, Object expected) throws Exception {
+      assertNotNull(f);
+      assertFalse(f.isCancelled());
+      assertEquals(expected, f.get());
+      assertTrue(f.isDone());
    }
 
    private void markStartTime() {
@@ -356,11 +446,14 @@ public class AsyncAPITest extends SingleCacheManagerTest {
 
    /**
     * Verifies if a key is evicted after a certain time.
-    *  @param key the key to check
-    * @param expectedValue expected key value at the beginning
+    *
+    * @param key              the key to check
+    * @param expectedValue    expected key value at the beginning
     * @param expectedLifetime expected life of the key
-    * @param checkPeriod period between executing checks. If the check modifies the idle time. this is important to block idle expiration.
-    * @param touchKey indicates if the poll for key existence should read the key and cause idle time to be reset
+    * @param checkPeriod      period between executing checks. If the check modifies the idle time. this is important to
+    *                         block idle expiration.
+    * @param touchKey         indicates if the poll for key existence should read the key and cause idle time to be
+    *                         reset
     */
    private void verifyEviction(final String key, final String expectedValue, final long expectedLifetime, long checkPeriod, final boolean touchKey) {
       if (startTime == null) {

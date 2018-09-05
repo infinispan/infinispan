@@ -331,6 +331,16 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return delegate.mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return delegate.mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   @Override
    public CompletableFuture<V> replaceAsync(K key, V value) {
       return delegate.replaceAsync(key, value);
    }
