@@ -4,6 +4,7 @@ import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -19,17 +20,15 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
    private static final Log log = LogFactory.getLog(RoundRobinBalancingStrategy.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private int index = 0;
+   private int index;
 
    private SocketAddress[] servers;
 
    @Override
    public void setServers(Collection<SocketAddress> servers) {
       this.servers = servers.toArray(new SocketAddress[servers.size()]);
-      // keep the old index if possible so that we don't produce more requests for the first server
-      if (index >= this.servers.length) {
-         index = 0;
-      }
+      // Always start with a random server after a topology update
+      index = ThreadLocalRandom.current().nextInt(this.servers.length);
       if (trace) {
          log.tracef("New server list is: " + Arrays.toString(this.servers));
       }
