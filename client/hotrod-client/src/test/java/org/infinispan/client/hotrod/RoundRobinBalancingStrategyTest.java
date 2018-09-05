@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNotSame;
 import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -22,7 +24,7 @@ import org.testng.annotations.Test;
  * @since 4.1
  */
 @Test (groups = "unit", testName = "client.hotrod.RoundRobinBalancingStrategyTest")
-public class RoundRobinBalancingStrategyTest {
+public class RoundRobinBalancingStrategyTest extends AbstractInfinispanTest {
 
 
    SocketAddress addr1 = new InetSocketAddress("localhost",1111);
@@ -43,7 +45,8 @@ public class RoundRobinBalancingStrategyTest {
    }
 
    public void simpleTest() {
-      assertEquals(addr1, strategy.nextServer(null));
+      // Starts with a random server
+      expectServerEventually(addr1, defaultServers, null);
       assertEquals(addr2, strategy.nextServer(null));
       assertEquals(addr3, strategy.nextServer(null));
       assertEquals(addr1, strategy.nextServer(null));
@@ -58,7 +61,8 @@ public class RoundRobinBalancingStrategyTest {
       List<SocketAddress> newServers = new ArrayList<SocketAddress>(defaultServers);
       newServers.add(addr4);
       strategy.setServers(newServers);
-      assertEquals(addr1, strategy.nextServer(null));
+      // Starts with a random server
+      expectServerEventually(addr1, newServers, null);
       assertEquals(addr2, strategy.nextServer(null));
       assertEquals(addr3, strategy.nextServer(null));
       assertEquals(addr4, strategy.nextServer(null));
@@ -75,7 +79,8 @@ public class RoundRobinBalancingStrategyTest {
       List<SocketAddress> newServers = new ArrayList<SocketAddress>(defaultServers);
       newServers.remove(addr3);
       strategy.setServers(newServers);
-      assertEquals(addr1, strategy.nextServer(null));
+      // Starts with a random server
+      expectServerEventually(addr1, newServers, null);
       assertEquals(addr2, strategy.nextServer(null));
       assertEquals(addr1, strategy.nextServer(null));
       assertEquals(addr2, strategy.nextServer(null));
@@ -84,7 +89,8 @@ public class RoundRobinBalancingStrategyTest {
    }
 
    public void testRemoveServerAfterActivity() {
-      assertEquals(addr1, strategy.nextServer(null));
+      // Starts with a random server
+      expectServerEventually(addr1, defaultServers, null);
       assertEquals(addr2, strategy.nextServer(null));
       assertEquals(addr3, strategy.nextServer(null));
       assertEquals(addr1, strategy.nextServer(null));
@@ -92,8 +98,8 @@ public class RoundRobinBalancingStrategyTest {
       List<SocketAddress> newServers = new ArrayList<SocketAddress>(defaultServers);
       newServers.remove(addr3);
       strategy.setServers(newServers);
-      // the next server index is reset to 0 because it would have been out of bounds
-      assertEquals(addr1, strategy.nextServer(null));
+      // Selects a new random server
+      expectServerEventually(addr1, newServers, null);
       assertEquals(addr2, strategy.nextServer(null));
       assertEquals(addr1, strategy.nextServer(null));
       assertEquals(addr2, strategy.nextServer(null));
@@ -102,7 +108,8 @@ public class RoundRobinBalancingStrategyTest {
    }
 
    public void testAddServerAfterActivity() {
-      assertEquals(addr1, strategy.nextServer(null));
+      // Starts with a random server
+      expectServerEventually(addr1, defaultServers, null);
       assertEquals(addr2, strategy.nextServer(null));
       assertEquals(addr3, strategy.nextServer(null));
       assertEquals(addr1, strategy.nextServer(null));
@@ -110,8 +117,8 @@ public class RoundRobinBalancingStrategyTest {
       List<SocketAddress> newServers = new ArrayList<SocketAddress>(defaultServers);
       newServers.add(addr4);
       strategy.setServers(newServers);
-      // the next server index is still valid, so it is not reset
-      assertEquals(addr3, strategy.nextServer(null));
+      // Selects a new random server
+      expectServerEventually(addr3, newServers, null);
       assertEquals(addr4, strategy.nextServer(null));
       assertEquals(addr1, strategy.nextServer(null));
       assertEquals(addr2, strategy.nextServer(null));
@@ -147,9 +154,18 @@ public class RoundRobinBalancingStrategyTest {
       strategy.setServers(defaultServers);
       Set<SocketAddress> failedServers = new HashSet<SocketAddress>(defaultServers);
       // with all servers failed, the behaviour should be the same
-      assertEquals(addr1, strategy.nextServer(failedServers));
+      expectServerEventually(addr1, defaultServers, failedServers);
       assertEquals(addr2, strategy.nextServer(failedServers));
       assertEquals(addr3, strategy.nextServer(failedServers));
       assertEquals(addr1, strategy.nextServer(failedServers));
+   }
+
+   private void expectServerEventually(SocketAddress addr, List<SocketAddress> servers,
+                                      Set<SocketAddress> failedServers) {
+      for (int i = 0; i < servers.size(); i++) {
+         if (addr.equals(strategy.nextServer(failedServers)))
+            return;
+      }
+      fail("Did not get server " + addr + " after " + servers.size() + " attempts");
    }
 }
