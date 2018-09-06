@@ -48,6 +48,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import org.infinispan.notifications.cachelistener.filter.KeyValueFilterConverterAsCacheEventFilterConverter;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
 
@@ -197,7 +198,13 @@ class ClientListenerRegistry {
             filterAnnotations.add(CacheEntryExpired.class);
       }
 
-      if (useRawData) {
+      // If no filter or converter are supplied, we can apply a converter so we don't have to return the value - since
+      // events will only use the key
+      if (converter == null && filter == null) {
+         converter = new KeyValueFilterConverterAsCacheEventFilterConverter<>(HotRodServer.ToEmptyBytesKeyValueFilterConverter.INSTANCE);
+         // We have to use storage format - otherwise passing converer will force it to change to incorrect format
+         cache.addStorageFormatFilteredListener(clientEventSender, filter, converter, filterAnnotations);
+      } else if (useRawData) {
          cache.addStorageFormatFilteredListener(clientEventSender, filter, converter, filterAnnotations);
       } else {
          cache.addFilteredListener(clientEventSender, filter, converter, filterAnnotations);
