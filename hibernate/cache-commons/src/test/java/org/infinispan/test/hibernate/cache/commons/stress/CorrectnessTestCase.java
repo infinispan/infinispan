@@ -90,6 +90,7 @@ import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.jta.JtaAwareConnectionProviderImpl;
 import org.hibernate.testing.jta.TestingJtaPlatformImpl;
 import org.hibernate.testing.junit4.CustomParameterized;
+import org.infinispan.test.hibernate.cache.commons.util.InducedException;
 import org.infinispan.test.hibernate.cache.commons.util.TestConfigurationHook;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Address;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family;
@@ -296,12 +297,6 @@ public abstract class CorrectnessTestCase {
       }
 
       return metadata;
-   }
-
-   public static class InducedException extends Exception {
-      public InducedException(String message) {
-         super(message);
-      }
    }
 
    public static class FailureInducingInterceptor extends BaseCustomInterceptor {
