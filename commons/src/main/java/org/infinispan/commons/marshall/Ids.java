@@ -201,6 +201,8 @@ public interface Ids {
    int STATS_ENVELOPE = 137;
    int BIAS_REVOCATION_RESPONSE = 138;
 
+   int KEY_VALUE_FILTER_CONVERTER_AS_CACHE_EVENT_FILTER_CONVERTER = 139;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

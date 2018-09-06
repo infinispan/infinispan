@@ -62,8 +62,9 @@ import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
-import org.infinispan.globalstate.ScopedState;
+import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.globalstate.ScopeFilter;
+import org.infinispan.globalstate.ScopedState;
 import org.infinispan.interceptors.distribution.VersionedResult;
 import org.infinispan.interceptors.distribution.VersionedResults;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
@@ -90,9 +91,9 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterAsKeyVa
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterAsKeyValueFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.KeyValueFilterConverterAsCacheEventFilterConverter;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.MIMECacheEntry;
-import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.remoting.responses.BiasRevocationResponse;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -183,6 +184,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new GlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new KeyFilterAsCacheEventFilter.Externalizer(), exts);
       addInternalExternalizer(new KeyFilterAsKeyValueFilter.Externalizer(), exts);
+      addInternalExternalizer(new KeyValueFilterConverterAsCacheEventFilterConverter.Externalizer(), exts);
       addInternalExternalizer(new KeyValueFilterAsCacheEventFilter.Externalizer(), exts);
       addInternalExternalizer(new KeyValueFilterAsKeyFilter.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new ImmortalCacheEntry.Externalizer(), exts);

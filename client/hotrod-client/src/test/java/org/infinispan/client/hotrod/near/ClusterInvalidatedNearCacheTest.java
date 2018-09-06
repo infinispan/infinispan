@@ -69,7 +69,7 @@ public class ClusterInvalidatedNearCacheTest extends MultiHotRodServersTest {
    protected void expectNearCacheUpdates(AssertsNearCache<Integer, String> producer,
          Integer key, AssertsNearCache<Integer, String> consumer) {
       producer.get(key, null).expectNearGetNull(key);
-      producer.put(key, "v1").expectNearRemove(key, consumer);
+      producer.put(key, "v1").expectNearPreemptiveRemove(key, consumer);
       producer.get(key, "v1").expectNearGetNull(key).expectNearPutIfAbsent(key, "v1");
       producer.put(key, "v2").expectNearRemove(key, consumer);
       producer.get(key, "v2").expectNearGetNull(key).expectNearPutIfAbsent(key, "v2");

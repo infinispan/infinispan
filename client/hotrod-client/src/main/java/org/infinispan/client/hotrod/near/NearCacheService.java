@@ -10,7 +10,6 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
-import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
@@ -157,13 +156,6 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
 
       private InvalidatedNearCacheListener(NearCache<K, V> cache) {
          this.cache = cache;
-      }
-
-      // TODO: Created events should not be fired by the server for near cache, see ISPN-5545
-      @ClientCacheEntryCreated
-      @SuppressWarnings("unused")
-      public void handleCreatedEvent(ClientCacheEntryCreatedEvent<K> event) {
-         invalidate(event.getKey());
       }
 
       @ClientCacheEntryModified

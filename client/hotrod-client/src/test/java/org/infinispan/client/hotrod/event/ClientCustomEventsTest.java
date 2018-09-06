@@ -72,6 +72,16 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       withClientListener(l, remote -> {});
    }
 
+   public void testNoConverterFactoryCustomEvents() {
+      NoConverterFactoryListener l = new NoConverterFactoryListener<>(remoteCacheManager.getCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.put(1, "one");
+         // We don't get an event, since we don't have a converter and we only allow custom events
+         l.expectNoEvents();
+      });
+   }
+
    public void testParameterBasedConversion() {
       final DynamicCustomEventLogListener<Integer> l =
             new DynamicCustomEventLogListener<>(remoteCacheManager.getCache());
@@ -131,4 +141,8 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       public NonExistingConverterFactoryListener(RemoteCache<K, ?> r) { super(r); }
    }
 
+   @ClientListener
+   public static class NoConverterFactoryListener<K> extends CustomEventLogListener<K, Object> {
+      public NoConverterFactoryListener(RemoteCache<K, ?> r) { super(r); }
+   }
 }
