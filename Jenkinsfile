@@ -26,7 +26,7 @@ pipeline {
                     env.JAVA10_HOME = tool('JDK 10')
                 }
 
-                sh returnStdout: true, script: 'cleanup.sh'
+                sh 'cleanup.sh'
             }
         }
 
