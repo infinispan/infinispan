@@ -9,6 +9,7 @@ import static org.infinispan.server.core.ExternalizerIds.DECISION_FUNCTION;
 import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
 import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_VERSION_CONVERTER;
 import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_WITH_PREVIOUS_CONVERTER;
+import static org.infinispan.server.core.ExternalizerIds.NEAR_CACHE_FILTER_CONVERTER;
 import static org.infinispan.server.core.ExternalizerIds.PREPARED_FUNCTION;
 import static org.infinispan.server.core.ExternalizerIds.PREPARING_FUNCTION;
 import static org.infinispan.server.core.ExternalizerIds.SERVER_ADDRESS;
@@ -71,6 +72,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       Map<Integer, AdvancedExternalizer<?>> externalizers = globalCfg.serialization().advancedExternalizers();
       externalizers.put(SERVER_ADDRESS, new ServerAddress.Externalizer());
       externalizers.put(KEY_VALUE_VERSION_CONVERTER, new KeyValueVersionConverter.Externalizer());
+      externalizers.put(NEAR_CACHE_FILTER_CONVERTER, new KeyOnlyFilterConverter.Externalizer());
       externalizers.put(KEY_VALUE_WITH_PREVIOUS_CONVERTER, new KeyValueWithPreviousEventConverterExternalizer());
       externalizers.put(ITERATION_FILTER, new IterationFilter.IterationFilterExternalizer());
       externalizers.put(TX_STATE, TxState.EXTERNALIZER);

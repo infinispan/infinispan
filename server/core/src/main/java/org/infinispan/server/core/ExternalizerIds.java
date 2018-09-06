@@ -35,5 +35,6 @@ public final class ExternalizerIds {
    public static final int PREPARED_FUNCTION = 1120;
    public static final int XID_PREDICATE = 1121;
    public static final int CONDITIONAL_MARK_ROLLBACK_FUNCTION = 1122;
+   public static final int NEAR_CACHE_FILTER_CONVERTER = 1123;
 
 }

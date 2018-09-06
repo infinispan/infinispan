@@ -223,10 +223,14 @@ class ClientListenerRegistry {
    }
 
    private CacheEventConverterFactory findConverterFactory(String name, ConcurrentMap<String, CacheEventConverterFactory> factories) {
-      if (name.equals("___eager-key-value-version-converter"))
-         return KeyValueVersionConverterFactory.SINGLETON;
-      else
-         return findFactory(name, factories, "converter");
+      switch(name) {
+         case KeyValueVersionConverterFactory.NAME:
+            return KeyValueVersionConverterFactory.SINGLETON;
+         case KeyOnlyFilterConverterFactory.NAME:
+            return KeyOnlyFilterConverterFactory.SINGLETON;
+         default:
+            return findFactory(name, factories, "converter");
+      }
    }
 
    private <T> T findFactory(String name, ConcurrentMap<String, T> factories, String factoryType) {

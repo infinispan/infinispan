@@ -72,7 +72,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
    public void testGetNearCache() {
       assertClient.expectNoNearEvents();
       assertClient.get(1, null).expectNearGetNull(1);
-      assertClient.put(1, "v1").expectNearRemove(1);
+      assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
       assertClient.get(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
       assertClient.get(1, "v1").expectNearGetValue(1, "v1");
       assertClient.remove(1).expectNearRemove(1);
@@ -82,7 +82,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
    public void testGetAsyncNearCache() throws ExecutionException, InterruptedException {
       assertClient.expectNoNearEvents();
       assertClient.getAsync(1, null).expectNearGetNull(1);
-      assertClient.putAsync(1, "v1").expectNearRemove(1);
+      assertClient.putAsync(1, "v1").expectNearPreemptiveRemove(1);
       assertClient.getAsync(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
       assertClient.getAsync(1, "v1").expectNearGetValue(1, "v1");
       assertClient.removeAsync(1).expectNearRemove(1);
@@ -92,7 +92,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
    public void testGetVersionedNearCache() {
       assertClient.expectNoNearEvents();
       assertClient.getVersioned(1, null).expectNearGetNull(1);
-      assertClient.put(1, "v1").expectNearRemove(1);
+      assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
       assertClient.getVersioned(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
       assertClient.getVersioned(1, "v1").expectNearGetValueVersion(1, "v1");
       assertClient.remove(1).expectNearRemove(1);
@@ -102,7 +102,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
    public void testGetWithMetadataNearCache() {
       assertClient.expectNoNearEvents();
       assertClient.getWithMetadata(1, null).expectNearGetNull(1);
-      assertClient.put(1, "v1").expectNearRemove(1);
+      assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
       assertClient.getWithMetadata(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
       assertClient.getWithMetadata(1, "v1").expectNearGetValueVersion(1, "v1");
       assertClient.remove(1).expectNearRemove(1);
@@ -112,7 +112,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
    public void testGetWithMetadataAsyncNearCache() throws ExecutionException, InterruptedException {
       assertClient.expectNoNearEvents();
       assertClient.getWithMetadataAsync(1, null).expectNearGetNull(1);
-      assertClient.putAsync(1, "v1").expectNearRemove(1);
+      assertClient.putAsync(1, "v1").expectNearPreemptiveRemove(1);
       assertClient.getWithMetadataAsync(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
       assertClient.getWithMetadataAsync(1, "v1").expectNearGetValueVersion(1, "v1");
       assertClient.removeAsync(1).expectNearRemove(1);
@@ -121,7 +121,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
 
    public void testUpdateNearCache() {
       assertClient.expectNoNearEvents();
-      assertClient.put(1, "v1").expectNearRemove(1);
+      assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
       assertClient.put(1, "v2").expectNearRemove(1);
       assertClient.get(1, "v2").expectNearGetNull(1).expectNearPutIfAbsent(1, "v2");
       assertClient.get(1, "v2").expectNearGetValue(1, "v2");
@@ -131,11 +131,11 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
 
    public void testUpdateAsyncNearCache() throws ExecutionException, InterruptedException {
       assertClient.expectNoNearEvents();
-      assertClient.putAsync(1, "v1").expectNearRemove(1);
+      assertClient.putAsync(1, "v1").expectNearPreemptiveRemove(1);
       assertClient.putAsync(1, "v2").expectNearRemove(1);
       assertClient.getAsync(1, "v2").expectNearGetNull(1).expectNearPutIfAbsent(1, "v2");
       assertClient.getAsync(1, "v2").expectNearGetValue(1, "v2");
-      assertClient.putAsync(1, "v3").expectNearRemove(1);
+      assertClient.putAsync(1, "v3").expectNearPreemptiveRemove(1);
       assertClient.removeAsync(1).expectNearRemove(1);
       assertClient.putAsync(1, "v4", 3, TimeUnit.MILLISECONDS).expectNearRemove(1);
       assertClient.putAsync(1, "v5", 3, TimeUnit.MILLISECONDS, 3, TimeUnit.MILLISECONDS).expectNearRemove(1);
@@ -143,7 +143,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
 
    public void testGetUpdatesNearCache() {
       assertClient.expectNoNearEvents();
-      assertClient.put(1, "v1").expectNearRemove(1);
+      assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
 
       final AssertsNearCache<Integer, String> newAsserts = createAssertClient();
       withRemoteCacheManager(new RemoteCacheManagerCallable(newAsserts.manager) {
@@ -157,7 +157,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
 
    public void testGetAsyncUpdatesNearCache() throws ExecutionException, InterruptedException {
       assertClient.expectNoNearEvents();
-      assertClient.putAsync(1, "v1").expectNearRemove(1);
+      assertClient.putAsync(1, "v1").expectNearPreemptiveRemove(1);
 
       final AssertsNearCache<Integer, String> newAsserts = createAssertClient();
       withRemoteCacheManager(new RemoteCacheManagerCallable(newAsserts.manager) {

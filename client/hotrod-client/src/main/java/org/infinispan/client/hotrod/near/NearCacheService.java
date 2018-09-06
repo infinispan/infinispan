@@ -16,7 +16,7 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheFailoverEvent;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
-import org.infinispan.client.hotrod.impl.MetadataValueImpl;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -49,17 +49,22 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
          // Create near cache
          cache = createNearCache(config);
          // Add a listener that updates the near cache
-         listener = createListener(remote);
-         remote.addClientListener(listener);
+         createAndRegisterListener(remote);
          // Get the listener ID for faster listener connected lookups
          listenerId = listenerNotifier.findListenerId(listener);
       }
    }
 
-   private Object createListener(RemoteCache<K, V> remote) {
-      return config.mode().invalidated()
-            ? new InvalidatedNearCacheListener(this)
-            : new EagerNearCacheListener(this, remote.getRemoteCacheManager().getMarshaller());
+   private void createAndRegisterListener(RemoteCache<K, V> remote) {
+      // Attempt to register the smart invalidation listener
+      listener = new KeyOnlyInvalidatedNearCacheListener<>(this, remote.getRemoteCacheManager().getMarshaller());
+      try {
+         remote.addClientListener(listener);
+      } catch (HotRodClientException e) {
+         // It failed, probably because an older server was used, so try to use the old listener instead
+         listener = new InvalidatedNearCacheListener<>(this);
+         remote.addClientListener(listener);
+      }
    }
 
    public void stop(RemoteCache<K, V> remote) {
@@ -150,9 +155,58 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       this.invalidationCallback = r;
    }
 
+   @ClientListener(converterFactoryName = "org.infinispan.keyonlyfilterconverter", useRawData = true)
+   private static class KeyOnlyInvalidatedNearCacheListener<K, V> {
+      private final NearCache<K, V> cache;
+      private final Marshaller marshaller;
+
+      private KeyOnlyInvalidatedNearCacheListener(NearCache<K, V> cache, Marshaller marshaller) {
+         this.cache = cache;
+         this.marshaller = marshaller;
+      }
+
+      @ClientCacheEntryModified
+      @ClientCacheEntryRemoved
+      @SuppressWarnings("unused")
+      public void handleCreatedModifiedEvent(ClientCacheEntryCustomEvent<byte[]> e) {
+         ByteBuffer in = ByteBuffer.wrap(e.getEventData());
+         byte[] keyBytes = extractElement(in);
+         K key = unmarshallObject(keyBytes, "key");
+         invalidate(key);
+      }
+
+      @ClientCacheFailover
+      @SuppressWarnings("unused")
+      public void handleFailover(ClientCacheFailoverEvent e) {
+         if (trace) log.trace("Clear near cache after fail-over of server");
+         cache.clear();
+      }
+
+      private void invalidate(K key) {
+         cache.remove(key);
+      }
+
+      private static byte[] extractElement(ByteBuffer in) {
+         int length = UnsignedNumeric.readUnsignedInt(in);
+         byte[] element = new byte[length];
+         in.get(element);
+         return element;
+      }
+
+      @SuppressWarnings("unchecked")
+      private <T> T unmarshallObject(byte[] bytes, String element) {
+         try {
+            return (T) marshaller.objectFromByteBuffer(bytes);
+         } catch (Exception e) {
+            log.unableToUnmarshallBytesError(element, Util.toStr(bytes), e);
+            return null;
+         }
+      }
+   }
+
+   // The simplistic version of the near cache invalidation listener for servers older than 9.4
    @ClientListener
    private static class InvalidatedNearCacheListener<K, V> {
-      private static final Log log = LogFactory.getLog(InvalidatedNearCacheListener.class);
       private final NearCache<K, V> cache;
 
       private InvalidatedNearCacheListener(NearCache<K, V> cache) {
@@ -189,76 +243,4 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
          cache.remove(key);
       }
    }
-
-   /**
-    * An near cache listener that eagerly populates the near cache as cache
-    * entries are created/modified in the server. It uses a converter in order
-    * to ship value and version information as well as the key. To avoid sharing
-    * classes between client and server, it uses raw data in the converter.
-    * This listener does not apply any filtering, so all keys are considered.
-    */
-   @Deprecated
-   @ClientListener(converterFactoryName = "___eager-key-value-version-converter", useRawData = true)
-   private static class EagerNearCacheListener<K, V> {
-      private static final Log log = LogFactory.getLog(EagerNearCacheListener.class);
-      private final NearCache<K, V> cache;
-      private final Marshaller marshaller;
-
-      private EagerNearCacheListener(NearCache<K, V> cache, Marshaller marshaller) {
-         this.cache = cache;
-         this.marshaller = marshaller;
-      }
-
-      @ClientCacheEntryCreated
-      @ClientCacheEntryModified
-      @SuppressWarnings("unused")
-      public void handleCreatedModifiedEvent(ClientCacheEntryCustomEvent<byte[]> e) {
-         ByteBuffer in = ByteBuffer.wrap(e.getEventData());
-         byte[] keyBytes = extractElement(in);
-         byte[] valueBytes = extractElement(in);
-         K key = unmarshallObject(keyBytes, "key");
-         V value = unmarshallObject(valueBytes, "value");
-         long version = in.getLong();
-         if (key != null && value != null) {
-            MetadataValueImpl<V> entry = new MetadataValueImpl<>(0, 0, 0, 0, version, value);
-            cache.put(key, entry);
-         }
-      }
-
-      @SuppressWarnings("unchecked")
-      private <T> T unmarshallObject(byte[] bytes, String element) {
-         try {
-            return (T) marshaller.objectFromByteBuffer(bytes);
-         } catch (Exception e) {
-            log.unableToUnmarshallBytesError(element, Util.toStr(bytes), e);
-            return null;
-         }
-      }
-
-      @ClientCacheEntryRemoved
-      @SuppressWarnings("unused")
-      public void handleRemovedEvent(ClientCacheEntryCustomEvent<byte[]> e) {
-         ByteBuffer in = ByteBuffer.wrap(e.getEventData());
-         byte[] keyBytes = extractElement(in);
-         K key = unmarshallObject(keyBytes, "key");
-         if (key != null) {
-            cache.remove(key);
-         }
-      }
-
-      @ClientCacheFailover
-      @SuppressWarnings("unused")
-      public void handleFailover(ClientCacheFailoverEvent e) {
-         if (trace) log.trace("Clear near cache after fail-over of server");
-         cache.clear();
-      }
-
-      private static byte[] extractElement(ByteBuffer in) {
-         int length = UnsignedNumeric.readUnsignedInt(in);
-         byte[] element = new byte[length];
-         in.get(element);
-         return element;
-      }
-   }
-
 }
