@@ -56,6 +56,7 @@ import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -93,6 +94,8 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
+   private final boolean writeBehind;
+
    // This is a hack to allow for cast to work properly, since Java doesn't work as well with nested generics
    protected static <R> Supplier<CacheStream<R>> supplierStreamCast(Supplier supplier) {
       return supplier;
@@ -118,6 +121,9 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
            int distributedBatchSize, Executor executor, ComponentRegistry registry, Function<? super Original, ?> toKeyFunction) {
       super(localAddress, parallel, dm, supplierStreamCast(supplier), csm, includeLoader, distributedBatchSize,
               executor, registry, toKeyFunction);
+
+      Configuration configuration = registry.getComponent(Configuration.class);
+      writeBehind = configuration.persistence().usingAsyncStore();
    }
 
    /**
@@ -127,6 +133,9 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
     */
    protected DistributedCacheStream(AbstractCacheStream other) {
       super(other);
+
+      Configuration configuration = registry.getComponent(Configuration.class);
+      writeBehind = configuration.persistence().usingAsyncStore();
    }
 
    @Override
@@ -629,10 +638,15 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
       if (ch.getMembers().contains(localAddress)) {
          IntSet ownedSegments = IntSets.from(ch.getSegmentsForOwner(localAddress));
-         if (segmentsToFilter == null) {
-            stayLocal = ownedSegments.size() == ch.getNumSegments();
+         if (writeBehind) {
+            // When write behind is enabled - we can't do stay local optimization
+            stayLocal = false;
          } else {
-            stayLocal = ownedSegments.containsAll(segmentsToFilter);
+            if (segmentsToFilter == null) {
+               stayLocal = ownedSegments.size() == ch.getNumSegments();
+            } else {
+               stayLocal = ownedSegments.containsAll(segmentsToFilter);
+            }
          }
 
          Publisher<S> innerPublisher = localPublisher(segmentsToFilter, ch,

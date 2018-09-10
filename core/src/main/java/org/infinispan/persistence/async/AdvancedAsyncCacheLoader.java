@@ -37,20 +37,24 @@ public class AdvancedAsyncCacheLoader<K, V> extends AsyncCacheLoader<K, V> imple
          return advancedLoader().publishKeys(filter);
       }
 
-      Publisher<K> modPublisher = Flowable.fromIterable(modificationMap.entrySet())
+      Flowable<K> modFlowable = Flowable.fromIterable(modificationMap.entrySet())
             // REMOVE we ignore, LIST and CLEAR aren't possible
             .filter(me -> Modification.Type.STORE == me.getValue().getType())
             .map(e -> (K) e.getKey());
 
+      if (filter != null) {
+         modFlowable = modFlowable.filter(filter::test);
+      }
+
       if (hadClear.get() == Boolean.TRUE) {
-         return modPublisher;
+         return modFlowable;
       }
       if (filter == null) {
          filter = k -> !modificationMap.containsKey(k);
       } else {
          filter = filter.and(k -> !modificationMap.containsKey(k));
       }
-      return Flowable.merge(modPublisher, advancedLoader().publishKeys(filter));
+      return Flowable.merge(modFlowable, advancedLoader().publishKeys(filter));
    }
 
    @Override
@@ -61,16 +65,21 @@ public class AdvancedAsyncCacheLoader<K, V> extends AsyncCacheLoader<K, V> imple
       if (modificationMap.isEmpty()) {
          return advancedLoader().publishEntries(filter, fetchValue, fetchMetadata);
       }
-      Publisher<MarshalledEntry<K, V>> modPublisher = Flowable.fromIterable(modificationMap.entrySet())
+      Flowable<MarshalledEntry<K, V>> modFlowable = Flowable.fromIterable(modificationMap.entrySet())
             .map(Map.Entry::getValue)
             // REMOVE we ignore, LIST and CLEAR aren't possible
             .filter(e -> Modification.Type.STORE == e.getType())
             .cast(Store.class)
             .map(Store::getStoredValue);
 
+      if (filter != null) {
+         Predicate<? super K> modificationFilter = filter;
+         modFlowable = modFlowable.filter(e -> modificationFilter.test(e.getKey()));
+      }
+
       // If we encountered a clear just ignore the actual store
       if (hadClear.get() == Boolean.TRUE) {
-         return modPublisher;
+         return modFlowable;
       }
       if (filter == null) {
          filter = k -> !modificationMap.containsKey(k);
@@ -78,7 +87,7 @@ public class AdvancedAsyncCacheLoader<K, V> extends AsyncCacheLoader<K, V> imple
          // Only use entry if it wasn't in modification map and passes filter
          filter = filter.and(k -> !modificationMap.containsKey(k));
       }
-      return Flowable.merge(modPublisher, advancedLoader().publishEntries(filter, fetchValue, fetchMetadata));
+      return Flowable.merge(modFlowable, advancedLoader().publishEntries(filter, fetchValue, fetchMetadata));
    }
 
    @Override
