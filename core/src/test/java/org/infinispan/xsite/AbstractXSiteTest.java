@@ -227,7 +227,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
 
       private TransportFlags transportFlags() {
-         return new TransportFlags().withPortRange(siteIndex).withSiteName(siteName);
+         return new TransportFlags().withPortRange(siteIndex).withSiteName(siteName).withFD(true);
       }
 
       protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName,
