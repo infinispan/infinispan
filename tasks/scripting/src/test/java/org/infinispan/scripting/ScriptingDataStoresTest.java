@@ -1,5 +1,6 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.TimeUnit;
@@ -58,7 +59,11 @@ public class ScriptingDataStoresTest extends AbstractScriptingTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      cacheManager.defineConfiguration(CACHE_NAME, new ConfigurationBuilder().build());
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.memory().storageType(this.storageType);
+      builder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
+      builder.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
+      cacheManager.defineConfiguration(CACHE_NAME, builder.build());
    }
 
    @Override
