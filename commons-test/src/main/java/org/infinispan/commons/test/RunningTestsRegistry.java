@@ -81,7 +81,7 @@ class RunningTestsRegistry {
             }
 
             File dumpFile =
-               new File(String.format("threaddump-%1$s-%2$tY-%2$tm-%2$td-%3$s.txt", safeTestName, new Date(), pid));
+               new File(String.format("threaddump-%1$s-%2$tY-%2$tm-%2$td-%3$s.log", safeTestName, new Date(), pid));
             System.out.printf("Dumping thread stacks of process %s to %s\n", pid, dumpFile.getAbsolutePath());
             Process jstack = new ProcessBuilder()
                .command(System.getProperty("java.home") + "/../bin/jstack", pid)
@@ -122,7 +122,8 @@ class RunningTestsRegistry {
             System.out.printf("Killed processes %s\n", String.join(" ", pids));
          }
       } catch (Exception e) {
-         System.err.println("Error dumping thread stacks/interrupting threads/killing processes:" + e);
+         System.err.println("Error dumping thread stacks/interrupting threads/killing processes:");
+         e.printStackTrace(System.err);
       }
    }
 }
