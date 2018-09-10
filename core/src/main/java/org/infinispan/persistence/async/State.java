@@ -70,11 +70,12 @@ public class State {
    Map<Object, Modification> flattenModifications(ByRef<Boolean> containsClear) {
       Map<Object, Modification> map = new HashMap<>();
       for (State state = this; state != null; state = state.next) {
+         // Make sure to add these before checking clear - as these are write operations done after the clear
+         state.modifications.forEach(map::putIfAbsent);
          if (state.clear) {
             containsClear.set(Boolean.TRUE);
             break;
          }
-         state.modifications.forEach(map::putIfAbsent);
       }
       return map;
    }
