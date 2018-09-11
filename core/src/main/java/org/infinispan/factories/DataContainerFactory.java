@@ -58,8 +58,8 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                if (clusteringConfiguration.cacheMode().needsStateTransfer()) {
                   int segments = clusteringConfiguration.hash().numSegments();
                   Supplier mapSupplier = () -> {
-                     OffHeapEntryFactory entryFactory = componentRegistry.getComponent(OffHeapEntryFactory.class);
-                     OffHeapMemoryAllocator memoryAllocator = componentRegistry.getComponent(OffHeapMemoryAllocator.class);
+                     OffHeapEntryFactory entryFactory = componentRegistry.getOrCreateComponent(OffHeapEntryFactory.class);
+                     OffHeapMemoryAllocator memoryAllocator = componentRegistry.getOrCreateComponent(OffHeapMemoryAllocator.class);
                      // TODO: find better way to handle size here or is it okay? internally it will round to next power of 2
                      OffHeapConcurrentMap offHeapMap = new OffHeapConcurrentMap(addressCount / segments, memoryAllocator, entryFactory, null);
                      offHeapMap.start();

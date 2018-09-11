@@ -1,5 +1,8 @@
 package org.infinispan.container.offheap;
 
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
+
 /**
  * OffsetCalculator that provides an offset where it is calculated by dividing the positive int values into contiguous
  * blocks. As an example if the int hash spectrum was 8 and the numBlocks provided was 2, then the blocks would contain
@@ -15,12 +18,16 @@ class ContiguousOffsetCalculator implements OffsetCalculator {
 
    private final int offsetDivisor;
 
+   // We use murmur hash as simple spread doesn't work well with contiguous blocks (similar hash codes end up in the
+   // same block otherwise)
+   private final static Hash hash = MurmurHash3.getInstance();
+
    /**
     * Creates a new contiguous offset calculator using the provided offset segment the entire positive int spectrum
     * up to {@link Integer#MAX_VALUE}.
     * @param numBlocks how many blocks there will be - note this <b>MUST</b> be a power of two
     */
-   public ContiguousOffsetCalculator(int numBlocks) {
+   ContiguousOffsetCalculator(int numBlocks) {
       // We need a positive offset count
       // And it has to be a power of 2
       if (numBlocks <= 0 && (numBlocks & (numBlocks - 1)) == 0) {
@@ -36,6 +43,7 @@ class ContiguousOffsetCalculator implements OffsetCalculator {
    }
 
    private static int spread(int h) {
-      return (h ^ (h >>> 16)) & HASH_BITS;
+      // Spread using murmur hash then ensure it is positive before finding block to use
+      return hash.hash(h) & HASH_BITS;
    }
 }
