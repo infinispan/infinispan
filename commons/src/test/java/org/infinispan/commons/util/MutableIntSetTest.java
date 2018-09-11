@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.PrimitiveIterator;
 import java.util.Set;
@@ -29,7 +30,7 @@ public class MutableIntSetTest {
    public static Object[] data() {
       return new Object[] {
             new SmallIntSet(),
-            new ConcurrentSmallIntSet(16),
+            new ConcurrentSmallIntSet(64),
       };
    }
 
@@ -92,6 +93,14 @@ public class MutableIntSetTest {
       intSet.add(4);
       int[] array = intSet.toIntArray();
       assertArrayEquals(new int[]{1, 4}, array);
+   }
+
+   @Test
+   public void testToIntArray64() throws Exception {
+      addRange64();
+
+      int[] array = intSet.toIntArray();
+      assertArrayEquals(new RangeSet(64).toIntArray(), array);
    }
 
    @Test
@@ -301,6 +310,23 @@ public class MutableIntSetTest {
    }
 
    @Test
+   public void testClear64() {
+      addRange64();
+
+      assertEquals(64, intSet.size());
+
+      intSet.clear();
+
+      assertEquals(0, intSet.size());
+   }
+
+   public void addRange64() {
+      for (int i = 0; i < 64; i++) {
+         intSet.add(i);
+      }
+   }
+
+   @Test
    public void testIntStream() throws Exception {
       intSet.add(1);
       intSet.add(4);
@@ -380,6 +406,17 @@ public class MutableIntSetTest {
    }
 
    @Test
+   public void testForEachPrimitive64() {
+      addRange64();
+
+      Set<Integer> results = new HashSet<>();
+
+      intSet.forEach((IntConsumer) results::add);
+
+      assertEquals(new RangeSet(64), results);
+   }
+
+   @Test
    public void testForEachObject() {
       intSet.add(0);
       intSet.add(4);
@@ -398,10 +435,22 @@ public class MutableIntSetTest {
       intSet.add(4);
       intSet.add(7);
 
-      assertFalse(intSet.removeIf((int i) -> i / 10 > 0));
+      assertFalse(intSet.removeIf((int i) -> i > 10));
       assertEquals(3, intSet.size());
-      assertTrue(intSet.removeIf((int i) -> i > 3));
-      assertEquals(CollectionFactory.makeSet((Object) 1), intSet);
+      assertTrue(intSet.removeIf((int i) -> true));
+      assertEquals(0, intSet.size());
+      assertEquals(Collections.emptySet(), intSet);
+   }
+
+   @Test
+   public void testRemoveIf64() {
+      addRange64();
+
+      assertFalse(intSet.removeIf((int i) -> i > 64));
+      assertEquals(64, intSet.size());
+      assertTrue(intSet.removeIf((int i) -> true));
+      assertEquals(0, intSet.size());
+      assertEquals(Collections.emptySet(), intSet);
    }
 
    @Test
