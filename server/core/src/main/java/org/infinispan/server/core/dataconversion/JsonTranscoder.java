@@ -6,7 +6,11 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.Collections;
 
@@ -76,16 +80,19 @@ public class JsonTranscoder extends OneToManyTranscoder {
             return convertCharset(content, contentCharset, destinationCharset, outputString);
          }
          try {
-            if (content instanceof byte[]) {
-               try {
-                  String jsonTree = objectMapper.readTree((byte[]) content).toString();
-                  return outputString ? jsonTree : jsonTree.getBytes(destinationCharset);
-               } catch (IOException e) {
-                  String contentAsString = new String((byte[]) content, destinationCharset);
-                  return outputString ? contentAsString : objectMapper.writeValueAsBytes(contentAsString);
-               }
+            if (content instanceof String || content instanceof byte[]) {
+               return convertTextToJson(content, contentCharset, destinationCharset, outputString);
             }
-            return outputString ? objectMapper.writeValueAsString(content) : objectMapper.writeValueAsBytes(content);
+
+            if (outputString) {
+               return objectMapper.writeValueAsString(content);
+            }
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+                 OutputStreamWriter osw = new OutputStreamWriter(out, destinationCharset)) {
+               objectMapper.writeValue(osw, content);
+               return out.toByteArray();
+            }
+
          } catch (IOException e) {
             throw logger.cannotConvertContent(content, contentType, destinationType);
          }
@@ -108,6 +115,19 @@ public class JsonTranscoder extends OneToManyTranscoder {
       }
       throw logger.unsupportedContent(content);
    }
+
+   private Object convertTextToJson(Object content, Charset contentCharset, Charset destinationCharset, boolean asString) throws IOException {
+      byte[] bytes = content instanceof byte[] ? (byte[]) content : content.toString().getBytes(contentCharset);
+
+      try (InputStreamReader isr = new InputStreamReader(new ByteArrayInputStream(bytes), contentCharset)) {
+         String jsonTree = objectMapper.readTree(isr).toString();
+         return asString ? jsonTree : jsonTree.getBytes(destinationCharset);
+      } catch (IOException e) {
+         String contentAsString = new String(bytes, contentCharset);
+         return asString ? objectMapper.writeValueAsString(contentAsString) : objectMapper.writeValueAsBytes(contentAsString);
+      }
+   }
+
 
    private Object convertCharset(Object content, Charset contentCharset, Charset destinationCharset, boolean outputAsString) {
       byte[] bytes = StandardConversions.convertCharset(content, contentCharset, destinationCharset);
