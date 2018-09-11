@@ -362,11 +362,7 @@ class ConcurrentSmallIntSet implements IntSet {
    public void clear() {
       for (int i = 0; i < array.length(); ++i) {
          int oldValue = array.getAndSet(i, 0);
-         int bitsSet = 0;
-         while (oldValue > 0) {
-            bitsSet += oldValue & 1;
-            oldValue >>= 1;
-         }
+         int bitsSet = Integer.bitCount(oldValue);
          if (bitsSet != 0) {
             currentSize.addAndGet(-bitsSet);
          }
@@ -393,7 +389,7 @@ class ConcurrentSmallIntSet implements IntSet {
       for (int i = 0; i < array.length(); ++i) {
          int value = array.get(i);
          int offset = 1;
-         while (value > 0) {
+         while (value != 0) {
             if ((value & 1) == 1) {
                if (index == size) {
                   size += (size >>> 1) + 1;
@@ -401,7 +397,7 @@ class ConcurrentSmallIntSet implements IntSet {
                }
                r[index++] = (i << ADDRESS_BITS_PER_INT) + offset - 1;
             }
-            value >>= 1;
+            value >>>= 1;
             offset += 1;
          }
       }
@@ -423,11 +419,11 @@ class ConcurrentSmallIntSet implements IntSet {
       for (int i = 0; i < array.length(); ++i) {
          int value = array.get(i);
          int offset = 1;
-         while (value > 0) {
+         while (value != 0) {
             if ((value & 1) == 1) {
                action.accept((i << ADDRESS_BITS_PER_INT) + offset - 1);
             }
-            value >>= 1;
+            value >>>= 1;
             offset += 1;
          }
       }
@@ -448,14 +444,14 @@ class ConcurrentSmallIntSet implements IntSet {
       for (int i = 0; i < array.length(); ++i) {
          int value = array.get(i);
          int offset = 1;
-         while (value > 0) {
+         while (value != 0) {
             if ((value & 1) == 1) {
                int ourValue = (i << ADDRESS_BITS_PER_INT) + offset - 1;
                if (filter.test(ourValue)) {
                   modified |= remove(ourValue);
                }
             }
-            value >>= 1;
+            value >>>= 1;
             offset += 1;
          }
       }
