@@ -320,7 +320,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
             csm.forgetOperation(id);
          }
          if (!remoteResults.lostSegments.isEmpty()) {
-            segmentsToProcess = remoteResults.lostSegments;
+            segmentsToProcess = IntSets.mutableCopyFrom(remoteResults.lostSegments);
             remoteResults.lostSegments.clear();
             getLog().tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
             try {
