@@ -8,7 +8,7 @@ class Server:
 		doc = ET.parse(path)
 		self.path = path
 		self.extensions = []
-		extensions = doc.findall('{0}extensions/{0}extension'.format("{urn:jboss:domain:7.0}"))
+		extensions = doc.findall('{0}extensions/{0}extension'.format("{urn:jboss:domain:8.0}"))
 		for extension in extensions:
 			self.extensions.append(extension.get('module'))
 
@@ -30,7 +30,7 @@ class Module:
 	def __init__(self, path):
 		doc = ET.parse(path)
 		root = doc.getroot()
-		self.path = path	
+		self.path = path
 		self.name = root.get('name')
 		self.dependencies = []
 		dependencies = doc.findall('{0}dependencies/{0}module'.format("{urn:jboss:module:1.5}"))
@@ -60,7 +60,7 @@ class Module:
 					module.traverse(modules, allModules)
 				except KeyError:
 					print "WARNING: missing module %s" % d
-		
+
 
 
 # The main code
