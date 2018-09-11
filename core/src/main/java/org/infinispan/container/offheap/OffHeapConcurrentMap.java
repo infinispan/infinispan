@@ -7,6 +7,7 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -44,7 +45,6 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
 
    private final OffHeapMemoryAllocator allocator;
    private final OffHeapEntryFactory offHeapEntryFactory;
-   private final OffsetCalculator offsetCalculator;
 
    private final EntryListener listener;
 
@@ -126,16 +126,15 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
 
    public OffHeapConcurrentMap(int desiredSize, OffHeapMemoryAllocator allocator,
          OffHeapEntryFactory offHeapEntryFactory, EntryListener listener) {
-      this.allocator = allocator;
-      this.offHeapEntryFactory = offHeapEntryFactory;
+      this.allocator = Objects.requireNonNull(allocator);
+      this.offHeapEntryFactory = Objects.requireNonNull(offHeapEntryFactory);
       this.listener = listener;
 
       // Since these are segmented now, just use # of processors instead
       lockCount = Util.findNextHighestPowerOfTwo(ProcessorInfo.availableProcessors() << 1);
       memoryAddressCount = getActualAddressCount(desiredSize, lockCount);
-      offsetCalculator = new ContiguousOffsetCalculator(lockCount);
       // Unfortunately desired size directly correlates to lock size
-      locks = new StripedLock(lockCount, offsetCalculator);
+      locks = new StripedLock(lockCount, new ContiguousOffsetCalculator(lockCount));
    }
 
    private void checkDeallocation() {
@@ -160,7 +159,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    public void start() {
       locks.lockAll();
       try {
-         memoryLookup = new MemoryAddressHash(memoryAddressCount, offsetCalculator, allocator);
+         memoryLookup = new MemoryAddressHash(memoryAddressCount, new ContiguousOffsetCalculator(memoryAddressCount),
+               allocator);
          dellocated = false;
       } finally {
          locks.unlockAll();
