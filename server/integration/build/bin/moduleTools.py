@@ -4,7 +4,7 @@ import sys
 import argparse
 import xml.etree.ElementTree as ET
 
-JBOSS_DOMAIN_NS = '{urn:jboss:domain:7.0}'
+JBOSS_DOMAIN_NS = '{urn:jboss:domain:8.0}'
 JBOSS_MODULE_NS = '{urn:jboss:module:1.5}'
 
 class Server:
@@ -35,13 +35,13 @@ class Module:
     def __init__(self, path):
         doc = ET.parse(path)
         root = doc.getroot()
-        self.path = path    
+        self.path = path
         self.name = root.get('name')
         self.dependencies = []
         self.resources = []
         if(root.tag==(JBOSS_MODULE_NS+'module-alias')):
             self.dependencies.append(root.get('target-name'))
-        
+
         dependencies = doc.findall('{0}dependencies/{0}module'.format(JBOSS_MODULE_NS))
         for dependency in dependencies:
         	if(dependency.get('optional', 'false')=='false'):
@@ -75,7 +75,7 @@ class Module:
                     module.traverse(modules, allModules, indent+2)
                 except KeyError:
                     continue
-        
+
 
 
 # The main code
@@ -87,7 +87,7 @@ def main():
     parser.add_argument('--html', dest='mode', action='store_const', const='html', default='excludes', help='Produces an HTML version of the dependency relationships')
 
     args = parser.parse_args()
-    
+
     # Parse the server
     server = Server(args.serverConfig)
 
@@ -100,7 +100,7 @@ def main():
     # Traverse all modules, building a set of required ones starting from the server extensions
     requiredModules = server.traverse(availableModules)
 
-    if args.mode == 'includes':    
+    if args.mode == 'includes':
         for module in sorted(requiredModules):
             availableModules[module].show()
     elif args.mode == 'excludes':

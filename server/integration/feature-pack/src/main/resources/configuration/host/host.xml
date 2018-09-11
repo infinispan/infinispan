@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 
-<host name="master" xmlns="urn:jboss:domain:7.0">
+<host name="master" xmlns="urn:jboss:domain:8.0">
     <extensions>
         <?EXTENSIONS?>
     </extensions>
@@ -102,7 +102,7 @@
             <socket-bindings port-offset="150"/>
         </server>
     </servers>
-    
+
     <profile>
         <?SUBSYSTEMS socket-binding-group="standard-sockets"?>
     </profile>
