@@ -8,7 +8,7 @@
                 <filter token="infinispan.module.slot" value="${infinispan.module.slot}"/>
                 <filter token="infinispan.module.slot.prefix" value="${infinispan.module.slot.prefix}"/>
                 <filter token="lucene.module.slot" value="${version.lucene.module.slot}"/>
-                <filter token="hibernate.search.module.slot" value="${version.hibernate.search}"/>
+                <filter token="hibernate.search.module.slot" value="${version.hibernate.search.module.slot}"/>
                 <filter token="gson.module.slot" value="${version.gson.module.slot}"/>
             </filterset>
             <regexpmapper from="(.*)/slot/(.*)" to="\1/${infinispan.module.slot}/\2" />

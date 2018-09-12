@@ -224,7 +224,7 @@
       <version.groovy>2.4.8</version.groovy>
       <version.hibernate.core>5.3.4.Final</version.hibernate.core>
       <version.javax.persistence>2.2</version.javax.persistence>
-      <version.hibernate.search>5.10.1.Final</version.hibernate.search>
+      <version.hibernate.search>5.10.3.Final</version.hibernate.search>
       <version.hibernate.search.module.slot>5.10</version.hibernate.search.module.slot>
       <version.hikaricp>2.4.6</version.hikaricp>
       <version.javax.activation>1.1.1</version.javax.activation>
@@ -234,7 +234,7 @@
       <version.jgroups>4.0.13.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
       <version.lucene>5.5.5</version.lucene>
-      <version.lucene.module.slot>5.5</version.lucene.module.slot>
+      <version.lucene.module.slot>5.5.5</version.lucene.module.slot>
       <version.gson.module.slot>2.8</version.gson.module.slot>
       <version.maven-compiler-plugin>3.7.0-jboss-1</version.maven-compiler-plugin> <!-- MCOMPILER-320 -->
       <version.maven.source>3.0.1</version.maven.source>

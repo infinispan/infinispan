@@ -33,7 +33,7 @@ public class VersionTestHelper {
    }
 
    public static String hibernateSearchModuleName() {
-      return "org.hibernate.search.orm:5.10";
+      return "org.hibernate.search.orm";
       //return "org.hibernate.search.orm:" + injectVariables( "${hibernate-search.module.slot}" );
    }
 
