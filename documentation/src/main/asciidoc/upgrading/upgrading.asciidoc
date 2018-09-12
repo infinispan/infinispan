@@ -11,6 +11,32 @@ This guide walks you through the process of upgrading Infinispan.
 
 === Client/Server changes
 
+==== Compatibility mode deprecation
+
+Compatibility mode has been deprecated and will be removed in the next Infinispan version.
+
+To use a cache from multiple endpoints, it is recommended to store data in binary format and to configure the MediaType for keys and values. More details in http://infinispan.org/docs/dev/user_guide/user_guide.html#endpoint.interop
+
+If storing data as unmarshalled objects is still desired, the equivalent of compatibility mode is to configure keys and values to store object content:
+
+[source,xml]
+----
+<encoding>
+   <key media-type="application/x-java-object"/>
+   <value media-type="application/x-java-object"/>
+</encoding>
+----
+
+==== Memcached storage
+
+For better interoperability between endpoints, the Memcached server no longer stores keys as `java.lang.String`, but as UTF-8 `byte[]`.
+
+If using memcached, it's recommended to run a rolling upgrade from 9.3 to store data in the new format, or reload the data in the cache.
+
+==== Scripts Response
+
+Distributed scripts with text-based data type no longer return `null` when the result from each server is null. The response is now a JSON array with each individual result, e.g. `"[null, null]"`
+
 ==== WebSocket endpoint removal
 The WebSocket endpoint has been unmaintained for several years. It has been removed.
 
@@ -31,6 +57,13 @@ A store cannot be configured as both shared and having passivation enabled.
 Doing so can cause data inconsistencies as there is no way to synchronize
 data between all the various nodes. As such this configuration will now
 cause a startup exception. Please update your configuration as appropriate.
+
+=== Query changes
+
+==== AffinityIndexManager
+
+The default number of shards is down to `4`, it was previously equals to the number of segments in the cache.
+
 
 == Upgrading from 9.2 to 9.3
 
@@ -58,6 +91,23 @@ Iteration in a clustered cache will still show entries that are expired via maxI
 === Wildfly Modules
 The {brandname} Wildfly modules are now located in the `system/add-ons/{moduleprefix}` dir as per the
 link:https://developer.jboss.org/wiki%20/LayeredDistributionsAndModulePathOrganization[Wildfly module conventions].
+
+=== Deserialization Whitelist
+
+Deserialization of content sent by clients to the server are no longer allowed by default.
+This applies to JSON, XML, and marshalled byte[] that, depending on the cache configuration, will cause the server
+to convert it to Java Objects either to store it or to perform any operation that cannot be done on a byte[] directly.
+
+The deserialization needs to be enabled using system properties, ether by class name or regular expressions:
+
+[source]
+----
+// Comma separated list of fully qualified class names
+-Dinfinispan.deserialization.whitelist.classes=java.time.Instant,com.myclass.Entity
+
+// Regex expression
+-Dinfinispan.deserialization.whitelist.regexps=.*
+----
 
 == Upgrading from 9.0 to 9.1
 
