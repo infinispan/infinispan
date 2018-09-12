@@ -44,7 +44,8 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
       map.start();
    }
 
-   @Stop
+   // Priority has to be higher than the clear priority - which is currently 999
+   @Stop(priority = 9999)
    public void stop() {
       map.stop();
    }
