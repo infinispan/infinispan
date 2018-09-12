@@ -65,7 +65,8 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       shouldStopSegments = cache.getCacheConfiguration().clustering().cacheMode().isDistributed();
    }
 
-   @Stop(priority = 999)
+   // Priority has to be higher than the clear priority - which is currently 999
+   @Stop(priority = 9999)
    public void stop() {
       for (int i = 0; i < maps.length(); ++i) {
          stopMap(i, false);
