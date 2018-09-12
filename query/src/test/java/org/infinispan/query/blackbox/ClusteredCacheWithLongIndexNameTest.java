@@ -2,19 +2,21 @@ package org.infinispan.query.blackbox;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.apache.lucene.search.Query;
-import org.hibernate.search.query.dsl.QueryBuilder;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.test.Person;
-import org.infinispan.query.test.VeryLongIndexNamedClass;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -26,19 +28,18 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups="functional", testName = "query.blackbox.ClusteredCacheWithLongIndexNameTest")
+@Test(groups = "functional", testName = "query.blackbox.ClusteredCacheWithLongIndexNameTest")
 @CleanupAfterMethod
 public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTest {
-   private Cache cache1, cache2, cache3;
+
+   private Cache<String, ClassWithLongIndexName> cache0, cache1, cache2;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cacheCfg = getDefaultConfiguration();
-
-      List<Cache<String, Person>> caches = createClusteredCaches(3, cacheCfg);
-      cache1 = caches.get(0);
-      cache2 = caches.get(1);
-      cache3 = caches.get(2);
+      List<Cache<String, ClassWithLongIndexName>> caches = createClusteredCaches(3, getDefaultConfiguration());
+      cache0 = caches.get(0);
+      cache1 = caches.get(1);
+      cache2 = caches.get(2);
    }
 
    private ConfigurationBuilder getDefaultConfiguration() {
@@ -48,10 +49,9 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
             .cacheMode(getCacheMode()).sync()
             .indexing()
             .index(Index.ALL)
-            .addIndexedEntity(VeryLongIndexNamedClass.class)
+            .addIndexedEntity(ClassWithLongIndexName.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-
       return cacheCfg;
    }
 
@@ -64,32 +64,55 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
    }
 
    public void testAdditionOfNewNode() {
-      prepareData();
+      for (int i = 0; i < 100; i++) {
+         cache0.put("key" + i, new ClassWithLongIndexName("value" + i));
+      }
 
-      SearchManager sm = Search.getSearchManager(cache3);
-      QueryBuilder qb = sm.buildQueryBuilderForClass(VeryLongIndexNamedClass.class).get();
-      Query q = qb.keyword().wildcard().onField("name").matching("value*").createQuery();
-      CacheQuery<?> cq = sm.getQuery(q, VeryLongIndexNamedClass.class);
-
+      SearchManager sm2 = Search.getSearchManager(cache2);
+      Query q = sm2.buildQueryBuilderForClass(ClassWithLongIndexName.class).get()
+            .keyword().wildcard().onField("name").matching("value*").createQuery();
+      CacheQuery<?> cq = sm2.getQuery(q, ClassWithLongIndexName.class);
       assertEquals(100, cq.getResultSize());
 
       addClusterEnabledCacheManager(getDefaultConfiguration());
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2), cache(3));
 
-      sm = Search.getSearchManager(cache(3));
-      qb = sm.buildQueryBuilderForClass(VeryLongIndexNamedClass.class).get();
-      q = qb.keyword().wildcard().onField("name").matching("value*").createQuery();
-      cq = sm.getQuery(q, VeryLongIndexNamedClass.class);
-
+      SearchManager sm3 = Search.getSearchManager(cache(3));
+      q = sm3.buildQueryBuilderForClass(ClassWithLongIndexName.class).get()
+            .keyword().wildcard().onField("name").matching("value*").createQuery();
+      cq = sm3.getQuery(q, ClassWithLongIndexName.class);
       assertEquals(100, cq.getResultSize());
    }
 
-   private void prepareData() {
-      VeryLongIndexNamedClass obj = null;
+   // index name as in bug description
+   @Indexed(index = "default_taskworker-java__com.google.appengine.api.datastore.Entity")
+   private static class ClassWithLongIndexName implements Serializable, ExternalPojo {
 
-      for(int i = 0; i < 100; i++) {
-         obj = new VeryLongIndexNamedClass("value" + i);
-         cache1.put("key" + i, obj);
+      private static final long serialVersionUID = 1;
+
+      @Field(store = Store.YES)
+      String name;
+
+      ClassWithLongIndexName(String name) {
+         this.name = name;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         ClassWithLongIndexName that = (ClassWithLongIndexName) o;
+         return name != null ? name.equals(that.name) : that.name == null;
+      }
+
+      @Override
+      public int hashCode() {
+         return name != null ? name.hashCode() : 0;
+      }
+
+      @Override
+      public String toString() {
+         return "ClassWithLongIndexName{name='" + name + "'}";
       }
    }
 }
