@@ -14,6 +14,7 @@ import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -93,9 +94,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                   }
                   // We check lifespan first as this is much less expensive to remove than max idle.
                   if (expiredMortal) {
-                     addAndWaitIfFull(handleLifespanExpireEntry(ice.getKey(), value, lifespan), futures);
+                     addAndWaitIfFull(handleLifespanExpireEntry(ice.getKey(), value, lifespan, false), futures);
                   } else if (expiredTransient) {
-                     addAndWaitIfFull(actualRemoveMaxIdleExpireEntry(ice.getKey(), value, maxIdle), futures);
+                     addAndWaitIfFull(actualRemoveMaxIdleExpireEntry(ice.getKey(), value, maxIdle, false), futures);
                   }
                }
             });
@@ -126,25 +127,30 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
    }
 
-   CompletableFuture<Void> handleLifespanExpireEntry(K key, V value, long lifespan) {
+   // Skip locking is required in case if the entry was found expired due to a write, which would already
+   // have the lock and remove lifespan expired is fired in a different thread with a different context. Otherwise the
+   // expiration may occur in the wrong order and events may also be raised in the incorrect order. We assume the caller
+   // holds the lock until this CompletableFuture completes. Without lock skipping this would deadlock.
+   CompletableFuture<Void> handleLifespanExpireEntry(K key, V value, long lifespan, boolean skipLocking) {
       // The most used case will be a miss so no extra read before
       if (expiring.putIfAbsent(key, key) == null) {
          if (trace) {
             log.tracef("Submitting expiration removal for key %s which had lifespan of %s", toStr(key), lifespan);
          }
-         CompletableFuture<Void> future = cache.removeLifespanExpired(key, value, lifespan);
+         AdvancedCache<K, V> cacheToUse = skipLocking ? cache.withFlags(Flag.SKIP_LOCKING) : cache;
+         CompletableFuture<Void> future = cacheToUse.removeLifespanExpired(key, value, lifespan);
          return future.whenComplete((v, t) -> expiring.remove(key, key));
       }
       return CompletableFutures.completedNull();
    }
 
    // Method invoked when an entry is found to be expired via get
-   CompletableFuture<Boolean> handleMaxIdleExpireEntry(K key, V value, long maxIdle) {
-      return actualRemoveMaxIdleExpireEntry(key, value, maxIdle);
+   CompletableFuture<Boolean> handleMaxIdleExpireEntry(K key, V value, long maxIdle, boolean skipLocking) {
+      return actualRemoveMaxIdleExpireEntry(key, value, maxIdle, skipLocking);
    }
 
    // Method invoked when entry should be attempted to be removed via max idle
-   CompletableFuture<Boolean> actualRemoveMaxIdleExpireEntry(K key, V value, long maxIdle) {
+   CompletableFuture<Boolean> actualRemoveMaxIdleExpireEntry(K key, V value, long maxIdle, boolean skipLocking) {
       CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
       Object expiringObject = expiring.putIfAbsent(key, completableFuture);
       if (expiringObject == null) {
@@ -153,7 +159,8 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          }
          completableFuture.whenComplete((b, t) -> expiring.remove(key, completableFuture));
          try {
-            CompletableFuture<Boolean> expired = cache.removeMaxIdleExpired(key, value);
+            AdvancedCache<K, V> cacheToUse = skipLocking ? cache.withFlags(Flag.SKIP_LOCKING) : cache;
+            CompletableFuture<Boolean> expired = cacheToUse.removeMaxIdleExpired(key, value);
             expired.whenComplete((b, t) -> {
                if (t != null) {
                   completableFuture.completeExceptionally(t);
@@ -176,7 +183,8 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    @Override
-   public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime) {
+   public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime,
+         boolean hasLock) {
       // We need to synchronize on the entry since {@link InternalCacheEntry} locks the entry when doing an update
       // so we can see both the new value and the metadata
       boolean expiredMortal;
@@ -188,12 +196,15 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, entry.getCreated(), currentTime);
       }
       if (expiredMortal) {
-         handleLifespanExpireEntry(entry.getKey(), value, lifespan);
+         CompletableFuture<Void> future = handleLifespanExpireEntry(entry.getKey(), value, lifespan, hasLock);
+         if (hasLock) {
+            return future.thenCompose(CompletableFutures.composeTrue());
+         }
          // We don't want to block the user while the remove expired is happening for lifespan
          return CompletableFutures.completedTrue();
       } else {
          // This means it expired transiently - this will block user until we confirm the entry is okay
-         return handleMaxIdleExpireEntry(entry.getKey(), value, entry.getMaxIdle());
+         return handleMaxIdleExpireEntry(entry.getKey(), value, entry.getMaxIdle(), hasLock);
       }
    }
 

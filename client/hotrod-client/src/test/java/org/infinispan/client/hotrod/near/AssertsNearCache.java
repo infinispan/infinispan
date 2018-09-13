@@ -159,7 +159,7 @@ class AssertsNearCache<K, V> {
       return this;
    }
 
-   public AssertsNearCache<K, V> expectNearPreemptiveRemove(K key, AssertsNearCache<K, V>... affected) {
+   public AssertsNearCache<K, V> expectNearPreemptiveRemove(K key) {
       // Preemptive remove
       MockRemoveEvent preemptiveRemove = pollEvent(events);
       assertEquals(key, preemptiveRemove.key);

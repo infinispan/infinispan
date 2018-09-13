@@ -80,7 +80,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       if (e != null && e.canExpire()) {
          long currentTimeMillis = timeService.wallClockTime();
          if (e.isExpired(currentTimeMillis) &&
-               expirationManager.entryExpiredInMemory(e, currentTimeMillis).join() == Boolean.TRUE) {
+               expirationManager.entryExpiredInMemory(e, currentTimeMillis, false).join() == Boolean.TRUE) {
             e = null;
          } else {
             e.touch(currentTimeMillis);
@@ -159,7 +159,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       if (ice != null && ice.canExpire()) {
          long currentTimeMillis = timeService.wallClockTime();
          if (ice.isExpired(currentTimeMillis)) {
-            if (expirationManager.entryExpiredInMemory(ice, currentTimeMillis).join() == Boolean.TRUE) {
+            if (expirationManager.entryExpiredInMemory(ice, currentTimeMillis, false).join() == Boolean.TRUE) {
                ice = null;
             }
          }

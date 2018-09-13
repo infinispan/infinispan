@@ -94,7 +94,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
                  purgeCandidates.hasNext();) {
                InternalCacheEntry<K, V> e = purgeCandidates.next();
                if (e.isExpired(currentTimeMillis)) {
-                  entryExpiredInMemory(e, currentTimeMillis);
+                  entryExpiredInMemory(e, currentTimeMillis, false);
                }
             }
             if (trace) {
@@ -117,7 +117,8 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    @Override
-   public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime) {
+   public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime,
+         boolean hasLock) {
       // We ignore the return from this method. It is possible for the entry to no longer be expired, but this means
       // it was updated by another thread. In that case it is a completely valid value for it to be expired then not.
       // So for this we just tell the caller it was expired.
@@ -139,13 +140,13 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    @Override
    public CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
       // Local we just remove the entry as we see them
-      return entryExpiredInMemory(entry, currentTime);
+      return entryExpiredInMemory(entry, currentTime, false);
    }
 
    @Override
    public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
       // Just invoke the new method and join
-      entryExpiredInMemory(entry, currentTime).join();
+      entryExpiredInMemory(entry, currentTime, false).join();
    }
 
    @Override

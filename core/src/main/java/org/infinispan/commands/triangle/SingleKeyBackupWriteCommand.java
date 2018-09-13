@@ -120,6 +120,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
          case REPLACE:
          case WRITE:
             output.writeObject(metadata);
+         // falls through
          case REMOVE_EXPIRED:
             output.writeObject(valueOrFunction);
             break;
@@ -141,6 +142,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
          case REPLACE:
          case WRITE:
             metadata = (Metadata) input.readObject();
+         // falls through
          case REMOVE_EXPIRED:
             valueOrFunction = input.readObject();
             break;
@@ -171,8 +173,8 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
                   getCommandInvocationId());
          case REMOVE_EXPIRED:
             // Doesn't matter if it is max idle or not - important thing is that it raises expired event
-            return new RemoveExpiredCommand(key, valueOrFunction, null, false, cacheNotifier, segmentId, getCommandInvocationId(),
-                  versionGenerator.nonExistingVersion(), componentRegistry.getTimeService());
+            return new RemoveExpiredCommand(key, valueOrFunction, null, false, cacheNotifier, segmentId, getFlags(),
+                  getCommandInvocationId(), versionGenerator.nonExistingVersion(), componentRegistry.getTimeService());
          case COMPUTE_IF_PRESENT:
             return new ComputeCommand(key, (BiFunction) valueOrFunction, true, segmentId, getFlags(), getCommandInvocationId(),
                   metadata, cacheNotifier, componentRegistry);

@@ -148,7 +148,8 @@ public class DataContainerStressTest {
                  }
 
                  @Override
-                 public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry entry, long currentTime) {
+                 public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry entry, long currentTime,
+                       boolean writeOperation) {
                     return null;
                  }
 

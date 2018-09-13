@@ -433,6 +433,16 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan) {
+      return cacheImplementation.removeLifespanExpired(key, value, lifespan, flags);
+   }
+
+   @Override
+   public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
+      return cacheImplementation.removeMaxIdleExpired(key, value, flags);
+   }
+
+   @Override
    public CompletableFuture<V> replaceAsync(K key, V value) {
       return replaceAsync(key, value, cacheImplementation.defaultMetadata);
    }
