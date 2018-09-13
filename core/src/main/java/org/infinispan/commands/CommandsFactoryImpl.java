@@ -250,15 +250,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan) {
-      return new RemoveExpiredCommand(key, value, lifespan, false, notifier, segment, generateUUID(transactional),
-            versionGenerator.nonExistingVersion(), timeService);
+   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan,
+         long flagsBitSet) {
+      return new RemoveExpiredCommand(key, value, lifespan, false, notifier, segment, flagsBitSet,
+            generateUUID(transactional), versionGenerator.nonExistingVersion(), timeService);
    }
 
    @Override
-   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment) {
-      return new RemoveExpiredCommand(key, value, null, true, notifier, segment, generateUUID(transactional),
-            versionGenerator.nonExistingVersion(), timeService);
+   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, long flagsBitSet) {
+      return new RemoveExpiredCommand(key, value, null, true, notifier, segment, flagsBitSet,
+            generateUUID(transactional), versionGenerator.nonExistingVersion(), timeService);
    }
 
    @Override

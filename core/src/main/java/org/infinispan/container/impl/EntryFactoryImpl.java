@@ -2,6 +2,7 @@ package org.infinispan.container.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
@@ -13,11 +14,12 @@ import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.container.entries.VersionedRepeatableReadEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,6 +39,8 @@ public class EntryFactoryImpl implements EntryFactory {
    @Inject private Configuration configuration;
    @Inject private TimeService timeService;
    @Inject private VersionGenerator versionGenerator;
+   @Inject private DistributionManager distributionManager;
+   @Inject private InternalExpirationManager expirationManager;
 
    private boolean isL1Enabled;
    private boolean useRepeatableRead;
@@ -94,7 +98,7 @@ public class EntryFactoryImpl implements EntryFactory {
             log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
       } else {
          // Not in the context yet.
-         CacheEntry cacheEntry = getFromContainer(key, segment, isOwner, true);
+         CacheEntry cacheEntry = getFromContainerForWrite(key, segment, isOwner);
          if (cacheEntry == null) {
             return;
          }
@@ -125,7 +129,7 @@ public class EntryFactoryImpl implements EntryFactory {
             log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
       } else {
          // Not in the context yet.
-         CacheEntry cacheEntry = innerGetFromContainer(key, segment, true, true);
+         CacheEntry cacheEntry = innerGetFromContainerForWrite(key, segment, true, false);
          if (cacheEntry == null) {
             cacheEntry = NullCacheEntry.getInstance();
          }
@@ -197,9 +201,14 @@ public class EntryFactoryImpl implements EntryFactory {
       return cacheEntry;
    }
 
-   private CacheEntry getFromContainer(Object key, int segment, boolean isOwner, boolean writeOperation) {
+   private boolean isPrimaryOwner(int segment) {
+      return distributionManager == null ||
+            distributionManager.getCacheTopology().getSegmentDistribution(segment).isPrimary();
+   }
+
+   private CacheEntry getFromContainerForWrite(Object key, int segment, boolean isOwner) {
       if (isOwner) {
-         final InternalCacheEntry ice = innerGetFromContainer(key, segment, writeOperation, false);
+         final InternalCacheEntry ice = innerGetFromContainerForWrite(key, segment, false, isPrimaryOwner(segment));
          if (trace)
             log.tracef("Retrieved from container %s", ice);
          if (ice == null) {
@@ -207,7 +216,7 @@ public class EntryFactoryImpl implements EntryFactory {
          }
          return ice;
       } else if (isL1Enabled) {
-         final InternalCacheEntry ice = innerGetFromContainer(key, segment, writeOperation, false);
+         final InternalCacheEntry ice = innerGetFromContainerForWrite(key, segment, false, false);
          if (trace)
             log.tracef("Retrieved from container %s", ice);
          if (ice == null || !ice.isL1Entry()) return null;
@@ -228,22 +237,20 @@ public class EntryFactoryImpl implements EntryFactory {
       }
    }
 
-   private InternalCacheEntry innerGetFromContainer(Object key, int segment, boolean writeOperation, boolean returnExpired) {
-      InternalCacheEntry ice;
-      // Write operations should not cause expiration events to occur, because we will most likely overwrite the
-      // value anyways - also required for remove expired to not cause infinite loop
-      if (writeOperation) {
-         ice = container.peek(segment, key);
-         if (ice != null && !returnExpired && ice.canExpire()) {
-            long wallClockTime = timeService.wallClockTime();
-            if (ice.isExpired(wallClockTime)) {
-               ice = null;
-            } else {
-               ice.touch(wallClockTime);
+   private InternalCacheEntry innerGetFromContainerForWrite(Object key, int segment, boolean returnExpired, boolean isPrimaryOwner) {
+      InternalCacheEntry ice = container.peek(segment, key);
+      if (ice != null && !returnExpired) {
+         long currentTime = timeService.wallClockTime();
+         if (ice.isExpired(currentTime)) {
+            // This means it is a write operation that isn't expiration and we are the owner, thus we should
+            // actually expire the entry from memory
+            if (isPrimaryOwner) {
+               // This method is always called from a write operation - we have to wait for the remove expired to
+               // complete to guarantee any expiration event is notified before performing the actual write operation
+               expirationManager.entryExpiredInMemory(ice, currentTime, true).join();
             }
+            return null;
          }
-      } else {
-         ice = container.get(segment, key);
       }
       return ice;
    }

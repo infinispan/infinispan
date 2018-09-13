@@ -1034,7 +1034,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                   if (!ctx.isOriginLocal()) {
                      // Have to build a new command since the command id points to the originating node - causes
                      // issues with triangle since it needs to know the originating node to respond to
-                     realRemoveCommand = cf.buildRemoveExpiredCommand(key, command.getValue(), segment);
+                     realRemoveCommand = cf.buildRemoveExpiredCommand(key, command.getValue(), segment,
+                           command.getFlagsBitSet());
                      realRemoveCommand.setTopologyId(cacheTopology.getTopologyId());
                   } else {
                      realRemoveCommand = command;

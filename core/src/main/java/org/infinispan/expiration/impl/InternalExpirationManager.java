@@ -21,14 +21,19 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
     * <p>
     * This method returns <b>true</b> if the entry was removed due to expiration or <b>false</b> if the entry was
     * not removed due to expiration
+    * <p>
+    * If <b>hasLock</b> is true, this method assumes that the caller has the lock for the key and it must allow the
+    * expiration to occur, ie. returned CompletableFuture has completed, before the lock is released. Failure to do
+    * so may cause inconsistency in data.
     * @param entry the entry that has expired
     * @param currentTime the current time when it expired
+    * @param hasLock if the expiration was found during a write operation
     * @return if this entry actually expired or not
     */
-   CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime);
+   CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime, boolean hasLock);
 
    /**
-    * This method is very similar to {@link #entryExpiredInMemory(InternalCacheEntry, long)} except that it does the
+    * This method is very similar to {@link #entryExpiredInMemory(InternalCacheEntry, long, boolean)} except that it does the
     * bare minimum when an entry expired to guarantee if the entry is valid or not. This is important to reduce time
     * spent per entry when iterating. This method may not actually remove the entry and may just return immediately
     * if it is safe to do so.

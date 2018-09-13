@@ -11,7 +11,6 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -48,10 +47,10 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    public RemoveExpiredCommand(Object key, Object value, Long lifespan, boolean maxIdle, CacheNotifier notifier, int segment,
-                               CommandInvocationId commandInvocationId, IncrementableEntryVersion nonExistentVersion,
+                               long flagBitSet, CommandInvocationId commandInvocationId, IncrementableEntryVersion nonExistentVersion,
          TimeService timeService) {
       //valueEquivalence can be null because this command never compares values.
-      super(key, value, notifier, segment, EnumUtil.EMPTY_BIT_SET, commandInvocationId);
+      super(key, value, notifier, segment, flagBitSet, commandInvocationId);
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
       this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;
@@ -160,6 +159,8 @@ public class RemoveExpiredCommand extends RemoveCommand {
          output.writeBoolean(false);
       }
       output.writeBoolean(maxIdle);
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
+
    }
 
    @Override
@@ -175,6 +176,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
          lifespan = null;
       }
       maxIdle = input.readBoolean();
+      setFlagsBitSet(input.readLong());
    }
 
    @Override
@@ -189,12 +191,6 @@ public class RemoveExpiredCommand extends RemoveCommand {
    @Override
    public int hashCode() {
       return Objects.hash(super.hashCode(), lifespan, maxIdle);
-   }
-
-   @Override
-   public long getFlagsBitSet() {
-      // Override the flags
-      return FlagBitSets.SKIP_CACHE_LOAD;
    }
 
    /**

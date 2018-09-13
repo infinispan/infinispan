@@ -161,18 +161,20 @@ public interface CommandsFactory {
     * @param value the value of the entry when it was expired
     * @param segment the segment of the given key
     * @param lifespan the lifespan that expired from the command
+    * @param flagsBitSet Command flags provided by cache
     * @return a RemovedExpiredCommand
     */
-   RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan);
+   RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan, long flagsBitSet);
 
    /**
     * Builds an expired remove command that is used to remove only a specific entry when it expires via maxIdle
     * @param key the key of the expired entry
     * @param value the value of the entry when it was expired
     * @param segment the segment of the given key
+    * @param flagsBitSet Command flags provided by cache
     * @return a RemovedExpiredCommand
     */
-   RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment);
+   RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, long flagsBitSet);
 
    /**
     * Builds a retrieve max idle command that is used to get the last access time for a given key.

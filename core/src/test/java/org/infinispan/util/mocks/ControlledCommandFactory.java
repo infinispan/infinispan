@@ -195,13 +195,14 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan) {
-      return actual.buildRemoveExpiredCommand(key, value, segment, lifespan);
+   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan,
+         long flagsBitSet) {
+      return actual.buildRemoveExpiredCommand(key, value, segment, lifespan, flagsBitSet);
    }
 
    @Override
-   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment) {
-      return actual.buildRemoveExpiredCommand(key, value, segment);
+   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, long flagsBitSet) {
+      return actual.buildRemoveExpiredCommand(key, value, segment, flagsBitSet);
    }
 
    @Override
