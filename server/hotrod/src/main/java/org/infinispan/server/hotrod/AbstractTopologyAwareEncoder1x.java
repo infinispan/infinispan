@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import static org.infinispan.server.hotrod.HotRodServer.UNKNOWN_TYPES;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -55,7 +57,7 @@ public abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
          return;
       }
 
-      AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(null, header.cacheName, server.getCacheManager(), false, true);
+      AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(UNKNOWN_TYPES, null, header.cacheName, server.getCacheManager(), false, true);
 
       // This is not quite correct, as the ownership of segments on the 1.0/1.1 clients is not exactly
       // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)

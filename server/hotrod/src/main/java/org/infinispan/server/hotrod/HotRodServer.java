@@ -1,8 +1,11 @@
 package org.infinispan.server.hotrod;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
-import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN_TYPE;
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -90,6 +93,7 @@ import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.upgrade.RollingUpgradeManager;
+import org.infinispan.util.KeyValuePair;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -135,6 +139,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private RemoveCacheListener removeCacheListener;
    private ClientCounterManagerNotificationManager clientCounterNotificationManager;
    private HotRodAccessLogging accessLogging = new HotRodAccessLogging();
+   static final KeyValuePair<String, String> UNKNOWN_TYPES = new KeyValuePair<>(APPLICATION_UNKNOWN_TYPE, APPLICATION_UNKNOWN_TYPE);
 
    public ServerAddress getAddress() {
       return address;
@@ -318,7 +323,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    protected void startDefaultCache() {
-      getCacheInstance(null, configuration.defaultCacheName(), cacheManager, true, true);
+      getCacheInstance(UNKNOWN_TYPES, null, configuration.defaultCacheName(), cacheManager, true, true);
    }
 
    private void preStartCaches() {
@@ -327,7 +332,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       boolean authz = cacheManager.getCacheManagerConfiguration().security().authorization().enabled();
       for (String cacheName : cacheManager.getCacheNames()) {
-         getCacheInstance(null, cacheName, cacheManager, false, (!icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED) || authz));
+         getCacheInstance(UNKNOWN_TYPES, null, cacheName, cacheManager, false, (!icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED) || authz));
       }
    }
 
@@ -387,7 +392,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          throw new CacheUnavailableException();
       }
       // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
-      AdvancedCache<byte[], byte[]> cache = knownCaches.get(scopedCacheKey(cacheName, header));
+      KeyValuePair<String, String> requestMediaTypes = getRequestMediaTypes(header, getCacheConfiguration(cacheName));
+      AdvancedCache<byte[], byte[]> cache = knownCaches.get(getDecoratedCacheKey(cacheName, requestMediaTypes));
       if (cache == null) {
          InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
          if (icr.isPrivateCache(cacheName)) {
@@ -397,13 +403,13 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          } else if (icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
             // We want to make sure the cache access is checked everytime, so don't store it as a "known" cache. More
             // expensive, but these caches should not be accessed frequently
-            cache = getCacheInstance(header, cacheName, cacheManager, true, false);
+            cache = getCacheInstance(requestMediaTypes, header, cacheName, cacheManager, true, false);
          } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
             throw new CacheNotFoundException(
                   String.format("Cache with name '%s' not found amongst the configured caches", cacheName),
                   header.version, header.messageId);
          } else {
-            cache = getCacheInstance(header, cacheName, cacheManager, true, true);
+            cache = getCacheInstance(requestMediaTypes, header, cacheName, cacheManager, true, true);
          }
       }
       cache = header.getOptimizedCache(cache, getCacheConfiguration(cacheName));
@@ -440,9 +446,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return info;
    }
 
-   AdvancedCache getCacheInstance(HotRodHeader header, String cacheName, EmbeddedCacheManager cacheManager, Boolean skipCacheCheck, Boolean addToKnownCaches) {
+   AdvancedCache getCacheInstance(KeyValuePair<String, String> requestTypes, HotRodHeader header, String cacheName, EmbeddedCacheManager cacheManager, Boolean skipCacheCheck, Boolean addToKnownCaches) {
       AdvancedCache cache = null;
-      String scopedCacheKey = scopedCacheKey(cacheName, header);
+      String scopedCacheKey = getDecoratedCacheKey(cacheName, requestTypes);
       if (!skipCacheCheck) cache = knownCaches.get(scopedCacheKey);
 
       if (cache == null) {
@@ -453,7 +459,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          knownCacheConfigurations.put(cacheName, cacheConfiguration);
          knownCacheRegistries.put(cacheName, SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()));
          if (header != null) {
-            cache = cache.withMediaType(header.getKeyMediaType().toString(), header.getValueMediaType().toString());
+            cache = cache.withMediaType(requestTypes.getKey(), requestTypes.getValue().toString());
          }
          if (addToKnownCaches) {
             knownCaches.put(scopedCacheKey, cache);
@@ -544,15 +550,28 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return iterationManager;
    }
 
-   private String scopedCacheKey(String cacheName, HotRodHeader header) {
-      String keyTypeAsString = header == null ? MATCH_ALL.getTypeSubtype() : asString(header.getKeyMediaType());
-      String valueTypeAsString = header == null ? MATCH_ALL.getTypeSubtype() : asString(header.getValueMediaType());
-      return cacheName + "|" + keyTypeAsString + "|" + valueTypeAsString;
+   static String getDecoratedCacheKey(String cacheName, KeyValuePair<String, String> mediaTypes) {
+      return cacheName + "|" + mediaTypes.getKey() + "|" + mediaTypes.getValue();
    }
 
-   private String asString(MediaType mediaType) {
-      boolean isDetermined = mediaType != null && !MATCH_ALL.equals(mediaType) && !APPLICATION_UNKNOWN.equals(mediaType);
-      return isDetermined ? mediaType.getTypeSubtype() : MATCH_ALL.getTypeSubtype();
+   private static KeyValuePair<String, String> getRequestMediaTypes(HotRodHeader header, Configuration configuration) {
+      String keyRequestType = header == null ? APPLICATION_UNKNOWN_TYPE : header.getKeyMediaType().toString();
+      String valueRequestType = header == null ? APPLICATION_UNKNOWN_TYPE : header.getValueMediaType().toString();
+      if (header != null && HotRodVersion.HOTROD_28.isOlder(header.version)) {
+         // Pre-2.8 clients always send protobuf payload to the metadata cache
+         if (header.cacheName.equals(PROTOBUF_METADATA_CACHE_NAME)) {
+            keyRequestType = APPLICATION_PROTOSTREAM_TYPE;
+            valueRequestType = APPLICATION_PROTOSTREAM_TYPE;
+         } else {
+            // Pre-2.8 clients always sent query encoded as protobuf unless object store is used.
+            if (header.op == HotRodOperation.QUERY) {
+               boolean objectStorage = APPLICATION_OBJECT.match(configuration.encoding().valueDataType().mediaType());
+               keyRequestType = objectStorage ? APPLICATION_JBOSS_MARSHALLING_TYPE : APPLICATION_PROTOSTREAM_TYPE;
+               valueRequestType = objectStorage ? APPLICATION_JBOSS_MARSHALLING_TYPE : APPLICATION_PROTOSTREAM_TYPE;
+            }
+         }
+      }
+      return new KeyValuePair<>(keyRequestType, valueRequestType);
    }
 
    @Override
