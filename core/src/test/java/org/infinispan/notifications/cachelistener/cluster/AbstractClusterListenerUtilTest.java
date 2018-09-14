@@ -105,6 +105,14 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       TestingUtil.replaceComponent(manager(2), TimeService.class, ts2, true);
    }
 
+   void advanceTimeServices(long time, TimeUnit unit) {
+      long millis = unit.toMillis(time);
+
+      ts0.advance(millis);
+      ts1.advance(millis);
+      ts2.advance(millis);
+   }
+
    @Listener(clustered = true)
    protected class ClusterListener {
       List<CacheEntryEvent> events = Collections.synchronizedList(new ArrayList<CacheEntryEvent>());

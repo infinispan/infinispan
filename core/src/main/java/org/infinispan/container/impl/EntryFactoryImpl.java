@@ -130,6 +130,8 @@ public class EntryFactoryImpl implements EntryFactory {
             cacheEntry = NullCacheEntry.getInstance();
          }
          MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry);
+         // Make sure to set the created date so we can verify if the entry actually expired
+         mvccEntry.setCreated(cacheEntry.getCreated());
          if (cacheEntry.isNull()) {
             mvccEntry.setCreated(true);
          }

@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,7 +22,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -91,13 +91,14 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    private void testLifespanExpiredEntryRetrieval(Cache<Object, String> primaryOwner, Cache<Object, String> backupOwner,
            ControlledTimeService timeService, boolean expireOnPrimary) throws Exception {
       MagicKey key = createKey(primaryOwner, backupOwner);
-      primaryOwner.put(key, key.toString(), 10, TimeUnit.MINUTES);
+      primaryOwner.put(key, key.toString(), 10, TimeUnit.MILLISECONDS);
 
       assertEquals(key.toString(), primaryOwner.get(key));
       assertEquals(key.toString(), backupOwner.get(key));
 
       // Now we expire on cache0, it should still exist on cache1
-      timeService.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+      // Note this has to be within the buffer in RemoveExpiredCommand (100 ms the time of this commit)
+      timeService.advance(11);
 
       Cache<?, ?> expiredCache;
       Cache<?, ?> otherCache;
@@ -312,5 +313,30 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       incrementAllTimeServices(9, TimeUnit.SECONDS);
 
       assertEquals(value, cache0.get(key));
+   }
+
+   public void testWriteExpiredEntry() throws InterruptedException {
+      String key = "key";
+      String value = "value";
+
+      for (int i = 0; i < 100; ++i) {
+         Cache<Object, String> cache = cache0;
+         Object prev = cache.get(key);
+         if (prev == null) {
+            prev = cache.putIfAbsent(key, value, 1, TimeUnit.SECONDS);
+
+            // Should be guaranteed to be null
+            assertNull(prev);
+
+            // We should always have a value still
+            assertNotNull(cache.get(key));
+         }
+
+         long secondOneMilliAdvanced = TimeUnit.SECONDS.toMillis(1);
+
+         ts0.advance(secondOneMilliAdvanced);
+         ts1.advance(secondOneMilliAdvanced);
+         ts2.advance(secondOneMilliAdvanced);
+      }
    }
 }

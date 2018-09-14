@@ -162,6 +162,8 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       return "MortalCacheEntry{" +
             "key=" + toStr(key) +
             ", value=" + toStr(value) +
+            ", created=" + created +
+            ", lifespan=" + lifespan +
             "}";
    }
 }
