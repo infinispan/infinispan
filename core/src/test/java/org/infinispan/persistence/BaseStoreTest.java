@@ -575,11 +575,11 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    protected final InternalCacheEntry<Object, Object> internalCacheEntry(String key, String value, long lifespan) {
-      return TestInternalCacheEntryFactory.<Object, Object>create(factory, key, wrap(key, value), lifespan);
+      return TestInternalCacheEntryFactory.create(factory, key, wrap(key, value), lifespan);
    }
 
    private InternalCacheEntry<Object, Object> internalCacheEntry(String key, String value, long lifespan, long idle) {
-      return TestInternalCacheEntryFactory.<Object, Object>create(factory, key, wrap(key, value), lifespan, idle);
+      return TestInternalCacheEntryFactory.create(factory, key, wrap(key, value), lifespan, idle);
    }
 
    private MarshalledEntry<Object, Object> marshalledEntry(String key, String value, InternalMetadata metadata) {

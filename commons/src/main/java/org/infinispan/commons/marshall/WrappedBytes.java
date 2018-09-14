@@ -1,16 +1,18 @@
 package org.infinispan.commons.marshall;
 
 /**
- * Interface that describes and object holding onto some bytes
+ * Interface that describes and object holding onto some bytes.
+ *
  * @author wburns
  * @since 9.0
  */
 public interface WrappedBytes {
+
    /**
-    * The backing array if there is one otherwise null is returned.  Callers should use
+    * The backing array if there is one otherwise {@code null} is returned.  Callers should use
     * {@link WrappedBytes#backArrayOffset()} to know where to read the bytes from.  This byte[] should never be modified
     * by the caller
-    * @return the backing byte[] if there is one.
+    * @return the backing byte[] if there is one or {@code null} otherwise
     */
    byte[] getBytes();
 
@@ -33,14 +35,11 @@ public interface WrappedBytes {
     */
    byte getByte(int offset);
 
-   default boolean equalsWrappedBytes(WrappedBytes other) {
-      if (other == null) return false;
-      int length = getLength();
-      if (other.getLength() != length) return false;
-      if (other.hashCode() != hashCode()) return false;
-      for (int i = 0; i < length; ++i) {
-         if (getByte(i) != other.getByte(i)) return false;
-      }
-      return true;
-   }
+   /**
+    * Compares the wrapped bytes.
+    *
+    * @param other the {@link WrappedBytes} to compare with
+    * @return {@code true} if the bytes are matching, {@code false} otherwise
+    */
+   boolean equalsWrappedBytes(WrappedBytes other);
 }
