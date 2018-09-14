@@ -172,7 +172,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
          case REMOVE_EXPIRED:
             // Doesn't matter if it is max idle or not - important thing is that it raises expired event
             return new RemoveExpiredCommand(key, valueOrFunction, null, false, cacheNotifier, segmentId, getCommandInvocationId(),
-                  versionGenerator.nonExistingVersion());
+                  versionGenerator.nonExistingVersion(), componentRegistry.getTimeService());
          case COMPUTE_IF_PRESENT:
             return new ComputeCommand(key, (BiFunction) valueOrFunction, true, segmentId, getFlags(), getCommandInvocationId(),
                   metadata, cacheNotifier, componentRegistry);

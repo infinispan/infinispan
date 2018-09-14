@@ -253,13 +253,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan) {
       return new RemoveExpiredCommand(key, value, lifespan, false, notifier, segment, generateUUID(transactional),
-            versionGenerator.nonExistingVersion());
+            versionGenerator.nonExistingVersion(), timeService);
    }
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment) {
       return new RemoveExpiredCommand(key, value, null, true, notifier, segment, generateUUID(transactional),
-            versionGenerator.nonExistingVersion());
+            versionGenerator.nonExistingVersion(), timeService);
    }
 
    @Override
@@ -524,7 +524,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case RemoveExpiredCommand.COMMAND_ID:
             RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
-            removeExpiredCommand.init(notifier, versionGenerator.nonExistingVersion());
+            removeExpiredCommand.init(notifier, versionGenerator.nonExistingVersion(), timeService);
             break;
          case RetrieveLastAccessCommand.COMMAND_ID:
             RetrieveLastAccessCommand retrieveLastAccessCommand = (RetrieveLastAccessCommand) c;

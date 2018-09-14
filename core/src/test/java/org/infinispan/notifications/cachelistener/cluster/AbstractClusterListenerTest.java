@@ -531,12 +531,12 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       MagicKey key = new MagicKey(cache0);
 
       String expectedValue = key + "-expiring";
-      cache0.put(key, key + "-expiring", 1000, TimeUnit.MILLISECONDS);
+      cache0.put(key, key + "-expiring", 10, TimeUnit.MILLISECONDS);
 
       ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
-      ts0.advance(1001);
+      ts0.advance(11);
 
       assertNull(cache0.get(key));
 
@@ -558,12 +558,12 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       MagicKey key = new MagicKey(cache0, cache1);
 
       String expectedValue = key + "-expiring";
-      cache0.put(key, key + "-expiring", 1000, TimeUnit.MILLISECONDS);
+      cache0.put(key, key + "-expiring", 10, TimeUnit.MILLISECONDS);
 
       ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
-      ts1.advance(1001);
+      ts1.advance(11);
 
       assertNull(cache1.get(key));
 
@@ -584,12 +584,14 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       MagicKey key = new MagicKey(cache0, cache1);
 
       String expectedValue = key + "-expiring";
-      cache0.put(key, key + "-expiring", 1000, TimeUnit.MILLISECONDS);
+      cache0.put(key, key + "-expiring", 10, TimeUnit.MILLISECONDS);
 
       ClusterListener clusterListener = listener();
       cache1.addListener(clusterListener);
 
-      ts0.advance(1001);
+      ts0.advance(11);
+      ts1.advance(11);
+      ts2.advance(11);
 
       assertNull(cache0.get(key));
 
@@ -610,12 +612,12 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       MagicKey key = new MagicKey(cache0, cache1);
 
       String expectedValue = key + "-expiring";
-      cache0.put(key, key + "-expiring", 1000, TimeUnit.MILLISECONDS);
+      cache0.put(key, key + "-expiring", 10, TimeUnit.MILLISECONDS);
 
       ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
-      ts1.advance(1001);
+      ts1.advance(11);
 
       assertNull(cache1.get(key));
 
@@ -642,9 +644,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
-      ts0.advance(1001);
-      ts1.advance(1001);
-      ts2.advance(1001);
+      advanceTimeServices(1001, TimeUnit.MILLISECONDS);
 
       assertNull(cache0.get(key));
       assertNull(cache1.get(key));
@@ -690,9 +690,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener, filter, null);
 
-      ts0.advance(keyToFilterOutLifespan + 1);
-      ts1.advance(keyToFilterOutLifespan + 1);
-      ts2.advance(keyToFilterOutLifespan + 1);
+      advanceTimeServices(keyToFilterOutLifespan + 1, TimeUnit.MILLISECONDS);
 
       assertNull(cache0.get(keyToFilterOut));
        // We should not have gotten the message since it was filtered
@@ -701,9 +699,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       String expectedValue = keyToUse + "-expiring";
       cache0.put(keyToUse, keyToUse + "-expiring", keyToUselifespan, TimeUnit.MILLISECONDS);
 
-      ts0.advance(keyToUselifespan + 1);
-      ts1.advance(keyToUselifespan + 1);
-      ts2.advance(keyToUselifespan + 1);
+      advanceTimeServices(keyToUselifespan + 1, TimeUnit.MILLISECONDS);
 
       assertNull(cache0.get(keyToUse));
 
@@ -712,14 +708,14 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
 
    @Test
    public void testSimpleExpirationConverterNotOwner() {
-      long lifespan = 1000l;
+      long lifespan = 1000;
       StringTruncator converter = new StringTruncator(0, 2);
       testExpirationConverter(new MagicKey(cache(1, CACHE_NAME), cache(2, CACHE_NAME)), FIRST_VALUE, FIRST_VALUE.substring(0, 2), lifespan, converter);
    }
 
    @Test
    public void testMetadataExpirationConverterSuccessNotOwner() {
-      long lifespan = 25000l;
+      long lifespan = 25000;
       LifespanConverter converter = new LifespanConverter(true, 500);
       testExpirationConverter(new MagicKey(cache(1, CACHE_NAME), cache(2, CACHE_NAME)), FIRST_VALUE, lifespan, lifespan, converter);
    }
@@ -733,9 +729,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener, null, converter);
 
-      ts0.advance(lifespan + 1);
-      ts1.advance(lifespan + 1);
-      ts2.advance(lifespan + 1);
+      advanceTimeServices(lifespan + 1, TimeUnit.MILLISECONDS);
 
       assertNull(cache0.get(key));
 

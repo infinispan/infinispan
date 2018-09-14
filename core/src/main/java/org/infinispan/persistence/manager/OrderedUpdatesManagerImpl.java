@@ -86,7 +86,7 @@ public class OrderedUpdatesManagerImpl implements OrderedUpdatesManager {
             lf.complete(null);
          }
       }
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    @Override
