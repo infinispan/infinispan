@@ -12,6 +12,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -55,6 +56,10 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       return remoteCache;
    }
 
+   protected ProtocolVersion getProtocolVersion() {
+      return ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
+   }
+
    protected Cache<Object, Object> getEmbeddedCache() {
       return cache;
    }
@@ -70,6 +75,7 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
+      clientBuilder.version(getProtocolVersion());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
       cacheManagers.forEach(c -> c.getClassWhiteList().addRegexps(".*"));

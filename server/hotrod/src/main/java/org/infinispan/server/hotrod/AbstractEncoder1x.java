@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import static org.infinispan.server.hotrod.HotRodServer.UNKNOWN_TYPES;
+
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -305,7 +307,7 @@ public abstract class AbstractEncoder1x implements VersionedEncoder {
             case Constants.INTELLIGENCE_TOPOLOGY_AWARE:
             case Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE:
                // Use the request cache's topology id as the HotRod topologyId.
-               AdvancedCache cache = server.getCacheInstance(null, header.cacheName, addressCache.getCacheManager(), false, true);
+               AdvancedCache cache = server.getCacheInstance(UNKNOWN_TYPES, null, header.cacheName, addressCache.getCacheManager(), false, true);
                RpcManager rpcManager = cache.getRpcManager();
                // Only send a topology update if the cache is clustered
                int currentTopologyId = rpcManager == null ? Constants.DEFAULT_TOPOLOGY_ID : rpcManager.getTopologyId();
@@ -329,7 +331,7 @@ public abstract class AbstractEncoder1x implements VersionedEncoder {
       // difference between the client topology id and the server topology id is 2 or more. The partial update
       // will have the topology id of the server - 1, so it won't prevent a regular topology update if/when
       // the topology cache is updated.
-      AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(null, header.cacheName, addressCache.getCacheManager(), false, true);
+      AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(UNKNOWN_TYPES, null, header.cacheName, addressCache.getCacheManager(), false, true);
       List<Address> cacheMembers = cache.getRpcManager().getMembers();
 
       int responseTopologyId = currentTopologyId;
@@ -361,7 +363,7 @@ public abstract class AbstractEncoder1x implements VersionedEncoder {
    }
 
    void writeHashTopologyUpdate(AbstractHashDistAwareResponse h, HotRodServer server, HotRodHeader header, ByteBuf buffer) {
-      AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(null, header.cacheName, server.getCacheManager(), false, true);
+      AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(UNKNOWN_TYPES, null, header.cacheName, server.getCacheManager(), false, true);
       DistributionManager distManager = cache.getDistributionManager();
       ConsistentHash ch = distManager.getWriteConsistentHash();
 

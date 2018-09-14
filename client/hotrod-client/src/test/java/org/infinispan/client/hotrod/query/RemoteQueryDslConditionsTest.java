@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -67,6 +68,10 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    protected RemoteCache<Object, Object> remoteCache;
    protected Cache<Object, Object> cache;
 
+   protected ProtocolVersion getProtocolVersion() {
+      return ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
+   }
+
    @Override
    protected QueryFactory getQueryFactory() {
       return Search.getQueryFactory(remoteCache);
@@ -101,6 +106,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
       clientBuilder.marshaller(new ProtoStreamMarshaller());
+      clientBuilder.version(getProtocolVersion());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
       initProtoSchema(remoteCacheManager);
