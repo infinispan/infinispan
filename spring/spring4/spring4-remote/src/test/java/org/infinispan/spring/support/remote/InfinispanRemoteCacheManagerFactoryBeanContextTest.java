@@ -10,12 +10,9 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.Test;
 
 /**
- * <p>
  * Test {@link InfinispanRemoteCacheManagerFactoryBean} deployed in a Spring application context.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- *
  */
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @ContextConfiguration("classpath:/org/infinispan/spring/support/remote/InfinispanRemoteCacheManagerFactoryBeanContextTest.xml")

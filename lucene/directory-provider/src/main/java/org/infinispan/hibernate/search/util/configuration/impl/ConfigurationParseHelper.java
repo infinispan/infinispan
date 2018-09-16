@@ -12,7 +12,7 @@ import org.infinispan.hibernate.search.logging.Log;
  *
  * @author Sanne Grinovero
  * @author Steve Ebersole
- * @author Emmanuel Bernard <emmanuel@hibernate.org>
+ * @author Emmanuel Bernard &lt;emmanuel@hibernate.org&gt;
  * @author Hardy Ferentschik
  */
 public class ConfigurationParseHelper {

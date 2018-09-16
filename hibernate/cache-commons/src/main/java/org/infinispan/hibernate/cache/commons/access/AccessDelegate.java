@@ -11,7 +11,7 @@ import org.hibernate.cache.spi.access.SoftLock;
 
 /**
  * Defines the strategy for access to entity or collection data in a Infinispan instance.
- * <p/>
+ * <p>
  * The intent of this class is to encapsulate common code and serve as a delegate for
  * {@link org.hibernate.cache.spi.access.EntityRegionAccessStrategy}
  * and {@link org.hibernate.cache.spi.access.CollectionRegionAccessStrategy} implementations.

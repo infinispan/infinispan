@@ -32,8 +32,8 @@ import io.netty.util.internal.logging.JdkLoggerFactory;
  * This class is responsible for performance tests against the router. It tests 3 configurations: <ul> <li>No SSL at
  * all</li> <li>HotRod with SSL only</li> <li>Multi tenant router with SSL+SNI</li> </ul>
  * <p>
- * <p> Note that this class is not triggered by Surefire by default (it doesn't end with "test"). We want to do
- * performance test on demand only. </p>
+ * Note that this class is not triggered by Surefire by default (it doesn't end with "test"). We want to do
+ * performance test on demand only.
  */
 public class EndpointRouterPerfTest {
 

@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * This annotation is used to define a cache {@link Configuration}.
  *
  * @author Pete Muir
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
 @Retention(RUNTIME)
 @Target({METHOD, FIELD, PARAMETER, TYPE})

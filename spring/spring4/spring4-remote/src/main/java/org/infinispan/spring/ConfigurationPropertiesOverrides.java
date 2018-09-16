@@ -20,10 +20,8 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * <p>
  * Provides a mechanism to override selected configuration properties using explicit setters for
  * each configuration setting.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  *

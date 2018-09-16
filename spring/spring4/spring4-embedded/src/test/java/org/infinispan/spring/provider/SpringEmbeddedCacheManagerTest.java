@@ -17,13 +17,10 @@ import org.springframework.cache.Cache;
 import org.testng.annotations.Test;
 
 /**
- * <p>
  * Test {@link SpringEmbeddedCacheManager}.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
- *
  */
 @Test(testName = "spring.provider.SpringEmbeddedCacheManagerTest", groups = "unit")
 public class SpringEmbeddedCacheManagerTest extends AbstractInfinispanTest {

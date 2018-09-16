@@ -667,7 +667,7 @@ public class PutFromLoadValidator {
 	/**
 	 * Lazy-initialization map for PendingPut. Optimized for the expected usual case where only a
 	 * single put is pending for a given key.
-	 * <p/>
+	 * <p>
 	 * This class is NOT THREAD SAFE. All operations on it must be performed with the lock held.
 	 */
 	private class PendingPutMap extends Lock {

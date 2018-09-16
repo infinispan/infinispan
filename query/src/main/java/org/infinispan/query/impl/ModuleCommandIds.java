@@ -5,7 +5,7 @@ package org.infinispan.query.impl;
  * are unique all numbers are defined here, and should stay in the range 100-119
  * which is the reserved range for this module.
  *
- * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2011 Red Hat Inc.
  */
 public interface ModuleCommandIds {
 

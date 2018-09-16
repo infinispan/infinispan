@@ -70,25 +70,25 @@ public final class CompressedFileAppender extends AbstractOutputStreamAppender<F
    /**
     * Create a File Appender.
     *
-    * @param fileName       The name and path of the file.
-    * @param append         "True" if the file should be appended to, "false" if it should be overwritten.
-    *                       The default is "true".
-    * @param locking        "True" if the file should be locked. The default is "false".
-    * @param name           The name of the Appender.
-    * @param immediateFlush "true" if the contents should be flushed on every write, "false" otherwise. The default
-    *                       is "true".
-    * @param ignore         If {@code "true"} (default) exceptions encountered when appending events are logged;
-    *                       otherwise
-    *                       they are propagated to the caller.
-    * @param bufferedIo     "true" if I/O should be buffered, "false" otherwise. The default is "true".
-    * @param bufferSizeStr  buffer size for buffered IO (default is 8192).
-    * @param layout         The layout to use to format the event. If no layout is provided the default PatternLayout
-    *                       will be used.
-    * @param filter         The filter, if any, to use.
-    * @param advertise      "true" if the appender configuration should be advertised, "false" otherwise.
-    * @param advertiseUri   The advertised URI which can be used to retrieve the file contents.
-    * @param config         The Configuration
-    * @return The FileAppender.
+    * @param fileName         The name and path of the file.
+    * @param append           "True" if the file should be appended to, "false" if it should be overwritten. The default
+    *                         is "true".
+    * @param locking          "True" if the file should be locked. The default is "false".
+    * @param name             The name of the Appender.
+    * @param immediateFlush   "true" if the contents should be flushed on every write, "false" otherwise. The default is
+    *                         "true".
+    * @param ignore           If {@code "true"} (default) exceptions encountered when appending events are logged;
+    *                         otherwise they are propagated to the caller.
+    * @param bufferedIo       "true" if I/O should be buffered, "false" otherwise. The default is "true".
+    * @param bufferSizeStr    buffer size for buffered IO (default is 8192).
+    * @param layout           The layout to use to format the event. If no layout is provided the default PatternLayout
+    *                         will be used.
+    * @param filter           The filter, if any, to use.
+    * @param advertise        "true" if the appender configuration should be advertised, "false" otherwise.
+    * @param advertiseUri     The advertised URI which can be used to retrieve the file contents.
+    * @param compressionLevel The gzip compression level.
+    * @param config           The Configuration
+    * @return The CompressedFileAppender.
     */
    @PluginFactory
    public static CompressedFileAppender createAppender(

@@ -15,13 +15,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
- * <p>
  * Test {@link SpringEmbeddedCacheManagerFactoryBean}.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
- *
  */
 @Test(testName = "spring.provider.SpringEmbeddedCacheManagerFactoryBeanTest", groups = "unit")
 public class SpringEmbeddedCacheManagerFactoryBeanTest {

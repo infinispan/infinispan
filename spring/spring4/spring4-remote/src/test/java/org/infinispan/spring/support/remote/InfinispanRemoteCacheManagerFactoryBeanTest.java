@@ -33,12 +33,9 @@ import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
 
 /**
- * <p>
  * Test {@link AbstractRemoteCacheManagerFactory}.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- *
  */
 @Test(testName = "spring.support.remote.InfinispanRemoteCacheManagerFactoryBeanTest", groups = "unit")
 public class InfinispanRemoteCacheManagerFactoryBeanTest {

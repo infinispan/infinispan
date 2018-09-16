@@ -23,12 +23,9 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.testng.annotations.Test;
 
 /**
- * <p>
  * Test {@link ConfigurationPropertiesOverrides}.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- *
  */
 @Test(groups = "unit", testName = "spring.ConfigurationPropertiesOverridesTest")
 public class ConfigurationPropertiesOverridesTest {

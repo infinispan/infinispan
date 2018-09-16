@@ -7,7 +7,7 @@ import org.h2.jdbcx.JdbcConnectionPool;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 
 /**
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
 public class ClusterSharedConnectionProvider implements ConnectionProvider {
 

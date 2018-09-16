@@ -7,15 +7,12 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.springframework.util.Assert;
 
 /**
- * <p>
  * A {@link org.springframework.cache.CacheManager <code>CacheManager</code>} implementation that is
  * backed by an {@link org.infinispan.client.hotrod.RemoteCacheManager
  * <code>Infinispan RemoteCacheManager</code>} instance.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
- *
  */
 public class SpringRemoteCacheManager implements org.springframework.cache.CacheManager {
 

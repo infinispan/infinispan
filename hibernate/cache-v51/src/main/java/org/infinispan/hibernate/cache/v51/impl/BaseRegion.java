@@ -89,7 +89,7 @@ public abstract class BaseRegion implements Region, InfinispanBaseRegion {
 
 	/**
 	 * {@inheritDoc}
-	 * <p/>
+	 * <p>
 	 * Not supported; returns -1
 	 */
 	@Override
@@ -99,7 +99,7 @@ public abstract class BaseRegion implements Region, InfinispanBaseRegion {
 
 	/**
 	 * {@inheritDoc}
-	 * <p/>
+	 * <p>
 	 * Not supported; returns -1
 	 */
 	@Override

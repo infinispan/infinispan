@@ -23,10 +23,10 @@ import org.junit.Test;
 /**
  * In a JMS Master/Slave configuration, every node should be able to find entities created by some other nodes after the
  * synchronization succeed.
- * <p/>
+ * <p>
  * Search dependencies are not added to the archives.
  *
- * @author Davide D'Alto <davide@hibernate.org>
+ * @author Davide D'Alto &lt;davide@hibernate.org&gt;
  */
 public abstract class SearchNewEntityJmsMasterSlave {
 

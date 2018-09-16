@@ -6,11 +6,18 @@ import java.util.Arrays;
 import org.testng.SkipException;
 
 /**
- * Allows to skip a test on certain Operation Systems.
+ * Allows to skip a test on certain Operating Systems or if various other conditions are met.
  */
-public class SkipTestNG {
+public final class SkipTestNG {
+
+   private SkipTestNG() {
+   }
+
    /**
     * Skip the test if a condition is true.
+    *
+    * @param skip the actual value of the condition
+    * @param message the message of the SkipException that will be thrown
     */
    public static void skipIf(boolean skip, String message) {
       if (skip) {
@@ -21,6 +28,8 @@ public class SkipTestNG {
    /**
     * Use within a {@code @Test} method to skip that method on some OSes.
     * Use in a {@code @BeforeClass} method to skip all methods in a class on some OSes.
+    *
+    * @param oses the {@link OS}es on which we skip the test
     */
    public static void skipOnOS(OS... oses) {
       OS currentOs = OS.getCurrentOs();
@@ -33,6 +42,8 @@ public class SkipTestNG {
     * Use within a {@code @Test} method to skip that method on all versions of Java equal or greater
     * to the one specified.
     * Use in a {@code @BeforeClass} method to skip all methods in a class on some JDKs.
+    *
+    * @param major JDK major version
     */
    public static void skipSinceJDK(int major) {
       int version = getJDKVersion();
@@ -44,6 +55,8 @@ public class SkipTestNG {
    /**
     * Use within a {@code @Test} method to skip that method on all versions of Java less than the one specified.
     * Use in a {@code @BeforeClass} method to skip all methods in a class on some JDKs.
+    *
+    * @param major JDK major version
     */
    public static void skipBeforeJDK(int major) {
       int version = getJDKVersion();

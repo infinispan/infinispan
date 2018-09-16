@@ -21,18 +21,14 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * <p>
  * An integration test for {@link SpringCache}.
- * </p>
  * <p>
  * <strong>CREDITS</strong> This test is a shameless copy of Costin Leau's
  * <code>org.springframework.cache.vendor.AbstractNativeCacheTest</code>. The additions made to it
  * are minor.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
- *
  */
 @Test(testName = "spring.provider.SpringCacheTest", groups = {"unit", "smoke"})
 public class SpringCacheTest extends SingleCacheManagerTest {

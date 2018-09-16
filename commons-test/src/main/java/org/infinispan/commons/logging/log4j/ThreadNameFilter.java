@@ -73,9 +73,8 @@ public final class ThreadNameFilter extends AbstractFilter {
    /**
     * Create a ThresholdFilter.
     * @param level The log Level.
-    * @param match The action to take on a match.
-    * @param mismatch The action to take on a mismatch.
-    * @return The created ThresholdFilter.
+    * @param include The name regex pattern
+    * @return The created ThreadNameFilter.
     */
    @PluginFactory
    public static ThreadNameFilter createFilter(

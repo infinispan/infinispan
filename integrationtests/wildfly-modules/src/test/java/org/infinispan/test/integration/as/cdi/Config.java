@@ -13,7 +13,7 @@ import org.infinispan.manager.DefaultCacheManager;
 /**
  * This is the configuration class.
  *
- * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011
+ * @author Kevin Pollet &lt;pollet.kevin@gmail.com&gt; (C) 2011
  * @author Galder Zamarreño
  */
 public class Config {

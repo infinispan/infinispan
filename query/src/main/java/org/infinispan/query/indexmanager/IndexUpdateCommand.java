@@ -14,8 +14,7 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
- * Custom RPC command containing an index update request for the
- * Master IndexManager of a specific cache & index.
+ * Custom RPC command containing an index update request for the Master IndexManager of a specific cache and index.
  *
  * @author Sanne Grinovero
  */

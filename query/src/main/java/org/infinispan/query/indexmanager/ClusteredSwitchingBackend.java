@@ -50,7 +50,7 @@ import net.jcip.annotations.GuardedBy;
  * although if the buffer for postponed operations gets filled too quickly,
  * we'll both speed up the lock acquisition and apply backpressure to the clients.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 @Listener

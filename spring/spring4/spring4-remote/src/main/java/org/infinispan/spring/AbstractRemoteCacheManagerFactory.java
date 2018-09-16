@@ -13,10 +13,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.springframework.core.io.Resource;
 
 /**
- * <p>
- * An abstract base class for factories creating cache manager that are backed by an Infinispan
- * RemoteCacheManager.
- * </p>
+ * An abstract base class for factories creating cache manager that are backed by an Infinispan RemoteCacheManager.
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  *

@@ -153,7 +153,9 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
    }
 
    /**
-    * generate the XML report given what we know from all the test results
+    * Generate the XML report given what we know from all the test results.
+    *
+    * @param suite the suite
     */
    protected void generateReport(ISuite suite) {
       XMLStringBuffer document = new XMLStringBuffer();

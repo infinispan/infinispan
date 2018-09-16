@@ -16,7 +16,7 @@ import org.infinispan.commons.util.CollectionFactory;
  *
  * EVICTION: NOT IMPLEMENTED!
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
 public final class QueryBox {

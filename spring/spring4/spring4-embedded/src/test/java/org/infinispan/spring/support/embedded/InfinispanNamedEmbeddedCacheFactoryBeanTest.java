@@ -19,12 +19,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * <p>
  * Test {@link InfinispanNamedEmbeddedCacheFactoryBean}.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- *
  */
 @Test(testName = "spring.support.embedded.InfinispanNamedEmbeddedCacheFactoryBeanTest", groups = "unit")
 public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractInfinispanTest {

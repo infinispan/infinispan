@@ -33,7 +33,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * This class was entirely copied from JGroups 2.7 (same name there). Couldn't simply reuse it because JGroups does not
  * ship with MBean, ManagedAttribute and ManagedOperation.
- * <p/>
+ * <p>
  * The original JGroup's ResourceDMBean logic has been modified so that invoke() method checks whether the operation
  * called has been exposed as a {@link ManagedOperation}, otherwise the call fails. JGroups deviated from this logic on
  * purpose because they liked the fact that you could expose all class methods by simply annotating class with {@link
@@ -53,7 +53,7 @@ public class ResourceDMBean implements DynamicMBean {
    private final Class<?> objectClass;
    private final IspnMBeanOperationInfo[] opInfos;
    private final MBeanAttributeInfo[] attInfos;
-   private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<String, InvokableMBeanAttributeInfo>(2);
+   private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<>(2);
    private final ManageableComponentMetadata mBeanMetadata;
 
    private static final Map<String, Field> FIELD_CACHE = CollectionFactory.makeConcurrentMap(64);

@@ -57,22 +57,22 @@ import io.reactivex.Flowable;
  * This cache store will store each entry within a row in the table. This assures a finer grained granularity for all
  * operation, and better performance. In order to be able to store non-string keys, it relies on an {@link
  * org.infinispan.persistence.keymappers.Key2StringMapper}.
- * <p/>
+ * <p>
  * Note that only the keys are stored as strings, the values are still saved as binary data. Using a character
  * data type for the value column will result in unmarshalling errors.
- * <p/>
+ * <p>
  * The actual storage table is defined through configuration {@link org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration}.
  * The table can be created/dropped on-the-fly, at deployment time. For more details consult javadoc for {@link
  * org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration}.
- * <p/>
+ * <p>
  * <b>Preload</b>.In order to support preload functionality the store needs to read the string keys from the database and transform them
  * into the corresponding key objects. {@link org.infinispan.persistence.keymappers.Key2StringMapper} only supports
  * key to string transformation(one way); in order to be able to use preload one needs to specify an
  * {@link org.infinispan.persistence.keymappers.TwoWayKey2StringMapper}, which extends {@link org.infinispan.persistence.keymappers.Key2StringMapper} and
  * allows bidirectional transformation.
- * <p/>
+ * <p>
  * <b>Rehashing</b>. When a node leaves/joins, Infinispan moves around persistent state as part of rehashing process.
- * For this it needs access to the underlaying key objects, so if distribution is used, the mapper needs to be an
+ * For this it needs access to the underlying key objects, so if distribution is used, the mapper needs to be an
  * {@link org.infinispan.persistence.keymappers.TwoWayKey2StringMapper} otherwise the cache won't start (same constraint as with preloading).
  *
  * @author Mircea.Markus@jboss.com

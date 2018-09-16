@@ -12,7 +12,7 @@ import org.infinispan.jcache.logging.Log;
 /**
  * {@link javax.cache.annotation.CachePut} interceptor implementation.
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  * @author Galder Zamarreño
  */
 @Interceptor

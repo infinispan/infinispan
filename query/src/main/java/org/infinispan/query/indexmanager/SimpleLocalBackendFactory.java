@@ -9,7 +9,7 @@ import org.hibernate.search.spi.WorkerBuildContext;
 /**
  * Factory of local backends to simplify lazy initialization.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 class SimpleLocalBackendFactory implements LocalBackendFactory {

@@ -13,7 +13,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.StringUtils;
 
 /**
- * <p>
  * A {@link org.springframework.beans.factory.FactoryBean <code>FactoryBean</code>} for creating a
  * native {@link #setCacheName(String) named} Infinispan {@link org.infinispan.Cache
  * <code>org.infinispan.Cache</code>}, delegating to a
@@ -22,10 +21,8 @@ import org.springframework.util.StringUtils;
  * <code>oorg.infinispan.client.hotrod.RemoteCacheManagerr</code>}. If no cache name is explicitly
  * set, this <code>FactoryBean</code>'s {@link #setBeanName(String) <code>beanName</code>} will be
  * used instead.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- *
  */
 public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<RemoteCache<K, V>>,
                                                                     BeanNameAware, InitializingBean {
@@ -119,12 +116,10 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
    // ------------------------------------------------------------------------
 
    /**
-    * <p>
     * Sets the {@link org.infinispan.Cache#getName() name} of the {@link org.infinispan.Cache
     * <code>org.infinispan.Cache</code>} to be created. If no explicit <code>cacheName</code> is
     * set, this <code>FactoryBean</code> will use its {@link #setBeanName(String)
     * <code>beanName</code>} as the <code>cacheName</code>.
-    * </p>
     *
     * @param cacheName
     *           The {@link org.infinispan.Cache#getName() name} of the {@link org.infinispan.Cache
@@ -135,12 +130,10 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
    }
 
    /**
-    * <p>
     * Sets the {@link org.infinispan.client.hotrod.RemoteCacheManager
     * <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} to be used for creating our
     * {@link org.infinispan.Cache <code>Cache</code>} instance. Note that this is a
     * <strong>mandatory</strong> property.
-    * </p>
     *
     * @param infinispanRemoteCacheManager
     *           The {@link org.infinispan.client.hotrod.RemoteCacheManager

@@ -13,12 +13,9 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
- * <p>
  * Test {@link InfinispanDefaultCacheFactoryBean}.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- *
  */
 @Test(testName = "spring.support.InfinispanDefaultCacheFactoryBeanTest", groups = "unit")
 public class InfinispanDefaultCacheFactoryBeanTest extends AbstractInfinispanTest {

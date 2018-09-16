@@ -21,9 +21,9 @@ import org.infinispan.protostream.descriptors.Option;
  * {@literal @}Field) that behave very similarly to the identically named Hibernate Search annotations and which can be
  * directly added to your Protobuf schema files in the documentation comments of your message type definitions as
  * demonstrated in the example below:
- * <p/>
+ * <p>
  * <b>Example:</b>
- * <p/>
+ * <p>
  * <pre>
  * /**
  *  * This message type is indexed, but not all of its fields are.

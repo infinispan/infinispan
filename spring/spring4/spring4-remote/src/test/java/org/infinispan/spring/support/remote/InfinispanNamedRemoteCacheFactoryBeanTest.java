@@ -18,12 +18,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * <p>
  * Test {@link InfinispanNamedRemoteCacheFactoryBean}.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- *
  */
 @Test(testName = "spring.support.remote.InfinispanNamedRemoteCacheFactoryBeanTest", groups = "functional")
 public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManagerTest {

@@ -17,7 +17,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  * Using SKIP_INDEXING is much lighter than having Infinispan Query need to use class reflection and attempt to reconfigure the Search engine
  * dynamically.
  *
- * @author Sanne Grinovero <sanne@infinispan.org> (C) 2012 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2012 Red Hat Inc.
  * @since 5.2
  */
 public class SkipIndexingGuaranteed extends CommandInterceptor {

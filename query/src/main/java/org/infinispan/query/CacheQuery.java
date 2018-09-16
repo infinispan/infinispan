@@ -12,7 +12,6 @@ import org.hibernate.search.query.engine.spi.FacetManager;
 /**
  * A cache-query is what will be returned when the getQuery() method is run on {@link org.infinispan.query.impl.SearchManagerImpl}. This object can
  * have methods such as list, setFirstResult,setMaxResults, setFetchSize, getResultSize and setSort.
- * <p/>
  *
  * @author Manik Surtani
  * @author Navin Surtani
@@ -96,10 +95,10 @@ public interface CacheQuery<E> extends Iterable<E> {
    /**
     * Defines the Lucene field names projected and returned in a query result
     * Each field is converted back to it's object representation, an Object[] being returned for each "row"
-    * <p/>
+    * <p>
     * A projectable field must be stored in the Lucene index and use a {@link org.hibernate.search.bridge.TwoWayFieldBridge}
     * Unless notified in their JavaDoc, all built-in bridges are two-way. All @DocumentId fields are projectable by design.
-    * <p/>
+    * <p>
     * If the projected field is not a projectable field, null is returned in the object[]
     *
     * @param fields the projected field names

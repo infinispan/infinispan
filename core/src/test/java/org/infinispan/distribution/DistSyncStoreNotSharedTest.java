@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
  * DistSyncSharedTest.
  *
  * @author Galder Zamarreño
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @since 4.0
  */
 @Test(groups = "functional", testName = "distribution.DistSyncStoreNotSharedTest")

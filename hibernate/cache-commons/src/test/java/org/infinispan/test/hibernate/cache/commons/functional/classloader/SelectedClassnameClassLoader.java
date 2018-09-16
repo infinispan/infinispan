@@ -23,11 +23,9 @@ import org.jboss.logging.Logger;
  * <li>Servlet-style child-first classloading, where this class is the child loader.</li>
  * <li>Parent-first classloading where the parent does not have access to certain classes</li>
  * </ul>
- * </p>
  * <p>
  * This class can also be configured to raise a ClassNotFoundException if asked to load certain classes, thus allowing classes on
  * the classpath to be hidden from a test environment.
- * </p>
  *
  * @author Brian Stansberry
  */
@@ -38,7 +36,7 @@ public class SelectedClassnameClassLoader extends ClassLoader {
     private String[] excludedClasses = null;
     private String[] notFoundClasses = null;
 
-    private Map<String, Class> classes = new java.util.HashMap<String, Class>();
+    private Map<String, Class> classes = new java.util.HashMap<>();
 
     /**
      * Creates a new classloader that loads the given classes.

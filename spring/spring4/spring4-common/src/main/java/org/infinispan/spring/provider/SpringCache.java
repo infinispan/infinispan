@@ -15,15 +15,11 @@ import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
 
 /**
- * <p>
- * A {@link org.springframework.cache.Cache <code>Cache</code>} implementation that delegates to a
- * {@link org.infinispan.Cache <code>org.infinispan.Cache</code>} instance supplied at construction
- * time.
- * </p>
+ * A {@link org.springframework.cache.Cache <code>Cache</code>} implementation that delegates to a {@link
+ * org.infinispan.Cache <code>org.infinispan.Cache</code>} instance supplied at construction time.
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author <a href="mailto:marius.bogoevici@gmail.com">Marius Bogoevici</a>
- *
  */
 public class SpringCache implements Cache {
    private final BasicCache nativeCache;

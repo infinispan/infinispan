@@ -17,7 +17,7 @@ import org.infinispan.topology.CacheTopology;
 /**
  * A component that manages the state transfer when the topology of the cluster changes.
  *
- * @author Dan Berindei <dan@infinispan.org>
+ * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @author Mircea Markus
  * @author anistor@redhat.com
  * @since 5.1

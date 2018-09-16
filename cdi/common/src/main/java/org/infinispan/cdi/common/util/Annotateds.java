@@ -21,16 +21,11 @@ import javax.enterprise.inject.spi.AnnotatedParameter;
 import javax.enterprise.inject.spi.AnnotatedType;
 
 /**
- * <p>
  * Utilities for working with {@link Annotated}s.
- * </p>
- * <p/>
  * <p>
- * Includes utilities to check the equality of and create unique id's for
- * <code>Annotated</code> instances.
- * </p>
+ * Includes utilities to check the equality of and create unique id's for <code>Annotated</code> instances.
  *
- * @author Stuart Douglas <stuart@baileyroberts.com.au>
+ * @author Stuart Douglas &lt;stuart@baileyroberts.com.au&gt;
  */
 public class Annotateds {
 

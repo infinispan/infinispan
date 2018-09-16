@@ -29,6 +29,8 @@ public class SkipJunit implements TestRule {
 
    /**
     * Use inside a method to skip that particular method on some OSes.
+    *
+    * @param oses the {@link OS}es
     */
    public static void skipOnOS(OS... oses) {
       OS os = OS.getCurrentOs();

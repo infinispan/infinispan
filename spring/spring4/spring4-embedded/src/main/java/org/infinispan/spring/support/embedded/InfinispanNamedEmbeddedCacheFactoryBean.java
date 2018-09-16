@@ -276,12 +276,10 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
    // ------------------------------------------------------------------------
 
    /**
-    * <p>
     * Sets the {@link org.infinispan.Cache#getName() name} of the {@link org.infinispan.Cache
     * <code>org.infinispan.Cache</code>} to be created. If no explicit <code>cacheName</code> is
     * set, this <code>FactoryBean</code> will use its {@link #setBeanName(String)
     * <code>beanName</code>} as the <code>cacheName</code>.
-    * </p>
     *
     * @param cacheName
     *           The {@link org.infinispan.Cache#getName() name} of the {@link org.infinispan.Cache
@@ -292,12 +290,10 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
    }
 
    /**
-    * <p>
     * Sets the {@link org.infinispan.manager.EmbeddedCacheManager
     * <code>org.infinispan.manager.EmbeddedCacheManager</code>} to be used for creating our
     * {@link org.infinispan.Cache <code>Cache</code>} instance. Note that this is a
     * <strong>mandatory</strong> property.
-    * </p>
     *
     * @param infinispanEmbeddedCacheManager
     *           The {@link org.infinispan.manager.EmbeddedCacheManager

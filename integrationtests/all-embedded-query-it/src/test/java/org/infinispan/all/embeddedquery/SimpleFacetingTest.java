@@ -20,7 +20,7 @@ import org.junit.Test;
  * Copy of SimpleFacetingTest for testing uber-jars
  *
  * @author Jiri Holusa (jholusa@redhat.com)
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Hardy Ferentschik
  */
 public class SimpleFacetingTest extends AbstractQueryTest {

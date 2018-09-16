@@ -3,7 +3,7 @@ package org.infinispan.query.remote.impl;
 /**
  * Identifiers used by the Marshaller to delegate to specialized Externalizers. For details, read
  * http://infinispan.org/docs/9.0.x/user_guide/user_guide.html#_preassigned_externalizer_id_ranges
- * <p/>
+ * <p>
  * The range reserved for the Infinispan Remote Query module is from 1700 to 1799.
  *
  * @author anistor@redhat.com

@@ -9,12 +9,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 
 /**
- * <p>
  * Test {@link InfinispanNamedRemoteCacheFactoryBean} deployed in a Spring application context.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- *
  */
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @ContextConfiguration("classpath:/org/infinispan/spring/support/remote/InfinispanNamedRemoteCacheFactoryBeanContextTest.xml")

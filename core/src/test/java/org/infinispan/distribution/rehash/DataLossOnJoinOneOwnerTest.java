@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests data loss during state transfer when a single data owner is configured.
- * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2011 Red Hat Inc.
  * @author Alex Heneveld
  * @author Manik Surtani
  */

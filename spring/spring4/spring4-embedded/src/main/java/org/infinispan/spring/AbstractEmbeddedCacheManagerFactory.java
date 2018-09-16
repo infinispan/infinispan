@@ -13,10 +13,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.springframework.core.io.Resource;
 
 /**
- * <p>
- * An abstract base class for factories creating cache managers that are backed by an
- * EmbeddedCacheManager.
- * </p>
+ * An abstract base class for factories creating cache managers that are backed by an EmbeddedCacheManager.
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici

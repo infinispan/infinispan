@@ -12,7 +12,7 @@ import org.hibernate.search.indexes.spi.IndexManager;
  * operations to the new backend.
  * Which backed is being selected depends on the cluster state.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 public class LazyInitializingBackend implements IndexingBackend {

@@ -3,10 +3,8 @@ package org.infinispan.spring.provider.sample.dao;
 import org.infinispan.spring.provider.sample.entity.Book;
 
 /**
- * <p>
  * A simple, woefully incomplete {@code DAO} for storing, retrieving and removing {@link org.infinispan.spring.provider.sample.entity.Book
  * <code>Books</code>}.
- * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @since 5.1
