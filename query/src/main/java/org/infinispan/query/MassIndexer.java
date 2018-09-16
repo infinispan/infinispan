@@ -14,7 +14,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * While reindexing is being performed queries should not be executed as they
  * will very likely miss many or all results.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
  */
 @MBean(objectName = "MassIndexer",
       description = "Component that rebuilds the index from the cached data")

@@ -9,7 +9,7 @@ import org.apache.lucene.store.IndexInput;
  * The buffer is not copied to avoid copy operations as the slice is expected to have a lifespan shorter than the buffer itself,
  * so there would be no benefit in having a smaller copy in heap.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 final class SlicedBufferIndexInput extends IndexInput {

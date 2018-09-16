@@ -32,7 +32,7 @@ class AnnotatedTypeImpl<X> extends AnnotatedImpl implements AnnotatedType<X> {
    /**
     * We make sure that there is a NewAnnotatedMember for every public
     * method/field/constructor
-    * <p/>
+    * <p>
     * If annotation have been added to other methods as well we add them to
     */
    AnnotatedTypeImpl(Class<X> clazz, AnnotationStore typeAnnotations, Map<Field, AnnotationStore> fieldAnnotations, Map<Method, AnnotationStore> methodAnnotations, Map<Method, Map<Integer, AnnotationStore>> methodParameterAnnotations, Map<Constructor<?>, AnnotationStore> constructorAnnotations, Map<Constructor<?>, Map<Integer, AnnotationStore>> constructorParameterAnnotations, Map<Field, Type> fieldTypes, Map<Method, Map<Integer, Type>> methodParameterTypes, Map<Constructor<?>, Map<Integer, Type>> constructorParameterTypes) {

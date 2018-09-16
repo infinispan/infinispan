@@ -56,7 +56,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
    /**
     * Returns the local cache defined as backup for the provided remote (site, cache) combo, or throws an
     * exception if no such site is defined.
-    * <p/>
+    * <p>
     * Also starts the cache if not already started; that is because the cache is needed for update after this method
     * is invoked.
     */

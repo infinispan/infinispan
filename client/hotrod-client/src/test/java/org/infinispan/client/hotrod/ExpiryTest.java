@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 
 /**
  * This test verifies that an entry can be expired from the Hot Rod server
- * using the default expiry lifespan or maxIdle. </p>
+ * using the default expiry lifespan or maxIdle.
  *
  * @author Galder Zamarreño
  * @since 5.0
@@ -52,7 +52,7 @@ public class ExpiryTest extends MultiHotRodServersTest {
 
    public void testGlobalExpiryPutAll() {
       RemoteCache<Integer, String> cache0 = client(0).getCache();
-      Map<Integer, String> data = new HashMap<Integer, String>();
+      Map<Integer, String> data = new HashMap<>();
       data.put(2,"v0");
       Req.PUT_ALL.execute(cache0,data);
       expectCachedThenExpired(cache0, 2, "v0");
@@ -60,7 +60,7 @@ public class ExpiryTest extends MultiHotRodServersTest {
 
    public void testGlobalExpiryPutAllWithFlag() {
       RemoteCache<Integer, String> cache0 = client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING);
-      Map<Integer, String> data = new HashMap<Integer, String>();
+      Map<Integer, String> data = new HashMap<>();
       data.put(3, "v0");
       Req.PUT_ALL.execute(cache0,data);
       expectCachedThenExpired(cache0, 3, "v0");

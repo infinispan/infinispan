@@ -15,7 +15,7 @@ public interface BackupReceiverRepository {
    /**
     * Returns the local cache associated defined as backup for the provided remote (site, cache) combo, or throws an
     * exception if no such site is defined.
-    * <p/>
+    * <p>
     * Also starts the cache if not already stated; that is because the cache is needed for update after when this method
     * is invoked.
     */

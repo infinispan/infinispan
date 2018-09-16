@@ -8,7 +8,7 @@ import javax.transaction.xa.Xid;
  * Xid to be used when no XAResource enlistment takes place. This is more efficient both creation and memory wise than
  * {@link DummyXid}.
  *
- * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
+ * @author Mircea Markus &lt;mircea.markus@jboss.com&gt; (C) 2011 Red Hat Inc.
  * @since 5.1
  * @deprecated it will be removed and {@link EmbeddedXid} would be used instead.
  */

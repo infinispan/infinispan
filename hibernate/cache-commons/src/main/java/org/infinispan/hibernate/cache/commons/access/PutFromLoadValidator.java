@@ -47,7 +47,7 @@ import org.infinispan.util.ByteString;
  * <p>
  * The expected usage of this class by a thread that read the cache and did
  * not find data is:
- * <p/>
+ * <p>
  * <ol>
  * <li> Call {@link #registerPendingPut(Object, Object, long)}</li>
  * <li> Read the database</li>
@@ -57,12 +57,12 @@ import org.infinispan.util.ByteString;
  * <li> then call {@link #releasePutFromLoadLock(Object, Lock)}</li>
  * </ol>
  * </p>
- * <p/>
+ * <p>
  * <p>
  * The expected usage by a thread that is taking an action such that any pending
  * <code>putFromLoad</code> may have stale data and should not cache it is to either
  * call
- * <p/>
+ * <p>
  * <ul>
  * <li> {@link #beginInvalidatingKey(Object, Object)} (for a single key invalidation)</li>
  * <li>or {@link #beginInvalidatingRegion()} followed by {@link #endInvalidatingRegion()}
@@ -71,7 +71,7 @@ import org.infinispan.util.ByteString;
  * After transaction commit (when the DB is updated) {@link #endInvalidatingKey(Object, Object)} should
  * be called in order to allow further attempts to cache entry.
  * </p>
- * <p/>
+ * <p>
  * <p>
  * This class also supports the concept of "naked puts", which are calls to
  * {@link #acquirePutFromLoadLock(Object, Object, long)} without a preceding {@link #registerPendingPut(Object, Object, long)}.
@@ -667,7 +667,7 @@ public class PutFromLoadValidator {
 	/**
 	 * Lazy-initialization map for PendingPut. Optimized for the expected usual case where only a
 	 * single put is pending for a given key.
-	 * <p/>
+	 * <p>
 	 * This class is NOT THREAD SAFE. All operations on it must be performed with the lock held.
 	 */
 	private class PendingPutMap extends Lock {

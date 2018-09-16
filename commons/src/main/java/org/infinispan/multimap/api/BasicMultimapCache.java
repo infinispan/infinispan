@@ -10,7 +10,7 @@ import org.infinispan.commons.util.Experimental;
  * provides: embedded and remote. <p> Please see the <a href="http://infinispan.org/documentation/">Infinispan
  * documentation</a> and/or the <a href="http://infinispan.org/docs/dev/getting_started/getting_started.html">5 Minute
  * Usage Tutorial</a> for more details on Infinispan.
- * <p/>
+ * <p>
  * <p> MutimapCache is a type of Infinispan Cache that maps keys to values, similar to {@link
  * org.infinispan.commons.api.AsyncCache} in which each key can contain multiple values.
  * <pre>

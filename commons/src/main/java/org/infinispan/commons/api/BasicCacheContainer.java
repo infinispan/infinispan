@@ -4,7 +4,6 @@ import java.util.Set;
 
 /**
  * <tt>BasicCacheContainer</tt> defines the methods used to obtain a {@link org.infinispan.api.BasicCache}.
- * <p/>
  *
  *
  * @see org.infinispan.manager.EmbeddedCacheManager
@@ -21,10 +20,10 @@ public interface BasicCacheContainer extends Lifecycle {
 
    /**
     * Retrieves the default cache associated with this cache container.
-    * <p/>
+    * <p>
     * As such, this method is always guaranteed to return the default cache, unless one has not been supplied to the
     * cache container.
-    * <p />
+    * <p>
     * <b>NB:</b> Shared caches are supported (and in fact encouraged) but if they are used it's the users responsibility to
     * ensure that <i>at least one</i> but <i>only one</i> caller calls stop() on the cache, and it does so with the awareness
     * that others may be using the cache.
@@ -36,13 +35,13 @@ public interface BasicCacheContainer extends Lifecycle {
    /**
     * Retrieves a named cache from the system.  If the cache has been previously created with the same name, the running
     * cache instance is returned.  Otherwise, this method attempts to create the cache first.
-    * <p/>
+    * <p>
     * In the case of a {@link org.infinispan.manager.EmbeddedCacheManager}: when creating a new cache, this method will
     * use the configuration passed in to the EmbeddedCacheManager on construction, as a template, and then optionally
     * apply any overrides previously defined for the named cache using the {@link EmbeddedCacheManager#defineConfiguration(String, org.infinispan.config.Configuration)}
     * or {@link EmbeddedCacheManager#defineConfiguration(String, String, org.infinispan.config.Configuration)}
     * methods, or declared in the configuration file.
-    * <p />
+    * <p>
     * <b>NB:</b> Shared caches are supported (and in fact encouraged) but if they are used it's the users responsibility to
     * ensure that <i>at least one</i> but <i>only one</i> caller calls stop() on the cache, and it does so with the awareness
     * that others may be using the cache.

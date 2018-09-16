@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 /**
  * Tests if the conditional commands correctly fetch the value from cache loader even with the skip cache load/store
  * flags.
- * <p/>
+ * <p>
  * The configuration used is a non-tx distributed cache with passivation.
  *
  * @author Pedro Ruivo

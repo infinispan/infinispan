@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  * Copied and adapted from Hibernate Search
  * org.hibernate.search.test.analyzer.solr.SolrAnalyzerTest
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
  * @author Emmanuel Bernard
  * @author Hardy Ferentschik
  */

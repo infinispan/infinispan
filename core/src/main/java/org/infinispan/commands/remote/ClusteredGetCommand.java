@@ -27,7 +27,6 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Issues a remote get call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the
  * interceptor chain.
- * <p/>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0

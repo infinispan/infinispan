@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 /**
  * Tests that a specific cache manager can be used for one or more caches.
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  * @see Config
  */
 @Test(groups = "functional", testName = "cdi.test.cache.embedded.specific.SpecificCacheManagerTest")

@@ -64,7 +64,7 @@ public class KarafTestSupport {
 
     /**
      * Make available system properties that are configured for the test, to the test container.
-     * <p>Note:</p> If not obvious the container runs in in forked mode and thus system properties passed
+     * <p><b>Note:</b> If not obvious the container runs in in forked mode and thus system properties passed
      * form command line or surefire plugin are not available to the container without an approach like this.
      */
     public static Option copySystemProperty(String propertyName) {

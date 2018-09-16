@@ -10,14 +10,10 @@ import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Qualifier;
 
 /**
- * <p>
  * A synthetic qualifier that can be used to replace other user-supplied
  * configuration at deployment.
- * </p>
- * <p/>
- * <p/>
  *
- * @author Stuart Douglas <stuart@baileyroberts.com.au>
+ * @author Stuart Douglas &lt;stuart@baileyroberts.com.au&gt;
  * @author Pete Muir
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -50,13 +46,9 @@ public @interface Synthetic {
     }
 
     /**
-     * <p>
-     * Provides a unique Synthetic qualifier for the specified namespace
-     * </p>
-     * <p/>
+     * Provides a unique Synthetic qualifier for the specified namespace.
      * <p>
      * {@link Provider} is thread safe.
-     * </p>
      *
      * @author Pete Muir
      */

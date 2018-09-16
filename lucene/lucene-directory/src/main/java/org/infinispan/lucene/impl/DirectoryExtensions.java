@@ -6,7 +6,7 @@ import org.infinispan.Cache;
  * Some additional methods we add to our Directory implementations,
  * mostly for reporting and testing reasons.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2013 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2013 Red Hat Inc.
  */
 public interface DirectoryExtensions {
 

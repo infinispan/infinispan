@@ -14,7 +14,7 @@ import org.jboss.as.cli.operation.OperationFormatException;
 
 /**
  * {@link CommandHandler} implementation with the {@code container} command logic.
- * <p/>
+ * <p>
  * The {@code container} command changes the container in which the Infinispan CLI command are
  * executed against. The command is only executed in the client.
  *

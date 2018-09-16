@@ -6,14 +6,13 @@ import org.infinispan.metadata.Metadata;
  * A representation of an InternalCacheEntry that does not have a reference to the key.  This should be used if the key
  * is either not needed or available elsewhere as it is more efficient to marshall and unmarshall.  Probably most useful
  * in cache stores.
- * <p/>
+ * <p>
  * Note that this should not be used to optimize memory overhead, since the saving of an additional reference to a key
  * (a single object reference) does not warrant the cost of constructing an InternalCacheValue, where an existing
  * InternalCacheEntry is already referenced.
- * <p/>
+ * <p>
  * Use of this interface <i>only</i> makes sense when marshalling is involved, since the cost of marshalling the key
  * again can be sidestepped using an InternalCacheValue if the key is already known/marshalled.
- * <p/>
  *
  * @author Manik Surtani
  * @since 4.0

@@ -13,9 +13,8 @@ public interface Listenable {
    /**
     * Adds a listener to the component.  Typically, listeners would need to be annotated with {@link Listener} and
     * further to that, contain methods annotated appropriately, otherwise the listener will not be registered.
-    * <p/>
+    * <p>
     * See the {@link Listener} annotation for more information.
-    * <p/>
     *
     * @param listener must not be null.
     */

@@ -18,7 +18,7 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  * our custom keyTransformers. LuceneWork instances are immutable, so we have to replace them
  * with new instances iff an id transformation is needed.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
  */
 public class LuceneWorkTransformationVisitor implements IndexWorkVisitor<KeyTransformationHandler, LuceneWork> {
 

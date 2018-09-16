@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  * Adaptor to implement the Hibernate Search contract of a BackendQueueProcessor
  * while delegating to the cluster-aware components of Infinispan Query.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 final class InfinispanBackendQueueProcessor extends WorkspaceHolder {

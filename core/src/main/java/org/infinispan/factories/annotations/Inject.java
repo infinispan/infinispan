@@ -14,7 +14,7 @@ import org.infinispan.factories.ComponentRegistry;
  * to be constructed must be built using the {@link AbstractComponentFactory#construct(Class)} method, or if your object
  * that needs components injected into it already exists, it can be built using the {@link
  * ComponentRegistry#wireDependencies(Object)} method.
- * <p/>
+ * <p>
  * Usage example:
  * <pre>
  *       public class MyClass
@@ -22,21 +22,20 @@ import org.infinispan.factories.ComponentRegistry;
  *          private TransactionManager tm;
  *          private BuddyManager bm;
  *          private Notifier n;
- * <p/>
- *          &amp;Inject
+ *
+ *          &#064;Inject
  *          public void setTransactionManager(TransactionManager tm)
  *          {
  *             this.tm = tm;
  *          }
- * <p/>
- *          &amp;Inject
+ *
+ *          &#064;Inject
  *          public void injectMoreStuff(BuddyManager bm, Notifier n)
  *          {
  *             this.bm = bm;
  *             this.n = n;
  *          }
  *       }
- * <p/>
  * </pre>
  * and an instance of this class can be constructed and wired using
  * <pre>

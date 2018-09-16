@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 /**
  * Tests that the default embedded cache configuration can be overridden.
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
 @Test(groups = "functional", testName = "cdi.test.cachemanager.embedded.DefaultConfigurationTest")
 public class DefaultConfigurationTest extends Arquillian {

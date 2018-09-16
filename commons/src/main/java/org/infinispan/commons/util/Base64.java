@@ -5,7 +5,7 @@ import org.infinispan.commons.logging.LogFactory;
 
 // TODO Remove this class in Infinispan 10
 /**
- * Encodes and decodes to and from Base64 notation. <p/> <p> Change Log: </p>
+ * Encodes and decodes to and from Base64 notation. <p> <p> Change Log: </p>
  * <ul> <li>v2.1 - Cleaned up javadoc comments and unused variables and
  * methods. Added some convenience methods for reading and writing to and from
  * files.</li> <li>v2.0.2 - Now specifies UTF-8 encoding in places where the
@@ -29,7 +29,7 @@ import org.infinispan.commons.logging.LogFactory;
  * line breaks. Fixed bug in input stream where last buffer being read, if not
  * completely full, was not returned.</li> <li>v1.3.4 - Fixed when "improperly
  * padded stream" error was thrown at the wrong time.</li> <li>v1.3.3 - Fixed
- * I/O streams which were totally messed up.</li> </ul> <p/> <p> I am placing
+ * I/O streams which were totally messed up.</li> </ul> <p> <p> I am placing
  * this code in the Public Domain. Do with it as you will. This software comes
  * with no guarantees or warranties but with plenty of well-wishing instead!
  * Please visit <a href="http://iharder.net/base64">http://iharder.net/base64</a>

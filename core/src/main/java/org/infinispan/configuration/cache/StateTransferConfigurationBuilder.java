@@ -35,7 +35,7 @@ public class StateTransferConfigurationBuilder extends
    /**
     * If {@code true}, the cache will fetch data from the neighboring caches when it starts up, so
     * the cache starts 'warm', although it will impact startup time.
-    * <p/>
+    * <p>
     * In distributed mode, state is transferred between running caches as well, as the ownership of
     * keys changes (e.g. because a cache left the cluster). Disabling this setting means a key will
     * sometimes have less than {@code numOwner} owners.

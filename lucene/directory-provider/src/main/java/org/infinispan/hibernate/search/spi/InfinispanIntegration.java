@@ -5,7 +5,7 @@ import java.util.Properties;
 /**
  * Configuration constants for the Infinispan integration
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
  */
 public class InfinispanIntegration {
 
@@ -45,10 +45,10 @@ public class InfinispanIntegration {
 
    /**
     * Configuration attribute to control if the writes to Index Metadata should be performed asynchronously.
-    * <p/>
+    * <p>
     * Defaults to {@code false} if the backend is configured as synchronous and defaults to {@code true} if the backend
     * is configured as asynchronous.
-    * <p/>
+    * <p>
     * Setting this to {@code true} might improve performance but is highly experimental.
     */
    public static final String WRITE_METADATA_ASYNC = "write_metadata_async";

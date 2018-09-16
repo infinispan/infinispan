@@ -152,7 +152,7 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
 
    /**
     * ConcurrentReferenceHashMap list entry. Note that this is never exported out as a user-visible Map.Entry.
-    * <p/>
+    * <p>
     * Because the value field is volatile, not final, it is legal wrt the Java Memory Model for an unsynchronized
     * reader to see null instead of initial value when read via a data race.  Although a reordering leading to this is
     * not likely to ever actually occur, the Segment.readValueUnderLock method is used as a backup in case a null
@@ -807,8 +807,8 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
    /**
     * Returns the value to which the specified key is mapped, or {@code null} if this map contains no mapping for the
     * key.
-    * <p/>
-    * <p>More formally, if this map contains a mapping from a key {@code k} to a value {@code v} such that {@code
+    * <p>
+    * More formally, if this map contains a mapping from a key {@code k} to a value {@code v} such that {@code
     * key.equals(k)}, then this method returns {@code v}; otherwise it returns {@code null}.  (There can be at most one
     * such mapping.)
     *
@@ -912,8 +912,8 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
 
    /**
     * Maps the specified key to the specified value in this table.  Neither the key nor the value can be null.
-    * <p/>
-    * <p>The value can be retrieved by calling the <tt>get</tt> method with a key that is equal to the original key.
+    * <p>
+    * The value can be retrieved by calling the <tt>get</tt> method with a key that is equal to the original key.
     *
     * @param key   key with which the specified value is to be associated
     * @param value value to be associated with the specified key
@@ -1033,7 +1033,7 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
     * stale entries are automatically removed lazily, when blocking operations are required. However, there are some
     * cases where this operation should be performed eagerly, such as cleaning up old references to a ClassLoader in a
     * multi-classloader environment.
-    * <p/>
+    * <p>
     * Note: this method will acquire locks, one at a time, across all segments of this table, so if it is to be used,
     * it should be used sparingly.
     */
@@ -1049,8 +1049,8 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
     * mapping from this map, via the <tt>Iterator.remove</tt>, <tt>Set.remove</tt>, <tt>removeAll</tt>,
     * <tt>retainAll</tt>, and <tt>clear</tt> operations.  It does not support the <tt>add</tt> or <tt>addAll</tt>
     * operations.
-    * <p/>
-    * <p>The view's <tt>iterator</tt> is a "weakly consistent" iterator that will never throw {@link
+    * <p>
+    * The view's <tt>iterator</tt> is a "weakly consistent" iterator that will never throw {@link
     * ConcurrentModificationException}, and guarantees to traverse elements as they existed upon construction of the
     * iterator, and may (but is not guaranteed to) reflect any modifications subsequent to construction.
     */
@@ -1066,8 +1066,8 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
     * which removes the corresponding mapping from this map, via the <tt>Iterator.remove</tt>,
     * <tt>Collection.remove</tt>, <tt>removeAll</tt>, <tt>retainAll</tt>, and <tt>clear</tt> operations.  It does not
     * support the <tt>add</tt> or <tt>addAll</tt> operations.
-    * <p/>
-    * <p>The view's <tt>iterator</tt> is a "weakly consistent" iterator that will never throw {@link
+    * <p>
+    * The view's <tt>iterator</tt> is a "weakly consistent" iterator that will never throw {@link
     * ConcurrentModificationException}, and guarantees to traverse elements as they existed upon construction of the
     * iterator, and may (but is not guaranteed to) reflect any modifications subsequent to construction.
     */
@@ -1083,8 +1083,8 @@ public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> impl
     * mapping from the map, via the <tt>Iterator.remove</tt>, <tt>Set.remove</tt>, <tt>removeAll</tt>,
     * <tt>retainAll</tt>, and <tt>clear</tt> operations.  It does not support the <tt>add</tt> or <tt>addAll</tt>
     * operations.
-    * <p/>
-    * <p>The view's <tt>iterator</tt> is a "weakly consistent" iterator that will never throw {@link
+    * <p>
+    * The view's <tt>iterator</tt> is a "weakly consistent" iterator that will never throw {@link
     * ConcurrentModificationException}, and guarantees to traverse elements as they existed upon construction of the
     * iterator, and may (but is not guaranteed to) reflect any modifications subsequent to construction.
     */

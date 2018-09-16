@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 
 /**
  * It tests the grouping advanced interface during the state transfer.
- * <p/>
+ * <p>
  * Note: no tests were added for {@link org.infinispan.AdvancedCache#removeGroup(String)} because internally it uses the
  * {@link org.infinispan.commands.write.RemoveCommand}. If the implementation changes, the new tests must be added to
  * this class.

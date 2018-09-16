@@ -10,7 +10,7 @@ import net.jcip.annotations.ThreadSafe;
 
 /**
  * A specialization of {@link Marshaller} that supports streams.
- * <p/>
+ * <p>
  * A single instance of any implementation is shared by multiple threads, so implementations <i>need</i> to be threadsafe,
  * and preferably immutable.
  *
@@ -24,8 +24,8 @@ import net.jcip.annotations.ThreadSafe;
 public interface StreamingMarshaller extends Marshaller {
 
    /**
-    * <p>Create and open an ObjectOutput instance for the given output stream. This method should be used for opening data
-    * outputs when multiple objectToObjectStream() calls will be made before the stream is closed by calling finishObjectOutput().</p>
+    * Create and open an ObjectOutput instance for the given output stream. This method should be used for opening data
+    * outputs when multiple objectToObjectStream() calls will be made before the stream is closed by calling finishObjectOutput().
     *
     * <p>This method also takes a boolean that represents whether this particular call to startObjectOutput() is reentrant
     * or not. A call to startObjectOutput() should be marked reentrant whenever a 2nd or more calls to this method are made
@@ -41,7 +41,7 @@ public interface StreamingMarshaller extends Marshaller {
     * following, a 2nd call could occur so that MarshalledValue's raw byte array version is calculated and sent across.
     * This enables storing as binary on the receiver side which is performance gain. The StreamingMarshaller implementation could decide
     * that it needs a separate ObjectOutput or similar for the 2nd call since it's aim is only to get the raw byte array version
-    * and the close finish with it.</p>
+    * and the close finish with it.
     *
     * @param os output stream
     * @param isReentrant whether the call is reentrant or not.

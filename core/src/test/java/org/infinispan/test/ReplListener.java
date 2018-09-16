@@ -65,7 +65,7 @@ public class ReplListener {
    /**
     * As {@link #ReplListener(org.infinispan.Cache)} except that you can optionally configure whether command recording
     * is eager (false by default).
-    * <p/>
+    * <p>
     * If <tt>recordCommandsEagerly</tt> is true, then commands are recorded from the moment the listener is attached to
     * the cache, even before {@link #expect(Class[])} is invoked.  As such, when {@link #expect(Class[])} is called, the
     * list of commands to wait for will take into account commands already seen thanks to eager recording.

@@ -218,7 +218,7 @@ public final class Util {
    /**
     * Instantiates a class by first attempting a static <i>factory method</i> named <tt>getInstance()</tt> on the class
     * and then falling back to an empty constructor.
-    * <p/>
+    * <p>
     * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
     *
     * @param clazz class to instantiate
@@ -262,7 +262,7 @@ public final class Util {
     * Instantiates a class based on the class name provided.  Instantiation is attempted via an appropriate, static
     * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls
     * back to an empty constructor.
-    * <p />
+    * <p>
     * Any exceptions encountered loading and instantiating the class is wrapped in a {@link CacheConfigurationException}.
     *
     * @param classname class to instantiate

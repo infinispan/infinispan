@@ -27,13 +27,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * * Test to use with a profiler to profile replication.  To be used in conjunction with ProfileSlaveTest.
- * <p/>
+ * Test to use with a profiler to profile replication.  To be used in conjunction with ProfileSlaveTest.
+ * <p>
  * Typical usage pattern:
- * <p/>
+ * <p>
  * 1.  Start a single test method in ProfileSlaveTest.  This will block until you kill it. 2.  Start the corresponding
  * test in this class, with the same name, in a different JVM, and attached to a profiler. 3.  Profile away!
- * <p/>
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Navin Surtani (<a href="mailto:nsurtani@redhat.com">nsurtani@redhat.com</a>)

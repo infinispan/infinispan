@@ -35,7 +35,7 @@ import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
 /**
- * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2011 Red Hat Inc.
  */
 @SuppressWarnings("deprecation")
 @Test(groups = "profiling", testName = "lucene.profiling.DynamicTopologyStressTest", sequential = true)

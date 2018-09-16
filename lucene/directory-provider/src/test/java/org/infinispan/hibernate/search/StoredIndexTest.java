@@ -22,7 +22,7 @@ import org.junit.rules.TemporaryFolder;
  * Verifies we're able to start from an existing index in Infinispan, stored in a CacheLoader. Requires a persistent
  * database so that we can shutdown the SessionFactory and start over again (simulated via a custom H2 service)
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
  */
 public class StoredIndexTest {
 

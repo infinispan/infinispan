@@ -11,7 +11,7 @@ import org.hibernate.search.engine.service.spi.Service;
  * write operations when Infinispan is running in clustered mode. This is implemented as a Service so that integrations
  * can inject a different managed threadpool, and we can share the same executor among multiple IndexManagers.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  */
 public interface AsyncDeleteExecutorService extends Service {
 

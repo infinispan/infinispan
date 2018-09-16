@@ -29,7 +29,7 @@ import org.jboss.logging.Logger;
 
 /**
  * Builder for the creation of WHERE/HAVING clause filters targeting a single entity.
- * <p/>
+ * <p>
  * Implemented as a stack of {@link LazyBooleanExpr}s which allows to add elements to the constructed query in a
  * uniform manner while traversing through the original query parse tree.
  *

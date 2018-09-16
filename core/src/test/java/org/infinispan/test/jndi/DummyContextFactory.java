@@ -12,7 +12,7 @@ public class DummyContextFactory implements InitialContextFactory {
    /**
     * Creates an Initial Context for beginning name resolution. Special requirements of this context are supplied using
     * <code>environment</code>.
-    * <p/>
+    * <p>
     * The environment parameter is owned by the caller. The implementation will not modify the object or keep a
     * reference to it, although it may keep a reference to a clone or copy.
     *

@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 
 /**
  * This test verifies that an entry can be expired from the Hot Rod server
- * using the default expiry lifespan or maxIdle. </p>
+ * using the default expiry lifespan or maxIdle.
  *
  * @author William Burns
  * @since 8.0

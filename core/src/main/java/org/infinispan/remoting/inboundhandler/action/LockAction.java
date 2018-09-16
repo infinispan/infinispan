@@ -15,7 +15,7 @@ import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 
 /**
  * An {@link Action} implementation that acquire the locks.
- * <p/>
+ * <p>
  * It returns {@link ActionStatus#READY} when the locks are available to acquired or the acquisition failed (timeout or
  * deadlock).
  *

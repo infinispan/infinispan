@@ -575,7 +575,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     * This method calculates the minimum topology ID known by the current node.  This method is only used in a clustered
     * cache, and only invoked when either a topology change is detected, or a transaction whose topology ID is not the same as
     * the current topology ID.
-    * <p/>
+    * <p>
     * This method is guarded by minTopologyRecalculationLock to prevent concurrent updates to the minimum topology ID field.
     *
     * @param idOfRemovedTransaction the topology ID associated with the transaction that triggered this recalculation, or -1

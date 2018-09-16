@@ -13,7 +13,7 @@ import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
  * A base {@link Action} implementation for locking.
- * <p/>
+ * <p>
  * This contains the basic steps for lock acquisition: try to acquire, check when it is available and acquired (or not).
  *
  * @author Pedro Ruivo

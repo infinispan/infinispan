@@ -11,8 +11,6 @@ import javax.transaction.UserTransaction;
 
 /**
  * @author bela
- *         <p/>
- *         Date: May 15, 2003 Time: 4:20:17 PM
  * @since 4.0
  * @deprecated use {@link EmbeddedUserTransaction}
  */

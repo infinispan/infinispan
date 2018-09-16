@@ -24,7 +24,6 @@ import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
  * Implementation class of the CacheQuery interface.
- * <p/>
  *
  * @author Navin Surtani
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.

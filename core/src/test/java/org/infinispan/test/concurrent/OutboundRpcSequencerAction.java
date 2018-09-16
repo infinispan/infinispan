@@ -35,7 +35,7 @@ public class OutboundRpcSequencerAction {
 
    /**
     * Set up a list of sequencer states before interceptor {@code interceptorClass} is called.
-    * <p/>
+    * <p>
     * Each invocation accepted by {@code matcher} will enter/exit the next state from the list, and does nothing after the list is exhausted.
     */
    public OutboundRpcSequencerAction before(String state1, String... additionalStates) {
@@ -55,7 +55,7 @@ public class OutboundRpcSequencerAction {
 
    /**
     * Set up a list of sequencer states after interceptor {@code interceptorClass} has returned.
-    * <p/>
+    * <p>
     * Each invocation accepted by {@code matcher} will enter/exit the next state from the list, and does nothing after the list is exhausted.
     */
    public OutboundRpcSequencerAction after(String state1, String... additionalStates) {

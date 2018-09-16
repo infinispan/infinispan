@@ -52,14 +52,14 @@ public class StringPropertyReplacer {
     * Go through the input string and replace any occurance of ${p} with the
     * System.getProperty(p) value. If there is no such property p defined, then
     * the ${p} reference will remain unchanged.
-    * <p/>
+    * <p>
     * If the property reference is of the form ${p:v} and there is no such
     * property p, then the default value v will be returned.
-    * <p/>
+    * <p>
     * If the property reference is of the form ${p1,p2} or ${p1,p2:v} then the
     * primary and the secondary properties will be tried in turn, before
     * returning either the unchanged input, or the default value.
-    * <p/>
+    * <p>
     * The property ${/} is replaced with System.getProperty("file.separator")
     * value and the property ${:} is replaced with System.getProperty("path.separator").
     *
@@ -75,14 +75,14 @@ public class StringPropertyReplacer {
     * Go through the input string and replace any occurance of ${p} with the
     * props.getProperty(p) value. If there is no such property p defined, then
     * the ${p} reference will remain unchanged.
-    * <p/>
+    * <p>
     * If the property reference is of the form ${p:v} and there is no such
     * property p, then the default value v will be returned.
-    * <p/>
+    * <p>
     * If the property reference is of the form ${p1,p2} or ${p1,p2:v} then the
     * primary and the secondary properties will be tried in turn, before
     * returning either the unchanged input, or the default value.
-    * <p/>
+    * <p>
     * The property ${/} is replaced with System.getProperty("file.separator")
     * value and the property ${:} is replaced with System.getProperty("path.separator").
     *
@@ -198,7 +198,7 @@ public class StringPropertyReplacer {
     * Try to resolve a "key" from the provided properties by checking if it is
     * actually a "key1,key2", in which case try first "key1", then "key2". If
     * all fails, return null.
-    * <p/>
+    * <p>
     * It also accepts "key1," and ",key2".
     *
     * @param key   the key to resolve

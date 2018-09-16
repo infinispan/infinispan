@@ -13,7 +13,7 @@ import org.infinispan.remoting.transport.Address;
  * This context is a non-context for operations such as eviction which are not related
  * to the method invocation which caused them.
  *
- * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2011 Red Hat Inc.
  */
 public final class ImmutableContext implements InvocationContext {
 

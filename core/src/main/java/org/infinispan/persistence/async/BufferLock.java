@@ -4,14 +4,14 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 /**
  * A custom reader-writer-lock combined with a bounded buffer size counter.
- * <p/>
+ * <p>
  * Supports multiple concurrent writers and a single exclusive reader. This ensures that no more
  * data is being written to the current state when the AsyncStoreCoordinator thread hands the
  * data off to the back-end store.
- * <p/>
+ * <p>
  * Additionally, {@link #writeLock(int)} blocks if the buffer is full, and {@link #readLock()}
  * blocks if no data is available.
- * <p/>
+ * <p>
  * This lock implementation is <em>not</em> reentrant!
  *
  *  @author Karsten Blees

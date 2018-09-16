@@ -7,13 +7,13 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation should be used on methods that need to be notified when cache entries are passivated.
- * <p/>
+ * <p>
  * Methods annotated with this annotation should accept a single parameter, a {@link
  * org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent} otherwise a {@link
  * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your listener.
- *  <p/>
- *  Locking: notification is performed WITH locks on the given key.
- * <p/>
+ * <p>
+ * Locking: notification is performed WITH locks on the given key.
+ * <p>
  * Any exceptions thrown by the listener will abort the call. Any other listeners not yet called will not be called,
  * and any transactions in progress will be rolled back.
  *

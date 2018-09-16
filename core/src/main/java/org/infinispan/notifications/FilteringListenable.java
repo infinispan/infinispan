@@ -21,9 +21,9 @@ public interface FilteringListenable<K, V> extends Listenable {
    /**
     * Adds a listener to the component.  Typically, listeners would need to be annotated with {@link org.infinispan.notifications.Listener} and
     * further to that, contain methods annotated appropriately, otherwise the listener will not be registered.
-    * <p/>
+    * <p>
     * See the {@link org.infinispan.notifications.Listener} annotation for more information.
-    * <p/>
+    * <p>
     *
     * @param listener must not be null.
     */
@@ -49,18 +49,18 @@ public interface FilteringListenable<K, V> extends Listenable {
    /**
     * Registers a listener limiting the cache-entry specific events only to
     * annotations that are passed in as parameter.
-    * <p/>
+    * <p>
     * For example, if the listener passed in contains callbacks for
     * {@link CacheEntryCreated} and {@link CacheEntryModified},
     * and filtered annotations contains only {@link CacheEntryCreated},
     * then the listener will be registered only for {@link CacheEntryCreated}
     * callbacks.
-    * <p/>
+    * <p>
     * Callback filtering only applies to {@link CacheEntryCreated},
     * {@link CacheEntryModified}, {@link CacheEntryRemoved}
     * and {@link CacheEntryExpired} annotations.
     * If the listener contains other annotations, these are preserved.
-    * <p/>
+    * <p>
     * This methods enables dynamic registration of listener interests at
     * runtime without the need to create several different listener classes.
     *

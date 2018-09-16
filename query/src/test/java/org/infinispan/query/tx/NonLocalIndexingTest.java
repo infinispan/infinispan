@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  * transactions enabled.
  * See also ISPN-2467 and subclasses.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
  */
 @Test(groups = "functional", testName = "query.tx.NonLocalIndexingTest")
 public class NonLocalIndexingTest extends MultipleCacheManagersTest {

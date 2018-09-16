@@ -22,7 +22,7 @@ import org.infinispan.jcache.logging.Log;
  * attribute value of false. If afterInvocation is true and the annotated method throws an exception the remove will not
  * happen.</p>
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  * @author Galder Zamarreño
  */
 public abstract class AbstractCacheRemoveEntryInterceptor implements Serializable {

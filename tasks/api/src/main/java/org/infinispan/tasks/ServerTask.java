@@ -12,9 +12,7 @@ import java.util.concurrent.Callable;
  * {@link org.infinispan.manager.EmbeddedCacheManager}, {@link org.infinispan.Cache},
  * {@link org.infinispan.commons.marshall.Marshaller} and parameters.
  *
- *
- * <p/>
- * Author: Michal Szynkiewicz <michal.l.szynkiewicz@gmail.com>
+ * @author Michal Szynkiewicz &lt;michal.l.szynkiewicz@gmail.com&gt;
  */
 public interface ServerTask<V> extends Callable<V>, Task {
    /**

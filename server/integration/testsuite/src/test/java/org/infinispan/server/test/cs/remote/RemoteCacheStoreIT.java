@@ -26,12 +26,12 @@ import org.junit.runner.RunWith;
 
 /**
  * Tests remote cache store under the following circumstances:
- * <p/>
+ * <p>
  * passivation == true --cache entries should get to the remote cache store only when evicted
  * preload == false --after server restart, entries should be be preloaded to the cache
  * purge == false --all entries should remain in the cache store after server restart
  * (must be false so that we can test preload)
- * <p/>
+ * <p>
  * Other attributes like singleton, shared, fetch-state do not make sense in single node cluster.
  *
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>

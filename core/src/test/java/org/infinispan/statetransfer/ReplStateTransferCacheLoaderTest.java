@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 
 /**
  * Short test to reproduce the scenario from ISPN-2712/MODE-1754 (https://issues.jboss.org/browse/MODE-2712, https://issues.jboss.org/browse/MODE-1754).
- * <p/>
+ * <p>
  * This test passes on 5.1.x but fails on 5.2.0 without the fix.
  *
  * @author anistor@redhat.com

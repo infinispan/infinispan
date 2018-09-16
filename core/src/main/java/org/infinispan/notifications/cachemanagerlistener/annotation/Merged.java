@@ -8,11 +8,11 @@ import java.lang.annotation.Target;
 /**
  * This annotation should be used on methods that need to be notified when the cache is used in a cluster and the
  * cluster topology experiences a merge event after a cluster split.
- * <p/>
+ * <p>
  * Methods annotated with this annotation should accept a single parameter, a {@link
  * org.infinispan.notifications.cachemanagerlistener.event.MergeEvent} otherwise a {@link
  * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your listener.
- * <p/>
+ * <p>
  * Any exceptions thrown by the listener will abort the call. Any other listeners not yet called will not be called,
  * and any transactions in progress will be rolled back.
  *

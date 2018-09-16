@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
 
 /**
  * This tests the following scenario:
- * <p/>
+ * <p>
  * 1 node exists.  Transactions running.  Some complete, some in prepare, some in commit. New node joins, rehash occurs.
  * Test that the new node is the owner and receives this state.
  */

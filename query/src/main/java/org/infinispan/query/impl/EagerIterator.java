@@ -10,7 +10,6 @@ import net.jcip.annotations.NotThreadSafe;
  * This is the implementation class for the interface ResultIterator. It is what is
  * returned when the {@link org.infinispan.query.CacheQuery#iterator()} using
  * a {@link org.infinispan.query.FetchOptions.FetchMode#EAGER}.
- * <p/>
  *
  * @author Navin Surtani
  * @author Marko Luksa

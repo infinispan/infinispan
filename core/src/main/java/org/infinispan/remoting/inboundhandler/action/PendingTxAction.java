@@ -16,7 +16,7 @@ import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 
 /**
  * An {@link Action} implementation that check for older topology transactions.
- * <p/>
+ * <p>
  * This action is ready when no older topology transactions exists or is canceled when the timeout occurs.
  *
  * @author Pedro Ruivo

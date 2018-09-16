@@ -66,7 +66,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
     * because even if a new transaction was started just before the cache was stopped, this could
     * only last as long as the transaction timeout allows it.
-    * <p/>
+    * <p>
     * This configuration property may be adjusted at runtime
     */
    public TransactionConfigurationBuilder cacheStopTimeout(long l) {
@@ -80,7 +80,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
     * because even if a new transaction was started just before the cache was stopped, this could
     * only last as long as the transaction timeout allows it.
-    * <p/>
+    * <p>
     * This configuration property may be adjusted at runtime
     */
    public TransactionConfigurationBuilder cacheStopTimeout(long l, TimeUnit unit) {
@@ -215,8 +215,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
     * access is no longer supported, so if you wanna speed up transactional
     * caches and you're ready to trade some consistency guarantees, you can
-    * enable use1PcForAutoCommitTransactions. <p/>
-    *
+    * enable use1PcForAutoCommitTransactions.
+    * <p>
     * What this configuration option does is force an induced transaction,
     * that has been started by Infinispan as a result of enabling autoCommit,
     * to commit in a single phase. So only 1 RPC instead of 2RPCs as in the

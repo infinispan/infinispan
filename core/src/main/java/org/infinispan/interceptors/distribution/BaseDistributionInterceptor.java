@@ -83,7 +83,7 @@ import net.jcip.annotations.GuardedBy;
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
  * @author Pete Muir
- * @author Dan Berindei <dan@infinispan.org>
+ * @author Dan Berindei &lt;dan@infinispan.org&gt;
  */
 public abstract class BaseDistributionInterceptor extends ClusteringInterceptor {
    private static final Log log = LogFactory.getLog(BaseDistributionInterceptor.class);

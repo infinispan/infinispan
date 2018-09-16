@@ -30,20 +30,19 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * This is the base class for all interceptors to extend, and implements the {@link Visitor} interface allowing it to
  * intercept invocations on {@link VisitableCommand}s.
- * <p/>
+ * <p>
  * Commands are either created by the {@link CacheImpl} (for invocations on the {@link Cache} public interface), or
  * by the {@link org.infinispan.remoting.inboundhandler.InboundInvocationHandler} for remotely originating invocations, and are passed up the interceptor chain
  * by using the {@link InterceptorChain} helper class.
- * <p/>
+ * <p>
  * When writing interceptors, authors can either override a specific visitXXX() method (such as {@link
  * #visitGetKeyValueCommand(InvocationContext, GetKeyValueCommand)}) or the more generic {@link
  * #handleDefault(InvocationContext, VisitableCommand)} which is the default behaviour of any visit method, as defined
  * in {@link AbstractVisitor#handleDefault(InvocationContext, VisitableCommand)}.
- * <p/>
+ * <p>
  * The preferred approach is to override the specific visitXXX() methods that are of interest rather than to override
  * {@link #handleDefault(InvocationContext, VisitableCommand)} and then write a series of if statements or a switch
  * block, if command-specific behaviour is needed.
- * <p/>
  *
  * @author Mircea.Markus@jboss.com
  * @see VisitableCommand

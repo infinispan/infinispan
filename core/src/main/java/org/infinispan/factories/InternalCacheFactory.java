@@ -59,10 +59,9 @@ import org.infinispan.xsite.XSiteAdminOperations;
 /**
  * An internal factory for constructing Caches.  Used by the {@link org.infinispan.manager.DefaultCacheManager}, this is
  * not intended as public API.
- * <p/>
+ * <p>
  * This is a special instance of a {@link AbstractComponentFactory} which contains bootstrap information for the {@link
  * ComponentRegistry}.
- * <p/>
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @since 4.0

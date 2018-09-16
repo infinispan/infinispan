@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * An Interval tree is an ordered tree data structure to hold Intervals. Specifically, it allows one to efficiently find
  * all Intervals that contain any given value in O(log n) time (see http://en.wikipedia.org/wiki/Interval_tree).
- * <p/>
+ * <p>
  * The implementation is based on red-black trees (http://en.wikipedia.org/wiki/Red–black_tree). Additions and removals
  * are efficient and require only minimal rebalancing of the tree as opposed to other implementation approaches that
  * perform a full rebuild after insertion. Duplicate intervals are not stored but are coped for.

@@ -86,7 +86,7 @@ public interface CacheTransaction {
     * Checks if this transaction holds a lock on the given key and then waits until the transaction completes or until
     * the timeout expires and returns <code>true</code> if the transaction is complete or <code>false</code> otherwise.
     * If the key is not locked or if the transaction is already completed it returns <code>true</code> immediately.
-    * <p/>
+    * <p>
     * This method is subject to spurious returns in a way similar to {@link java.lang.Object#wait()}. It can sometimes return
     * before the specified time has elapsed and without guaranteeing that this transaction is complete. The caller is
     * responsible to call the method again if transaction completion was not reached and the time budget was not spent.
@@ -140,7 +140,7 @@ public interface CacheTransaction {
    /**
     * Sets the version read for this key. The version is only set at the first time, i.e. multiple invocation of this
     * method will not change the state.
-    * <p/>
+    * <p>
     * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
     */
    void addVersionRead(Object key, EntryVersion version);
@@ -148,7 +148,7 @@ public interface CacheTransaction {
    /**
     * Sets the version read fr this key, replacing the old version if it exists, i.e each invocation updates the version
     * of the key. This method is used when a remote get is performed for the key.
-    * <p/>
+    * <p>
     * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
     * @deprecated since 9.0
     */

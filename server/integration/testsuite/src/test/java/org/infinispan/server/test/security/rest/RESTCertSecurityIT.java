@@ -45,18 +45,18 @@ import org.junit.runner.RunWith;
 /**
  * Tests CLIENT-CERT security for REST endpoint as is configured via "auth-method" attribute on "rest-connector" element
  * in datagrid subsystem.
- * <p/>
+ * <p>
  * In order to configure CLIENT-CERT security, we add a new security-domain in the security subsystem
  * and a new https connector in the web subsystem. This is done via XSL transformations.
- * <p/>
+ * <p>
  * Client authenticates himself with client.keystore file. Server contains ca.jks file in security subsystem as a
  * truststore and keystore_server.jks file in the REST connector as a certificate file. How to create and inspect those files
  * is described e.g. at http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html
- * <p/>
+ * <p>
  * Password for all the files is the same: "secret" The user is allowed to connect to the secured REST endpoint with
  * "client1" alias cos the server has this alias registered in its truststore. There's also another alias "test2" which is
  * not signed by the CA, and therefore won't be accepted.
- * <p/>
+ * <p>
  * The REST endpoint requires users to be in "REST" role which is defined in roles.properties.
  *
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>

@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Keeps the sample for percentile calculations.
- * <p/>
+ * <p>
  * Please check <a href="http://en.wikipedia.org/wiki/Reservoir_sampling for more details">this</a> for more details
  *
  * @author Roberto Palmieri

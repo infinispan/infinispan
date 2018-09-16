@@ -4,7 +4,7 @@ import org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandl
 
 /**
  * An {@link Action} implementation that checks if the command topology id is valid.
- * <p/>
+ * <p>
  * The command topology id is valid when it is higher or equal thant the first topology as member for this node.
  *
  * @author Pedro Ruivo

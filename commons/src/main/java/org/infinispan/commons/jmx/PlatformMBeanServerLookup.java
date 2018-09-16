@@ -7,7 +7,7 @@ import javax.management.MBeanServer;
 
 /**
  * Default implementation for {@link MBeanServerLookup}, will return the platform MBean server.
- * <p/>
+ * <p>
  * Note: to enable platform MBeanServer the following system property should be passed to the Sun JVM:
  * <b>-Dcom.sun.management.jmxremote</b>.
  *

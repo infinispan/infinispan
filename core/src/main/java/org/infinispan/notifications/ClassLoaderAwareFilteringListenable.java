@@ -18,9 +18,9 @@ public interface ClassLoaderAwareFilteringListenable<K, V> extends FilteringList
    /**
     * Adds a listener to the component.  Typically, listeners would need to be annotated with {@link org.infinispan.notifications.Listener} and
     * further to that, contain methods annotated appropriately, otherwise the listener will not be registered.
-    * <p/>
+    * <p>
     * See the {@link org.infinispan.notifications.Listener} annotation for more information.
-    * <p/>
+    * <p>
     *
     * @param listener must not be null.
     * @param classLoader class loader
@@ -33,7 +33,7 @@ public interface ClassLoaderAwareFilteringListenable<K, V> extends FilteringList
     * org.infinispan.notifications.cachelistener.filter.CacheEventFilter,
     * org.infinispan.notifications.cachelistener.filter.CacheEventConverter)}
     * for more details.
-    * <p/>
+    * <p>
     * @param listener must not be null.  The listener to callback on when an event is raised
     * @param filter The filter to apply for the entry to see if the event should be raised
     * @param converter The converter to convert the filtered entry to a new value

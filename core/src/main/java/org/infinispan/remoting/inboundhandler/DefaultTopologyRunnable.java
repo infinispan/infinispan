@@ -8,7 +8,7 @@ import org.infinispan.remoting.responses.Response;
 
 /**
  * The default {@link Runnable} for the remote commands receives.
- * <p/>
+ * <p>
  * It checks the command topology and ensures that the topology higher or equal is installed in this node.
  *
  * @author Pedro Ruivo

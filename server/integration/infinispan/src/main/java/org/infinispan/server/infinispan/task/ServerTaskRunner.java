@@ -5,8 +5,8 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.tasks.TaskContext;
 
 /**
- * Used by ServerTaskEngine to executed ServerTasks
- * <p/>
+ * Used by ServerTaskEngine to executed ServerTasks.
+ * <p>
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  * Date: 1/28/16
  * Time: 9:33 AM

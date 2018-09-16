@@ -45,7 +45,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * This interceptor acts as a replacement to the replication interceptor when the CacheImpl is configured with
  * ClusteredSyncMode as INVALIDATE.
- * <p/>
+ * <p>
  * The idea is that rather than replicating changes to all caches in a cluster when write methods are called, simply
  * broadcast an {@link InvalidateCommand} on the remote caches containing all keys modified.  This allows the remote
  * cache to look up the value in a shared cache loader which would have been updated with the changes.

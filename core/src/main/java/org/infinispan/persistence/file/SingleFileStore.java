@@ -40,11 +40,11 @@ import io.reactivex.Flowable;
  * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}. This file store
  * stores cache values in a single file <tt>&lt;location&gt;/&lt;cache name&gt;.dat</tt>,
  * keys and file positions are kept in memory.
- * <p/>
+ * <p>
  * Note: this CacheStore implementation keeps keys and file positions in memory!
  * The current implementation needs about 100 bytes per cache entry, plus the
  * memory for the key objects.
- * <p/>
+ * <p>
  * So, the space taken by this cache store is both the space in the file
  * itself plus the in-memory index with the keys and their file positions.
  * With this in mind and to avoid the cache store leading to
@@ -56,7 +56,7 @@ import io.reactivex.Flowable;
  * is used as a cache where loss of data in the cache store does not lead to
  * data loss, and data can be recomputed or re-queried from the original data
  * source.
- * <p/>
+ * <p>
  * This class is fully thread safe, yet allows for concurrent load / store
  * of individual cache entries.
  *
@@ -306,7 +306,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    /**
     * Frees the space of the specified file entry (for reuse by allocate).
-    * <p/>
+    * <p>
     * Note: Caller must hold the {@code resizeLock} in shared mode.
     */
    private void free(FileEntry fe) throws IOException {
@@ -722,7 +722,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    /**
     * Helper class to represent an entry in the cache file.
-    * <p/>
+    * <p>
     * The format of a FileEntry on disk is as follows:
     * <ul>
     * <li>4 bytes: {@link #size}</li>

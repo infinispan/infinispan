@@ -13,7 +13,7 @@ import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
 
 /**
  * Helper class for integration testing of the generated JBoss Modules.
- * <p/>
+ * <p>
  * The slot version is set as a property in the parent pom, and passed to the JVM of Arquillian as a system property of
  * the Maven maven-failsafe-plugin.
  * Loading it as a Properties makes these settings available to tests run withing the IDE as well.

@@ -32,7 +32,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * LockControlCommand is a command that enables distributed locking across infinispan nodes.
- * <p/>
+ * <p>
  * For more details refer to: https://jira.jboss.org/jira/browse/ISPN-70 https://jira.jboss.org/jira/browse/ISPN-48
  *
  * @author Vladimir Blagojevic (<a href="mailto:vblagoje@redhat.com">vblagoje@redhat.com</a>)

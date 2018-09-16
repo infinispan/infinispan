@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011
+ * @author Kevin Pollet &lt;pollet.kevin@gmail.com&gt; (C) 2011
  */
 @RunWith(Arquillian.class)
 public class GreetingServiceIT {

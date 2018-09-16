@@ -23,7 +23,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * as DIST: all key owners and the node which is performing the operation will receive
  * a notification.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @since 5.0
  */
 @Test(groups = "functional", testName = "notifications.DistListenerTest")

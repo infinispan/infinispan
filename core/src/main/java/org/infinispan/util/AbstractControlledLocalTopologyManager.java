@@ -16,7 +16,7 @@ import org.infinispan.topology.RebalancingStatus;
 
 /**
  * Class to be extended to allow some control over the local topology manager when testing Infinispan.
- * <p/>
+ * <p>
  * Note: create before/after method lazily when need.
  *
  * @author Pedro Ruivo

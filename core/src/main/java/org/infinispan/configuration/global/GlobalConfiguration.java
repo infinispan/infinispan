@@ -13,9 +13,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 /**
- * <p>
  * Configuration component that exposes the global configuration.
- * </p>
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
@@ -26,7 +24,6 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 5.1
  *
  * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
- *
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts

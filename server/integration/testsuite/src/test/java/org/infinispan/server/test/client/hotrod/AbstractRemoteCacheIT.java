@@ -67,7 +67,7 @@ import org.junit.Test;
  * Tests for HotRod client and its RemoteCache API. Subclasses must provide a
  * way to get the list of remote HotRod servers and to assert the cache is
  * empty.
- * <p/>
+ * <p>
  * Subclasses may be used in Client-Server mode or Hybrid mode where HotRod
  * server runs as a library deployed in an application server.
  *

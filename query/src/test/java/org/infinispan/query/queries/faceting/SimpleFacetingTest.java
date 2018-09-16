@@ -21,7 +21,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Hardy Ferentschik
  */
 @Test(groups = {"functional"}, testName = "query.queries.faceting.SimpleFacetingTest")
@@ -58,7 +58,7 @@ public class SimpleFacetingTest extends SingleCacheManagerTest {
       cache.clear();
    }
 
-   public void testFaceting() throws Exception {
+   public void testFaceting() {
       QueryBuilder queryBuilder = qf.buildQueryBuilderForClass(Car.class).get();
 
       FacetingRequest request = queryBuilder.facet()

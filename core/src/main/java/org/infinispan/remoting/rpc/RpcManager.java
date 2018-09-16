@@ -196,7 +196,7 @@ public interface RpcManager {
 
    /**
     * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
-    * <p/>
+    * <p>
     * The {@link org.infinispan.remoting.rpc.RpcOptionsBuilder} is configured with the {@link org.infinispan.remoting.rpc.ResponseMode} and with
     * {@link org.infinispan.remoting.inboundhandler.DeliverOrder#NONE} if the {@link
     * org.infinispan.remoting.rpc.ResponseMode} is synchronous otherwise, with {@link
@@ -224,7 +224,7 @@ public interface RpcManager {
 
    /**
     * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
-    * <p/>
+    * <p>
     * The {@link org.infinispan.remoting.rpc.RpcOptionsBuilder} is configured with {@link
     * org.infinispan.remoting.inboundhandler.DeliverOrder#NONE} if the {@param sync} is {@code true} otherwise, with
     * {@link org.infinispan.remoting.inboundhandler.DeliverOrder#PER_SENDER}.

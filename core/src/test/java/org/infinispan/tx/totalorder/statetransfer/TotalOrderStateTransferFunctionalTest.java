@@ -10,7 +10,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
- * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
+ * @author Mircea Markus &lt;mircea.markus@jboss.com&gt; (C) 2011 Red Hat Inc.
  * @since 5.3
  */
 @Test(groups = "unstable", testName = "tx.totalorder.statetransfer.TotalOrderStateTransferFunctionalTest", description = "JGRP-2233")

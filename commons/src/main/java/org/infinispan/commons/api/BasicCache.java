@@ -9,24 +9,24 @@ import java.util.function.Function;
 /**
  * BasicCache provides the common building block for the two different types of caches that Infinispan provides:
  * embedded and remote.
- * <p/>
+ * <p>
  * For convenience, BasicCache extends {@link ConcurrentMap} and implements all methods accordingly, although methods like
  * {@link ConcurrentMap#keySet()}, {@link ConcurrentMap#values()} and {@link ConcurrentMap#entrySet()} are expensive
  * (prohibitively so when using a distributed cache) and frequent use of these methods is not recommended.
- * <p />
+ * <p>
  * Other methods such as {@link #size()} provide an approximation-only, and should not be relied on for an accurate picture
  * as to the size of the entire, distributed cache.  Remote nodes are <i>not</i> queried and in-fly transactions are not
  * taken into account, even if {@link #size()} is invoked from within such a transaction.
- * <p/>
+ * <p>
  * Also, like many {@link ConcurrentMap} implementations, BasicCache does not support the use of <tt>null</tt> keys or
  * values.
- * <p/>
+ * <p>
  * <h3>Unsupported operations</h3>
  * <p>{@link #containsValue(Object)}</p>
  *
  * Please see the <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a> and/or the <a
  * href="https://docs.jboss.org/author/display/ISPN/Getting+Started+Guide#GettingStartedGuide-5minutetutorial">5 Minute Usage Tutorial</a> for more details.
- * <p/>
+ * <p>
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani

@@ -7,26 +7,26 @@ import java.lang.annotation.Target;
 
 /**
  * Class-level annotation used to annotate an object as being a valid cache listener.  Used with the {@link
- * org.infinispan.Cache#addListener(Object)} and related APIs. <p/> Note that even if a class is annotated with this
+ * org.infinispan.Cache#addListener(Object)} and related APIs. <p> Note that even if a class is annotated with this
  * annotation, it still needs method-level annotation (such as {@link org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted})
- * to actually receive notifications. <p/> Objects annotated with this annotation - listeners - can be attached to a
- * running {@link org.infinispan.Cache} so users can be notified of {@link org.infinispan.Cache} events. <p/> <p/> There can
+ * to actually receive notifications. <p> Objects annotated with this annotation - listeners - can be attached to a
+ * running {@link org.infinispan.Cache} so users can be notified of {@link org.infinispan.Cache} events. <p> There can
  * be multiple methods that are annotated to receive the same event, and a method may receive multiple events by using a
- * super type. </p> <p/> <h4>Delivery Semantics</h4> <p/> An event is delivered immediately after the respective
+ * super type. </p> <p> <h4>Delivery Semantics</h4> <p> An event is delivered immediately after the respective
  * operation, but before the underlying cache call returns. For this reason it is important to keep listener processing
- * logic short-lived. If a long running task needs to be performed, it's recommended to use another thread. </p> <p/>
- * <h4>Transactional Semantics</h4> <p/> Since the event is delivered during the actual cache call, the transactional
+ * logic short-lived. If a long running task needs to be performed, it's recommended to use another thread. </p> <p>
+ * <h4>Transactional Semantics</h4> <p> Since the event is delivered during the actual cache call, the transactional
  * outcome is not yet known. For this reason, <i>events are always delivered, even if the changes they represent are
  * discarded by their containing transaction</i>. For applications that must only process events that represent changes
  * in a completed transaction, {@link org.infinispan.notifications.cachelistener.event.TransactionalEvent#getGlobalTransaction()}
  * can be used, along with {@link org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent#isTransactionSuccessful()}
  * to record events and later process them once the transaction has been successfully committed. Example 4 demonstrates
- * this. </p> <p/> <h4>Threading Semantics</h4> <p/> A listener implementation must be capable of handling concurrent
- * invocations. Local notifications reuse the calling thread; remote notifications reuse the network thread. </p> <p/>
+ * this. </p> <p> <h4>Threading Semantics</h4> <p> A listener implementation must be capable of handling concurrent
+ * invocations. Local notifications reuse the calling thread; remote notifications reuse the network thread. </p> <p>
  * Since notifications reuse the calling or network thread, it is important to realise that if your listener
  * implementation blocks or performs a long-running task, the original caller which triggered the cache event may block
  * until the listener callback completes.  It is therefore a good idea to use the listener to be notified of an event
- * but to perform any long running tasks in a separate thread so as not to block the original caller. </p> <p/> In
+ * but to perform any long running tasks in a separate thread so as not to block the original caller. </p> <p> In
  * addition, any locks acquired for the operation being performed will still be held for the callback.  This needs to be
  * kept in mind as locks may be held longer than necessary or intended to and may cause deadlocking in certain
  * situations.  See above paragraph on long-running tasks that should be run in a separate thread. </p> <b>Note</b>:
@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
  * made in a <i>separate</i> thread, which will not cause any blocking on the caller or network thread.  The separate
  * thread is taken from a pool, which can be configured using {@link org.infinispan.config.GlobalConfiguration#setAsyncListenerExecutorProperties(java.util.Properties)}
  * and {@link org.infinispan.config.GlobalConfiguration#setAsyncListenerExecutorFactoryClass(String)}.
- * <p/>
+ * <p>
  * <b>Summary of Notification Annotations</b> <table border="1" cellpadding="1" cellspacing="1" summary="Summary of
  * notification annotations"> <tr> <th bgcolor="#CCCCFF" align="left">Annotation</th> <th bgcolor="#CCCCFF"
  * align="left">Event</th> <th bgcolor="#CCCCFF" align="left">Description</th> </tr> <tr> <td valign="top">{@link
@@ -72,9 +72,9 @@ import java.lang.annotation.Target;
  * org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated}</td> <td valign=@"top">{@link
  * org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent}</td> <td valign="top">A cache entry was
  * invalidated by a remote cache.  Only if cache mode is INVALIDATION_SYNC or INVALIDATION_ASYNC.</td> </tr>
- * <p/>
+ * <p>
  * </table>
- * <p/>
+ * <p>
  * <h4>Example 1 - Method receiving a single event</h4>
  * <pre>
  *    &#064;Listener
@@ -87,7 +87,7 @@ import java.lang.annotation.Target;
  *       }
  *    }
  * </pre>
- * <p/>
+ * <p>
  * <h4>Example 2 - Method receiving multiple events</h4>
  * <pre>
  *    &#064;Listener
@@ -104,7 +104,7 @@ import java.lang.annotation.Target;
  *       }
  *    }
  * </pre>
- * <p/>
+ * <p>
  * <h4>Example 3 - Multiple methods receiving the same event</h4>
  * <pre>
  *    &#064;Listener
@@ -115,7 +115,7 @@ import java.lang.annotation.Target;
  *       {
  *          System.out.println(&quot;Cache started&quot;);
  *       }
- * <p/>
+ *
  *       &#064;CacheStarted
  *       &#064;CacheStopped
  *       &#064;CacheBlocked
@@ -127,10 +127,10 @@ import java.lang.annotation.Target;
  *       }
  *    }
  * </pre>
- * <p/>
- * <p/>
+ * <p>
+ * <p>
  * <b>Example 4 - Processing only events with a committed transaction.</b>
- * <p/>
+ * <p>
  * <pre>
  *    &#064;Listener
  *    public class EventHandler

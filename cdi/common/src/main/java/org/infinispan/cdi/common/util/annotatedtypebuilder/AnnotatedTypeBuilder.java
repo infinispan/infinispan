@@ -22,7 +22,7 @@ import org.infinispan.commons.logging.LogFactory;
 
 /**
  * <p> Class for constructing a new AnnotatedType. A new instance of builder
- * should be used for each annotated type. </p> <p/> <p> {@link
+ * should be used for each annotated type. </p> <p> <p> {@link
  * AnnotatedTypeBuilder} is not thread-safe. </p>
  *
  * @author Stuart Douglas

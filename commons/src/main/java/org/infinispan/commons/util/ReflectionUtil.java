@@ -283,7 +283,7 @@ public class ReflectionUtil {
    /**
     * Inspects the class passed in for the class level annotation specified.  If the annotation is not available, this
     * method recursively inspects superclasses and interfaces until it finds the required annotation.
-    * <p/>
+    * <p>
     * Returns null if the annotation cannot be found.
     *
     * @param clazz class to inspect

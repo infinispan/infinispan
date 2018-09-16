@@ -11,7 +11,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * The JBoss Logging interface which defined the logging methods for the CDI integration. The id range for the CDI
  * integration is 17001-18000
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
 @MessageLogger(projectCode = "ISPN")
 public interface RemoteLog extends BasicLogger {

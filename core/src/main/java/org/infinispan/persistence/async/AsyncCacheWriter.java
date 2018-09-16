@@ -42,21 +42,20 @@ import net.jcip.annotations.GuardedBy;
 /**
  * The AsyncCacheWriter is a delegating CacheStore that buffers changes and writes them asynchronously to
  * the underlying CacheStore.
- * <p/>
+ * <p>
  * Read operations are done synchronously, taking into account the current state of buffered changes.
- * <p/>
+ * <p>
  * There is no provision for exception handling for problems encountered with the underlying store
  * during a write operation, and the exception is just logged.
- * <p/>
+ * <p>
  * When configuring the loader, use the following element:
- * <p/>
+ * <p>
  * <code> &lt;async enabled="true" /&gt; </code>
- * <p/>
+ * <p>
  * to define whether cache loader operations are to be asynchronous. If not specified, a cache loader operation is
  * assumed synchronous and this decorator is not applied.
- * <p/>
+ * <p>
  * Write operations affecting same key are now coalesced so that only the final state is actually stored.
- * <p/>
  *
  * @author Manik Surtani
  * @author Galder Zamarreño

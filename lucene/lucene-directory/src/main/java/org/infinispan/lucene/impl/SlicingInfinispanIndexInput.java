@@ -8,7 +8,7 @@ import org.apache.lucene.store.IndexInput;
  * Wraps an InfinispanIndexInput to expose only a slice of it.
  * Such slices are dependent on the parent IndexInput and will not handle readlocks.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 final class SlicingInfinispanIndexInput extends IndexInput {

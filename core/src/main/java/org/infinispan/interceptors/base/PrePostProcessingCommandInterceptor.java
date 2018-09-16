@@ -20,16 +20,15 @@ import org.infinispan.interceptors.AsyncInterceptor;
 
 /**
  * This interceptor adds pre and post processing to each <tt>visitXXX()</tt> method.
- * <p/>
+ * <p>
  * For each <tt>visitXXX()</tt> method invoked, it will first call {@link #doBeforeCall(InvocationContext,
  * VisitableCommand)} and if this method returns true, it will proceed to invoking a <tt>handleXXX()</tt> method and
  * lastly, {@link #doAfterCall(InvocationContext, VisitableCommand)} in a <tt>finally</tt> block.  Note that the
  * <tt>doAfterCall()</tt> method is still invoked even if <tt>doBeforeCall()</tt> returns <tt>false</tt>.
- * <p/>
+ * <p>
  * Instead of overriding <tt>visitXXX()</tt> methods, implementations should override their <tt>handleXXX()</tt>
  * counterparts defined in this class instead, as well as the {@link #doAfterCall(InvocationContext ,VisitableCommand)}
  * method and optionally {@link #doBeforeCall(InvocationContext, VisitableCommand)}.
- * <p/>
  *
  * @author Mircea.Markus@jboss.com
  * @deprecated Since 9.0, please extend {@link AsyncInterceptor} instead.

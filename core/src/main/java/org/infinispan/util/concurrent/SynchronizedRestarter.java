@@ -10,10 +10,10 @@ import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
  * A class that handles restarts of components via multiple threads.  Specifically, if a component needs to be restarted
  * and several threads may demand a restart but only one thread should be allowed to restart the component, then use
  * this class.
- * <p/>
+ * <p>
  * What this class guarantees is that several threads may come in while a component is being restarted, but they will
  * block until the restart is complete.
- * <p/>
+ * <p>
  * This is different from other techniques in that: <ul> <li>A simple compare-and-swap to check whether another thread
  * is already performing a restart will result in the requesting thread returning immediately and potentially attempting
  * to use the resource being restarted.</li> <li>A synchronized method or use of a lock would result in the thread

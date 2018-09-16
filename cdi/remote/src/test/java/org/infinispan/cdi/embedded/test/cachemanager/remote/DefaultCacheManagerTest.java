@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 /**
  * Test the default remote cache manager injection.
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
 @Test(groups = "functional", testName = "cdi.test.cachemanager.remote.DefaultCacheManagerTest")
 public class DefaultCacheManagerTest extends Arquillian {

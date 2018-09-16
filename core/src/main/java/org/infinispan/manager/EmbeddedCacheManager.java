@@ -23,19 +23,19 @@ import org.infinispan.stats.CacheContainerStats;
 
 /**
  * EmbeddedCacheManager is an CacheManager that runs in the same JVM as the client.
- * <p/>
+ * <p>
  * Constructing a <tt>EmbeddedCacheManager</tt> is done via one of its constructors, which optionally take in a {@link
  * org.infinispan.configuration.cache.Configuration} or a path or URL to a configuration XML file: see {@link org.infinispan.manager.DefaultCacheManager}.
- * <p/>
+ * <p>
  * Lifecycle - <tt>EmbeddedCacheManager</tt>s have a lifecycle (it implements {@link Lifecycle}) and
  * the default constructors also call {@link #start()}.  Overloaded versions of the constructors are available, that do
  * not start the <tt>CacheManager</tt>, although it must be kept in mind that <tt>CacheManager</tt>s need to be started
  * before they can be used to readWriteMap <tt>Cache</tt> instances.
- * <p/>
+ * <p>
  * Once constructed, <tt>EmbeddedCacheManager</tt>s should be made available to any component that requires a <tt>Cache</tt>,
  * via <a href="http://en.wikipedia.org/wiki/Java_Naming_and_Directory_Interface">JNDI</a> or via some other mechanism
  * such as an <a href="http://en.wikipedia.org/wiki/Dependency_injection">dependency injection</a> framework.
- * <p/>
+ * <p>
  *
  * @see org.infinispan.manager.DefaultCacheManager
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
@@ -49,13 +49,13 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
 
    /**
     * Defines a named cache's configuration by using the provided configuration
-    * <p/>
+    * <p>
     * Unlike previous versions of Infinispan, this method does not build on an existing configuration (default or named).
     * If you want this behavior, then use {@link ConfigurationBuilder#read(org.infinispan.configuration.cache.Configuration)}.
-    * <p/>
+    * <p>
     * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
     * manager.
-    * <p/>
+    * <p>
     * If this cache was already configured either declaritively or programmatically this method will throw a
     * {@link org.infinispan.commons.CacheConfigurationException}.
     * @param cacheName             name of cache whose configuration is being defined
@@ -67,13 +67,13 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    /**
     * Defines a named cache's configuration using by first reading the template configuration and then applying
     * the override afterwards to generate a configuration.
-    * <p/>
+    * <p>
     * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
     * manager.
-    * <p/>
+    * <p>
     * If templateName is null or there isn't any named cache with that name, this methods works exactly like {@link
     * #defineConfiguration(String, Configuration)}.
-    * <p/>
+    * <p>
     * If this cache was already configured either declaratively or programmatically this method will throw a
     * {@link org.infinispan.commons.CacheConfigurationException}.
     * @param cacheName             name of cache whose configuration is being defined

@@ -17,7 +17,7 @@ import org.infinispan.context.impl.FlagBitSets;
  * Used to fetch a full CacheEntry rather than just the value.
  * This functionality was originally incorporated into GetKeyValueCommand.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.1
  */
 public final class GetCacheEntryCommand extends AbstractDataCommand {

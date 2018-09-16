@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mechanism for specifying the name of components to retrieve
+ * Mechanism for specifying the name of components to retrieve.
  *
  * @author Manik Surtani
  * @since 4.0

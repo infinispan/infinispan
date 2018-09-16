@@ -11,13 +11,13 @@ import net.jcip.annotations.ThreadSafe;
 
 /**
  * Central component that deals with expiration of cache entries.
- * <p />
+ * <p>
  * Typically, {@link #processExpiration()} is called periodically by the expiration thread (which can be configured using
  * {@link ExpirationConfigurationBuilder#wakeUpInterval(long)} and {@link GlobalConfigurationBuilder#expirationThreadPool()}).
- * <p />
+ * <p>
  * If the expiration thread is disabled - by setting {@link ExpirationConfigurationBuilder#wakeUpInterval(long)} to <tt>0</tt> -
  * then this method could be called directly, perhaps by any other maintenance thread that runs periodically in the application.
- * <p />
+ *
  * @author William Burns
  * @since 7.2
  */

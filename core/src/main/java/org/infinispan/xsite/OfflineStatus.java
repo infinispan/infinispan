@@ -14,10 +14,10 @@ import net.jcip.annotations.ThreadSafe;
 
 /**
  * Keeps state needed for knowing when a site needs to be taken offline.
- * <p/>
+ * <p>
  * Thread safety: This class is updated from multiple threads so the access to it is synchronized by object's intrinsic
  * lock.
- * <p/>
+ * <p>
  * Impl detail: As this class's state changes constantly, the equals and hashCode haven't been overridden. This
  * shouldn't affect performance significantly as the number of site backups should be relatively small (1-3).
  *

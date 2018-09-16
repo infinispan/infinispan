@@ -12,7 +12,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 /**
  * The response for a {@link ClusteredQueryCommand}.
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
 public final class QueryResponse {

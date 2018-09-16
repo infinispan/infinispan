@@ -9,9 +9,8 @@ import org.hibernate.search.jpa.Search;
 
 /**
  * This class uses CDI to alias Java EE resources, such as the persistence context, to CDI beans
- * <p/>
+ * <p>
  * <p> Example injection on a managed bean field: </p>
- * <p/>
  * <pre>
  * &#064;Inject
  * private EntityManager em;

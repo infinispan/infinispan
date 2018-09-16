@@ -11,7 +11,7 @@ import org.infinispan.commons.util.CollectionFactory;
 /**
  * A simple Set implementation backed by a {@link java.util.concurrent.ConcurrentHashMap} to deal with the fact that the
  * JDK does not have a proper concurrent Set implementation that uses efficient lock striping.
- * <p/>
+ * <p>
  * Note that values are stored as keys in the underlying Map, with a static dummy object as value.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>

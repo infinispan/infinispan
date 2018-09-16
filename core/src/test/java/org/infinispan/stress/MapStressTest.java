@@ -30,7 +30,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * Stress test different maps for container implementations
  *
  * @author Manik Surtani
- * @author Dan Berindei <dberinde@redhat.com>
+ * @author Dan Berindei &lt;dberinde@redhat.com&gt;
  * @since 4.0
  */
 @Test(testName = "stress.MapStressTest", groups = "profiling")

@@ -31,11 +31,11 @@ import org.infinispan.stream.impl.local.ValueCacheCollection;
 /**
  * A decorator to a cache, which can be built with a specific set of {@link Flag}s.  This
  * set of {@link Flag}s will be applied to all cache invocations made via this decorator.
- * <p/>
+ * <p>
  * In addition to cleaner and more readable code, this approach offers a performance benefit to using
  * {@link AdvancedCache#withFlags(Flag...)} API, thanks to
  * internal optimizations that can be made when the {@link Flag} set is unchanging.
- * <p/>
+ * <p>
  * Note that {@link DecoratedCache} must be the closest Delegate to the actual Cache implementation. All others
  * must delegate to this DecoratedCache.
  * @author Manik Surtani

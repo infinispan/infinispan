@@ -41,7 +41,7 @@ import io.netty.channel.Channel;
 /**
  * Tests for HotRod client and its RemoteCacheManager API. Subclasses must provide
  * a way to get the list of remote HotRod servers.
- * <p/>
+ * <p>
  * Subclasses may be used in Client-Server mode or Hybrid mode where HotRod server
  * runs as a library deployed in an application server.
  *

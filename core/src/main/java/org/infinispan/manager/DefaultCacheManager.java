@@ -85,30 +85,30 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * A <tt>CacheManager</tt> is the primary mechanism for retrieving a {@link Cache} instance, and is often used as a
  * starting point to using the {@link Cache}.
- * <p/>
+ * <p>
  * <tt>CacheManager</tt>s are heavyweight objects, and we foresee no more than one <tt>CacheManager</tt> being used per
  * JVM (unless specific configuration requirements require more than one; but either way, this would be a minimal and
  * finite number of instances).
- * <p/>
+ * <p>
  * Constructing a <tt>CacheManager</tt> is done via one of its constructors, which optionally take in a {@link
  * org.infinispan.configuration.cache.Configuration} or a path or URL to a configuration XML file.
- * <p/>
+ * <p>
  * Lifecycle - <tt>CacheManager</tt>s have a lifecycle (it implements {@link Lifecycle}) and the default constructors
  * also call {@link #start()}. Overloaded versions of the constructors are available, that do not start the
  * <tt>CacheManager</tt>, although it must be kept in mind that <tt>CacheManager</tt>s need to be started before they
  * can be used to create <tt>Cache</tt> instances.
- * <p/>
+ * <p>
  * Once constructed, <tt>CacheManager</tt>s should be made available to any component that requires a <tt>Cache</tt>,
  * via JNDI or via some other mechanism such as an IoC container.
- * <p/>
+ * <p>
  * You obtain <tt>Cache</tt> instances from the <tt>CacheManager</tt> by using one of the overloaded
  * <tt>getCache()</tt>, methods. Note that with <tt>getCache()</tt>, there is no guarantee that the instance you get is
  * brand-new and empty, since caches are named and shared. Because of this, the <tt>CacheManager</tt> also acts as a
  * repository of <tt>Cache</tt>s, and is an effective mechanism of looking up or creating <tt>Cache</tt>s on demand.
- * <p/>
+ * <p>
  * When the system shuts down, it should call {@link #stop()} on the <tt>CacheManager</tt>. This will ensure all caches
  * within its scope are properly stopped as well.
- * <p/>
+ * <p>
  * Sample usage:
  * <pre><code>
  *    CacheManager manager = CacheManager.getInstance("my-config-file.xml");
@@ -421,7 +421,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * Retrieves the default cache associated with this cache manager. Note that the default cache does not need to be
     * explicitly created with {@link #createCache(String, String)} (String)} since it is automatically created lazily
     * when first used.
-    * <p/>
+    * <p>
     * As such, this method is always guaranteed to return the default cache.
     *
     * @return the default cache.
@@ -437,7 +437,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    /**
     * Retrieves a named cache from the system. If the cache has been previously created with the same name, the running
     * cache instance is returned. Otherwise, this method attempts to create the cache first.
-    * <p/>
+    * <p>
     * When creating a new cache, this method will use the configuration passed in to the CacheManager on construction,
     * as a template, and then optionally apply any overrides previously defined for the named cache using the {@link
     * #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)}

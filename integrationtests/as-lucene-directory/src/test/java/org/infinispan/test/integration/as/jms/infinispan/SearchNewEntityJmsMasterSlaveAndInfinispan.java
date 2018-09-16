@@ -17,10 +17,10 @@ import org.junit.Test;
 
 /**
  * Test that the JMS backend can be used at the same time with Infinispan.
- * <p/>
+ * <p>
  * Search dependencies are not added to the archives.
  *
- * @author Davide D'Alto <davide@hibernate.org>
+ * @author Davide D'Alto &lt;davide@hibernate.org&gt;
  */
 public abstract class SearchNewEntityJmsMasterSlaveAndInfinispan {
 

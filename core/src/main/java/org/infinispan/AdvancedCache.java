@@ -61,10 +61,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     *   cache.withFlags(Flag.FORCE_WRITE_LOCK).get(key);
     * </pre>
     * will invoke a cache.get() with a write lock forced.
-    * <p/>
+    * <p>
     * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned
     * by this method.
-    * <p/>
+    * <p>
     * As an alternative to setting this on every invocation, users could also consider using the {@link DecoratedCache}
     * wrapper, as this allows for more readable code.  E.g.:
     * <pre>
@@ -343,7 +343,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * Using this operation, users can call any {@link AdvancedCache} operation with a given {@link ClassLoader}. This
     * means that any {@link ClassLoader} happening as a result of the cache operation will be done using the {@link
     * ClassLoader} given. For example:
-    * <p/>
+    * <p>
     * When users store POJO instances in caches configured with {@link org.infinispan.configuration.cache.StoreAsBinaryConfiguration},
     * these instances are transformed into byte arrays. When these entries are read from the cache, a lazy unmarshalling
     * process happens where these byte arrays are transformed back into POJO instances. Using {@link
@@ -354,7 +354,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * </pre>
     * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned
     * by this method.
-    * <p/>
+    * <p>
     * As an alternative to setting this on every invocation, users could also consider using the {@link DecoratedCache}
     * wrapper, as this allows for more readable code.  E.g.:
     * <pre>
@@ -579,7 +579,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * Asynchronous version of {@link #put(Object, Object, Metadata)} which stores metadata alongside the value.  This
     * method does not block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
     * #put(Object, Object, Metadata)} if used in LOCAL mode.
-    * <p/>
+    * <p>
     *
     * @param key      key to use
     * @param value    value to store
@@ -796,15 +796,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
 
    /**
     * It fetches all the keys which belong to the group.
-    * <p/>
+    * <p>
     * Semantically, it iterates over all the keys in memory and persistence, and performs a read operation in the keys
     * found. Multiple invocations inside a transaction ensures that all the keys previous read are returned and it may
     * return newly added keys to the group from other committed transactions (also known as phantom reads).
-    * <p/>
+    * <p>
     * The {@code map} returned is immutable and represents the group at the time of the invocation. If you want to add
     * or remove keys from a group use {@link #put(Object, Object)} and {@link #remove(Object)}. To remove all the keys
     * in the group use {@link #removeGroup(String)}.
-    * <p/>
+    * <p>
     * To improve performance you may use the {@code flag} {@link org.infinispan.context.Flag#SKIP_CACHE_LOAD} to avoid
     * fetching the key/value from persistence. However, you will get an inconsistent snapshot of the group.
     *
@@ -815,9 +815,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
 
    /**
     * It removes all the key which belongs to a group.
-    * <p/>
+    * <p>
     * Semantically, it fetches the most recent group keys/values and removes them.
-    * <p/>
+    * <p>
     * Note that, concurrent addition perform by other transactions/threads to the group may not be removed.
     *
     * @param groupName the group name.

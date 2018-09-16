@@ -20,8 +20,8 @@ import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 /**
- * Tests for lock API
- * <p/>
+ * Tests for lock API.
+ * <p>
  * Introduce lock() API methods https://jira.jboss.org/jira/browse/ISPN-48
  *
  * @author Manik Surtani

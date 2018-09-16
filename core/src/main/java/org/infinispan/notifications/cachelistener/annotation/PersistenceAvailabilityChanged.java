@@ -10,12 +10,12 @@ import java.lang.annotation.Target;
  * When Cache stores are configured, but the connection to at least one store is lost, the PersistenceManager becomes
  * unavailable. As a result, {@link org.infinispan.persistence.spi.StoreUnavailableException} is thrown on all read/write
  * operations that require the PersistenceManager until all stores become available again.
- * <p/>
+ * <p>
  * Methods that use this annotation should be public and take one parameter, {@link
  * org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent}. Otherwise {@link
  * org.infinispan.notifications.IncorrectListenerException} is thrown when registering your cache listener.
  * Locking: notification is performed WITH locks on the given key.
- * <p/>
+ * <p>
  * If the listener throws any exceptions, the call aborts. No other listeners are called. Any transactions in progress
  * are rolled back.
  *

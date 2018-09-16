@@ -13,17 +13,16 @@ import org.infinispan.configuration.cache.CacheMode;
  * {@link org.infinispan.partitionhandling.impl.PartitionHandlingManager} changes due to a change in cluster topology.
  * This is only fired in a {@link CacheMode#DIST_SYNC}, {@link CacheMode#DIST_ASYNC}, {@link CacheMode#REPL_SYNC} or
  * {@link CacheMode#REPL_ASYNC} configured cache.
- * <p/>
+ * <p>
  * Methods annotated with this annotation should accept a single parameter, a
  * {@link org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent} otherwise a
  * {@link org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your listener.
- * <p/>
+ * <p>
  * Note that methods marked with this annotation will be fired <i>before</i> and <i>after</i> the updated
  * {@link org.infinispan.partitionhandling.AvailabilityMode}
  * is updated, i.e., your method will be called twice, with
  * {@link org.infinispan.notifications.cachelistener.event.Event#isPre()} being set to <tt>true</tt> as well
  * as <tt>false</tt>.
- * <p/>
  *
  * @author William Burns
  * @see org.infinispan.notifications.Listener

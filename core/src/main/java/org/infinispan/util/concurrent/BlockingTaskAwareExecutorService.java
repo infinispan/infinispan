@@ -5,7 +5,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * Executor service that is aware of {@code BlockingRunnable} and only dispatch the runnable to a thread when it has low
  * (or no) probability of blocking the thread.
- * <p/>
+ * <p>
  * However, it is not aware of the changes in the state so you must invoke {@link #checkForReadyTasks()} to notify
  * this that some runnable may be ready to be processed.
  *

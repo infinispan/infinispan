@@ -10,10 +10,10 @@ import org.infinispan.commons.configuration.attributes.Matchable;
  * a serialized, binary format.  There are benefits to both approaches, but often if used in a clustered mode,
  * storing objects as binary means that the cost of serialization happens early on, and can be amortized.  Further,
  * deserialization costs are incurred lazily which improves throughput.
- * <p />
+ * <p>
  * It is possible to control this on a fine-grained basis: you can choose to just store keys or values as binary, or
  * both.
- * <p />
+ *
  * @see StoreAsBinaryConfigurationBuilder
  * @deprecated Use {@link MemoryConfiguration} instead
  */

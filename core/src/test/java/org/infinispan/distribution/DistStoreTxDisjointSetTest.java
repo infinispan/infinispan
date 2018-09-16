@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 
 /**
  * This tests the access pattern where a Tx touches multiple keys such that: K1: {A, B} K2: {A, C}
- * <p/>
+ * <p>
  * The tx starts and runs on A, and the TX must succeed even though each node only gets a subset of data.  Particularly,
  * needs to be checked when using a cache store.
  */

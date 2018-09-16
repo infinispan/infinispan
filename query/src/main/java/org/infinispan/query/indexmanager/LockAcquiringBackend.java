@@ -22,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  * trigger more backpressure when it's filled (although filling it should not
  * be possible as the current implementation steals the locks aggressively).
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 public class LockAcquiringBackend implements IndexingBackend {

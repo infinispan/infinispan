@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
 /**
  * Test that CommandAwareRpcManager detects members who left the cluster and throws an exception.
  *
- * @author Dan Berindei <dan@infinispan.org>
+ * @author Dan Berindei &lt;dan@infinispan.org&gt;
  */
 @Test (testName = "remoting.MessageSentToLeaverTest", groups = "functional")
 public class MessageSentToLeaverTest extends AbstractInfinispanTest {

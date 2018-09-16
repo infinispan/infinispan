@@ -49,9 +49,9 @@ import io.netty.handler.codec.http.cors.CorsConfig;
 
 
 /**
- * A service which starts the REST web application
+ * A service which starts the REST web application.
  *
- * @author Tristan Tarrant <ttarrant@redhat.com>
+ * @author Tristan Tarrant &lt;ttarrant@redhat.com&gt;
  * @since 6.0
  */
 public class RestService implements Service<RestServer>, EncryptableService {

@@ -7,7 +7,7 @@ package org.infinispan.objectfilter;
  * if specified) and the 'order by' projections (optional, if specified). The 'order by' projection is an array of
  * {@link java.lang.Comparable} that can be compared using the {@link java.util.Comparator} provided by {@link
  * FilterSubscription#getComparator()}.
- * <p/>
+ * <p>
  * Implementations of this interface are provided by the subscriber and must written is such a way that they can be
  * invoked from multiple threads simultaneously.
  *

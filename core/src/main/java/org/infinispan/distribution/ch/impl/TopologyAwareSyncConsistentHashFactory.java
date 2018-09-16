@@ -19,10 +19,10 @@ import org.infinispan.remoting.transport.TopologyAwareAddress;
  * A {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation that guarantees caches
  * with the same members have the same consistent hash and also tries to distribute segments based on the
  * topology information in {@link org.infinispan.configuration.global.TransportConfiguration}.
- * <p/>
+ * <p>
  * It has a drawback compared to {@link org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory}:
  * it can potentially move a lot more segments during a rebalance than strictly necessary.
- * <p/>
+ * <p>
  * It is not recommended using the {@code TopologyAwareSyncConsistentHashFactory} with a very small number
  * of segments. The distribution of segments to owners gets better with a higher number of segments, and is
  * especially bad when {@code numSegments &lt; numNodes}

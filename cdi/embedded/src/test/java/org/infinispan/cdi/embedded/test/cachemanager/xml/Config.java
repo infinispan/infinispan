@@ -17,7 +17,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  * Creates a number of caches, based on some external mechanism.
  *
  * @author Pete Muir
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
 public class Config {
    /**

@@ -77,7 +77,7 @@ public interface LocalTopologyManager {
 
    /**
     * Checks if the cache defined by {@code cacheName} is using total order.
-    * <p/>
+    * <p>
     * If this component is not running or the {@code cacheName} is not defined, it returns {@code false}.
     *
     * @return {@code true} if the cache is using the total order protocol, {@code false} otherwise.

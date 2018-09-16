@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 /**
  * Tests that configured caches are registered in the corresponding cache manager.
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
 @Listeners(TestResourceTrackingListener.class)
 @Test(groups = "functional", testName = "cdi.test.cachemanager.embedded.registration.CacheRegistrationTest")

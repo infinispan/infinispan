@@ -20,13 +20,13 @@ import org.jboss.marshalling.Unmarshaller;
  * A JBoss Marshalling based marshaller that is oriented at internal, embedded,
  * Infinispan usage. It uses of a custom object table for Infinispan based
  * Externalizer instances that are either internal or user defined.
- * <p />
+ * <p>
  * The reason why this is implemented specially in Infinispan rather than resorting to Java serialization or even the
  * more efficient JBoss serialization is that a lot of efficiency can be gained when a majority of the serialization
  * that occurs has to do with a small set of known types such as {@link org.infinispan.transaction.xa.GlobalTransaction} or
  * {@link org.infinispan.commands.ReplicableCommand}, and class type information can be replaced with simple magic
  * numbers.
- * <p/>
+ * <p>
  * Unknown types (typically user data) falls back to Java serialization.
  *
  * @author Galder Zamarreño

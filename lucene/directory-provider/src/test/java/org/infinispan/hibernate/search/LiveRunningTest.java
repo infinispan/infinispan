@@ -27,12 +27,12 @@ import org.junit.experimental.categories.Category;
 /**
  * In this test we initially start a master node which will stay alive for the full test duration and constantly
  * indexing new entities.
- * <p/>
+ * <p>
  * After that we add and remove additional new nodes, still making more index changes checking that each node is always
  * able to see changes as soon as committed by the main node; this results in a very stressfull test as the cluster
  * topology is changed at each step (though it doesn't rehash as it's replicating).
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
 public class LiveRunningTest {
 

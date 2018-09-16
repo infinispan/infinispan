@@ -177,7 +177,7 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 
 	/**
 	 * Test method for {@link QueryResultsRegion#evictAll()}.
-	 * <p/>
+	 * <p>
 	 * FIXME add testing of the "immediately without regard for transaction isolation" bit in the
 	 * CollectionRegionAccessStrategy API.
 	 */

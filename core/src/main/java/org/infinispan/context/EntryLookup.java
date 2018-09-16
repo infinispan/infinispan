@@ -15,7 +15,6 @@ import org.infinispan.container.entries.CacheEntry;
 public interface EntryLookup {
    /**
     * Retrieves an entry from the collection of looked up entries in the current scope.
-    * <p/>
     *
     * @param key key to look up
     * @return an entry, or null if it cannot be found.
@@ -24,7 +23,7 @@ public interface EntryLookup {
 
    /**
     * Retrieves a map of entries looked up within the current scope.
-    * <p/>
+    * <p>
     * Note: The key inside the {@linkplain CacheEntry} may be {@code null} if the key does not exist in the cache.
     *
     * @return a map of looked up entries.
@@ -69,7 +68,6 @@ public interface EntryLookup {
 
    /**
     * Puts an entry in the registry of looked up entries in the current scope.
-    * <p/>
     *
     * @param key key to store
     * @param e   entry to store

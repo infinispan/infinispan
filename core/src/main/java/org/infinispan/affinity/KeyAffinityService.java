@@ -6,9 +6,9 @@ import org.infinispan.remoting.transport.Address;
 /**
  * Defines a service that generates keys to be mapped to specific nodes in a distributed(vs. replicated) cluster.
  * The service is instantiated through through one of the factory methods from {@link org.infinispan.affinity.KeyAffinityServiceFactory}.
- * <p/>
+ * <p>
  * Sample usage:
- * <p/>
+ * <p>
  * <pre><code>
  *    Cache&lt;String, Long&gt; cache = getDistributedCache();
  *    KeyAffinityService&lt;String&gt; service = KeyAffinityServiceFactory.newKeyAffinityService(cache, 100);
@@ -19,11 +19,11 @@ import org.infinispan.remoting.transport.Address;
  *    //this will reside on the same node in the cluster
  *    cache.put(newCollocatedSession, someInfo);
  * </code></pre>
- * <p/>
+ * <p>
  * Uniqueness: the service does not guarantee that the generated keys are unique. It relies on an
  * {@link org.infinispan.affinity.KeyGenerator} for obtaining and distributing the generated keys. If key uniqueness is
  * needed that should be enforced in the generator.
- * <p/>
+ * <p>
  * The service might also drop key generated through the {@link org.infinispan.affinity.KeyGenerator}.
  *
  * @see org.infinispan.affinity.KeyAffinityServiceFactory

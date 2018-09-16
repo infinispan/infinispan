@@ -3,7 +3,7 @@ package org.infinispan.query.indexmanager;
 /**
  * Interface to control the Lucene index's write lock.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 interface IndexLockController {

@@ -21,8 +21,8 @@ import org.infinispan.remoting.transport.Address;
 /**
  * Invoke a ClusteredQueryCommand on the cluster, including on own node.
  *
- * @author Israel Lacerra <israeldl@gmail.com>
- * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
+ * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2011 Red Hat Inc.
  * @since 5.1
  */
 final class ClusteredQueryInvoker {

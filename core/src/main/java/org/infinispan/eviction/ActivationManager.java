@@ -22,7 +22,7 @@ public interface ActivationManager {
 
    /**
     * Remove key and associated value from cache store and update the activation counter.
-    * <p/>
+    * <p>
     * The key is also removed from the shared configured stores.
     *
     * @param key      Key to activate

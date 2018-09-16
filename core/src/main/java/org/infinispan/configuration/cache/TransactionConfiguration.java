@@ -241,13 +241,13 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
     * offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
     * access is no longer supported, so if you wanna speed up transactional
     * caches and you're ready to trade some consistency guarantees, you can
-    * enable use1PcForAutoCommitTransactions. <p/>
-    *
+    * enable use1PcForAutoCommitTransactions.
+    * <p>
     * What this configuration option does is force an induced transaction,
     * that has been started by Infinispan as a result of enabling autoCommit,
     * to commit in a single phase. So only 1 RPC instead of 2RPCs as in the
     * case of a full 2 Phase Commit (2PC).
-    * <p/>
+    * <p>
     * <b>N.B.</b> this option should NOT be used when modifying the
     * same key from multiple transactions as 1PC does not offer any consistency
     * guarantees under concurrent access.

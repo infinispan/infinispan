@@ -21,7 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  * Rather than wrapping the Directory or the LockManager directly, we need to wrap the IndexManager
  * as the Directory initialization is deferred.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 final class IndexManagerBasedLockController implements IndexLockController {

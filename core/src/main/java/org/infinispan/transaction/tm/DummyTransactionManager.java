@@ -6,8 +6,6 @@ import javax.transaction.xa.XAResource;
  * Simple transaction manager implementation that maintains transaction state in memory only.
  *
  * @author bela
- *         <p/>
- *         Date: May 15, 2003 Time: 4:11:37 PM
  * @since 4.0
  * @deprecated use {@link EmbeddedTransactionManager}
  */

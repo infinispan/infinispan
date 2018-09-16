@@ -35,7 +35,7 @@ import java.io.Serializable;
  * It's common practice to include externalizer implementations within the
  * classes that they marshall/unmarshall as <code>public static classes</code>.
  * To make externalizer implementations easier to code and more typesafe, make
- * sure you define type <T> as the type of object that's being
+ * sure you define type &lt;T&gt; as the type of object that's being
  * marshalled/unmarshalled.
  *
  * Even though this way of defining externalizers is very user friendly, it has

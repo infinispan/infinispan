@@ -27,14 +27,14 @@ import org.junit.Test;
  * In this test we initially start a master node which will stay alive for the full test duration and constantly
  * indexing new entities, focusing on the configurtion using async indexing and exclusive lock ownership on the primary
  * node.
- * <p/>
+ * <p>
  * After that we add and remove additional new nodes, still making more index changes checking that each node is always
  * able to see changes - although the purpose here is to test async indexing so the visibility on these changes might
  * be slightly delayed.
  * This results in a very stressfull test as the cluster topology is changed frequently, but since it uses replication
  * it doesn't need to perform rehashing.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2017 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2017 Red Hat Inc.
  */
 public class AsyncLiveRunningTest {
 

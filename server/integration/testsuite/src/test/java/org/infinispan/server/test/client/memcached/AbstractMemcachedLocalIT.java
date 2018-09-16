@@ -27,7 +27,7 @@ import org.junit.Test;
 /**
  * Tests for Memcached endpoint. Subclasses must provide a way to get the list of remote
  * infinispan servers.
- * <p/>
+ * <p>
  * Subclasses may be used in Client-Server mode or Hybrid mode where Memcached server
  * runs as a library deployed in an application server.
  *

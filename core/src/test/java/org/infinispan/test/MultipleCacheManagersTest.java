@@ -73,15 +73,13 @@ import org.testng.annotations.Factory;
  * class</i>, you could set the <tt>cleanup</tt> field to {@link MultipleCacheManagersTest.CleanupPhase#AFTER_METHOD} in
  * your test's constructor.  E.g.:
  * <pre>
- * <p/>
  * public void MyTest extends MultipleCacheManagersTest {
  *    public MyTest() {
  *       cleanup =  CleanupPhase.AFTER_METHOD;
  *    }
  * }
- * <p/>
  * </pre>
- * <p/>
+ * <p>
  * Note that this will cause {@link #createCacheManagers()}  to be called before each method.
  *
  * @author Mircea.Markus@jboss.com

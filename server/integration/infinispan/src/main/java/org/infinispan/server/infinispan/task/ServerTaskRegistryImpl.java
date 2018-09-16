@@ -17,9 +17,7 @@ import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskManager;
 
 /**
- * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
- * Date: 1/20/16
- * Time: 12:53 PM
+ * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
 @Scope(Scopes.GLOBAL)
 public class ServerTaskRegistryImpl implements ServerTaskRegistry {

@@ -6,7 +6,7 @@ import org.infinispan.commands.ReplicableCommand;
 
 /**
  * The state used by an {@link Action}.
- * <p/>
+ * <p>
  * It is shared among them.
  *
  * @author Pedro Ruivo

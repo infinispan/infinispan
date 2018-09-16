@@ -30,14 +30,14 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * SingletonStore is a delegating cache store used for situations when only one instance should interact with the
  * underlying store. The coordinator of the cluster will be responsible for the underlying CacheStore.
- * <p/>
+ * <p>
  * SingletonStore is a simply facade to a real CacheStore implementation. It always delegates reads to the real
  * CacheStore.
- * <p/>
+ * <p>
  * Writes are delegated <i>only if</i> this SingletonStore is currently the coordinator. This avoids having all stores in
  * a cluster writing the same data to the same underlying store. Although not incorrect (e.g. a DB will just discard
  * additional INSERTs for the same key, and throw an exception), this will avoid a lot of redundant work.
- * <p/>
+ * <p>
  * Whenever the current coordinator dies (or leaves), the second in line will take over. That SingletonStore will then
  * pass writes through to its underlying CacheStore. Optionally, when a new coordinator takes over the Singleton, it can
  * push the in-memory state to the cache cacheStore, within a time constraint.

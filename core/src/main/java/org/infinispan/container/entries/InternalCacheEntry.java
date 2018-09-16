@@ -76,12 +76,11 @@ public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
     * purpose of this is to provide a representation that does <i>not</i> have a reference to the key. This is useful in
     * situations where the key is already known or stored elsewhere, making serialization and deserialization more
     * efficient.
-    * <p/>
+    * <p>
     * Note that this should not be used to optimize memory overhead, since the saving of an additional reference to a
     * key (a single object reference) does not warrant the cost of constructing an InternalCacheValue.  This <i>only</i>
     * makes sense when marshalling is involved, since the cost of marshalling the key again can be sidestepped using an
     * InternalCacheValue if the key is already known/marshalled.
-    * <p/>
     *
     * @return a new InternalCacheValue encapsulating this InternalCacheEntry's value and expiration information.
     */

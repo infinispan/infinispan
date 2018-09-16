@@ -15,7 +15,7 @@ import javax.enterprise.context.ApplicationScoped;
  * By default all key parameters of the intercepted method compose the
  * {@link javax.cache.annotation.CacheKey}.
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  * @author Galder Zamarreño
  */
 @ApplicationScoped

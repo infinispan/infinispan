@@ -11,8 +11,8 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * A collection of stream related utility methods.
- * <p/>
- * <p>Exceptions that are thrown and not explicitly declared are ignored.
+ * <p>
+ * Exceptions that are thrown and not explicitly declared are ignored.
  *
  * @author <a href="mailto:jason@planet57.com">Jason Dillon</a>
  * @since 4.2

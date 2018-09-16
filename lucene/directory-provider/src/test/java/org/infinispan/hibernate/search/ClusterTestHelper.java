@@ -19,7 +19,7 @@ import org.infinispan.remoting.transport.Address;
  * Helpers to setup several instances of Hibernate Search using clustering to connect the index, and sharing the same H2
  * database instance.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
 public final class ClusterTestHelper {
 

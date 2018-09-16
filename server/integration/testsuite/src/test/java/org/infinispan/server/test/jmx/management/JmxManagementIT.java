@@ -34,10 +34,10 @@ import org.junit.runner.RunWith;
 
 /**
  * Test that JMX statistics/operations are available for an Infinispan server instance.
- * <p/>
+ * <p>
  * TODO: operations/attributes of Transactions MBean  - Transactions are only available in embedded mode (to be impl.
  * for HotRod later: ISPN-375)
- * <p/>
+ * <p>
  * operations/attributes of RecoveryAdmin MBean - the same as above
  *
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>

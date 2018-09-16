@@ -12,10 +12,10 @@ import org.jboss.dmr.ModelNode;
 /**
  * It represents the no-arg Infinispan CLI command. It should be used as a base class for other commands
  * with arguments Infinispan CLI command.
- * <p/>
+ * <p>
  * The Infinispan CLI command is only available when connected and the prefix contains the
  * {@code cache-container}.
- * <p/>
+ * <p>
  * The commands are sent to the Infinispan interpreted to be processed and the result is printed.
  *
  * @author Pedro Ruivo

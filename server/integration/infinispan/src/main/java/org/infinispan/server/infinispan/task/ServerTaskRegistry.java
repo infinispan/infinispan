@@ -6,27 +6,25 @@ import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.Task;
 
 /**
- * Server task registry.
- * Stores server tasks that can be executed via {@link org.infinispan.tasks.TaskManager}
+ * Server task registry. Stores server tasks that can be executed via {@link org.infinispan.tasks.TaskManager}
  *
- * <p/>
- * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
- * Date: 1/22/16
- * Time: 4:03 PM
+ * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
 public interface ServerTaskRegistry {
+
    /**
     * Lists the registered server tasks.
+    *
     * @return a list of server tasks
     */
    List<Task> getTasks();
 
    /**
-    * Returns a {@link ServerTaskWrapper} for a task with given name.
-    * ServerTaskWrapper wraps {@link ServerTask} to make it compatible with {@link Task}
+    * Returns a {@link ServerTaskWrapper} for a task with given name. ServerTaskWrapper wraps {@link ServerTask} to make
+    * it compatible with {@link Task}
     *
     * @param taskName task name (as returned by {@link ServerTask#getName()})
-    * @param <T> type of return value of the task
+    * @param <T>      type of return value of the task
     * @return server task wrapper for task of given name
     */
    <T> ServerTaskWrapper<T> getTask(String taskName);
@@ -41,13 +39,15 @@ public interface ServerTaskRegistry {
 
    /**
     * Register a ServerTask in the registry
+    *
     * @param task server task to register
-    * @param <T> type of the return value of the task
+    * @param <T>  type of the return value of the task
     */
    <T> void addDeployedTask(ServerTask<T> task);
 
    /**
     * Unregister server task with given name
+    *
     * @param name name of the task
     */
    void removeDeployedTask(String name);

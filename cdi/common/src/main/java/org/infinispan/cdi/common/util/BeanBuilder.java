@@ -22,13 +22,13 @@ import javax.inject.Named;
  * {@link PassivationCapable} beans, using
  * {@link Annotateds#createTypeId(AnnotatedType)} to generate the id.
  * </p>
- * <p/>
+ * <p>
  * <p>
  * The builder can read from an {@link AnnotatedType} and have any attribute
  * modified. This class is not thread-safe, but the bean created by calling
  * {@link #create()} is.
  * </p>
- * <p/>
+ * <p>
  * <p>
  * It is advised that a new bean builder is instantiated for each bean created.
  * </p>
@@ -73,12 +73,12 @@ public class BeanBuilder<T> {
      * Read the {@link AnnotatedType}, creating a bean from the class and it's
      * annotations.
      * </p>
-     * <p/>
+     * <p>
      * <p>
      * By default the bean lifecycle will wrap the result of calling
      * {@link BeanManager#createInjectionTarget(AnnotatedType)}.
      * </p>
-     * <p/>
+     * <p>
      * <p>
      * {@link BeanBuilder} does <em>not</em> support reading members of the class
      * to create producers or observer methods.

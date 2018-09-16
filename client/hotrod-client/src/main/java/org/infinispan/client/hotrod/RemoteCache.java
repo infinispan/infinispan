@@ -18,22 +18,22 @@ import org.infinispan.query.dsl.Query;
  * Provides remote reference to a Hot Rod server/cluster. It implements {@link org.infinispan.Cache}, but given its
  * nature (remote) some operations are not supported. All these unsupported operations are being overridden within this
  * interface and documented as such.
- * <p/>
+ * <p>
  * <b>New operations</b>: besides the operations inherited from {@link org.infinispan.Cache}, RemoteCache also adds new
  * operations to optimize/reduce network traffic: e.g. versioned put operation.
- * <p/>
+ * <p>
  * <b>Concurrency</b>: implementors of this interface will support multi-threaded access, similar to the way {@link
  * org.infinispan.Cache} supports it.
- * <p/>
+ * <p>
  * <b>Return values</b>: previously existing values for certain {@link java.util.Map} operations are not returned, null
  * is returned instead. E.g. {@link java.util.Map#put(Object, Object)} returns the previous value associated to the
  * supplied key. In case of RemoteCache, this returns null.
- * <p/>
+ * <p>
  * <b>Synthetic operations</b>: aggregate operations are being implemented based on other Hot Rod operations. E.g. all
  * the {@link java.util.Map#putAll(java.util.Map)} is implemented through multiple individual puts. This means that the
  * these operations are not atomic and that they are costly, e.g. as the number of network round-trips is not one, but
  * the size of the added map. All these synthetic operations are documented as such.
- * <p/>
+ * <p>
  * <b>changing default behavior through {@link org.infinispan.client.hotrod.Flag}s</b>: it is possible to change the
  * default cache behaviour by using flags on an per invocation basis. E.g.
  * <pre>
@@ -45,7 +45,7 @@ import org.infinispan.query.dsl.Query;
  * would return (by default) <tt>null</tt>. This is in order to avoid fetching a possibly large object from the remote
  * server, which might not be needed. The flags as set by the {@link org.infinispan.client.hotrod.RemoteCache#withFlags(Flag...)}
  * operation only apply for the very next operation executed <b>by the same thread</b> on the RemoteCache.
- * <p/>
+ * <p>
  * <b><a href="http://community.jboss.org/wiki/Eviction">Eviction and expiration</a></b>: Unlike local {@link
  * org.infinispan.Cache} cache, which allows specifying time values with any granularity (as defined by {@link
  * TimeUnit}), HotRod only supports seconds as time units. If a different time unit is used instead, HotRod will
@@ -428,7 +428,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    /**
     * Applies one or more {@link Flag}s to the scope of a single invocation.  See the {@link Flag} enumeration to for
     * information on available flags.
-    * <p />
+    * <p>
     * Sample usage:
     * <pre>
     *    remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).put("hello", "world");

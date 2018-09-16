@@ -13,7 +13,7 @@ import javax.inject.Qualifier;
  *
  * <p>This qualifier will be associated to the greeting cache in the {@link Config} class.</p>
  *
- * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011
+ * @author Kevin Pollet &lt;pollet.kevin@gmail.com&gt; (C) 2011
  */
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

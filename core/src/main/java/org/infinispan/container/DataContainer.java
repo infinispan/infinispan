@@ -49,7 +49,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * Retrieves a cache entry in the same way as {@link #get(Object)}} except that it does not update or reorder any of
     * the internal constructs. I.e., expiration does not happen, and in the case of the LRU container, the entry is not
     * moved to the end of the chain.
-    * <p/>
+    * <p>
     * This method should be used instead of {@link #get(Object)}} when called while iterating through the data container
     * using methods like {@link #iterator()} to avoid changing the underlying collection's order.
     *
@@ -61,7 +61,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    /**
     * Puts an entry in the cache along with metadata adding information such lifespan of entry, max idle time, version
     * information...etc.
-    * <p/>
+    * <p>
     * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#onUpdate(Object,
     * boolean)}.
     *
@@ -81,7 +81,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     * Removes an entry from the cache
-    * <p/>
+    * <p>
     * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#onRemove(Object,
     * boolean)}.
     *
@@ -150,7 +150,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * Returns a mutable set of immutable cache entries exposed as immutable Map.Entry instances. Clients of this method
     * such as Cache.entrySet() operation implementors are free to convert the set into an immutable set if needed, which
     * is the most common use case.
-    * <p/>
+    * <p>
     * If a client needs to iterate through a mutable set of mutable cache entries, it should iterate the container
     * itself rather than iterating through the return of entrySet().
     * <p>
@@ -169,7 +169,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     * Atomically, it removes the key from {@code DataContainer} and passivates it to persistence.
-    * <p/>
+    * <p>
     * The passivation must be done by invoking the method {@link org.infinispan.eviction.PassivationManager#passivate(org.infinispan.container.entries.InternalCacheEntry)}.
     *
     * @param key The key to evict.
@@ -178,10 +178,10 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     * Computes the new value for the key.
-    * <p/>
+    * <p>
     * See {@link org.infinispan.container.DataContainer.ComputeAction#compute(Object,
     * org.infinispan.container.entries.InternalCacheEntry, InternalEntryFactory)}.
-    * <p/>
+    * <p>
     * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#onRemove(Object,
     * boolean)} or {@link org.infinispan.eviction.ActivationManager#onUpdate(Object, boolean)} depending if the value
     * returned by the {@link org.infinispan.container.DataContainer.ComputeAction} is null or not respectively.

@@ -28,14 +28,14 @@ import org.infinispan.factories.scopes.Scopes;
  * {@link DefaultFactoryFor}, {@link ComponentName}, {@link Inject}, {@link Start} and {@link Stop} annotations.  Instead
  * of scanning for these annotations and working out dependency chains at runtime "on-demand", since Infinispan 5.1, this
  * process now happens offline, at build-time.
- * <p />
+ * <p>
  * When compiling Infinispan, components and their dependency chains are inspected and the information expressed by the
  * annotations above are denormalized and a series of {@link ComponentMetadata} objects are created and persisted in the
  * Infinispan jar.
- * <p />
+ * <p>
  * This metadata is then read in by the {@link ComponentMetadataRepo} at runtime, and used by the {@link ComponentRegistry}
  * and other factory-like classes to bootstrap an Infinispan node.
- * <p />
+ * <p>
  * Also see {@link ManageableComponentMetadata} for components that also expose JMX information.
 
  * @author Manik Surtani

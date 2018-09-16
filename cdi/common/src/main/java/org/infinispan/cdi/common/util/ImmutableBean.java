@@ -16,7 +16,7 @@ import javax.enterprise.inject.spi.InjectionPoint;
  * collections are defensively copied on instantiation. It uses the defaults
  * from the specification for properties if not specified.
  * </p>
- * <p/>
+ * <p>
  * <p>
  * This bean delegates it's lifecycle to the callbacks on the provided
  * {@link ContextualLifecycle}.

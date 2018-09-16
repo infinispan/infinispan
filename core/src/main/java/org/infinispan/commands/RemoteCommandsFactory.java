@@ -86,7 +86,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
  * Specifically used to create un-initialized {@link org.infinispan.commands.ReplicableCommand}s from a byte stream.
  * This is a {@link Scopes#GLOBAL} component and doesn't have knowledge of initializing a command by injecting
  * cache-specific components into it.
- * <p />
+ * <p>
  * Usually a second step to unmarshalling a command from a byte stream (after
  * creating an un-initialized version using this factory) is to pass the command though {@link CommandsFactory#initializeReplicableCommand(ReplicableCommand,boolean)}.
  *
@@ -104,10 +104,8 @@ public class RemoteCommandsFactory {
    /**
     * Creates an un-initialized command.  Un-initialized in the sense that parameters will be set, but any components
     * specific to the cache in question will not be set.
-    * <p/>
+    * <p>
     * You would typically set these parameters using {@link CommandsFactory#initializeReplicableCommand(ReplicableCommand,boolean)}
-    * <p/>
-    *
     *
     * @param id id of the command
     * @param type type of the command

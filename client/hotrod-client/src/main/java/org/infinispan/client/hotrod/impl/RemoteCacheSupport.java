@@ -11,7 +11,7 @@ import java.util.function.Function;
 import org.infinispan.client.hotrod.RemoteCache;
 
 /**
- * Purpose: keep all delegating and unsupported methods in one place -> readability.
+ * Purpose: keep all delegating and unsupported methods in one place for readability.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -84,7 +84,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
     * alter the signature even if it might look like unreachable code. Implementors should perform a put operation but
     * optimizing it as return values are not required.
     *
-    * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+    * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2011 Red Hat Inc.
     * @since 5.0
     */
    protected abstract void set(K key, V value);
@@ -128,7 +128,6 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
    public V put(K key, V value, long lifespan, TimeUnit unit) {
       return put(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
-
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {

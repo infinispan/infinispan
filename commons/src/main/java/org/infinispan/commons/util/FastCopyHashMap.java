@@ -16,7 +16,7 @@ import org.infinispan.commons.logging.LogFactory;
 
 /**
  * A HashMap that is optimized for fast shallow copies.
- * <p/>
+ * <p>
  * Null keys are <i>not</i> supported.
  *
  * @author Jason T. Greene

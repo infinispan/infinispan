@@ -19,11 +19,10 @@ import net.jcip.annotations.Immutable;
 /**
  * A lightweight, read-only copy of a List.  Typically used in place of the common idiom: <code> return
  * Collections.unmodifiableList(new ArrayList( myInternalList )); </code>
- * <p/>
+ * <p>
  * a it is far more efficient than making a defensive copy and then wrapping the defensive copy in a read-only wrapper.
- * <p/>
+ * <p>
  * Also used whenever a read-only reference List is needed.
- * <p/>
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0

@@ -19,7 +19,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * This class behaves as a synchronization point between incoming transactions (totally ordered) and between incoming
  * transactions and state transfer.
- * <p/>
+ * <p>
  * Main functions:
  * <ul>
  *    <li>

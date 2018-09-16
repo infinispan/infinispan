@@ -8,8 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  * Method level annotation that indicates a (no-param) method to be called on a component after the
- * {@link org.infinispan.factories.ComponentRegistry} has been fully initialized
- * <p/>
+ * {@link org.infinispan.factories.ComponentRegistry} has been fully initialized.
  *
  * @author Tristan Tarrant
  * @since 9.2

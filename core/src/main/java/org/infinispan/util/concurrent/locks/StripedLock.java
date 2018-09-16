@@ -13,13 +13,13 @@ import net.jcip.annotations.ThreadSafe;
 /**
  * A simple implementation of lock striping, using cache entry keys to lock on, primarily used to help make {@link
  * org.infinispan.persistence.spi.CacheLoader} implemtations thread safe.
- * <p/>
+ * <p>
  * Backed by a set of {@link java.util.concurrent.locks.ReentrantReadWriteLock} instances, and using the key hashcodes
  * to determine buckets.
- * <p/>
+ * <p>
  * Since buckets are used, it doesn't matter that the key in question is not removed from the lock map when no longer in
  * use, since the key is not referenced in this class.  Rather, the hash code is used.
- * <p/>
+ * <p>
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @author Mircea.Markus@jboss.com

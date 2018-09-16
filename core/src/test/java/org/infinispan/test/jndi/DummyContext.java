@@ -104,7 +104,7 @@ public class DummyContext implements Context {
    /**
     * Binds a name to an object, overwriting any existing binding. All intermediate contexts and the target context
     * (that named by all but terminal atomic component of the name) must already exist.
-    * <p/>
+    * <p>
     * <p> If the object is a <tt>DirContext</tt>, any existing attributes associated with the name are replaced with
     * those of the object. Otherwise, any existing attributes associated with the name remain unchanged.
     *
@@ -138,10 +138,10 @@ public class DummyContext implements Context {
    /**
     * Unbinds the named object. Removes the terminal atomic name in <code>name</code> from the target context--that
     * named by all but the terminal atomic part of <code>name</code>.
-    * <p/>
+    * <p>
     * <p> This method is idempotent. It succeeds even if the terminal atomic name is not bound in the target context,
     * but throws <tt>NameNotFoundException</tt> if any of the intermediate contexts do not exist.
-    * <p/>
+    * <p>
     * <p> Any attributes associated with the name are removed. Intermediate contexts are not changed.
     *
     * @param name the name to unbind; may not be empty
@@ -205,7 +205,7 @@ public class DummyContext implements Context {
    /**
     * Enumerates the names bound in the named context, along with the class names of objects bound to them. The contents
     * of any subcontexts are not included.
-    * <p/>
+    * <p>
     * <p> If a binding is added to or removed from this context, its effect on an enumeration previously returned is
     * undefined.
     *
@@ -237,7 +237,7 @@ public class DummyContext implements Context {
    /**
     * Enumerates the names bound in the named context, along with the objects bound to them. The contents of any
     * subcontexts are not included.
-    * <p/>
+    * <p>
     * <p> If a binding is added to or removed from this context, its effect on an enumeration previously returned is
     * undefined.
     *
@@ -269,10 +269,10 @@ public class DummyContext implements Context {
    /**
     * Destroys the named context and removes it from the namespace. Any attributes associated with the name are also
     * removed. Intermediate contexts are not destroyed.
-    * <p/>
+    * <p>
     * <p> This method is idempotent. It succeeds even if the terminal atomic name is not bound in the target context,
     * but throws <tt>NameNotFoundException</tt> if any of the intermediate contexts do not exist.
-    * <p/>
+    * <p>
     * <p> In a federated naming system, a context from one naming system may be bound to a name in another.  One can
     * subsequently look up and perform operations on the foreign context using a composite name.  However, an attempt
     * destroy the context using this composite name will fail with <tt>NotContextException</tt>, because the foreign
@@ -402,7 +402,7 @@ public class DummyContext implements Context {
     * returns the composition of the two names using the syntax appropriate for the naming system(s) involved.  That is,
     * if <code>name</code> names an object relative to this context, the result is the name of the same object, but
     * relative to the ancestor context.  None of the names may be null.
-    * <p/>
+    * <p>
     * For example, if this context is named "wiz.com" relative to the initial context, then
     * <pre>
     *    composeName("east", "wiz.com")   </pre>
@@ -472,7 +472,7 @@ public class DummyContext implements Context {
    /**
     * Retrieves the environment in effect for this context. See class description for more details on environment
     * properties.
-    * <p/>
+    * <p>
     * <p> The caller should not make any changes to the object returned: their effect on the context is undefined. The
     * environment of this context may be changed using <tt>addToEnvironment()</tt> and
     * <tt>removeFromEnvironment()</tt>.
@@ -489,7 +489,7 @@ public class DummyContext implements Context {
    /**
     * Closes this context. This method releases this context's resources immediately, instead of waiting for them to be
     * released automatically by the garbage collector.
-    * <p/>
+    * <p>
     * <p> This method is idempotent:  invoking it on a context that has already been closed has no effect.  Invoking any
     * other method on a closed context is not allowed, and results in undefined behaviour.
     *
@@ -500,7 +500,7 @@ public class DummyContext implements Context {
 
    /**
     * Retrieves the full name of this context within its own namespace.
-    * <p/>
+    * <p>
     * <p> Many naming services have a notion of a "full name" for objects in their respective namespaces.  For example,
     * an LDAP entry has a distinguished name, and a DNS record has a fully qualified name. This method allows the client
     * application to retrieve this name. The string returned by this method is not a JNDI composite name and should not

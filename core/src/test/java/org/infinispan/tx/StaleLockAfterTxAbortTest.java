@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 
 /**
  * This tests the following pattern:
- * <p/>
+ * <p>
  * Thread T1 holds lock for key K. TX1 attempts to lock a key K.  Waits for lock. TM times out the tx and aborts the tx
  * (calls XA.end, XA.rollback). T1 releases lock. Wait a few seconds. Make sure there are no stale locks (i.e., when the
  * thread for TX1 wakes up and gets the lock on K, it then releases and aborts).

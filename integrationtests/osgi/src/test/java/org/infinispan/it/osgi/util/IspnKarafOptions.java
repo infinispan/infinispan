@@ -273,7 +273,7 @@ public class IspnKarafOptions {
     * PAX URL needs to know the location of the local maven repo to resolve mvn: URLs. When running the tests on the CI
     * machine TeamCity passes a custom local repo location using -Dmaven.repo.local to isolate the build targets and PAX
     * URL is not aware there's a custom repo to be used and tries to load from the default local repo location.
-    * <p/>
+    * <p>
     * This option will pass the location specified using -Dmaven.repo.local to the appropriate system property of the
     * container.
     *

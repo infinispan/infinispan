@@ -11,10 +11,9 @@ import org.infinispan.commons.configuration.attributes.Matchable;
  *
  * Controls certain tuning parameters that may break some of Infinispan's public API contracts in
  * exchange for better performance in some cases.
- * <p />
+ * <p>
  * Use with care, only after thoroughly reading and understanding the documentation about a specific
  * feature.
- * <p />
  *
  * @see UnsafeConfigurationBuilder
  */
