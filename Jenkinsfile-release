@@ -45,7 +45,7 @@ pipeline {
             steps {
                 // Create a staging repository on Nexus
                 script {
-                    STAGING_REPO_ID = sh(returnStdout: true, script: "$MAVEN_HOME/bin/mvn -B -V org.sonatype.plugins:nexus-staging-maven-plugin:rc-open -pl .|grep \"Opened \"|cut -f3 -d' '").trim()
+                    STAGING_REPO_ID = sh(returnStdout: true, script: "$MAVEN_HOME/bin/mvn -B -V org.sonatype.plugins:nexus-staging-maven-plugin:rc-open -pl .|grep 'Opened '|grep -oE '[^ ]+$'").trim()
                 }
                 echo "Staging repository: $STAGING_REPO_ID"
             }
