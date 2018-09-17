@@ -27,6 +27,11 @@
       <module>feature-pack</module>
       <module>build</module>
    </modules>
+   
+   <properties>
+      <product.name>infinispan-server</product.name>
+      <product.version>${project.version}</product.version>
+   </properties>
 
    <profiles>
       <profile>
@@ -50,4 +55,5 @@
          </modules>
       </profile>
    </profiles>
+
 </project>

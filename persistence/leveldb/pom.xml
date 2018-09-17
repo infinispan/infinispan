@@ -27,6 +27,12 @@
         <artifactId>framework</artifactId>
         <type>kar</type>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
          <groupId>org.testng</groupId>

@@ -129,7 +129,7 @@
                      <outputDirectory>${server.dir}</outputDirectory>
                         <resources>
                            <resource>
-                              <directory>../../server/integration/build/target/infinispan-server-${project.version}/</directory>
+                              <directory>../../server/integration/build/target/server-distribution-thin/${infinispan.brand.prefix}-server-${infinispan.brand.version}</directory>
                               <filtering>false</filtering>
                            </resource>
                         </resources>

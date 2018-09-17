@@ -69,7 +69,7 @@
 
         <!-- Feature Pack dependencies -->
         <dependency>
-            <groupId>org.wildfly</groupId>
+            <groupId>${appserver.groupId}</groupId>
             <artifactId>wildfly-feature-pack</artifactId>
             <type>zip</type>
             <exclusions>
@@ -128,7 +128,6 @@
         <dependency>
             <groupId>org.jboss.marshalling</groupId>
             <artifactId>jboss-marshalling-river</artifactId>
-            <version>${version.org.jboss.marshalling.jboss-marshalling}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.jboss.marshalling</groupId>

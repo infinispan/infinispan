@@ -272,14 +272,14 @@
                         <additionalDependency>
                            <groupId>org.osgi</groupId>
                            <artifactId>org.osgi.core</artifactId>
-                           <scope>provided</scope>
                            <version>${version.osgi}</version>
+                           <scope>provided</scope>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>org.osgi</groupId>
                            <artifactId>org.osgi.compendium</artifactId>
-                           <scope>provided</scope>
                            <version>${version.osgi}</version>
+                           <scope>provided</scope>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>org.hibernate</groupId>

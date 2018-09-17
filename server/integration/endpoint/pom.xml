@@ -167,7 +167,7 @@
          <exclusions>
              <exclusion>
                  <artifactId>wildfly-ee</artifactId>
-                 <groupId>org.wildfly</groupId>
+                 <groupId>${appserver.groupId}</groupId>
              </exclusion>
          </exclusions>
       </dependency>
@@ -199,11 +199,11 @@
       </dependency>
 
       <dependency>
-         <groupId>org.wildfly</groupId>
+         <groupId>${appserver.groupId}</groupId>
          <artifactId>wildfly-security</artifactId>
          <exclusions>
             <exclusion>
-               <groupId>org.wildfly</groupId>
+               <groupId>${appserver.groupId}</groupId>
                <artifactId>wildfly-clustering-infinispan</artifactId>
             </exclusion>
          </exclusions>

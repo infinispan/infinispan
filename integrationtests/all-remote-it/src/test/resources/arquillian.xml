@@ -7,7 +7,7 @@
     <group qualifier="Grid" default="true">
         <container qualifier="container-1" default="true" mode="manual">
             <configuration>
-                <property name="jbossHome">${project.build.directory}/node1/infinispan-server-${project.version}</property>
+                <property name="jbossHome">${project.build.directory}/node1/${infinispan.brand.prefix}-server-${infinispan.brand.version}</property>
                 <property name="serverConfig">clustered.xml</property>
                 <property name="javaVmArguments">
                     ${testjvm.jigsawArgs}
@@ -20,7 +20,7 @@
         </container>
         <container qualifier="container-2" mode="manual">
             <configuration>
-                <property name="jbossHome">${project.build.directory}/node2/infinispan-server-${project.version}</property>
+                <property name="jbossHome">${project.build.directory}/node2/${infinispan.brand.prefix}-server-${infinispan.brand.version}</property>
                 <property name="serverConfig">clustered.xml</property>
                 <property name="javaVmArguments">
                     ${testjvm.jigsawArgs}

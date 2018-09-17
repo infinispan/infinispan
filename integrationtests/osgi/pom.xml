@@ -52,12 +52,10 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-embedded</artifactId>
-         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-remote</artifactId>
-         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>org.hibernate</groupId>
@@ -67,7 +65,6 @@
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-osgi</artifactId>
-         <version>${version.hibernate.core}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -150,10 +147,12 @@
       <dependency>
          <groupId>org.ops4j.pax.exam</groupId>
          <artifactId>pax-exam-container-karaf</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.ops4j.pax.exam</groupId>
          <artifactId>pax-exam-junit4</artifactId>
+         <scope>test</scope>
          <exclusions>
             <exclusion>
                <artifactId>bndlib</artifactId>
@@ -164,22 +163,27 @@
       <dependency>
          <groupId>org.ops4j.pax.exam</groupId>
          <artifactId>pax-exam</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.ops4j.pax.exam</groupId>
          <artifactId>pax-exam-inject</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.ops4j.pax.url</groupId>
          <artifactId>pax-url-aether</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.ops4j.pax.url</groupId>
          <artifactId>pax-url-assembly</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.ops4j.pax.url</groupId>
          <artifactId>pax-url-wrap</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.apache.karaf.features</groupId>
