@@ -59,17 +59,6 @@
                 <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>server-provisioning-fat</id>
-                        <goals>
-                            <goal>build</goal>
-                        </goals>
-                        <phase>compile</phase>
-                        <configuration>
-                            <config-file>server-provisioning-fat.xml</config-file>
-                            <buildName>${project.build.directory}/distribution</buildName>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>server-provisioning-thin</id>
                         <goals>
                             <goal>build</goal>
@@ -77,6 +66,7 @@
                         <phase>compile</phase>
                         <configuration>
                             <config-file>server-provisioning-thin.xml</config-file>
+                            <buildName>${project.build.directory}/server-distribution-thin</buildName>
                         </configuration>
                     </execution>
                 </executions>
@@ -99,19 +89,10 @@
                         <phase>package</phase>
                         <configuration>
                             <target>
-                                <property name="server.dir" value="${project.build.directory}/${server.output.dir.prefix}-${infinispan.brand.version}"/>
-                            </target>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>trim-fat-server</id>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <target>
-                                <property name="server.dir" value="${project.build.directory}/distribution/${server.output.dir.prefix}-${infinispan.brand.version}"/>
+				                <property name="output.dir" value="${project.build.directory}/server-distribution-thin/${server.output.dir.prefix}-${infinispan.brand.version}"/>
+                                <ant antfile="build.xml" inheritRefs="true">
+                                    <target name="trim-server" />
+                                </ant>
                             </target>
                         </configuration>
                     </execution>
@@ -122,20 +103,20 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>assemble</id>
+                        <id>assemble-thin</id>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
                         <configuration>
                             <descriptors>
-                                <descriptor>assembly.xml</descriptor>
+                                <descriptor>assembly-thin-server.xml</descriptor>
                             </descriptors>
                             <recompressZippedFiles>true</recompressZippedFiles>
                             <finalName>${server.output.dir.prefix}-${infinispan.brand.version}</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
                             <outputDirectory>${project.build.directory}</outputDirectory>
-                            <workDirectory>${project.build.directory}/assembly/work</workDirectory>
+                            <workDirectory>${project.build.directory}/assembly/work-dir/thin</workDirectory>
                             <tarLongFileMode>gnu</tarLongFileMode>
                         </configuration>
                     </execution>
@@ -143,5 +124,62 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>distribution</id>
+            <!-- builds the fat server -->
+            <build>
+                <finalName>${server.output.dir.prefix}-${infinispan.brand.version}</finalName>
+                <plugins>
+                    <plugin>
+                        <groupId>org.wildfly.build</groupId>
+                        <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>server-provisioning-fat</id>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                                <phase>compile</phase>
+                                <configuration>
+                                    <config-file>server-provisioning-fat.xml</config-file>
+                                    <buildName>${project.build.directory}/server-distribution-fat</buildName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <configuration>
+                            <target>
+                                <ant antfile="build.xml" inheritRefs="true">
+                                    <target name="trim-server"/>
+                                </ant>
+                            </target>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>trim-fat-server</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <target>
+                                        <property name="output.dir"
+                                                  value="${project.build.directory}/server-distribution-fat/${server.output.dir.prefix}-${infinispan.brand.version}"/>
+                                        <ant antfile="build.xml" inheritRefs="true">
+                                            <target name="trim-server"/>
+                                        </ant>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
 

@@ -26,7 +26,7 @@
          </includes>
       </fileSet>
       <fileSet>
-         <directory>../server/integration/build/target/distribution/${infinispan.brand.prefix}-server-${infinispan.brand.version}</directory>
+         <directory>../server/integration/build/target/server-distribution-fat/${infinispan.brand.prefix}-server-${infinispan.brand.version}</directory>
          <outputDirectory />
          <includes>
             <include>**/**</include>

@@ -19,18 +19,6 @@
         <overridden.version.mockito>1.10.19</overridden.version.mockito>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${version.spring-boot}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <!-- Those are normal dependencies that are recommended for Spring Boot users -->
         <dependency>

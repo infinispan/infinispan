@@ -2,6 +2,6 @@
     <dependencies>
         <!-- TODO make commons standalone so that it does not require on full wildfly-feature-pack-->
         <!-- Modules required: javax.transaction.api, org.jboss.logging, javax.api-->
-        <artifact name="org.wildfly:wildfly-feature-pack" />
+        <artifact name="${appserver.groupId}:wildfly-feature-pack" />
     </dependencies>
 </build>

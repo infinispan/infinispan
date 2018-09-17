@@ -15,7 +15,7 @@
 
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-      <version.hibernate.core>5.1.10.Final</version.hibernate.core>
+      <version.hibernate.core>5.1.10.Final</version.hibernate.core><!-- TODO remove this -->
    </properties>
 
    <dependencies>
@@ -27,6 +27,12 @@
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-core</artifactId>
          <version>${version.hibernate.core}</version>
+         <exclusions>
+            <exclusion>
+               <groupId>org.apache.geronimo.specs</groupId>
+               <artifactId>geronimo-jta_1.1_spec</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>

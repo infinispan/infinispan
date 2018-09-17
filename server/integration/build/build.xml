@@ -1,35 +1,18 @@
 <project name="dist-dir" basedir="." default="clean">
+    <!--
+       Allow to trim both thin and fat servers
+    -->
 
-   <property name="server.dir" value="${project.build.directory}/${server.output.dir.prefix}-${infinispan.brand.version}" />
+    <target name="trim-server" depends="trim-all"/>
 
-   <target name="trim-server" depends="trim-modules, trim-as" />
+    <target name="trim-all">
+        <delete includeemptydirs="true" verbose="true">
+            <fileset dir="${output.dir}" includesfile="trim-delete.txt" excludesfile="trim-keep.txt"/>
+        </delete>
+    </target>
 
-   <target name="trim-modules">
-      <delete includeemptydirs="true" verbose="true">
-         <fileset dir="${server.dir}/modules/system/layers/base" includesfile="trim-modules.txt" excludesfile="retain-modules.txt"/>
-      </delete>
-   </target>
+    <target name="default">
+        <echo message="This script needs to be executed by the maven ant plugin"/>
+    </target>
 
-   <target name="trim-as">
-      <delete>
-         <fileset dir="${server.dir}/bin">
-            <include name="appclient.*" />
-            <include name="run.*" />
-            <include name="wsconsume.*" />
-            <include name="wsprovide.*" />
-            <include name="jboss-cli.bat" />
-            <include name="jboss-cli.sh" />
-            <include name="jboss-cli.ps1" />
-         </fileset>
-      </delete>
-      <delete dir="${server.dir}/appclient" />
-      <delete dir="${server.dir}/welcome-content" />
-      <delete>
-         <fileset dir="${server.dir}/docs/schema" excludesfile="keep-schemas.txt"/>
-      </delete>
-   </target>
-
-   <target name="default">
-       <echo message="This script needs to be executed by the maven ant plugin" />
-   </target>
 </project>

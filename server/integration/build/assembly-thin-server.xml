@@ -8,10 +8,10 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <fileSets>
         <fileSet>
-            <directory>target</directory>
+            <directory>${project.build.directory}/server-distribution-thin</directory>
             <outputDirectory/>
             <includes>
-                <include>${server.output.dir.prefix}-${version}/**</include>
+                <include>${server.output.dir.prefix}-${infinispan.brand.version}/**</include>
             </includes>
         </fileSet>
     </fileSets>
