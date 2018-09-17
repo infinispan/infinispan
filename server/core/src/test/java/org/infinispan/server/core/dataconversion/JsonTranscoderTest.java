@@ -1,7 +1,11 @@
 package org.infinispan.server.core.dataconversion;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.StandardConversions.convertCharset;
 import static org.infinispan.server.core.dataconversion.JsonTranscoder.TYPE_PROPERTY;
@@ -54,6 +58,16 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
       Object fromJson = transcoder.transcode(result, jsonMediaType, personMediaType);
 
       assertEquals(fromJson, dataSrc);
+   }
+
+   @Test
+   public void testEmptyContent() {
+      byte[] empty = new byte[0];
+      assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_JSON, APPLICATION_JSON.withCharset(US_ASCII)));
+      assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_UNKNOWN, APPLICATION_JSON));
+      assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_OCTET_STREAM, APPLICATION_JSON));
+      assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, TEXT_PLAIN, APPLICATION_JSON));
+      assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_OBJECT, APPLICATION_JSON));
    }
 
    @Test
