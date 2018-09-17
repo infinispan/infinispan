@@ -118,7 +118,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
 
    private Object convertTextToJson(Object content, Charset contentCharset, Charset destinationCharset, boolean asString) throws IOException {
       byte[] bytes = content instanceof byte[] ? (byte[]) content : content.toString().getBytes(contentCharset);
-
+      if (bytes.length == 0) return bytes;
       try (InputStreamReader isr = new InputStreamReader(new ByteArrayInputStream(bytes), contentCharset)) {
          String jsonTree = objectMapper.readTree(isr).toString();
          return asString ? jsonTree : jsonTree.getBytes(destinationCharset);
