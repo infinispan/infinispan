@@ -987,9 +987,8 @@ The current implementation of indexing and searching is still based on
 Hibernate Search and Lucene so all indexing related aspects presented in this chapter still apply.
 
 The new API simplifies the writing of queries by not exposing the user to the low level details of constructing Lucene
-query objects and also has the advantage of being available to link:#querying_via_the_java_hot_rod_client[remote Hot Rod clients].
-But before delving into further details, let's examine first a simple example of writing a query for the _Book_ entity
-from link:#simple_example[previous example].
+query objects and also has the advantage of being available to remote Hot Rod clients. But before delving into further details, let's examine first a simple example of writing a query for the _Book_ entity
+from the previous example.
 
 .Query example using {brandname}'s query DSL
 [source,java]
@@ -1500,7 +1499,7 @@ NOTE: Continuous Queries can use the full power of the Query DSL except: groupin
 ====== Running Continuous Queries
 
 To create a continuous query you'll start by creating a Query object first. This is described in
-link:#infinispan_s_query_dsl[the Query DSL section]. Then you'll need to obtain the ContinuousQuery (_org.infinispan.query.api.continuous.ContinuousQuery_)
+link:#query.dsl[the Query DSL section]. Then you'll need to obtain the ContinuousQuery (_org.infinispan.query.api.continuous.ContinuousQuery_)
 object of your cache and register the query and a continuous query listener (_org.infinispan.query.api.continuous.ContinuousQueryListener_)
 with it. A ContinuousQuery object associated to a cache can be obtained by calling the static method _org.infinispan.client.hotrod.Search.getContinuousQuery(RemoteCache<K, V> cache)_
 if running in remote mode or _org.infinispan.query.Search.getContinuousQuery(Cache<K, V> cache)_ when running in embedded mode.
@@ -1590,8 +1589,8 @@ each query captures the minimal information needed both in terms of number of ma
 to quickly process all received events without blocking and to avoid performing actions that will lead to the generation
 of new matching events from the cache it listens to.
 
-
-=== Remote Querying [[query.remote]]
+[[query.remote]]
+=== Remote Querying
 
 Apart from supporting indexing and searching of Java entities to embedded clients, {brandname} introduced support for remote,
 language neutral, querying.
@@ -1599,7 +1598,7 @@ language neutral, querying.
 This leap required two major changes:
 
 * Since non-JVM clients cannot benefit from directly using link:http://lucene.apache.org/[Apache Lucene]'s Java
-API, {brandname} defines its own new link:#infinispan_s_query_dsl[query language], based on an internal DSL that is easily
+API, {brandname} defines its own new link:#query.dsl[query language], based on an internal DSL that is easily
 implementable in all languages for which we currently have an implementation of the Hot Rod client.
 * In order to enable indexing, the entities put in the cache by clients can no longer be opaque binary blobs understood
 solely by the client. Their structure has to be known to both server and client, so a common way of
@@ -1742,7 +1741,7 @@ TODO
 ==== Indexing of Protobuf encoded entries
 After configuring the client as described in the previous section you can start configuring indexing for your caches on
 the server side. Activating indexing and the various indexing specific configurations is identical to embedded mode and
-is detailed in the <<query:configuration,Querying {brandname}>> chapter.
+is detailed in the <<query:configuration-api,Querying {brandname}>> chapter.
 
 There is however an extra configuration step involved. While in embedded mode the indexing metadata is obtained via Java
 reflection by analyzing the presence of various Hibernate Search annotations on the entry's class, this is obviously not
@@ -1801,7 +1800,7 @@ List<Book> list = query.list(); // Voila! We have our book back from the cache!
 
 The key part of creating a query is obtaining the _QueryFactory_ for the remote cache using the
 _org.infinispan.client.hotrod.Search.getQueryFactory()_ method. Once you have this creating the query is similar to
-embedded mode which is covered in link:#infinispan_s_query_dsl[this] section.
+embedded mode which is covered in link:#query.dsl[this] section.
 
 
 === Statistics
@@ -1898,4 +1897,3 @@ The async reader strategy is particularly useful for Index Managers that rely on
 ==== Lucene Options
 
 It is possible to apply tuning options in Lucene directly. For more details, see link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#_lucene_configuration[Hibernate Search manual]
-

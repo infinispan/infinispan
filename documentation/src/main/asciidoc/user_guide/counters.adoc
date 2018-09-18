@@ -172,7 +172,7 @@ RemoteCacheManager manager = ...;
 CounterManager counterManager = RemoteCounterManagerFactory.asCounterManager(manager);
 ----
 
-NOTE: Hot Rod messages format can be found in link:#_hot_rod_protocol_2_7[Hot Rod Protocol 2.7]
+NOTE: Hot Rod messages format can be found in link:#hot_rod_protocol_2_7[Hot Rod Protocol 2.7]
 
 ==== Remove a counter via CounterManager
 
@@ -499,4 +499,3 @@ NOTE: The state is always `State.VALID` for unbounded strong counter and weak co
 `State.LOWER_BOUND_REACHED` and `State.UPPER_BOUND_REACHED` are only valid for bounded strong counters.
 
 WARNING: The weak counter `reset()` operation will trigger multiple notification with intermediate values.
-

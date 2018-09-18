@@ -19,7 +19,7 @@ From a users perspective, a very common concern is whether {brandname} supports 
 
 If either of these options is true, key/value pairs in the cache will need to be marshalled and currently they require to either to extend `java.io.Serializable` or `java.io.Externalizable`.
 
-TIP: Since {brandname} 5.0, marshalling non-Serializable key/value objects are supported as long as users can to provide meaningful Externalizer implementations for these non-Seralizable objects. <<plugging_infinispan_with_user_defined_externalizers, This section>> has more details.
+TIP: Since {brandname} 5.0, marshalling non-Serializable key/value objects are supported as long as users can to provide meaningful Externalizer implementations for these non-Seralizable objects.
 
 If you're unable to retrofit Serializable or Externalizable into the classes whose instances are stored in {brandname}, you could alternatively use something like link:http://x-stream.github.io/[XStream] to convert your Non-Serializable objects into a String that can be stored into {brandname}. The one caveat about using XStream is that it slows down the process of storing key/value objects due to the XML transformation that it needs to do.
 
@@ -443,5 +443,3 @@ This is the list of Externalizer identifiers that are used by {brandname} based 
 |{brandname} Multimap:|2050 - 2099
 |{brandname} Locks:|2100 - 2149
 |===============
-
-

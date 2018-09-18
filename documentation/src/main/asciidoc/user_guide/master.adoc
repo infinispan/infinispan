@@ -1,0 +1,11 @@
+:toc:
+:toclevels: 3
+:icons: font
+:numbered:
+:productized:
+
+include::topics/attributes/product-attributes.adoc[]
+
+= {UserGuide}
+
+include::topics.adoc[]
