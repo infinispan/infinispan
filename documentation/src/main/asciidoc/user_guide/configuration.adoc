@@ -291,7 +291,7 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
 
 ----
 
-You can not only configure global, cache manager level, options, but you can also configure cache level options such as the <<_cluster_mode, cluster mode>>:
+You can not only configure global, cache manager level, options, but you can also configure cache level options such as the cluster mode:
 
 [source,java]
 ----
@@ -499,4 +499,3 @@ $ java -cp ... -Djgroups.tcp.port=1234 -Djgroups.tcp.address=10.11.12.13
 JGroups also supports more system property overrides, details of which can be found on this page: link:http://www.jgroups.org/manual4/index.html#SystemProperties[SystemProps]
 
 In addition, the JGroups configuration files shipped with {brandname} are intended as a jumping off point to getting something up and running, and working.  More often than not though, you will want to fine-tune your JGroups stack further to extract every ounce of performance from your network equipment.  For this, your next stop should be the JGroups manual which has a link:http://jgroups.org/manual/html/protlist.html[detailed section] on configuring each of the protocols you see in a JGroups configuration file.
-

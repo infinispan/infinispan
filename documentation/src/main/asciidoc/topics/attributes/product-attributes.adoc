@@ -1,0 +1,50 @@
+//
+// This file contains attributes for building Red Hat Data Grid documentation.
+//
+
+//
+// Define conditional statement for product docs
+//
+:productized:
+
+//
+// RH Product Names and Versions
+//
+:FullProductName: Red Hat Data Grid
+:ProductName: Data Grid
+:ProductShortName: JDG
+:ProductRelease: 7.3
+:ProductVersion: 7.3
+:FullProductRelease: 7.3.1
+:FullProductVersion: 7.3.1
+:DocInfoProductNumber: 7.3
+:ProductPreviousVersion: 7.2
+:ProductNextVersion: 8.0
+:ProductPreviousRelease: 6
+:ProductPreviousPreviousRelease: 5
+:plusplus: ++
+:underscores: ___
+
+//
+// ISPN Attributes
+//
+:brandname: Red Hat Data Grid
+:infinispanversion: 9.4.0
+:moduleprefix:
+:infinispanslot:
+:javadocroot:
+:configdocroot:
+:wildflydocroot:
+:jdkdocroot:
+:javaeedocroot:
+
+//
+// Component Versions
+//
+:JGroupsVersion: 4.0.4.Final
+:FullInfinispanVersion: 8.5.0.Final-redhat-9
+
+//
+// Book Names
+//
+:UserGuide: {FullProductName} User Guide

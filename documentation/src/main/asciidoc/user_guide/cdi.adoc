@@ -110,7 +110,7 @@ public class Config {
 To use this cache in the GreetingService add the `@GeetingCache` qualifier on your cache injection point.
 
 ==== Override the default embedded cache manager and configuration
-You can override the default cache configuration used by the default `EmbeddedCacheManager`. For that, you just have to create a `Configuration` producer with default qualifiers as illustrated in the following snippet: 
+You can override the default cache configuration used by the default `EmbeddedCacheManager`. For that, you just have to create a `Configuration` producer with default qualifiers as illustrated in the following snippet:
 
 .Overriding Configuration
 [source,java]
@@ -156,7 +156,7 @@ public class Config {
 
 ==== Configure the transport for clustered use
 To use {brandname} in a clustered mode you have to configure the transport with the `GlobalConfiguration`.
-To achieve that override the default cache manager as explained in the previous section. Look at the following snippet: 
+To achieve that override the default cache manager as explained in the previous section. Look at the following snippet:
 
 .Overriding default EmbeddedCacheManager
 [source,java]
@@ -179,7 +179,7 @@ public EmbeddedCacheManager defaultClusteredCacheManager() {
 === Remote cache integration
 
 ==== Inject a remote cache
-With the CDI integration it's also possible to use a `RemoteCache` as illustrated in the following snippet: 
+With the CDI integration it's also possible to use a `RemoteCache` as illustrated in the following snippet:
 
 .Injecting RemoteCache
 [source,java]
@@ -202,7 +202,7 @@ public class GreetingService {
 
 ----
 
-If you want to use another cache, for example the greeting-cache, add the `@Remote` qualifier on the cache injection point which contains the cache name. 
+If you want to use another cache, for example the greeting-cache, add the `@Remote` qualifier on the cache injection point which contains the cache name.
 
 .Injecting RemoteCache with qualifier
 [source,java]
@@ -236,7 +236,7 @@ public @interface RemoteGreetingCache {
 
 ----
 
-To use this cache in the GreetingService add the qualifier `@RemoteGreetingCache` qualifier on your cache injection. 
+To use this cache in the GreetingService add the qualifier `@RemoteGreetingCache` qualifier on your cache injection.
 
 ==== Override the default remote cache manager
 Like the embedded cache integration, the remote cache integration comes with a default remote cache manager producer. This default `RemoteCacheManager` can be overridden as illustrated in the following snippet:
@@ -284,18 +284,18 @@ public class Config {
 
 ----
 
-With the above code the GreetingCache or the RemoteGreetingCache will be associated with the produced cache manager. 
+With the above code the GreetingCache or the RemoteGreetingCache will be associated with the produced cache manager.
 
 .Producer method scope
 NOTE: To work properly the producers must have the scope @ApplicationScoped . Otherwise each injection of cache will be associated to a new instance of cache manager.
 
 === Use JCache caching annotations
 
-TIP: There is now a separate module for JSR 107 (JCACHE) integration, including API.  See <<_using_infinispan_as_a_jsr107_jcache_provider, this chapter>> for details.
+TIP: There is now a separate module for JSR 107 (JCACHE) integration, including API.  See <<_jcache_jsr_107, this chapter>> for details.
 
 When CDI integration and JCache artifacts are present on the classpath, it is possible to use JCache annotations with CDI managed beans.
 These annotations provide a simple way to handle common use cases.
-The following caching annotations are defined in this specification: 
+The following caching annotations are defined in this specification:
 
 * `@CacheResult` - caches the result of a method call
 * `@CachePut` - caches a method parameter
@@ -343,7 +343,7 @@ To use these annotations, proper interceptors need to be declared in `beans.xml`
 </beans>
 ----
 
-The following snippet of code illustrates the use of `@CacheResult` annotation. As you can see it simplifies the caching of the `Greetingservice#greet` method results. 
+The following snippet of code illustrates the use of `@CacheResult` annotation. As you can see it simplifies the caching of the `Greetingservice#greet` method results.
 
 .Using JCache annotations
 [source,java]
@@ -361,9 +361,9 @@ public class GreetingService {
 
 ----
 
-The first version of the `GreetingService` and the above version have exactly the same behavior. The only difference is the cache used. By default it's the fully qualified name of the annotated method with its parameter types (e.g. `org.infinispan.example.GreetingService.greet(java.lang.String)`). 
+The first version of the `GreetingService` and the above version have exactly the same behavior. The only difference is the cache used. By default it's the fully qualified name of the annotated method with its parameter types (e.g. `org.infinispan.example.GreetingService.greet(java.lang.String)`).
 
-Using other cache than default is rather simple. All you need to do is to specify its name with the `cacheName` attribute of the cache annotation. For example: 
+Using other cache than default is rather simple. All you need to do is to specify its name with the `cacheName` attribute of the cache annotation. For example:
 
 .Specifying cache name for JCache
 [source,java]
@@ -401,4 +401,3 @@ public class GreetingService {
 ----
 
 TIP: Check <<_Listeners_and_notifications_section,Listeners and Notifications section>> for more information about event types.
-

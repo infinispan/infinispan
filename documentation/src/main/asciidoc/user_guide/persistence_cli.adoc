@@ -10,7 +10,7 @@ The CLI cache loader is configured with a connection URL pointing to the
 
 NOTE: Details on the format of the URL and how to make sure a node can
 receive invocations via the CLI can be found in the
-<<_CLI_chapter,Command-Line Interface chapter>>.
+<<_command_line_interface,Command-Line Interface chapter>>.
 
 NOTE: This store doesn't support being segmented
 

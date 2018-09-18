@@ -310,7 +310,7 @@ link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.ReadWriteEntr
 to modify the data in the cache.
 
 The operations are exposed by read-write entry views are a union of
-the operations exposed by <<_read-only_entry_view, read-only entry views>>
+the operations exposed by <<_read_only_entry_view, read-only entry views>>
 and <<_write_only_entry_view, write-only entry views>>
 
 [[_meta_parameter]]
@@ -783,4 +783,3 @@ link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/
 , for example, if you want to do a replace
 operation using metadata parameter equality instead of value equality, or
 if you want to retrieve metadata information from values...etc.
-

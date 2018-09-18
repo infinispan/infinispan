@@ -1,3 +1,4 @@
+[[_jcache_jsr_107]]
 ==  JCache (JSR-107) provider
 {brandname} provides an implementation of
 JCache 1.0 API ( link:http://www.jcp.org/en/jsr/detail?id=107[JSR-107] ).
@@ -46,8 +47,7 @@ WARNING: By default, the JCache API specifies that data should be stored as
 cache, won't have an impact in the objects stored in the cache. {brandname}
 has so far implemented this using serialization/marshalling to make copies to
 store in the cache, and that way adhere to the spec. Hence, if using default
-JCache configuration with {brandname}, data stored
-<<_plugging_infinispan_with_user_defined_externalizers, must be marshallable>>.
+JCache configuration with {brandname}, data stored must be marshallable.
 
 Alternatively, JCache can be configured to store data by reference
 (just like {brandname} or JDK Collections work). To do that, simply call:
@@ -210,4 +210,3 @@ public static class TestClassLoader extends ClassLoader {
   }
 }
 ----
-
