@@ -117,7 +117,7 @@ if [ -r "$RUN_CONF" ]; then
 fi
 
 if [ "x$JMX_CONF" = "x" ]; then
-    JMX_CONF="$DIRNAME/agent.conf"
+    JMX_CONF="9779:$DIRNAME/prometheus_config.yaml"
 fi
 
 # Set debug settings if not already set
@@ -333,7 +333,7 @@ if [ "$SECMGR" = "true" ]; then
 fi
 
 if [ "x$USE_JMX_COLLECTORS" != "x" ]; then
-    . $DIRNAME/jolokia.sh $JMX_CONF
+    . $DIRNAME/prometheus.sh $JMX_CONF
 fi
 
 
