@@ -183,6 +183,7 @@
         <versionx.io.dropwizard.metrics.metrics-json>3.1.5</versionx.io.dropwizard.metrics.metrics-json>
         <versionx.io.dropwizard.metrics.metrics-jvm>3.1.0</versionx.io.dropwizard.metrics.metrics-jvm>
         <versionx.io.fabric8.agent-bond-agent>1.0.2</versionx.io.fabric8.agent-bond-agent>
+        <versionx.io.prometheus.jmx.jmx_prometheus_javaagent>0.3.1</versionx.io.prometheus.jmx.jmx_prometheus_javaagent>
         <versionx.io.netty.netty>${version.netty}</versionx.io.netty.netty>
         <versionx.io.netty.netty-all>${version.netty}</versionx.io.netty.netty-all>
         <versionx.io.netty.netty-bom>${version.netty}</versionx.io.netty.netty-bom>
@@ -1529,6 +1530,11 @@
                 <groupId>io.fabric8</groupId>
                 <artifactId>agent-bond-agent</artifactId>
                 <version>${versionx.io.fabric8.agent-bond-agent}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.prometheus.jmx</groupId>
+                <artifactId>jmx_prometheus_javaagent</artifactId>
+                <version>${versionx.io.prometheus.jmx.jmx_prometheus_javaagent}</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>

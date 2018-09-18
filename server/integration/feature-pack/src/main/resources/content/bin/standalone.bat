@@ -123,13 +123,13 @@ if "%DEBUG_MODE%" == "true" (
 
 setlocal EnableDelayedExpansion
 if "x%JMX_CONF%" == "x" (
-   set JMX_CONF="%DIRNAME%agent.conf"
+   set JMX_CONF="9779:%~p0%prometheus_config.yaml"
 )
 if "%USE_JMX_CONNECTORS%" == "true" (
    set SERVER_OPTS=!SERVER_OPTS:%JMX_CONF:"=%=!
    set SERVER_OPTS=!SERVER_OPTS:--jmx=!
-   echo Calling "%DIRNAME%jolokia.bat %JMX_CONF%"
-   call %DIRNAME%jolokia.bat %JMX_CONF%
+   echo Calling "%DIRNAME%prometheus.bat %JMX_CONF%"
+   call %DIRNAME%prometheus.bat %JMX_CONF%
 )
 setlocal DisableDelayedExpansion
 

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="io.prometheus.jmx" slot="@infinispan.module.slot@">
+    <resources>
+        <artifact name="${io.prometheus.jmx:jmx_prometheus_javaagent}" />
+    </resources>
+</module>
