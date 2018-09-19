@@ -10,16 +10,4 @@ This is a guide to getting started with {brandname}.
 It is meant to be read alongside the more complete link:../user_guide/user_guide.html[User Guide],
 and as a supplement to the link:http://infinispan.org/tutorials[Tutorials] that have been made available.
 
-include::introduction.adoc[]
-include::installation.adoc[]
-include::gui_demo.adoc[]
-include::embedded_cache.adoc[]
-include::embedded_datagrid.adoc[]
-include::create_project.adoc[]
-include::hibernate_2lc.adoc[]
-include::server.adoc[]
-include::wildfly.adoc[]
-include::servlet_containers.adoc[]
-include::monitoring.adoc[]
-include::example_with_groovy.adoc[]
-include::example_with_scala.adoc[]
+include::topics.adoc[]

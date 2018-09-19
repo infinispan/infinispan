@@ -48,3 +48,9 @@
 // Book Names
 //
 :UserGuide: {FullProductName} User Guide
+:FAQ: {FullProductName} Frequently Asked Questions
+:GetStarted: Getting Started with {FullProductName}
+:Glossary: {FullProductName} Glossary
+:Performance: {FullProductName} Performance Guide
+:ServerGuide: {FullProductName} Server Guide
+:Upgrading: Upgrading {FullProductName}
