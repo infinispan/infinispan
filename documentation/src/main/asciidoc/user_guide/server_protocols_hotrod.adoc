@@ -4,7 +4,7 @@ Please refer to {brandname} Server's link:../server_guide/server_guide.html[docu
 
 To connect to {brandname} over this highly efficient Hot Rod protocol you can
 either use one of the clients described in this chapter, or use higher level
-tools such as <<integrations:hibernate-ogm,Hibernate OGM>>.
+tools such as link:#integrations-hibernate-ogm[Hibernate OGM].
 
 include::server_protocols_hotrod_wire.adoc[]
 
@@ -1069,7 +1069,8 @@ marshaller class implementation.
 Note that the Marshaller could be deployed in either a separate jar, or in the
 same jar as the `CacheEventConverter` and/or `CacheEventFilter` instances.
 
-===== Protostream marshallers deployment[[protostream.deployment]]
+[[protostream_deployment]]
+===== Protostream marshallers deployment
 
 If a cache stores protobuf content, as it happens when using protostream marshaller in the Hot Rod client,
 it's not necessary to deploy a custom marshaller since the format is already support by the server: there are
@@ -1300,7 +1301,7 @@ The Hot Rod client allows one to plug in a custom marshaller for transforming us
 
 The marshaller can be plugged through the "marshaller" configuration element (see Configuration section): the value should be the fully qualified name of a class implementing the link:{javadocroot}/org/infinispan/marshall/Marshaller.html[Marshaller] interface. This is a optional parameter, if not specified it defaults to the link:{javadocroot}/org/infinispan/marshall/jboss/GenericJBossMarshaller.html[GenericJBossMarshaller] - a highly optimized implementation based on the link:http://www.jboss.org/jbossmarshalling[JBoss Marshalling] library.
 
-Since version 6.0, there's a new marshaller available to Java Hot Rod clients based on Protostream which generates portable payloads. You can find more information about it <<query.remote,here>>
+Since version 6.0, there's a new marshaller available to Java Hot Rod clients based on Protostream which generates portable payloads. You can find more information about it link:#query_remote[here].
 
 .WARNING: If developing your own custom marshaller, take care of potential injection attacks.
 
@@ -1363,7 +1364,7 @@ RemoteCache<String, JsonNode> jsonNodeCache = remoteCache.withDataFormat(jsonNod
 ----
 
 IMPORTANT: The data conversions happen in the server, and if it doesn't support converting from the storage format to the request format and vice versa, an error will be returned.
-For more details on server data format configuration and supported conversions, see <<encoding:media_type,here.>>
+For more details on server data format configuration and supported conversions, see link:#encoding_media_type[here].
 
 WARNING: Using different marshallers and formats for the key, with `.keyMarshaller()` and `.keyType()` may interfere with the client intelligence routing mechanism, causing it
 contact the server that is not the owner of the key during Hot Rod operations. This will not result in errors but can result in extra hops inside the cluster to execute the operation.

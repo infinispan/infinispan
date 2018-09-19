@@ -47,7 +47,7 @@ HTTP PUT and POST methods are used to place data in the cache, with URLs to addr
 
 ====== Configuration
 
-Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType]. More details in the configuration <<encoding:media_type,here.>>
+Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType]. More details in the configuration link:#encoding_media_type[here].
 
 An example of storage configuration is as follows:
 
@@ -93,8 +93,8 @@ All the REST API calls can provide headers describing the content written or the
 when reading. {brandname} supports the standard HTTP/1.1 headers "Content-Type" and "Accept" that are applied for values,
 plus the "Key-Content-Type" with similar effect for keys.
 
-
-====== Accept header [[rest.accept]]
+[[rest_accept]]
+====== Accept header
 
 The REST server is compliant with the https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html[RFC-2616] Accept header,
 and will negotiate the correct MediaType based on the conversions supported. Example, sending the following header when reading data:
@@ -105,7 +105,8 @@ will cause {brandname} to try first to return content in JSON format (higher pri
 to JSON, next format tried will be _text/plain_ (second highest priority 0.7), and finally it falls back to _*/*_, that will pick a format
 suitable for displaying automatically based on the cache configuration.
 
-====== Key-Content-Type header [[rest.key_content_type]]
+[[rest_key_content_type]]
+====== Key-Content-Type header
 
 Most REST API calls have the Key included in the URL. {brandname} will assume the Key is a _java.lang.String_ when handling those calls, but
 it's possible to use a specific header _Key-Content-Type_ for keys in different formats.
@@ -161,7 +162,7 @@ Exactly the same as PUT, only if a value in a cache/key already exists, it will 
 
 .Headers
 
-*  <<rest.key_content_type,Key-Content-Type>> : OPTIONAL The content type for the Key present in the URL.
+*  link:#rest_key_content_type[Key-Content-Type]: OPTIONAL The content type for the Key present in the URL.
 
 *  Content-Type : OPTIONAL The https://en.wikipedia.org/wiki/Media_type[MediaType] of the Value being sent.
 
@@ -222,8 +223,8 @@ This will return the data found in the given cacheName, under the given key - as
 
 .Headers
 
-*  <<rest.key_content_type,Key-Content-Type>> : OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
-*  <<rest.accept,Accept>>: OPTIONAL The required format to return the content
+*  link:#rest_key_content_type[Key-Content-Type]: OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
+*  link:#rest_accept[Accept]: OPTIONAL The required format to return the content
 
 It is possible to obtain additional information by appending the "extended" parameter on the query string, as follows:
 
@@ -243,7 +244,7 @@ Similarly to the GET method, the HEAD method also supports returning extended in
 
 .Headers
 
-*  <<rest.key_content_type,Key-Content-Type>> : OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
+*  link:#rest_key_content_type[Key-Content-Type]: OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
 
 ===== Listing keys
 ====== `GET /{cacheName}`
@@ -268,7 +269,7 @@ Removes the given key name from the cache.
 
 .Headers
 
-*  <<rest.key_content_type,Key-Content-Type>> : OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
+*  link:#rest_key_content_type[Key-Content-Type]: OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
 
 ====== `DELETE /{cacheName}`
 Removes ALL the entries in the given cache name (i.e., everything from that path down). If the operation is successful, it returns 200 code.
@@ -291,7 +292,7 @@ Will execute an Ickle query in the given cache name.
 * _query_: REQUIRED the query string
 * _max_results_: OPTIONAL the number of results to return, default is _10_
 * _offset_: OPTIONAL the index of the first result to return, default is _0_
-* _query_mode_: OPTIONAL the <<query.clustered-query-api,execution mode>> of the query once it's received by server. Valid values are _FETCH_ and _BROADCAST_. Default is _FETCH_.
+* _query_mode_: OPTIONAL the link:#query-clustered-query-api[execution mode] of the query once it's received by server. Valid values are _FETCH_ and _BROADCAST_. Default is _FETCH_.
 
 .Query Result
 
@@ -618,4 +619,3 @@ public class RestExample {
 }
 
 ----
-
