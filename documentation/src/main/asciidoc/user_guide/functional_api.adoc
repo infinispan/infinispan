@@ -1,3 +1,4 @@
+[[functional_map_api]]
 === Functional Map API
 
 {brandname} 8 introduces a new experimental API for interacting with your
@@ -55,7 +56,6 @@ link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadOnlyM
 link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html[`R​eadWriteMap`]
 or
 link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html[`W​riteOnlyMap`]
-:
 
 [source,java]
 ----
@@ -79,8 +79,7 @@ is temporary.
 Read-only operations have the advantage that no locks are acquired
 for the duration of the operation. Here's an example on how to the
 equivalent operation for
-link:{jdkdocroot}/java/util/Map.html#get-java.lang.Object-[Map.get(K)]
-:
+link:{jdkdocroot}/java/util/Map.html#get-java.lang.Object-[Map.get(K)]:
 
 [source,java]
 ----
@@ -110,7 +109,7 @@ values.forEach(System.out::println);
 Finally, read-only map also exposes methods to read all existing keys as well
 as entries, which include both key and value information.
 
-[[_read_only_entry_view]]
+[[read_only_entry_view]]
 ===== Read-Only Entry View
 
 The function parameters for read-only maps provide the user with a
@@ -134,7 +133,7 @@ definitely a value associated with the key.
 allows metadata parameter information
 associated with the cache entry to be looked up, for example: entry
 lifespan, last  accessed time...etc.
-See <<_meta_parameter, Metadata Parameter Handling section>> to find out more.
+See link:#meta_parameter[Metadata Parameter Handling] to find out more.
 
 ==== Write-Only Map API
 
@@ -190,9 +189,7 @@ To remove all contents of the cache, there are two possibilities with
 different semantics. If using
 link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#evalAll-java.util.function.Consumer-[`evalAll`]
 each cached entry is iterated over and the function is called
-with that entry's information. Using this method also results in listeners
-(see <<_functional_listeners, functional listeners section>> for more information)
-being invoked:
+with that entry's information. Using this method also results in listeners being invoked. See link:#functional_listeners[functional listeners] for more information.
 
 [source,java]
 ----
@@ -215,7 +212,7 @@ CompletableFuture<Void> truncateFuture = writeOnlyMap.truncate();
 truncateFuture.thenAccept(x -> "Cache contents cleared");
 ----
 
-[[_write_only_entry_view]]
+[[write_only_entry_view]]
 ===== Write-Only Entry View
 The function parameters for write-only maps provide the user with a
 link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html[write-only entry view]
@@ -226,8 +223,7 @@ operations:
 method allows for a new value to be
 associated with the cache entry for which this function is executed, and it
 optionally takes zero or more metadata parameters to be stored along with
-the value (see <<_meta_parameter, Metadata Parameter Handling section>> to
-find out more).
+the value. See link:#meta_parameter[Metadata Parameter Handling] for more information.
 * link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html#remove--[`remove()`]
 method removes the cache entry, including both value and metadata
 parameters associated with this key.
@@ -301,7 +297,7 @@ Read-write map API contains `evalMany` and `evalAll` operations which behave
 similar to the write-only map offerings, except that they enable previous
 value and metadata parameters to be read.
 
-[[_read_write_entry_view]]
+[[read_write_entry_view]]
 ===== Read-Write Entry View
 The function parameters for read-write maps provide the user with the
 possibility to query the information associated with the key, including
@@ -310,10 +306,10 @@ link:{javadocroot}/org/infinispan/commons/api/functional/EntryView.ReadWriteEntr
 to modify the data in the cache.
 
 The operations are exposed by read-write entry views are a union of
-the operations exposed by <<_read_only_entry_view, read-only entry views>>
-and <<_write_only_entry_view, write-only entry views>>
+the operations exposed by link:#read_only_entry_view[read-only entry views]
+and link:#write_only_entry_view[write-only entry views].
 
-[[_meta_parameter]]
+[[meta_parameter]]
 ==== Metadata Parameter Handling
 link:{javadocroot}/org/infinispan/commons/api/functional/MetaParam.html[Metadata parameters]
 provide extra information about the cache entry, such
@@ -328,15 +324,13 @@ extend
 link:{javadocroot}/org/infinispan/commons/api/functional/MetaParam.Lookup.html[`MetaParam.Writable`]
 interface, and implement the methods to allow the
 internal logic to extra the data. Storing is done via the
-`set(V, MetaParam.Writable...)` method in
-<<_write_only_entry_view, write-only entry view>> or
-<<_read_write_entry_view, read-write entry view>> function parameters.
+`set(V, MetaParam.Writable...)` method in the link:#write_only_entry_view[write-only entry view] or link:#read_write_entry_view[read-write entry view] function parameters.
 
 Querying metadata parameters is available via the
 link:{javadocroot}/org/infinispan/commons/api/functional/MetaParam.Lookup.html#findMetaParam-java.lang.Class-[`findMetaParam(Class)`]
 method
-available via <<_read_write_entry_view, read-write entry view>> or
-<<_read_only_entry_view, read-only entry view>> or function parameters.
+available via link:#read_write_entry_view[read-write entry view] or
+link:#read_only_entry_view[read-only entry views] or function parameters.
 
 Here is an example showing how to store metadata parameters and how to query
 them:
@@ -470,7 +464,7 @@ by the API. The exception to this rule would be advanced users who decide
 to add new interceptors to the internal stack. These users have the ability
 to query these parameters within the interceptors.
 
-[[_functional_listeners]]
+[[functional_listeners]]
 ==== Functional Listeners
 The functional map offers a listener API, where clients can register for and
 get notified when events take place. These notifications are post-event, so
@@ -694,8 +688,7 @@ CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", wv -> wv.set("on
 without doing the cast described above.
 
 A more economical way to marshall a function is to provide an {brandname}
-link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[`Externalizer`]
-for it:
+link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[`Externalizer`] for it:
 
 [source,java]
 ----

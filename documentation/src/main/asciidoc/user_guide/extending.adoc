@@ -1,3 +1,4 @@
+[[extending]]
 == Extending {brandname}
 {brandname} can be extended to provide the ability for an end user to add
 additional configurations, operations and components outside of the scope of the ones normally provided
@@ -6,7 +7,7 @@ by {brandname}.
 === Custom Commands
 {brandname} makes use of a link:http://en.wikipedia.org/wiki/Command_pattern[command/visitor pattern] to
 implement the various top-level methods you see on the public-facing API.
-This is explained in further detail in the <<arch:overview,Architectural Overview>> section below.
+This is explained in further detail in the link:#arch_overview[Architectural Overview] section.
 While the core commands - and their corresponding visitors - are hard-coded as
 a part of {brandname}'s core module, module authors can extend and enhance {brandname}
 by creating new custom commands.
@@ -49,5 +50,3 @@ Being this a single byte, ranges can't be too large.
 If your custom module requires configuration, it is possible to enhance {brandname}'s configuration builders and
 parsers. Look at the link:https://github.com/infinispan/infinispan/blob/master/core/src/test/java/org/infinispan/configuration/module[custom module tests]
 for a detail example on how to implement this.
-
-

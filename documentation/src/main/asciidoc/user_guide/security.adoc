@@ -1,3 +1,4 @@
+[[security]]
 == Security
 
 Security within {brandname} is implemented at several layers:
@@ -7,7 +8,7 @@ Security within {brandname} is implemented at several layers:
 * between nodes in a cluster, so that only authorized nodes can join and to secure the transport using encryption
 
 In order to maximize compatibility and integration, {brandname} uses widespread security standards where possible and appropriate, such as X.509 certificates, SSL/TLS encryption and Kerberos/GSSAPI.
-Also, to avoid pulling in any external dependencies and to increase the ease of integration with third party libraries and containers, the implementation makes use of any facilities provided by the 
+Also, to avoid pulling in any external dependencies and to increase the ease of integration with third party libraries and containers, the implementation makes use of any facilities provided by the
 standard Java security libraries (JAAS, JSSE, JCA, JCE, SASL, etc).
 For this reason, the {brandname} core library only provides interfaces and a set of basic implementations.
 
@@ -15,9 +16,9 @@ For this reason, the {brandname} core library only provides interfaces and a set
 Applications interact with {brandname} using its API within the same JVM. The two main components which are exposed by the {brandname} API are CacheManagers and Caches. If an application wants to interact with a secured CacheManager and Cache, it should provide an identity which {brandname}’s security layer will validate against a set of required roles and permissions. If the identity provided by the user application has sufficient permissions, then access will be granted, otherwise an exception indicating a security violation will be thrown. The identity is represented by the javax.security.auth.Subject class which is a wrapper around multiple Principals, e.g. a user and all the groups it belongs to. Since the Principal name is dependent on the owning system (e.g. a Distinguished Name in LDAP), {brandname} needs to be able to map Principal names to roles.
 Roles, in turn, represent one or more permissions. The following diagram shows the relationship between the various elements:
 
-.Roles/Permissions mapping 
+.Roles/Permissions mapping
 image::images/SecurityRolesPermissions.png[Roles/Permissions mapping]
- 
+
 ==== Embedded Permissions
 
 Access to a cache manager or a cache is controlled by using a list of required permissions. Permissions are concerned with the type of action that is performed on one of the above entities and not with the type of data being manipulated. Some of these permissions can be narrowed to specifically named entities, where applicable (e.g. a named cache). Depending on the type of entity, there are different types of permission available:
@@ -195,8 +196,8 @@ JGroups can be configured so that nodes need to authenticate each other when joi
     client_name="node_user"
     client_password="node_password"
     server_callback_handler_class="org.example.infinispan.security.JGroupsSaslServerCallbackHandler"
-    client_callback_handler_class="org.example.infinispan.security.JGroupsSaslClientCallbackHandler" 
-    sasl_props="com.sun.security.sasl.digest.realm=test_realm" /> 
+    client_callback_handler_class="org.example.infinispan.security.JGroupsSaslClientCallbackHandler"
+    sasl_props="com.sun.security.sasl.digest.realm=test_realm" />
 ----
 
 In the above example, the SASL mech will be +DIGEST-MD5+. Each node will need to declare the user and password it will use when joining the cluster. The behaviour of a node differs depending on whether it is the coordinator or any other node. The coordinator acts as the SASL server, whereas joining/merging nodes act as SASL clients. Therefore two different CallbackHandlers are required, the +server_callback_handler_class+ will be used by the coordinator, and the +client_callback_handler_class+ will be used by the other nodes.

@@ -1,3 +1,4 @@
+[[clustered_lock]]
 == Clustered Lock
 
 A _clustered lock_ is a lock which is distributed and shared among all nodes in the {brandname} cluster and currently provides a way to execute
@@ -23,7 +24,8 @@ Currently no extra configuration needs to be provided.
 
 Currently there is a single type of `ClusteredLock` supported : non reentrant, NODE ownership lock.
 
-==== [[ownership]]Ownership
+[[clustered_lock_ownership]]
+==== Ownership
 
 * `NODE`
 When a `ClusteredLock` is defined, this lock can be used from all the nodes in the infinispan cluster.
@@ -45,7 +47,6 @@ a new instance.
 This lock can be used to synchronize code between infinispan nodes and inside each infinispan node.
 The advantage of this lock is that only the instance that called 'lock' can release the lock.
 
-
 ==== Reentrancy
 
 When a `ClusteredLock` is configured reentrant, the owner of the lock can reacquire the lock as many consecutive
@@ -53,7 +54,6 @@ times as it wants while holding the lock.
 
 Currently, only non reentrant locks are supported. This means that when two consecutive `lock` calls are sent for the same
 owner, the first call will acquire the lock if it's available, and the second call will block.
-
 
 === The ClusteredLockManager interface.
 
@@ -73,7 +73,6 @@ EmbeddedCacheManager manager = ...;
 // retrieve the ClusteredLockManager
 ClusteredLockManager clusteredLockManager = ClusteredLockManagerFactory.from(manager);
 ----
-
 
 [source,java]
 ----
@@ -106,7 +105,7 @@ configurations.
 
 * `ClusteredLock get(String name)` :
 Get’s a `ClusteredLock` by it’s name. A call of `defineLock` must be done at least once in the cluster.
-See <<ownership>> level section to understand the implications of `get` method call.
+See link:#clustered_lock_ownership[ownership] level section to understand the implications of `get` method call.
 
 Currently, the only ownership level supported is *NODE*.
 
@@ -124,7 +123,7 @@ Removes a `ClusteredLock` if such exists.
 Releases - or unlocks - a `ClusteredLock`, if such exists, no matter who is holding it at a given time.
 Calling this method may cause concurrency issues and has to be used in *exceptional situations*.
 
-
+[[clustered_lock_interface]]
 === The Clustered Lock
 
 `ClusteredLock` interface, *marked as experimental*, is the interface that implements the clustered locks.
@@ -175,7 +174,7 @@ Returns `true` when the lock is locked and `false` when the lock is released.
 * `isLockedByMe`
 Returns `true` when the lock is owned by the caller and `false` when the lock is owned by someone else or it's released.
 
-
+[[clustered_lock_usage]]
 ==== Usage Examples
 
 [source,java]

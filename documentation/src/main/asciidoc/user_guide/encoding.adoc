@@ -1,3 +1,4 @@
+[[data_encoding]]
 ===  Encoding
 
 ==== Overview
@@ -46,7 +47,7 @@ public interface Encoder {
 | Mode | Configuration | Encoder | Description
 | Embedded/Server | Default | IdentityEncoder | Passthrough  encoder, no conversion done
 | Embedded | StorageType.OFF_HEAP  | GlobalMarshallerEncoder | Uses {brandname} internal marshaller to convert to byte[]. May delegate to the configured marshaller in the cache manager.
-| Embedded | <<store.binary,StorageType.BINARY>> | BinaryEncoder | Uses infinispan internal marshaller to convert to byte[], except for primitives and String.
+| Embedded | link:#store_binary[StorageType.BINARY] | BinaryEncoder | Uses infinispan internal marshaller to convert to byte[], except for primitives and String.
 | Server | StorageType.OFF_HEAP  | IdentityEncoder | Just store byte[] directly as received by remote clients
 |==============================================================================
 
@@ -175,8 +176,8 @@ Object value = compressingCache.withEncoding(IdentityEncoder.class).get("2979317
 // value is a byte[] which is the compressed value
 ----
 
-
-==== MediaType[[encoding:media_type]]
+[[encoding_media_type]]
+==== MediaType
 
 A Cache can optionally be configured with a `org.infinispan.commons.dataconversion.MediaType` for keys and values. By describing the data format of the cache, {brandname} is able to convert data on the fly during cache operations.
 
@@ -230,7 +231,8 @@ cfg.encoding().value().mediaType("application/json");
 
 ----
 
-===== Overriding the MediaType programmatically[[mediatype.override]]
+[[mediatype_override]]
+===== Overriding the MediaType programmatically
 
 It's possible to decorate the Cache with a different MediaType, allowing cache operations to be executed sending and receiving different data formats.
 

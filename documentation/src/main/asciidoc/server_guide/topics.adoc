@@ -1,0 +1,181 @@
+include::introduction.adoc[]
+include::operating_modes.adoc[]
+include::management.adoc[]
+include::configuration.adoc[]
+include::security.adoc[]
+
+== Health monitoring
+
+{brandname} server has special endpoints for monitoring cluster health. The API is exposed via:
+
+* Programmatically (using `embeddedCacheManager.getHealth()`)
+* JMX
+* CLI
+* REST (using https://docs.jboss.org/author/display/WFLY10/The+HTTP+management+API[WildFly HTTP Management API])
+
+=== Accessing Health API using JMX
+
+At first you need to connect to the {brandname} Server using JMX (use JConsole or other tool for this).
+Next, navigate to object name `jboss.datagrid-infinispan:type=CacheManager,name="clustered",component=CacheContainerHealth`.
+
+=== Accessing Health API using CLI
+
+The Health API can be also accessed using CLI interface. An example invocation and result is presented below:
+
+[source,bash]
+----
+$ ispn-cli.sh -c "/subsystem=datagrid-infinispan/cache-container=clustered/health=HEALTH:read-resource(include-runtime=true)"
+
+{
+    "outcome" => "success",
+    "result" => {
+        "cache-health" => "HEALTHY",
+        "cluster-health" => ["test"],
+        "cluster-name" => "clustered",
+        "free-memory" => 99958L,
+        "log-tail" => [
+            "2016-08-10 11:54:14,706 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-5) DGENDPT10001: HotRodServer listening on 127.0.0.1:11222",
+            "2016-08-10 11:54:14,706 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-1) DGENDPT10001: MemcachedServer listening on 127.0.0.1:11211",
+            "2016-08-10 11:54:14,785 INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-6) DGISPN0001: Started ___protobuf_metadata cache from clustered container",
+            "2016-08-10 11:54:14,800 INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-6) DGISPN0001: Started ___script_cache cache from clustered container",
+            "2016-08-10 11:54:15,159 INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-5) DGISPN0001: Started ___hotRodTopologyCache cache from clustered container",
+            "2016-08-10 11:54:15,210 INFO  [org.infinispan.rest.NettyRestServer] (MSC service thread 1-6) ISPN012003: REST server starting, listening on 127.0.0.1:8080",
+            "2016-08-10 11:54:15,210 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-6) DGENDPT10002: REST mapped to /rest",
+            "2016-08-10 11:54:15,306 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0060: Http management interface listening on http://127.0.0.1:9990/management",
+            "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0051: Admin console listening on http://127.0.0.1:9990",
+            "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: {brandname} Server 9.0.0-SNAPSHOT (WildFly Core 2.2.0.CR9) started in 8681ms - Started 196 of 237 services (121 services are lazy, passive or on-demand)"
+        ],
+        "number-of-cpus" => 8,
+        "number-of-nodes" => 1,
+        "total-memory" => 235520L
+    }
+}
+
+----
+
+=== Accessing Health API using REST
+
+As mentioned in the https://docs.jboss.org/author/display/WFLY10/The+HTTP+management+API[WildFly HTTP Management API] article, the HTTP API requires using proper credentials (use `add-user.sh` script for that).
+
+When credentials are set, all resources accessible by CLI can also be accessed using REST interface. An example is shown below:
+
+[source,bash]
+----
+curl --digest -L -D - "http://localhost:9990/management/subsystem/datagrid-infinispan/cache-container/clustered/health/HEALTH?operation=resource&include-runtime=true&json.pretty=1" --header "Content-Type: application/json" -u ispnadmin:ispnadmin
+HTTP/1.1 401 Unauthorized
+Connection: keep-alive
+WWW-Authenticate: Digest realm="ManagementRealm",domain="/management",nonce="AuZzFxz7uC4NMTQ3MDgyNTU1NTQ3OCfIJBHXVpPHPBdzGUy7Qts=",opaque="00000000000000000000000000000000",algorithm=MD5,qop="auth"
+Content-Length: 77
+Content-Type: text/html
+Date: Wed, 10 Aug 2016 10:39:15 GMT
+
+HTTP/1.1 200 OK
+Connection: keep-alive
+Authentication-Info: nextnonce="AuZzFxz7uC4NMTQ3MDgyNTU1NTQ3OCfIJBHXVpPHPBdzGUy7Qts=",qop="auth",rspauth="b518c3170e627bd732055c382ce5d970",cnonce="NGViOWM0NDY5OGJmNjY0MjcyOWE4NDkyZDU3YzNhYjY=",nc=00000001
+Content-Type: application/json; charset=utf-8
+Content-Length: 1927
+Date: Wed, 10 Aug 2016 10:39:15 GMT
+
+{
+    "cache-health" : "HEALTHY",
+    "cluster-health" : ["test", "HEALTHY"],
+    "cluster-name" : "clustered",
+    "free-memory" : 96778,
+    "log-tail" : [
+        "2016-08-10 11:54:14,706 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-5) DGENDPT10001: HotRodServer listening on 127.0.0.1:11222",
+        "2016-08-10 11:54:14,706 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-1) DGENDPT10001: MemcachedServer listening on 127.0.0.1:11211",
+        "2016-08-10 11:54:14,785 INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-6) DGISPN0001: Started ___protobuf_metadata cache from clustered container",
+        "2016-08-10 11:54:14,800 INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-6) DGISPN0001: Started ___script_cache cache from clustered container",
+        "2016-08-10 11:54:15,159 INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-5) DGISPN0001: Started ___hotRodTopologyCache cache from clustered container",
+        "2016-08-10 11:54:15,210 INFO  [org.infinispan.rest.NettyRestServer] (MSC service thread 1-6) ISPN012003: REST server starting, listening on 127.0.0.1:8080",
+        "2016-08-10 11:54:15,210 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-6) DGENDPT10002: REST mapped to /rest",
+        "2016-08-10 11:54:15,306 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0060: Http management interface listening on http://127.0.0.1:9990/management",
+        "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0051: Admin console listening on http://127.0.0.1:9990",
+        "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: {brandname} Server 9.0.0-SNAPSHOT (WildFly Core 2.2.0.CR9) started in 8681ms - Started 196 of 237 services (121 services are lazy, passive or on-demand)"
+    ],
+    "number-of-cpus" : 8,
+    "number-of-nodes" : 1,
+    "total-memory" : 235520
+}%
+----
+
+Note that the result is exactly the same as the one obtained by CLI interface.
+
+== Multi-tenancy
+
+Multi-tenancy allows accessing multiple containers as shown below:
+
+image::images/multi-tenancy.png[]
+
+Currently there are two supported protocols for accessing the data - using Hot Rod client and using REST interface.
+
+=== Using REST interface
+
+Multi-tenancy router uses URL prefixes to separate containers using the following template: `https://<server_ip>:<server_port>/rest/<rest_connector_name>/<cache_name>/<key>`. All HTTP operations remain exactly the same as using standard `rest-connector`.
+
+The REST connector by default support both HTTP/1.1 and HTTP/2 protocols. The switching from HTTP/1.1 to HTTP/2 procedure involves
+either using TLS/ALPN negotiation or HTTP/1.1 upgrade procedure. The former requires proper encryption to be enabled. The latter
+is always enabled.
+
+=== Using Hot Rod client
+
+Multi-tenant routing for binary protocols requires using a standard, transport layer mechanism such as link:https://en.wikipedia.org/wiki/Server_Name_Indication[SSL/TLS Server Name Indication]. The server needs to be configured to support encryption and additional SNI routing needs to be added to the `router-connector`.
+
+In order to connect to a secured Hot Rod server, the client needs to use configuration similar to this:
+
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(hotrodServer.getPort())
+     .security()
+        .ssl()
+           .enabled(sslClient)
+           .sniHostName("hotrod-1") // SNI Host Name
+           .trustStoreFileName("truststore.jks")
+           .trustStorePassword("secret".toCharArray());
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+----
+
+==== Multi-tenant router
+
+The Multi-tenant router endpoint works as a facade for one or more REST/Hot Rod connectors. Its main purpose is to forward client requests into proper container.
+
+In order to properly configure the routing, `socket-binding` attributes of other connectors must be disabled and additional attribute `name` must be used as shown below:
+
+[source,xml]
+----
+
+<rest-connector name="rest-1" cache-container="local"/>
+<rest-connector name="rest-2" cache-container="local"/>
+<hotrod-connector name="hotrod-1" cache-container="local" />
+<hotrod-connector name="hotrod-2" cache-container="local" />
+
+----
+
+The next step is to add a new `router-connector` endpoint and configure how other containers will be accessed. Note that Hot Rod connectors require using TLS/SNI and REST connectors require using prefix in the URL:
+
+[source,xml]
+----
+
+<router-connector hotrod-socket-binding="hotrod" rest-socket-binding="rest" keep-alive="true" tcp-nodelay="false" receive-buffer-size="1024" send-buffer-size="1024">
+    <hotrod name="hotrod-1" >
+        <sni host-name="hotrod-1" security-realm="SSLRealm1"/>
+    </hotrod>
+    <hotrod name="hotrod-2" >
+        <sni host-name="hotrod-2" security-realm="SSLRealm2"/>
+    </hotrod>
+    <rest name="rest-1">
+        <prefix path="rest-1" />
+    </rest>
+    <rest name="rest-2">
+        <prefix path="rest-2" />
+    </rest>
+</router-connector>
+
+----
+
+With the following configuration, Hot Rod clients will access `hotrod-1` connector when using SNI Host Name "hotrod-1".
+REST clients will need to use the following URL to access "rest-1" connector - `https://<server_ip>:<server_port>/rest/rest-1`.

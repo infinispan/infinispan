@@ -10,6 +10,7 @@
 :rtml: link:{javadocroot}/org/infinispan/client/hotrod/transaction/lookup/RemoteTransactionManagerLookup.html[RemoteTransactionManagerLookup]
 :rtm: link:{javadocroot}/org/infinispan/client/hotrod/transaction/manager/RemoteTransactionManager.html[RemoteTransactionManager]
 
+[[hot_rod_transaction]]
 ==== Hot Rod Transaction
 
 This section provides details about how to configure and use the Hot Rod client to be a participant in a JTA {tx}.

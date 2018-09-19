@@ -1,3 +1,4 @@
+[[jpa_cache_store]]
 === JPA Cache Store
 The implementation depends on JPA 2.0 specification to access entity meta model.
 
@@ -129,8 +130,8 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
 [options="header"]
 |===============
 |Parameter|Description
-|persistenceUnitName| JPA persistence unit name in JPA configuration ﻿(persistence.xml) that contains the JPA entity class 
-|entityClass| JPA entity class that is expected to be stored in this cache.  Only one class is allowed. 
+|persistenceUnitName| JPA persistence unit name in JPA configuration ﻿(persistence.xml) that contains the JPA entity class
+|entityClass| JPA entity class that is expected to be stored in this cache.  Only one class is allowed.
 |===============
 
 ===== Sample XML Configuration
@@ -152,12 +153,12 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
 [options="header"]
 |===============
 |Parameter|Description
-|persistence-unit| JPA persistence unit name in JPA configuration ﻿(persistence.xml) that contains the JPA entity class 
+|persistence-unit| JPA persistence unit name in JPA configuration ﻿(persistence.xml) that contains the JPA entity class
 |entity-class|Fully qualified JPA entity class name that is expected to be stored in this cache.  Only one class is allowed.
 
 |===============
 
 ==== Additional References
-Refer to the link:https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/java/org/infinispan/persistence/jpa/JpaConfigurationTest.java[test case] for code samples in action. 
+Refer to the link:https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/java/org/infinispan/persistence/jpa/JpaConfigurationTest.java[test case] for code samples in action.
 
 Refer to link:https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/resources/config/jpa-config.xml[test configurations] for configuration samples.

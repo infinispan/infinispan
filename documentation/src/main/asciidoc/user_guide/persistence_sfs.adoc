@@ -1,3 +1,4 @@
+[[sfs_cache_store]]
 ==== Single File Store
 
 The single file cache store keeps all data in a single file. The way it

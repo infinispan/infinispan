@@ -1,3 +1,4 @@
+[[hot_rod_protocol]]
 === Hot Rod Protocol
 The following articles provides detailed information about each version of
 the custom TCP client/server Hot Rod protocol.
@@ -143,6 +144,7 @@ transaction associated to this call. Its length is determined by the
 transaction type. If transaction type is 0, no transaction id will be present.
 |==============================================================================
 
+[[hot_rod_response_header]]
 ===== Response Header
 
 The header for a response is composed of:
@@ -2150,9 +2152,7 @@ Response. Prepare (0x3C), Commit (0x3E) and Rollback (0x40)
 |The XA code representing the prepare response. +
 Can be `XA_OK(0)`, `XA_RDONLY(3)` or any of the error codes (see `XaException`). +
 This field isn't present if the response state is different from `Successful`.
-
 |===
-
 
 .XID Format
 
@@ -2184,7 +2184,7 @@ The XID in the requests has the following format:
 
 |===
 
-[#counter-config-encode]
+[[counter_config_encode]]
 .Counter Configuration encoding format
 
 The `CounterConfiguration` class encoding format is the following:
@@ -2250,7 +2250,7 @@ Creates a counter if it doesn't exist.
 |Counter Configuration
 |variable
 |The counter's configuration.
-See <<counter-config-encode,CounterConfiguration encode>>.
+See link:#counter_config_encode[CounterConfiguration encode].
 
 |===
 
@@ -2269,7 +2269,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
 * `0x01`: Operation failed. Counter is already defined.
-* See the <<Response Header>> for error codes.
+* See the link:#hot_rod_response_header[Reponse Header] for error codes.
 
 .Counter get configuration operation
 
@@ -2303,7 +2303,7 @@ Returns the counter's configuration.
 |variable
 |(Optional) The counter's configuration.
 Only present if `Status==0x00`.
-See <<counter-config-encode,CounterConfiguration encode>>.
+See link:#counter_config_encode[CounterConfiguration encode].
 
 |===
 
@@ -2311,7 +2311,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
 * `0x02`: Counter doesn't exist.
-* See the <<Response Header>> for error codes.
+* See the link:#hot_rod_response_header[Reponse Header] for error codes.
 
 .Counter is defined operation
 
@@ -2347,7 +2347,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Counter is defined.
 * `0x01`: Counter isn't defined.
-* See the <<Response Header>> for error codes.
+* See the link:#hot_rod_response_header[Reponse Header] for error codes.
 
 .Counter add-and-get operation
 
@@ -2395,7 +2395,7 @@ Response Header `Status` possible values:
 * `0x00`: Operation successful.
 * `0x02`: The counter isn't defined.
 * `0x04`: The counter reached its boundary. Only possible for `STRONG` counters.
-* See the <<Response Header>> for error codes.
+* See the link:#hot_rod_response_header[Reponse Header] for error codes.
 
 .Counter reset operation
 
@@ -2431,7 +2431,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
 * `0x02`: Counter isn't defined.
-* See the <<Response Header>> for error codes.
+* See the link:#hot_rod_response_header[Reponse Header] for error codes.
 
 .Counter get operation
 
@@ -2472,7 +2472,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
 * `0x02`: Counter isn't defined.
-* See the <<Response Header>> for error codes.
+* See the link:#hot_rod_response_header[Reponse Header] for error codes.
 
 .Counter compare-and-swap operation
 
@@ -2522,7 +2522,7 @@ Response Header `Status` possible values:
 * `0x00`: Operation successful.
 * `0x02`: The counter isn't defined.
 * `0x04`: The counter reached its boundary. Only possible for `STRONG` counters.
-* See the <<Response Header>> for error codes.
+* See the link:#hot_rod_response_header[Reponse Header] for error codes.
 
 .Counter add and remove listener
 
@@ -2565,7 +2565,7 @@ Response Header `Status` possible values:
 * `0x00`: Operation successful and the connection used in the request will be used to send event (add) or the connection can be removed (remove).
 * `0x01`: Operation successful and the current connection is still in use.
 * `0x02`: The counter isn't defined.
-* See the <<Response Header>> for error codes.
+* See the link:#hot_rod_response_header[Reponse Header] for error codes.
 
 .Counter Event (0x66)
 
@@ -2644,7 +2644,7 @@ Response Header `Status` possible values:
 
 * `0x00`: Operation successful.
 * `0x02`: The counter isn't defined.
-* See the <<Response Header>> for error codes.
+* See the link:#hot_rod_response_header[Reponse Header] for error codes.
 
 ==== Hot Rod Protocol 2.8
 
@@ -3075,11 +3075,11 @@ Admin tasks return the result of the operation represented as a JSON string.
 |==============================================================================
 
 .@@cache@names
-[cols="3,10,2",options="header"]
-|==============================================================================
-| Parameter       | Description | Required
-|==============================================================================
-
+//[cols="3,10,2",options="header"]
+//|==============================================================================
+//| Parameter       | Description | Required
+//|==============================================================================
+//dnaro: Empty table body. Need to investigate this.
 Returns the cache names as a JSON array of strings, e.g. ["cache1", "cache2"]
 
 .@@cache@reindex

@@ -1,3 +1,4 @@
+[[rocksdb_cache_store]]
 === RocksDB Cache Store
 The {brandname} Community
 
@@ -95,4 +96,3 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
 Refer to the link:$$https://github.com/infinispan/infinispan/blob/master/persistence/rocksdb/src/test/java/org/infinispan/persistence/rocksdb/config/ConfigurationTest.java$$[test case] for code samples in action.
 
 Refer to link:$$https://github.com/infinispan/infinispan/tree/master/persistence/rocksdb/src/test/resources/config/$$[test configurations] for configuration samples.
-

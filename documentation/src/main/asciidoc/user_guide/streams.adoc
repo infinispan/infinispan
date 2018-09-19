@@ -1,3 +1,4 @@
+[[streams]]
 ===  Streams
 
 You may want to process a subset or all data in the cache to produce a result.
@@ -579,7 +580,7 @@ with the operations are serialized across to other nods as it is captured by the
 However the real saving piece is that the cache operation is performed on the primary
 owner thus reducing the amount of network traffic required to remove these values from the
 cache. The cache is not captured by the lambda as we provide a special BiConsumer method
-override that when invoked on each node passes the cache to the BiConsumer 
+override that when invoked on each node passes the cache to the BiConsumer
 
 One thing to keep in mind using the forEach command in this manner is that the underlying
 stream obtains no locks. The cache remove operation will still obtain locks naturally, but
@@ -593,4 +594,3 @@ covered in the next section.
 
 Also remember that `Streams` are a JRE tool now and there are a multitude of examples that can
 be found all over.  Just remember that your operations need to be Serializable in some fashion!
-

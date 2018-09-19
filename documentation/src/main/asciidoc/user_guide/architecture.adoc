@@ -1,9 +1,11 @@
-== Architectural Overview [[arch:overview]]
+[[arch_overview]]
+== Architectural Overview
 
 This section contains a high level overview of {brandname}'s internal
 architecture.  This document is geared towards people with an interest in
 extending or enhancing {brandname}, or just curious about {brandname}’s internals.
 
+[[cache_hierarchy]]
 === Cache hierarchy
 
 {brandname}'s Cache interface extends the JRE's ConcurrentMap interface
@@ -29,7 +31,8 @@ EmbeddedCacheManagers create either clustered or standalone Caches that reside
 in the same JVM.  RemoteCacheManagers, on the other hand, create RemoteCaches
 that connect to a remote cache tier via the Hot Rod protocol.
 
-=== Commands [[arch:commands]]
+[[arch_commands]]
+=== Commands
 
 Internally, each and every cache operation is encapsulated by a command.  These
 command objects represent the type of operation being performed, and also hold
@@ -93,7 +96,7 @@ commands, but also acts in a chain.  A chain of interceptors all visit the
 command, one in turn, until all registered interceptors visit the command.
 
 The class to note is the
-link:://{javadocroot}/org/infinispan/interceptors/base/CommandInterceptor.html[CommandInterceptor].
+link://{javadocroot}/org/infinispan/interceptors/base/CommandInterceptor.html[CommandInterceptor].
 This abstract class implements the interceptor pattern, and also implements
 Visitor.  {brandname}'s interceptors extend CommandInterceptor, and these add
 specific behaviour to specific commands, such as distribution across a network
@@ -101,9 +104,9 @@ or writing through to disk.
 
 There is also an experimental asynchronous interceptor which can be used.
 The interface used for asynchronous interceptors is
-link:://{javadocroot}/org/infinispan/interceptors/AsyncInterceptor.html[AsyncInterceptor]
+link://{javadocroot}/org/infinispan/interceptors/AsyncInterceptor.html[AsyncInterceptor]
 and a base implementation which should be used when a custom implementation is desired
-link:://{javadocroot}/org/infinispan/interceptors/BaseCustomAsyncInterceptor.html[BaseCustomAsyncInterceptor].
+link://{javadocroot}/org/infinispan/interceptors/BaseCustomAsyncInterceptor.html[BaseCustomAsyncInterceptor].
 Note this class also implements the `Visitor` interface.
 
 
@@ -202,4 +205,3 @@ indicate the order in which the component is stopped, in relation to other
 components.  This follows a Unix Sys-V style ordering, where smaller priority
 methods are called before higher priority ones.  The default priority, if not
 specified, is 10.
-

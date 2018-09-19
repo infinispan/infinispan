@@ -1,5 +1,5 @@
-[[_Rolling_chapter]]
-==  Rolling upgrades
+[[rolling_upgrades]]
+== Rolling upgrades
 Rolling upgrades is the process by which an {brandname} installation is
 upgraded without a service shutdown. In the case of {brandname} library/embedded mode, it refers to an
 installation to the nodes where {brandname} is running in library/embedded mode.
@@ -18,7 +18,7 @@ advantage of the Command-Line Interface (CLI) that {brandname} provides
 in order to interact with a remote {brandname} cluster. When a new cluster is
 started, it will get the data from the existing cluster using the
 CLI, so the existing cluster must be ready to receive CLI requests. Please
-check the <<_command_line_interface, Command-Line Interface (CLI) chapter>> for information on how to set
+check the link:#command_line_interface[Command-Line Interface chapter] for information on how to set
 up a cluster to receive CLI requests.
 
 NOTE: Rolling upgrades for {brandname} library/embedded mode are only supported
@@ -95,43 +95,36 @@ In  the following description we will refer to the Source and Target  clusters, 
 
 === Steps
 
-
 .  Start a new cluster ( _Target Cluster_ ) with the new version of {brandname}, using either different network settings or JGroups cluster name so that the old cluster ( _Source Cluster_ ) and the new one don't overlap.
-
-
++
 .  For each cache to be migrated, the _Target Cluster_ is configured with a RemoteCacheStore with the following settings:
-
-
++
 ..  _servers_ should point to the _Source Cluster_
-
-
++
 ..  _remoteCacheName_ must coincide with the name of the cache on the _Source Cluster_
-
-
++
 ..  _hotRodWrapping_ must be enabled ( _true_ )
-
++
 .. _shared_ should be _true_
-
-
++
 .  Configure clients to point to the _Target Cluster_ instead of the _Source Cluster_ , and one by one, restart each client node.  Gradually, all requests will be handled by the _Target Cluster_ rather than the _Source Cluster_ . The _Target Cluster_ will lazily load data from the _Source Cluster_ on demand via the RemoteCacheStore.
-
-
++
 .  If the _Source Cluster_ version is **older than 8.2**, its keyset must be dumped. This can be achieved either via a JMX operation or via the CLI:
-
++
 ..  JMX: invoke the _recordKnownGlobalKeyset_ operation on the _RollingUpgradeManager_ MBean on the _Source Cluster_ for all of the caches that need to be migrated
++
 ..  CLI: invoke the _upgrade --dumpkeys_ command on the _Source Cluster_ for all of the caches that need to be migrated (additionally the _--all_ switch can be used to dump all caches in the cluster)
-
-
++
 .  At this point the _Target Cluster_ needs to fetch all remaining data from the _Source Cluster_ . This can be achieved either via a JMX operation or via the CLI:
-
++
 ..  JMX: invoke the _synchronizeData_ operation specifying the "hotrod" parameter on the _RollingUpgradeManager_ MBean on the _Target Cluster_ for all of the caches that need to be migrated
++
 ..  CLI: invoke the _upgrade --synchronize=hotrod_ command on the _Target Cluster_ for all of the caches that need to be migrated (additionally the _--all_ switch can be used to synchronize all caches in the cluster)
-
-
++
 .  Once the above operation is complete, the _RemoteCacheStore_ on the _Target Cluster_ must be disabled either via JMX or CLI:
-
++
 ..  JMX: invoke the _disconnectSource_ operation specifying the "hotrod" parameter on the _RollingUpgradeManager_ MBean on the _Target Cluster_ for all of the caches that have been migrated
++
 ..  CLI: invoke the _upgrade --disconnectsource=hotrod_ command on the _Target Cluster_ for all of the caches that have been migrated (additionally the _--all_ switch can be used to disconnect all caches in the cluster)
 
-
-.  The _Source Cluster_ can be decomissioned now.
+You can now decommission the _Source Cluster_.

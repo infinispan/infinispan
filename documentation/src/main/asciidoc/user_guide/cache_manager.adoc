@@ -1,3 +1,4 @@
+[[cache_manager]]
 == The Embedded CacheManager
 The CacheManager is {brandname}'s main entry point. You use a CacheManager to
 
@@ -9,7 +10,7 @@ The CacheManager is {brandname}'s main entry point. You use a CacheManager to
 Depending on whether you are embedding {brandname} in your application or you are using it remotely, you will be
 dealing with either an `EmbeddedCacheManager` or a `RemoteCacheManager`. While they share some methods and properties,
 be aware that there are semantic differences between them. The following chapters focus mostly on the _embedded_
-implementation. For details on the _remote_ implementation refer to <<hotrod:java-client>>.
+implementation. For details on the _remote_ implementation refer to link:#hotrod_java_client[Hot Rod Java Client].
 
 CacheManagers are heavyweight objects, and we foresee no more than one CacheManager being used per JVM
 (unless specific setups require more than one; but either way, this would be a minimal and finite
@@ -128,5 +129,3 @@ case JGroups) you can use this mechanism.
 The stats provided here are coalesced from all of the active caches in this manager.
 These stats can be useful to see if there is something wrong going on with your
 cluster overall.
-
-

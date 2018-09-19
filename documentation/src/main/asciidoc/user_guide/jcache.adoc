@@ -1,4 +1,4 @@
-[[_jcache_jsr_107]]
+[[jcache_jsr_107]]
 ==  JCache (JSR-107) provider
 {brandname} provides an implementation of
 JCache 1.0 API ( link:http://www.jcp.org/en/jsr/detail?id=107[JSR-107] ).
