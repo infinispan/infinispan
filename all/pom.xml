@@ -39,23 +39,36 @@
             </executions>
             <inherited>true</inherited>
          </plugin>
-         <plugin>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <configuration>
-               <skip>true</skip>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <configuration>
-               <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
-            </configuration>
-         </plugin>
       </plugins>
    </build>
 
    <profiles>
+
+      <profile>
+         <!-- nexus-staging-maven-plugin blocks maven-deploy-plugin -->
+         <id>nexus-staging</id>
+         <activation>
+            <property><name>!skipNexusStaging</name></property>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-deploy-plugin</artifactId>
+                  <configuration>
+                     <skip>true</skip>
+                  </configuration>
+               </plugin>
+               <plugin>
+                  <groupId>org.sonatype.plugins</groupId>
+                  <artifactId>nexus-staging-maven-plugin</artifactId>
+                  <configuration>
+                     <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
       <profile>
       <id>distribution</id>
       <properties>

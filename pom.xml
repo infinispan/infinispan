@@ -391,7 +391,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-dependency-plugin</artifactId>
-               <version>3.0.2</version>
+               <version>3.1.1</version>
             </plugin>
             <plugin>
                <groupId>org.apache.servicemix.tooling</groupId>
@@ -915,11 +915,6 @@
                </execution>
             </executions>
          </plugin>
-         <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <extensions>true</extensions>
-         </plugin>
       </plugins>
    </build>
    <reporting>
@@ -946,7 +941,26 @@
          </plugin>
       </plugins>
    </reporting>
+
    <profiles>
+
+      <profile>
+         <!-- nexus-staging-maven-plugin blocks maven-deploy-plugin -->
+         <id>nexus-staging</id>
+         <activation>
+            <property><name>!skipNexusStaging</name></property>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.sonatype.plugins</groupId>
+                  <artifactId>nexus-staging-maven-plugin</artifactId>
+                  <extensions>true</extensions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
       <profile>
          <id>m2e</id>
          <activation>

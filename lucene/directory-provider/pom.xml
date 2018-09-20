@@ -120,6 +120,7 @@
                                 <artifactItem>
                                     <groupId>org.jboss.byteman</groupId>
                                     <artifactId>byteman</artifactId>
+                                    <version>${version.byteman}</version>
                                     <outputDirectory>${project.build.directory}/agents</outputDirectory>
                                     <destFileName>byteman.jar</destFileName>
                                 </artifactItem>

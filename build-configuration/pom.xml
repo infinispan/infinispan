@@ -128,6 +128,7 @@
       <version.antlr>${version.antlr3}</version.antlr>
       <version.asm>2.2.3</version.asm>
       <version.asm.ow2>6.1.1</version.asm.ow2>
+      <version.byteman>4.0.2</version.byteman>
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
       <version.caffeine>2.6.2</version.caffeine>

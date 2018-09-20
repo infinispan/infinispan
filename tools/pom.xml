@@ -144,6 +144,24 @@
             </dependency>
          </dependencies>
       </profile>
+
+      <profile>
+         <id>nexus-staging</id>
+         <activation>
+            <property><name>!skipNexusStaging</name></property>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-deploy-plugin</artifactId>
+                  <configuration>
+                     <skip>${module.skipSupportModuleDeployment}</skip>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+      
    </profiles>
 
    <build>
@@ -161,12 +179,6 @@
                      /META-INF/services=${project.basedir}/target/classes/META-INF/services
                   </Include-Resource>
                </instructions>
-            </configuration>
-         </plugin>
-         <plugin>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <configuration>
-               <skip>${module.skipSupportModuleDeployment}</skip>
             </configuration>
          </plugin>
       </plugins>

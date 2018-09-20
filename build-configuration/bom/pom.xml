@@ -583,8 +583,8 @@
         <versionx.org.jboss.arquillian.testenricher.arquillian-testenricher-resource>1.1.13.Final</versionx.org.jboss.arquillian.testenricher.arquillian-testenricher-resource>
         <versionx.org.jboss.arquillian.testng.arquillian-testng-container>1.1.13.Final</versionx.org.jboss.arquillian.testng.arquillian-testng-container>
         <versionx.org.jboss.arquillian.testng.arquillian-testng-core>1.1.13.Final</versionx.org.jboss.arquillian.testng.arquillian-testng-core>
-        <versionx.org.jboss.byteman.byteman>4.0.2</versionx.org.jboss.byteman.byteman>
-        <versionx.org.jboss.byteman.byteman-bmunit>4.0.2</versionx.org.jboss.byteman.byteman-bmunit>
+        <versionx.org.jboss.byteman.byteman>${version.byteman}</versionx.org.jboss.byteman.byteman>
+        <versionx.org.jboss.byteman.byteman-bmunit>${version.byteman}</versionx.org.jboss.byteman.byteman-bmunit>
         <versionx.org.jboss.dmr-repl_2.11>0.2.0</versionx.org.jboss.dmr-repl_2.11>
         <versionx.org.jboss.invocation.jboss-invocation>1.5.1.Final</versionx.org.jboss.invocation.jboss-invocation>
         <versionx.org.jboss.jandex>${version.hibernate_dep.jandex}</versionx.org.jboss.jandex>
@@ -4435,6 +4435,12 @@
                 <version>${versionx.org.hyperic.sigar-dist}</version>
             </dependency>
             <dependency>
+                <groupId>org.hyperic</groupId>
+                <artifactId>sigar-dist</artifactId>
+                <version>${versionx.org.hyperic.sigar-dist}</version>
+                <type>zip</type>
+            </dependency>
+            <dependency>
                 <groupId>org.infinispan.arquillian.container</groupId>
                 <artifactId>infinispan-arquillian-impl</artifactId>
                 <version>${versionx.org.infinispan.arquillian.container.infinispan-arquillian-impl}</version>
@@ -6937,20 +6943,34 @@
             </plugins>
         </pluginManagement>
 
-        <plugins>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.8</version>
-                <inherited>false</inherited>
-                <configuration>
-                    <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
-                    <serverId>${jboss.releases.repo.id}</serverId>
-                    <stagingProfileId>2161b7b8da0080</stagingProfileId>
-                    <stagingRepositoryId>${stagingRepositoryId}</stagingRepositoryId>
-                </configuration>
-            </plugin>
-        </plugins>
-
     </build>
+
+    <profiles>
+
+        <profile>
+            <!-- nexus-staging-maven-plugin blocks maven-deploy-plugin -->
+            <id>nexus-staging</id>
+            <activation>
+                <property><name>!skipNexusStaging</name></property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
+                        <configuration><!-- Does not inherit from infinispan-parent -->
+                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                            <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
+                            <serverId>${jboss.releases.repo.id}</serverId>
+                            <stagingProfileId>2161b7b8da0080</stagingProfileId>
+                            <stagingRepositoryId>${stagingRepositoryId}</stagingRepositoryId>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+
 </project>
