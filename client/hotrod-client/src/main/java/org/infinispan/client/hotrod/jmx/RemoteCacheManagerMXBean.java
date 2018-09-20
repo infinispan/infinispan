@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.jmx;
 
 public interface RemoteCacheManagerMXBean {
    /**
-    * Returns the list of servers the client is currently connected to in the format address:port
+    * Returns a list of servers to which the client is currently connected in the format of ip_address:port_number.
     */
    String[] getServers();
 

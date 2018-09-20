@@ -3,69 +3,68 @@ package org.infinispan.client.hotrod.jmx;
 public interface RemoteCacheClientStatisticsMXBean {
 
    /**
-    * Returns the number of remote cache hits
+    * Returns the number of hits for a remote cache.
     */
    long getRemoteHits();
 
    /**
-    * Returns the number of remote cache misses
+    * Returns the number of misses for a remote cache.
     */
    long getRemoteMisses();
 
    /**
-    * Returns the average read time
+    * Returns the average read time, in milliseconds, for a remote cache.
     */
    long getAverageRemoteReadTime();
 
    /**
-    * Returns the number of remote cache stores (put, replace) that were applied - e.g. failed conditional operations
-    * don't increase the count. Put counts all the time, though, even if it replaced an equal value.
+    * Returns the number of remote cache stores (put, replace) that the client applied.
+    * Failed conditional operations do not increase the count of entries in the remote cache. Put operations always increase the count even if an operation replaces an equal value.
     */
    long getRemoteStores();
 
    /**
-    * Returns the average write time
+    * Returns the average store time, in milliseconds, for a remote cache.
     */
    long getAverageRemoteStoreTime();
 
    /**
-    * Returns the number of remote cache removes
+    * Returns the number of removes for a remote cache.
     */
    long getRemoteRemoves();
 
-
    /**
-    * Returns the average remove time
+    * Returns the average time, in milliseconds, for remove operations in a remote cache.
     */
    long getAverageRemoteRemovesTime();
 
    /**
-    * Returns the number of near-cache hits. If near-caching is disabled this will always return 0
+    * Returns the number of near-cache hits. Returns a value of 0 if near-caching is disabled.
     */
    long getNearCacheHits();
 
    /**
-    * Returns the number of near-cache misses. If near-caching is disabled this will always return 0
+    * Returns the number of near-cache misses. Returns a value of 0 if near-caching is disabled.
     */
    long getNearCacheMisses();
 
    /**
-    * Returns the number of near-cache invalidations. If near-caching is disabled this will always return 0
+    * Returns the number of near-cache invalidations. Returns a value of 0 if near-caching is disabled.
     */
    long getNearCacheInvalidations();
 
    /**
-    * Returns the number of entries currently stored in the near-cache. If near-caching is disabled this will always
+    * Returns the number of entries currently stored in the near-cache. Returns a value of 0 if near-caching is disabled.
     */
    long getNearCacheSize();
 
    /**
-    * Resets statistics
+    * Resets statistics.
     */
    void resetStatistics();
 
    /**
-    * Returns the time in seconds since the last reset. See {@link #resetStatistics()}
+    * Returns the time, in seconds, since the last reset. See {@link #resetStatistics()}
     */
    long getTimeSinceReset();
 }
