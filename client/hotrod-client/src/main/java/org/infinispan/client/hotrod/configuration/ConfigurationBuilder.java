@@ -29,6 +29,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
@@ -77,8 +78,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int batchSize = ConfigurationProperties.DEFAULT_BATCH_SIZE;
    private final TransactionConfigurationBuilder transaction;
    private final StatisticsConfigurationBuilder statistics;
-
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<>();
+   private Features features;
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
@@ -435,11 +436,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
             consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
-            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create());
+            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features);
    }
 
    @Override
    public Configuration build() {
+      features = new Features(classLoader.get());
       return build(true);
    }
 
