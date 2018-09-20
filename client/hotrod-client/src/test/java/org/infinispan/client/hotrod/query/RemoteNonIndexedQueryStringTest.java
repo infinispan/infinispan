@@ -138,6 +138,14 @@ public class RemoteNonIndexedQueryStringTest extends RemoteQueryStringTest {
       super.testFullTextRegexp2();
    }
 
+   @Override public void findMovieByViews_startsV() {
+      // Not applicable to non-indexed caches
+   }
+
+   @Override public void findMovieByRating_protoBytesTypeProperty() {
+      // Not applicable to non-indexed caches
+   }
+
    @Override
    public void testCustomFieldAnalyzer() {
       // Not applicable to non-indexed caches

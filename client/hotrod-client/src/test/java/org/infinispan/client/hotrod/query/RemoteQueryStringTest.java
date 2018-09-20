@@ -17,8 +17,10 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AnalyzerTestEntity;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.Movie;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.AnalyzerTestEntityMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MovieMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.util.Util;
@@ -63,6 +65,17 @@ public class RemoteQueryStringTest extends QueryStringTest {
          "\toptional int32 f2 = 2;\n" +
          "}\n";
 
+   private static final String MOVIE_PROTO_SCHEMA = "package sample_bank_account;\n" +
+         "message Movie {\n" +
+         "\trequired string id = 1;\n" +
+         "\toptional int32 genre = 2;\n" +
+         "\toptional int64 releaseDate = 3;\n" +
+         "\toptional string suitableForKids = 4;\n" +
+         "\toptional string title = 5;\n" +
+         "\toptional bytes rating = 6;\n" +
+         "\toptional int32 views = 7;\n" +
+         "}\n";
+
    protected HotRodServer hotRodServer;
    protected RemoteCacheManager remoteCacheManager;
    protected RemoteCache<Object, Object> remoteCache;
@@ -76,6 +89,12 @@ public class RemoteQueryStringTest extends QueryStringTest {
       getCacheForWrite().put("analyzed1", new AnalyzerTestEntity("tested 123", 3));
       getCacheForWrite().put("analyzed2", new AnalyzerTestEntity("testing 1234", 3));
       getCacheForWrite().put("analyzed3", new AnalyzerTestEntity("xyz", null));
+
+      getCacheForWrite().put("A", new Movie( "A", 7, 777l, "yes", "T2", (byte) 1 , 3 ));
+      getCacheForWrite().put("B", new Movie( "B", 8, 777l, "yes", "T1", (byte) 2 , 3 ));
+      getCacheForWrite().put("C", new Movie( "C", 7, 777l, "no", "T1", (byte) 4 , 2 ));
+      getCacheForWrite().put("D", new Movie( "D", 8, 717l, "yes", "T2", (byte) 1 , 5 ));
+      getCacheForWrite().put("E", new Movie( "E", 7, 717l, "no", "T1", (byte) 4 , 2 ));
    }
 
    @Override
@@ -127,6 +146,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
       metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       metadataCache.put("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
       metadataCache.put("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA);
+      metadataCache.put("movie.proto", MOVIE_PROTO_SCHEMA);
       RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
 
       //initialize client-side serialization context
@@ -134,8 +154,10 @@ public class RemoteQueryStringTest extends QueryStringTest {
       MarshallerRegistration.registerMarshallers(serCtx);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA));
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA));
+      serCtx.registerProtoFiles(FileDescriptorSource.fromString("movie.proto", MOVIE_PROTO_SCHEMA));
       serCtx.registerMarshaller(new NotIndexedMarshaller());
       serCtx.registerMarshaller(new AnalyzerTestEntityMarshaller());
+      serCtx.registerMarshaller(new MovieMarshaller());
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {
@@ -207,6 +229,35 @@ public class RemoteQueryStringTest extends QueryStringTest {
 
       List<AnalyzerTestEntity> list = q.list();
       assertEquals(2, list.size());
+   }
+
+   /*
+      Error:
+      org.infinispan.client.hotrod.exceptions.HotRodClientException:Request for messageId=79 returned server error (status=0x85):
+      org.infinispan.objectfilter.ParsingException: ISPN028501: The type sample_bank_account.Movie has no property named 'iews'.
+
+      I think the problem here is the name of the property 'views', starting with 'v'. Isn't it?
+    */
+   @Test(expectedExceptions = HotRodClientException.class)
+   public void findMovieByViews_startsV() {
+      Query query = getQueryFactory().create( "from sample_bank_account.Movie where views = :views" )
+            .setParameter( "views", 3 );
+
+      List<Object> output = query.list();
+
+      // I think expected should be 2
+      assertEquals( 2, output.size() );
+   }
+
+   @Test
+   public void findMovieByRating_protoBytesTypeProperty() {
+      Query query = getQueryFactory().create( "from sample_bank_account.Movie where rating = :rating" )
+            .setParameter( "rating", "4" );
+
+      List<Object> output = query.list();
+
+      // I think the expected value should be 2. Isn't it?
+      assertEquals( 0, output.size() );
    }
 
    @Override
