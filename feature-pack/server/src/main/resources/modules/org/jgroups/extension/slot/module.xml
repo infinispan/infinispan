@@ -31,5 +31,6 @@
         <module name="org.jgroups.kubernetes" slot="@infinispan.module.slot@"/>
         <module name="org.wildfly.security.elytron-private" services="import"/>
         <module name="org.wildfly.security.manager"/>
+        <module name="sun.jdk"/>
     </dependencies>
 </module>
