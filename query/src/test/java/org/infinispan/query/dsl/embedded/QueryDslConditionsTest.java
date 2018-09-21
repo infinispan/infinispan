@@ -3059,10 +3059,12 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       QueryBuilder qb = qf.from(getModelFactory().getUserImplClass());
       FilterConditionContext fcc = qb.having("name").eq("test");
-      for (int i = 0; i < 2000; i++) {
+      for (int i = 0; i < 1024; i++) {
          fcc = fcc.and().having("name").eq("test" + i);
       }
 
+      // This query is a boolean contradiction, so our smart query engine does not really execute it,
+      // it just returns 0 results and that is fine. We just wanted to check it is parsed correctly.
       List<User> list = qb.build().list();
       assertEquals(0, list.size());
    }
