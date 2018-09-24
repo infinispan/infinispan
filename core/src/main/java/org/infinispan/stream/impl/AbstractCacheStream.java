@@ -37,6 +37,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
@@ -266,7 +267,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       IntSet segmentsToProcess = segmentsToFilter;
       TerminalOperation<Original, R> op;
       do {
-         CacheTopology cacheTopology = dm.getCacheTopology();
+         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
          ConsistentHash ch = cacheTopology.getReadConsistentHash();
          if (retryOnRehash) {
             op = new SegmentRetryingOperation(intermediateOperations, supplierForSegments(ch, segmentsToProcess,
@@ -283,24 +284,23 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
             boolean localRun = ch.getMembers().contains(localAddress);
             if (localRun) {
                localValue = op.performOperation();
+
+               IntSet ourSegments;
+               if (segmentsToProcess != null) {
+                  ourSegments =  IntSets.mutableFrom(cacheTopology.getLocalReadSegments());
+                  ourSegments.retainAll(segmentsToProcess);
+               } else {
+                  ourSegments = IntSets.from(cacheTopology.getLocalReadSegments());
+               }
                // TODO: we can do this more efficiently - since we drop all results locally
-               if (dm.getReadConsistentHash().equals(ch)) {
-                  IntSet ourSegments;
-                  if (segmentsToProcess != null) {
-                     ourSegments =  IntSets.mutableFrom(ch.getPrimarySegmentsForOwner(localAddress));
-                     ourSegments.retainAll(segmentsToProcess);
-                  } else {
-                     ourSegments = IntSets.from(ch.getPrimarySegmentsForOwner(localAddress));
-                  }
+               LocalizedCacheTopology newCacheTopology = dm.getCacheTopology();
+               if (newCacheTopology.getTopologyId() == cacheTopology.getTopologyId() ||
+                   newCacheTopology.getReadConsistentHash().equals(ch)) {
                   remoteResults.onCompletion(null, ourSegments, localValue);
                } else {
-                  if (segmentsToProcess != null) {
-                     IntSet ourSegments = IntSets.mutableFrom(ch.getPrimarySegmentsForOwner(localAddress));
-                     ourSegments.retainAll(segmentsToProcess);
-                     remoteResults.onSegmentsLost(ourSegments);
-                  } else {
-                     remoteResults.onSegmentsLost(IntSets.from(ch.getPrimarySegmentsForOwner(localAddress)));
-                  }
+                  getLog().tracef("Local cache topology changed from %d to %d, suspecting local segments %s",
+                                  cacheTopology.getTopologyId(), newCacheTopology.getTopologyId(), ourSegments);
+                  remoteResults.onSegmentsLost(ourSegments);
                }
             } else {
                // This isn't actually used because localRun short circuits first

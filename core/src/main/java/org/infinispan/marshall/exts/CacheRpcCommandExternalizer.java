@@ -49,7 +49,6 @@ import org.infinispan.stream.impl.StreamIteratorNextCommand;
 import org.infinispan.stream.impl.StreamIteratorRequestCommand;
 import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.stream.impl.StreamResponseCommand;
-import org.infinispan.stream.impl.StreamSegmentResponseCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.XSiteAdminCommand;
@@ -89,7 +88,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                TotalOrderVersionedCommitCommand.class, TotalOrderRollbackCommand.class,
                XSiteStateTransferControlCommand.class, XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
                ClusteredGetAllCommand.class,
-               StreamRequestCommand.class, StreamSegmentResponseCommand.class, StreamResponseCommand.class,
+               StreamRequestCommand.class, StreamResponseCommand.class,
                SingleKeyBackupWriteCommand.class,
                SingleKeyFunctionalBackupWriteCommand.class,
                PutMapBackupWriteCommand.class,

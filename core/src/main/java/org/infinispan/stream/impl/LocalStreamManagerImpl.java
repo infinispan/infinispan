@@ -321,7 +321,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
             log.tracef("UnRegistered change listener for %s", requestId);
          }
       }
-      if (cache.getStatus() != ComponentStatus.RUNNING) {
+      if (cache.getStatus() != ComponentStatus.RUNNING && cache.getStatus() != ComponentStatus.INITIALIZING) {
          if (trace) {
             log.tracef("Cache status is no longer running, all segments are now suspect for %s", requestId);
          }
@@ -392,7 +392,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
             log.tracef("UnRegistered change listener for %s", requestId);
          }
       }
-      if (cache.getStatus() != ComponentStatus.RUNNING) {
+      if (cache.getStatus() != ComponentStatus.RUNNING && cache.getStatus() != ComponentStatus.INITIALIZING) {
          if (trace) {
             log.tracef("Cache status is no longer running, all segments are now suspect for %s", requestId);
          }
@@ -434,7 +434,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
       iterator.onClose(() -> {
          changeListener.remove(requestId);
          // If the cache is no longer running, all segments have to be suspect
-         if (cache.getStatus() != ComponentStatus.RUNNING) {
+         if (cache.getStatus() != ComponentStatus.RUNNING && cache.getStatus() != ComponentStatus.INITIALIZING) {
             if (trace) {
                log.tracef("Cache status is no longer running after completing iterator, all segments are now suspect for %s", requestId);
             }
