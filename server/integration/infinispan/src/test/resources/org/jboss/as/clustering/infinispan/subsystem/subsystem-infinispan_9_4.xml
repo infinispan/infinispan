@@ -61,6 +61,9 @@
                 <key-transformers>
                     <key-transformer key="java.lang.String" transformer="org.infinispan.query.impl.DefaultTransformer"/>
                 </key-transformers>
+                <!--<indexed-entities>-->
+                    <!--<indexed-entity>org.infinispan.server.test.query.TestEntity</indexed-entity>-->
+                <!--</indexed-entities>-->
             </indexing>
         </local-cache>
         <local-cache name="rocksdb-stored" batching="false" start="EAGER" module="org.infinispan" statistics="true">
