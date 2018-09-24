@@ -426,6 +426,84 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       verifyEviction("k2", "v", 500, 500, false);
    }
 
+   public void testComputeAsyncWithLifespan() throws Exception {
+      c.put("k", "v");
+      CompletableFuture<String> f = c.computeAsync("k", (key, value) -> "" + key + value, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "kv");
+      verifyEviction("k", "kv", 1000, 500, true);
+
+      f = c.computeAsync("k2", (key, value) -> "" + 42, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "42");
+      verifyEviction("k2", "42", 1000, 500, true);
+   }
+
+   public void testComputeAsyncWithLifespanAndMaxIdle() throws Exception {
+      c.put("k", "v");
+      CompletableFuture<String> f = c.computeAsync("k", (key, value) -> "" + key + value, 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "kv");
+      verifyEviction("k", "kv", 1000, 500, false);
+
+      c.put("k", "v");
+      f = c.computeAsync("k", (key, value) -> "" + key + value, 500, TimeUnit.MILLISECONDS, 5000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "kv");
+      verifyEviction("k", "kv", 500, 500, false);
+
+      f = c.computeAsync("k2", (key, value) -> "" + 42, 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "42");
+      verifyEviction("k2", "42", 1000, 500, false);
+
+      f = c.computeAsync("k2", (key, value) -> "" + value + 42, 500, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "null42");
+      verifyEviction("k2", "null42", 500, 500, false);
+   }
+
+   public void testComputeIfPresentAsyncWithLifespan() throws Exception {
+      c.put("k", "v");
+      CompletableFuture<String> f = c.computeIfPresentAsync("k", (key, value) -> "" + key + value, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "kv");
+      verifyEviction("k", "kv", 1000, 500, true);
+   }
+
+   public void testComputeIfPresentAsyncWithLifespanAndMaxIdle() throws Exception {
+      c.put("k", "v");
+      CompletableFuture<String> f = c.computeIfPresentAsync("k", (key, value) -> "" + key + value, 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "kv");
+      verifyEviction("k", "kv", 1000, 500, false);
+
+      c.put("k", "v");
+      f = c.computeIfPresentAsync("k", (key, value) -> "" + key + value, 500, TimeUnit.MILLISECONDS, 5000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "kv");
+      verifyEviction("k", "kv", 500, 500, false);
+   }
+
+   public void testComputeIfAbsentAsyncWithLifespan() throws Exception {
+      CompletableFuture<String> f = c.computeIfAbsentAsync("k2", key -> key + 42, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "k242");
+      verifyEviction("k2", "k242", 1000, 500, true);
+   }
+
+   public void testComputeIfAbsentAsyncWithLifespanAndMaxIdle() throws Exception {
+      CompletableFuture<String> f = c.computeIfAbsentAsync("k2", key -> key + 42, 5000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "k242");
+      verifyEviction("k2", "k242", 1000, 500, false);
+
+      f = c.computeIfAbsentAsync("k2", key -> "" + key + 42, 500, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
+      markStartTime();
+      assertFutureResult(f, "k242");
+      verifyEviction("k2", "k242", 500, 500, false);
+   }
+
    /**
     * Verifies the common assertions for the obtained Future object
     *

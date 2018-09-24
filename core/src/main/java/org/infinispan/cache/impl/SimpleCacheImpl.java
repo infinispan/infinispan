@@ -325,13 +325,43 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return CompletableFuture.completedFuture(compute(key, remappingFunction, lifespan, lifespanUnit));
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return CompletableFuture.completedFuture(compute(key, remappingFunction, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+   }
+
+   @Override
    public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
       return CompletableFuture.completedFuture(computeIfAbsent(key, mappingFunction));
    }
 
    @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return CompletableFuture.completedFuture(computeIfAbsent(key, mappingFunction, lifespan, lifespanUnit));
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return CompletableFuture.completedFuture(computeIfAbsent(key, mappingFunction, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+   }
+
+   @Override
    public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return CompletableFuture.completedFuture(computeIfPresent(key, remappingFunction));
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return CompletableFuture.completedFuture(computeIfPresent(key, remappingFunction, lifespan, lifespanUnit));
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return CompletableFuture.completedFuture(computeIfPresent(key, remappingFunction, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
    }
 
    @Override
@@ -1320,6 +1350,18 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return computeIfAbsentInternal(key, mappingFunction, newValueRef, metadata);
    }
 
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      ByRef<V> newValueRef = new ByRef<>(null);
+      return computeIfAbsentInternal(key, mappingFunction, newValueRef, createMetadata(lifespan, lifespanUnit));
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      ByRef<V> newValueRef = new ByRef<>(null);
+      return computeIfAbsentInternal(key, mappingFunction, newValueRef, createMetadata(lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+   }
+
    protected V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, ByRef<V> newValueRef) {
       return computeIfAbsentInternal(key, mappingFunction, newValueRef, defaultMetadata);
    }
@@ -1357,6 +1399,18 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       CacheEntryChange<K, V> ref = new CacheEntryChange<>();
       return computeIfPresentInternal(key, remappingFunction, ref, defaultMetadata);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      CacheEntryChange<K, V> ref = new CacheEntryChange<>();
+      return computeIfPresentInternal(key, remappingFunction, ref, createMetadata(lifespan, lifespanUnit));
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      CacheEntryChange<K, V> ref = new CacheEntryChange<>();
+      return computeIfPresentInternal(key, remappingFunction, ref, createMetadata(lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
@@ -1410,6 +1464,16 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       CacheEntryChange<K, V> ref = new CacheEntryChange<>();
       return computeInternal(key, remappingFunction, ref, defaultMetadata);
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return computeInternal(key, remappingFunction, new CacheEntryChange<>(), createMetadata(lifespan, lifespanUnit));
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return computeInternal(key, remappingFunction, new CacheEntryChange<>(), createMetadata(lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
