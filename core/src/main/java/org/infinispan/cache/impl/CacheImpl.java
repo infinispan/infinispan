@@ -274,6 +274,22 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(defaultMetadata.maxIdle(), MILLISECONDS).build();
+      return computeInternal(key, remappingFunction, false, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, maxIdleTimeUnit).build();
+      return computeInternal(key, remappingFunction, false, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return computeInternal(key, remappingFunction, false, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
    }
@@ -281,6 +297,21 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return compute(key, remappingFunction, true);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit).build();
+      return computeInternal(key, remappingFunction, true, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, maxIdleTimeUnit).build();
+      return computeInternal(key, remappingFunction, true, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
    }
 
    @Override
@@ -297,7 +328,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent,
-         Metadata metadata, long flags, ContextBuilder contextBuilder) {
+                     Metadata metadata, long flags, ContextBuilder contextBuilder) {
       assertKeyNotNull(key);
       assertFunctionNotNull(remappingFunction);
       ComputeCommand command = commandsFactory.buildComputeCommand(key, remappingFunction, computeIfPresent,
@@ -311,13 +342,28 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit).build();
+      return computeIfAbsent(key, mappingFunction, metadata);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, maxIdleTimeUnit).build();
+      return computeIfAbsent(key, mappingFunction, metadata);
+   }
+
+   @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
       return computeIfAbsentInternal(key, mappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
             contextBuilder);
    }
 
    V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata, long flags,
-         ContextBuilder contextBuilder) {
+                             ContextBuilder contextBuilder) {
       assertKeyNotNull(key);
       assertFunctionNotNull(mappingFunction);
       ComputeIfAbsentCommand command = commandsFactory.buildComputeIfAbsentCommand(key, mappingFunction,
@@ -356,7 +402,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    V mergeInternal(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata,
-         long flags, ContextBuilder contextBuilder) {
+                   long flags, ContextBuilder contextBuilder) {
       assertKeyNotNull(key);
       assertValueNotNull(value);
       assertFunctionNotNull(remappingFunction);
@@ -496,7 +542,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return getCacheEntryAsync(key, EnumUtil.EMPTY_BIT_SET, invocationContextFactory.createInvocationContext(false, 1));
    }
 
-   final CompletableFuture<CacheEntry<K,V>> getCacheEntryAsync(Object key, long explicitFlags, InvocationContext ctx) {
+   final CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key, long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, keyPartitioner.getSegment(key),
             explicitFlags);
@@ -955,6 +1001,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    /**
     * Creates an invocation context with an implicit transaction if it is required. An implicit transaction is created
     * if there is no current transaction and autoCommit is enabled.
+    *
     * @param keyCount how many keys are expected to be changed
     * @return the invocation context
     */
@@ -963,9 +1010,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    /**
-    * Same as {@link #getInvocationContextWithImplicitTransaction(int)} except if <b>forceCreateTransaction</b>
-    * is true then autoCommit doesn't have to be enabled to start a new transaction.
-    * @param keyCount how many keys are expected to be changed
+    * Same as {@link #getInvocationContextWithImplicitTransaction(int)} except if <b>forceCreateTransaction</b> is true
+    * then autoCommit doesn't have to be enabled to start a new transaction.
+    *
+    * @param keyCount               how many keys are expected to be changed
     * @param forceCreateTransaction if true then a transaction is always started if there wasn't one
     * @return the invocation context
     */
@@ -1442,7 +1490,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final Map<K, V> getAndPutAll(Map<? extends K, ? extends V> map, Metadata metadata, long explicitFlags,
-         ContextBuilder contextBuilder) {
+                                ContextBuilder contextBuilder) {
       PutMapCommand command = createPutAllCommand(map, metadata, explicitFlags);
       return dropNullEntries(executeCommandAndCommitIfNeeded(contextBuilder, command, map.size()));
    }
@@ -1645,6 +1693,22 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(defaultMetadata.maxIdle(), MILLISECONDS).build();
+      return computeAsyncInternal(key, remappingFunction, false, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET), contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdle, maxIdleUnit).build();
+      return computeAsyncInternal(key, remappingFunction, false, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET), contextBuilder);
+   }
+
+   @Override
    public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return computeAsync(key, remappingFunction, true);
    }
@@ -1656,6 +1720,22 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent) {
       return computeAsyncInternal(key, remappingFunction, computeIfPresent, applyDefaultMetadata(defaultMetadata), addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(defaultMetadata.maxIdle(), MILLISECONDS).build();
+      return computeAsyncInternal(key, remappingFunction, false, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET), contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdle, maxIdleUnit).build();
+      return computeAsyncInternal(key, remappingFunction, true, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET), contextBuilder);
    }
 
    private CompletableFuture<V> computeAsyncInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent, Metadata metadata, long flags) {
@@ -1682,8 +1762,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
             contextBuilder);
    }
 
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(defaultMetadata.maxIdle(), MILLISECONDS).build();
+      return computeIfAbsentAsyncInternal(key, mappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET), contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdle, maxIdleUnit).build();
+      return computeIfAbsentAsyncInternal(key, mappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET), contextBuilder);
+   }
+
    CompletableFuture<V> computeIfAbsentAsyncInternal(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata, long flags,
-                             ContextBuilder contextBuilder) {
+                                                     ContextBuilder contextBuilder) {
       assertKeyNotNull(key);
       assertFunctionNotNull(mappingFunction);
       ComputeIfAbsentCommand command = commandsFactory.buildComputeIfAbsentCommand(key, mappingFunction,
@@ -1722,7 +1818,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    CompletableFuture<V> mergeInternalAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata,
-                   long flags, ContextBuilder contextBuilder) {
+                                           long flags, ContextBuilder contextBuilder) {
       assertKeyNotNull(key);
       assertValueNotNull(value);
       assertFunctionNotNull(remappingFunction);
@@ -1793,10 +1889,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
     * <p>
     * This method creates the {@link InvocationContext} using {@link ContextBuilder} and initializes it.
     * <p>
-    * If the cache is transactional and no transaction is running, a transaction is created and committed for the command (i.e. an injected transaction)
+    * If the cache is transactional and no transaction is running, a transaction is created and committed for the
+    * command (i.e. an injected transaction)
     */
    private <T> T executeCommandAndCommitIfNeeded(ContextBuilder contextBuilder, VisitableCommand command,
-         int keyCount) {
+                                                 int keyCount) {
       InvocationContext ctx = contextBuilder.create(keyCount);
       checkLockOwner(ctx, command);
       //noinspection unchecked
