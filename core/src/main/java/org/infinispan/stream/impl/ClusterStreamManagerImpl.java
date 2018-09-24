@@ -103,7 +103,7 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
       Map<Address, IntSet> targets = determineTargets(ch, segments, callback);
       String id;
       if (!targets.isEmpty()) {
-         id = localAddress.toString() + requestId.getAndIncrement();
+         id = localAddress.toString() + "#" + requestId.getAndIncrement();
          log.tracef("Performing remote operations %s for id %s", targets, id);
          RequestTracker<R> tracker = new RequestTracker<>(callback, targets, earlyTerminatePredicate);
          currentlyRunning.put(id, tracker);

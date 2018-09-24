@@ -135,7 +135,6 @@ import org.infinispan.stream.impl.StreamIteratorNextCommand;
 import org.infinispan.stream.impl.StreamIteratorRequestCommand;
 import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.stream.impl.StreamResponseCommand;
-import org.infinispan.stream.impl.StreamSegmentResponseCommand;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -511,10 +510,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             StreamResponseCommand streamResponseCommand = (StreamResponseCommand) c;
             streamResponseCommand.inject(clusterStreamManager);
             break;
-         case StreamSegmentResponseCommand.COMMAND_ID:
-            StreamSegmentResponseCommand streamSegmentResponseCommand = (StreamSegmentResponseCommand) c;
-            streamSegmentResponseCommand.inject(clusterStreamManager);
-            break;
          case StreamIteratorRequestCommand.COMMAND_ID:
             StreamIteratorRequestCommand streamIteratorRequestCommand = (StreamIteratorRequestCommand) c;
             streamIteratorRequestCommand.inject(localStreamManager);
@@ -723,13 +718,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete,
            IntSet lostSegments, R response) {
-      if (lostSegments.isEmpty()) {
-         return new StreamResponseCommand<>(cacheName, cache.getCacheManager().getAddress(), identifier, complete,
-                 response);
-      } else {
-         return new StreamSegmentResponseCommand<>(cacheName, cache.getCacheManager().getAddress(), identifier,
-                 complete, response, lostSegments);
-      }
+      return new StreamResponseCommand<>(cacheName, cache.getCacheManager().getAddress(), identifier, complete,
+              lostSegments, response);
    }
 
    @Override
