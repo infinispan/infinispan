@@ -5,7 +5,7 @@
 {brandname} supports indexing and searching of Java Pojo(s) or objects encoded via link:https://developers.google.com/protocol-buffers/[Protocol Buffers]
 stored in the grid using powerful search APIs which complement its main Map-like API.
 
-Querying is possible both in <<query.library,library>> and <<query.remote,client/server mode>> (for Java, C#, Node.js and other clients), and {brandname} can index data
+Querying is possible both in link:#query_library[library] and link:#query_remote[client/server mode] (for Java, C#, Node.js and other clients), and {brandname} can index data
 using link:http://lucene.apache.org/[Apache Lucene], offering an efficient link:https://en.wikipedia.org/wiki/Full-text_search[full-text]
 capable search engine in order to cover a wide range of data retrieval use cases.
 
@@ -13,27 +13,27 @@ Indexing configuration relies on a schema definition, and for that {brandname} c
 and protobuf schemas for remote clients written in other languages. By standardizing on protobuf, {brandname} allows full interoperability
 between Java and non-Java clients.
 
-Apart from indexed queries, {brandname} can run queries over non-indexed data (<<query.indexless, indexless queries>>) and over partially indexed data (<<query.hybrid,hybrid queries>>).
+Apart from indexed queries, {brandname} can run queries over non-indexed data (link#query_indexless[indexless queries]) and over partially indexed data (link#query_hybrid[hybrid queries]).
 
-In terms of Search APIs, {brandname} has its own query language called _<<query.ickle,Ickle>>_, which is a subset of JP-QL providing extensions for full-text
-querying. The <<query.dsl,{brandname} Query DSL>> can be used for both embedded and remote java clients when full-text is not required; for Java embedded clients
-{brandname} offers the <<query.hibernatesearch,Hibernate Search Query API>> which supports running Lucene queries in the grid, apart from advanced search capabilities
+In terms of Search APIs, {brandname} has its own query language called _link:#query_ickle[Ickle]_, which is a subset of JP-QL providing extensions for full-text
+querying. The link:#query_dsl[Query DSL] can be used for both embedded and remote java clients when full-text is not required; for Java embedded clients
+{brandname} offers the link:#query_hibernatesearch[Hibernate Search Query API] which supports running Lucene queries in the grid, apart from advanced search capabilities
 like Faceted and Spatial search.
 
-Finally, {brandname} has support for <<query.continuous,Continuous Queries>>, which works in a reverse manner to the other APIs: instead of creating, executing a query
+Finally, {brandname} has support for link:#query_continuous[Continuous Queries], which works in a reverse manner to the other APIs: instead of creating, executing a query
 and obtain results, it allows a client to register queries that will be evaluated continuously as data in the cluster changes, generating notifications
 whenever the changed data matches the queries.
 
-=== Embedded Querying [[query.library]]
+[[query_library]]
+=== Embedded Querying
 
 Embedded querying is available when {brandname} is used as a library. No protobuf mapping is required, and both indexing and searching
-are done on top of Java objects. When in library mode, it is possible to run Lucene queries directly and use all the available <<query.apis,Query APIs>>,
-and it also allows flexible indexing configurations to keep latency to a minimal.
+are done on top of Java objects. When in library mode, it is possible to run Lucene queries directly and use all the available link:#query_apis[Query APIs] and it also allows flexible indexing configurations to keep latency to a minimal.
 
 ====  Quick example
 
 We're going to store _Book_ instances in an {brandname} cache called "books". _Book_ instances will be indexed, so we enable indexing for the cache,
-letting {brandname} <<query.autoconfig,configure the indexing automatically>>:
+letting {brandname} link:#query_autoconfig[configure the indexing automatically]:
 
 {brandname} configuration:
 
@@ -169,7 +169,7 @@ List<Book> list = q.list();
 
 ----
 
-Finally, we can use an <<query.ickle,Ickle>> query directly, allowing for Lucene syntax in one or more predicates:
+Finally, we can use an link:#query_ickle[Ickle] query directly, allowing for Lucene syntax in one or more predicates:
 
 [source,java]
 ----
@@ -190,13 +190,13 @@ List<Book> list = q.list();
 ==== Indexing
 
 Indexing in {brandname} happens on a per-cache basis and by default a cache is not indexed. Enabling indexing is not mandatory but queries using an index will
-have a vastly superior performance. On the other hand, enabling indexing can impact negatively the write throughput of a cluster, so make sure to check the <<query.performance, query performance guide>> for some strategies to minimize this impact depending on the cache type and use case.
+have a vastly superior performance. On the other hand, enabling indexing can impact negatively the write throughput of a cluster, so make sure to check the link:#query_performance[query performance guide] for some strategies to minimize this impact depending on the cache type and use case.
 
 ===== Configuration
 
 ====== General format
 
-To enable indexing via XML, you need to add the `<indexing>` element plus the `index` (<<query.index-mode,index mode>>)
+To enable indexing via XML, you need to add the `<indexing>` element plus the `index` (link:#query-index-mode[index mode])
 to your cache configuration, and optionally pass additional properties.
 
 [source,xml]
@@ -329,8 +329,8 @@ NOTE: Only for server, if you fail to follow the requirement of using 'extended'
 its resolution will fail due to missing class because the wrong ClassLoader is being used (the {brandname}'s internal
 class path is being used).
 
-
-===== Index mode [[query.index-mode]]
+[[query-index-mode]]
+===== Index mode
 
 An {brandname} node typically receives data from two sources: local and remote. Local translates to clients manipulating data using the map API in the same JVM;
 remote data comes from other {brandname} nodes during replication or rebalancing.
@@ -344,30 +344,32 @@ Possible values:
 * PRIMARY_OWNER: Only entries containing keys that the node is primary owner will be indexed, regardless of local or remote origin.
 * NONE: no data is indexed. Equivalent to not configure indexing at all.
 
-===== Index Managers [[query.index-manager]]
+[[query-index-manager]]
+===== Index Managers
 
 Index managers are central components in {brandname} Querying responsible for the indexing configuration, distribution and internal lifecycle of several query components such as Lucene's
 _IndexReader_ and _IndexWriter_. Each Index Manager is associated with a _Directory Provider_, which defines the physical storage of the index.
 
 Regarding index distribution, {brandname} can be configured with shared or non-shared indexes.
 
-===== Shared indexes [[query.shared-index]]
+[[query-shared-index]]
+===== Shared indexes
 
-A shared index is a single, distributed, cluster-wide index for a certain cache. The main advantage is that the index is visible from every node and can be queried as if the index were local, there is no need to <<query.clustered-query-api,broadcast>>
+A shared index is a single, distributed, cluster-wide index for a certain cache. The main advantage is that the index is visible from every node and can be queried as if the index were local, there is no need to link:#query-clustered-query-api[broadcast]
 queries to all members and aggregate the results. The downside is that Lucene does not allow more than a single process writing to the index at the same time, and the coordination of lock acquisitions needs to be done by a proper shared index capable index manager.
 In any case, having a single write lock cluster-wise can lead to some degree of contention under heavy writing.
 
-{brandname} supports shared indexes leveraging the <<integrations.adoc#integrations:directory-provider,{brandname} Directory Provider>>, which stores indexes in a separate set of caches. Two index managers are available
+{brandname} supports shared indexes leveraging the link:#integrations-directory-provider[{brandname} Directory Provider], which stores indexes in a separate set of caches. Two index managers are available
 to use shared indexes: InfinispanIndexManager and AffinityIndexManager.
 
 ====== Effect of the index mode
 
 Shared indexes should not use the `ALL` index mode since it'd lead to redundant indexing: since there is a single index cluster wide, the entry would get indexed when inserted via Cache API, and another time
-when {brandname} replicates it to another node. The `ALL` mode is usually associates with <<query.non-shared-index>> in order to create full index replicas on each node.
+when {brandname} replicates it to another node. The `ALL` mode is usually associates with link:#query-non-shared-index[non-shared indexes] in order to create full index replicas on each node.
 
 ====== InfinispanIndexManager
 
-This index manager uses the <<integrations.adoc#integrations:directory-provider,Infinispan Directory Provider>>, and is suitable for creating shared indexes. Index mode should be set to `LOCAL` in this configuration.
+This index manager uses the link:#integrations-directory-provider[{brandname} Directory Provider], and is suitable for creating shared indexes. Index mode should be set to `LOCAL` in this configuration.
 
 Configuration:
 
@@ -421,9 +423,10 @@ Reasons re-define them would be performance tuning for a specific scenario, or f
 In order to avoid index corruption when two or more nodes of the cluster try to write to the index at the same time, the _InfinispanIndexManager_ internally
 elects a master in the cluster (which is the JGroups coordinator) and forwards all indexing works to this master.
 
-====== AffinityIndexManager [[query.affinity-index-manager]]
+[[query-affinity-index-manager]]
+====== AffinityIndexManager
 
-The AffinityIndexManager is an *experimental* index manager used for shared indexes that also stores indexes using the <<integrations.adoc#integrations:directory-provider,{brandname} Directory Provider>>.
+The AffinityIndexManager is an *experimental* index manager used for shared indexes that also stores indexes using the link:#integrations-directory-provider[{brandname} Directory Provider].
 Unlike the InfinispanIndexManager, it does not have a single node (master) that handles all the indexing cluster wide, but rather splits the index using multiple shards, each shard being responsible for indexing data associated with one or more {brandname} segments.
 For an in-depth description of the inner workings, please see the link:https://github.com/infinispan/infinispan/wiki/Index-affinity-proposal[design doc].
 
@@ -467,14 +470,14 @@ The `AffinityIndexManager` by default will have as many shards as {brandname} se
 The number of shards affects directly the query performance and writing throughput: generally speaking, a high number of shards offers better write throughput but
 has an adverse effect on query performance.
 
-
-===== Non-shared indexes [[query.non-shared-index]]
+[[query-non-shared-index]]
+===== Non-shared indexes
 
 Non-shared indexes are independent indexes at each node. This setup is particularly advantageous for replicated caches where each node has all the cluster data
 and thus can hold all the indexes as well, offering optimal query performance with zero network latency when querying. Another advantage is, since the index
 is local to each node, there is less contention during writes due to the fact that each node is subjected to its own index lock, not a cluster wide one.
 
-Since each node might hold a partial index, it may be necessary to <<query.clustered-query-api, broadcast>> queries in order to get correct search results, which
+Since each node might hold a partial index, it may be necessary to link#query-clustered-query-api[broadcast] queries in order to get correct search results, which
 can add latency. If the cache is REPL, though, the broadcast is not necessary: each node can hold a full local copy of the index and queries runs at optimal speed
 taking advantage of a local index.
 
@@ -483,18 +486,18 @@ in ram, filesystem, or {brandname} local caches.
 
 ====== Effect of the index mode
 
-The `directory-based` and `near-real-time` index managers can be associated with different <<query.index-mode,index modes>>, resulting in different index distributions.
+The `directory-based` and `near-real-time` index managers can be associated with different link:#query-index-mode[index modes], resulting in different index distributions.
 
 REPL caches combined with the `ALL` index mode will result in a full copy of the cluster-wide index on each node. This mode allows queries to become effectively local without
-network latency. This is the recommended mode to index any REPL cache, and that's the choice picked by the <<query.autoconfig, auto-config>> when the a REPL cache is detected. The `ALL` mode should not be used with DIST caches.
+network latency. This is the recommended mode to index any REPL cache, and that's the choice picked by the link:#query_autoconfig[auto-config] when the a REPL cache is detected. The `ALL` mode should not be used with DIST caches.
 
 REPL or DIST caches combined with `LOCAL` index mode will cause each node to index only data inserted from the same JVM, causing an uneven distribution of the index. In order
-to obtain correct query results, it's necessary to use <<query.clustered-query-api,broadcast>> queries.
+to obtain correct query results, it's necessary to use link:#query-clustered-query-api[broadcast] queries.
 
 REPL or DIST caches combined with `PRIMARY_OWNER` will also need broadcast queries. Differently from the `LOCAL` mode, each node's index will contain indexed entries which key is primarily owned by the node according to the consistent hash, leading to a more evenly distributed indexes among the nodes.
 
-
-====== directory-based index manager [[query.directory-based]]
+[[query-directory-based]]
+====== directory-based index manager
 
 This is the default Index Manager used when no index manager is configured. The `directory-based` index manager is used to manage indexes backed by a local lucene directory. It supports _ram_, _filesystem_ and non-clustered
 _infinispan_ storage.
@@ -522,7 +525,7 @@ Configuration:
 [small]*Ram storage*
 
 Index is stored in memory using a link:https://lucene.apache.org/core/6_0_0/core/org/apache/lucene/store/RAMDirectory.html[Lucene RAMDirectory].
-Not recommended for large indexes or highly concurrent situations. Indexes stored in Ram are not persistent, so after a cluster shutdown a <<query.massindexer,re-index>>
+Not recommended for large indexes or highly concurrent situations. Indexes stored in Ram are not persistent, so after a cluster shutdown a link:#query_massindexer[re-index]
 is needed. Configuration:
 
 
@@ -537,7 +540,7 @@ is needed. Configuration:
 
 [small]*{brandname} storage*
 
-{brandname} storage makes use of the <<integrations:lucene-directory, {brandname} Lucene directory>> that saves the indexes to a set of caches; those caches can be configured like any other {brandname} cache, for example by adding a cache store to have indexes persisted elsewhere apart from memory.
+{brandname} storage makes use of the link:#integrations-lucene-directory[{brandname} Lucene directory] that saves the indexes to a set of caches; those caches can be configured like any other {brandname} cache, for example by adding a cache store to have indexes persisted elsewhere apart from memory.
 In order to use {brandname} storage with a non-shared index, it's necessary to use LOCAL caches for the indexes:
 
 [source,xml]
@@ -570,7 +573,7 @@ In order to use {brandname} storage with a non-shared index, it's necessary to u
 Similar to the `directory-based` index manager but takes advantage of the Near-Real-Time features of Lucene. It has better write performance than
 the `directory-based` because it flushes the index to the underlying store less often. The drawback is that unflushed index changes can be lost in case
 of a non-clean shutdown. Can be used in conjunction with `local-heap`, `filesystem` and local infinispan storage. Configuration for each different storage
-type is the same as the <<query.directory-based>> index manager.
+type is the same as the link:#query-directory-based[directory-based] index manager.
 
 Example with ram:
 
@@ -620,8 +623,8 @@ Configuration:
 The index mode should be set to `LOCAL`, since {brandname} considers Elasticsearch as a single shared index.
 More information about Elasticsearch integration, including the full description of the configuration properties can be found at the link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#elasticsearch-integration[Hibernate Search manual].
 
-
-===== Automatic configuration [[query.autoconfig]]
+[[query_autoconfig]]
+===== Automatic configuration
 
 The attribute auto-config provides a simple way of configuring indexing based on the cache type. For replicated and local caches, the indexing is configured to be persisted on disk and not shared
 with any other processes. Also, it is configured so that minimum delay exists between the moment an object is indexed and the moment it is available for searches (near real time).
@@ -664,7 +667,8 @@ The auto config properties for distributed caches are:
 | default.reader.strategy | shared | Reuse index reader across several queries, avoiding reopening it
 |==============================================================================
 
-===== Re-indexing [[query.massindexer]]
+[[query_massindexer]]
+===== Re-indexing
 
 Occasionally you might need to rebuild the Lucene index by reconstructing it from the data stored in the Cache. You need to rebuild the index if you change the definition of what is indexed on your types, or if you change for example some _Analyzer_ parameter, as Analyzers affect how the index is written. Also, you might need to rebuild the index if you had it destroyed by some system administration mistake. To rebuild the index just get a reference to the MassIndexer and start it; beware it might take some time as it needs to reprocess all data in the grid!
 
@@ -682,11 +686,13 @@ CompletableFuture<Void> future = searchManager.getMassIndexer().startAsyc();
 TIP: This is also available as a `start` JMX operation on the link:{javadocroot}/jmxComponents.html#MassIndexer[MassIndexer MBean]
 registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=MassIndexer`.
 
-===== Indexless [[query.indexless]]
+[[query_indexless]]
+===== Indexless
 
 TODO
 
-===== Hybrid [[query.hybrid]]
+[[query_hybrid]]
+===== Hybrid
 
 TODO
 
@@ -739,7 +745,8 @@ Using this technique, you don't have to annotate your custom key type:
 org.infinispan.query.SearchManager.registerKeyTransformer(Class<?>, Class<? extends Transformer>)
 ----
 
-====== Programmatic mapping [[query:configuration-api]]
+[[query-configuration-api]]
+====== Programmatic mapping
 
 Instead of using annotations to map an entity to the index, it's also possible to configure it programmatically.
 
@@ -794,7 +801,8 @@ assert cq.getResultSize() == 1;
 
 ----
 
-==== Querying APIs [[query.apis]]
+[[query_apis]]
+==== Querying APIs
 
 {brandname} allows to query using Lucene queries directly and its own query language called Ickle, a subset of JP-QL with full-text extensions.
 
@@ -803,8 +811,8 @@ query.
 
 Finally, when using Lucene or Hibernate Search Query API, it is possible to query a single node or to broadcast a query to multiple nodes combining the results.
 
-
-===== Hibernate Search [[query.hibernatesearch]]
+[[query_hibernatesearch]]
+===== Hibernate Search
 
 Apart from supporting Hibernate Search annotations to configure indexing, it's also possible to query the cache using other Hibernate Search APIs
 
@@ -956,11 +964,11 @@ List<Restaurant> nearBy = cacheQuery.list();
 
 More info on http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#spatial[Hibernate Search manual]
 
-
-====== IndexedQueryMode [[query.clustered-query-api]]
+[[query-clustered-query-api]]
+====== IndexedQueryMode
 
 It's possible to specify a query mode for indexed queries. IndexedQueryMode.BROADCAST allows to broadcast a query to each node of the cluster, retrieve the results and combine them before returning to the caller.
-It is suitable for use in conjunction with <<query.non-shared-index,non-shared indexes>>, since each node's local index will have only a subset of the data indexed.
+It is suitable for use in conjunction with link:#query-non-shared-index[non-shared indexes], since each node's local index will have only a subset of the data indexed.
 
 IndexedQueryMode.FETCH will execute the query in the caller. If all the indexes for the cluster wide data are available locally, performance will be optimal, otherwise this query mode
 may involve fetching indexes data from remote nodes.
@@ -978,7 +986,8 @@ List<Person> result = broadcastQuery.list();
 
 ----
 
-===== {brandname} Query DSL [[query.dsl]]
+[[query_dsl]]
+===== {brandname} Query DSL
 
 {brandname} provides its own query DSL, independent of Lucene and Hibernate Search.
 Decoupling the query API from the underlying query and indexing mechanism makes it possible to introduce new alternative
@@ -1343,8 +1352,8 @@ Probably the best way to explore using the Query DSL API is to have a look at ou
 link:https://github.com/infinispan/infinispan/blob/master/query/src/test/java/org/infinispan/query/dsl/embedded/QueryDslConditionsTest.java[QueryDslConditionsTest]
 is a fine example.
 
-
-===== Ickle [[query.ickle]]
+[[query_ickle]]
+===== Ickle
 
 Using Ickle, a light and small subset of JP-QL with full-text extensions, it is possible to create relational and full-text queries in both Library and Remote Client-Server mode. Ickle is a string-based querying language, and has the following characteristics:
 
@@ -1456,8 +1465,8 @@ Terms may be boosted by adding a ^ after the term to increase their relevance in
 Query boostedQuery = qf.create("from sample_library.Book where title : beer^3 OR wine");
 ----
 
-
-===== Continuous Query [[query.continuous]]
+[[query_continuous]]
+===== Continuous Query
 
 Continuous Queries allow an application to register a listener which will receive the entries that currently match a
 query filter, and will be continuously notified of any changes to the queried data set that result from further cache
@@ -1499,7 +1508,7 @@ NOTE: Continuous Queries can use the full power of the Query DSL except: groupin
 ====== Running Continuous Queries
 
 To create a continuous query you'll start by creating a Query object first. This is described in
-link:#query.dsl[the Query DSL section]. Then you'll need to obtain the ContinuousQuery (_org.infinispan.query.api.continuous.ContinuousQuery_)
+link:#query_dsl[the Query DSL section]. Then you'll need to obtain the ContinuousQuery (_org.infinispan.query.api.continuous.ContinuousQuery_)
 object of your cache and register the query and a continuous query listener (_org.infinispan.query.api.continuous.ContinuousQueryListener_)
 with it. A ContinuousQuery object associated to a cache can be obtained by calling the static method _org.infinispan.client.hotrod.Search.getContinuousQuery(RemoteCache<K, V> cache)_
 if running in remote mode or _org.infinispan.query.Search.getContinuousQuery(Cache<K, V> cache)_ when running in embedded mode.
@@ -1589,7 +1598,7 @@ each query captures the minimal information needed both in terms of number of ma
 to quickly process all received events without blocking and to avoid performing actions that will lead to the generation
 of new matching events from the cache it listens to.
 
-[[query.remote]]
+[[query_remote]]
 === Remote Querying
 
 Apart from supporting indexing and searching of Java entities to embedded clients, {brandname} introduced support for remote,
@@ -1598,7 +1607,7 @@ language neutral, querying.
 This leap required two major changes:
 
 * Since non-JVM clients cannot benefit from directly using link:http://lucene.apache.org/[Apache Lucene]'s Java
-API, {brandname} defines its own new link:#query.dsl[query language], based on an internal DSL that is easily
+API, {brandname} defines its own new link:#query_dsl[query language], based on an internal DSL that is easily
 implementable in all languages for which we currently have an implementation of the Hot Rod client.
 * In order to enable indexing, the entities put in the cache by clients can no longer be opaque binary blobs understood
 solely by the client. Their structure has to be known to both server and client, so a common way of
@@ -1607,7 +1616,8 @@ language and platform-neutral encoding. Google's link:http://code.google.com/p/p
 elected as an encoding format for both over-the-wire and storage due to its efficiency, robustness, good multi-language
 support and support for schema evolution.
 
-==== Storing Protobuf encoded entities[[storing.protobuf]]
+[[storing_protobuf]]
+==== Storing Protobuf encoded entities
 Remote clients that want to be able to index and query their stored entities must do so using the Protobuf encoding
 format. This is _key_ for the search capability to work. But it's also possible to store Protobuf entities just for
 gaining the benefit of platform independence and not enable indexing if you do not need it.
@@ -1741,7 +1751,7 @@ TODO
 ==== Indexing of Protobuf encoded entries
 After configuring the client as described in the previous section you can start configuring indexing for your caches on
 the server side. Activating indexing and the various indexing specific configurations is identical to embedded mode and
-is detailed in the <<query:configuration-api,Querying {brandname}>> chapter.
+is detailed in the link:#query-configuration-api[Querying {brandname}] chapter.
 
 There is however an extra configuration step involved. While in embedded mode the indexing metadata is obtained via Java
 reflection by analyzing the presence of various Hibernate Search annotations on the entry's class, this is obviously not
@@ -1800,7 +1810,7 @@ List<Book> list = query.list(); // Voila! We have our book back from the cache!
 
 The key part of creating a query is obtaining the _QueryFactory_ for the remote cache using the
 _org.infinispan.client.hotrod.Search.getQueryFactory()_ method. Once you have this creating the query is similar to
-embedded mode which is covered in link:#query.dsl[this] section.
+embedded mode which is covered in link:#query_dsl[this] section.
 
 
 === Statistics
@@ -1823,11 +1833,12 @@ WARNING: Hibernate Search has its own configuration properties `hibernate.search
 for JMX statistics as explained link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-monitoring[here].
 Using them with {brandname} Query is forbidden as it will only lead to duplicated MBeans and unpredictable results.
 
-=== Performance Tuning [[query.performance]]
+[[query_performance]]
+=== Performance Tuning
 
 ==== Batch writing in SYNC mode
 
-By default, the <<query.index-manager, Index Managers>> work in sync mode, meaning when data is written to {brandname}, it will perform the indexing operations synchronously.
+By default, the link:#query-index-manager[Index Managers] work in sync mode, meaning when data is written to {brandname}, it will perform the indexing operations synchronously.
 This synchronicity guarantees indexes are always consistent with the data (and thus visible in searches), but can slowdown write operations since it will also perform a commit to the index.
 Committing is an extremely expensive operation in Lucene, and for that reason, multiple writes from different nodes can be automatically batched into a single commit to reduce
 the impact.
@@ -1835,7 +1846,7 @@ the impact.
 So, when doing data loads to {brandname} with index enabled, try to use multiple threads to take advantage of this batching.
 
 If using multiple threads does not result in the required performance, an alternative is to load data with indexing temporarily disabled and run
- a <<query.massindexer,re-indexing>> operation afterwards. This can be done writing data with the `SKIP_INDEXING` flag:
+ a link:#query_massindexer[re-indexing] operation afterwards. This can be done writing data with the `SKIP_INDEXING` flag:
 
 [source,java]
 ----

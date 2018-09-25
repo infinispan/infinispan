@@ -483,6 +483,7 @@ The HotRod, Memcached and WebSocket protocol connectors support a number of tuni
 
 *  _receive-buffer-size_ Sets the size of the receive buffer.
 
+[[protocol_interoperability]]
 ==== Protocol Interoperability
 
 By default each protocol stores data in the cache in the most efficient format for that protocol, so that no transformations are required when retrieving entries. If instead you need to access the same data from multiple protocols, you should enable compatibility mode on the caches that you want to share. This is done by adding the `<compatibility />` element to a cache definition, as follows:
@@ -593,7 +594,7 @@ via Java's ServiceLoader api, therefore the full path of the implementing class(
 
 ===== Server Compatibility Mode
 When using the Protostuff/Kryo bridges in compatibility mode, it is necessary for the class files of all custom objects to
-be placed on the classpath of the server.  To achieve this, you should follow the steps outlined in the link:#_protocol_interoperability[Protocol Interoperability]
+be placed on the classpath of the server.  To achieve this, you should follow the steps outlined in the link:#protocol_interoperability[Protocol Interoperability]
 section, to place a jar containing all of their custom classes on the server's classpath.
 
 When utilising a custom marshaller in compatibility mode, it is also necessary for the marshaller and it's runtime dependencies
@@ -618,4 +619,3 @@ in the same directory or module as the marshaller bundle and custom classes.
 NOTE: It is not necessary for the service provider implementation to be provided in the same jar as the user's custom
 classes, however the jar containing the provider must be in the same directory/module as the marshaller and custom class
 jars.
-

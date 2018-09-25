@@ -78,7 +78,7 @@ The supported SASL mechanisms (usually shortened as mechs) are:
 * GSSAPI - This mech uses Kerberos tickets, and therefore requires the presence of a properly configured Kerberos Domain Controller (such as Microsoft Active Directory)
 * EXTERNAL - This mech obtains credentials from the underlying transport (i.e. from a X.509 client certificate) and therefore requires encryption using client-certificates to be enabled.
 
-The following configuration enables authentication against ApplicationRealm, using the DIGEST-MD5 SASL mechanism and only enables the *auth* QoP (see <<server:saslqop>>):
+The following configuration enables authentication against ApplicationRealm, using the DIGEST-MD5 SASL mechanism and only enables the *auth* QoP (see link:#security_saslqop[SASL Quality of Protection]):
 
 .Hot Rod connector configuration
 [source,xml]
@@ -93,7 +93,7 @@ Notice the server-name attribute: it is the name that the server declares to inc
 It is particularly important when using GSSAPI as it is equivalent to the Kerberos service name.
 You can specify multiple mechanisms and they will be attempted in order.
 
-==== SASL Quality of Protection [[security:saslqop]]
+==== SASL Quality of Protection [[security_saslqop]]
 
 While the main purpose of SASL is to provide authentication, some mechanisms also support integrity and privacy protection, also known as Quality of Protection (or qop).
 During authentication negotiation, ciphers are exchanged between client and server, and they can be used to add checksums and encryption to all subsequent traffic.

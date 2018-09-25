@@ -11,7 +11,8 @@ Also check the link:https://github.com/infinispan/infinispan-spark/tree/master/e
 The {brandname} Hadoop connector can be used to expose {brandname} as a Hadoop compliant data source and sink that implements link:https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/InputFormat.html[InputFormat]/link:https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/OutputFormat.html[OutputFormat].
 For further details, refer to the full link:https://github.com/infinispan/infinispan-hadoop/blob/master/README.md[documentation].
 
-=== Apache Lucene [[integrations:lucene-directory]]
+[[integrations-lucene-directory]]
+=== Apache Lucene
 {brandname} includes a highly scalable distributed link:http://lucene.apache.org[Apache Lucene Directory] implementation.
 
 This directory closely mimics the same semantics of the traditional filesystem and RAM-based directories, being able to work as a drop-in replacement for existing applications using Lucene and providing reliable index sharing and other features of {brandname} like node auto-discovery, automatic failover and rebalancing, optionally transactions, and can be backed by traditional storage solutions as filesystem, databases or cloud store engines.
@@ -223,7 +224,8 @@ Start several instances, then try adding text in one instance and searching for 
 * Issue tracker: link:https://jira.jboss.org/browse/ISPN/component/12312732[]
 * Source code: link:https://github.com/infinispan/infinispan/tree/master/lucene/lucene-directory/src/main/java/org/infinispan/lucene[]
 
-=== Directory Provider for Hibernate Search [[integrations:directory-provider]]
+[[integrations-directory-provider]]
+=== Directory Provider for Hibernate Search
 
 Hibernate Search applications can use {brandname} as a directory provider, taking advantage of {brandname}'s distribution and low latency capabilities to store the Lucene indexes.
 
@@ -279,8 +281,8 @@ Refer to the link:https://docs.jboss.org/hibernate/stable/search/reference/en-US
 
 include::integrations_hibernate_cache.adoc[]
 
-
-===  JPA / Hibernate OGM [[integrations:hibernate-ogm]]
+[[integrations-hibernate-ogm]]
+===  JPA / Hibernate OGM
 
 Hibernate can perform CRUD operations directly on an {brandname} cluster.
 

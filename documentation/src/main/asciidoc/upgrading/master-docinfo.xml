@@ -1,11 +1,11 @@
 <productname>{FullProductName}</productname>
 <productnumber>{DocInfoProductNumber}</productnumber>
 <subtitle>For use with {FullProductName} {ProductRelease}</subtitle>
-<title>{FullProductName} User Guide</title>
+<title>Upgrading {FullProductName}</title>
 <release>{DocInfoProductNumber}</release>
 <abstract>
 	<para>
-		This guide describes the administration and configuration of {FullProductName} {ProductRelease}.
+		This guide provides information for upgrading {FullProductName}.
 	</para>
 </abstract>
 <authorgroup>

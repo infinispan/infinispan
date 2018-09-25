@@ -1120,7 +1120,7 @@ To utilise a custom EntryMergePolicy implementation on the server, it's necessar
 org.example.CustomMergePolicy
 ----
 
-In order for a Custom merge policy to be utilised on the server, you should <<embedded.remote.interop,enable object storage>>, if your policies semantics require access to the stored Key/Value objects. This is because cache entries in the server may be stored in a marshalled format and the Key/Value objects returned to your policy would be instances of WrappedByteArray.
+In order for a Custom merge policy to be utilised on the server, you should link:#embedded_remote_interop[enable object storage], if your policies semantics require access to the stored Key/Value objects. This is because cache entries in the server may be stored in a marshalled format and the Key/Value objects returned to your policy would be instances of WrappedByteArray.
 However, if the custom policy only depends on the metadata associated with a cache entry, then object storage is not required and should be avoided (unless needed for other reasons) due to the additional performance cost of marshalling data per request.
 Finally, object storage is never required if one of the provided merge policies is used.
 
