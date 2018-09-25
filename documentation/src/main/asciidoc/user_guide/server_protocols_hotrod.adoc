@@ -1,15 +1,16 @@
+[[hot_rod_server_usage]]
 ===  Using Hot Rod Server
 The {brandname} Server distribution contains a server module that implements {brandname}'s custom binary protocol called Hot Rod. The protocol was designed to enable faster client/server interactions compared to other existing text based protocols and to allow clients to make more intelligent decisions with regards to load balancing, failover and even data location operations.
 Please refer to {brandname} Server's link:../server_guide/server_guide.html[documentation] for instructions on how to configure and run a HotRod server.
 
 To connect to {brandname} over this highly efficient Hot Rod protocol you can
 either use one of the clients described in this chapter, or use higher level
-tools such as link:#integrations-hibernate-ogm[Hibernate OGM].
+tools such as link:#integrations_hibernate_ogm[Hibernate OGM].
 
 include::server_protocols_hotrod_wire.adoc[]
 
-
-===  Java Hot Rod client [[hotrod:java-client]]
+[[hotrod_java_client]]
+===  Java Hot Rod client
 Hot Rod is a binary, language neutral protocol. This article explains how a Java client can interact with a server via the Hot Rod protocol. A reference implementation of the protocol written in Java can be found in all {brandname} distributions, and this article focuses on the capabilities of this java client.
 
 TIP: Looking for more clients?  Visit link:http://infinispan.org/hotrod-clients[this website] for clients written in a variety of different languages.
@@ -89,8 +90,10 @@ For a complete reference of the available configuration options for the properti
 If the server has set up authentication, you need to configure your client accordingly. Depending on the mechs enabled on the server,
 the client must provide the required information.
 
+ifndef::productized[]
 NOTE: This section is about client configuration. If you want to set up the server to require authentication, read the
-link:link:../server_guide/server_guide.html#security:hotrod_auth[Hot Rod server authentication] section.
+link:../server_guide/server_guide.html#security:hotrod_auth[Hot Rod server authentication] section.
+endif::productized[]
 
 ===== DIGEST-MD5
 DIGEST-MD5 is the recommended approach for simple username/password authentication scenarios. If you are using the default
@@ -160,7 +163,7 @@ remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----
 
-For more details, read the <<hr:encryption>> section below.
+For more details, read the link:#hr_encryption[Encryption] section below.
 
 ===== GSSAPI (Kerberos)
 
@@ -283,10 +286,13 @@ RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 
 The actual type of callbacks that your CallbackHandler will need to be able to handle are mech-specific, so the above is just a simple example.
 
-==== Encryption [[hr:encryption]]
+[[hr_encryption]]
+==== Encryption
 
+ifndef::productized[]
 NOTE: This section is about client configuration. If you want to set up the server to require encryption, read the
-link:link:../server_guide/server_guide.html#security:hotrod_rest_encryption[Hot Rod server encryption] section.
+link:../server_guide/server_guide.html#security:hotrod_rest_encryption[Hot Rod server encryption] section.
+endif::productized[]
 
 Encryption uses TLS/SSL, so it requires setting up an appropriate server certificate chain. Generally, a certificate chain looks like the following:
 
@@ -362,7 +368,8 @@ RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 Please read the link:{jdkroot}/technotes/tools/unix/keytool.html[KeyTool] documentation for more details on KeyStores.
 Additionally, the link:http://keystore-explorer.org/[KeyStore Explorer] is a great GUI tool for easily managing KeyStores.
 
-==== Basic API [[hr:basic-api]]
+[[hr_basic_api]]
+==== Basic API
 Below is a sample code snippet on how the client API can be used to store or retrieve information from a Hot Rod server using the Java Hot Rod client. It assumes that a Hot Rod server has been started bound to the default location (localhost:11222)
 
 [source,java]
@@ -518,10 +525,11 @@ public class MyKeyValueFilterConverterFactory implements KeyValueFilterConverter
 * Optional: If the filter uses custom key/value classes, these must be included in the JAR so that the filter can correctly unmarshall key and/or value instances.
 * Deploy the JAR file in the {brandname} Server.
 
-==== Versioned API [[hr:versioned-api]]
+[[hr_versioned_api]]
+==== Versioned API
 A RemoteCacheManager provides instances of link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] interface that represents a handle to the named or default cache on the remote cluster.
 API wise, it extends the link:{javadocroot}/org/infinispan/Cache.html[Cache] interface to which it also adds some new methods, including the so called versioned API.
-Please find below some examples of this API <<server-hotrod:failover,but to understand the motivation behind it, make sure you read this section>>.
+Please find below some examples of this API link:#server_hotrod_failover[but to understand the motivation behind it, make sure you read this section.
 
 The code snippet bellow depicts the usage of these versioned methods:
 
@@ -554,12 +562,12 @@ For more details on versioned operations refer to link:{javadocroot}/org/infinis
 
 ==== Async API
 
-This is "borrowed" from the {brandname} core and it is largely discussed <<_asynchronous_api, here>>
+This is "borrowed" from the {brandname} core and it is largely discussed link:#cache_asynchronous_api[here].
 
 ==== Streaming API
 
 When sending / receiving large objects, it might make sense to stream them between the client and the server. The
-Streaming API implements methods similar to the <<hr:basic-api>> and <<hr:versioned-api>> described above but, instead of taking the value as a parameter,
+Streaming API implements methods similar to the link:#hr_basic_api[Hot Rod Basic API] and link:#hr_versioned_api[Hot Rod Versioned API] described above but, instead of taking the value as a parameter,
 they return instances of InputStream and OutputStream. The following example shows how one would write a potentially large
 object:
 
@@ -649,7 +657,7 @@ succeeds. In other words, if a remove operation is invoked but no entry is
 found or no entry should be removed, no event is generated. Users interested
 in removed events, even when no entry was removed, can develop event
 customization logic to generate such events. More information can be found
-in the <<_customizing_events,customizing client events section>>.
+in the link:#customizing_events[customizing client events section].
 
 All `ClientCacheEntryCreatedEvent`, `ClientCacheEntryModifiedEvent` and
 `ClientCacheEntryRemovedEvent` event instances also provide a `boolean isCommandRetried()`
@@ -798,7 +806,7 @@ even if the even is generated in a different node to where the listener is
 registered. To make them marshallable, either make them extend `Serializable`,
 `Externalizable`, or provide a custom `Externalizer` for them.
 
-[[_customizing_events]]
+[[customizing_events]]
 ==== Customizing Events
 
 The events generated by default contain just enough information to make the
@@ -1050,7 +1058,7 @@ instances that work on typed objects. By default, filters and converter will use
 method `format()` from the filter/converter. If the format returns `null`, the filter/converter will receive
 data as it's stored.
 
-As indicated in the <<marshalling_data,Marshalling data>> section, Hot Rod
+As indicated in the link:#hot_rod_marshalling_data[Marshalling Data] section, Hot Rod
 Java clients can be configured to use a different `org.infinispan.commons.marshall.Marshaller`
 instance. If doing this and deploying `CacheEventConverter` or `CacheEventFilter` instances,
 to be able to present filters/converter with Java Objects rather than marshalled content,
@@ -1296,6 +1304,7 @@ In order to avoid creating a TCP connection on each request (which is a costly o
 
 The number of connections per server, total number of connections, how long should a connection be kept idle in the pool before being closed - all these (and more) can be configured. Please refer to the javadoc of link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager] for a list of all possible configuration elements.
 
+[[hot_rod_marshalling_data]]
 ==== Marshalling data
 The Hot Rod client allows one to plug in a custom marshaller for transforming user objects into byte arrays and the other way around. This transformation is needed because of Hot Rod's binary nature - it doesn't know about objects.
 
@@ -1324,7 +1333,7 @@ configBuilder.addJavaSerialWhiteList(".*Person.*", ".*Employee.*");
 
 ==== Reading data in different data formats
 
-By default, every Hot Rod client operation will use the configured marshaller when reading and writing from the server for both keys and values (see <<marshalling_data,Marshalling data>>).
+By default, every Hot Rod client operation will use the configured marshaller when reading and writing from the server for both keys and values. See link:#hot_rod_marshalling_data[Marshalling Data].
 Using the DataFormat API, it's possible to decorate remote caches so that all operations can happen with a custom data format.
 
 ===== Using different marshallers for Key and Values
@@ -1376,7 +1385,8 @@ Various server usage statistics can be obtained through the link:{javadocroot}/o
 ==== Multi-Get Operations
 The Java Hot Rod client does not provide multi-get functionality out of the box but clients can build it themselves with the given APIs.
 
-==== Failover capabilities [[server-hotrod:failover]]
+[[server_hotrod_failover]]
+==== Failover capabilities
 
 Hot Rod clients' capabilities to keep up with topology changes helps with request
 balancing and more importantly, with the ability to failover operations
@@ -1440,9 +1450,10 @@ to one of the clusters pre-defined in the Hot Rod client configuration.
 To switch to the initial servers defined in the client configuration, call
 `switchToDefaultCluster()`.
 
-==== Monitoring the Hot Rod client [[hotrod:java-client-monitoring]]
+[[hotrod_java_client_monitoring]]
+==== Monitoring the Hot Rod client
 
-The Hot Rod client can be monitored and managed via JMX similarly to what is described in  <<jmx:chapter>>.
+The Hot Rod client can be monitored and managed via JMX similarly to what is described in the link:#jmx_mgmt_tooling[Management] chapter.
 By enabling statistics, an MBean will be registered for the `RemoteCacheManager` as well as for each `RemoteCache` obtained
 through it.
 Through these MBeans it is possible to obtain statistics about remote and near-cache hits/misses and connection pool usage.

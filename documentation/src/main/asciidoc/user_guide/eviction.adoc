@@ -294,7 +294,6 @@ cache.put("riesling", rieslingPrice, 5,
 
 ----
 
-
 === Expiration designs
 
 Central to expiration is an ExpirationManager.
@@ -305,8 +304,4 @@ disabled (wakeupInterval set to -1) expiration can be kicked off manually
 using ExprationManager.processExpiration(), for example from another
 maintenance thread that may run periodically in your application.
 
-The expiration manager processes expirations in the following manner:
-
-. Causes the data container to purge expired entries
-. Causes cache stores (if any) to purge expired entries
-
+The expiration manager processes expirations by causing the data container to purge expired entries and then causing any cache stores to purge expired entries.

@@ -322,7 +322,11 @@ The possible attributes for the locking element are:
 While it is possible to configure server caches to be transactional, none of the available protocols offer transaction capabilities.
 
 ==== Loaders and Stores
-Loaders and stores can be defined in server mode in almost the same way as in embedded mode (link:../user_guide/user_guide.html#persistence[described here]).
+Loaders and stores can be defined in server mode in almost the same way as in embedded mode.
+ifndef::productized[]
+See link:../user_guide/user_guide.html#persistence[Persistence] in the User Guide.
+endif::productized[]
+
 However, in server mode it is no longer necessary to define the `<persistence>...</persistence>` tag. Instead, a store's attributes are
 now defined on the store type element. For example, to configure the H2 database with a distributed cache in domain mode
 we define the "default" cache as follows in our domain.xml configuration:

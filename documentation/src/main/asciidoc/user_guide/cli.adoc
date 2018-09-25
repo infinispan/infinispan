@@ -1,4 +1,4 @@
-[[_command_line_interface]]
+[[command_line_interface]]
 ===  Command-Line Interface (CLI)
 {brandname} offers a simple Command-Line Interface (CLI) with which it is possible to interact with the data within the caches and with most of the internal components (e.g. transactions, cross-site backups, rolling upgrades).
 
@@ -222,7 +222,7 @@ The _locate_ command shows the physical location of a specified entry in a distr
 ----
 
 ===== put
-The _put_ command inserts an entry in the cache. If the cache previously contained a mapping for the key, the old value is replaced by the specified value. The user can control the type of data that the CLI will use to store the key and value. See the <<_data_types, Data Types>> section.
+The _put_ command inserts an entry in the cache. If the cache previously contained a mapping for the key, the old value is replaced by the specified value. The user can control the type of data that the CLI will use to store the key and value. See the link:#data_types[Data Types] section.
 
 
 ----
@@ -332,7 +332,7 @@ LockManager: {
 ----
 
 ==== upgrade
-The _upgrade_ command performs operations used during the rolling upgrade procedure. For a detailed description of this procedure please see <<_Rolling_chapter,Rolling Upgrades>>
+The _upgrade_ command performs operations used during the rolling upgrade procedure. For a detailed description of this procedure please see link:#rolling_upgrades[Rolling Upgrades].
 
 
 ----
@@ -350,6 +350,7 @@ Client Version 5.2.1.Final
 Server Version 5.2.1.Final
 ----
 
+[[data_types]]
 ==== Data Types
 
 The CLI understands the following types:

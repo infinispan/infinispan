@@ -1,3 +1,4 @@
+[[multimap_cache]]
 == Multimap Cache
 
 MutimapCache is a type of {brandname} Cache that maps keys to values in which each key can contain multiple values.
@@ -152,5 +153,3 @@ Eviction per key-value could be supported in the future.
 Implicit transactions are supported through the auto-commit and all the methods are non blocking.
 Explicit transactions work without blocking in most of the cases.
 Methods that will block are `size`, `containsEntry` and `remove(Predicate<? super V> p)`
-
-

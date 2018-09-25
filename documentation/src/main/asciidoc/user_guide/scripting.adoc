@@ -1,3 +1,4 @@
+[[scripting]]
 === Scripting
 
 Scripting is a feature of {brandname} Server which allows invoking server-side scripts from remote clients.
@@ -6,8 +7,8 @@ By default, the JDK comes with Nashorn, a ScriptEngine capable of running JavaSc
 
 ==== Installing scripts
 Scripts are stored in a special script cache, named '___script_cache'.
-Adding a script is therefore as simple as +put+ting it into the cache itself. 
-If the name of the script contains a filename extension, e.g. +myscript.js+, then that extension determines the engine that 
+Adding a script is therefore as simple as +put+ting it into the cache itself.
+If the name of the script contains a filename extension, e.g. +myscript.js+, then that extension determines the engine that
 will be used to execute it.
 Alternatively the script engine can be selected using script metadata (see below).
 Be aware that, when security is enabled, access to the script cache via the remote protocols requires
@@ -19,7 +20,7 @@ script is executed.
 It is contained in a specially-formatted comment on the first lines of the script.
 
 Properties are specified as +key=value+ pairs, separated by commas.
-You can use several different comment styles: The `//`, `;;`, `#` depending on the scripting language you use. 
+You can use several different comment styles: The `//`, `;;`, `#` depending on the scripting language you use.
 You can split metadata over multiple lines if necessary, and you can use single (') or double (") quotes to delimit your values.
 
 The following are examples of valid metadata comments:
@@ -103,4 +104,3 @@ Each node will return its address, and the results from all nodes will be collec
 // mode:distributed,language=javascript
 cacheManager.getAddress().toString();
 ----
-

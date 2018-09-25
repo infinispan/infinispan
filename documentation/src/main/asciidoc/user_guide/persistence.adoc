@@ -1,4 +1,5 @@
-==  Persistence
+[[persistence]]
+== Persistence
 Persistence allows configuring external (persistent) storage engines complementary to the default in memory storage offered by {brandname}.
 An external persistent storage might be useful for several reasons:
 
@@ -59,13 +60,13 @@ is available, i.e. how regularly are stores/loaders polled via their `org.infini
 or `org.infinispan.persistence.spi.CacheLoader#isAvailable` implementation. If a single store/loader is unavailable,
 then an exception is thrown during cache operations.
 
-* `passivation` (false by default) has a significant impact on how {brandname} interacts with the loaders, and is discussed in the <<cache-passivation,Cache Passivation>> section.
+* `passivation` (false by default) has a significant impact on how {brandname} interacts with the loaders, and is discussed in the link:#cache_passivation[Cache Passivation] section.
 
 * `class` defines the class of the store and must implement CacheLoader, CacheWriter or both
 
 * `fetch-state` (false by default) determines whether or not to fetch the persistent state of a cache when joining a cluster. The aim here is to take the persistent state of a cache and apply it to the local cache store of the joining node. Fetch persistent state is ignored if a cache store is configured to be shared, since they access the same data. Only one configured cache loader may set this property to true; if more than one cache loader does so, a configuration exception will be thrown when starting your cache service.
 
-* `preload` (false by default) if true, when the cache starts, data stored in the cache loader will be pre-loaded into memory. This is particularly useful when data in the cache loader is needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Note that preloading is done in a local fashion, so any data loaded is only stored locally in the node. No replication or distribution of the preloaded data happens. Also, {brandname} only preloads up to the maximum configured number of entries in <<eviction_anchor,eviction>>.
+* `preload` (false by default) if true, when the cache starts, data stored in the cache loader will be pre-loaded into memory. This is particularly useful when data in the cache loader is needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Note that preloading is done in a local fashion, so any data loaded is only stored locally in the node. No replication or distribution of the preloaded data happens. Also, {brandname} only preloads up to the maximum configured number of entries in link:#eviction_anchor[eviction].
 
 * `shared` (false by default) indicates that the cache loader is shared among different cache instances, for example where all instances in a cluster use the same JDBC settings to talk to the same remote, shared database. Setting this to true prevents repeated and unnecessary writes of the same data to the cache loader by different cache instances.
 
@@ -77,7 +78,7 @@ then an exception is thrown during cache operations.
 
 * `max-batch-size` (#{AbstractStore-maxBatchSize} by default) The maximum size of a batch to be inserted/deleted from the store. If the value is less than one, then no upper limit is placed on the number of operations in a batch.
 
-* `write-behind` (disabled by default) element has to do with a persisting data asynchronously to the actual store. It is discussed in detail <<_write_behind_asynchronous, here>>.
+* `write-behind` (disabled by default) element has to do with a persisting data asynchronously to the actual store. It is discussed in detail link:#write_behind_asynchronous[here].
 
 * `singleton` (disabled by default) attribute enables modifications to be stored by only one node in the cluster, the coordinator. Essentially, whenever any data comes in to some node it is always replicated(or distributed) so as to keep the caches in-memory states in sync; the coordinator, though, has the sole responsibility of pushing that state to disk. This functionality must be configured by setting the enabled attribute to true in all nodes. Only the coordinator of the cluster will persist data, but all nodes must have this configured to prevent others from persisting as well. You cannot configure a store as shared and singleton.
 
@@ -126,7 +127,7 @@ The same configuration can be achieved programmatically:
 
 ----
 
-[[cache-passivation]]
+[[cache_passivation]]
 === Cache Passivation
 A CacheWriter can be used to enforce entry passivation and activation on eviction in a cache. Cache passivation is the
 process of removing an object from in-memory cache and writing it to a secondary data store (e.g., file system, database)
@@ -223,6 +224,7 @@ Configuring a write-through or synchronous cache store does not require any part
 
 ----
 
+[[write_behind_asynchronous]]
 ==== Write-Behind (Asynchronous)
 In this mode, updates to the cache are asynchronously written to the cache store.
 {brandname} tries to store changes as quickly as possible by queueing the pending changes into a modification queue.
@@ -253,7 +255,7 @@ This strategy is suited for cache stores with low latency and cheap operation co
 
 A store can optionally be segmented. That is that data is stored by the segment
 that its key maps to. Information pertaining to segments and the ownership of
-them can be found at <<key_ownership,Key Ownership>>.
+them can be found at link:#key_ownership[Key Ownership].
 
 Segmenting a store has the benefit of increasing the read performance for
 bulk operations. Some examples of said methods are any stream operation
@@ -291,22 +293,15 @@ context, failures when writing to the file (which happens during the commit
 phase) cannot be recovered.
 
 include::persistence_sfs.adoc[]
-
 include::persistence_sifs.adoc[]
-
 include::persistence_jdbc.adoc[]
-
 include::persistence_remote.adoc[]
-
 include::persistence_cluster.adoc[]
-
 include::persistence_cli.adoc[]
 include::persistence_rocksdb.adoc[]
 include::persistence_leveldb.adoc[]
 include::persistence_jpa.adoc[]
-
 include::persistence_custom.adoc[]
-
 include::persistence_storemigrator.adoc[]
 
 Following sections describe the SPI and also discuss the SPI implementations that {brandname} ships out of the box.
@@ -358,5 +353,3 @@ If you're looking at migrating your existing store to the new API or to write a 
 === More implementations
 Many more cache loader and cache store implementations exist.
 Visit link:http://infinispan.org/cache-store-implementations[this website] for more details.
-
-

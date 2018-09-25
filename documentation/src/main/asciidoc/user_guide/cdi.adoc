@@ -1,8 +1,10 @@
+[[cdi_support]]
 ==  CDI Support
 {brandname} includes integration with link:http://www.cdi-spec.org[Contexts and Dependency Injection (better known as CDI)] via {brandname}'s `infinispan-cdi-embedded` or `infinispan-cdi-remote` module.
 CDI is part of link:http://www.oracle.com/technetwork/java/javaee/tech/index-jsp-142185.html[Java EE specification] and aims for managing beans' lifecycle inside the container.
 The integration allows to inject Cache interface and bridge Cache and CacheManager events. JCache annotations (JSR-107) are supported by `infinispan-jcache` and `infinispan-jcache-remote` artifacts. For more information have a look at link:http://download.oracle.com/otndocs/jcp/jcache-1_0-fr-spec/index.html[Chapter 11] of the JCACHE specification.
 
+[[maven_dependencies]]
 === Maven Dependencies
 To include CDI support for {brandname} in your project, use one of the following dependencies:
 
@@ -291,7 +293,7 @@ NOTE: To work properly the producers must have the scope @ApplicationScoped . Ot
 
 === Use JCache caching annotations
 
-TIP: There is now a separate module for JSR 107 (JCACHE) integration, including API.  See <<_jcache_jsr_107, this chapter>> for details.
+TIP: There is now a separate module for JSR 107 (JCACHE) integration, including API. See link:#jcache_jsr_107[this chapter] for details.
 
 When CDI integration and JCache artifacts are present on the classpath, it is possible to use JCache annotations with CDI managed beans.
 These annotations provide a simple way to handle common use cases.
@@ -400,4 +402,4 @@ public class GreetingService {
 
 ----
 
-TIP: Check <<_Listeners_and_notifications_section,Listeners and Notifications section>> for more information about event types.
+TIP: Check link:#listeners_and_notifications[Listeners and Notifications] for more information about event types.

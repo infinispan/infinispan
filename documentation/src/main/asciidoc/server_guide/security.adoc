@@ -66,9 +66,12 @@ Bear in mind that the choice of authentication mechanism you select for the prot
 The {brandname} subsystem security audit by default sends audit logs to the audit manager configured at the server level.
 Refer to the link:{wildflydocroot}/Security%20subsystem%20configuration[WildFly security subsystem guide] on how to configure the server audit manager.
 Alternatively you can also set your custom audit logger by using the same configuration as for embedded mode.
-Refer to the The link:../user_guide/user_guide.html#Security_chapter[Security] chapter in the user guide for details.
+ifndef::productized[]
+Refer to the link:../user_guide/user_guide.html#Security_chapter[Security] chapter in the user guide for details.
+endif::productized[]
 
-=== Hot Rod authentication [[security:hotrod_auth]]
+ [[security_hotrod_auth]]
+=== Hot Rod authentication
 
 The Hot Rod protocol supports authentication by leveraging the SASL mechanisms.
 The supported SASL mechanisms (usually shortened as mechs) are:
@@ -93,7 +96,8 @@ Notice the server-name attribute: it is the name that the server declares to inc
 It is particularly important when using GSSAPI as it is equivalent to the Kerberos service name.
 You can specify multiple mechanisms and they will be attempted in order.
 
-==== SASL Quality of Protection [[security_saslqop]]
+[[security_saslqop]]
+==== SASL Quality of Protection
 
 While the main purpose of SASL is to provide authentication, some mechanisms also support integrity and privacy protection, also known as Quality of Protection (or qop).
 During authentication negotiation, ciphers are exchanged between client and server, and they can be used to add checksums and encryption to all subsequent traffic.
@@ -188,7 +192,8 @@ Next we need to modify the Hot Rod connector
 </hotrod-connector>
 ----
 
-=== Hot Rod and REST encryption (TLS/SSL) [[security:hotrod_rest_encryption]]
+[[security_hotrod_rest_encryption]]
+=== Hot Rod and REST encryption (TLS/SSL)
 
 Both Hot Rod and REST protocols support encryption using SSL/TLS with optional TLS/SNI support (link:https://en.wikipedia.org/wiki/Server_Name_Indication[Server Name Indication]). To set this up you need to create a keystore using the +keytool+ application which is part of the JDK to store your server certificate. Then add a +<server-identities>+ element to your security realm:
 
@@ -303,5 +308,10 @@ And then tell the connector to require a client certificate:
 ----
 
 The client, at this point, will also need to specify a keyStore which contains its certificate on top of the trustStore
-which trusts the server certificate. See the link:../user_guide/user_guide.html#hr:encryption[Hot Rod client encryption]
+which trusts the server certificate.
+//dnaro: adding conditional statement to exclude this from productized builds
+ifndef::productized[]
+See the link:../user_guide/user_guide.html#hr_encryption[Hot Rod client encryption]
+endif::productized[]
+
 section to learn how.

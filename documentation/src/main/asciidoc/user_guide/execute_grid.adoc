@@ -1,4 +1,5 @@
-==  Executing code in the Grid
+[[execute_code_grid]]
+== Executing code in the Grid
 
 The main benefit of a Cache is the ability to very quickly lookup a value
 by its key, even across machines. In fact this use alone is probably the reason
@@ -8,8 +9,7 @@ a cluster of machines we also have features available that can help utilize
 the entire cluster for performing the user's desired workload.
 
 NOTE: This section covers only executing code in the grid using an embedded cache,
-if you are using a remote cache you should check out
-<<executing_code_in_the_remote_grid, Executing code in the Remote Grid>>.
+if you are using a remote cache you should check out link:#execute_code_remote_grid[Executing code in the Remote Grid].
 
 === Cluster Executor
 
@@ -30,7 +30,7 @@ inteface as an argument. Also since these arguments will be sent to other nodes 
 used a nice trick to ensure our lambdas are immediately Serializable.  That is by having the arguments implement both
 Serializable and the real argument type (ie. Runnable or Function).  The JRE will pick the most specific class when
 determining which method to invoke, so in that case your lambdas will always be serializable.
-It is also possible to use an <<_user_defined_externalizers, Externalizer>> to possibly reduce message size further.
+It is also possible to use an Externalizer to possibly reduce message size further.
 
 The manager by default will submit a given command to all nodes in the cluster including the node
 where it was submitted from. You can control on which nodes the task is executed on
@@ -50,8 +50,7 @@ requests to at the scope of same or different machine, rack or site level.
    manager.executor().filterTargets(ClusterExecutionPolicy.SAME_RACK).submit(...)
 ----
 
-To use this topology base filtering you must enable topology aware consistent hashing through
-<<ServerHinting, Server Hinting>>.
+To use this topology base filtering you must enable topology aware consistent hashing through link:#server_hinting[Server Hinting].
 
 You can also filter using a predicate based on the `Address` of the node. This can also
 be optionally combined with topology based filtering in the previous code snippet.
@@ -183,8 +182,5 @@ public class PiAppx {
 
 
 include::streams.adoc[]
-
 include::locked_streams.adoc[]
-
 include::distributed_executor.adoc[]
-

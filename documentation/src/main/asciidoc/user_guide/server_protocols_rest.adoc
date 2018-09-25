@@ -1,3 +1,4 @@
+[[rest_server]]
 ===  REST Server
 
 The {brandname} Server distribution contains a module that implements link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP access to the {brandname} data grid, built on https://github.com/netty/netty[Netty].
@@ -34,8 +35,8 @@ bin/add-user.sh -u user -p changeme -a
 
 ==== Supported protocols
 
-The REST Server supports HTTP/1.1 as well as HTTP/2 protocols. It is possible to switch to HTTP/2 by either performing a https://http2.github.io/http2-spec/#discover-http[HTTP/1.1 Upgrade procedure] or
-by negotiating communication protocol using https://http2.github.io/http2-spec/#versioning[TLS/ALPN extension].
+The REST Server supports HTTP/1.1 as well as HTTP/2 protocols. It is possible to switch to HTTP/2 by either performing a link:https://http2.github.io/http2-spec/#discover-http[HTTP/1.1 Upgrade procedure] or
+by negotiating communication protocol using link:https://http2.github.io/http2-spec/#versioning[TLS/ALPN extension].
 
 Note: TLS/ALPN with JDK8 requires additional steps from the client perspective. Please refer to your client documentation but it is very likely
 that you will need Jetty ALPN Agent or OpenSSL bindings.
@@ -43,7 +44,8 @@ that you will need Jetty ALPN Agent or OpenSSL bindings.
 ==== REST API
 HTTP PUT and POST methods are used to place data in the cache, with URLs to address the cache name and key(s) - the data being the body of the request (the data can be anything you like). Other headers are used to control the cache settings and behaviour.
 
-===== Data formats[[server-rest:data-format]]
+[[rest_server_data_format]]
+===== Data formats
 
 ====== Configuration
 
@@ -96,10 +98,13 @@ plus the "Key-Content-Type" with similar effect for keys.
 [[rest_accept]]
 ====== Accept header
 
-The REST server is compliant with the https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html[RFC-2616] Accept header,
+The REST server is compliant with the link:https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html[RFC-2616] Accept header,
 and will negotiate the correct MediaType based on the conversions supported. Example, sending the following header when reading data:
 
-   Accept: text/plain;q=0.7, application/json;q=0.8, */*;q=0.6
+[source,options=nowrap]
+----
+Accept: text/plain;q=0.7, application/json;q=0.8, */*;q=0.6
+----
 
 will cause {brandname} to try first to return content in JSON format (higher priority 0.8). If it's not possible to convert the storage format
 to JSON, next format tried will be _text/plain_ (second highest priority 0.7), and finally it falls back to _*/*_, that will pick a format
@@ -117,33 +122,37 @@ Examples:
 
 API call:
 
-   PUT /my-cache/AQIDBDM=
+   `PUT /my-cache/AQIDBDM=`
 
 Headers:
 
-   Key-Content-Type: application/octet-stream
+`Key-Content-Type: application/octet-stream`
 
 * Specifying a byte[] Key as a hexadecimal string:
 
 API call:
 
-   GET /my-cache/0x01CA03042F
+`GET /my-cache/0x01CA03042F`
 
 Headers:
 
-   Key-Content-Type: application/octet-stream; encoding=hex
-
+[source,options=nowrap]
+----
+Key-Content-Type: application/octet-stream; encoding=hex
+----
 
 * Specifying a double Key:
 
 API call:
 
-   POST /my-cache/3.141456
+`POST /my-cache/3.141456`
 
 Headers:
 
-   Key-Content-Type: application/x-java-object;type=java.lang.Double
-
+[source,options=nowrap]
+----
+Key-Content-Type: application/x-java-object;type=java.lang.Double
+----
 
 The _type_ parameter for _application/x-java-object_ is restricted to:
 
@@ -228,10 +237,9 @@ This will return the data found in the given cacheName, under the given key - as
 
 It is possible to obtain additional information by appending the "extended" parameter on the query string, as follows:
 
- GET /cacheName/cacheKey?extended
+`GET /cacheName/cacheKey?extended`
 
 This will return the following custom headers:
-
 
 * Cluster-Primary-Owner: the node name of the primary owner for this key
 * Cluster-Node-Name: the JGroups node name of the server that has handled the request
@@ -257,7 +265,7 @@ This will return a list of keys present in the given cacheName as the body of th
 
 If the cache identified by cacheName is distributed, only the keys owned by the node handling the request will be returned. To return all keys, append the "global" parameter to the query, as follows:
 
- GET /cacheName?global
+`GET /cacheName?global`
 
 ===== Removing data
 Data can be removed at the cache key/element level, or via a whole cache name using the HTTP delete method.
@@ -265,7 +273,6 @@ Data can be removed at the cache key/element level, or via a whole cache name us
 ====== `DELETE /{cacheName}/{cacheKey}`
 
 Removes the given key name from the cache.
-
 
 .Headers
 
@@ -276,7 +283,6 @@ Removes ALL the entries in the given cache name (i.e., everything from that path
 
 .Make it quicker!
 TIP: Set the header performAsync to true to return immediately and let the removal happen in the background.
-
 
 ===== Querying
 
@@ -292,7 +298,7 @@ Will execute an Ickle query in the given cache name.
 * _query_: REQUIRED the query string
 * _max_results_: OPTIONAL the number of results to return, default is _10_
 * _offset_: OPTIONAL the index of the first result to return, default is _0_
-* _query_mode_: OPTIONAL the link:#query-clustered-query-api[execution mode] of the query once it's received by server. Valid values are _FETCH_ and _BROADCAST_. Default is _FETCH_.
+* _query_mode_: OPTIONAL the link:#query_clustered_query_api[execution mode] of the query once it's received by server. Valid values are _FETCH_ and _BROADCAST_. Default is _FETCH_.
 
 .Query Result
 
@@ -324,7 +330,6 @@ Results are JSON documents containing one or more hits. Example:
 * _total_results_: NUMBER, the total number of results from the query.
 * _hits_: ARRAY, list of matches from the query
 * _hit_: OBJECT, each result from the query. Can contain all fields or just a subset of fields in case a _Select_ clause is used.
-
 
 ====== `POST /{cacheName}?action=search`
 
@@ -368,8 +373,6 @@ The rules are evaluated sequentially based on the "Origin" header set by the bro
 otherwise the next rule will be tested. Since the rule "allow ALL" permits all origins, any script coming from a different origin will be able to perform the methods specified and use the headers supplied.
 
 The <cors-rule> element can be configured as follows:
-
-
 
 |===
 | Config   | Description  | Mandatory
@@ -503,7 +506,6 @@ print(resp.read().decode('utf-8'))
 ----
 
 ===== Java example
-
 
 [source,java]
 ----

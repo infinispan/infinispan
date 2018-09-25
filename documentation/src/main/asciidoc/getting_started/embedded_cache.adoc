@@ -26,10 +26,12 @@ If you are using Maven (or another build system like Gradle or Ivy which can use
 to the `<dependencies>` section of the POM.
 You'll need to substitute `${infinispan.version}` for the version of {brandname} you wish to use.
 
+ifndef::productized[]
 .Which version of {brandname} should I use?
 TIP: We recommend using the latest stable version of {brandname}. All releases are displayed on the link:http://www.infinispan.org/download[downloads page].
 
-Alternatively, you can link:https://raw.github.com/infinispan/infinispan-quickstart/master/embedded-cache/pom.xml[use the POM] from the quickstart that accompanies this tutorial. 
+Alternatively, you can link:https://raw.github.com/infinispan/infinispan-quickstart/master/embedded-cache/pom.xml[use the POM] from the quickstart that accompanies this tutorial.
+endif::productized[]
 
 ==== Ant users
 If you are using Ant, or another build system which doesn't provide declarative dependency management, then the {brandname} distribution zip contains a lib/ directory. Add the contents of this to the build classpath.
@@ -42,7 +44,7 @@ In order to run {brandname}, we're going to create a `main()` method in the `Qui
 .Quickstart.java
 
 ----
-public class Quickstart {	
+public class Quickstart {
 
    public static void main(String args[]) throws Exception {
       Cache<Object, Object> c = new DefaultCacheManager().getCache();

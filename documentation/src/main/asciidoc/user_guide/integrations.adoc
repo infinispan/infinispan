@@ -1,3 +1,4 @@
+[[integrations]]
 ==  Integrations
 {brandname} can be integrated with a number of other projects, as detailed below.
 
@@ -11,7 +12,7 @@ Also check the link:https://github.com/infinispan/infinispan-spark/tree/master/e
 The {brandname} Hadoop connector can be used to expose {brandname} as a Hadoop compliant data source and sink that implements link:https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/InputFormat.html[InputFormat]/link:https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/OutputFormat.html[OutputFormat].
 For further details, refer to the full link:https://github.com/infinispan/infinispan-hadoop/blob/master/README.md[documentation].
 
-[[integrations-lucene-directory]]
+[[integrations_lucene_directory]]
 === Apache Lucene
 {brandname} includes a highly scalable distributed link:http://lucene.apache.org[Apache Lucene Directory] implementation.
 
@@ -37,6 +38,7 @@ All you need is _org.infinispan:infinispan-lucene-directory_ :
 </dependency>
 
 ----
+
 ==== How to use it
 
 See the below example of using the {brandname} Lucene Directory in order to index and query a single Document:
@@ -153,7 +155,7 @@ Example of configuration:
 ----
 
 ==== Using a CacheLoader
-Using a CacheLoader you can have the index content backed up to a permanent storage; you can use a shared store for all nodes or one per node, see <<cache-passivation, cache passivation>> for more details.
+Using a CacheLoader you can have the index content backed up to a permanent storage; you can use a shared store for all nodes or one per node, see link:#cache_passivation[cache passivation] for more details.
 
 When using a CacheLoader to store a Lucene index, to get best write performance you would need to configure the CacheLoader with _async=true_ .
 
@@ -224,7 +226,7 @@ Start several instances, then try adding text in one instance and searching for 
 * Issue tracker: link:https://jira.jboss.org/browse/ISPN/component/12312732[]
 * Source code: link:https://github.com/infinispan/infinispan/tree/master/lucene/lucene-directory/src/main/java/org/infinispan/lucene[]
 
-[[integrations-directory-provider]]
+[[integrations_directory_provider]]
 === Directory Provider for Hibernate Search
 
 Hibernate Search applications can use {brandname} as a directory provider, taking advantage of {brandname}'s distribution and low latency capabilities to store the Lucene indexes.
@@ -232,12 +234,12 @@ Hibernate Search applications can use {brandname} as a directory provider, takin
 ==== Maven dependencies
 
 .pom.xml
-[source,xml,subs=attributes]
+[source,xml,subs=attributes+]
 ----
 <dependency>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-directory-provider</artifactId>
-   <version>{infinispanversion}</version>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-directory-provider</artifactId>
+   <version>{infinispanversion}</version>
 </dependency>
 
 ----
@@ -265,9 +267,9 @@ Optional properties allow for a custom {brandname} configuration or to use an ex
 [options="header"]
 |===============
 |Property|Description|Example value
-|hibernate.search.infinispan.configuration_resourcename| Custom configuration for {brandname} | config/infinispan.xml
-|hibernate.search.infinispan.configuration.transport_override_resourcename| Overrides the JGroups stack in the {brandname} configuration file | jgroups-ec2.xml
-|hibernate.search.infinispan.cachemanager_jndiname| Specifies the JNDI name under which the _EmbeddedCacheManager_ to use is bound. Will cause the properties above to be ignored when present| java:jboss/infinispan/container/hibernate-search
+|`hibernate.search.infinispan.configuration_resourcename`| Custom configuration for {brandname} | config/infinispan.xml
+|`hibernate.search.infinispan.configuration.transport_override_resourcename`| Overrides the JGroups stack in the {brandname} configuration file | jgroups-ec2.xml
+|`hibernate.search.infinispan.cachemanager_jndiname`| Specifies the JNDI name under which the _EmbeddedCacheManager_ to use is bound. Will cause the properties above to be ignored when present| `java:jboss/infinispan/container/hibernate-search`
 |===============
 
 ==== Architecture considerations
@@ -281,7 +283,7 @@ Refer to the link:https://docs.jboss.org/hibernate/stable/search/reference/en-US
 
 include::integrations_hibernate_cache.adoc[]
 
-[[integrations-hibernate-ogm]]
+[[integrations_hibernate_ogm]]
 ===  JPA / Hibernate OGM
 
 Hibernate can perform CRUD operations directly on an {brandname} cluster.
@@ -352,7 +354,7 @@ As the {brandname} modules shipped with link:http://wildfly.org/[WildFly] / link
 if you want to use {brandname} in your application that is deployed to WildFly / EAP. By installing these modules, it is possible to deploy user applications without packaging the {brandname} JARs within the deployments (WARs, EARs, etc), thus minimizing their size.
 Also, there will be no conflict with WildFly / EAP's internal modules since the slot will be different.
 
-[[_Modules_installation_section]]
+[[modules_installation_section]]
 ==== Installation
 
 The modules for WildFly / EAP are available in the link:http://infinispan.org/download/[downloads] section of our site. The zip should be extracted to `WILDFLY_HOME/modules`, so that for example the infinispan core module would be under `WILDFLY_HOME/modules/system/add-ons/{moduleprefix}/org/infinispan/core`.
@@ -414,15 +416,13 @@ Dependencies: org.infinispan:{infinispanslot} services
 
 ===== Remote
 
-If you need to connect to remote {brandname} servers via Hot Rod, including execution of remote queries, use the module ```org.infinispan.remote``` that exposes the needed dependencies conveniently:
+If you need to connect to remote {brandname} servers via Hot Rod, including execution of remote queries, use the module `org.infinispan.remote` that exposes the needed dependencies conveniently:
 
 .MANIFEST.MF
 [source,subs=attributes]
 ----
-
 Manifest-Version: 1.0
 Dependencies: org.infinispan.remote:{infinispanslot} services
-
 ----
 
 ===== Embedded Query
@@ -432,10 +432,8 @@ For embedded querying, including the {brandname} Query DSL, Lucene and Hibernate
 .MANIFEST.MF
 [source,subs=attributes]
 ----
-
 Manifest-Version: 1.0
 Dependencies: org.infinispan:{infinispanslot} services, org.infinispan.query:{infinispanslot} services
-
 ----
 
 ===== Lucene Directory
@@ -445,10 +443,8 @@ Lucene users who wants to simple use {brandname} as a _org.apache.lucene.store.D
 .MANIFEST.MF
 [source,subs=attributes]
 ----
-
 Manifest-Version: 1.0
 Dependencies: org.infinispan.lucene-directory:{infinispanslot}
-
 ----
 
 ===== Hibernate Search directory provider for {brandname}
@@ -459,7 +455,7 @@ When choosing the {brandname} module zip to use, start by checking which Hiberna
 ====== Usage with Wildfy's internal Hibernate Search modules
 
 The Hibernate Search module present in Wildfly 10.x has slot "5.5", which in turn has an optional dependency to `org.infinispan.hibernate-search.directory-provider:for-hibernatesearch-5.5`.
-This dependency will be available once the {brandname} modules are <<_Modules_installation_section,installed>>.
+This dependency will be available once the {brandname} modules are link:#modules_installation_section[installed].
 
 
 ====== Usage with other Hibernate Search modules
@@ -470,7 +466,7 @@ To use a Hibernate Search with a different version that is present in Wildfly, p
 Make sure that the chosen Hibernate Search optional slot for `org.infinispan.hibernate-search.directory-provider` matches the one distributed with {brandname}.
 
 ==== Usage
-There are two possible ways for your application to utilize {brandname} within Wildfly: embedded mode and server mode.
+There are two possible ways for your application to utilize {brandname} within Wildfly, embedded mode and server mode.
 
 ===== Embedded Mode
 All CacheManagers and cache instances are created in your application logic.  The lifecycle of your EmbeddedCacheManager

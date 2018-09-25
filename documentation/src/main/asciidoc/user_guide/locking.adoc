@@ -1,3 +1,4 @@
+[[locking_concurrency]]
 ==  Locking and Concurrency
 {brandname} makes use of multi-versioned concurrency control (link:http://en.wikipedia.org/wiki/Multiversion_concurrency_control[MVCC]) - a concurrency scheme popular with relational databases and other data stores.
 MVCC offers many advantages over coarse-grained Java synchronization and even JDK Locks for access to shared data, including:
@@ -39,12 +40,12 @@ NOTE: If the operation is executed locally in the primary owner, the first step 
 ==== Transactional caches
 
 The transactional cache supports optimistic and pessimistic locking mode.
-Check section <<tx:locking>> for more information about it.
+Check section link:#tx_locking[Transaction Locking] for more information about it.
 
 ==== Isolation levels
 
 Isolation level affects what transactions can read when running concurrently with other transaction.
-Check section <<tx:isolation-levels>> for more details about it.
+Check section link:#tx_isolation_levels[Isolation Levels] for more details about it.
 
 ==== The LockManager
 The `LockManager` is a component that is responsible for locking an entry for writing.
@@ -123,8 +124,7 @@ The reason for this is the that the lock for a key `K` is always, deterministica
 
 ===  Data Versioning
 {brandname} supports two forms of data versioning: simple and external.
-The simple versioning is used in transactional caches for write skew check.
-Check section <<tx:write-skew>> section for detail about it.
+The simple versioning is used in transactional caches for write skew check. See link:#tx_write_skew[Write Skews].
 
 The external versioning is used to encapsulate an external source of data versioning within {brandname}, such as when using {brandname} with Hibernate which in turn gets its data version information directly from a database.
 
@@ -132,4 +132,3 @@ In this scheme, a mechanism to pass in the version becomes necessary, and overlo
 This is then stored on the `InvocationContext` and applied to the entry at commit time.
 
 NOTE: Write skew checks cannot and will not be performed in the case of external data versioning.
-

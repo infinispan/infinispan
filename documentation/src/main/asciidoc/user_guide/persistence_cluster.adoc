@@ -1,3 +1,4 @@
+[[cluster_cache_loader]]
 === Cluster cache loader
 The ClusterCacheLoader is a cache loader implementation that retrieves data from other cluster members.
 

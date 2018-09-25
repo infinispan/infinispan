@@ -1,3 +1,4 @@
+[[marshalling]]
 ==  Marshalling
 Marshalling is the process of converting Java POJOs into something that can be written in a format that can be transferred over the wire.
 Unmarshalling is the reverse process whereby data read from a wire format is transformed back into Java POJOs. {brandname} uses marshalling/unmarshalling in order to:
@@ -23,7 +24,8 @@ TIP: Since {brandname} 5.0, marshalling non-Serializable key/value objects are s
 
 If you're unable to retrofit Serializable or Externalizable into the classes whose instances are stored in {brandname}, you could alternatively use something like link:http://x-stream.github.io/[XStream] to convert your Non-Serializable objects into a String that can be stored into {brandname}. The one caveat about using XStream is that it slows down the process of storing key/value objects due to the XML transformation that it needs to do.
 
-==== Store As Binary[[store_binary]]
+[[store_binary]]
+==== Store As Binary
 Store as binary enables data to be stored in its serialized form. This can be useful to achieve lazy deserialization, which is the mechanism by which {brandname} by which serialization and deserialization of objects is deferred till the point in time in which they are used and needed. This typically means that any deserialization happens using the thread context class loader of the invocation that requires deserialization, and is an effective mechanism to provide classloader isolation. By default lazy deserialization is disabled but if you want to enable it, you can do it like this:
 
 * Via XML at the Cache level, either under `<*-cache />` element:

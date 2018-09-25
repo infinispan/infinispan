@@ -1,3 +1,4 @@
+[[memcached_server]]
 ===  Memcached Server
 The {brandname} Server distribution contains a server module that implements the link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol]. This allows Memcached clients to talk to one or several {brandname} backed Memcached servers. These servers could either be working standalone just like Memcached does where each server acts independently and does not communicate with the rest, or they could be clustered where servers replicate or distribute their contents to other {brandname} backed Memcached servers, thus providing clients with failover capabilities.
 Please refer to {brandname} Server's link:../server_guide/server_guide.html#memcached[memcached server guide] for instructions on how to configure and run a Memcached server.
@@ -88,9 +89,12 @@ Which automatically starts two nodes.
 
 *  Execute link:https://github.com/infinispan/infinispan/tree/master/server/memcached/src/test/resources/test_memcached_read.py[test_memcached_read.py] script which connects to server bound to 127.0.0.1:11311 and verifies that it can read the data that was written by the writer script to the first server. If the script is executed successfully, you should see an output similar to this:
 
+[source,options=nowrap]
+----
  Connecting to 127.0.0.1:11311
  Testing get ['Simple_Key'] should return Simple value ... OK
  Testing get ['Expiring_Key'] should return nothing... OK
  Testing get ['Incr_Key'] should return 4 ... OK
  Testing get ['Decr_Key'] should return 3 ... OK
  Testing get ['Multi_Decr_Key'] should return 1 ... OK
+----

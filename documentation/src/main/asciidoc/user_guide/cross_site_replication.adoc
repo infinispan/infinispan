@@ -1,4 +1,4 @@
-[[CrossSiteReplication]]
+[[x_site_replication]]
 == Cross site replication
 Cross site (x-site) replication allows backing up the data from one cluster to other clusters, potentially situated in different geographical location. The cross-site replication is built on top of JGroups' link:http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced[RELAY2 protocol] . link:https://community.jboss.org/wiki/DesignForCrossSiteReplication[This document] describes the technical design of cross site replication in more detail.
 
@@ -306,9 +306,9 @@ the sites is broken during the state transfer (as described above);
 
 * +clearPushStateStatus()+ - It clears the status of completed cross-site state transfer.
 
-For more technical information, you can check the Cross Site design document (See <<x-site-reference, Reference>>).
+For more technical information, you can check the Cross Site design document. See link:#x_site_reference[Reference].
 
-[[x-site-st-configuration]]
+[[x_site_st_configuration]]
 ==== Configuration
 State transfer between sites cannot be enabled or disabled but it allows to tune some parameters. The values shown
 below are the default values:
@@ -360,7 +360,6 @@ the command will not retry in case of failure. Default value is 30.
 * _wait-time_ - The waiting time (in milliseconds) between each retry. A negative or a zero value is *not* a valid
 value. Default value is 2 seconds.
 
-[[x-site-reference]]
+[[x_site_reference]]
 === Reference
 link:https://community.jboss.org/wiki/DesignForCrossSiteReplication[This document] describes the technical design of cross site replication in more detail.
-

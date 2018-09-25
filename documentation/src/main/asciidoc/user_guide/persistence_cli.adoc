@@ -1,3 +1,4 @@
+[[cli_cache_loader]]
 === Command-Line Interface cache loader
 The Command-Line Interface (CLI) cache loader is a cache loader implementation
 that retrieves data from another {brandname} node using the CLI. The node to
@@ -9,8 +10,7 @@ The CLI cache loader is configured with a connection URL pointing to the
 {brandname} node to which connect to. Here is an example:
 
 NOTE: Details on the format of the URL and how to make sure a node can
-receive invocations via the CLI can be found in the
-<<_command_line_interface,Command-Line Interface chapter>>.
+receive invocations via the CLI can be found in the link:#command_line_interface[Command-Line Interface chapter].
 
 NOTE: This store doesn't support being segmented
 

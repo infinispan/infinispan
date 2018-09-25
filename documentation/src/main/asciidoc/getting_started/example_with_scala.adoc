@@ -1,5 +1,6 @@
+[[start_example_scala]]
 ==  Example with Scala
-This article shows how to use {brandname} with link:http://www.scala-lang.org/[Scala language] . It uses the same commands and configurations used in the <<_example_with_groovy, Example with Groovy>>. For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility.
+This article shows how to use {brandname} with link:http://www.scala-lang.org/[Scala language] . It uses the same commands and configurations used in the link:#start_example_groovy[Example with Groovy]. For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility.
 
 === Environment
 Running the shell
@@ -334,4 +335,3 @@ scala> cacheStoreEvictionCache.get("cs1")
 res43: String = value1
 
 ----
-

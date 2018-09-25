@@ -1,4 +1,5 @@
-==  Management Tooling [[jmx:chapter]]
+[[jmx_mgmt_tooling]]
+==  Management Tooling
 Management of {brandname} instances is all about exposing as much relevant statistical information that allows administrators to get a view of the state of each {brandname} instance. Taking in account that a single installation could be made up of several tens or hundreds {brandname} instances, providing clear and concise information in an efficient manner is imperative. The following sections dive into the range of management tooling that {brandname} provides.
 
 === JMX
@@ -136,4 +137,3 @@ Refer to link:http://hawt.io/plugins/infinispan/[Hawt.io's documentation] for in
 
 === Writing plugins for other management tools
 Any management tool that supports JMX already has basic support for {brandname}. However, custom plugins could be written to adapt the JMX information for easier consumption.
-

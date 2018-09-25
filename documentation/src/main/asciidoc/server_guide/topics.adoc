@@ -119,7 +119,7 @@ is always enabled.
 
 === Using Hot Rod client
 
-Multi-tenant routing for binary protocols requires using a standard, transport layer mechanism such as link:$$https://en.wikipedia.org/wiki/Server_Name_Indication$$[SSL/TLS Server Name Indication]. The server needs to be configured to support encryption and additional SNI routing needs to be added to the `router-connector`.
+Multi-tenant routing for binary protocols requires using a standard, transport layer mechanism such as link:https://en.wikipedia.org/wiki/Server_Name_Indication[SSL/TLS Server Name Indication]. The server needs to be configured to support encryption and additional SNI routing needs to be added to the `router-connector`.
 
 In order to connect to a secured Hot Rod server, the client needs to use configuration similar to this:
 

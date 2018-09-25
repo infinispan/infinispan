@@ -1,6 +1,6 @@
+[[leveldb_cache_store]]
 === LevelDB Cache Store
 
 WARNING: The LevelDB Cache Store has been deprecated and has been replaced with the RocksDB Cache Store.
 If you have existing data stored in a LevelDB Cache Store, the RocksDB Cache Store will convert it to the new SST-based format
 on the first run.
-

@@ -1,3 +1,4 @@
+[[sifs_cache_store]]
 ==== Soft-Index File Store
 
 The Soft-Index File Store is an experimental local file-based.
