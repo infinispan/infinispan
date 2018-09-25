@@ -34,6 +34,8 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 public class DataContainerFactory extends AbstractNamedCacheComponentFactory implements
          AutoInstantiableFactory {
 
+   public static final String SEGMENTATION_FEATURE = "data-segmentation";
+
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
@@ -44,18 +46,21 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          }
          return (T) new InternalDataContainerAdapter<>(customDataContainer);
       } else {
+         ClusteringConfiguration clusteringConfiguration = configuration.clustering();
+
+         boolean shouldSegment = globalConfiguration.features().isAvailable(SEGMENTATION_FEATURE) &&
+               clusteringConfiguration.cacheMode().needsStateTransfer();
          int level = configuration.locking().concurrencyLevel();
 
          MemoryConfiguration memoryConfiguration = configuration.memory();
 
          EvictionStrategy strategy = memoryConfiguration.evictionStrategy();
-         ClusteringConfiguration clusteringConfiguration = configuration.clustering();
          //handle case when < 0 value signifies unbounded container or when we are not removal based
          if (strategy.isExceptionBased() || !strategy.isEnabled()) {
             if (configuration.memory().storageType() == StorageType.OFF_HEAP) {
 
                int addressCount = memoryConfiguration.addressCount();
-               if (clusteringConfiguration.cacheMode().needsStateTransfer()) {
+               if (shouldSegment) {
                   int segments = clusteringConfiguration.hash().numSegments();
                   Supplier mapSupplier = () -> {
                      OffHeapEntryFactory entryFactory = componentRegistry.getOrCreateComponent(OffHeapEntryFactory.class);
@@ -72,17 +77,15 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                } else {
                   return (T) new OffHeapDataContainer(addressCount);
                }
-            } else {
-               if (clusteringConfiguration.cacheMode().needsStateTransfer()) {
-                  Supplier mapSupplier = ConcurrentHashMap::new;
-                  int segments = clusteringConfiguration.hash().numSegments();
-                  if (clusteringConfiguration.l1().enabled()) {
-                     return (T) new L1SegmentedDataContainer<>(mapSupplier, segments);
-                  }
-                  return (T) new DefaultSegmentedDataContainer<>(mapSupplier, segments);
-               } else {
-                  return (T) DefaultDataContainer.unBoundedDataContainer(level);
+            } else if (shouldSegment) {
+               Supplier mapSupplier = ConcurrentHashMap::new;
+               int segments = clusteringConfiguration.hash().numSegments();
+               if (clusteringConfiguration.l1().enabled()) {
+                  return (T) new L1SegmentedDataContainer<>(mapSupplier, segments);
                }
+               return (T) new DefaultSegmentedDataContainer<>(mapSupplier, segments);
+            } else {
+               return (T) DefaultDataContainer.unBoundedDataContainer(level);
             }
          }
 
@@ -91,7 +94,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          DataContainer dataContainer;
          if (memoryConfiguration.storageType() == StorageType.OFF_HEAP) {
             int addressCount = memoryConfiguration.addressCount();
-            if (clusteringConfiguration.cacheMode().needsStateTransfer()) {
+            if (shouldSegment) {
                int segments = clusteringConfiguration.hash().numSegments();
                dataContainer = new SegmentedBoundedOffHeapDataContainer(addressCount, segments, thresholdSize,
                      memoryConfiguration.evictionType());
@@ -99,15 +102,13 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                dataContainer = new BoundedOffHeapDataContainer(addressCount, thresholdSize,
                      memoryConfiguration.evictionType());
             }
+         } else if (shouldSegment) {
+            int segments = clusteringConfiguration.hash().numSegments();
+            dataContainer = new BoundedSegmentedDataContainer<>(segments, thresholdSize,
+                  memoryConfiguration.evictionType());
          } else {
-            if (clusteringConfiguration.cacheMode().needsStateTransfer()) {
-               int segments = clusteringConfiguration.hash().numSegments();
-               dataContainer = new BoundedSegmentedDataContainer<>(segments, thresholdSize,
-                     memoryConfiguration.evictionType());
-            } else {
-               dataContainer = DefaultDataContainer.boundedDataContainer(level, thresholdSize,
-                     memoryConfiguration.evictionType());
-            }
+            dataContainer = DefaultDataContainer.boundedDataContainer(level, thresholdSize,
+                  memoryConfiguration.evictionType());
          }
          configuration.eviction().attributes().attribute(EvictionConfiguration.SIZE).addListener((newSize, old) ->
                memoryConfiguration.size(newSize.get()));

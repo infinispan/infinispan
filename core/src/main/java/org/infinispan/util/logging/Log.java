@@ -1823,4 +1823,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Grouping requires OBJECT storage type but was: %s", id = 534)
    CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(StorageType storageType);
+
+   @Message(value = "Store is configured as segmented, but data-segmentation feature is disabled", id = 535)
+   CacheConfigurationException storeSegmentedButSegmentationDisabled();
 }
