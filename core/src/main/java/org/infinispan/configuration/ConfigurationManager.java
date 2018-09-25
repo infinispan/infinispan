@@ -94,7 +94,7 @@ public class ConfigurationManager {
    }
 
    public Configuration putConfiguration(String cacheName, ConfigurationBuilder builder) {
-      return putConfiguration(cacheName, builder.build());
+      return putConfiguration(cacheName, builder.build(globalConfiguration));
    }
 
    public void removeConfiguration(String cacheName) {

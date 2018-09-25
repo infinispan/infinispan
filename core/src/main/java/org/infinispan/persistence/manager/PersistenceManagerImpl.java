@@ -39,16 +39,19 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.expiration.impl.InternalExpirationManager;
+import org.infinispan.factories.DataContainerFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -103,6 +106,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private static final boolean trace = log.isTraceEnabled();
 
    @Inject private Configuration configuration;
+   @Inject private GlobalConfiguration globalConfiguration;
    @Inject private AdvancedCache<Object, Object> cache;
    @Inject private StreamingMarshaller m;
    @Inject private TransactionManager transactionManager;
@@ -869,15 +873,22 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private void createLoadersAndWriters() {
+      Features features = globalConfiguration.features();
       for (StoreConfiguration cfg : configuration.persistence().stores()) {
 
-         Object bareInstance;
-         if (cfg.segmented() && cfg instanceof AbstractSegmentedStoreConfiguration) {
-            bareInstance = new ComposedSegmentedLoadWriteStore<>((AbstractSegmentedStoreConfiguration) cfg);
+         final Object bareInstance;
+         if (cfg.segmented()) {
+            if (!features.isAvailable(DataContainerFactory.SEGMENTATION_FEATURE)) {
+               throw log.storeSegmentedButSegmentationDisabled();
+            }
+            if (cfg instanceof AbstractSegmentedStoreConfiguration) {
+               bareInstance = new ComposedSegmentedLoadWriteStore<>((AbstractSegmentedStoreConfiguration) cfg);
+            } else {
+               bareInstance = cacheStoreFactoryRegistry.createInstance(cfg);
+            }
          } else {
             bareInstance = cacheStoreFactoryRegistry.createInstance(cfg);
          }
-
 
          StoreConfiguration processedConfiguration = cacheStoreFactoryRegistry.processStoreConfiguration(cfg);
 
