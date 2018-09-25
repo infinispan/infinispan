@@ -21,19 +21,17 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    private ObjectName interpreterObjName;
 
    @Override
-   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
-      // This works because the interpreter is not yet used internally, otherwise it would have to be in cacheManagerStarting
-      GlobalConfiguration globalConfig = gcr.getGlobalConfiguration();
-      GlobalJmxStatisticsConfiguration jmxConfig = globalConfig.globalJmxStatistics();
-      if (jmxConfig.enabled()) {
-         String groupName = getGroupName(globalConfig.cacheManagerName());
+   public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
+      GlobalJmxStatisticsConfiguration jmxConfiguration = gcr.getGlobalConfiguration().globalJmxStatistics();
+      if (jmxConfiguration.enabled()) {
+         String groupName = getGroupName(globalConfiguration.cacheManagerName());
          Interpreter interpreter = new Interpreter();
 
          gcr.registerComponent(interpreter, Interpreter.class);
 
          try {
             CacheManagerJmxRegistration jmxRegistration = gcr.getComponent(CacheManagerJmxRegistration.class);
-            jmxRegistration.registerExternalMBean(interpreter, jmxConfig.domain(), groupName, "Interpreter");
+            jmxRegistration.registerExternalMBean(interpreter, jmxConfiguration.domain(), groupName, "Interpreter");
          } catch (Exception e) {
             interpreterObjName = null;
             log.jmxRegistrationFailed();

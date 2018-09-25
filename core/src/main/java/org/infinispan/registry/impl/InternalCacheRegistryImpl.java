@@ -34,6 +34,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    @Inject EmbeddedCacheManager cacheManager;
    @Inject CacheManagerJmxRegistration cacheManagerJmxRegistration;
    @Inject ConfigurationManager configurationManager;
+   @Inject GlobalConfiguration globalConfiguration;
 
    private final ConcurrentMap<String, EnumSet<Flag>> internalCaches = new ConcurrentHashMap<>();
    private final Set<String> privateCaches = ConcurrentHashMap.newKeySet();
@@ -57,7 +58,6 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       }
       ConfigurationBuilder builder = new ConfigurationBuilder().read(configuration);
       builder.jmxStatistics().disable(); // Internal caches must not be included in stats counts
-      GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
       if (flags.contains(Flag.GLOBAL) && globalConfiguration.isClustered()) {
          // TODO: choose a merge policy
          builder.clustering()

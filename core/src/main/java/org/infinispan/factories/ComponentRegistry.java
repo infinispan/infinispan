@@ -74,6 +74,10 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    @Inject CacheManagerNotifier cacheManagerNotifier;
 
+   // All modules must be initialized before the first cache starts
+   @SuppressWarnings("unused")
+   @Inject GlobalComponentRegistry.ModuleInitializer moduleInitializer;
+
    //Cached fields:
    private ComponentRef<AdvancedCache> cache;
    private ComponentRef<AsyncInterceptorChain> asyncInterceptorChain;

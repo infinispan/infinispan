@@ -30,7 +30,7 @@ public class JpaStoreTest extends BaseStoreTest {
                      .create();
       InitializationContext context = createContext(builder.build());
       context.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry()
-            .registerComponent(new EntityManagerFactoryRegistry(), EntityManagerFactoryRegistry.class);
+             .registerComponent(new EntityManagerFactoryRegistry(), EntityManagerFactoryRegistry.class);
       JpaStore store = new JpaStore();
       store.init(context);
       return store;

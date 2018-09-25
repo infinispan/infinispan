@@ -68,6 +68,7 @@ public class PersistenceMockUtil {
       Set<String> cachesSet = new HashSet<>();
       EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
       when(cm.getCacheManagerConfiguration()).thenReturn(gc);
+      when(cm.getClassWhiteList()).thenReturn(new ClassWhiteList());
       GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cm, cachesSet, TestModuleRepository.defaultModuleRepository(),
                                                                 mock(ConfigurationManager.class));
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
@@ -76,7 +77,7 @@ public class PersistenceMockUtil {
                                                          configuration.getClass().getClassLoader());
 
       when(cache.getClassLoader()).thenReturn(PersistenceMockUtil.class.getClassLoader());
-      when(cache.getCacheManager().getCacheManagerConfiguration()) .thenReturn(gc);
+      when(cache.getCacheManager().getCacheManagerConfiguration()).thenReturn(gc);
       when(cache.getCacheManager().getClassWhiteList()).thenReturn(whiteList);
       when(cache.getName()).thenReturn(cacheName);
       when(cache.getAdvancedCache()).thenReturn(cache);
