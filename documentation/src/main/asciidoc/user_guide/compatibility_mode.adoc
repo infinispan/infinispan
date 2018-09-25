@@ -58,3 +58,4 @@ One concrete example of this marshaller logic can be found in the link:https://g
 
 === Code examples
 The best code examples available showing compatibility in action can be found in the link:https://github.com/infinispan/infinispan/tree/master/integrationtests/compatibility-mode-it/src/test/java/org/infinispan/it/compatibility[{brandname} Compatibility Mode testsuite], but more will be developed in the near future.
+

@@ -1,4 +1,4 @@
-==  Embedded/Remote Interoperability[[endpoint.interop]]
+== Embedded/Remote Interoperability[[endpoint.interop]]
 
 
 {brandname} offers the possibility to store and retrieve data in a local embedded way, and also remotely thanks to multiple endpoints offered.
@@ -173,3 +173,4 @@ WARNING: Entities must be visible to the server during startup!
 === Demos
 
 Please refer to https://github.com/infinispan-demos/endpoint-interop to try out the interoperability support using the {brandname} docker image.
+
