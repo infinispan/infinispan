@@ -51,6 +51,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 final class TerminalFunctions {
    private static final Log log = LogFactory.getLog(TerminalFunctions.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private TerminalFunctions() { }
 
@@ -620,7 +621,9 @@ final class TerminalFunctions {
       @Override
       public Long apply(Stream<T> stream) {
          long count = stream.count();
-         log.tracef("Count value is %d", count);
+         if (trace) {
+            log.tracef("Count value is %d", count);
+         }
          return count;
       }
 

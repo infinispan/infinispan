@@ -2,9 +2,7 @@ package org.infinispan.stream.stress;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
@@ -30,6 +27,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.util.function.SerializablePredicate;
 import org.testng.annotations.Test;
 
 /**
@@ -78,15 +76,18 @@ public class DistributedStreamRehashStressTest extends StressTest {
 
    public void testStressNodesLeavingWhileMultipleCollectors() throws Throwable {
       testStressNodesLeavingWhilePerformingCallable((cache, masterValues, iteration) -> {
-         Map<Integer, Integer> results = cache.entrySet().stream().filter(
-                 (Serializable & Predicate<Map.Entry<Integer, Integer>>)
-                         e -> (e.getKey() & 1) == 1).collect(
-                 () -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+         SerializablePredicate<Map.Entry<Integer, Integer>> predicate = e -> (e.getKey() & 1) == 1;
+         // Remote invocation with data from cache
+         Map<Integer, Integer> results = cache.entrySet().stream()
+               .filter(predicate)
+               .collect(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+         // Local invocation
+         Map<Integer, Integer> filteredMasterValues = masterValues.entrySet().stream()
+               .filter(predicate)
+               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+         KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
+         findMismatchedSegments(keyPartitioner, filteredMasterValues, results, iteration);
          assertEquals(CACHE_ENTRY_COUNT / 2, results.size());
-         for (Map.Entry<Integer, Integer> entry : results.entrySet()) {
-            assertEquals(entry.getKey(), entry.getValue());
-            assertTrue((entry.getKey() & 1) == 1, "Mismatched value was " + entry.getKey());
-         }
       });
    }
 

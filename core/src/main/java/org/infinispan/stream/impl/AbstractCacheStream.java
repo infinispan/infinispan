@@ -287,10 +287,10 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
 
                IntSet ourSegments;
                if (segmentsToProcess != null) {
-                  ourSegments =  IntSets.mutableFrom(cacheTopology.getLocalReadSegments());
+                  ourSegments =  IntSets.mutableFrom(ch.getPrimarySegmentsForOwner(localAddress));
                   ourSegments.retainAll(segmentsToProcess);
                } else {
-                  ourSegments = IntSets.from(cacheTopology.getLocalReadSegments());
+                  ourSegments = IntSets.from(ch.getPrimarySegmentsForOwner(localAddress));
                }
                // TODO: we can do this more efficiently - since we drop all results locally
                LocalizedCacheTopology newCacheTopology = dm.getCacheTopology();
