@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.KnownComponentNames;
@@ -43,8 +44,11 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    }
 
    @Override
-   public void cacheManagerStopping(GlobalComponentRegistry gcr) {
-      gcr.getComponent(EventLogManager.class).replaceEventLogger(oldEventLogger);
+   public void cacheStopping(ComponentRegistry cr, String cacheName) {
+      // Replace the event logger when the cache is stopping, not later when the global components are stopping
+      if (cacheName.equals(ServerEventLogger.EVENT_LOG_CACHE)) {
+         cr.getComponent(EventLogManager.class).replaceEventLogger(oldEventLogger);
+      }
    }
 
    private ConfigurationBuilder getTaskHistoryCacheConfiguration(EmbeddedCacheManager cacheManager) {

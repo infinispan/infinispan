@@ -1,9 +1,11 @@
 package org.infinispan.counter;
 
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
+import static org.infinispan.test.TestingUtil.withCacheManager;
 
 import java.io.File;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -28,6 +30,7 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
@@ -344,4 +347,9 @@ public class ConfigurationTest extends AbstractCacheTest {
       }
    }
 
+   public void testLocalManagerNotStarted() {
+      withCacheManager(TestCacheManagerFactory.createCacheManager(false), cm -> {
+         Exceptions.expectException(IllegalLifecycleStateException.class, () -> EmbeddedCounterManagerFactory.asCounterManager(cm));
+      });
+   }
 }

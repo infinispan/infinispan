@@ -22,6 +22,8 @@ import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -146,6 +148,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
                Collections.emptyMap(), MODULE_COMMAND_INITIALIZERS);
          }
 
+         // Allow caches to depend only on module initialization instead of the entire GCR
+         basicComponentRegistry.registerComponent(ModuleInitializer.class, new ModuleInitializer(), true);
 
          this.createdCaches = createdCaches;
          this.cacheManager = cacheManager;
@@ -246,12 +250,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected void preStart() {
-      for (ModuleLifecycle l : moduleLifecycles) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Invoking %s.cacheManagerStarting()", l);
-         }
-         l.cacheManagerStarting(this, globalConfiguration);
-      }
+      basicComponentRegistry.getComponent(ModuleInitializer.class).running();
 
       if (versionLogged.compareAndSet(false, true)) {
          log.version(Version.printVersion());
@@ -260,6 +259,19 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected void postStart() {
+      modulesManagerStarted();
+   }
+
+   private void modulesManagerStarting() {
+      for (ModuleLifecycle l : moduleLifecycles) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Invoking %s.cacheManagerStarting()", l);
+         }
+         l.cacheManagerStarting(this, globalConfiguration);
+      }
+   }
+
+   private void modulesManagerStarted() {
       for (ModuleLifecycle l : moduleLifecycles) {
          if (log.isTraceEnabled()) {
             log.tracef("Invoking %s.cacheManagerStarted()", l);
@@ -270,6 +282,15 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected void preStop() {
+      modulesManagerStopping();
+   }
+
+   @Override
+   protected void postStop() {
+      // Do nothing, ModulesOuterLifecycle invokes modulesManagerStopped automatically
+   }
+
+   private void modulesManagerStopping() {
       for (ModuleLifecycle l : moduleLifecycles) {
          if (log.isTraceEnabled()) {
             log.tracef("Invoking %s.cacheManagerStopping()", l);
@@ -282,8 +303,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       }
    }
 
-   @Override
-   protected void postStop() {
+   private void modulesManagerStopped() {
       if (state == ComponentStatus.TERMINATED) {
          for (ModuleLifecycle l : moduleLifecycles) {
             if (log.isTraceEnabled()) {
@@ -327,5 +347,22 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    public EmbeddedCacheManager getCacheManager() {
       return cacheManager;
+   }
+
+   /**
+    * Module initialization happens in {@link ModuleLifecycle#cacheManagerStarting(GlobalComponentRegistry, GlobalConfiguration)}.
+    * This component helps guarantee that all modules are initialized before the first cache starts.
+    */
+   @Scope(Scopes.GLOBAL)
+   public class ModuleInitializer {
+      @Start
+      void start() {
+         modulesManagerStarting();
+      }
+
+      @Stop
+      void stop() {
+         modulesManagerStopped();
+      }
    }
 }

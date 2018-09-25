@@ -14,7 +14,7 @@ import org.infinispan.util.logging.events.EventLogger;
  */
 @Scope(Scopes.GLOBAL)
 public class EventLogManagerImpl implements EventLogManager {
-   EventLogger logger = new BasicEventLogger();
+   private EventLogger logger = new BasicEventLogger();
 
    @Override
    public EventLogger replaceEventLogger(EventLogger newLogger) {

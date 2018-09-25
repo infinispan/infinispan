@@ -42,6 +42,7 @@ import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.format.PropertyFormatter;
+import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfiguration;
@@ -497,6 +498,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    public <K, V> Cache<K, V> internalGetCache(String cacheName, String configurationName) {
       assertIsNotTerminated();
+      // No need to block if another thread (or even the current thread) is starting the global components
+      // Because each cache component will wait for the global components it depends on
+      // And and ComponentRegistry depends on GlobalComponentRegistry.ModuleInitializer
       internalStart(false);
 
       CompletableFuture<Cache<?, ?>> cacheFuture = caches.get(cacheName);
@@ -702,7 +706,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       internalStart(true);
    }
 
+   /**
+    * @param block {@code true} when we need all the global components to be running.
+    */
    private void internalStart(boolean block) {
+      final GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
       lifecycleLock.lock();
       try {
          while (block && status == ComponentStatus.INITIALIZING) {
@@ -713,6 +721,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          }
 
          log.debugf("Starting cache manager %s", configurationManager.getGlobalConfiguration().transport().nodeName());
+         initializeSecurity(globalConfiguration);
+
          updateStatus(ComponentStatus.INITIALIZING);
       } catch (InterruptedException e) {
          throw new CacheException("Interrupted waiting for the cache manager to start");
@@ -721,22 +731,25 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       }
 
       try {
-         final GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
-         if (globalConfiguration.security().authorization().enabled() && System.getSecurityManager() == null) {
-            log.authorizationEnabledWithoutSecurityManager();
-         }
          globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
-         String nodeName = globalConfiguration.transport().nodeName();
-         if (globalConfiguration.security().authorization().enabled()) {
-            globalConfiguration.security().authorization().principalRoleMapper().setContext(
-               new PrincipalRoleMapperContextImpl(this));
-         }
          globalComponentRegistry.start();
+
+         String nodeName = globalConfiguration.transport().nodeName();
          log.debugf("Started cache manager %s on %s", nodeName, getAddress());
       } catch (Exception e) {
          throw new EmbeddedCacheManagerStartupException(e);
       } finally {
          updateStatus(globalComponentRegistry.getStatus());
+      }
+   }
+
+   private void initializeSecurity(GlobalConfiguration globalConfiguration) {
+      GlobalAuthorizationConfiguration authorizationConfig = globalConfiguration.security().authorization();
+      if (authorizationConfig.enabled() && System.getSecurityManager() == null) {
+         log.authorizationEnabledWithoutSecurityManager();
+      }
+      if (authorizationConfig.enabled()) {
+         authorizationConfig.principalRoleMapper().setContext(new PrincipalRoleMapperContextImpl(this));
       }
    }
 
