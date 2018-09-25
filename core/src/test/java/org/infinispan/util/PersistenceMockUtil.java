@@ -4,9 +4,6 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
@@ -18,7 +15,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
@@ -56,17 +53,15 @@ public class PersistenceMockUtil {
                                   .transport().nodeName(nodeName)
                                   .build();
 
-      Set<String> cachesSet = new HashSet<>();
       EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
       when(cm.getCacheManagerConfiguration()).thenReturn(gc);
-      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cm, cachesSet);
-      BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
-      gbcr.replaceComponent(TimeService.class.getName(), timeService, true);
-      ComponentRegistry registry = new ComponentRegistry(cacheName, configuration, cache, gcr,
-                                                         configuration.getClass().getClassLoader());
+      GlobalComponentRegistry gcr = mock(GlobalComponentRegistry.class);
+      when(gcr.getComponent(TimeService.class)).thenReturn(timeService);
+      when(gcr.getComponentMetadataRepo()).thenReturn(mock(ComponentMetadataRepo.class));
+      ComponentRegistry registry = new ComponentRegistry(cacheName, configuration, cache, gcr, gc.classLoader());
 
       when(cache.getClassLoader()).thenReturn(PersistenceMockUtil.class.getClassLoader());
-      when(cache.getCacheManager().getCacheManagerConfiguration()) .thenReturn(gc);
+      when(cache.getCacheManager().getCacheManagerConfiguration()).thenReturn(gc);
       when(cache.getName()).thenReturn(cacheName);
       when(cache.getAdvancedCache()).thenReturn(cache);
       when(cache.getComponentRegistry()).thenReturn(registry);

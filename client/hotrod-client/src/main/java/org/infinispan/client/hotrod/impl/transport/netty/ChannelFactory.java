@@ -492,7 +492,7 @@ public class ChannelFactory {
                }
             } else {
                // One successful response is enough to be able to switch to this cluster
-               log.tracef("Ping to server %s succeeded");
+               log.tracef("Ping to server %s succeeded", server);
                allFuture.complete(true);
             }
          });

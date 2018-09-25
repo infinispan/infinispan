@@ -53,6 +53,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private final GlobalComponentRegistry globalComponents;
 
    @Inject private CacheManagerNotifier cacheManagerNotifier;
+   // The modules must be initialized before any cache starts
+   @Inject private GlobalComponentRegistry.ModulesOuterLifecycle modulesInitialized;
 
    //Cached fields:
    private StateTransferManager stateTransferManager;

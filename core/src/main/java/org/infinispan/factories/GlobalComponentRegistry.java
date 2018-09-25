@@ -25,6 +25,8 @@ import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
@@ -84,7 +86,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    private final ModuleProperties moduleProperties = new ModuleProperties();
 
    final Collection<ModuleLifecycle> moduleLifecycles;
-   boolean modulesStarted;
 
    final ConcurrentMap<ByteString, ComponentRegistry> namedComponents = new ConcurrentHashMap<>(4);
 
@@ -146,6 +147,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
                Collections.emptyMap(), MODULE_COMMAND_INITIALIZERS);
          }
 
+         // Allow caches to depend only on the module initialization instead of the entire GCR
+         basicComponentRegistry.registerComponent(ModulesOuterLifecycle.class, new ModulesOuterLifecycle(), true);
 
          this.createdCaches = createdCaches;
 
@@ -246,12 +249,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected void preStart() {
-      for (ModuleLifecycle l : moduleLifecycles) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Invoking %s.cacheManagerStarting()", l);
-         }
-         l.cacheManagerStarting(this, globalConfiguration);
-      }
+      basicComponentRegistry.getComponent(ModulesOuterLifecycle.class).running();
 
       if (versionLogged.compareAndSet(false, true)) {
          log.version(Version.printVersion());
@@ -260,14 +258,27 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected void postStart() {
+      modulesManagerStarted();
+
+      warnAboutUberJarDuplicates();
+   }
+
+   private void modulesManagerStarting() {
+      for (ModuleLifecycle l : moduleLifecycles) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Invoking %s.cacheManagerStarting()", l);
+         }
+         l.cacheManagerStarting(this, globalConfiguration);
+      }
+   }
+
+   private void modulesManagerStarted() {
       for (ModuleLifecycle l : moduleLifecycles) {
          if (log.isTraceEnabled()) {
             log.tracef("Invoking %s.cacheManagerStarted()", l);
          }
          l.cacheManagerStarted(this);
       }
-
-      warnAboutUberJarDuplicates();
    }
 
    private void warnAboutUberJarDuplicates() {
@@ -281,6 +292,15 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected void preStop() {
+      modulesManagerStopping();
+   }
+
+   @Override
+   protected void postStop() {
+      // Do nothing, ModulesOuterLifecycle invokes modulesManagerStopped automatically
+   }
+
+   private void modulesManagerStopping() {
       for (ModuleLifecycle l : moduleLifecycles) {
          if (log.isTraceEnabled()) {
             log.tracef("Invoking %s.cacheManagerStopping()", l);
@@ -293,8 +313,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       }
    }
 
-   @Override
-   protected void postStop() {
+   private void modulesManagerStopped() {
       if (state == ComponentStatus.TERMINATED) {
          for (ModuleLifecycle l : moduleLifecycles) {
             if (log.isTraceEnabled()) {
@@ -333,5 +352,18 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    public ModuleProperties getModuleProperties() {
       return moduleProperties;
+   }
+
+   @Scope(Scopes.GLOBAL)
+   class ModulesOuterLifecycle {
+      @Start
+      public void start() {
+         modulesManagerStarting();
+      }
+
+      @Stop
+      public void stop() {
+         modulesManagerStopped();
+      }
    }
 }

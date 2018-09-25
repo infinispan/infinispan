@@ -1,5 +1,10 @@
 package org.infinispan.util.logging.events;
 
+import static java.util.Objects.requireNonNull;
+
+import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
@@ -12,10 +17,19 @@ import org.infinispan.manager.EmbeddedCacheManager;
  */
 public interface EventLogManager {
    /**
-    * @return the event logger for the given {@link CacheManager}
+    * @return the event logger for the given {@link EmbeddedCacheManager}
+    * @throws IllegalLifecycleStateException if the cache manager is not running
     */
    static EventLogger getEventLogger(EmbeddedCacheManager cacheManager) {
-      EventLogManager eventLogManager = cacheManager.getGlobalComponentRegistry().getComponent(EventLogManager.class);
+      requireNonNull(cacheManager, "EmbeddedCacheManager can't be null.");
+
+      if (cacheManager.getStatus() != ComponentStatus.RUNNING)
+         throw new IllegalLifecycleStateException();
+
+      EventLogManager eventLogManager = cacheManager.getGlobalComponentRegistry()
+                                               .getComponent(BasicComponentRegistry.class)
+                                               .getComponent(EventLogManager.class)
+                                               .running();
       return eventLogManager.getEventLogger();
    }
 

@@ -392,7 +392,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       KeyValuePair<String, String> requestMediaTypes = getRequestMediaTypes(header, getCacheConfiguration(cacheName));
       AdvancedCache<byte[], byte[]> cache = knownCaches.get(getDecoratedCacheKey(cacheName, requestMediaTypes));
       if (cache == null) {
-         InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+         InternalCacheRegistry icr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(InternalCacheRegistry.class);
          if (icr.isPrivateCache(cacheName)) {
             throw new RequestParsingException(
                   String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),

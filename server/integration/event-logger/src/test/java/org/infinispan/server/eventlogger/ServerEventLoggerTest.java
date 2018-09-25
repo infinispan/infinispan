@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -18,8 +19,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultiCacheManagerCallable;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -102,23 +103,31 @@ public class ServerEventLoggerTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testLocalServerEventLoggingPreloading() {
-      deleteGlobalPersistentState();
-      EmbeddedCacheManager cm = startCacheManager();
-      EventLogger eventLogger = EventLogManager.getEventLogger(cm);
-      eventLogger.info(EventLogCategory.CLUSTER, "message #1");
-      TestingUtil.killCacheManagers(cm);
-      cm = startCacheManager();
-      eventLogger = EventLogManager.getEventLogger(cm);
-      eventLogger.info(EventLogCategory.CLUSTER, "message #5");
+   public void testLocalManagerNotStarted() {
+      withCacheManager(TestCacheManagerFactory.createCacheManager(false), cm -> {
+         Exceptions.expectException(IllegalLifecycleStateException.class, () -> EventLogManager.getEventLogger(cm));
+      });
    }
 
-   public EmbeddedCacheManager startCacheManager() {
+   public void testLocalServerEventLoggingPreloading() {
+      deleteGlobalPersistentState();
+
+      withCacheManager(startCacheManagerWithGlobalState(), cm -> {
+         EventLogger eventLogger = EventLogManager.getEventLogger(cm);
+         eventLogger.info(EventLogCategory.CLUSTER, "message #1");
+      });
+      withCacheManager(startCacheManagerWithGlobalState(), cm -> {
+         EventLogger eventLogger = EventLogManager.getEventLogger(cm);
+         eventLogger.info(EventLogCategory.CLUSTER, "message #5");
+      });
+   }
+
+   public EmbeddedCacheManager startCacheManagerWithGlobalState() {
       GlobalConfigurationBuilder globaCfg = new GlobalConfigurationBuilder();
       globaCfg.globalState().enable();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(
             globaCfg, new ConfigurationBuilder());
-      cm.getCache();
+      cm.start();
       return cm;
    }
 

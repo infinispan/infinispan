@@ -6,8 +6,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -18,7 +20,6 @@ import org.infinispan.jmx.annotations.Units;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.Stats;
-import org.infinispan.commons.time.TimeService;
 
 
 /**
@@ -38,7 +39,10 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    public CacheContainerStatsImpl(EmbeddedCacheManager cm) {
       this.cm = cm;
-      cm.getGlobalComponentRegistry().registerComponent(this, CacheContainerStats.class);
+   }
+
+   @Start
+   void start() {
       boolean globalJmxStatsEnabled = cm.getCacheManagerConfiguration().globalJmxStatistics().enabled();
       setStatisticsEnabled(globalJmxStatsEnabled);
    }

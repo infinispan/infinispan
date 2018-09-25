@@ -1,8 +1,11 @@
 package org.infinispan.persistence.jpa;
 
+import static org.mockito.Mockito.when;
+
 import java.io.IOException;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
 import org.infinispan.persistence.jpa.entity.KeyValueEntity;
@@ -29,8 +32,10 @@ public class JpaStoreTest extends BaseStoreTest {
                      .storeMetadata(storeMetadata())
                      .create();
       InitializationContext context = createContext(builder.build());
-      context.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry()
-            .registerComponent(new EntityManagerFactoryRegistry(), EntityManagerFactoryRegistry.class);
+      GlobalComponentRegistry gcr =
+         context.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry();
+      when(gcr.getComponent(EntityManagerFactoryRegistry.class))
+         .thenReturn(new EntityManagerFactoryRegistry());
       JpaStore store = new JpaStore();
       store.init(context);
       return store;

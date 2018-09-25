@@ -1577,6 +1577,23 @@ public class TestingUtil {
    }
 
    /**
+    * Invoke a task using a cache manager.
+    * This method guarantees that the cache manager will
+    * be cleaned up after the task has completed, regardless of the task outcome.
+    *
+    * @param cm cache manager
+    * @param c consumer function to execute with cache manager
+    */
+   public static void withCacheManager(EmbeddedCacheManager cm,
+                                       Consumer<EmbeddedCacheManager> c) {
+      try {
+         c.accept(cm);
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
+   }
+
+   /**
     * Invoke a task using a several cache managers. This method guarantees
     * that the cache managers used in the task will be cleaned up after the
     * task has completed, regardless of the task outcome.
