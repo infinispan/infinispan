@@ -308,12 +308,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      AdvancedCache<K, V> loaderCache = cache.with(classLoader);
-      if (loaderCache != cache) {
-         return wrapper.wrap(this, loaderCache);
-      } else {
-         return this;
-      }
+      return this;
    }
 
    @Override
