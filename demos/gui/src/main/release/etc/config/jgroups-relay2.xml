@@ -19,7 +19,7 @@
          mcast_recv_buf_size="25000000"
          mcast_send_buf_size="640000"
          max_bundle_size="8500"
-         bundler_type="no-bundler"
+         bundler_type="transfer-queue"
          ip_ttl="${jgroups.udp.ip_ttl:0}"
          enable_diagnostics="true"
          thread_naming_pattern="cl"
