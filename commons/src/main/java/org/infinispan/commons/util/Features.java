@@ -33,7 +33,7 @@ public class Features {
             }
          }
          if (log.isDebugEnabled()) {
-            features.entrySet().forEach(e -> log.debugf("Feature %s=%s", e.getKey(), e.getValue()));
+            features.forEach((key, value) -> log.debugf("Feature %s=%s", key, value));
          }
       } catch (IOException e) {
          log.debugf(e, "Error while attempting to obtain `%s` resources from the classpath", FEATURES_FILE);
