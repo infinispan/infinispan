@@ -10,6 +10,7 @@ import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetDefaultExecutorServiceAction;
+import org.infinispan.security.impl.SecureCacheImpl;
 
 /**
  * SecurityActions for the org.infinispan.stats.impl package.
@@ -37,5 +38,13 @@ final class SecurityActions {
    static Configuration getCacheConfiguration(final AdvancedCache<?, ?> cache) {
       GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
       return doPrivileged(action);
+   }
+
+   static <K, V> Cache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
+      if (cache instanceof SecureCacheImpl) {
+         return doPrivileged(() ->  ((SecureCacheImpl)cache).getDelegate() );
+      } else {
+         return cache;
+      }
    }
 }
