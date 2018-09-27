@@ -508,7 +508,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
 
    public void testSearchKeyTransformer() throws ParseException {
-      SearchManagerImplementor manager = (SearchManagerImplementor) Search.getSearchManager(cache);
+      SearchManagerImplementor manager = Search.getSearchManager(cache).unwrap(SearchManagerImplementor.class);
       manager.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
 
       loadTestingDataWithCustomKey();

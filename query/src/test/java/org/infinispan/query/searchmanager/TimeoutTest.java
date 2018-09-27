@@ -37,8 +37,8 @@ public class TimeoutTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void timeoutExceptionIsThrownAndIsProducedByMyFactory() throws Exception {
-      SearchManagerImplementor searchManager = (SearchManagerImplementor) Search.getSearchManager(cache);
+   public void timeoutExceptionIsThrownAndIsProducedByMyFactory() {
+      SearchManagerImplementor searchManager = Search.getSearchManager(cache).unwrap(SearchManagerImplementor.class);
       searchManager.setTimeoutExceptionFactory(new MyTimeoutExceptionFactory());
       Query query = searchManager.buildQueryBuilderForClass(Foo.class).get()
             .keyword().onField("bar").matching("1")

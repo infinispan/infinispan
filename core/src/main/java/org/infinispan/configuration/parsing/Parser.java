@@ -26,7 +26,6 @@ import javax.xml.stream.XMLStreamException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
@@ -1466,10 +1465,10 @@ public class Parser implements ConfigurationParser {
                builder.dataContainer().dataContainer(Util.getInstance(value, holder.getClassLoader()));
                break;
             case KEY_EQUIVALENCE:
-               builder.dataContainer().keyEquivalence(Util.<Equivalence>getInstance(value, holder.getClassLoader()));
+               builder.dataContainer().keyEquivalence(Util.getInstance(value, holder.getClassLoader()));
                break;
             case VALUE_EQUIVALENCE:
-               builder.dataContainer().valueEquivalence(Util.<Equivalence>getInstance(value, holder.getClassLoader()));
+               builder.dataContainer().valueEquivalence(Util.getInstance(value, holder.getClassLoader()));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -2515,6 +2514,10 @@ public class Parser implements ConfigurationParser {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case KEY_TRANSFORMERS: {
+               parseKeyTransformers(reader, holder, builder);
+               break;
+            }
             case INDEXED_ENTITIES: {
                parseIndexedEntities(reader, holder, builder);
                break;
@@ -2529,6 +2532,42 @@ public class Parser implements ConfigurationParser {
          }
       }
       builder.indexing().withProperties(indexingProperties);
+   }
+
+   private void parseKeyTransformers(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ConfigurationBuilder builder) throws XMLStreamException {
+      ParseUtils.requireNoAttributes(reader);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case KEY_TRANSFORMER: {
+               parseKeyTransformer(reader, holder, builder);
+               break;
+            }
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseKeyTransformer(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ConfigurationBuilder builder) throws XMLStreamException {
+      String[] attrs = ParseUtils.requireAttributes(reader, Attribute.KEY.getLocalName(), Attribute.TRANSFORMER.getLocalName());
+      Class<?> keyClass = Util.loadClass(attrs[0], holder.getClassLoader());
+      Class<?> transformerClass = Util.loadClass(attrs[1], holder.getClassLoader());
+      builder.indexing().addKeyTransformer(keyClass, transformerClass);
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case KEY:
+            case TRANSFORMER:
+               // Already handled
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseIndexedEntities(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ConfigurationBuilder builder) throws XMLStreamException {
