@@ -17,5 +17,7 @@
     <dependencies>
         <module name="javax.api"/>
         <module name="org.javassist" optional="true"/>
+        <module name="org.apache.log4j"/>
+        <module name="sun.jdk"/>
     </dependencies>
 </module>
