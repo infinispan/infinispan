@@ -1,6 +1,6 @@
 package org.infinispan.query.blackbox;
 
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.KeyTypeTest")
 public class KeyTypeTest extends SingleCacheManagerTest {
 
-   Person person1;
+   private Person person1;
 
    public KeyTypeTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -77,11 +77,11 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       // Going to search the 'blurb' field for 'owns'
       Term term = new Term("blurb", "owns");
       CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
-      assertEquals(cacheQuery.getResultSize(), 9);
+      assertEquals(9, cacheQuery.getResultSize());
 
       List<Person> found = cacheQuery.list();
       for (int i = 0; i < 9; i++) {
-         assertEquals(found.get(i), person1);
+         assertEquals(person1, found.get(i));
       }
    }
 
@@ -96,6 +96,6 @@ public class KeyTypeTest extends SingleCacheManagerTest {
 
       Term term = new Term("blurb", "owns");
       CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
-      assertEquals(cacheQuery.getResultSize(), 3);
+      assertEquals(3, cacheQuery.getResultSize());
    }
 }

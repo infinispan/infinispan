@@ -46,7 +46,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
-   public void testQueryCache() throws Exception {
+   public void testQueryCache() {
       // populate our data cache
       UserHS user = new UserHS();
       user.setId(1);

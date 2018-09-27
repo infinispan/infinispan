@@ -19,6 +19,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.IndexUpdater;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestResourceTracker;
@@ -84,13 +85,11 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       final AtomicInteger counter = new AtomicInteger(0);
       for (int i = 0; i < OBJECT_COUNT; i++) {
          executorService.submit(() -> {
-            int key = counter.incrementAndGet();
-            Cache insertCache;
+            Cache<Integer, Transaction> insertCache = cache1;
             if (DISABLE_INDEX_WHEN_INSERTING) {
-               insertCache = cache1.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
-            } else {
-               insertCache = cache1;
+               insertCache = insertCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
             }
+            int key = counter.incrementAndGet();
             insertCache.put(key, new Transaction(key * 100, "0eab" + key));
             if (key != 0 && key % PRINT_EACH == 0) {
                System.out.printf("\rInserted %d", key);
@@ -260,7 +259,10 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    private void flushIndex() {
-      new IndexUpdater(cache1).flush(new PojoIndexedTypeIdentifier(Transaction.class));
+      IndexUpdater indexUpdater = new IndexUpdater(ComponentRegistryUtils.getSearchIntegrator(cache1),
+            ComponentRegistryUtils.getKeyTransformationHandler(cache1),
+            ComponentRegistryUtils.getTimeService(cache1));
+      indexUpdater.flush(new PojoIndexedTypeIdentifier(Transaction.class));
    }
 
    class StopTimer {
@@ -287,5 +289,4 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
          return unit.convert(elapsed, TimeUnit.MILLISECONDS);
       }
    }
-
 }

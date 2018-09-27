@@ -2,7 +2,6 @@ package org.infinispan.query.impl;
 
 import static org.mockito.Mockito.mock;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,19 +23,19 @@ public class VeryLargeFetchSizeTest {
    private static final int VERY_LARGE_FETCH_SIZE = Integer.MAX_VALUE;
 
    private List<EntityInfo> entityInfos = new ArrayList<>();
+
    private AdvancedCache<String, String> cache;
 
    @Test
-   public void testLazyIteratorHandlesVeryLargeFetchSize() throws IOException {
+   public void testLazyIteratorHandlesVeryLargeFetchSize() {
       cache = mock(AdvancedCache.class);
       DocumentExtractor extractor = mock(DocumentExtractor.class);
-      new LazyIterator<>(extractor, new EntityLoader(cache, new KeyTransformationHandler()), VERY_LARGE_FETCH_SIZE);
+      new LazyIterator<>(extractor, new EntityLoader(cache, new KeyTransformationHandler(null)), VERY_LARGE_FETCH_SIZE);
    }
 
    @Test
-   public void testEagerIteratorHandlesVeryLargeFetchSize() throws IOException {
+   public void testEagerIteratorHandlesVeryLargeFetchSize() {
       cache = mock(AdvancedCache.class);
-      new EagerIterator<>(entityInfos, new EntityLoader(cache, new KeyTransformationHandler()), VERY_LARGE_FETCH_SIZE);
+      new EagerIterator<>(entityInfos, new EntityLoader(cache, new KeyTransformationHandler(null)), VERY_LARGE_FETCH_SIZE);
    }
-
 }

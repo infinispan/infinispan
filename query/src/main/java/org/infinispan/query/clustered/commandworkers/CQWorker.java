@@ -9,12 +9,13 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.QueryResponse;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.QueryDefinition;
 
 /**
  * Add specific behavior for ClusteredQueryCommand. Each ClusteredQueryCommandType links to a CQWorker
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
 abstract class CQWorker {
@@ -32,9 +33,9 @@ abstract class CQWorker {
    protected UUID queryId;
    protected int docIndex;
 
-   void init(AdvancedCache<?, ?> cache, QueryDefinition queryDefinition, UUID queryId, int docIndex) {
+   void initialize(AdvancedCache<?, ?> cache, QueryDefinition queryDefinition, UUID queryId, int docIndex) {
       this.cache = cache;
-      this.keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
+      this.keyTransformationHandler = ComponentRegistryUtils.getQueryInterceptor(cache).getKeyTransformationHandler();
       if (queryDefinition != null) {
          this.queryDefinition = queryDefinition;
          this.queryDefinition.initialize(cache);
@@ -75,6 +76,6 @@ abstract class CQWorker {
          throw new SearchException("Error while extracting key", e);
       }
 
-      return keyTransformationHandler.stringToKey(strKey, cache.getClassLoader());
+      return keyTransformationHandler.stringToKey(strKey);
    }
 }

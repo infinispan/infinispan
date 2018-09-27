@@ -105,7 +105,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    private final AbstractVisitor serializationContextUpdaterVisitor = new AbstractVisitor() {
 
       @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
          final String key = (String) command.getKey();
          if (shouldIntercept(key)) {
             FileDescriptorSource source = new FileDescriptorSource()
@@ -121,7 +121,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       }
 
       @Override
-      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
          final Map<Object, Object> map = command.getMap();
          FileDescriptorSource source = new FileDescriptorSource()
                .withProgressCallback(EMPTY_CALLBACK);
@@ -139,7 +139,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       }
 
       @Override
-      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
          final String key = (String) command.getKey();
          if (shouldIntercept(key)) {
             FileDescriptorSource source = new FileDescriptorSource()

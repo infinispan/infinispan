@@ -2,7 +2,6 @@ package org.infinispan.query.impl;
 
 import java.util.ArrayList;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.query.ProjectionConstants;
 import org.infinispan.query.backend.KeyTransformationHandler;
 
@@ -13,13 +12,11 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  */
 final class ProjectionConverter {
 
-   private final AdvancedCache<?, ?> cache;
    private final KeyTransformationHandler keyTransformationHandler;
    private final String[] hibernateSearchFields;
    private final int[] indexesOfKey;
 
-   ProjectionConverter(String[] fields, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
-      this.cache = cache;
+   ProjectionConverter(String[] fields, KeyTransformationHandler keyTransformationHandler) {
       this.keyTransformationHandler = keyTransformationHandler;
 
       hibernateSearchFields = fields.clone();
@@ -47,7 +44,7 @@ final class ProjectionConverter {
    public Object[] convert(Object[] projection) {
       if (indexesOfKey != null) {
          for (int i : indexesOfKey) {
-            projection[i] = keyTransformationHandler.stringToKey((String) projection[i], cache.getClassLoader());
+            projection[i] = keyTransformationHandler.stringToKey((String) projection[i]);
          }
       }
       return projection;

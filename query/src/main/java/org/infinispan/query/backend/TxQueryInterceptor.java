@@ -18,8 +18,10 @@ import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
-public class TxQueryInterceptor extends DDAsyncInterceptor {
+public final class TxQueryInterceptor extends DDAsyncInterceptor {
+
    private final ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues;
+
    // Storing direct reference from one interceptor to another is antipattern, but extracting helper
    // wouldn't help much.
    private final QueryInterceptor queryInterceptor;
@@ -32,7 +34,7 @@ public class TxQueryInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       if (command.isOnePhaseCommit()) {
          return invokeNextThenAccept(ctx, command, commitModificationsToIndex);
       } else {
@@ -41,7 +43,7 @@ public class TxQueryInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
       return invokeNextThenAccept(ctx, command, commitModificationsToIndex);
    }
 

@@ -3,7 +3,10 @@ package org.infinispan.query;
 /**
  * Convert objects (cache keys only) from their original Java types to a String representation (which is suitable to be
  * used in a Lucene index) and vice versa. Transformers are needed only for custom types. Primitive types (boxed),
- * java.lang.String and byte arrays are internally handled without the need of a user-supplied Transformer.
+ * java.lang.String, java.util.UUID and byte arrays are internally handled without the need of a user-supplied
+ * Transformer.
+ * <p>
+ * Implementations must be thread-safe! It is recommended they are also stateless.
  *
  * @author Manik Surtani
  * @since 4.0

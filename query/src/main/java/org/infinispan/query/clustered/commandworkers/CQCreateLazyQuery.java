@@ -9,7 +9,7 @@ import org.infinispan.query.clustered.QueryResponse;
 /**
  * Creates a DocumentExtractor and register it on the node QueryBox.
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
 final class CQCreateLazyQuery extends CQWorker {

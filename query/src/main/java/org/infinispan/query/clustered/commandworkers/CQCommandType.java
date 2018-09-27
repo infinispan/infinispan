@@ -11,7 +11,7 @@ import org.infinispan.query.impl.QueryDefinition;
  * Types of CQWorker. Each type defines a different behavior for a ClusteredQueryCommand. The {@link #perform} method is
  * delegated to a CQWorker. This enum is more efficient to serialize than an actual CQWorker.
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @author anistor@redhat.com
  * @since 5.1
  */
@@ -37,7 +37,7 @@ public enum CQCommandType {
 
    public QueryResponse perform(AdvancedCache<?, ?> cache, QueryDefinition queryDefinition, UUID queryId, int docIndex) {
       CQWorker worker = workerSupplier.get();
-      worker.init(cache, queryDefinition, queryId, docIndex);
+      worker.initialize(cache, queryDefinition, queryId, docIndex);
       return worker.perform();
    }
 }

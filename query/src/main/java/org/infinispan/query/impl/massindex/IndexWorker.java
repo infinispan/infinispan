@@ -10,46 +10,49 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.hibernate.search.spi.IndexedTypeIdentifier;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 
 /**
- * Base class for mass indexer tasks.
+ * Mass indexer task.
  *
  * @author gustavonalle
  * @since 7.1
  */
-public class IndexWorker implements DistributedCallable<Object, Object, Void> {
+public final class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
-   protected final IndexedTypeIdentifier indexedType;
+   private final IndexedTypeIdentifier indexedType;
    private final boolean flush;
    private final boolean clean;
    private final boolean primaryOwner;
-   protected Cache<Object, Object> cache;
-   protected IndexUpdater indexUpdater;
-   private Set<Object> everywhereKeys;
+   private final Set<Object> everywhereKeys;
+   private Cache<Object, Object> cache;
+   private IndexUpdater indexUpdater;
    private Set<Object> keys = new HashSet<>();
    private ClusteringDependentLogic clusteringDependentLogic;
    private DataConversion valueDataConversion;
    private DataConversion keyDataConversion;
 
-   public IndexWorker(IndexedTypeIdentifier indexedType, boolean flush, boolean clean, boolean primaryOwner, Set<Object> everywhereKeys) {
+   IndexWorker(IndexedTypeIdentifier indexedType, boolean flush, boolean clean, boolean primaryOwner, Set<Object> everywhereKeys) {
       this.indexedType = indexedType;
       this.flush = flush;
       this.clean = clean;
@@ -59,28 +62,34 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
    @Override
    public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
-      Cache<Object, Object> unwrapped = SecurityActions.getUnwrappedCache(cache);
-      MemoryConfiguration memory = unwrapped.getCacheConfiguration().memory();
-      this.cache = cache;
-      if (memory.storageType() == StorageType.OBJECT) {
-         this.cache = unwrapped.getAdvancedCache().withWrapping(ByteArrayWrapper.class, IdentityWrapper.class);
+      AdvancedCache<Object, Object> unwrapped = SecurityActions.getUnwrappedCache(cache).getAdvancedCache();
+      if (unwrapped.getCacheConfiguration().memory().storageType() == StorageType.OBJECT) {
+         this.cache = unwrapped.withWrapping(ByteArrayWrapper.class, IdentityWrapper.class);
+      } else {
+         this.cache = cache;  //todo [anistor] why not `unwrapped` instead ? do we need security for mass indexing ?
       }
-      this.indexUpdater = new IndexUpdater(this.cache);
-      ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
-      this.clusteringDependentLogic = componentRegistry.getComponent(ClusteringDependentLogic.class);
-      if (everywhereKeys != null && everywhereKeys.size() > 0)
+
+      SearchIntegrator searchIntegrator = ComponentRegistryUtils.getSearchIntegrator(unwrapped);
+      KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(unwrapped);
+      TimeService timeService = ComponentRegistryUtils.getTimeService(unwrapped);
+
+      this.indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
+      this.clusteringDependentLogic = SecurityActions.getClusteringDependentLogic(unwrapped);
+
+      if (everywhereKeys != null)
          keys.addAll(everywhereKeys);
-      if (inputKeys != null && inputKeys.size() > 0)
+      if (inputKeys != null)
          keys.addAll(inputKeys);
-      keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
-      valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
+
+      keyDataConversion = unwrapped.getKeyDataConversion();
+      valueDataConversion = unwrapped.getValueDataConversion();
    }
 
-   protected void preIndex() {
+   private void preIndex() {
       if (clean) indexUpdater.purge(indexedType);
    }
 
-   protected void postIndex() {
+   private void postIndex() {
       indexUpdater.waitForAsyncCompletion();
       if (flush) indexUpdater.flush(indexedType);
    }
@@ -95,7 +104,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
    @Override
    @SuppressWarnings("unchecked")
-   public Void call() throws Exception {
+   public Void call() {
       if (keys == null || keys.size() == 0) {
          preIndex();
          KeyValueFilter filter = getFilter();
@@ -126,7 +135,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
       return null;
    }
 
-   public static class Externalizer extends AbstractExternalizer<IndexWorker> {
+   public static final class Externalizer extends AbstractExternalizer<IndexWorker> {
 
       @Override
       public Set<Class<? extends IndexWorker>> getTypeClasses() {
@@ -144,7 +153,12 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
       @Override
       public IndexWorker readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new IndexWorker(PojoIndexedTypeIdentifier.convertFromLegacy((Class) input.readObject()), input.readBoolean(), input.readBoolean(), input.readBoolean(), (Set<Object>) input.readObject());
+         Class indexedClass = (Class) input.readObject();
+         boolean flush = input.readBoolean();
+         boolean clean = input.readBoolean();
+         boolean primaryOwner = input.readBoolean();
+         Set<Object> everywhereKeys = (Set<Object>) input.readObject();
+         return new IndexWorker(PojoIndexedTypeIdentifier.convertFromLegacy(indexedClass), flush, clean, primaryOwner, everywhereKeys);
       }
 
       @Override
@@ -153,12 +167,11 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
       }
    }
 
-   private class PrimaryOwnersKeyValueFilter implements KeyValueFilter {
+   private class PrimaryOwnersKeyValueFilter implements KeyValueFilter<Object, Object> {
 
       @Override
       public boolean accept(Object key, Object value, Metadata metadata) {
          return clusteringDependentLogic.getCacheTopology().getDistribution(keyDataConversion.toStorage(key)).isPrimary();
       }
    }
-
 }

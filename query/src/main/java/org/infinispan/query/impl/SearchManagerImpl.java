@@ -15,6 +15,7 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
@@ -27,10 +28,11 @@ import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.spi.SearchManagerImplementor;
 
 /**
- * Class that is used to build {@link org.infinispan.query.CacheQuery}
+ * Class that is used to build a {@link org.infinispan.query.CacheQuery} based on a Lucene or an Ickle query, only for
+ * indexed caches.
  *
  * @author Navin Surtani
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
  * @since 4.0
  */
@@ -39,7 +41,9 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    private final AdvancedCache<?, ?> cache;
    private final SearchIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
+   private final KeyTransformationHandler keyTransformationHandler;
    private final EmbeddedQueryEngine queryEngine;
+   private final TimeService timeService;
    private TimeoutExceptionFactory timeoutExceptionFactory;
 
    public SearchManagerImpl(AdvancedCache<?, ?> cache) {
@@ -49,13 +53,14 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
       this.cache = cache;
       this.searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
+      this.keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
       this.queryEngine = ComponentRegistryUtils.getEmbeddedQueryEngine(cache);
+      this.timeService = ComponentRegistryUtils.getTimeService(cache);
    }
 
    @Override
    public <E> CacheQuery<E> getQuery(Query luceneQuery, IndexedQueryMode indexedQueryMode, Class<?>... classes) {
       queryInterceptor.enableClasses(classes);
-      KeyTransformationHandler keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       return queryEngine.buildCacheQuery(luceneQuery, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor, classes);
    }
@@ -63,18 +68,16 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    @Override
    public <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode, Class<?>... classes) {
       queryInterceptor.enableClasses(classes);
-      KeyTransformationHandler keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       try {
          return queryEngine.buildCacheQuery(queryString, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor, classes);
       } catch (SearchException se) {
-         throw new SearchException(queryString + " cannot be converted to an indexed Query", se);
+         throw new SearchException("'" + queryString + "' cannot be converted to an indexed query", se);
       }
    }
 
    @Override
    public <E> CacheQuery<E> getQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode, IndexedTypeMap<CustomTypeMetadata> indexedTypeMap) {
-      KeyTransformationHandler keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor, indexedTypeMap);
    }
@@ -99,20 +102,21 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
 
       if (queryMode == IndexedQueryMode.BROADCAST) {
          ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
-         return new ClusteredCacheQueryImpl<>(new QueryDefinition(hSearchQuery), asyncExecutor, cache, queryInterceptor.getKeyTransformationHandler(), null);
+         return new ClusteredCacheQueryImpl<>(new QueryDefinition(hSearchQuery), asyncExecutor, cache, keyTransformationHandler, null);
       } else {
-         return new CacheQueryImpl<>(hSearchQuery, cache, queryInterceptor.getKeyTransformationHandler());
+         return new CacheQueryImpl<>(hSearchQuery, cache, keyTransformationHandler);
       }
    }
 
    @Override
+   @Deprecated
    public <E> CacheQuery<E> getClusteredQuery(Query luceneQuery, Class<?>... classes) {
       return getQuery(luceneQuery, IndexedQueryMode.BROADCAST, classes);
    }
 
    @Override
    public void registerKeyTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
-      queryInterceptor.registerKeyTransformer(keyClass, transformerClass);
+      keyTransformationHandler.registerTransformer(keyClass, transformerClass);
    }
 
    @Override
@@ -122,14 +126,14 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
 
    @Override
    public EntityContext buildQueryBuilderForClass(Class<?> entityType) {
-      queryInterceptor.enableClasses(new Class[]{entityType});
+      queryInterceptor.enableClasses(entityType);
       return searchFactory.buildQueryBuilder().forEntity(entityType);
    }
 
    @Override
    public MassIndexer getMassIndexer() {
       // TODO: Should a new instance be created every time?
-      return new DistributedExecutorMassIndexer(cache, searchFactory);
+      return new DistributedExecutorMassIndexer(cache, searchFactory, keyTransformationHandler, timeService);
    }
 
    @Override

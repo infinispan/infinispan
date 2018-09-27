@@ -12,7 +12,7 @@ import org.infinispan.query.clustered.QueryResponse;
 /**
  * Returns the results of a node to create an eager distributed iterator.
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
 final class CQCreateEagerQuery extends CQWorker {

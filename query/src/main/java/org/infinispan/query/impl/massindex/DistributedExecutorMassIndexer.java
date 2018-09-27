@@ -19,10 +19,12 @@ import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distexec.DistributedTask;
 import org.infinispan.query.MassIndexer;
+import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.CleanExecutionMode;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.FlushExecutionMode;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.IndexingExecutionMode;
@@ -37,22 +39,22 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
 
    private static final Log LOG = LogFactory.getLog(DistributedExecutorMassIndexer.class, Log.class);
 
-   private final AdvancedCache cache;
+   private final AdvancedCache<?, ?> cache;
    private final SearchIntegrator searchIntegrator;
    private final IndexUpdater indexUpdater;
    private final DistributedExecutorService executor;
 
-   public DistributedExecutorMassIndexer(AdvancedCache cache, SearchIntegrator searchIntegrator) {
+   public DistributedExecutorMassIndexer(AdvancedCache cache, SearchIntegrator searchIntegrator,
+                                         KeyTransformationHandler keyTransformationHandler, TimeService timeService) {
       this.cache = cache;
       this.searchIntegrator = searchIntegrator;
-      this.indexUpdater = new IndexUpdater(cache);
+      this.indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
       this.executor = new DefaultExecutorService(cache);
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public void start() {
-      CompletableFuture<Void> executionResult = executeInternal(false);
+      CompletableFuture<?> executionResult = executeInternal(false);
       executionResult.join();
    }
 
@@ -122,9 +124,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          List<CompletableFuture<Void>> futureList = executor.submitEverywhere(taskEverywhere, primeownerSet.toArray());
          addFutureListToFutures(futures, futureList);
       }
-      CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(
-            new CompletableFuture[futures.size()]));
-      return compositeFuture;
+      return CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
    }
 
    private CompletableFuture<Void> executeInternal(boolean asyncFlush) {
@@ -169,6 +169,5 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          compositeFuture = compositeFuture.whenComplete(consumer);
       }
       return compositeFuture;
-
    }
 }

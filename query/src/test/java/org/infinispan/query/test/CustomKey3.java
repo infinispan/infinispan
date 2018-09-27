@@ -5,9 +5,10 @@ import java.io.Serializable;
 import org.infinispan.marshall.core.ExternalPojo;
 
 public class CustomKey3 implements Serializable, ExternalPojo {
-   private static final long serialVersionUID = -8825579871900146417L;
 
-   String str;
+   private static final long serialVersionUID = -1;
+
+   private String str;
 
    public CustomKey3() {
    }
@@ -16,16 +17,16 @@ public class CustomKey3 implements Serializable, ExternalPojo {
       this.str = str;
    }
 
+   public String getStr() {
+      return str;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
       CustomKey3 that = (CustomKey3) o;
-
-      if (str != null ? !str.equals(that.str) : that.str != null) return false;
-
-      return true;
+      return str != null ? str.equals(that.str) : that.str == null;
    }
 
    @Override

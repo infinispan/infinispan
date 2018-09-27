@@ -27,7 +27,7 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  * <p/>
  *
  * @author Navin Surtani
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
  */
 public class CacheQueryImpl<E> implements CacheQuery<E> {
@@ -190,7 +190,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
 
    @Override
    public CacheQuery<Object[]> projection(String... fields) {
-      projectionConverter = new ProjectionConverter(fields, cache, keyTransformationHandler);
+      projectionConverter = new ProjectionConverter(fields, keyTransformationHandler);
       queryDefinition.getHsQuery().projection(projectionConverter.getHSearchProjection());
       return (CacheQuery<Object[]>) this;
    }
