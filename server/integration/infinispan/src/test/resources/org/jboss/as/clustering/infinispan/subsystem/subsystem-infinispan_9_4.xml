@@ -57,7 +57,11 @@
             <file-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" relative-to="jboss.server.temp.dir" shared="false" singleton="false" max-entries="1000000" name="file-store">
                 <write-behind modification-queue-size="2048" thread-pool-size="1" />
             </file-store>
-            <indexing index="LOCAL" auto-config="true"/>
+            <indexing index="LOCAL" auto-config="true">
+                <key-transformers>
+                    <key-transformer key="java.lang.String" transformer="org.infinispan.query.impl.DefaultTransformer"/>
+                </key-transformers>
+            </indexing>
         </local-cache>
         <local-cache name="rocksdb-stored" batching="false" start="EAGER" module="org.infinispan" statistics="true">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED"/>

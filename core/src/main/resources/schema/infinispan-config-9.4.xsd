@@ -744,6 +744,24 @@
         </xs:annotation>
         <xs:complexType>
           <xs:sequence>
+            <xs:element name="key-transformers" minOccurs="0" maxOccurs="1">
+              <xs:annotation>
+                <xs:documentation>Defines the Transformers used to stringify keys for indexing with Lucene</xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                <xs:sequence>
+                  <xs:element name="key-transformer" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                      <xs:annotation>
+                        <xs:documentation>Defines the Transformer to use for the specified key class</xs:documentation>
+                      </xs:annotation>
+                      <xs:attribute name="key" type="xs:string" use="required" />
+                      <xs:attribute name="transformer" type="xs:string" use="required"/>
+                    </xs:complexType>
+                  </xs:element>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:element>
             <xs:element name="indexed-entities" minOccurs="0" maxOccurs="1">
               <xs:annotation>
                 <xs:documentation>Defines the indexed entity classes</xs:documentation>

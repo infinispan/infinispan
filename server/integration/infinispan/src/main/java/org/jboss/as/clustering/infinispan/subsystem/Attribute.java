@@ -27,8 +27,6 @@ import java.util.Map;
 
 import javax.xml.XMLConstants;
 
-import org.jboss.as.controller.AttributeDefinition;
-
 /**
  * Enumerates the attributes used in the Infinispan subsystem schema.
  * @author Paul Ferraro
@@ -37,7 +35,8 @@ import org.jboss.as.controller.AttributeDefinition;
  */
 public enum Attribute {
     // must be first
-    UNKNOWN((String) null),
+    UNKNOWN(null),
+
     ACQUIRE_TIMEOUT(ModelKeys.ACQUIRE_TIMEOUT),
     ADDRESS_COUNT(ModelKeys.ADDRESS_COUNT),
     ALIASES(ModelKeys.ALIASES),
@@ -97,6 +96,7 @@ public enum Attribute {
     ISOLATION(ModelKeys.ISOLATION),
     JNDI_NAME(ModelKeys.JNDI_NAME),
     KEEPALIVE_TIME(ModelKeys.KEEPALIVE_TIME),
+    KEY(ModelKeys.KEY),
     L1_LIFESPAN(ModelKeys.L1_LIFESPAN),
     LIFESPAN(ModelKeys.LIFESPAN),
     @Deprecated
@@ -185,6 +185,7 @@ public enum Attribute {
     TIMEOUT(ModelKeys.TIMEOUT),
     @Deprecated
     TOTAL_ORDER_EXECUTOR(ModelKeys.TOTAL_ORDER_EXECUTOR),
+    TRANSFORMER(ModelKeys.TRANSFORMER),
     TYPE(ModelKeys.TYPE),
     USERNAME(ModelKeys.USERNAME),
     UPPER_BOUND(ModelKeys.UPPER_BOUND),
@@ -194,16 +195,9 @@ public enum Attribute {
     ;
 
     private final String name;
-    private final AttributeDefinition definition;
 
-    Attribute(final String name) {
+    Attribute(String name) {
         this.name = name;
-        this.definition = null;
-    }
-
-    Attribute(final AttributeDefinition definition) {
-        this.name = definition.getXmlName();
-        this.definition = definition;
     }
 
     /**
@@ -213,10 +207,6 @@ public enum Attribute {
      */
     public String getLocalName() {
         return name;
-    }
-
-    public AttributeDefinition getDefinition() {
-        return definition;
     }
 
     private static final Map<String, Attribute> attributes;

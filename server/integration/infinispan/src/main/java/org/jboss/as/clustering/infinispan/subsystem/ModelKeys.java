@@ -141,6 +141,8 @@ public class ModelKeys {
     static final String JDBC_STORE_NAME = "JDBC_STORE";
     static final String KEEPALIVE_TIME = "keepalive-time";
     static final String KEY = "key";
+    static final String KEY_TRANSFORMERS = "key-transformers";
+    static final String KEY_TRANSFORMER = "key-transformer";
     static final String ROCKSDB_EXPIRATION = "expiration-db";
     static final String ROCKSDB_STORE = "rocksdb-store";
     static final String LOADER = "loader";
@@ -277,6 +279,7 @@ public class ModelKeys {
     static final String TOTAL_ORDER_EXECUTOR = "total-order-executor";
     static final String TRANSACTION = "transaction";
     static final String TRANSACTION_NAME = "TRANSACTION";
+    static final String TRANSFORMER = "transformer";
     static final String TRANSPORT = "transport";
     static final String HEALTH = "health";
     static final String TRANSPORT_NAME = "TRANSPORT";

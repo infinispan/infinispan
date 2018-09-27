@@ -1,6 +1,8 @@
 package org.infinispan.configuration.cache;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
@@ -17,12 +19,15 @@ import org.infinispan.commons.util.TypedProperties;
 public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<IndexingConfiguration> {
    public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", Index.NONE).immutable().build();
    public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder("autoConfig", false).immutable().build();
+   public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder("key-transformers", null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
+         .copier(CollectionAttributeCopier.INSTANCE)
+         .initializer(HashMap::new).immutable().build();
    public static final AttributeDefinition<Set<Class<?>>> INDEXED_ENTITIES = AttributeDefinition.builder("indexed-entities", null, (Class<Set<Class<?>>>) (Class<?>) Set.class)
          .copier(CollectionAttributeCopier.INSTANCE)
          .initializer(HashSet::new).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, INDEXED_ENTITIES);
+      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES);
    }
 
    private static final String DIRECTORY_PROVIDER_KEY = "directory_provider";
@@ -37,12 +42,14 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    private final Attribute<Index> index;
    private final Attribute<Boolean> autoConfig;
+   private final Attribute<Map<Class<?>, Class<?>>> keyTransformers;
    private final Attribute<Set<Class<?>>> indexedEntities;
 
    IndexingConfiguration(AttributeSet attributes) {
       super(attributes);
       index = attributes.attribute(INDEX);
       autoConfig = attributes.attribute(AUTO_CONFIG);
+      keyTransformers = attributes.attribute(KEY_TRANSFORMERS);
       indexedEntities = attributes.attribute(INDEXED_ENTITIES);
    }
 
@@ -92,10 +99,14 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    }
 
    /**
-    * Determines if autoconfig is enabled for this IndexingConfiguration
+    * Determines if autoconfig is enabled for this IndexingConfiguration.
     */
    public boolean autoConfig() {
       return autoConfig.get();
+   }
+
+   public Map<Class<?>, Class<?>> keyTransformers() {
+      return keyTransformers.get();
    }
 
    public Set<Class<?>> indexedEntities() {
@@ -108,7 +119,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    /**
     * Check if the indexes can be shared. Currently only "ram" based indexes don't allow any sort of
-    * sharing
+    * sharing.
     *
     * @return false if the index is ram only and thus not shared
     */
@@ -135,5 +146,4 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    public String toString() {
       return "IndexingConfiguration [attributes=" + attributes + "]";
    }
-
 }

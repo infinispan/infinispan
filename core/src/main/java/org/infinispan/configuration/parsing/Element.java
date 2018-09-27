@@ -58,6 +58,8 @@ public enum Element {
     JMX("jmx"),
     JMX_STATISTICS("jmxStatistics"),
     KEY_DATA_TYPE("key"),
+    KEY_TRANSFORMERS("key-transformers"),
+    KEY_TRANSFORMER("key-transformer"),
     L1("l1"),
     LOADER("loader"),
     LOCAL_CACHE("local-cache"),

@@ -50,6 +50,27 @@ public class IndexingConfigurationResource extends CacheConfigurationChildResour
           .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
           .build();
 
+    static final SimpleMapAttributeDefinition KEY_TRANSFORMERS = new SimpleMapAttributeDefinition.Builder(ModelKeys.KEY_TRANSFORMERS, true)
+          .setRequired(false)
+          .setAllowExpression(false)
+          .setAttributeMarshaller(new AttributeMarshaller() {
+              @Override
+              public void marshallAsElement(AttributeDefinition attribute, ModelNode resourceModel, boolean marshallDefault, XMLStreamWriter writer) throws XMLStreamException {
+                  resourceModel = resourceModel.get(attribute.getName());
+                  if (!resourceModel.isDefined()) {
+                      return;
+                  }
+                  for (Property property : resourceModel.asPropertyList()) {
+                      writer.writeStartElement(Element.KEY_TRANSFORMER.getLocalName());
+                      writer.writeAttribute(Attribute.KEY.getLocalName(), property.getName());
+                      writer.writeAttribute(Attribute.TRANSFORMER.getLocalName(), property.getValue().asString());
+                      writer.writeEndElement();
+                  }
+              }
+          })
+          .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+          .build();
+
     static final SimpleMapAttributeDefinition INDEXING_PROPERTIES = new SimpleMapAttributeDefinition.Builder(ModelKeys.INDEXING_PROPERTIES, true)
           .setAllowExpression(true)
           .setAttributeMarshaller(new AttributeMarshaller() {
@@ -70,7 +91,7 @@ public class IndexingConfigurationResource extends CacheConfigurationChildResour
           .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
           .build();
 
-    private static final AttributeDefinition[] ATTRIBUTES = {INDEXING, INDEXING_AUTO_CONFIG, INDEXED_ENTITIES, INDEXING_PROPERTIES};
+    private static final AttributeDefinition[] ATTRIBUTES = {INDEXING, INDEXING_AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, INDEXING_PROPERTIES};
 
     public IndexingConfigurationResource(CacheConfigurationResource parent) {
         super(PATH, ModelKeys.INDEXING, parent, ATTRIBUTES);

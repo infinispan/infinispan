@@ -726,6 +726,11 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             writer.writeStartElement(Element.INDEXING.getLocalName());
             IndexingConfigurationResource.INDEXING.marshallAsAttribute(indexing, writer);
             IndexingConfigurationResource.INDEXING_AUTO_CONFIG.marshallAsAttribute(indexing, writer);
+            if (indexing.get(ModelKeys.KEY_TRANSFORMERS).isDefined()) {
+                writer.writeStartElement(Element.KEY_TRANSFORMERS.getLocalName());
+                IndexingConfigurationResource.KEY_TRANSFORMERS.marshallAsElement(indexing, writer);
+                writer.writeEndElement();
+            }
             if (indexing.get(ModelKeys.INDEXED_ENTITIES).isDefined()) {
                 writer.writeStartElement(Element.INDEXED_ENTITIES.getLocalName());
                 IndexingConfigurationResource.INDEXED_ENTITIES.marshallAsElement(indexing, writer);
@@ -752,7 +757,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             this.writeOptional(writer, Attribute.MERGE_POLICY, partitionHandling, ModelKeys.MERGE_POLICY);
             writer.writeEndElement();
         }
-
     }
 
     private void writeListAsAttribute(XMLExtendedStreamWriter writer, Attribute attribute, ModelNode node, String key) throws XMLStreamException {

@@ -23,7 +23,8 @@ import org.infinispan.util.logging.LogFactory;
  * <p>
  * For user-defined keys, three options are supported. Types annotated with @Transformable, and declaring an appropriate
  * {@link org.infinispan.query.Transformer} implementation, types for which a {@link org.infinispan.query.Transformer}
- * has been explicitly registered through KeyTransformationHandler.registerTransformer().
+ * has been explicitly registered through KeyTransformationHandler.registerTransformer() or through the indexing configuration
+ * ({@link org.infinispan.configuration.cache.IndexingConfigurationBuilder#addKeyTransformer}).
  *
  * @author Manik Surtani
  * @author Marko Luksa
