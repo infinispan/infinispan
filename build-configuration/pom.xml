@@ -152,7 +152,7 @@
       <version.jboss.logging>3.3.1.Final</version.jboss.logging>
       <version.jboss.marshalling>2.0.5.Final</version.jboss.marshalling>
       <version.jetty>9.4.5.v20170502</version.jetty>
-      <version.jgroups>4.0.13.Final</version.jgroups>
+      <version.jgroups>4.0.15.Final</version.jgroups>
       <version.junit>4.12</version.junit>
       <version.karaf>4.2.0</version.karaf>
       <version.log4j>2.8.2</version.log4j>
