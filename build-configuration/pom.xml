@@ -105,7 +105,7 @@
       <version.component.infinispan>9.4.0-SNAPSHOT</version.component.infinispan>
       <version.component.jsclient>0.5.0-SNAPSHOT</version.component.jsclient>
       <version.component.spark16><!-- N/A --></version.component.spark16>
-      <version.component.spark2>0.8-SNAPSHOT</version.component.spark2>
+      <version.component.spark2>0.9-SNAPSHOT</version.component.spark2>
       <version.component.camel><!-- N/A --></version.component.camel>
       <version.component.hadoop>0.3-SNAPSHOT</version.component.hadoop>
       <version.component.clustering>4.0.0.Beta1-SNAPSHOT</version.component.clustering>
