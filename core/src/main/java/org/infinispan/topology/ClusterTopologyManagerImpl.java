@@ -522,7 +522,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private void confirmMembersAvailable() throws Exception {
-      transport.invokeRemotely(null, HeartBeatCommand.INSTANCE, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), null, DeliverOrder.NONE, false);
+      transport.invokeRemotely(null, HeartBeatCommand.INSTANCE, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, getGlobalTimeout(), null, DeliverOrder.NONE, false);
    }
 
    /**
