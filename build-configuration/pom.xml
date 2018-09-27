@@ -163,9 +163,9 @@
       <version.mockito_dep.bytebuddy>1.8.8</version.mockito_dep.bytebuddy>
       <version.mockito_dep.hamcrest>1.3</version.mockito_dep.hamcrest>
       <version.mockito_dep.objenesis>2.6</version.mockito_dep.objenesis>
-      <version.netty>4.1.22.Final</version.netty>
+      <version.netty>4.1.28.Final</version.netty>
       <version.netty-conscrypt-optional>1.0.0</version.netty-conscrypt-optional>
-      <version.netty.tcnative>2.0.7.Final</version.netty.tcnative>
+      <version.netty.tcnative>2.0.17.Final</version.netty.tcnative>
       <version.netty-tcnative-boringssl-static>${version.netty.tcnative}</version.netty-tcnative-boringssl-static>
       <version.org.wildfly>${appserver.version}</version.org.wildfly>
       <version.org.wildfly.core>5.0.0.Final</version.org.wildfly.core>
