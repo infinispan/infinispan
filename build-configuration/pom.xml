@@ -150,7 +150,7 @@
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jaxb>2.3.0</version.jaxb>
       <version.jboss.logging>3.3.1.Final</version.jboss.logging>
-      <version.jboss.marshalling>2.0.5.Final</version.jboss.marshalling>
+      <version.jboss.marshalling>2.0.6.Final</version.jboss.marshalling>
       <version.jetty>9.4.5.v20170502</version.jetty>
       <version.jgroups>4.0.15.Final</version.jgroups>
       <version.junit>4.12</version.junit>
