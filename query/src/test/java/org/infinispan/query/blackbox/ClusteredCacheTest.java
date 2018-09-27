@@ -650,7 +650,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    public void testSearchKeyTransformer() throws Exception {
       caches().forEach(cache -> {
-         SearchManagerImplementor manager = (SearchManagerImplementor) Search.getSearchManager(cache);
+         SearchManagerImplementor manager = Search.getSearchManager(cache).unwrap(SearchManagerImplementor.class);
          manager.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
       });
 

@@ -21,8 +21,6 @@ package org.infinispan.server.endpoint.subsystem;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jboss.as.controller.AttributeDefinition;
-
 /**
  * Enumerates the attributes used in the Infinispan Endpoint subsystem schema.
  *
@@ -31,7 +29,7 @@ import org.jboss.as.controller.AttributeDefinition;
  */
 public enum Attribute {
     // must be first
-    UNKNOWN((String) null),
+    UNKNOWN(null),
 
     AWAIT_INITIAL_RETRIEVAL(ModelKeys.AWAIT_INITIAL_RETRIEVAL),
     ALLOW_CREDENTIALS(ModelKeys.ALLOW_CREDENTIALS),
@@ -41,7 +39,7 @@ public enum Attribute {
     CACHE_CONTAINER(ModelKeys.CACHE_CONTAINER),
     @Deprecated
     CACHE_SUFFIX(ModelKeys.CACHE_SUFFIX),
-   CLIENT_ENCODING(ModelKeys.CLIENT_ENCODING),
+    CLIENT_ENCODING(ModelKeys.CLIENT_ENCODING),
     IGNORED_CACHES(ModelKeys.IGNORED_CACHES),
     IO_THREADS(ModelKeys.IO_THREADS),
     EXTENDED_HEADERS(ModelKeys.EXTENDED_HEADERS),
@@ -83,11 +81,9 @@ public enum Attribute {
     WORKER_THREADS(ModelKeys.WORKER_THREADS);
 
     private final String name;
-    private final AttributeDefinition definition;
 
-    Attribute(final String name) {
+    Attribute(String name) {
         this.name = name;
-        this.definition = null;
     }
 
     /**
@@ -99,14 +95,10 @@ public enum Attribute {
         return name;
     }
 
-    public AttributeDefinition getDefinition() {
-        return definition;
-    }
-
     private static final Map<String, Attribute> attributes;
 
     static {
-        final Map<String, Attribute> map = new HashMap<String, Attribute>();
+        final Map<String, Attribute> map = new HashMap<>();
         for (Attribute attribute : values()) {
             final String name = attribute.getLocalName();
             if (name != null) map.put(name, attribute);

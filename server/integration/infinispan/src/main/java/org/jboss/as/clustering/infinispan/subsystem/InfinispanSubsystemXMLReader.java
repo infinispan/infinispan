@@ -645,9 +645,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     parseModule(reader, modulesAddress, additionalConfigurationOperations);
                     break;
                 }
-                default: {
+                default:
                     throw ParseUtils.unexpectedElement(reader);
-                }
             }
         }
 
@@ -2778,6 +2777,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
+                case KEY_TRANSFORMERS: {
+                    parseKeyTransformers(reader, indexing);
+                    break;
+                }
                 case INDEXED_ENTITIES: {
                     parseIndexedEntities(reader, indexing);
                     break;
@@ -2813,6 +2816,41 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         operations.put(indexingAddress, indexing);
     }
 
+    private void parseKeyTransformers(XMLExtendedStreamReader reader, ModelNode node) throws XMLStreamException {
+        ParseUtils.requireNoAttributes(reader);
+        while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+            Element element = Element.forName(reader.getLocalName());
+            switch (element) {
+                case KEY_TRANSFORMER: {
+                    parseKeyTransformer(reader, node);
+                    break;
+                }
+                default:
+                    throw ParseUtils.unexpectedElement(reader);
+            }
+        }
+    }
+
+    private void parseKeyTransformer(XMLExtendedStreamReader reader, ModelNode node) throws XMLStreamException {
+        String[] attrs = ParseUtils.requireAttributes(reader, Attribute.KEY.getLocalName(), Attribute.TRANSFORMER.getLocalName());
+        IndexingConfigurationResource.KEY_TRANSFORMERS.parseAndAddParameterElement(attrs[0], attrs[1], node, reader);
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            ParseUtils.requireNoNamespaceAttribute(reader, i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case KEY:
+                case TRANSFORMER: {
+                    // Already handled
+                    break;
+                }
+                default:
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+        }
+        ParseUtils.requireNoContent(reader);
+    }
+
     private void parseIndexedEntities(XMLExtendedStreamReader reader, ModelNode node) throws XMLStreamException {
         ParseUtils.requireNoAttributes(reader);
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
@@ -2824,9 +2862,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     IndexingConfigurationResource.INDEXED_ENTITIES.parseAndAddParameterElement(value, node, reader);
                     break;
                 }
-                default: {
+                default:
                     throw ParseUtils.unexpectedElement(reader);
-                }
             }
         }
     }

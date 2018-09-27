@@ -4,7 +4,9 @@ import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfig
 import static org.infinispan.configuration.cache.IndexingConfiguration.AUTO_CONFIG;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
+import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
 
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -34,7 +36,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    /**
-    * Enable indexing
+    * Enable indexing.
+    *
     * @deprecated Use {@link #index(Index)} instead
     */
    @Deprecated
@@ -46,7 +49,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    /**
-    * Disable indexing
+    * Disable indexing.
+    *
     * @deprecated Use {@link #index(Index)} instead
     */
    @Deprecated
@@ -56,7 +60,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    /**
-    * Enable or disable indexing
+    * Enable or disable indexing.
+    *
     * @deprecated Use {@link #index(Index)} instead
     */
    @Deprecated
@@ -86,24 +91,43 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   @Deprecated
    boolean indexLocalOnly() {
       return attributes.attribute(INDEX).get().isLocalOnly();
    }
 
    /**
-    * <p>
+    * Registers a transformer for a key class.
+    *
+    * @param keyClass the class of the key
+    * @param keyTransformerClass the class of the org.infinispan.query.Transformer that handles this key type
+    * @return <code>this</code>, for method chaining
+    */
+   public IndexingConfigurationBuilder addKeyTransformer(Class<?> keyClass, Class<?> keyTransformerClass) {
+      Map<Class<?>, Class<?>> indexedEntities = keyTransformers();
+      indexedEntities.put(keyClass, keyTransformerClass);
+      attributes.attribute(KEY_TRANSFORMERS).set(indexedEntities);
+      return this;
+   }
+
+   /**
+    * The currently configured key transformers.
+    *
+    * @return a {@link Map} in which the map key is the key class and the value is the Transformer class.
+    */
+   private Map<Class<?>, Class<?>> keyTransformers() {
+      return attributes.attribute(KEY_TRANSFORMERS).get();
+   }
+
+   /**
     * Defines a single property. Can be used multiple times to define all needed properties, but the
     * full set is overridden by {@link #withProperties(Properties)}.
-    * </p>
     * <p>
     * These properties are passed directly to the embedded Hibernate Search engine, so for the
     * complete and up to date documentation about available properties refer to the the Hibernate Search
     * reference of the version used by Infinispan Query.
-    * </p>
     *
-    * @see <a
-    *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
-    *      Search</a>
+    * @see <a href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate Search</a>
     * @param key Property key
     * @param value Property value
     * @return <code>this</code>, for method chaining
@@ -113,19 +137,14 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    /**
-    * <p>
     * Defines a single value. Can be used multiple times to define all needed property values, but the
     * full set is overridden by {@link #withProperties(Properties)}.
-    * </p>
     * <p>
     * These properties are passed directly to the embedded Hibernate Search engine, so for the
     * complete and up to date documentation about available properties refer to the the Hibernate Search
     * reference of the version used by Infinispan Query.
-    * </p>
     *
-    * @see <a
-    *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
-    *      Search</a>
+    * @see <a href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate Search</a>
     * @param key Property key
     * @param value Property value
     * @return <code>this</code>, for method chaining
@@ -138,18 +157,13 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    /**
-    * <p>
     * The Query engine relies on properties for configuration.
-    * </p>
     * <p>
     * These properties are passed directly to the embedded Hibernate Search engine, so for the
     * complete and up to date documentation about available properties refer to the Hibernate Search
     * reference of the version you're using with Infinispan Query.
-    * </p>
     *
-    * @see <a
-    *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
-    *      Search</a>
+    * @see <a href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate Search</a>
     * @param props the properties
     * @return <code>this</code>, for method chaining
     */

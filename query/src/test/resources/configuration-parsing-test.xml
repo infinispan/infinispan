@@ -13,6 +13,12 @@
       <local-cache name="simple" />
       <local-cache name="memory-searchable">
          <indexing index="ALL">
+            <key-transformers>
+               <key-transformer key="org.infinispan.query.test.CustomKey" transformer="org.infinispan.query.test.CustomTransformer"/>
+            </key-transformers>
+            <indexed-entities>
+               <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+            </indexed-entities>
             <property name="default.directory_provider">local-heap</property>
             <property name="lucene_version">LUCENE_48</property>
          </indexing>

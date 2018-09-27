@@ -547,6 +547,11 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
            writer.writeStartElement(Element.INDEXING.getLocalName());
            IndexingConfigurationResource.INDEXING.marshallAsAttribute(indexing, writer);
            IndexingConfigurationResource.INDEXING_AUTO_CONFIG.marshallAsAttribute(indexing, writer);
+           if (indexing.get(ModelKeys.KEY_TRANSFORMERS).isDefined()) {
+              writer.writeStartElement(Element.KEY_TRANSFORMERS.getLocalName());
+              IndexingConfigurationResource.KEY_TRANSFORMERS.marshallAsElement(indexing, writer);
+              writer.writeEndElement();
+           }
            if (indexing.get(ModelKeys.INDEXED_ENTITIES).isDefined()) {
               writer.writeStartElement(Element.INDEXED_ENTITIES.getLocalName());
               IndexingConfigurationResource.INDEXED_ENTITIES.marshallAsElement(indexing, writer);

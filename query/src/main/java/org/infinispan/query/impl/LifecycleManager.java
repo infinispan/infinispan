@@ -53,6 +53,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.MassIndexer;
+import org.infinispan.query.Transformer;
 import org.infinispan.query.affinity.ShardAllocationManagerImpl;
 import org.infinispan.query.affinity.ShardAllocatorManager;
 import org.infinispan.query.backend.IndexModificationStrategy;
@@ -188,6 +189,10 @@ public class LifecycleManager implements ModuleLifecycle {
       ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues = new ConcurrentHashMap<>();
       IndexModificationStrategy indexingStrategy = IndexModificationStrategy.configuredStrategy(searchIntegrator, cfg);
       QueryInterceptor queryInterceptor = new QueryInterceptor(searchIntegrator, keyTransformationHandler, indexingStrategy, txOldValues, cache);
+
+      for (Map.Entry<Class<?>, Class<?>> kt : cfg.indexing().keyTransformers().entrySet()) {
+         keyTransformationHandler.registerTransformer(kt.getKey(), (Class<? extends Transformer>) kt.getValue());
+      }
 
       // Interceptor registration not needed, core configuration handling
       // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!

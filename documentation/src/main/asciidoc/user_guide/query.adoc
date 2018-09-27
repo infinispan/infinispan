@@ -709,9 +709,10 @@ Unlike Hibernate Search, using _@DocumentId_ to mark a field as identifier does 
 ====== @Transformable keys
 The key for each value needs to be indexed as well, and the key instance must be transformed in a _String_. {brandname} includes some default transformation routines to encode common primitives, but to use a custom key you must provide an implementation of _org.infinispan.query.Transformer_ .
 
-[small]*Registering a Transformer via annotations*
+[small]*Registering a key Transformer via annotations*
 
-You can annotate your key type with _org.infinispan.query.Transformable_ :
+You can annotate your key class with _org.infinispan.query.Transformable_ and your custom transformer implementation
+will be picked up automatically:
 
 [source,java]
 ----
@@ -737,14 +738,50 @@ public class CustomTransformer implements Transformer {
 
 ----
 
-[small]*Registering a Transformer programmatically*
+[small]*Registering a key Transformer via the cache indexing configuration*
 
-Using this technique, you don't have to annotate your custom key type:
+You can use the _key-transformers_ xml element in both embedded and server config:
+
+[source,xml]
+----
+
+   <replicated-cache name="test">
+       <indexing index="ALL" auto-config="true">
+           <key-transformers>
+               <key-transformer key="com.mycompany.CustomKey" transformer="com.mycompany.CustomTransformer"/>
+           </key-transformers>
+       </indexing>
+   </replicated-cache>
+
+----
+
+or alternatively, you can achieve the same effect by using the Java configuration API (embedded mode):
 
 [source,java]
 ----
-org.infinispan.query.SearchManager.registerKeyTransformer(Class<?>, Class<? extends Transformer>)
+
+   ConfigurationBuilder builder = ...
+   builder.indexing().autoConfig(true)
+         .addKeyTransformer(CustomKey.class, CustomTransformer.class);
+
 ----
+
+[small]*Registering a Transformer programmatically at runtime*
+
+Using this technique, you don't have to annotate your custom key type and you also do not add the transformer to the,
+cache indexing configuration, instead, you can add it to the _SearchManagerImplementor_ dynamically at runtime by invoking
+_org.infinispan.query.spi.SearchManagerImplementor.registerKeyTransformer(Class<?>, Class<? extends Transformer>)_:
+
+[source,java]
+----
+org.infinispan.query.spi.SearchManagerImplementor manager = Search.getSearchManager(cache).unwrap(SearchManagerImplementor.class);
+manager.registerKeyTransformer(keyClass, keyTransformerClass);
+----
+
+NOTE: This approach is deprecated since 10.0 because it can lead to situations when a newly started node receives cache
+entries via initial state transfer and is not able to index them because the needed key transformers are not yet registered
+(and can only be registered after the Cache has been fully started). This undesirable situation is avoided if you register
+your key transformers using the other available approaches (configuration and annotation).
 
 [[query_configuration_api]]
 ====== Programmatic mapping
