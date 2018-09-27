@@ -32,12 +32,12 @@ public interface SearchManager {
     * @throws org.hibernate.search.exception.SearchException if the queryString cannot be converted to an indexed query,
     *                                                        due to lack of indexes to resolve it fully or if contains
     *                                                        aggregations and grouping.
-    * @see #getQuery(Query, IndexedQueryMode, Class[])
+    * @see #getQuery(Query, IndexedQueryMode, Class...)
     */
    <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode, Class<?>... classes);
 
    /**
-    * @see #getQuery(Query, IndexedQueryMode, Class[])
+    * @see #getQuery(Query, IndexedQueryMode, Class...)
     */
    <E> CacheQuery<E> getQuery(Query luceneQuery, Class<?>... classes);
 
@@ -104,6 +104,10 @@ public interface SearchManager {
     * This method gives access to internal Infinispan implementation details, and should not be normally needed. The
     * interface of the internal types does not constitute a public API and can (and probably will) change without
     * notice.
+    *
+    * @param cls the class of the desired internal component
+    * @return the 'unwrapped' internal component
+    * @throws IllegalArgumentException if the class of the requested internal component is not recognized
     */
    <T> T unwrap(Class<T> cls);
 }

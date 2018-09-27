@@ -15,11 +15,11 @@ import org.hibernate.search.indexes.spi.IndexManager;
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
-public class LazyInitializingBackend implements IndexingBackend {
+class LazyInitializingBackend implements IndexingBackend {
 
    private final LazyInitializableBackend backend;
 
-   public LazyInitializingBackend(LazyInitializableBackend backend) {
+   LazyInitializingBackend(LazyInitializableBackend backend) {
       this.backend = backend;
    }
 
@@ -33,7 +33,6 @@ public class LazyInitializingBackend implements IndexingBackend {
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
       backend.lazyInitialize();
       backend.getCurrentIndexingBackend().applyStreamWork(singleOperation, monitor, indexManager);
-
    }
 
    @Override
@@ -50,5 +49,4 @@ public class LazyInitializingBackend implements IndexingBackend {
    public String toString() {
       return "LazyInitializingBackend";
    }
-
 }

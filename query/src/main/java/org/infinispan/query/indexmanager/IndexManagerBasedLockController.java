@@ -31,7 +31,7 @@ final class IndexManagerBasedLockController implements IndexLockController {
    private final DirectoryBasedIndexManager indexManager;
    private final TransactionHelper transactionHelper;
 
-   public IndexManagerBasedLockController(DirectoryBasedIndexManager indexManager, TransactionManager tm) {
+   IndexManagerBasedLockController(DirectoryBasedIndexManager indexManager, TransactionManager tm) {
       this.indexManager = indexManager;
       this.transactionHelper = new TransactionHelper(tm);
    }

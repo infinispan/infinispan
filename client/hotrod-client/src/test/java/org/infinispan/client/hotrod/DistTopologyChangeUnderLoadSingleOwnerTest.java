@@ -61,10 +61,10 @@ public class DistTopologyChangeUnderLoadSingleOwnerTest extends MultiHotRodServe
 
    private class PutHammer implements Callable<Void> {
       private final Random r = new Random();
-      volatile boolean stop;
+      volatile boolean stop = false;
 
       @Override
-      public Void call() throws Exception {
+      public Void call() {
          RemoteCache<Integer, String> remote = client(0).getCache();
          while (!stop) {
             int i = r.nextInt(10);
@@ -74,5 +74,4 @@ public class DistTopologyChangeUnderLoadSingleOwnerTest extends MultiHotRodServe
          return null;
       }
    }
-
 }

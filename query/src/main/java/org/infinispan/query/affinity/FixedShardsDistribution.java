@@ -1,9 +1,12 @@
 package org.infinispan.query.affinity;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.IntStream.range;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -11,35 +14,35 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * {@link ShardDistribution} that maintain a fixed number of index shards.
- * The minimum number of shards is 1 and the maximum is the number of segments.
+ * {@link ShardDistribution} that maintain a fixed number of index shards. The minimum number of shards is 1 and the
+ * maximum is the number of segments.
  *
  * @since 9.0
  */
 class FixedShardsDistribution implements ShardDistribution {
-   private static final Log LOGGER = LogFactory.getLog(FixedShardsDistribution.class, Log.class);
 
-   private final Map<Integer, String> shardPerSegmentMap = CollectionFactory.makeConcurrentMap();
-   private final Map<Address, Set<String>> shardsPerAddressMap = CollectionFactory.makeConcurrentMap();
-   private final Map<String, Address> addressPerShardMap = CollectionFactory.makeConcurrentMap();
+   private static final Log log = LogFactory.getLog(FixedShardsDistribution.class, Log.class);
+
+   private final Map<Integer, String> shardPerSegmentMap = new HashMap<>();
+   private final Map<Address, Set<String>> shardsPerAddressMap = new HashMap<>();
+   private final Map<String, Address> addressPerShardMap = new HashMap<>();
    private final int numShards;
 
    FixedShardsDistribution(ConsistentHash consistentHash, int numShards) {
       if (numShards > consistentHash.getNumSegments()) {
          throw new IllegalArgumentException("Number of shards cannot be higher than number of segments");
       }
-      if (numShards < 0) {
-         throw new IllegalArgumentException("Number of shards cannot be negative");
+      if (numShards < 1) {
+         throw new IllegalArgumentException("Minimum number of shards is 1");
       }
       this.numShards = numShards;
-      this.calculate(consistentHash, numShards);
+      calculate(consistentHash, numShards);
    }
 
    private void calculate(ConsistentHash consistentHash, int numShards) {
@@ -51,9 +54,11 @@ class FixedShardsDistribution implements ShardDistribution {
 
       int[] shardsNumPerServer = allocateShardsToNodes(numShards, numNodes, segmentsPerServer);
       this.populateSegments(shardsNumPerServer, segmentsPerServer, nodes);
-      LOGGER.tracef("Calculated shard distribution shardPerSegmentMap: %s", shardPerSegmentMap);
-      LOGGER.tracef("Calculated shard distribution shardsPerAddressMap: %s", shardsPerAddressMap);
-      LOGGER.tracef("Calculated shard distribution addressPerShardMap: %s", addressPerShardMap);
+      if (log.isTraceEnabled()) {
+         log.tracef("Calculated shard distribution shardPerSegmentMap: %s", shardPerSegmentMap);
+         log.tracef("Calculated shard distribution shardsPerAddressMap: %s", shardsPerAddressMap);
+         log.tracef("Calculated shard distribution addressPerShardMap: %s", addressPerShardMap);
+      }
    }
 
    /**
@@ -75,7 +80,7 @@ class FixedShardsDistribution implements ShardDistribution {
             continue;
          }
          shardsPerAddressMap.computeIfAbsent(node, a -> new HashSet<>(shardQuantity));
-         List<Set<Integer>> segments = this.split(primarySegments, shardsNumPerServer[n++]);
+         List<Set<Integer>> segments = split(primarySegments, shardsNumPerServer[n++]);
          for (Collection<Integer> shardSegments : segments) {
             String id = String.valueOf(shardId++);
             shardSegments.forEach(seg -> shardPerSegmentMap.put(seg, id));
@@ -89,6 +94,20 @@ class FixedShardsDistribution implements ShardDistribution {
             shardPerSegmentMap.put(segment, shardIterator.next());
          }
       }
+   }
+
+   /**
+    * @return input collection split into 'parts' sub collections
+    */
+   private static List<Set<Integer>> split(Collection<Integer> segments, int parts) {
+      if (segments.isEmpty() || parts == 0) return Collections.emptyList();
+      List<Set<Integer>> splits = new ArrayList<>(parts);
+      range(0, parts).forEach(p -> splits.add(new HashSet<>(segments.size() / parts)));
+      int i = 0;
+      for (Integer segment : segments) {
+         splits.get(i++ % parts).add(segment);
+      }
+      return splits;
    }
 
    /**
@@ -120,7 +139,7 @@ class FixedShardsDistribution implements ShardDistribution {
    }
 
    @Override
-   public String getShardFromSegment(Integer segment) {
+   public String getShardFromSegment(int segment) {
       return shardPerSegmentMap.get(segment);
    }
 
@@ -128,5 +147,4 @@ class FixedShardsDistribution implements ShardDistribution {
    public Address getOwner(String shardId) {
       return addressPerShardMap.get(shardId);
    }
-
 }

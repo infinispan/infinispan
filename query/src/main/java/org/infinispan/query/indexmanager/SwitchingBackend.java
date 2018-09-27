@@ -7,7 +7,7 @@ package org.infinispan.query.indexmanager;
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
-public interface SwitchingBackend {
+interface SwitchingBackend {
 
    void initialize();
 
@@ -16,5 +16,4 @@ public interface SwitchingBackend {
    void refresh();
 
    void shutdown();
-
 }

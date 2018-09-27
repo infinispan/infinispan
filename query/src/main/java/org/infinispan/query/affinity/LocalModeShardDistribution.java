@@ -1,63 +1,46 @@
 package org.infinispan.query.affinity;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.LocalModeAddress;
 
 /**
- * {@link ShardDistribution} for non-clustered indexes, all shardsIdentifiers are associated with a single server.
+ * {@link ShardDistribution} for non-clustered indexes, all shard identifiers are associated with a single server.
  *
  * @since 9.0
  */
 final class LocalModeShardDistribution implements ShardDistribution {
 
-   private final Set<Integer> segments;
-   private final Set<String> shardsIdentifiers;
-   private final Address localAddress = LocalModeAddress.INSTANCE;
+   private final int numShards;
 
-   private final Map<Integer, String> shardPerSegmentMap = CollectionFactory.makeConcurrentMap();
-   private final Map<String, Set<Integer>> segmentPerShardMap = CollectionFactory.makeConcurrentMap();
+   private final Set<String> shardIds;
 
-   LocalModeShardDistribution(int numSegments, int numShards) {
-      this.segments = IntStream.range(0, numSegments).boxed().collect(Collectors.toSet());
-      this.shardsIdentifiers = IntStream.range(0, numShards).boxed().map(String::valueOf).collect(Collectors.toSet());
-      this.distribute(numShards);
-   }
-
-   private void distribute(int numShards) {
-      List<Set<Integer>> shardsDistribution = this.split(segments, numShards);
-      int i = 0;
-      for (Set<Integer> shardSegments : shardsDistribution) {
-         String shardId = String.valueOf(i++);
-         segmentPerShardMap.put(shardId, shardSegments);
-         shardSegments.forEach(s -> shardPerSegmentMap.put(s, shardId));
-      }
+   LocalModeShardDistribution(int numShards) {
+      this.numShards = numShards;
+      this.shardIds = Collections.unmodifiableSet(IntStream.range(0, numShards).boxed().map(String::valueOf).collect(Collectors.toSet()));
    }
 
    @Override
    public Set<String> getShardsIdentifiers() {
-      return Collections.unmodifiableSet(shardsIdentifiers);
+      return shardIds;
    }
 
    @Override
    public Address getOwner(String shardId) {
-      return localAddress;
+      return LocalModeAddress.INSTANCE;
    }
 
    @Override
    public Set<String> getShards(Address address) {
-      return Collections.unmodifiableSet(shardsIdentifiers);
+      return shardIds;
    }
 
    @Override
-   public String getShardFromSegment(Integer segment) {
-      return shardPerSegmentMap.get(segment);
+   public String getShardFromSegment(int segment) {
+      return String.valueOf(segment % numShards);
    }
 }

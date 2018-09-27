@@ -15,9 +15,8 @@ import org.hibernate.search.spi.WorkerBuildContext;
 class SimpleLocalBackendFactory implements LocalBackendFactory {
 
    private final IndexManager indexManager;
-   private Properties cfg;
-   private WorkerBuildContext buildContext;
-
+   private final Properties cfg;
+   private final WorkerBuildContext buildContext;
 
    SimpleLocalBackendFactory(IndexManager indexManager, Properties cfg, WorkerBuildContext buildContext) {
       this.indexManager = indexManager;
@@ -28,8 +27,7 @@ class SimpleLocalBackendFactory implements LocalBackendFactory {
    @Override
    public IndexingBackend createLocalIndexingBackend() {
       WorkspaceHolder workspaceHolder = new WorkspaceHolder();
-      workspaceHolder.initialize(cfg,buildContext,indexManager);
+      workspaceHolder.initialize(cfg, buildContext, indexManager);
       return new LocalIndexingBackend(workspaceHolder);
    }
-
 }

@@ -2,17 +2,14 @@ package org.infinispan.query.affinity;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.lucene.document.Document;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.query.indexmanager.AbstractUpdateCommand;
-import org.infinispan.query.indexmanager.LuceneWorkConverter;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.util.ByteString;
@@ -21,10 +18,13 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Handle index updates forwarded by the {@link AffinityIndexManager}, in exceptional cases where
  * an index work ceases to be local to a node due to transient ownership changes.
+ * <p>
+ * This class is public so it can be used by other internal Infinispan packages but should not be considered part of a
+ * public API.
  *
  * @since 9.0
  */
-public class AffinityUpdateCommand extends AbstractUpdateCommand {
+public final class AffinityUpdateCommand extends AbstractUpdateCommand {
 
    private static final Log log = LogFactory.getLog(AffinityUpdateCommand.class, Log.class);
 
@@ -35,25 +35,16 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
    }
 
    @Override
-   public void setSerializedWorkList(byte[] serializedModel) {
-      super.setSerializedWorkList(serializedModel);
-   }
-
-   @Override
    public CompletableFuture<Object> invokeAsync() {
       if (queryInterceptor.isStopping()) {
          throw log.cacheIsStoppingNoCommandAllowed(cacheName.toString());
       }
-      List<LuceneWork> luceneWorks = searchFactory.getWorkSerializer().toLuceneWorks(serializedModel);
-      KeyTransformationHandler handler = queryInterceptor.getKeyTransformationHandler();
-      List<LuceneWork> workToApply = LuceneWorkConverter.transformKeysToString(luceneWorks, handler);
-
-      for (LuceneWork luceneWork : workToApply) {
+      for (LuceneWork luceneWork : getLuceneWorks()) {
          Iterable<IndexManager> indexManagers = getIndexManagerForModifications(luceneWork);
          try {
             for (IndexManager im : indexManagers) {
                if (log.isDebugEnabled())
-                  log.debugf("Performing remote affinity work %s command on index %s", workToApply, im.getIndexName());
+                  log.debugf("Performing remote affinity work %s command on index %s", luceneWork, im.getIndexName());
                AffinityIndexManager affinityIndexManager = (AffinityIndexManager) im;
                affinityIndexManager.performOperations(Collections.singletonList(luceneWork), null, false, false);
             }

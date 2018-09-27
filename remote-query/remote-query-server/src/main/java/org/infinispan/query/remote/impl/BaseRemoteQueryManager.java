@@ -4,10 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.client.QueryRequest;
@@ -22,11 +20,11 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
    final DataConversion keyDataConversion;
    final DataConversion valueDataConversion;
 
-   BaseRemoteQueryManager(ComponentRegistry cr, QuerySerializers querySerializers) {
-      this.cache = cr.getComponent(Cache.class).getAdvancedCache();
+   BaseRemoteQueryManager(AdvancedCache<?, ?> cache, QuerySerializers querySerializers) {
+      this.cache = cache;
       this.querySerializers = querySerializers;
-      this.keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
-      this.valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
+      this.keyDataConversion = cache.getKeyDataConversion();
+      this.valueDataConversion = cache.getValueDataConversion();
    }
 
    public byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
@@ -36,12 +34,7 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
       List<Object> results = query.list();
       String[] projection = query.getProjection();
       int totalResults = query.getResultSize();
-      RemoteQueryResult remoteQueryResult;
-      if (projection == null) {
-         remoteQueryResult = new RemoteQueryResult(null, totalResults, results);
-      } else {
-         remoteQueryResult = new RemoteQueryResult(projection, totalResults, results);
-      }
+      RemoteQueryResult remoteQueryResult = new RemoteQueryResult(projection, totalResults, results);
       Object response = querySerializer.createQueryResponse(remoteQueryResult);
       return querySerializer.encodeQueryResponse(response, outputFormat);
    }

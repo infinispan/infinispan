@@ -5,6 +5,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hibernate.search.backend.BackendFactory;
+import org.hibernate.search.indexes.serialization.spi.LuceneWorkSerializer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -24,7 +25,7 @@ import net.jcip.annotations.GuardedBy;
  *
  * Initialization of a node - still not having enough information on the cluster
  * Becoming a master because of previous master failure / shutdown
- * Forfaiting the master role (useful for cluster merges)
+ * Forfeiting the master role (useful for cluster merges)
  *
  * The transition to become a master goes via different phases, and at each state
  * the process is reversible. So for example if operations have been put on hold
@@ -74,11 +75,12 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    private final Address localAddress;
    private final RpcManager rpcManager;
    private final LocalBackendFactory factory;
-   private final IndexLockController indexlock;
+   private final IndexLockController indexLockController;
    private final boolean async;
 
    private final String indexName;
    private final String cacheName;
+   private final LuceneWorkSerializer luceneWorkSerializer;
 
    /**
     * Monotonically increasing view identification sequence:
@@ -96,12 +98,14 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    @GuardedBy("this")
    private int masterLockAcquisitionAttempts = 0;
 
-   ClusteredSwitchingBackend(Properties props, ComponentRegistry componentsRegistry, String indexName, LocalBackendFactory factory, IndexLockController indexlock) {
+   ClusteredSwitchingBackend(Properties props, ComponentRegistry componentRegistry, String indexName,
+                             LuceneWorkSerializer luceneWorkSerializer, LocalBackendFactory factory, IndexLockController indexLockController) {
       this.indexName = indexName;
       this.factory = factory;
-      this.indexlock = indexlock;
-      this.rpcManager = componentsRegistry.getComponent(RpcManager.class);
-      this.cacheName = componentsRegistry.getCacheName();
+      this.indexLockController = indexLockController;
+      this.cacheName = componentRegistry.getCacheName();
+      this.luceneWorkSerializer = luceneWorkSerializer;
+      this.rpcManager = componentRegistry.getComponent(RpcManager.class);
       if (rpcManager == null) {
          throw new IllegalStateException("This Cache is not clustered! The switching backend should not be used for local caches");
       }
@@ -149,7 +153,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    private synchronized void applyViewChangedEvent(ViewChangedEvent e) {
       List<Address> newMembers = e.getNewMembers();
       if (log.isDebugEnabled()) {
-         log.debug("Notified of new View! Members: " + newMembers);
+         log.debugf("Notified of new View! Members: %s", newMembers);
       }
       handleTopologyChange(newMembers);
    }
@@ -171,7 +175,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
          } else {
             updateRoutingToNewRemote(newmaster);
             if (log.isDebugEnabled()) {
-               log.debug("New master elected, now routing updates to node " + newmaster);
+               log.debugf("New master elected, now routing updates to node %s", newmaster);
             }
          }
       }
@@ -193,8 +197,8 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
       }
    }
 
-   private void updateRoutingToNewRemote(final Address newMaster) {
-      final IndexingBackend newBackend = new RemoteIndexingBackend(cacheName, rpcManager, indexName, newMaster, async);
+   private void updateRoutingToNewRemote(Address newMaster) {
+      IndexingBackend newBackend = new RemoteIndexingBackend(cacheName, indexName, luceneWorkSerializer, rpcManager, newMaster, async);
       swapNewBackendIn(newBackend, newMaster);
    }
 
@@ -204,14 +208,14 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
       swapNewBackendIn(backend, localAddress);
    }
 
-   private void forfeitControl(Address newMasterAddress) {
-      final IndexingBackend newBackend = new RemoteIndexingBackend(cacheName, rpcManager, indexName, newMasterAddress, async);
-      swapNewBackendIn(newBackend, newMasterAddress);
+   private void forfeitControl(Address newMaster) {
+      IndexingBackend newBackend = new RemoteIndexingBackend(cacheName, indexName, luceneWorkSerializer, rpcManager, newMaster, async);
+      swapNewBackendIn(newBackend, newMaster);
    }
 
    private void swapNewBackendIn(IndexingBackend newBackend, Address newMasterAddress) {
       final IndexingBackend oldBackend = currentBackend;
-      log.debugv("Swapping from backend {0} to {1}'", oldBackend, newBackend);
+      log.debugf("Swapping from backend %s to %s", oldBackend, newBackend);
       this.currentBackend = newBackend;
       this.currentMaster = newMasterAddress;
       closeBackend(oldBackend, currentBackend);
@@ -233,7 +237,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
       handleTopologyChange(rpcManager.getMembers());
    }
 
-   private static void closeBackend(final IndexingBackend oldOne, final IndexingBackend replacement) {
+   private static void closeBackend(IndexingBackend oldOne, IndexingBackend replacement) {
       if (oldOne != null) {
          oldOne.flushAndClose(replacement);
       }
@@ -247,13 +251,13 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
          return true;
       }
       if (masterLockAcquisitionAttempts >= MAX_LOCK_ACQUISITION_ATTEMPTS) {
-         indexlock.forceLockClear();
+         indexLockController.forceLockClear();
          swapNewBackendIn(factory.createLocalIndexingBackend(), localAddress);
          return true;
       } else {
          masterLockAcquisitionAttempts++;
       }
-      if (indexlock.waitForAvailability()) {
+      if (indexLockController.waitForAvailability()) {
          swapNewBackendIn(factory.createLocalIndexingBackend(), localAddress);
          return true;
       } else {
@@ -261,5 +265,4 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
          return false;
       }
    }
-
 }

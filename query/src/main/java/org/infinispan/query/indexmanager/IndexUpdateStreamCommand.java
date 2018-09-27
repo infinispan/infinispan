@@ -1,25 +1,26 @@
 package org.infinispan.query.indexmanager;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
- * Execute a stream operation
+ * Execute a stream operation.
+ * <p>
+ * This class is public so it can be used by other internal Infinispan packages but should not be considered part of a
+ * public API.
  *
  * @author gustavonalle
  * @since 7.0
  */
-public class IndexUpdateStreamCommand extends AbstractUpdateCommand {
+public final class IndexUpdateStreamCommand extends AbstractUpdateCommand {
 
    private static final Log log = LogFactory.getLog(IndexUpdateStreamCommand.class, Log.class);
 
@@ -38,9 +39,7 @@ public class IndexUpdateStreamCommand extends AbstractUpdateCommand {
       if (indexManager == null) {
          throw new SearchException("Unknown index referenced : " + indexName);
       }
-      List<LuceneWork> luceneWorks = indexManager.getSerializer().toLuceneWorks(this.serializedModel);
-      KeyTransformationHandler handler = queryInterceptor.getKeyTransformationHandler();
-      LuceneWork workToApply = LuceneWorkConverter.transformKeysToString(luceneWorks.iterator().next(), handler);
+      LuceneWork workToApply = getLuceneWorks().get(0);
       indexManager.performStreamOperation(workToApply, null, true);
       return CompletableFutures.completedNull();
    }

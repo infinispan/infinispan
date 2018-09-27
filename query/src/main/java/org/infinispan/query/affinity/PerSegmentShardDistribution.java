@@ -15,23 +15,23 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @since 9.0
  */
-class PerSegmentShardDistribution implements ShardDistribution {
+final class PerSegmentShardDistribution implements ShardDistribution {
 
-   private static final Log logger = LogFactory.getLog(PerSegmentShardDistribution.class, Log.class);
+   private static final Log log = LogFactory.getLog(PerSegmentShardDistribution.class, Log.class);
 
    private final Set<String> identifiers;
    private final ConsistentHash consistentHash;
 
    PerSegmentShardDistribution(ConsistentHash consistentHash) {
-      int numSegments = consistentHash.getNumSegments();
       this.consistentHash = consistentHash;
-      this.identifiers = IntStream.range(0, numSegments).boxed().map(String::valueOf).collect(Collectors.toSet());
-      logger.debugf("Created with numSegments %d", numSegments);
+      this.identifiers = Collections.unmodifiableSet(IntStream.range(0, consistentHash.getNumSegments())
+            .boxed().map(String::valueOf).collect(Collectors.toSet()));
+      log.debugf("Created with numSegments %d", consistentHash.getNumSegments());
    }
 
    @Override
    public Set<String> getShardsIdentifiers() {
-      return Collections.unmodifiableSet(identifiers);
+      return identifiers;
    }
 
    @Override
@@ -41,12 +41,12 @@ class PerSegmentShardDistribution implements ShardDistribution {
 
    @Override
    public Set<String> getShards(Address address) {
-      return consistentHash.getPrimarySegmentsForOwner(address).stream()
-            .map(String::valueOf).collect(Collectors.toSet());
+      return consistentHash.getPrimarySegmentsForOwner(address)
+            .stream().map(String::valueOf).collect(Collectors.toSet());
    }
 
    @Override
-   public String getShardFromSegment(Integer segment) {
-      return String.valueOf(segment);
+   public String getShardFromSegment(int segment) {
+      return Integer.toString(segment);
    }
 }

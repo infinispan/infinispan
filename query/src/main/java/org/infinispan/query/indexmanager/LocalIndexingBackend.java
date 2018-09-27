@@ -22,7 +22,7 @@ final class LocalIndexingBackend implements IndexingBackend {
    private static final Log log = LogFactory.getLog(LocalIndexingBackend.class, Log.class);
    private final WorkspaceHolder workspaceHolder;
 
-   public LocalIndexingBackend(WorkspaceHolder workspaceHolder) {
+   LocalIndexingBackend(WorkspaceHolder workspaceHolder) {
       this.workspaceHolder = workspaceHolder;
    }
 

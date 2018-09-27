@@ -11,6 +11,6 @@ import org.infinispan.objectfilter.Matcher;
 final class ObjectRemoteQueryEngine extends BaseRemoteQueryEngine {
 
    ObjectRemoteQueryEngine(AdvancedCache<?, ?> cache, Class<? extends Matcher> matcherImplClass, boolean isIndexed) {
-      super(cache.getAdvancedCache().withEncoding(IdentityEncoder.class), isIndexed, matcherImplClass, null);
+      super(cache.withEncoding(IdentityEncoder.class), isIndexed, matcherImplClass, null);
    }
 }

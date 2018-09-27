@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.marshall;
 
+import java.io.Serializable;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -8,9 +10,7 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.test.data.Person;
 import org.testng.annotations.Test;
 
-import java.io.Serializable;
-
-@Test(testName = "client.hotrod.marshall.WhiteListMarshallingTest", groups = {"functional", "smoke"} )
+@Test(testName = "client.hotrod.marshall.WhiteListMarshallingTest", groups = {"functional", "smoke"})
 public class WhiteListMarshallingTest extends SingleHotRodServerTest {
 
    @Override
@@ -21,8 +21,7 @@ public class WhiteListMarshallingTest extends SingleHotRodServerTest {
       return new InternalRemoteCacheManager(builder.build());
    }
 
-   @Test(expectedExceptions = HotRodClientException.class,
-      expectedExceptionsMessageRegExp = ".*ISPN004034:.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN004034:.*")
    public void testUnsafeClassNotAllowed() {
       remoteCacheManager.getCache().put("unsafe", new UnsafeClass());
       remoteCacheManager.getCache().get("unsafe");
@@ -35,5 +34,4 @@ public class WhiteListMarshallingTest extends SingleHotRodServerTest {
 
    private static final class UnsafeClass implements Serializable {
    }
-
 }

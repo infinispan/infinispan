@@ -55,6 +55,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
 
    private KeyTransformationHandler keyTransformationHandler;
    private Cache<?, ?> cache;
+   private boolean isClustered;
 
    private final ReadWriteLock flushLock = new ReentrantReadWriteLock();
    private final Lock writeLock = flushLock.writeLock();
@@ -76,19 +77,20 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
       ComponentRegistryService componentRegistryService = serviceManager.requestService(ComponentRegistryService.class);
       ComponentRegistry componentRegistry = componentRegistryService.getComponentRegistry();
       transactionHelper = new TransactionHelper(componentRegistry.getComponent(TransactionManager.class));
-      shardId = this.extractShardName(indexName);
+      shardId = extractShardName(indexName);
       Transaction tx = transactionHelper.suspendTxIfExists();
       try {
          super.initialize(indexName, properties, similarity, buildContext);
       } finally {
          transactionHelper.resume(tx);
       }
-      RpcManager rpcManager = componentRegistry.getComponent(RpcManager.class);
       cache = componentRegistry.getComponent(Cache.class);
+      isClustered = cache.getCacheConfiguration().clustering().cacheMode().isClustered();
       keyTransformationHandler = componentRegistry.getComponent(QueryInterceptor.class).getKeyTransformationHandler();
       shardAllocatorManager = componentRegistry.getComponent(ShardAllocatorManager.class);
       searchIntegrator = componentRegistry.getComponent(SearchIntegrator.class);
       isAsync = !BackendFactory.isConfiguredAsSync(properties);
+      RpcManager rpcManager = componentRegistry.getComponent(RpcManager.class);
       localShardAddress = new ShardAddress(shardId, rpcManager != null ? rpcManager.getAddress() : LocalModeAddress.INSTANCE);
       ExecutorService asyncExecutor = componentRegistry.getComponent(ExecutorService.class, ASYNC_OPERATIONS_EXECUTOR);
       luceneWorkDispatcher = new LuceneWorkDispatcher(this, rpcManager);
@@ -101,9 +103,9 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
    private void handleOwnershipLost() {
       writeLock.lock();
       try {
-         log.debugf("Ownership of %s lost to '%s', closing index manager", this.getIndexName(),
-               shardAllocatorManager.getOwner(String.valueOf(shardId)));
-         this.flushAndReleaseResources();
+         log.debugf("Ownership of %s lost to '%s', closing index manager",
+               getIndexName(), shardAllocatorManager.getOwner(shardId));
+         flushAndReleaseResources();
       } finally {
          writeLock.unlock();
       }
@@ -111,7 +113,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
 
    @Override
    public void flushAndReleaseResources() {
-      InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) this.getDirectoryProvider();
+      InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) getDirectoryProvider();
       int activeDeleteTasks = directoryProvider.pendingDeleteTasks();
       boolean wasInterrupted = false;
       long endTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(POLL_WAIT);
@@ -127,7 +129,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
       if (wasInterrupted) {
          Thread.currentThread().interrupt();
       }
-      log.debugf("Flushing directory provider at %s on %s", this.getIndexName(), localShardAddress);
+      log.debugf("Flushing directory provider at %s on %s", getIndexName(), localShardAddress);
       super.flushAndReleaseResources();
    }
 
@@ -139,7 +141,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
       log.debugf("Getting lock holder for %s", indexName);
       Transaction tx = transactionHelper.suspendTxIfExists();
       try {
-         InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) this.getDirectoryProvider();
+         InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) getDirectoryProvider();
          return directoryProvider.getLockOwner(indexName, Integer.valueOf(affinityId), IndexWriter.WRITE_LOCK_NAME);
       } finally {
          transactionHelper.resume(tx);
@@ -147,25 +149,25 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
    }
 
    Address getLockHolder() {
-      return this.getLockHolder(this.getIndexName(), shardId);
+      return getLockHolder(getIndexName(), shardId);
    }
 
    @Override
    public void performOperations(List<LuceneWork> workList, IndexingMonitor monitor) {
-      this.performOperations(workList, monitor, true, false);
+      performOperations(workList, monitor, true, false);
    }
 
    private void checkOwnership() {
       log.debugf("Checking ownership at %s", localShardAddress);
       Address primaryOwner = shardAllocatorManager.getOwner(shardId);
       if (!localShardAddress.getAddress().equals(primaryOwner)) {
-         log.debugf("%s is not owner of %s anymore, releasing resources", localShardAddress, this.getIndexName());
-         this.handleOwnershipLost();
+         log.debugf("%s is not owner of %s anymore, releasing resources", localShardAddress, getIndexName());
+         handleOwnershipLost();
       }
    }
 
    void performOperations(List<LuceneWork> workList, IndexingMonitor monitor, boolean originLocal, boolean isRetry) {
-      if (this.cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
+      if (isClustered) {
          Map<ShardAddress, List<LuceneWork>> workByAddress = workPartitioner.partitionWorkByAddress(workList, originLocal,
                isRetry);
          readLock.lock();
@@ -173,7 +175,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
             log.debugf("Applying work @ %s, workMap is %s", localShardAddress, workByAddress);
             List<LuceneWork> localWork = workByAddress.get(localShardAddress);
             if (localWork != null && !localWork.isEmpty()) {
-               log.debugf("About to apply local work %s (index %s) at %s", localWork, this.getIndexName(), localShardAddress);
+               log.debugf("About to apply local work %s (index %s) at %s", localWork, getIndexName(), localShardAddress);
                super.performOperations(localWork, monitor);
                log.debugf("Work %s applied at %s", localWork, localShardAddress);
                workByAddress.remove(localShardAddress);
@@ -181,9 +183,9 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
          } finally {
             readLock.unlock();
          }
-         workByAddress.entrySet().forEach(entry -> luceneWorkDispatcher.dispatch(entry.getValue(), entry.getKey(), originLocal));
+         workByAddress.forEach((key, value) -> luceneWorkDispatcher.dispatch(value, key, originLocal));
          if (isRetry || !originLocal) {
-            this.checkOwnership();
+            checkOwnership();
          }
       } else {
 
@@ -191,7 +193,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
       }
    }
 
-   private String extractShardName(String indexName) {
+   private static String extractShardName(String indexName) {
       int idx = indexName.lastIndexOf('.');
       return idx == -1 ? "0" : indexName.substring(idx + 1);
    }
@@ -227,12 +229,11 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
    @TopologyChanged
    @SuppressWarnings("unused")
    public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
-      log.debugf("Topology changed notification for %s: %s", this.getIndexName(), tce);
-      boolean ownershipChanged = shardAllocatorManager.isOwnershipChanged(tce, this.getIndexName());
+      log.debugf("Topology changed notification for %s: %s", getIndexName(), tce);
+      boolean ownershipChanged = shardAllocatorManager.isOwnershipChanged(tce, getIndexName());
       log.debugf("Ownership changed? %s,", ownershipChanged);
       if (ownershipChanged) {
-         this.handleOwnershipLost();
+         handleOwnershipLost();
       }
    }
-
 }

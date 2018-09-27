@@ -3,15 +3,13 @@ package org.infinispan.query.indexmanager;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.hibernate.search.backend.FlushLuceneWork;
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.PurgeAllLuceneWork;
+import org.hibernate.search.indexes.serialization.spi.LuceneWorkSerializer;
 import org.hibernate.search.indexes.spi.IndexManager;
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commons.util.Util;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -29,13 +27,12 @@ final class RemoteIndexingBackend implements IndexingBackend {
 
    private static final Log log = LogFactory.getLog(RemoteIndexingBackend.class, Log.class);
 
-   private final int GRACE_MILLISECONDS_FOR_REPLACEMENT = 4000;
-   private final int POLLING_MILLISECONDS_FOR_REPLACEMENT = 4000;
-   protected static final Set<Class<? extends LuceneWork>> SYNC_ONLY_WORKS =
-         Util.asSet(PurgeAllLuceneWork.class, FlushLuceneWork.class);
+   private static final int GRACE_MILLISECONDS_FOR_REPLACEMENT = 4000;
+   private static final int POLLING_MILLISECONDS_FOR_REPLACEMENT = 4000;
 
    private final String cacheName;
    private final String indexName;
+   private final LuceneWorkSerializer luceneWorkSerializer;
    private final Collection<Address> recipients;
    private final RpcManager rpcManager;
    private final Address masterAddress;
@@ -43,10 +40,11 @@ final class RemoteIndexingBackend implements IndexingBackend {
 
    private volatile IndexingBackend replacement;
 
-   public RemoteIndexingBackend(String cacheName, RpcManager rpcManager, String indexName, Address masterAddress, boolean async) {
+   RemoteIndexingBackend(String cacheName, String indexName, LuceneWorkSerializer luceneWorkSerializer, RpcManager rpcManager, Address masterAddress, boolean async) {
       this.cacheName = cacheName;
-      this.rpcManager = rpcManager;
       this.indexName = indexName;
+      this.luceneWorkSerializer = luceneWorkSerializer;
+      this.rpcManager = rpcManager;
       this.masterAddress = masterAddress;
       this.recipients = Collections.singleton(masterAddress);
       this.async = async;
@@ -61,14 +59,8 @@ final class RemoteIndexingBackend implements IndexingBackend {
 
    @Override
    public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager) {
-      IndexUpdateCommand command = new IndexUpdateCommand(ByteString.fromString(cacheName));
-      //Use Search's custom Avro based serializer as it includes support for back/future compatibility
-      byte[] serializedModel = indexManager.getSerializer().toSerializedModel(workList);
-      command.setSerializedWorkList(serializedModel);
-      command.setIndexName(this.indexName);
       try {
-         log.applyingChangeListRemotely(workList);
-         sendCommand(command, workList, shouldSendSync(workList));
+         sendCommand(new IndexUpdateCommand(ByteString.fromString(cacheName)), workList);
       } catch (Exception e) {
          waitForReplacementBackend();
          if (replacement != null) {
@@ -79,27 +71,10 @@ final class RemoteIndexingBackend implements IndexingBackend {
       }
    }
 
-   /**
-    * Decides whether a command should be sent sync or async
-    */
-   private boolean shouldSendSync(LuceneWork operation) {
-      return !async || SYNC_ONLY_WORKS.contains(operation.getClass());
-   }
-
-   private boolean shouldSendSync(List<LuceneWork> operations) {
-      return !async || (operations.size() == 1 && shouldSendSync(operations.get(0)));
-   }
-
-
    @Override
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
-      final IndexUpdateStreamCommand streamCommand = new IndexUpdateStreamCommand(ByteString.fromString(cacheName));
-      final List<LuceneWork> operations = Collections.singletonList(singleOperation);
-      final byte[] serializedModel = indexManager.getSerializer().toSerializedModel(operations);
-      streamCommand.setSerializedWorkList(serializedModel);
-      streamCommand.setIndexName(this.indexName);
       try {
-         sendCommand(streamCommand, operations, shouldSendSync(singleOperation));
+         sendCommand(new IndexUpdateStreamCommand(ByteString.fromString(cacheName)), Collections.singletonList(singleOperation));
       } catch (Exception e) {
          waitForReplacementBackend();
          if (replacement != null) {
@@ -131,8 +106,37 @@ final class RemoteIndexingBackend implements IndexingBackend {
       }
    }
 
-   private void sendCommand(ReplicableCommand command, List<LuceneWork> workList, boolean sync) {
+   /**
+    * Decides whether commands should be sent sync or async.
+    */
+   private boolean shouldSendSync(List<LuceneWork> operations) {
+      if (!async) {
+         return true;
+      }
+      if (operations.size() == 1) {
+         Class<? extends LuceneWork> workClass = operations.get(0).getClass(); //todo [anistor] why do we look only at the first one?
+
+         return workClass == FlushLuceneWork.class || workClass == PurgeAllLuceneWork.class;
+      }
+      return false;
+   }
+
+   /**
+    * Serializes the give work list using Hibernate Search's internal serializer and sets the payload to the command and
+    * sends it to the master.
+    *
+    * @param command  an IndexUpdateCommand or IndexUpdateStreamCommand command
+    * @param workList the list of LuceneWork objects to send
+    */
+   private void sendCommand(AbstractUpdateCommand command, List<LuceneWork> workList) {
+      log.applyingChangeListRemotely(workList);
+
+      command.setSerializedLuceneWorks(luceneWorkSerializer.toSerializedModel(workList));
+      command.setIndexName(indexName);
+
+      boolean sync = shouldSendSync(workList);
       rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(sync));
+
       log.workListRemotedTo(workList, masterAddress);
    }
 
@@ -144,5 +148,4 @@ final class RemoteIndexingBackend implements IndexingBackend {
    public String toString() {
       return "RemoteIndexingBackend(" + masterAddress + ")";
    }
-
 }

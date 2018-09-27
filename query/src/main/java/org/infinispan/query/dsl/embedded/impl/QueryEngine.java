@@ -17,7 +17,6 @@ import org.hibernate.search.spi.IndexedTypeMap;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.encoding.DataConversion;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
@@ -111,7 +110,7 @@ public class QueryEngine<TypeMetadata> {
    private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(EmbeddedQueryEngine.class);
 
    protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass, LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider) {
-      this.cache = wrapCache(cache, isIndexed);
+      this.cache = cache.getValueDataConversion().isStorageFormatFilterable() ? cache.withEncoding(IdentityEncoder.class) : cache;
       this.isIndexed = isIndexed;
       this.matcherImplClass = matcherImplClass;
       this.queryCache = ComponentRegistryUtils.getQueryCache(cache);
@@ -122,14 +121,6 @@ public class QueryEngine<TypeMetadata> {
       } else {
          this.fieldBridgeAndAnalyzerProvider = fieldBridgeAndAnalyzerProvider;
       }
-   }
-
-   protected AdvancedCache<?, ?> wrapCache(AdvancedCache<?, ?> cache, boolean isIndexed) {
-      DataConversion valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
-      if (valueDataConversion.isStorageFormatFilterable()) {
-         cache = cache.withEncoding(IdentityEncoder.class);
-      }
-      return cache;
    }
 
    protected SearchManagerImplementor getSearchManager() {

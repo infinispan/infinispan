@@ -37,6 +37,7 @@ import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ManageableComponentMetadata;
@@ -124,7 +125,9 @@ public class LifecycleManager implements ModuleLifecycle {
          SearchIntegrator searchFactory = null;
          boolean isIndexed = cfg.indexing().index().isEnabled();
          if (isIndexed) {
-            cr.registerComponent(new ShardAllocationManagerImpl(), ShardAllocatorManager.class);
+            //todo [anistor] if not indexed should not be able to declare indexed-entities and key-transformers
+            DistributionManager distributionManager = cr.getComponent(DistributionManager.class);
+            cr.registerComponent(new ShardAllocationManagerImpl(distributionManager, cache), ShardAllocatorManager.class);
             searchFactory = createSearchIntegrator(cfg.indexing(), cr, aggregatedClassLoader);
 
             KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler(aggregatedClassLoader);

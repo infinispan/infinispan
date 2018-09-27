@@ -15,6 +15,7 @@ import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper;
 
 /**
  * Implementation of {@link RemoteQueryManager} for caches storing deserialized content (Java Objects).
@@ -23,17 +24,17 @@ import org.infinispan.query.backend.QueryInterceptor;
  */
 class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
 
-   private final Map<String, BaseRemoteQueryEngine> enginePerMediaType = new ConcurrentHashMap<>();
+   private final Map<String, ObjectRemoteQueryEngine> enginePerMediaType = new ConcurrentHashMap<>();
 
    protected final SerializationContext serCtx;
-   protected final boolean isIndexed;
 
+   private final SearchIntegrator searchIntegrator;
    private final ComponentRegistry cr;
 
-   ObjectRemoteQueryManager(ComponentRegistry cr, QuerySerializers querySerializers) {
-      super(cr, querySerializers);
+   ObjectRemoteQueryManager(AdvancedCache<?, ?> cache, ComponentRegistry cr, QuerySerializers querySerializers) {
+      super(cache, querySerializers);
+      searchIntegrator = cr.getComponent(SearchIntegrator.class);
       this.cr = cr;
-      this.isIndexed = cache.getCacheConfiguration().indexing().index().isEnabled();
       this.serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cache.getCacheManager());
    }
 
@@ -52,40 +53,35 @@ class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
       return filterResult;
    }
 
-   private BaseRemoteQueryEngine getQueryEngineForMediaType(MediaType mediaType) {
-      BaseRemoteQueryEngine queryEngine = enginePerMediaType.get(mediaType.getTypeSubtype());
-      if (queryEngine != null) return queryEngine;
+   private ObjectRemoteQueryEngine getQueryEngineForMediaType(MediaType mediaType) {
+      ObjectRemoteQueryEngine queryEngine = enginePerMediaType.get(mediaType.getTypeSubtype());
+      if (queryEngine == null) {
+         ReflectionMatcher matcher = mediaType.match(APPLICATION_PROTOSTREAM) ?
+               getProtobufObjectReflectionMatcher() : getObjectReflectionMatcher();
 
-      SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
-
-      EntityNameResolver entityNameResolver = createEntityNamesResolver(mediaType);
-
-      ReflectionMatcher matcher = mediaType.match(APPLICATION_PROTOSTREAM) ?
-            ProtobufObjectReflectionMatcher.create(entityNameResolver, serCtx, searchIntegrator) :
-            ObjectReflectionMatcher.create(entityNameResolver, searchIntegrator);
-
-      cr.registerComponent(matcher, matcher.getClass());
-      ObjectRemoteQueryEngine engine = new ObjectRemoteQueryEngine(cache, matcher.getClass(), isIndexed);
-      enginePerMediaType.put(mediaType.getTypeSubtype(), engine);
-      return engine;
+         cr.registerComponent(matcher, matcher.getClass());
+         queryEngine = new ObjectRemoteQueryEngine(cache, matcher.getClass(), searchIntegrator != null);
+         enginePerMediaType.put(mediaType.getTypeSubtype(), queryEngine);
+      }
+      return queryEngine;
    }
 
-   private EntityNameResolver createEntityNamesResolver(MediaType mediaType) {
-      if (mediaType.match(APPLICATION_PROTOSTREAM)) {
-         return new ProtobufEntityNameResolver(serCtx);
-      } else {
-         ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
+   private ProtobufObjectReflectionMatcher getProtobufObjectReflectionMatcher() {
+      ProtobufEntityNameResolver entityNameResolver = new ProtobufEntityNameResolver(serCtx);
+      return searchIntegrator == null ? new ProtobufObjectReflectionMatcher(entityNameResolver, serCtx) :
+            new ProtobufObjectReflectionMatcher(entityNameResolver, serCtx, searchIntegrator);
+   }
 
-         ReflectionEntityNamesResolver reflectionEntityNamesResolver = new ReflectionEntityNamesResolver(classLoader);
-         if (isIndexed) {
-            // If indexing is enabled, then use the known set of classes for lookup and the global classloader as a fallback.
-            QueryInterceptor qi = cr.getComponent(QueryInterceptor.class);
-            return name -> qi.getKnownClasses().stream()
-                  .filter(c -> c.getName().equals(name))
-                  .findFirst()
-                  .orElse(reflectionEntityNamesResolver.resolve(name));
-         }
-         return reflectionEntityNamesResolver;
+   private ObjectReflectionMatcher getObjectReflectionMatcher() {
+      EntityNameResolver reflectionEntityNamesResolver = new ReflectionEntityNamesResolver(cache.getClassLoader());
+      if (searchIntegrator == null) {
+         return new ObjectReflectionMatcher(reflectionEntityNamesResolver);
       }
+
+      // If indexing is enabled, then use the known set of classes for lookup and the global classloader as a fallback.
+      QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
+      return new ObjectReflectionMatcher(new HibernateSearchPropertyHelper(searchIntegrator,
+            name -> queryInterceptor.getKnownClasses().stream()
+                  .filter(c -> c.getName().equals(name)).findFirst().orElse(reflectionEntityNamesResolver.resolve(name))));
    }
 }

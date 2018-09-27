@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -18,7 +19,6 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
@@ -171,22 +171,21 @@ public final class LifecycleManager implements ModuleLifecycle {
       }
    }
 
-   private RemoteQueryManager buildQueryManager(Configuration cfg, SerializationContext ctx, ComponentRegistry cr) {
-      ContentTypeConfiguration valueEncoding = cfg.encoding().valueDataType();
-      MediaType valueStorageMediaType = valueEncoding.mediaType();
-      MediaType storageMediaType = cr.getComponent(Cache.class).getAdvancedCache().getValueDataConversion().getStorageMediaType();
-      QuerySerializers querySerializers = buildQuerySerializers(cr, storageMediaType);
+   private RemoteQueryManager buildRemoteQueryManager(Configuration cfg, SerializationContext ctx, ComponentRegistry cr) {
+      AdvancedCache cache = cr.getComponent(Cache.class).getAdvancedCache();
+      MediaType storageMediaType = cache.getValueDataConversion().getStorageMediaType();
+      EncoderRegistry encoderRegistry = cr.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
+      QuerySerializers querySerializers = buildQuerySerializers(encoderRegistry, storageMediaType);
 
+      MediaType valueStorageMediaType = cfg.encoding().valueDataType().mediaType();
       boolean isObjectStorage = valueStorageMediaType != null && valueStorageMediaType.match(APPLICATION_OBJECT);
-      if (isObjectStorage) return new ObjectRemoteQueryManager(cr, querySerializers);
-      return new ProtobufRemoteQueryManager(ctx, cr, querySerializers);
+      return isObjectStorage ? new ObjectRemoteQueryManager(cache, cr, querySerializers) :
+            new ProtobufRemoteQueryManager(ctx, cache, cr, querySerializers);
    }
 
-   private QuerySerializers buildQuerySerializers(ComponentRegistry cr, MediaType storageMediaType) {
-      EncoderRegistry encoderRegistry = cr.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
+   private QuerySerializers buildQuerySerializers(EncoderRegistry encoderRegistry, MediaType storageMediaType) {
       QuerySerializers querySerializers = new QuerySerializers();
-      DefaultQuerySerializer defaultQuerySerializer = new DefaultQuerySerializer(encoderRegistry);
-      querySerializers.addSerializer(MediaType.MATCH_ALL, defaultQuerySerializer);
+      querySerializers.addSerializer(MediaType.MATCH_ALL, new DefaultQuerySerializer(encoderRegistry));
 
       if (encoderRegistry.isConversionSupported(storageMediaType, APPLICATION_JSON)) {
          Transcoder jsonStorage = encoderRegistry.getTranscoder(APPLICATION_JSON, storageMediaType);
@@ -204,8 +203,7 @@ public final class LifecycleManager implements ModuleLifecycle {
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
 
-         RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
-
+         RemoteQueryManager remoteQueryManager = buildRemoteQueryManager(cfg, serCtx, cr);
          cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
 
          if (cfg.indexing().index().isEnabled()) {

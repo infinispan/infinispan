@@ -8,12 +8,12 @@ package org.infinispan.query.indexmanager;
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
-public class LocalOnlyBackend implements SwitchingBackend {
+class LocalOnlyBackend implements SwitchingBackend {
 
    private IndexingBackend localIndexingBackend;
    private LocalBackendFactory factory;
 
-   public LocalOnlyBackend(LocalBackendFactory factory) {
+   LocalOnlyBackend(LocalBackendFactory factory) {
       this.factory = factory;
    }
 
@@ -37,5 +37,4 @@ public class LocalOnlyBackend implements SwitchingBackend {
    public void shutdown() {
       localIndexingBackend.flushAndClose(null);
    }
-
 }

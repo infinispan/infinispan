@@ -5,7 +5,6 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.Listener.Observation;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
@@ -21,34 +20,45 @@ import org.infinispan.util.logging.LogFactory;
 @Listener(observation = Observation.POST)
 public final class ShardAllocationManagerImpl implements ShardAllocatorManager {
 
-   private static final Log logger = LogFactory.getLog(ShardAllocationManagerImpl.class, Log.class);
+   private static final Log log = LogFactory.getLog(ShardAllocationManagerImpl.class, Log.class);
 
-   private DistributionManager distributionManager;
+   private final DistributionManager distributionManager;
+
+   /**
+    * Indicates if {@link #numSegments} and {@link #numShards} are initialized.
+    */
    private volatile boolean initialized;
    private int numSegments;
    private int numShards;
+
    private volatile ShardDistribution shardDistribution;
 
-   @Inject
-   public void inject(Cache<?, ?> cache, DistributionManager distributionManager) {
+   public ShardAllocationManagerImpl(DistributionManager distributionManager, Cache<?, ?> cache) {
       this.distributionManager = distributionManager;
       cache.addListener(this);
    }
 
    @Override
    public String getShardFromSegment(int segment) {
-      String shardId = this.getShardDistribution().getShardFromSegment(segment);
-      logger.debugf("ShardId for segment %d: %s", segment, shardId);
+      String shardId = getShardDistribution().getShardFromSegment(segment);
+      log.debugf("ShardId for segment %d: %s", segment, shardId);
       return shardId;
    }
 
    private ShardDistribution buildShardDistribution(ConsistentHash consistentHash) {
-      return ShardDistributionFactory.build(numShards, numSegments, consistentHash);
+      if (!initialized) {
+         throw new IllegalStateException("Not initialized yet!");
+      }
+      if (consistentHash == null) {
+         return new LocalModeShardDistribution(numShards);
+      }
+      return numShards == numSegments ? new PerSegmentShardDistribution(consistentHash) :
+            new FixedShardsDistribution(consistentHash, numShards);
    }
 
    private ShardDistribution getShardDistribution() {
       if (shardDistribution == null) {
-         shardDistribution = this.buildShardDistribution(
+         shardDistribution = buildShardDistribution(
                distributionManager == null ? null : distributionManager.getWriteConsistentHash());
       }
       return shardDistribution;
@@ -56,44 +66,44 @@ public final class ShardAllocationManagerImpl implements ShardAllocatorManager {
 
    @Override
    public Address getOwner(String shardId) {
-      return this.getShardDistribution().getOwner(shardId);
+      return getShardDistribution().getOwner(shardId);
    }
 
    @Override
    public String getShardFromKey(Object key) {
-      int segment = distributionManager.getCacheTopology().getSegment(key);
-      logger.debugf("Segment for key %s: %d", key, segment);
-      return this.getShardDistribution().getShardFromSegment(segment);
+      int segment = distributionManager != null ? distributionManager.getCacheTopology().getSegment(key) : 0;
+      log.debugf("Segment for key %s: %d", key, segment);
+      return getShardDistribution().getShardFromSegment(segment);
    }
 
    @Override
-   public void initialize(int numberOfShards, int numSegments) {
+   public void initialize(int numShards, int numSegments) {
       this.numSegments = numSegments;
-      this.numShards = numberOfShards;
+      this.numShards = numShards;
       initialized = true;
    }
 
    @Override
    public Set<String> getShards() {
-      Set<String> shards = this.getShardDistribution().getShardsIdentifiers();
-      logger.debugf("AllShards:%s", shards);
+      Set<String> shards = getShardDistribution().getShardsIdentifiers();
+      log.debugf("AllShards:%s", shards);
       return shards;
    }
 
    @Override
    public Set<String> getShardsForModification(Address address) {
-      Set<String> shards = this.getShardDistribution().getShards(address);
-      logger.debugf("Shard for modification %s for address %s", shards, address);
+      Set<String> shards = getShardDistribution().getShards(address);
+      log.debugf("Shard for modification %s for address %s", shards, address);
       return shards;
    }
 
    @Override
-   public boolean isOwnershipChanged(TopologyChangedEvent<?, ?> tce, String indeName) {
-      String shardId = indeName.substring(indeName.lastIndexOf('.') + 1);
+   public boolean isOwnershipChanged(TopologyChangedEvent<?, ?> tce, String indexName) {
+      String shardId = indexName.substring(indexName.lastIndexOf('.') + 1);
       ConsistentHash consistentHashAtStart = tce.getConsistentHashAtStart();
       ConsistentHash consistentHashAtEnd = tce.getConsistentHashAtEnd();
-      ShardDistribution shardDistributionBefore = this.buildShardDistribution(consistentHashAtStart);
-      ShardDistribution shardDistributionAfter = this.buildShardDistribution(consistentHashAtEnd);
+      ShardDistribution shardDistributionBefore = buildShardDistribution(consistentHashAtStart);
+      ShardDistribution shardDistributionAfter = buildShardDistribution(consistentHashAtEnd);
       return !shardDistributionBefore.getOwner(shardId).equals(shardDistributionAfter.getOwner(shardId));
    }
 
@@ -101,9 +111,8 @@ public final class ShardAllocationManagerImpl implements ShardAllocatorManager {
    @SuppressWarnings("unused")
    public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
       if (initialized) {
-         logger.debugf("Updating shard allocation");
-         this.shardDistribution = this.buildShardDistribution(distributionManager.getWriteConsistentHash());
+         log.debug("Updating shard allocation due to topology change");
+         shardDistribution = buildShardDistribution(distributionManager.getWriteConsistentHash());
       }
    }
-
 }

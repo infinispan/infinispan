@@ -10,6 +10,7 @@ import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.impl.lucene.WorkspaceHolder;
 import org.hibernate.search.engine.service.spi.ServiceManager;
+import org.hibernate.search.indexes.serialization.spi.LuceneWorkSerializer;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.WorkerBuildContext;
@@ -34,24 +35,23 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
    private static final Log log = LogFactory.getLog(InfinispanBackendQueueProcessor.class, Log.class);
 
    private ServiceManager serviceManager;
-   private String indexName;
-   private IndexManager indexManager;
+   private DirectoryBasedIndexManager indexManager;
    private SwitchingBackend forwardingBackend;
 
    @Override
    public void initialize(Properties props, WorkerBuildContext context, IndexManager indexManager) {
-      this.indexManager = indexManager;
-      LocalBackendFactory localBackendFactory = new SimpleLocalBackendFactory(indexManager, props, context);
-      serviceManager = context.getServiceManager();
+      this.indexManager = (DirectoryBasedIndexManager) indexManager;
+      this.serviceManager = context.getServiceManager();
+      LuceneWorkSerializer luceneWorkSerializer = serviceManager.requestService(LuceneWorkSerializer.class);
       CacheManagerService cacheManagerService = serviceManager.requestService(CacheManagerService.class);
-      this.indexName = indexManager.getIndexName();
       ComponentRegistryService componentRegistryService = serviceManager.requestService(ComponentRegistryService.class);
       ComponentRegistry componentRegistry = componentRegistryService.getComponentRegistry();
-      this.forwardingBackend = createForwardingBackend(props, componentRegistry, indexName, localBackendFactory, cacheManagerService, indexManager);
-      log.commandsBackendInitialized(indexName);
+      LocalBackendFactory localBackendFactory = new SimpleLocalBackendFactory(indexManager, props, context);
+      this.forwardingBackend = createForwardingBackend(props, componentRegistry, luceneWorkSerializer, localBackendFactory, cacheManagerService, this.indexManager);
+      log.commandsBackendInitialized(indexManager.getIndexName());
    }
 
-   private static SwitchingBackend createForwardingBackend(Properties props, ComponentRegistry componentRegistry, String indexName, LocalBackendFactory localBackendFactory, CacheManagerService cacheManagerService, IndexManager indexManager) {
+   private static SwitchingBackend createForwardingBackend(Properties props, ComponentRegistry componentRegistry, LuceneWorkSerializer luceneWorkSerializer, LocalBackendFactory localBackendFactory, CacheManagerService cacheManagerService, DirectoryBasedIndexManager indexManager) {
       RpcManager rpcManager = componentRegistry.getComponent(RpcManager.class);
       if (rpcManager == null) {
          //non-clustered case:
@@ -65,9 +65,8 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
          //but it was changed as the intention is to evolve on this introducing non-Directory based IndexManager implementations.
          //FIXME: avoid the need for the cast or validate eagerly with a nicer error message.
          //https://issues.jboss.org/browse/ISPN-6212
-         DirectoryBasedIndexManager directoryBasedIndexManager = (DirectoryBasedIndexManager) indexManager;
-         IndexLockController lockControl = new IndexManagerBasedLockController(directoryBasedIndexManager, transactionManager);
-         ClusteredSwitchingBackend backend = new ClusteredSwitchingBackend(props, componentRegistry, indexName, localBackendFactory, lockControl);
+         IndexLockController lockControl = new IndexManagerBasedLockController(indexManager, transactionManager);
+         ClusteredSwitchingBackend backend = new ClusteredSwitchingBackend(props, componentRegistry, indexManager.getIndexName(), luceneWorkSerializer, localBackendFactory, lockControl);
          backend.initialize();
          embeddedCacheManager.addListener(backend);
          return backend;
@@ -77,6 +76,7 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
    @Override
    public void close() {
       forwardingBackend.shutdown();
+      serviceManager.releaseService(LuceneWorkSerializer.class);
       serviceManager.releaseService(CacheManagerService.class);
       serviceManager.releaseService(ComponentRegistryService.class);
       serviceManager = null;
@@ -94,8 +94,7 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
 
    @Override
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor) {
-      forwardingBackend.getCurrentIndexingBackend()
-            .applyStreamWork(singleOperation, monitor, indexManager);
+      forwardingBackend.getCurrentIndexingBackend().applyStreamWork(singleOperation, monitor, indexManager);
    }
 
    @Override
@@ -111,5 +110,4 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
    boolean isMasterLocal() {
       return forwardingBackend.getCurrentIndexingBackend().isMasterLocal();
    }
-
 }

@@ -7,7 +7,7 @@ import org.infinispan.remoting.transport.Address;
 /**
  * @since 9.0
  */
-class ShardAddress {
+final class ShardAddress {
 
    private final String shard;
    private final Address address;
@@ -21,7 +21,7 @@ class ShardAddress {
       return shard;
    }
 
-   public Address getAddress() {
+   Address getAddress() {
       return address;
    }
 

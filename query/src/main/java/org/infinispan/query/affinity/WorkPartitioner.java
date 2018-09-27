@@ -2,7 +2,6 @@ package org.infinispan.query.affinity;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,9 +24,11 @@ class WorkPartitioner {
    private final ShardAllocatorManager shardAllocatorManager;
    private final ShardAddress localShardAddress;
    private final String indexName;
+   private final String indexNamePrefix;
 
    WorkPartitioner(AffinityIndexManager affinityIndexManager, ShardAllocatorManager shardAllocatorManager) {
       this.indexName = affinityIndexManager.getIndexName();
+      this.indexNamePrefix = indexName.substring(0, indexName.lastIndexOf('.') + 1);
       this.localShardAddress = affinityIndexManager.getLocalShardAddress();
       this.affinityIndexManager = affinityIndexManager;
       this.shardAllocatorManager = shardAllocatorManager;
@@ -36,39 +37,38 @@ class WorkPartitioner {
    Map<ShardAddress, List<LuceneWork>> partitionWorkByAddress(Collection<LuceneWork> works, boolean originLocal,
                                                               boolean isRetry) {
       return works.stream().collect(
-            Collectors.toMap(w -> this.getLocation(w, originLocal, isRetry), WorkPartitioner::newList, (w1, w2) -> {
-               w1.addAll(w2);
-               return w1;
-            })
+            Collectors.toMap(w -> getLocation(w, originLocal, isRetry),
+                  (w) -> {
+                     List<LuceneWork> list = new ArrayList<>();
+                     list.add(w);
+                     return list;
+                  },
+                  (w1, w2) -> {
+                     w1.addAll(w2);
+                     return w1;
+                  })
       );
    }
 
    private static String extractShardName(String indexName) {
-      int idx = indexName.lastIndexOf('.');
-      return idx == -1 ? "0" : indexName.substring(idx + 1);
+      int pos = indexName.lastIndexOf('.');
+      return pos == -1 ? "0" : indexName.substring(pos + 1);
    }
 
    private String getIndexName(String shardId) {
-      return indexName.substring(0, indexName.lastIndexOf('.') + 1) + shardId;
-   }
-
-   @SafeVarargs
-   private static <T> List<T> newList(T... elements) {
-      List<T> list = new ArrayList<>(elements.length);
-      Collections.addAll(list, elements);
-      return list;
+      return indexNamePrefix + shardId;
    }
 
    private ShardAddress getLocation(LuceneWork work, boolean originLocal, boolean isRetry) {
       log.debugf("Getting location for work %s at %s", work, localShardAddress);
       if (work.getIdInString() == null) {
-         String shard = String.valueOf(extractShardName(indexName));
+         String shard = extractShardName(indexName);
          Address destination = isRetry ? affinityIndexManager.getLockHolder() : shardAllocatorManager.getOwner(shard);
          return new ShardAddress(shard, destination);
       }
       Object workKey = affinityIndexManager.stringToKey(work.getIdInString());
       String workShard = shardAllocatorManager.getShardFromKey(workKey);
-      String workIndexName = this.getIndexName(workShard);
+      String workIndexName = getIndexName(workShard);
       Address workOwner = shardAllocatorManager.getOwner(workShard);
 
       if (isRetry || !originLocal) {
@@ -86,5 +86,4 @@ class WorkPartitioner {
          return new ShardAddress(null, workOwner);
       }
    }
-
 }

@@ -25,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
-public class LockAcquiringBackend implements IndexingBackend {
+class LockAcquiringBackend implements IndexingBackend {
 
    private static final Log log = LogFactory.getLog(LockAcquiringBackend.class, Log.class);
 
@@ -33,11 +33,11 @@ public class LockAcquiringBackend implements IndexingBackend {
     * Using a system property here as I don't think we'll ever hit the limit.
     */
    private static final int MAX_QUEUE_SIZE = Integer.getInteger("org.infinispan.query.indexmanager.LockAcquiringBackend.MAX_QUEUE_SIZE", 1000);
-   private final BlockingQueue<Work> bufferedWork = new ArrayBlockingQueue<Work>(MAX_QUEUE_SIZE);
+   private final BlockingQueue<Work> bufferedWork = new ArrayBlockingQueue<>(MAX_QUEUE_SIZE);
 
    private final LazyInitializableBackend clusteredSwitchingBackend;
 
-   public LockAcquiringBackend(LazyInitializableBackend clusteredSwitchingBackend) {
+   LockAcquiringBackend(LazyInitializableBackend clusteredSwitchingBackend) {
       this.clusteredSwitchingBackend = clusteredSwitchingBackend;
    }
 
@@ -90,7 +90,7 @@ public class LockAcquiringBackend implements IndexingBackend {
    @Override
    public void flushAndClose(final IndexingBackend replacement) {
       if (replacement != null) {
-         final ArrayList<Work> all = new ArrayList<Work>(bufferedWork.size());
+         final ArrayList<Work> all = new ArrayList<>(bufferedWork.size());
          bufferedWork.drainTo(all);
          for (Work w : all) {
             w.applyTo(replacement);
@@ -105,7 +105,7 @@ public class LockAcquiringBackend implements IndexingBackend {
    }
 
    private interface Work {
-      public void applyTo(IndexingBackend target);
+      void applyTo(IndexingBackend target);
    }
 
    private static class StreamWork implements Work {
@@ -114,7 +114,7 @@ public class LockAcquiringBackend implements IndexingBackend {
       private final IndexingMonitor monitor;
       private final IndexManager indexManager;
 
-      public StreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
+      StreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
          this.singleOperation = singleOperation;
          this.monitor = monitor;
          this.indexManager = indexManager;
@@ -132,7 +132,7 @@ public class LockAcquiringBackend implements IndexingBackend {
       private final IndexingMonitor monitor;
       private final IndexManager indexManager;
 
-      public TransactionWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager) {
+      TransactionWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager) {
          this.workList = workList;
          this.monitor = monitor;
          this.indexManager = indexManager;

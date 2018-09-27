@@ -35,9 +35,7 @@ public class ExtendedBatchBackend implements BatchBackend {
    }
 
    public void purge(IndexedTypeSet entityTypes) {
-      performShardAwareOperation(entityTypes, (im, type) -> {
-         im.performStreamOperation(new PurgeAllLuceneWork(type), progressMonitor, false);
-      });
+      performShardAwareOperation(entityTypes, (im, type) -> im.performStreamOperation(new PurgeAllLuceneWork(type), progressMonitor, false));
       flush(entityTypes);
    }
 
@@ -58,9 +56,7 @@ public class ExtendedBatchBackend implements BatchBackend {
 
    @Override
    public void flush(IndexedTypeSet entityTypes) {
-      performShardAwareOperation(entityTypes, (im, type) -> {
-         im.performStreamOperation(new FlushLuceneWork(null, type), progressMonitor, false);
-      });
+      performShardAwareOperation(entityTypes, (im, type) -> im.performStreamOperation(new FlushLuceneWork(null, type), progressMonitor, false));
    }
 
    @Override
