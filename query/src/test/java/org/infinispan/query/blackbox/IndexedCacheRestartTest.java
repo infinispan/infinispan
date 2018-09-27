@@ -2,6 +2,7 @@ package org.infinispan.query.blackbox;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.List;
@@ -24,25 +25,25 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
- * Tests whether query caches can restart without problems.
+ * Tests whether indexed caches can restart without problems.
  *
  * @author Galder Zamarreño
  * @author Sanne Grinovero
  * @author Marko Luksa
  * @since 5.2
  */
-@Test(testName = "query.blackbox.QueryCacheRestartTest", groups = "functional")
-public class QueryCacheRestartTest extends AbstractInfinispanTest {
+@Test(testName = "query.blackbox.IndexedCacheRestartTest", groups = "functional")
+public class IndexedCacheRestartTest extends AbstractInfinispanTest {
 
-   public void testQueryCacheRestart() {
-      queryCacheRestart(false);
+   public void testIndexedCacheRestart() {
+      indexedCacheRestart(false);
    }
 
-   public void testLocalQueryCacheRestart() {
-      queryCacheRestart(true);
+   public void testLocalIndexedCacheRestart() {
+      indexedCacheRestart(true);
    }
 
-   private void queryCacheRestart(boolean localOnly) {
+   private void indexedCacheRestart(boolean localOnly) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().index(localOnly ? Index.PRIMARY_OWNER : Index.ALL)
             .addIndexedEntity(Book.class)
@@ -54,7 +55,8 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
          public void call() {
-            Cache<Object, Object> cache = cm.getCache();
+            Cache<String, Book> cache = cm.getCache();
+            assertTrue(cache.isEmpty());
             addABook(cache);
             assertFindBook(cache);
             cache.stop();
@@ -62,6 +64,7 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
             assertCacheHasCustomInterceptor(cache, noOpInterceptor);
 
             cache.start();
+            assertTrue(cache.isEmpty());
             //stopped cache lost all data, and in memory index is lost: re-store both
             //(not needed with permanent indexes and caches using a cachestore)
             addABook(cache);
@@ -70,19 +73,18 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
             assertCacheHasCustomInterceptor(cache, noOpInterceptor);
          }
 
-         protected void addABook(Cache<Object, Object> cache) {
+         private void addABook(Cache<String, Book> cache) {
             cache.put("1",
                   new Book("Infinispan Data Grid Platform",
-                           "Francesco Marchioni and Manik Surtani",
-                           "Packt Publishing"));
+                        "Francesco Marchioni and Manik Surtani",
+                        "Packt Publishing"));
          }
-
       });
    }
 
-   private void assertCacheHasCustomInterceptor(Cache<Object, Object> cache, CommandInterceptor interceptor) {
+   private void assertCacheHasCustomInterceptor(Cache<?, ?> cache, CommandInterceptor interceptor) {
       for (InterceptorConfiguration interceptorConfig : cache.getCacheConfiguration().customInterceptors().interceptors()) {
-         if (interceptor.equals(interceptorConfig.interceptor())) {
+         if (interceptor == interceptorConfig.interceptor()) {
             return;
          }
       }
@@ -90,7 +92,7 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
       fail("Expected to find interceptor " + interceptor + " among custom interceptors of cache, but it was not there.");
    }
 
-   private static void assertFindBook(Cache<Object, Object> cache) {
+   private static void assertFindBook(Cache<?, ?> cache) {
       SearchManager searchManager = Search.getSearchManager(cache);
       QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(Book.class).get();
       Query luceneQuery = queryBuilder.keyword().onField("title").matching("infinispan").createQuery();
