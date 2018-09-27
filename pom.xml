@@ -162,16 +162,6 @@
       <module>hibernate</module>
    </modules>
    <properties>
-      <!-- Versions and codenames -->
-      <infinispan.brand.name>Infinispan</infinispan.brand.name>
-      <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
-      <infinispan.brand.version>${project.version}</infinispan.brand.version>
-      <infinispan.codename>Infinity Minus ONE +2</infinispan.codename>
-      <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
-      <infinispan.base.version>9.4</infinispan.base.version>
-      <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
-      <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
-
       <!-- Semantic versioning defaults. -->
       <bnd.consumer.policy>$&lt;range;[==,+)&gt;</bnd.consumer.policy>
       <bnd.provider.policy>$&lt;range;[==,=+)&gt;</bnd.provider.policy>
