@@ -27,7 +27,7 @@ import org.infinispan.util.logging.LogFactory;
  * also provides the {@link QueryFactory} which is your starting point for building DSL-based or query string based
  * Ickle queries, continuous queries and event filters, for both indexed and unindexed caches.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author anistor@redhat.com
  */
 public final class Search {

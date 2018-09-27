@@ -8,12 +8,10 @@ import static org.mockito.Mockito.when;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.query.backend.KeyTransformationHandler;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
 
 
 /**
@@ -29,15 +27,12 @@ public class LazyIteratorTest extends EagerIteratorTest {
 
       extractor = mock(DocumentExtractor.class);
       when(extractor.getMaxIndex()).thenReturn(entityInfos.size() - 1);
-      when(extractor.extract(anyInt())).thenAnswer(new Answer<EntityInfo>() {
-         @Override
-         public EntityInfo answer(InvocationOnMock invocation) throws Throwable {
-            int index = (Integer) invocation.getArguments()[0];
-            return entityInfos.get(index);
-         }
+      when(extractor.extract(anyInt())).thenAnswer((Answer<EntityInfo>) invocation -> {
+         int index = (Integer) invocation.getArguments()[0];
+         return entityInfos.get(index);
       });
 
-      iterator = new LazyIterator<>(extractor, new EntityLoader(cache, new KeyTransformationHandler()), getFetchSize());
+      iterator = new LazyIterator<>(extractor, new EntityLoader(cache, new KeyTransformationHandler(null)), getFetchSize());
    }
 
    @AfterMethod(alwaysRun = false)
@@ -46,5 +41,4 @@ public class LazyIteratorTest extends EagerIteratorTest {
       verify(extractor).close();
       super.tearDown();
    }
-
 }

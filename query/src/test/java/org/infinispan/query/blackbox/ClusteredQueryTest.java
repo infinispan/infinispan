@@ -413,7 +413,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       return indexReader.numDocs();
    }
 
-   @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = ".*cannot be converted to an indexed Query")
+   @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = ".*cannot be converted to an indexed query")
    public void testPreventHybridQuery() {
       CacheQuery<Person> hybridQuery = Search.getSearchManager(cacheAMachine1)
             .getQuery(String.format("FROM %s p where p.nonSearchableField = 'nothing'", Person.class.getName()),
@@ -422,7 +422,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       hybridQuery.list();
    }
 
-   @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = ".*cannot be converted to an indexed Query")
+   @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = ".*cannot be converted to an indexed query")
    public void testPreventAggregationQueries() {
       CacheQuery<Person> aggregationQuery = Search.getSearchManager(cacheAMachine1)
             .getQuery(String.format("FROM %s p where p.name:'name3' group by p.name", Person.class.getName()),

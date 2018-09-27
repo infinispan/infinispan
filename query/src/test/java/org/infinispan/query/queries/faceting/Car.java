@@ -40,6 +40,6 @@ public class Car implements Serializable, ExternalPojo {
 
    @Override
    public String toString() {
-      return "Car" + "{color='" + color + '\'' + ", make='" + make + '\'' + ", cubicCapacity=" + cubicCapacity + '}';
+      return "Car{color='" + color + "', make='" + make + "', cubicCapacity=" + cubicCapacity + '}';
    }
 }

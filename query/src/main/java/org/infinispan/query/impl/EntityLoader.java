@@ -10,7 +10,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
  * @since 5.0
  */
@@ -25,7 +25,7 @@ final class EntityLoader implements QueryResultLoader {
    }
 
    private Object decodeKey(EntityInfo entityInfo) {
-      return keyTransformationHandler.stringToKey(entityInfo.getId().toString(), cache.getClassLoader());
+      return keyTransformationHandler.stringToKey(entityInfo.getId().toString());
    }
 
    @Override

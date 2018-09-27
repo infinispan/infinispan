@@ -5,7 +5,7 @@ import org.infinispan.query.clustered.QueryResponse;
 /**
  * Close a distributed lazy iterator...
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
 final class CQKillLazyIterator extends CQWorker {

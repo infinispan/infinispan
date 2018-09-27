@@ -16,6 +16,8 @@ public interface SearchManagerImplementor extends SearchManager {
     * (String, int, ...) nor annotated with {@code @Transformable}, Infinispan-Query will need to know what {@link
     * Transformer} to use when transforming the keys to Strings. Clients must specify what Transformer to use for a
     * particular key class by registering it through this method.
+    * <p>
+    * WARNING: this method registers the transformer on the local node only (see https://issues.jboss.org/browse/ISPN-9513)
     *
     * @param keyClass         the key class for which the supplied transformerClass should be used
     * @param transformerClass the transformer class to use for the supplied key class

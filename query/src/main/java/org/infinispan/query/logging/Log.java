@@ -169,4 +169,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot execute query: cluster is operating in degraded mode and partition handling configuration doesn't allow reads and writes.", id = 14042)
    AvailabilityException partitionDegraded();
+
+   @Message(value = "Cannot find an appropriate Transformer for key type %s. Indexing only works with entries keyed " +
+         "on Strings, primitives, byte[], UUID, classes that have the @Transformable annotation or classes for which " +
+         "you have defined a suitable Transformer in the indexing configuration. Alternatively, see " +
+         "org.infinispan.query.spi.SearchManagerImplementor.registerKeyTransformer.", id = 14043)
+   CacheException noTransformerForKey(String keyClassName);
 }

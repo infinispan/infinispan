@@ -76,11 +76,11 @@ public class AffinityShardIdentifierProvider implements ShardIdentifierProvider 
 
    @Override
    public String getShardIdentifier(Class<?> entityType, Serializable id, String idAsString, Document document) {
-      Object key = this.getKeyTransformationHandler().stringToKey(idAsString, null);
-      int segment = this.getSegment(key);
+      Object key = getKeyTransformationHandler().stringToKey(idAsString);
+      int segment = getSegment(key);
       String shardId = shardAllocatorManager.getShardFromSegment(segment);
       if (log.isDebugEnabled()) {
-         log.debugf("Shard Identifier for segment[%s] = %s mapped to shard %s", id, segment, shardId);
+         log.debugf("Shard Identifier for segment[%s] = %d mapped to shard %s", id, segment, shardId);
       }
       return shardId;
    }

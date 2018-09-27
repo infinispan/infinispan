@@ -44,21 +44,12 @@ public class CustomKey {
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
-      CustomKey customKey = (CustomKey) o;
-
-      if (i != customKey.i) return false;
-      if (j != customKey.j) return false;
-      if (k != customKey.k) return false;
-
-      return true;
+      CustomKey other = (CustomKey) o;
+      return i == other.i && j == other.j && k == other.k;
    }
 
    @Override
    public int hashCode() {
-      int result = i;
-      result = 31 * result + j;
-      result = 31 * result + k;
-      return result;
+      return 31 * (31 * i + j) + k;
    }
 }

@@ -16,7 +16,7 @@ import org.hibernate.search.query.engine.spi.FacetManager;
  *
  * @author Manik Surtani
  * @author Navin Surtani
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
  * @see org.infinispan.query.impl.SearchManagerImpl#getQuery(org.apache.lucene.search.Query, Class...)
  */

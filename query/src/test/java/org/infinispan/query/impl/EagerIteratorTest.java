@@ -20,11 +20,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
+ * Test class for the {@link EagerIterator}.
+ *
  * @author Navin Surtani
- *         <p/>
- *         Test class for the {@link EagerIterator}
  */
-
 @Test(groups = "functional", testName = "query.impl.EagerIteratorTest")
 public class EagerIteratorTest {
    List<String> keys;
@@ -36,12 +35,11 @@ public class EagerIteratorTest {
 
    @BeforeMethod
    public void setUp() throws Exception {
-
       keys = new ArrayList<>();
       dummyResults = new HashMap<>();
 
       entityInfos = new ArrayList<>();
-      keyTransformationHandler = new KeyTransformationHandler();
+      keyTransformationHandler = new KeyTransformationHandler(null);
 
       for (int i = 1; i <= 10; i++) {
          String key = "key" + i;
@@ -91,7 +89,7 @@ public class EagerIteratorTest {
 
       private final String key;
 
-      public MockEntityInfo(String key) {
+      MockEntityInfo(String key) {
          this.key = key;
       }
 

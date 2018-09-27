@@ -4,6 +4,8 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.security.Security;
@@ -25,6 +27,10 @@ final class SecurityActions {
    private static <T> T doPrivileged(PrivilegedAction<T> action) {
       return System.getSecurityManager() != null ?
             AccessController.doPrivileged(action) : Security.doPrivileged(action);
+   }
+
+   static Configuration getCacheConfiguration(Cache<?, ?> cache) {
+      return doPrivileged(cache::getCacheConfiguration);
    }
 
    static ComponentRegistry getCacheComponentRegistry(AdvancedCache<?, ?> cache) {

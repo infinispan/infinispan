@@ -1,31 +1,29 @@
 package org.infinispan.query.backend;
 
+import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 
-import java.util.Base64;
-import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
-import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.DefaultTransformer;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
  * This transforms arbitrary keys to a String which can be used by Lucene as a document identifier, and vice versa.
- * <p/>
- * There are 2 approaches to doing so; one for SimpleKeys: Java primitives (and their object wrappers), byte[] and Strings, and
- * one for custom, user-defined types that could be used as keys.
- * <p/>
- * For SimpleKeys, users don't need to do anything, these keys are automatically transformed by this class.
- * <p/>
- * For user-defined keys, two options are supported. Types annotated with @Transformable, and declaring an appropriate {@link
- * org.infinispan.query.Transformer} implementation; and types for which a {@link org.infinispan.query.Transformer} has
- * been explicitly registered through KeyTransformationHandler.registerTransformer().
+ * <p>
+ * There are 2 approaches to doing so; one for simple keys: Java primitives (and their object wrappers), byte[], Strings
+ * and UUID, and one for custom, user-defined types that could be used as keys.
+ * <p>
+ * For simple keys, users don't need to do anything, these keys are automatically transformed by this class.
+ * <p>
+ * For user-defined keys, three options are supported. Types annotated with @Transformable, and declaring an appropriate
+ * {@link org.infinispan.query.Transformer} implementation, types for which a {@link org.infinispan.query.Transformer}
+ * has been explicitly registered through KeyTransformationHandler.registerTransformer().
  *
  * @author Manik Surtani
  * @author Marko Luksa
@@ -33,17 +31,35 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.infinispan.query.Transformer
  * @since 4.0
  */
-public class KeyTransformationHandler {
+public final class KeyTransformationHandler {
 
    private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
 
    private final Map<Class<?>, Class<? extends Transformer>> transformerTypes = CollectionFactory.makeConcurrentMap();
 
-   public Object stringToKey(String s, ClassLoader classLoader) {
+   private final ClassLoader classLoader;
+
+   /**
+    * Constructs a KeyTransformationHandler for an indexed Cache.
+    *
+    * @param classLoader the classloader of the cache that owns this KeyTransformationHandler or {@code null} if the
+    *                    thread context classloader is to be used (acceptable for testing only!)
+    */
+   public KeyTransformationHandler(ClassLoader classLoader) {
+      this.classLoader = classLoader;
+   }
+
+   /**
+    * Converts a Lucene document id from string form back to the original object.
+    *
+    * @param s the string form of the key
+    * @return the key object
+    */
+   public Object stringToKey(String s) {
       char type = s.charAt(0);
       switch (type) {
          case 'S':
-            // this is a normal String, but NOT a SHORT. For short see case 'x'.
+            // this is a String, NOT a Short. For Short see case 'X'.
             return s.substring(2);
          case 'I':
             // This is an Integer
@@ -64,7 +80,7 @@ public class KeyTransformationHandler {
             // This is a Float
             return Float.valueOf(s.substring(2));
          case 'B':
-            // This is a Boolean. This is NOT the case for a BYTE. For a BYTE, see case 'y'.
+            // This is a Boolean, NOT a Byte. For Byte see case 'Y'.
             return Boolean.valueOf(s.substring(2));
          case 'C':
             // This is a Character
@@ -74,167 +90,126 @@ public class KeyTransformationHandler {
             return UUID.fromString(s.substring(2));
          case 'A':
             // This is an array of bytes encoded as a Base64 string
-            return Base64.getDecoder().decode(s.substring(2));   //todo [anistor] need to profile this and check performance of base64 against raw sequence of byte values
+            return Base64.getDecoder().decode(s.substring(2));
          case 'T':
-            // this is a custom transformable.
-            int indexOfSecondDelimiter = s.indexOf(":", 2);
+            // this is a custom Transformable or a type with a registered Transformer
+            int indexOfSecondDelimiter = s.indexOf(':', 2);
             String keyClassName = s.substring(2, indexOfSecondDelimiter);
             String keyAsString = s.substring(indexOfSecondDelimiter + 1);
-            Transformer t = getCustomTransformer(keyClassName, classLoader);
-            if (t == null) throw new CacheException("Cannot find an appropriate Transformer for key type " + keyClassName);
-            return t.fromString(keyAsString);
+            Transformer t = getTransformer(keyClassName);
+            if (t != null) {
+               return t.fromString(keyAsString);
+            } else {
+               throw log.noTransformerForKey(keyClassName);
+            }
       }
-      throw new CacheException("Unknown type metadata " + type);
+      throw new CacheException("Unknown key type metadata: " + type);
    }
 
-   private Transformer getCustomTransformer(final String keyClassName, final ClassLoader classLoader) {
-      Transformer t = null;
-      // try and locate class
-      Class<?> keyClass = null;
+   private Transformer getTransformer(String keyClassName) {
+      Class<?> keyClass;
       try {
          keyClass = Util.loadClassStrict(keyClassName, classLoader);
       } catch (ClassNotFoundException e) {
          log.keyClassNotFound(keyClassName, e);
+         return null;
       }
-      if (keyClass != null) {
-         t = getTransformer(keyClass);
-      }
-      return t;
+      return getTransformer(keyClass);
    }
 
+   /**
+    * Stringify a key so Lucene can use it as document id.
+    *
+    * @param key the key
+    * @return a string form of the key
+    */
    public String keyToString(Object key) {
-      // this string should be in the format of
-      // "<TYPE>:(TRANSFORMER):<KEY>"
+      // This string should be in the format of:
+      // "<TYPE>:<KEY>" for internally supported types or "T:<KEY_CLASS>:<KEY>" for custom types
       // e.g.:
       //   "S:my string key"
       //   "I:75"
       //   "D:5.34"
       //   "B:f"
-      //   "T:com.myorg.MyTransformer:STRING_GENERATED_BY_MY_TRANSFORMER"
-
-      char prefix = ' ';
+      //   "T:com.myorg.MyType:STRING_GENERATED_BY_TRANSFORMER_FOR_MY_TYPE"
 
       // First going to check if the key is a primitive or a String. Otherwise, check if it's a transformable.
-      // If none of those conditions are satisfied, we'll throw an Exception.
+      // If none of those conditions are satisfied, we'll throw a CacheException.
 
-      Transformer tf;
-
-      if (isStringOrPrimitive(key)) {
-         // Using 'X' for Shorts and 'Y' for Bytes because 'S' is used for Strings and 'B' is being used for Booleans.
-
-         if (key instanceof byte[])
-            return "A:" + Base64.getEncoder().encodeToString((byte[]) key);  //todo [anistor] need to profile this and check performance of base64 against raw sequence of byte values
-         if (key instanceof String)
-            prefix = 'S';
-         else if (key instanceof Integer)
-            prefix = 'I';
-         else if (key instanceof Boolean)
-            prefix = 'B';
-         else if (key instanceof Long)
-            prefix = 'L';
-         else if (key instanceof Float)
-            prefix = 'F';
-         else if (key instanceof Double)
-            prefix = 'D';
-         else if (key instanceof Short)
-            prefix = 'X';
-         else if (key instanceof Byte)
-            prefix = 'Y';
-         else if (key instanceof Character)
-            prefix = 'C';
-         else if (key instanceof UUID)
-            prefix = 'U';
-         return prefix + ":" + key;
-
-      } else if ((tf = getTransformer(key.getClass())) != null) {
-         // There is a bit more work to do for this case.
-         return "T:" + key.getClass().getName() + ":" + tf.toString(key);
-      } else
-         throw new IllegalArgumentException("Indexing only works with entries keyed on Strings, primitives " +
-               "and classes that have the @Transformable annotation - you passed in a " + key.getClass().toString() +
-               ". Alternatively, see org.infinispan.query.SearchManager#registerKeyTransformer");
-   }
-
-   private boolean isStringOrPrimitive(Object key) {
-
-      // we support String, byte[] and JDK primitives and their wrappers.
-      return key instanceof String ||
-            key instanceof Integer ||
-            key instanceof Long ||
-            key instanceof Float ||
-            key instanceof Double ||
-            key instanceof Boolean ||
-            key instanceof Short ||
-            key instanceof Byte ||
-            key instanceof Character ||
-            key instanceof UUID ||
-            key instanceof byte[];
+      // Using 'X' for Shorts and 'Y' for Bytes because 'S' is used for Strings and 'B' is being used for Booleans.
+      if (key instanceof byte[])
+         return "A:" + Base64.getEncoder().encodeToString((byte[]) key);  //todo [anistor] need to profile Base64 versus simple hex encoding of the raw bytes
+      if (key instanceof String)
+         return "S:" + key;
+      else if (key instanceof Integer)
+         return "I:" + key;
+      else if (key instanceof Boolean)
+         return "B:" + key;
+      else if (key instanceof Long)
+         return "L:" + key;
+      else if (key instanceof Float)
+         return "F:" + key;
+      else if (key instanceof Double)
+         return "D:" + key;
+      else if (key instanceof Short)
+         return "X:" + key;
+      else if (key instanceof Byte)
+         return "Y:" + key;
+      else if (key instanceof Character)
+         return "C:" + key;
+      else if (key instanceof UUID)
+         return "U:" + key;
+      else {
+         Transformer t = getTransformer(key.getClass());
+         if (t != null) {
+            return "T:" + key.getClass().getName() + ":" + t.toString(key);
+         } else {
+            throw log.noTransformerForKey(key.getClass().getName());
+         }
+      }
    }
 
    /**
-    * Retrieves a {@link org.infinispan.query.Transformer} instance for this key.  If the key is not
-    * {@link org.infinispan.query.Transformable} and no transformer has been registered for the key's class,
-    * null is returned.
+    * Retrieves a {@link org.infinispan.query.Transformer} instance for this key.  If the key is not {@link
+    * org.infinispan.query.Transformable} and no transformer has been registered for the key's class, null is returned.
     *
     * @param keyClass key class to analyze
     * @return a Transformer for this key, or null if the key type is not properly annotated.
     */
    private Transformer getTransformer(Class<?> keyClass) {
-      Class<?> transformerClass = getTransformerClass(keyClass);
-      if (transformerClass != null)
-         return instantiate(transformerClass);
+      Class<? extends Transformer> transformerClass = getTransformerClass(keyClass);
+      if (transformerClass != null) {
+         try {
+            return transformerClass.newInstance();
+         } catch (Exception e) {
+            log.couldNotInstantiaterTransformerClass(transformerClass, e);
+         }
+      }
       return null;
    }
 
    private Class<? extends Transformer> getTransformerClass(Class<?> keyClass) {
       Class<? extends Transformer> transformerClass = transformerTypes.get(keyClass);
       if (transformerClass == null) {
-         transformerClass = getTransformerClassFromAnnotation(keyClass);
+         Transformable transformableAnnotation = keyClass.getAnnotation(Transformable.class);
+         transformerClass = transformableAnnotation != null ? transformableAnnotation.transformer() : null;
          if (transformerClass != null) {
-             if (transformerClass.equals(DefaultTransformer.class)) {
-                log.typeIsUsingDefaultTransformer(keyClass);
-             }
-             registerTransformer(keyClass, transformerClass);
+            if (transformerClass == DefaultTransformer.class) {
+               log.typeIsUsingDefaultTransformer(keyClass);
+            }
+            registerTransformer(keyClass, transformerClass);
          }
       }
       return transformerClass;
    }
 
-   private Class<? extends Transformer> getTransformerClassFromAnnotation(Class<?> keyClass) {
-      Transformable annotation = keyClass.getAnnotation(Transformable.class);
-      if (annotation!=null) {
-         return annotation.transformer();
-      }
-      return null;
-   }
-
-   private Transformer instantiate(Class<?> transformerClass) {
-      try {
-         // The cast should not be necessary but it's a workaround for a compiler bug.
-         return (Transformer) transformerClass.newInstance();
-      } catch (Exception e) {
-         log.couldNotInstantiaterTransformerClass(transformerClass, e);
-         return null;
-      }
-   }
-
    /**
     * Registers a {@link org.infinispan.query.Transformer} for the supplied key class.
-    * @param keyClass the key class for which the supplied transformerClass should be used
+    *
+    * @param keyClass         the key class for which the supplied transformerClass should be used
     * @param transformerClass the transformer class to use for the supplied key class
     */
    public void registerTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
       transformerTypes.put(keyClass, transformerClass);
    }
-
-   /**
-    * Gets the KeyTransformationHandler instance used by the supplied cache.
-    * @param cache the cache for which we want to get the KeyTransformationHandler instance
-    * @return a KeyTransformationHandler instance
-    */
-   public static KeyTransformationHandler getInstance(AdvancedCache<?, ?> cache) {
-      QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
-      return queryInterceptor.getKeyTransformationHandler();
-   }
-
 }

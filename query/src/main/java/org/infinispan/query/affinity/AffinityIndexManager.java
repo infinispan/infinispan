@@ -132,7 +132,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
    }
 
    Object stringToKey(String key) {
-      return keyTransformationHandler.stringToKey(key, cache.getAdvancedCache().getClassLoader());
+      return keyTransformationHandler.stringToKey(key);
    }
 
    Address getLockHolder(String indexName, String affinityId) {

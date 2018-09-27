@@ -1,6 +1,5 @@
 package org.infinispan.query.backend;
 
-import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
@@ -19,12 +18,13 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
- * Tests to verify if unnecessary index operations are sent
+ * Tests to verify if unnecessary index operations are sent.
  *
  * @author gustavonalle
  * @since 7.0
@@ -43,12 +43,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
       Entity1 entity1 = new Entity1("e1");
       cache.put(1, entity1);
 
-      long commits = doRecordingCommits(directory, new Operation() {
-         @Override
-         public void execute() {
-            cache.put(1, new Entity1("e2"));
-         }
-      });
+      long commits = doRecordingCommits(directory, () -> cache.put(1, new Entity1("e2")));
 
       assertEquals(1, commits);
       assertEquals(1, countIndexedDocuments(Entity1.class));
@@ -61,12 +56,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
 
       cache.put(1, "string value");
 
-      long commits = doRecordingCommits(directory, new Operation() {
-         @Override
-         public void execute() {
-            cache.put(1, new Entity1("e1"));
-         }
-      });
+      long commits = doRecordingCommits(directory, () -> cache.put(1, new Entity1("e1")));
 
       assertEquals(1, commits);
       assertEquals(1, countIndexedDocuments(Entity1.class));
@@ -80,12 +70,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
       final Entity1 entity1 = new Entity1("title");
       cache.put(1, entity1);
 
-      long commits = doRecordingCommits(directory, new Operation() {
-         @Override
-         public void execute() {
-            cache.put(1, "another");
-         }
-      });
+      long commits = doRecordingCommits(directory, () -> cache.put(1, "another"));
 
       assertEquals(1, commits);
       assertEquals(0, countIndexedDocuments(Entity1.class));
@@ -99,12 +84,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
       final Entity1 entity1 = new Entity1("title");
       cache.put(1, entity1);
 
-      long commits = doRecordingCommits(directory, new Operation() {
-         @Override
-         public void execute() {
-            cache.put(1, new Entity2("title2"));
-         }
-      });
+      long commits = doRecordingCommits(directory, () -> cache.put(1, new Entity2("title2")));
 
       assertEquals(2, commits);
       assertEquals(0, countIndexedDocuments(Entity1.class));
@@ -143,8 +123,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    }
 
    private Directory initializeAndExtractDirectory(Cache cache) {
-      QueryInterceptor queryInterceptor = extractComponent(cache, QueryInterceptor.class);
-      SearchIntegrator searchFactory = queryInterceptor.getSearchFactory();
+      SearchIntegrator searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
       DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) searchFactory.getIndexBindings().get(Entity1.class)
             .getIndexManagerSelector().all().iterator().next();
       return indexManager.getDirectoryProvider().getDirectory();
@@ -178,5 +157,4 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
          this.attribute = attribute;
       }
    }
-
 }

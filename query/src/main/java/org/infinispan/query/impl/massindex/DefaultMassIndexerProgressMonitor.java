@@ -4,16 +4,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.hibernate.search.batchindexing.MassIndexerProgressMonitor;
-import org.infinispan.query.logging.Log;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
  */
 public class DefaultMassIndexerProgressMonitor implements MassIndexerProgressMonitor {
 
    private static final Log log = LogFactory.getLog(DefaultMassIndexerProgressMonitor.class, Log.class);
+
    private final AtomicLong documentsDoneCounter = new AtomicLong();
    private volatile long startTime;
    private final int logAfterNumberOfDocuments;

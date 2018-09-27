@@ -21,7 +21,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
  */
 @Test(groups = "functional", testName = "query.distributed.DistributedMassIndexingTest")
 public class DistributedMassIndexingTest extends MultipleCacheManagersTest {

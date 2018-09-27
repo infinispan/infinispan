@@ -2,12 +2,15 @@ package org.infinispan.query.test;
 
 import java.io.Serializable;
 
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.Transformable;
 
 @Transformable
-public class CustomKey2 implements Serializable {
-   int i, j, k;
-   private static final long serialVersionUID = -8825579871900146417L;
+public class CustomKey2 implements Serializable, ExternalPojo {
+
+   private static final long serialVersionUID = -1;
+
+   private int i, j, k;
 
    public CustomKey2(int i, int j, int k) {
       this.i = i;
@@ -46,21 +49,12 @@ public class CustomKey2 implements Serializable {
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
-      CustomKey2 that = (CustomKey2) o;
-
-      if (i != that.i) return false;
-      if (j != that.j) return false;
-      if (k != that.k) return false;
-
-      return true;
+      CustomKey2 other = (CustomKey2) o;
+      return i == other.i && j == other.j && k == other.k;
    }
 
    @Override
    public int hashCode() {
-      int result = i;
-      result = 31 * result + j;
-      result = 31 * result + k;
-      return result;
+      return 31 * (31 * i + j) + k;
    }
 }

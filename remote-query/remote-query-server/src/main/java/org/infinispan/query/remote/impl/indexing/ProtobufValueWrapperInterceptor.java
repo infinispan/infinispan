@@ -9,38 +9,28 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 
 /**
- * Intercepts write operations to the cache where the value is a ProtobufValueWrapper object and parses the underlying
- * WrappedMessage to discover the inner message type. The message type is needed in order to be able to tell later in
- * the interceptor chain if it gets indexed or not.
+ * Intercepts write operations to the cache where the value is a {@link ProtobufValueWrapper} object and parses the
+ * underlying WrappedMessage to discover the actual user message type. Knowledge of the message type is needed in order
+ * to be able to tell later in the interceptor chain if this values gets to be indexed or not.
  *
  * @author anistor@redhat.com
  * @since 9.3
  */
 public final class ProtobufValueWrapperInterceptor extends DDAsyncInterceptor {
 
-   private final EmbeddedCacheManager cacheManager;
+   private final SerializationContext serializationContext;
 
-   /**
-    * This is lazily initialised in {@code discoverMessageType} method. This does not need to be volatile nor do we need
-    * to synchronize before accessing it. It may happen to initialize it multiple times but that is not harmful.
-    */
-   private SerializationContext serializationContext = null;
+   private final Descriptor wrapperDescriptor;
 
-   /**
-    * Lazily initialized in {@code discoverMessageType} method, similarly to {@code serializationContext} field.
-    */
-   private Descriptor wrapperDescriptor = null;
-
-   public ProtobufValueWrapperInterceptor(EmbeddedCacheManager cacheManager) {
-      this.cacheManager = cacheManager;
+   public ProtobufValueWrapperInterceptor(SerializationContext serializationContext) {
+      this.serializationContext = serializationContext;
+      wrapperDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
    }
 
    @Override
@@ -76,14 +66,13 @@ public final class ProtobufValueWrapperInterceptor extends DDAsyncInterceptor {
       }
    }
 
+   /**
+    * Discovers the type of the protobuf payload and if it is a message type it sets the descriptor using {@link
+    * ProtobufValueWrapper#setMessageDescriptor}.
+    *
+    * @param valueWrapper the wrapper of the protobuf binary payload
+    */
    private void discoverMessageType(ProtobufValueWrapper valueWrapper) {
-      if (serializationContext == null) {
-         serializationContext = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
-      }
-      if (wrapperDescriptor == null) {
-         wrapperDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
-      }
-
       try {
          ProtobufParser.INSTANCE.parse(new WrappedMessageTagHandler(valueWrapper, serializationContext), wrapperDescriptor, valueWrapper.getBinary());
       } catch (IOException e) {

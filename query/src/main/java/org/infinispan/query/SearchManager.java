@@ -7,9 +7,9 @@ import org.hibernate.search.stat.Statistics;
 import org.infinispan.query.dsl.IndexedQueryMode;
 
 /**
- * The SearchManager is the entry point to create full text queries on top of a cache.
+ * The SearchManager is the entry point to create full text queries on top of an indexed cache.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
  */
 public interface SearchManager {
