@@ -125,7 +125,7 @@
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
       <version.caffeine>2.6.2</version.caffeine>
       <version.camel>2.17.0</version.camel>
-      <version.cdi>1.2</version.cdi>
+      <version.cdi>2.0</version.cdi>
       <version.elasticsearch>5.6.8</version.elasticsearch>
       <version.groovy>2.4.8</version.groovy>
       <version.gson>2.8.2</version.gson>
@@ -160,7 +160,7 @@
       <version.lucene.module.slot>5.5.5</version.lucene.module.slot>
       <version.metainf-services>1.7</version.metainf-services>
       <version.mockito>2.18.3</version.mockito>
-      <version.mockito_dep.bytebuddy>1.8.8</version.mockito_dep.bytebuddy>
+      <version.mockito_dep.bytebuddy>1.8.12</version.mockito_dep.bytebuddy>
       <version.mockito_dep.hamcrest>1.3</version.mockito_dep.hamcrest>
       <version.mockito_dep.objenesis>2.6</version.mockito_dep.objenesis>
       <version.netty>4.1.28.Final</version.netty>
@@ -173,7 +173,7 @@
       <version.pax.exam>4.11.0</version.pax.exam>
       <version.protostream>4.2.1.Final</version.protostream>
       <version.protostuff>1.6.0</version.protostuff>
-      <version.reactivestreams>1.0.1</version.reactivestreams>
+      <version.reactivestreams>1.0.2</version.reactivestreams>
       <version.rocksdb>5.8.0</version.rocksdb>
       <version.rxjava>2.2.0</version.rxjava>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
