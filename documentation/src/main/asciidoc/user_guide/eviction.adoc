@@ -145,67 +145,119 @@ times can be configured by adding the
 link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[&lt;expiration /&gt;]
 element to your `<*-cache />`  configuration sections.
 
-When an entry expires it will reside in the data container or cache store
-until it is accessed again by a user request.  There is also an optional
-expiration reaper that can run at a given configurable interval of
-milliseconds which will check for expired entries and remove them. Expiration reaper
-is always enabled when a cache store is present. It is highly recommended to always enable
-the reaper when using max idle in a clustered cache.
+When an entry expires it resides in the data container or cache store until it
+is accessed again by a user request. An expiration reaper is also available to
+check for expired entries and remove them at a configurable interval of
+milliseconds.
+
+You can enable the expiration reaper declaratively with the `reaper-interval`
+attribute or programmatically with the `enableReaper` method in the
+`ExpirationConfigurationBuilder` class.
+
+[NOTE]
+====
+* The expiration reaper cannot be disabled when a cache store is present.
+* When using a maximum idle time in a clustered cache, you should always enable
+the expiration reaper. For more information, see
+link:#max_idle_clustered[Clustered Max Idle].
+====
 
 ==== Difference between Eviction and Expiration
 
 Both Eviction and Expiration are means of cleaning the cache of unused entries
-and thus guarding the heap against OutOfMemory exceptions, so now a brief
+and thus guarding the heap against `OutOfMemory` exceptions, so now a brief
 explanation of the difference.
 
-With _eviction_ you set _maximal number of entries_ you want to keep in the cache
-and if this limit is exceeded, some candidates are found to be removed according
-to a choosen _eviction strategy_ (LRU, LIRS, etc...). Eviction can be setup to
-work with passivation (evicting to a cache store).
+With _eviction_ you set _maximal number of entries_ you want to keep in the
+cache and if this limit is exceeded, some candidates are found to be removed
+according to a choosen _eviction strategy_ (LRU, LIRS, etc...). Eviction can be
+setup to work with passivation, which is eviction to a cache store.
 
-With _expiration_ you set _time criteria_ for entries, _how long you want to keep them_
-in cache. Either you set maximum _lifespan_ of the entry - time it is allowed to
-stay in the cache or _maximum idle time_ , time it's allowed to be untouched
-(no operation performed with given key).
+With _expiration_ you set _time criteria_ for entries to specify _how long you
+want to keep them_ in the cache.
+
+_lifespan_::
+Specifies how long entries can remain in the cache before they expire. The
+default value is `-1`, which is unlimited time.
+_maximum idle time_::
+Specifies how long entries can remain idle before they expire. An entry in the
+cache is idle when no operation is performed with the key. The default value is
+`-1`, which is unlimited time.
 
 ===  Expiration details
 
-.  _Expiration_ is a top-level construct, represented in the configuration as well as in the cache API.
-.  While eviction is _local to each cache instance_ , expiration is _cluster-wide_ .  Expiration lifespans and maxIdle values are replicated along with the cache entry.
-.  Max idle requires additional network messages to work in a cluster.  As such using maxIdle in a clustered cache will cause some operations to be slower at times.
-.  Expiration lifespan and maxIdle are also persisted in CacheStores, so this information survives eviction/passivation.
+.  _Expiration_ is a top-level construct, represented in the configuration as
+well as in the cache API.
+.  While eviction is _local to each cache instance_ , expiration is
+_cluster-wide_ .  Expiration `lifespan` and `maxIdle` values are replicated
+along with the cache entry.
+.  Maximum idle times for cache entries require additional network messages in
+clustered environments. For this reason, setting `maxIdle` in clustered caches
+can result in slower operation times.
+.  Expiration lifespan and `maxIdle` are also persisted in CacheStores, so this information survives eviction/passivation.
 
+==== Maximum Idle Expiration
 
-==== Max Idle Details
+Maximum idle expiration has different behavior in local and clustered cache environments.
 
-Max idle expiration occurs when an entry has not been accessed within a given time frame. This poses a more interesting problem than lifespan, which is very simple. Thus this type of expiration behaves slightly different in a local versus cluster cache.
-
+[[max_idle_local]]
 ===== Local Max Idle
 
-Max idle is pretty straightforward in a non clustered cache. It removes expired entries when accessed directly (ie. Cache.get), also removes expired entries entries when iterated upon (ie. Cache.size) or via expiration reaper.
+In non-clustered cache environments, the `maxIdle` configuration expires entries when:
 
-===== Cluster Max Idle
+* accessed directly (`Cache.get`).
+* iterated upon (`Cache.size`).
+* the expiration reaper thread runs.
 
-Max idle in a cluster is quite a bit more complicated. Since each node can have a different access time, an entry is not removed until all owners of said entry say it hasn't been accessed in the given amount of time.
+[[max_idle_clustered]]
+===== Clustered Max Idle
 
-This check is done when a given node finds an entry has expired via maxIdle. It then will ask all the other owners what their last access time was (if it hasn't expired). If all owners say that the entry has expired, then it will not be returned to the user and removed based on the operation.
+In clustered environments, nodes in the cluster can have different access times
+for the same entry. Entries do not expire from the cache until they reach the
+maxium idle time for all owners across the cluster.
 
-WARN: Clustered caches should always enable reaper when using max idle expiration due to some limitations listed in the section below.
+When a node detects that an entry has reached the maximum idle time and is
+expired, the node gets the last time that the entry was accessed from the other
+owners in the cluster. If the other owners indicate that the entry is expired,
+that entry is not returned to the requester and removed from the cache.
 
-When using max idle, it is important to keep the following points in mind:
+The following points apply to using the `maxIdle` configuration with clustered
+caches:
 
-. A Cache.get in a clustered cache will return the "expired" entry if at least one owner finds that this entry is not expired. The last access time for the given entry will be updated to the current time.
-. When an entry is found to have expired due to max idle in the expiration reaper, instead of updating the last access time to current time, it will update all nodes to the most recent access of all owners.
-. Iteration in a clustered cache *will* return entries that this node thinks are expired via max idle. This is to ensure performance as no remote invocations are done. The entry is not refreshed and may be removed by the reaper or get access.
-. A clustered transactional cache does *NOT* remove entries expired via max idle on a get. These entries are only removed via reaper. This is prevented as doing so can cause deadlocking.
+* If one or more owner in the cluster detects that an entry is not expired,
+then a `Cache.get` operation returns the entry. The last access time for that
+entry is also updated to the current time.
+* When the expiration reaper finds entries that might be expired with the
+maximum idle time, all nodes update the last access time for those entries
+to the most recent access time before the `maxIdle` time. In this way, the
+reaper prevents invalid expiration of entries.
+* Clustered transactional caches do *not* remove entries that are expired
+with the maximum idle time on `Cache.get` operations. These expired entries
+are removed with the expiration reaper thread only, otherwise deadlocking
+can occur.
+* Iteration across a clustered cache returns entries that might be expired
+with the maximum idle time. This behavior ensures performance because no
+remote invocations are performed during the iteration. However this does not
+refresh any expired entries, which are removed by the expiration reaper or
+when accessed directly (`Cache.get`).
 
-WARN: Care should be used when utilizing max idle expiration and exception based eviction since expired entries that aren't removed still will count towards container sizing
-
-INFO: Entries transferred via state transfer will be created on the new node with a last access time equal to the current time, essentially refreshing any of these entries
+[IMPORTANT]
+====
+* Clustered caches should always use the expiration reaper with the `maxIdle`
+configuration.
+* When using `maxIdle` expiration with exception-based eviction, entries that
+are expired but not removed from the cache count towards the size of the data
+container.
+* Entries that are transferred to the cache via state transfer are created on
+the new node with a last access time that is equal to the current time. As a
+result those entries are refreshed.
+====
 
 ==== Configuration
 
-Eviction and Expiration may be configured using the programmatic or declarative XML configuration. This configuration is on a per-cache basis. Valid eviction/expiration-related configuration elements are:
+Eviction and Expiration may be configured using the programmatic or
+declarative XML configuration. This configuration is on a per-cache basis.
+Valid eviction/expiration-related configuration elements are:
 
 [source,xml]
 ----
@@ -304,4 +356,8 @@ disabled (wakeupInterval set to -1) expiration can be kicked off manually
 using ExprationManager.processExpiration(), for example from another
 maintenance thread that may run periodically in your application.
 
-The expiration manager processes expirations by causing the data container to purge expired entries and then causing any cache stores to purge expired entries.
+The expiration manager processes expirations in the following manner:
+
+. Causes the data container to purge expired entries
+. Causes cache stores (if any) to purge expired entries
+
