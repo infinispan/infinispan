@@ -43,7 +43,7 @@
             <artifactId>wildfly-threads</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wildfly</groupId>
+            <groupId>${appserver.groupId}</groupId>
             <artifactId>wildfly-naming</artifactId>
         </dependency>
         

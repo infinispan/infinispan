@@ -1,4 +1,4 @@
-[[DistributedExecutor]]
+[[distributed_execution]]
 === Distributed Execution
 
 NOTE: Distributed Executor has been deprecated as of {brandname} 9.1.
@@ -215,4 +215,3 @@ Pi approximation can greatly benefit from parallel distributed execution in Dist
    }
 }
 ----
-

@@ -1,3 +1,4 @@
+[[clustered_counters]]
 == Clustered Counters
 
 _Clustered counters_ are counters which are distributed and shared among all nodes in the {brandname} cluster.
@@ -214,13 +215,12 @@ SyncStrongCounter sync(); //SyncWeakCounter for WeakCounter
 * `getValue()` returns the current counter's value.
 * `reset()` allows to reset the counter's value to its initial value.
 * `addListener()` register a listener to receive update events.
-More details about it in the <<_notifications_and_events,Notification section>>.
+More details about it in the link:#clustered_counters_notify_events[Notification and Events] section.
 * `getConfiguration()` returns the configuration used by the counter.
 * `remove()` removes the counter value from the cluster. The instance can still be used and the listeners are kept.
 * `sync()` creates a synchronous counter.
 
 NOTE: The counter is re-created if it is accessed after a removal.
-
 
 ==== The `StrongCounter` interface: when the consistency or bounds matters.
 
@@ -451,6 +451,7 @@ counter.reset().whenComplete((aVoid, throwable) -> System.out.println("Reset don
 System.out.println("current value is " + counter.getValue().get());
 ----
 
+[[clustered_counters_notify_events]]
 === Notifications and Events
 
 Both strong and weak counter supports a listener to receive its updates events.

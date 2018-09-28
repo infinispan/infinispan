@@ -346,7 +346,6 @@ cache.put("riesling", rieslingPrice, 5,
 
 ----
 
-
 === Expiration designs
 
 Central to expiration is an ExpirationManager.
@@ -361,3 +360,4 @@ The expiration manager processes expirations in the following manner:
 
 . Causes the data container to purge expired entries
 . Causes cache stores (if any) to purge expired entries
+

@@ -37,25 +37,26 @@
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-backend-jms</artifactId>
-         <version>${version.hibernate.search}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-orm</artifactId>
-         <version>${version.hibernate.search}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.jboss.spec.javax.ejb</groupId>
          <artifactId>jboss-ejb-api_3.2_spec</artifactId>
-         <version>1.0.0.Final</version>
          <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.enterprise</groupId>
+         <artifactId>cdi-api</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.jboss.spec.javax.jms</groupId>
          <artifactId>jboss-jms-api_2.0_spec</artifactId>
-         <version>1.0.0.Final</version>
          <scope>provided</scope>
       </dependency>
       <dependency>
@@ -118,7 +119,6 @@
            as we start the server and then connect to it from within WildFly:
            it can not connect between different versions.
            -->
-         <version>${version.h2.driver-within-wildfly}</version>
       </dependency>
       <dependency>
          <groupId>junit</groupId>

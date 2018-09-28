@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.infinispan.Version;
+import org.infinispan.commons.util.Features;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -53,18 +54,19 @@ public class GlobalConfiguration {
    private final ThreadPoolConfiguration stateTransferThreadPool;
    private final ThreadPoolConfiguration asyncThreadPool;
    private final Optional<String> defaultCacheName;
+   private final Features features;
 
    GlobalConfiguration(ThreadPoolConfiguration expirationThreadPool,
-         ThreadPoolConfiguration listenerThreadPool,
-         ThreadPoolConfiguration replicationQueueThreadPool,
-         ThreadPoolConfiguration persistenceThreadPool,
-         ThreadPoolConfiguration stateTransferThreadPool,
-         ThreadPoolConfiguration asyncThreadPool,
-         GlobalJmxStatisticsConfiguration globalJmxStatistics,
-         TransportConfiguration transport, GlobalSecurityConfiguration security,
-         SerializationConfiguration serialization, ShutdownConfiguration shutdown,
-         GlobalStateConfiguration globalState,
-         List<?> modules, SiteConfiguration site, Optional<String> defaultCacheName, ClassLoader cl) {
+                       ThreadPoolConfiguration listenerThreadPool,
+                       ThreadPoolConfiguration replicationQueueThreadPool,
+                       ThreadPoolConfiguration persistenceThreadPool,
+                       ThreadPoolConfiguration stateTransferThreadPool,
+                       ThreadPoolConfiguration asyncThreadPool,
+                       GlobalJmxStatisticsConfiguration globalJmxStatistics,
+                       TransportConfiguration transport, GlobalSecurityConfiguration security,
+                       SerializationConfiguration serialization, ShutdownConfiguration shutdown,
+                       GlobalStateConfiguration globalState,
+                       List<?> modules, SiteConfiguration site, Optional<String> defaultCacheName, ClassLoader cl, Features features) {
       this.expirationThreadPool = expirationThreadPool;
       this.listenerThreadPool = listenerThreadPool;
       this.replicationQueueThreadPool = replicationQueueThreadPool;
@@ -85,6 +87,7 @@ public class GlobalConfiguration {
       this.site = site;
       this.defaultCacheName = defaultCacheName;
       this.cl = new WeakReference<>(cl);
+      this.features = features;
    }
 
    /**
@@ -216,6 +219,10 @@ public class GlobalConfiguration {
 
    public Optional<String> defaultCacheName() {
       return defaultCacheName;
+   }
+
+   public Features features() {
+      return features;
    }
 
    @Override

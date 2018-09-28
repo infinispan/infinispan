@@ -613,7 +613,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       Set<Stats> stats = new HashSet<Stats>();
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            AdvancedCache cache = cm.getCache(cn).getAdvancedCache();
+            AdvancedCache cache = SecurityActions.getUnwrappedCache(cm.getCache(cn)).getAdvancedCache();
             stats.add(cache.getStats());
          }
       }
@@ -624,8 +624,8 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       Set<Stats> stats = new HashSet<Stats>();
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            AdvancedCache cache = cm.getCache(cn).getAdvancedCache();
-            Configuration cfg = SecurityActions.getCacheConfiguration(cache);
+            AdvancedCache cache = SecurityActions.getUnwrappedCache(cm.getCache(cn)).getAdvancedCache();
+            Configuration cfg = cache.getCacheConfiguration();
             if (cfg.jmxStatistics().enabled()) {
                stats.add(cache.getStats());
             }

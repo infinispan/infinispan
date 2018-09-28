@@ -15,9 +15,8 @@
     <dependencies>
         <!-- Feature pack dependencies -->
         <dependency>
-            <groupId>org.wildfly</groupId>
+            <groupId>${appserver.groupId}</groupId>
             <artifactId>wildfly-feature-pack</artifactId>
-            <version>${version.org.wildfly}</version>
             <type>zip</type>
             <exclusions>
                 <exclusion>

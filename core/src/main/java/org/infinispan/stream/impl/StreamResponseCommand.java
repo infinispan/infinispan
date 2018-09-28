@@ -6,7 +6,9 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.IntSetsExternalization;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
@@ -24,6 +26,7 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
    protected Object id;
    protected boolean complete;
    protected R response;
+   protected IntSet missedSegments;
 
    // Only here for CommandIdUniquenessTest
    protected StreamResponseCommand() { super(null); }
@@ -33,11 +36,16 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
    }
 
    public StreamResponseCommand(ByteString cacheName, Address origin, Object id, boolean complete, R response) {
+      this(cacheName, origin, id, complete, IntSets.immutableEmptySet(), response);
+   }
+   public StreamResponseCommand(ByteString cacheName, Address origin, Object id, boolean complete,
+                                IntSet missedSegments, R response) {
       super(cacheName);
       setOrigin(origin);
       this.id = id;
       this.complete = complete;
       this.response = response;
+      this.missedSegments = missedSegments;
    }
 
    public void inject(ClusterStreamManager csm) {
@@ -46,7 +54,7 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      csm.receiveResponse(id, getOrigin(), complete, IntSets.immutableEmptySet(), response);
+      csm.receiveResponse(id, getOrigin(), complete, missedSegments, response);
       return CompletableFutures.completedNull();
    }
 
@@ -60,6 +68,7 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
       output.writeObject(getOrigin());
       output.writeObject(id);
       output.writeBoolean(complete);
+      IntSetsExternalization.writeTo(output, missedSegments);
       output.writeObject(response);
    }
 
@@ -68,6 +77,7 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
       setOrigin((Address) input.readObject());
       id = input.readObject();
       complete = input.readBoolean();
+      missedSegments = IntSetsExternalization.readFrom(input);
       response = (R) input.readObject();
    }
 
@@ -86,6 +96,7 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
       final StringBuilder sb = new StringBuilder("StreamResponseCommand{");
       sb.append("id=").append(id);
       sb.append(", complete=").append(complete);
+      sb.append(", missedSegments=").append(missedSegments);
       sb.append(", response=").append(response);
       sb.append('}');
       return sb.toString();

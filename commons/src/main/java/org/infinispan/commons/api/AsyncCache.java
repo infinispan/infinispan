@@ -36,6 +36,9 @@ import java.util.function.Function;
  * <p/>
  * Also, the use of async operations when within a transaction return your local value only, as expected.  A
  * {@link CompletableFuture} is still returned though for API consistency.
+ *
+ * These methods can have benefit over their sync versions even in LOCAL mode.
+ *
  * <p/>
  *
  * @author Mircea Markus
@@ -47,8 +50,7 @@ import java.util.function.Function;
 public interface AsyncCache<K, V> {
    /**
     * Asynchronous version of {@link BasicCache#put(Object, Object)}.  This method does not block on remote calls, even if your
-    * cache mode is synchronous.  Has no benefit over {@link BasicCache#put(Object, Object)} if used in LOCAL mode.
-    * <p/>
+    * cache mode is synchronous.
     *
     * @param key   key to use
     * @param value value to store
@@ -58,8 +60,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#put(Object, Object, long, TimeUnit)} .  This method does not block on remote
-    * calls, even if your cache mode is synchronous.  Has no benefit over {@link BasicCache#put(Object, Object, long, TimeUnit)}
-    * if used in LOCAL mode.
+    * calls, even if your cache mode is synchronous.
     *
     * @param key      key to use
     * @param value    value to store
@@ -71,8 +72,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#put(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does not block
-    * on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link BasicCache#put(Object, Object, long,
-    * TimeUnit, long, TimeUnit)} if used in LOCAL mode.
+    * on remote calls, even if your cache mode is synchronous.
     *
     * @param key          key to use
     * @param value        value to store
@@ -87,7 +87,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#putAll(Map)}.  This method does not block on remote calls, even if your cache mode
-    * is synchronous.  Has no benefit over {@link BasicCache#putAll(Map)} if used in LOCAL mode.
+    * is synchronous.
     *
     * @param data to store
     * @return a future containing a void return type
@@ -96,7 +96,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#putAll(Map, long, TimeUnit)}.  This method does not block on remote calls, even if
-    * your cache mode is synchronous.  Has no benefit over {@link BasicCache#putAll(Map, long, TimeUnit)} if used in LOCAL mode.
+    * your cache mode is synchronous.
     *
     * @param data     to store
     * @param lifespan lifespan of entry
@@ -107,8 +107,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#putAll(Map, long, TimeUnit, long, TimeUnit)}.  This method does not block on
-    * remote calls, even if your cache mode is synchronous.  Has no benefit over {@link BasicCache#putAll(Map, long, TimeUnit,
-    * long, TimeUnit)} if used in LOCAL mode.
+    * remote calls, even if your cache mode is synchronous.
     *
     * @param data         to store
     * @param lifespan     lifespan of entry
@@ -122,7 +121,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#clear()}.  This method does not block on remote calls, even if your cache mode is
-    * synchronous.  Has no benefit over {@link BasicCache#clear()} if used in LOCAL mode.
+    * synchronous.
     *
     * @return a future containing a void return type
     */
@@ -130,8 +129,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#putIfAbsent(Object, Object)}.  This method does not block on remote calls, even if
-    * your cache mode is synchronous.  Has no benefit over {@link BasicCache#putIfAbsent(Object, Object)} if used in LOCAL mode.
-    * <p/>
+    * your cache mode is synchronous.
     *
     * @param key   key to use
     * @param value value to store
@@ -141,8 +139,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#putIfAbsent(Object, Object, long, TimeUnit)} .  This method does not block on
-    * remote calls, even if your cache mode is synchronous.  Has no benefit over {@link BasicCache#putIfAbsent(Object, Object,
-    * long, TimeUnit)} if used in LOCAL mode.
+    * remote calls, even if your cache mode is synchronous.
     *
     * @param key      key to use
     * @param value    value to store
@@ -154,8 +151,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#putIfAbsent(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does
-    * not block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
-    * BasicCache#putIfAbsent(Object, Object, long, TimeUnit, long, TimeUnit)} if used in LOCAL mode.
+    * not block on remote calls, even if your cache mode is synchronous.
     *
     * @param key          key to use
     * @param value        value to store
@@ -170,7 +166,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#remove(Object)}.  This method does not block on remote calls, even if your cache
-    * mode is synchronous.  Has no benefit over {@link BasicCache#remove(Object)} if used in LOCAL mode.
+    * mode is synchronous.
     *
     * @param key key to remove
     * @return a future containing the value removed
@@ -179,7 +175,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#remove(Object, Object)}.  This method does not block on remote calls, even if your
-    * cache mode is synchronous.  Has no benefit over {@link BasicCache#remove(Object, Object)} if used in LOCAL mode.
+    * cache mode is synchronous.
     *
     * @param key   key to remove
     * @param value value to match on
@@ -189,7 +185,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#replace(Object, Object)}.  This method does not block on remote calls, even if
-    * your cache mode is synchronous.  Has no benefit over {@link BasicCache#replace(Object, Object)} if used in LOCAL mode.
+    * your cache mode is synchronous.
     *
     * @param key   key to remove
     * @param value value to store
@@ -199,8 +195,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#replace(Object, Object, long, TimeUnit)}.  This method does not block on remote
-    * calls, even if your cache mode is synchronous.  Has no benefit over {@link BasicCache#replace(Object, Object, long,
-    * TimeUnit)} if used in LOCAL mode.
+    * calls, even if your cache mode is synchronous.
     *
     * @param key      key to remove
     * @param value    value to store
@@ -212,8 +207,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#replace(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does not
-    * block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link BasicCache#replace(Object,
-    * Object, long, TimeUnit, long, TimeUnit)} if used in LOCAL mode.
+    * block on remote calls, even if your cache mode is synchronous.
     *
     * @param key          key to remove
     * @param value        value to store
@@ -228,8 +222,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#replace(Object, Object, Object)}.  This method does not block on remote calls,
-    * even if your cache mode is synchronous.  Has no benefit over {@link BasicCache#replace(Object, Object, Object)} if used in
-    * LOCAL mode.
+    * even if your cache mode is synchronous.
     *
     * @param key      key to remove
     * @param oldValue value to overwrite
@@ -240,8 +233,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#replace(Object, Object, Object, long, TimeUnit)}.  This method does not block on
-    * remote calls, even if your cache mode is synchronous.  Has no benefit over {@link BasicCache#replace(Object, Object, Object,
-    * long, TimeUnit)} if used in LOCAL mode.
+    * remote calls, even if your cache mode is synchronous.
     *
     * @param key      key to remove
     * @param oldValue value to overwrite
@@ -254,8 +246,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#replace(Object, Object, Object, long, TimeUnit, long, TimeUnit)}.  This method
-    * does not block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
-    * BasicCache#replace(Object, Object, Object, long, TimeUnit, long, TimeUnit)} if used in LOCAL mode.
+    * does not block on remote calls, even if your cache mode is synchronous.
     *
     * @param key          key to remove
     * @param oldValue     value to overwrite
@@ -317,35 +308,81 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#compute(Object, BiFunction)}. This method does not block on remote
-    * calls, even if your cache mode is synchronous. Has no benefit over {@link BasicCache#compute(Object, BiFunction)}
-    * )} if used in LOCAL mode.
+    * calls, even if your cache mode is synchronous.
     *
     * @since 9.4
     */
    CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
 
    /**
+    * Asynchronous version of {@link BasicCache#compute(Object, BiFunction, long, TimeUnit)}. This method does not block on remote
+    * calls, even if your cache mode is synchronous.
+    *
+    * @since 9.4
+    */
+   CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit);
+
+   /**
+    * Asynchronous version of {@link BasicCache#compute(Object, BiFunction, long, TimeUnit, long, TimeUnit)}. This method does not block on remote
+    * calls, even if your cache mode is synchronous.
+    *
+    * @since 9.4
+    */
+   CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+
+   /**
     * Asynchronous version of {@link BasicCache#computeIfAbsent(Object, Function)}. This method does not block on remote
-    * calls, even if your cache mode is synchronous. Has no benefit over {@link BasicCache#computeIfAbsent(Object,
-    * Function)} if used in LOCAL mode.
+    * calls, even if your cache mode is synchronous.
     *
     * @since 9.4
     */
    CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction);
 
+
+   /**
+    * Asynchronous version of {@link BasicCache#computeIfAbsent(Object, Function, long, TimeUnit)}. This method does not block on remote
+    * calls, even if your cache mode is synchronous.
+    *
+    * @since 9.4
+    */
+   CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit);
+
+
+   /**
+    * Asynchronous version of {@link BasicCache#computeIfAbsent(Object, Function, long, TimeUnit, long, TimeUnit)}. This method does not block on remote
+    * calls, even if your cache mode is synchronous.
+    *
+    * @since 9.4
+    */
+   CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+
    /**
     * Asynchronous version of {@link BasicCache#computeIfPresent(Object, BiFunction)}. This method does not block on
-    * remote calls, even if your cache mode is synchronous. Has no benefit over {@link
-    * BasicCache#computeIfPresent(Object, BiFunction)} if used in LOCAL mode.
+    * remote calls, even if your cache mode is synchronous.
     *
     * @since 9.4
     */
    CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
 
    /**
+    * Asynchronous version of {@link BasicCache#computeIfPresent(Object, BiFunction, long, TimeUnit)} . This method does not block on
+    * remote calls, even if your cache mode is synchronous.
+    *
+    * @since 9.4
+    */
+   CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit);
+
+   /**
+    * Asynchronous version of {@link BasicCache#computeIfPresent(Object, BiFunction, long, TimeUnit, long, TimeUnit)} . This method does not block on
+    * remote calls, even if your cache mode is synchronous.
+    *
+    * @since 9.4
+    */
+   CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+
+   /**
     * Asynchronous version of {@link BasicCache#merge(Object, Object, BiFunction)}. This method does not block on remote
-    * calls, even if your cache mode is synchronous. Has no benefit over {@link BasicCache#merge(Object, Object,
-    * BiFunction)} if used in LOCAL mode.
+    * calls, even if your cache mode is synchronous.
     *
     * @since 9.4
     */
@@ -353,8 +390,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#merge(Object, Object, BiFunction, long, TimeUnit)}. This method does not
-    * block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
-    * BasicCache#merge(Object, Object, BiFunction, long, TimeUnit)} if used in LOCAL mode.
+    * block on remote calls, even if your cache mode is synchronous.
     *
     * @since 9.4
     */
@@ -362,8 +398,7 @@ public interface AsyncCache<K, V> {
 
    /**
     * Asynchronous version of {@link BasicCache#merge(Object, Object, BiFunction, long, TimeUnit, long, TimeUnit)}. This
-    * method does not block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
-    * BasicCache#merge(Object, Object, BiFunction, long, TimeUnit, long, TimeUnit)} if used in LOCAL mode.
+    * method does not block on remote calls, even if your cache mode is synchronous.
     *
     * @since 9.4
     */

@@ -1,3 +1,4 @@
+[[cache_api]]
 == The Cache API
 
 === The Cache interface
@@ -19,16 +20,19 @@ Attempting to perform these operations globally would have large performance imp
 
 It should be noted that using certain flags with the link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags] method can mitigate some of these concerns, please check each method's documentation for more details.
 
+//dnaro: adding conditional statement to exclude this from productized builds
+ifndef::productized[]
 For more performance tips, have a look at our link:../performance_guide/performance_guide.html[Performance Guide].
+endif::productized[]
 
 ==== Mortal and Immortal Data
 Further to simply storing entries, {brandname}'s cache API allows you to attach mortality information to data.  For example, simply using link:{jdkdocroot}/java/util/Map.html#put-K-V-[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:{javadocroot}/org/infinispan/commons/api/BasicCache.html#put-K-V-long-java.util.concurrent.TimeUnit-[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
 
 In addition to _lifespan_ , {brandname} also supports _maxIdle_ as an additional metric with which to determine expiration.  Any combination of lifespans or maxIdles can be used.
 
-==== Example of Using Expiry and Mortal Data
-See these examples of using mortal data with {brandname}.
-//dnaro: Need to fix this section. Broken link, <<_eviction_examples, these examples>>
+//dnaro: Need to fix this section. Broken linking.
+//==== Example of Using Expiry and Mortal Data
+//See <<_eviction_examples, these examples>> of using mortal data with {brandname}.
 
 ==== putForExternalRead operation
 {brandname}'s link:{javadocroot}/org/infinispan/Cache.html[Cache] class contains a different 'put' operation called link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] . This operation is particularly useful when {brandname} is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way.
@@ -92,9 +96,9 @@ advancedCache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_LOCKING)
 
 The AdvancedCache interface also offers advanced developers a mechanism with which to attach custom interceptors.  Custom interceptors allow developers to alter the behavior of the cache API methods, and the AdvancedCache interface allows developers to attach these interceptors programmatically, at run-time.  See the AdvancedCache Javadocs for more details.
 
-For more information on writing custom interceptors, see <<_custom_interceptors_chapter, this chapter>>.
+For more information on writing custom interceptors, see link:#custom_interceptors_chapter[Custom Interceptors].
 
-[[_Listeners_and_notifications_section]]
+[[listeners_and_notifications]]
 ===  Listeners and Notifications
 
 {brandname} offers a listener API, where clients can register for and get notified when events take place.  This annotation-driven API applies to 2 different levels: cache level events and cache manager level events.
@@ -227,6 +231,7 @@ public class MyAsyncListener { .... }
 ===== Asynchronous thread pool
 To tune the thread pool used to dispatch such asynchronous notifications, use the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<listener-executor />`] XML element in your configuration file.
 
+[[cache_asynchronous_api]]
 ===  Asynchronous API
 In addition to synchronous API methods like link:{jdkdocroot}/java/util/Map.html#put-K-V-[Cache.put()] , link:{jdkdocroot}/java/util/Map.html#remove-java.lang.Object-[Cache.remove()] , etc., {brandname} also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
 
@@ -358,7 +363,7 @@ For your application to use the tree API, you need to import infinispan-tree.jar
 ----
 
 ==== Creating a Tree Cache
-The first step to use the tree API is to actually create a tree cache. To do so, you need to <<configuration, create an {brandname} Cache>> as you'd normally do, and using the link:{javadocroot}/org/infinispan/tree/TreeCacheFactory.html[TreeCacheFactory] , create an instance of link:{javadocroot}/org/infinispan/tree/TreeCache.html[TreeCache] . A very important note to remember here is that the Cache instance passed to the factory must be configured with invocation batching. For example:
+The first step to use the tree API is to actually create a tree cache. To do so, you need to create an {brandname} Cache as you'd normally do, and using the link:{javadocroot}/org/infinispan/tree/TreeCacheFactory.html[TreeCacheFactory] , create an instance of link:{javadocroot}/org/infinispan/tree/TreeCache.html[TreeCache] . A very important note to remember here is that the Cache instance passed to the factory must be configured with invocation batching. For example:
 
 [source,java]
 ----

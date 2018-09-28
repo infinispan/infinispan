@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.Util;
 
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
@@ -31,6 +32,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final List<Builder<?>> modules = new ArrayList<>();
    private final SiteConfigurationBuilder site;
    private Optional<String> defaultCacheName;
+   private Features features;
 
    public GlobalConfigurationBuilder() {
       // In OSGi contexts the TCCL should not be used. Use the infinispan-core bundle as default instead.
@@ -194,6 +196,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @SuppressWarnings("unchecked")
    public void validate() {
+      features = new Features(cl.get());
       List<RuntimeException> validationExceptions = new ArrayList<>();
       Arrays.asList(
             expirationThreadPool,
@@ -248,7 +251,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             modulesConfig,
             site.create(),
             defaultCacheName,
-            cl.get());
+            cl.get(),
+            features);
    }
 
    public GlobalConfigurationBuilder read(GlobalConfiguration template) {

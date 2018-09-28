@@ -1,3 +1,4 @@
+[[start_example_groovy]]
 ==  Example with Groovy
 The idea by this tutorial is to give an introduction in the use of the link:{javadocroot}[{brandname} API] and its configuration file. As trying to do it in a more interactive fashion, the tutorial makes use of the link:http://groovy.codehaus.org/[Groovy] dynamic language that will allow to interact with the API by using a console.
 
@@ -453,4 +454,3 @@ groovy:000> cacheStoreEvictionCache.get("cs1")
 === > value1
 
 ----
-

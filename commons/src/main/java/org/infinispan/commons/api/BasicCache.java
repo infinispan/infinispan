@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * BasicCache provides the common building block for the two different types of caches that Infinispan provides:
@@ -216,6 +217,81 @@ public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>,
     * @return the merged value that was stored under key
     */
    V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
+
+   /**
+    * An overloaded form of {@link #compute(Object, BiFunction)} which takes in lifespan parameters.
+    *
+    * @param key                key to use
+    * @param remappingFunction  function to use to compute and store the value under key
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @return the computed value that was stored under key
+    */
+   V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit);
+
+   /**
+    * An overloaded form of {@link #compute(Object, BiFunction)} which takes in lifespan and maxIdleTime parameters.
+    *
+    * @param key                key to use
+    * @param remappingFunction  function to use to compute and store the value under key
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @param maxIdleTime        the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                           expired
+    * @param maxIdleTimeUnit    time unit for max idle time
+    * @return the computed value that was stored under key
+    */
+   V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
+
+   /**
+    * An overloaded form of {@link #computeIfPresent(Object, BiFunction)}  which takes in lifespan parameters.
+    *
+    * @param key                key to use
+    * @param remappingFunction  function to use to compute and store the value under key, if such exists
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @return the computed value that was stored under key
+    */
+   V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit);
+
+   /**
+    * An overloaded form of {@link #computeIfPresent(Object, BiFunction)} which takes in lifespan and maxIdleTime parameters.
+    *
+    * @param key                key to use
+    * @param remappingFunction  function to use to compute and store the value under key, if such exists
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @param maxIdleTime        the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                           expired
+    * @param maxIdleTimeUnit    time unit for max idle time
+    * @return the computed value that was stored under key
+    */
+   V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
+
+   /**
+    * An overloaded form of {@link #computeIfAbsent(Object, Function)} which takes in lifespan parameters.
+    *
+    * @param key                key to use
+    * @param mappingFunction    function to use to compute and store the value under key, if the key is absent
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @return the computed value that was stored under key
+    */
+   V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit);
+
+   /**
+    * An overloaded form of {@link #computeIfAbsent(Object, Function)} which takes in lifespan and maxIdleTime parameters.
+    *
+    * @param key                key to use
+    * @param mappingFunction    function to use to compute and store the value under key, if the key is absent
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @param maxIdleTime        the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                           expired
+    * @param maxIdleTimeUnit    time unit for max idle time
+    * @return the computed value that was stored under key
+    */
+   V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
 
    /**
     * {@inheritDoc}

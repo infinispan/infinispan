@@ -128,6 +128,7 @@
         <dependency>
             <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-build</artifactId>
+            <version>${version.org.infinispan.server-build.old}</version>
             <type>zip</type>
             <scope>test</scope>
         </dependency>
@@ -229,7 +230,7 @@
             <artifactId>creaper-commands</artifactId>
             <exclusions>
                 <exclusion>
-                    <groupId>org.wildfly</groupId>
+                    <groupId>${appserver.groupId}</groupId>
                     <artifactId>wildfly-patching</artifactId>
                 </exclusion>
             </exclusions>
@@ -281,7 +282,7 @@
         <username.other>sa</username.other>
 
         <ispnserver.project.dir>${basedir}/..</ispnserver.project.dir>
-        <server.build.dist>${ispnserver.project.dir}/build/target/${infinispan.brand.prefix}-server-${project.version}</server.build.dist>
+        <server.build.dist>${ispnserver.project.dir}/build/target/server-distribution-thin/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
 
         <server1.dist>${basedir}/target/server/node1</server1.dist>
         <server2.dist>${basedir}/target/server/node2</server2.dist>

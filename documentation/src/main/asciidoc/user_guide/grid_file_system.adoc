@@ -1,3 +1,4 @@
+[[grid_file]]
 ==  Grid File System
 {brandname}'s GridFileSystem is an experimental API that exposes an {brandname}-backed data grid as a file system.
 
@@ -67,5 +68,3 @@ out.close();
 {brandname} ships with a demo link:http://en.wikipedia.org/wiki/WebDAV[WebDAV] application that makes use of the grid file system APIs.
 This demo app is packaged as a link:http://en.wikipedia.org/wiki/WAR_(Sun_file_format)[WAR] file which can be deployed in a servlet container, such as JBoss AS or Tomcat, and exposes the grid as a file system over WebDAV.
 This could then be mounted as a remote drive on your operating system.
-
-

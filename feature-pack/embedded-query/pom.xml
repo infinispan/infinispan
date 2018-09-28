@@ -23,14 +23,12 @@
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-jbossmodules-elasticsearch</artifactId>
-            <version>${version.hibernate.search}</version>
             <type>zip</type>
         </dependency>
 
         <dependency>
             <groupId>org.hibernate.lucene-jbossmodules</groupId>
             <artifactId>lucene-jbossmodules</artifactId>
-            <version>${version.lucene.featurepack}</version>
             <type>zip</type>
         </dependency>
         <!-- Main module dependencies -->

@@ -1,3 +1,4 @@
+[[introduction]]
 ==  Introduction
 
 Welcome to the official {brandname} user guide.
@@ -51,4 +52,3 @@ such as transactions, notifications, queries, distributed execution, distributed
 ==== As a geographical backup for your data
 
 {brandname} supports replication between clusters, allowing you to backup your data across geographically remote sites.
-

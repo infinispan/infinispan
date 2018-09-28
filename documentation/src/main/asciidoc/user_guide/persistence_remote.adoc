@@ -1,3 +1,4 @@
+[[remote_cache_store]]
 === Remote store
 The `RemoteStore` is a cache loader and writer implementation that stores data in a remote infinispan cluster. In order to communicate with the remote cluster, the `RemoteStore` uses the HotRod client/server architecture. HotRod bering the load balancing and fault tolerance of calls and the possibility to fine-tune the connection between the RemoteCacheStore and the actual cluster. Please refer to Hot Rod for more information on the protocol, client and server configuration. For a list of RemoteStore configuration refer to the link:{javadocroot}/org/infinispan/persistence/remote/configuration/RemoteStoreConfigurationBuilder.html[javadoc] . Example:
 

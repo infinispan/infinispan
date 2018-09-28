@@ -1,3 +1,4 @@
+[[integrations_jpa_hibernate]]
 === JPA/Hibernate 2L Cache
 
 Hibernate manages a second-level cache where it moves data into and out as a result of operations performed by `Session` or `EntityManager` (JPA).
@@ -50,7 +51,7 @@ To use second level cache, you first need to enable the second level cache so th
 [cols="1,10"]
 |===
 | JPA       | `<property name="hibernate.cache.use_second_level_cache" value="true"/>`
-| Spring    | `spring.jpa.properties.hibernate.cache.use_second_level_cache=true`     
+| Spring    | `spring.jpa.properties.hibernate.cache.use_second_level_cache=true`
 |===
 
 To select which entities/collections to cache, first annotate them with `javax.persistence.Cacheable`.
@@ -60,7 +61,7 @@ Then make sure shared cache mode is set to `ENABLE_SELECTIVE`:
 [cols="1,10"]
 |===
 | JPA       | `<shared-cache-mode>ENABLE_SELECTIVE</shared-cache-mode>`
-| Spring    | `spring.jpa.properties.javax.persistence.sharedCache.mode=ENABLE_SELECTIVE` 
+| Spring    | `spring.jpa.properties.javax.persistence.sharedCache.mode=ENABLE_SELECTIVE`
 |===
 
 NOTE: This is the most common way of selecting which entities/collections to cache.
@@ -73,7 +74,7 @@ Optionally, queries can also be cached but for that query cache needs to be enab
 [cols="1,10"]
 |===
 | JPA       | `<property name="hibernate.cache.use_query_cache" value="true"/>`
-| Spring    | `spring.jpa.properties.hibernate.cache.use_query_cache=true`     
+| Spring    | `spring.jpa.properties.hibernate.cache.use_query_cache=true`
 |===
 
 NOTE: As well as enabling query cache, forcing a query to be cached requires the query to be made cacheable.
@@ -87,7 +88,7 @@ Statistics are disabled by default, so it is recommended that you enable statist
 [cols="1,10"]
 |===
 | JPA       | `<property name="hibernate.generate_statistics" value="true" />`
-| Spring    | `spring.jpa.properties.hibernate.generate_statistics=true`      
+| Spring    | `spring.jpa.properties.hibernate.generate_statistics=true`
 |===
 
 
@@ -119,7 +120,7 @@ Then, modify the persistence.xml to include these properties:
 By default when running standalone, the {brandname} second-level cache provider uses an {brandname} configuration that’s designed for clustered environments.
 However, {brandname} also provides a configuration designed for local, single node, environments.
 To enable that configuration, set `hibernate.cache.infinispan.cfg` to `org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml` value.
-You can find more about the configuration check the <<_default_local_configuration,local configuration>> section.
+You can find more about the configuration check the link:#default_local_configuration_second_level[Default Local Configuration] section.
 
 A simple tutorial showing how to use {brandname} as Hibernate cache provider in a standalone application can be found
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/local[here].
@@ -134,7 +135,7 @@ Then, modify `application.properties` file to contain:
 
     # Use {brandname} second level cache provider
     spring.jpa.properties.hibernate.cache.region.factory_class=infinispan
-    # 
+    #
     # Force using local configuration when only using a single node.
     # Otherwise a clustered configuration is loaded.
     spring.jpa.properties.hibernate.cache.infinispan.cfg=org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml
@@ -142,7 +143,7 @@ Then, modify `application.properties` file to contain:
 By default when running standalone, the {brandname} second-level cache provider uses an {brandname} configuration that’s designed for clustered environments.
 However, {brandname} also provides a configuration designed for local, single node, environments.
 To enable that configuration, set `spring.jpa.properties.hibernate.cache.infinispan.cfg` to `org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml` value.
-You can find more about the configuration check the <<_default_local_configuration,local configuration>> section.
+You can find more about the configuration check the link:#default_local_configuration_second_level[Default Local Configuration] section.
 
 A simple tutorial showing how to use {brandname} as Hibernate cache provider in a Spring application can be found
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/spring-local[here].
@@ -152,14 +153,14 @@ link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hiber
 In WildFly, {brandname} is the default second level cache provider for JPA/Hibernate.
 This means that when using JPA in WildFly, region factory is already set to `infinispan`.
 {brandname}'s configuration is located in WildFly's `standalone.xml` file.
-It follows the same settings explained in <<_default_local_configuration,local configuration>> section.
+It follows the same settings explained in link:#default_local_configuration_second_level[Default Local Configuration] section.
 
 WARNING: When running in Wildfly, do not set `hibernate.cache.infinispan.cfg`.
 The configuration of the caches comes from WildFly's configuration file.
 
 Several aspects of the {brandname} second level cache provider can be configured directly in `persistence.xml`.
 This means that some of those tweaks do not require changing WildFly's `standalone.xml` file.
-You can find out more about these changes in the <<_configuration_properties, configuration properties>> section.
+You can find out more about these changes in the link:#configuration_properties[Configuration Properties] section.
 
 So, to enable Hibernate to use {brandname} as second-level cache, all you need to do is enable second-level cache.
 This is explained in detail in the introduction of this chapter.
@@ -177,7 +178,7 @@ Clustering the {brandname} second-level cache provider is as simple as adding th
 <property name="hibernate.cache.region.factory_class" value="infinispan"/>
 
 The default {brandname} configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
-You can find more about the configuration check the <<_default_cluster_configuration,cluster configuration>> section.
+You can find more about the configuration check the link:#default_cluster_configuration_second_level[Default Cluster Configuration] section.
 
 ===== Multi-Node Standalone Spring Application
 
@@ -188,7 +189,7 @@ Clustering the {brandname} second-level cache provider is as simple as adding th
     spring.jpa.properties.hibernate.cache.region.factory_class=infinispan
 
 The default {brandname} configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
-You can find more about the configuration check the <<_default_cluster_configuration,cluster configuration>> section.
+You can find more about the configuration check the link:#default_cluster_configuration_second_level[Default Cluster Configuration] section.
 
 ===== Multi-Node Wildfly Application
 
@@ -197,11 +198,11 @@ This means that when using JPA in WildFly, region factory is already set to `inf
 
 When running Wildfly multi-node clusters, it is recommended that you start off by using `standalone-ha.xml` configuration file.
 Within this file you can find Hibernate {brandname} caches configured with the correct settings to work in a clustered environment.
-You can find more about the configuration check the <<_default_cluster_configuration,cluster configuration>> section.
+You can find more about the configuration check the link:#default_cluster_configuration_second_level[Default Cluster Configuration] section.
 
 Several aspects of the {brandname} second level cache provider can be configured directly in `persistence.xml`.
 This means that some of those tweaks do not require changing WildFly's `standalone-ha.xml` file.
-You can find out more about these changes in the <<_configuration_properties, configuration properties>> section.
+You can find out more about these changes in the link:#configuration_properties[Configuration Properties] section.
 
 So, to enable Hibernate to use {brandname} as second-level cache, all you need to do is enable second-level cache.
 Enabling second-level cache is explained in detail in the introduction of this chapter.
@@ -210,6 +211,7 @@ Enabling second-level cache is explained in detail in the introduction of this c
 
 This section is dedicated at explaining configuration in detail as well as some extra configuration options.
 
+[[default_local_configuration_second_level]]
 ===== Default Local Configuration
 
 {brandname} second-level cache provider comes with a configuration designed for local, single node, environments.
@@ -225,10 +227,11 @@ Entities and collections query caches are configured with the following eviction
 * Default eviction algorithm is LRU, least recently used.
 
 You can change these settings on a per entity or collection basis or per individual entity or collection type.
-More information in the <<_configuration_properties, configuration properties>> section below.
+More information in the link:#configuration_properties[Configuration Properties] section below.
 
 _No eviction/expiration is configured for timestamp caches_, nor it's allowed.
 
+[[default_cluster_configuration_second_level]]
 ===== Default Cluster Configuration
 
 {brandname} second-level cache provider default configuration is designed for multi-node clustered environments.
@@ -240,7 +243,7 @@ These are the characteristics of such configuration:
 By default all _entities and collections are configured to use a synchronous invalidation_ as clustering mode.
 Whenever a new _entity or collection is read from database_ and needs to be cached, _it's only cached locally_ in order to reduce intra-cluster traffic.
 This option can be changed so that entities/collections are cached cluster wide, by switching the entity/collection cache to be replicated or distributed.
-How to change this option is explained in the <<_configuration_properties, configuration properties>> section.
+How to change this option is explained in the link:#configuration_properties[Configuration Properties] section.
 
 WARNING: When data read from the database is put in the cache, with replicated or distributed caches,
 the data is propagated to other nodes using asynchronous communication.
@@ -254,13 +257,13 @@ This means that when an entity is updated, the updated cache will send a message
 Upon receipt of this message, the other nodes will remove this data from their local cache, if it was stored there.
 This option can be changed so that both local and remote nodes contain the updates by configuring entities or collections to use a replicated or distributed cache.
 With replicated caches all nodes would contain the update, whereas with distributed caches only a subset of the nodes.
-How to change this option is explained in the <<_configuration_properties, configuration properties>> section.
+How to change this option is explained in the link:#configuration_properties[Configuration Properties] section.
 
 All _entities and collections have initial state transfer disabled_ since there's no need for it.
 
 Entities and collections are configured with the following eviction settings.
 You can change these settings on a per entity or collection basis or per individual entity or collection type.
-More information in the <<_configuration_properties, configuration properties>> section below.
+More information in the link:#configuration_properties[Configuration Properties] section below.
 
 * Eviction wake up interval is 5 seconds.
 * Max number of entries are 10,000.
@@ -305,7 +308,7 @@ After a cached query results is loaded, its timestamp is compared to all timesta
 If any of these is higher, the cached query result is discarded and the query is executed against DB.
 This requires synchronization of the wall clock across the cluster to work as expected.
 
-
+[[configuration_properties]]
 ===== Configuration Properties
 
 As explained above, {brandname} second-level cache provider comes with default configuration in `infinispan-config.xml` that is suited for clustered use.
@@ -317,7 +320,7 @@ WARNING: It is not possible to specify the configuration this way in WildFly.
 Cache configuration changes in Wildfly should be done either modifying the cache configurations inside the application server configuration, or creating new caches with the desired tweaks and plugging them accordingly.
 See examples below on how entity/collection specific configurations can be applied.
 
-[[caching-provider-infinispan-config-example]]
+[[caching_provider_infinispan_config_example]]
 .Use custom {brandname} configuration
 ====
 [source, XML, indent=0]
@@ -349,7 +352,7 @@ Auxiliary caches for regions using invalidation mode caches.
 
 For specifying cache template for specific region, use region name instead of the `_data-type_`:
 
-[[caching-provider-infinispan-config-cache-example]]
+[[caching_provider_infinispan_config_cache_example]]
 .Use custom cache template
 ====
 [source, XML, indent=0]
@@ -462,14 +465,14 @@ In integrations with Hibernate 5.2 or lower the actual setting of cache concurre
 Support for _replicated/distributed_ caches for `read-write` and `read-only` strategies has been added during 5.x development and this requires exclusively _non-transactional configuration_.
 Also eviction should not be used in this configuration as it can lead to consistency issues. Expiration (with reasonably long max-idle times) can be used.
 
-`Nonstrict-read-write` strategy is supported on _non-transactional distributed/replicated_ caches, but the eviction should be turned off as well. In addition to that, the entities must use versioning. This means that this strategy cannot be used for caching natural IDs (which are never versioned). This mode mildly relaxes the consistency - between DB commit and end of transaction commit a stale read (see <<caching-provider-infinispan-stale-read-example,example>>) may occur in another transaction.
+`Nonstrict-read-write` strategy is supported on _non-transactional distributed/replicated_ caches, but the eviction should be turned off as well. In addition to that, the entities must use versioning. This means that this strategy cannot be used for caching natural IDs (which are never versioned). This mode mildly relaxes the consistency - between DB commit and end of transaction commit a stale read may occur in another transaction.
 However this strategy uses less RPCs and can be more performant than the other ones.
 
 `Read-only` mode is supported in all configurations mentioned above but use of this mode currently does not bring any performance gains.
 
 The available combinations are summarized in table below:
 
-[[caching-provider-infinispan-compatibility-table]]
+[[caching_provider_infinispan_compatibility_table]]
 .Cache concurrency strategy/cache mode compatibility table
 [options="header"]
 |===
@@ -481,11 +484,11 @@ The available combinations are summarized in table below:
 |nonstrict-read-write|non-transactional |distributed/replicated |no
 |===
 
-Changing caches to behave different to the default behaviour explained in previous section is explained in the <<_configuration_properties, configuration properties>> section.
+Changing caches to behave different to the default behaviour explained in previous section is explained in the link:#configuration_properties[Configuration Properties] section.
 
 IMPORTANT: Use of transactional caches is possible only in JTA environment. Hibernate supports JDBC-only transactions but Infinispan transactional caches do not integrate with these. Therefore, in non-JTA environment the only option is to use `read-write`, `nonstrict-read-write` or `read-only` on non-transactional cache. Configuring the cache as transactional in non-JTA can lead to undefined behaviour.
 
-[[caching-provider-infinispan-stale-read-example]]
+[[caching_provider_infinispan_stale_read_example]]
 .Stale read with `nonstrict-read-write` strategy
 ====
 [source, indent=0]

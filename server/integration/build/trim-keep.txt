@@ -1,0 +1,14 @@
+modules/system/layers/base/org/jboss/as/clustering/common/**
+docs/schema/jboss-as-deployment-scanner_*.xsd
+docs/schema/jboss-as-jmx_*.xsd
+docs/schema/jboss-as-logging_*.xsd
+docs/schema/jboss-as-txn_*.xsd
+docs/schema/jboss-as-xts_*.xsd
+docs/schema/module-*.xsd
+docs/schema/jboss-infinispan-endpoint_*.xsd
+docs/schema/jboss-infinispan-jgroups_*.xsd
+docs/schema/jboss-infinispan-core_*.xsd
+docs/schema/wildfly-cli_*.xsd
+docs/schema/wildfly-config_*.xsd
+docs/schema/wildfly-txn_*.xsd
+docs/schema/wildfly-datasources_*.xsd

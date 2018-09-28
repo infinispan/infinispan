@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-build-configuration-parent</artifactId>
+   <version>9.4.0-SNAPSHOT</version>
+   <packaging>pom</packaging>
+
+   <name>Infinispan Common Parent</name>
+   <description>Infinispan common parent POM module</description>
+   <url>http://www.infinispan.org</url>
+   <organization>
+      <name>JBoss, a division of Red Hat</name>
+      <url>http://www.jboss.org</url>
+   </organization>
+   <licenses>
+      <license>
+         <name>Apache License 2.0</name>
+         <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+         <distribution>repo</distribution>
+      </license>
+   </licenses>
+   <developers>
+      <developer>
+         <id>placeholder</id>
+         <name>See http://www.infinispan.org for a complete list of contributors</name>
+      </developer>
+   </developers>
+   <mailingLists>
+      <mailingList>
+         <name>Infinispan Issues</name>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</unsubscribe>
+         <post>infinispan-issues@lists.jboss.org</post>
+         <archive>http://lists.jboss.org/pipermail/infinispan-issues/</archive>
+      </mailingList>
+      <mailingList>
+         <name>Infinispan Developers</name>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
+         <post>infinispan-dev@lists.jboss.org</post>
+         <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
+      </mailingList>
+   </mailingLists>
+   <scm>
+      <connection>scm:git:git@github.com:infinispan/infinispan.git</connection>
+      <developerConnection>scm:git:git@github.com:infinispan/infinispan.git</developerConnection>
+      <url>https://github.com/infinispan/infinispan</url>
+   </scm>
+   <issueManagement>
+      <system>jira</system>
+      <url>https://issues.jboss.org/browse/ISPN</url>
+   </issueManagement>
+   <ciManagement>
+      <system>Jenkins</system>
+      <url>https://ci.infinispan.org</url>
+      <notifiers>
+         <notifier>
+            <type>mail</type>
+            <address>infinispan-commits@lists.jboss.org</address>
+         </notifier>
+      </notifiers>
+   </ciManagement>
+   <distributionManagement>
+      <repository>
+         <id>${jboss.releases.repo.id}</id>
+         <name>JBoss Release Repository</name>
+         <url>${jboss.releases.repo.url}</url>
+      </repository>
+      <snapshotRepository>
+         <id>${jboss.snapshots.repo.id}</id>
+         <name>JBoss Snapshot Repository</name>
+         <url>${jboss.snapshots.repo.url}</url>
+      </snapshotRepository>
+   </distributionManagement>
+   <modules>
+      <module>bom</module>
+   </modules>
+
+   <properties>
+
+      <!-- === Branding Configuration === -->
+      <infinispan.brand.name>Infinispan</infinispan.brand.name>
+      <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
+      <infinispan.brand.short-name>infinispan</infinispan.brand.short-name>
+      <infinispan.brand.version.major>9</infinispan.brand.version.major>
+      <infinispan.brand.version.minor>4</infinispan.brand.version.minor>
+      <infinispan.brand.version.micro>0</infinispan.brand.version.micro>
+      <infinispan.brand.version>${infinispan.brand.version.major}.${infinispan.brand.version.minor}.${infinispan.brand.version.micro}</infinispan.brand.version>
+      <infinispan.codename>Infinity Minus ONE +2</infinispan.codename>
+      <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
+      <infinispan.base.version>9.4</infinispan.base.version>
+      <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
+      <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
+
+      <!-- === Application Server Configuration === -->
+
+      <!-- org.wildfly / org.jboss.eap -->
+      <appserver.groupId>org.wildfly</appserver.groupId>
+      <!-- 14.0.1.Final / 7.2.0.Beta-redhat-00002 -->
+      <appserver.version>14.0.1.Final</appserver.version>
+
+      <!-- === Component Versions === -->
+      <version.component.infinispan>9.4.0-SNAPSHOT</version.component.infinispan>
+      <version.component.jsclient>0.5.0-SNAPSHOT</version.component.jsclient>
+      <version.component.spark16><!-- N/A --></version.component.spark16>
+      <version.component.spark2>0.9-SNAPSHOT</version.component.spark2>
+      <version.component.camel><!-- N/A --></version.component.camel>
+      <version.component.hadoop>0.3-SNAPSHOT</version.component.hadoop>
+      <version.component.clustering>4.0.0.Beta1-SNAPSHOT</version.component.clustering>
+
+      <!-- Java source/target version -->
+      <version.java>1.8</version.java>
+
+      <!-- Dependency versions -->
+      <version.ant>1.10.1</version.ant>
+      <version.ant-contrib>1.0b3</version.ant-contrib>
+      <version.antlr2>2.7.7</version.antlr2>
+      <version.antlr3>3.5.2</version.antlr3>
+      <version.antlr>${version.antlr3}</version.antlr>
+      <version.asm>2.2.3</version.asm>
+      <version.asm.ow2>6.1.1</version.asm.ow2>
+      <version.c3p0>0.9.5-pre8</version.c3p0>
+      <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
+      <version.caffeine>2.6.2</version.caffeine>
+      <version.camel>2.17.0</version.camel>
+      <version.cdi>1.2</version.cdi>
+      <version.elasticsearch>5.6.8</version.elasticsearch>
+      <version.groovy>2.4.8</version.groovy>
+      <version.gson>2.8.2</version.gson>
+      <version.hadoop>2.7.1</version.hadoop>
+      <version.hibernate.core>5.3.4.Final</version.hibernate.core>
+      <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
+      <version.hibernate_dep.classmate>1.3.4</version.hibernate_dep.classmate>
+      <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
+      <version.hibernate_dep.hibernate-commons-annotations>5.0.4.Final</version.hibernate_dep.hibernate-commons-annotations>
+      <version.hibernate_dep.jandex>2.0.5.Final</version.hibernate_dep.jandex>
+      <version.hibernate_dep.javassist>3.23.1-GA</version.hibernate_dep.javassist>
+      <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
+      <version.hibernate.search>5.10.3.Final</version.hibernate.search>
+      <version.hibernate.search.modules>5.7.3.Final</version.hibernate.search.modules>
+      <version.hibernate.search.module.slot>5.10</version.hibernate.search.module.slot>
+      <version.hikaricp>2.4.6</version.hikaricp>
+      <version.infinispan>${version.component.infinispan}</version.infinispan>
+      <version.jackson>2.9.5</version.jackson>
+      <version.jacoco>0.7.5.201505241946</version.jacoco>
+      <version.javax.cache>1.1.0</version.javax.cache>
+      <version.javax.persistence>2.2</version.javax.persistence>
+      <version.javax.servlet>2.5</version.javax.servlet>
+      <version.jaxb>2.3.0</version.jaxb>
+      <version.jboss.logging>3.3.2.Final</version.jboss.logging>
+      <version.jboss.marshalling>2.0.6.Final</version.jboss.marshalling>
+      <version.jetty>9.4.5.v20170502</version.jetty>
+      <version.jgroups>4.0.15.Final</version.jgroups>
+      <version.junit>4.12</version.junit>
+      <version.karaf>4.2.0</version.karaf>
+      <version.log4j>2.8.2</version.log4j>
+      <version.lucene>5.5.5</version.lucene>
+      <version.lucene.module.slot>5.5.5</version.lucene.module.slot>
+      <version.metainf-services>1.7</version.metainf-services>
+      <version.mockito>2.18.3</version.mockito>
+      <version.mockito_dep.bytebuddy>1.8.8</version.mockito_dep.bytebuddy>
+      <version.mockito_dep.hamcrest>1.3</version.mockito_dep.hamcrest>
+      <version.mockito_dep.objenesis>2.6</version.mockito_dep.objenesis>
+      <version.netty>4.1.28.Final</version.netty>
+      <version.netty-conscrypt-optional>1.0.0</version.netty-conscrypt-optional>
+      <version.netty.tcnative>2.0.17.Final</version.netty.tcnative>
+      <version.netty-tcnative-boringssl-static>${version.netty.tcnative}</version.netty-tcnative-boringssl-static>
+      <version.org.wildfly>${appserver.version}</version.org.wildfly>
+      <version.org.wildfly.core>5.0.0.Final</version.org.wildfly.core>
+      <version.osgi>4.3.1</version.osgi>
+      <version.pax.exam>4.11.0</version.pax.exam>
+      <version.protostream>4.2.1.Final</version.protostream>
+      <version.protostuff>1.6.0</version.protostuff>
+      <version.reactivestreams>1.0.1</version.reactivestreams>
+      <version.rocksdb>5.8.0</version.rocksdb>
+      <version.rxjava>2.2.0</version.rxjava>
+      <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
+      <version.spring4>4.3.4.RELEASE</version.spring4>
+      <version.tomcat7>7.0.88</version.tomcat7>
+      <version.tomcat80>8.0.52</version.tomcat80>
+      <version.tomcat85>8.5.31</version.tomcat85>
+      <version.tomcat9>9.0.8</version.tomcat9>
+      <version.xalan>2.7.1.jbossorg-2</version.xalan>
+      <version.xerces>2.11.0.SP5</version.xerces>
+
+      <!-- Versions of feature packs we consume: must match expected versions manually for the time being
+        See also note in wildfly-modules/provisioning-of-hibernatesearch.xml -->
+      <version.elasticsearch-client.featurepack>5.6.7.hibernate01</version.elasticsearch-client.featurepack>
+      <version.gson.featurepack>2.8.2.hibernate03</version.gson.featurepack>
+      <version.gson.module.slot>2.8</version.gson.module.slot>
+      <version.lucene.featurepack>5.5.5.hibernate05</version.lucene.featurepack>
+
+      <!-- Plugin dependencies -->
+      <version.checkstyle>8.1</version.checkstyle>
+      <version.checkstyle.maven-plugin>2.17</version.checkstyle.maven-plugin>
+      <version.elasticsearch.plugin>5.7</version.elasticsearch.plugin>
+      <version.karaf-maven-plugin>4.2.0</version.karaf-maven-plugin>
+      <version.maven.antlr3>${version.antlr3}</version.maven.antlr3>
+      <version.maven.antrun>1.8</version.maven.antrun>
+      <version.maven.buildhelper>1.8</version.maven.buildhelper>
+      <version.maven.bundle>4.0.0</version.maven.bundle>
+      <version.maven-compiler-plugin>3.7.0-jboss-1</version.maven-compiler-plugin> <!-- MCOMPILER-320 -->
+      <version.maven.invoker>1.8</version.maven.invoker>
+      <version.maven.jar>3.0.2</version.maven.jar>
+      <version.maven-plugin-annotations>3.5.1</version.maven-plugin-annotations>
+      <version.maven-plugin-api>3.5.3</version.maven-plugin-api>
+      <version.maven-plugin-plugin>3.5</version.maven-plugin-plugin>
+      <version.maven.remote.resource>1.5</version.maven.remote.resource>
+      <version.maven.shade>3.1.1</version.maven.shade>
+      <version.maven.source>3.0.1</version.maven.source>
+      <version.maven.surefire>2.21.0</version.maven.surefire>
+      <version.org.wildfly.build-tools>1.2.10.Final</version.org.wildfly.build-tools>
+      <version.org.wildfly.maven-plugin>1.2.1.Final</version.org.wildfly.maven-plugin>
+      <version.owasp-dependency-check-plugin>3.1.1</version.owasp-dependency-check-plugin>
+
+      <!-- configuration properties -->
+      <org.infinispan.attachServerZip>false</org.infinispan.attachServerZip>
+
+   </properties>
+
+</project>

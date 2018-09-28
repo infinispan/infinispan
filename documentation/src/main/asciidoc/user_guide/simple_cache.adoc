@@ -1,3 +1,4 @@
+[[simple_cache]]
 ==== Simple Cache
 
 Traditional local caches use the same architecture as clustered caches, i.e. they use the interceptor stack.

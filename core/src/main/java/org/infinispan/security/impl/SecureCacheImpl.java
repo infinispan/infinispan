@@ -412,6 +412,18 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.compute(key, remappingFunction, lifespan, lifespanUnit);
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.compute(key, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.computeIfPresent(key, remappingFunction);
@@ -424,6 +436,18 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfPresent(key, remappingFunction, lifespan, lifespanUnit);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfPresent(key, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.computeIfAbsent(key, mappingFunction);
@@ -433,6 +457,18 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.computeIfAbsent(key, mappingFunction, metadata);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfAbsent(key, mappingFunction, lifespan, lifespanUnit);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfAbsent(key, mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
@@ -478,15 +514,51 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeAsync(key, remappingFunction, lifespan, lifespanUnit);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeAsync(key, remappingFunction, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   @Override
    public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.computeIfAbsentAsync(key, mappingFunction);
    }
 
    @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfAbsentAsync(key, mappingFunction, lifespan, lifespanUnit);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfAbsentAsync(key, mappingFunction, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   @Override
    public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.computeIfPresentAsync(key, remappingFunction);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfPresentAsync(key, remappingFunction, lifespan, lifespanUnit);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfPresentAsync(key, remappingFunction, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override

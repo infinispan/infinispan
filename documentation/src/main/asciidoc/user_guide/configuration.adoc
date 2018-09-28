@@ -1,7 +1,9 @@
+[[cache_configuration]]
 ===  Configuration
 
 {brandname} offers both declarative and programmatic configuration.
 
+[[cache_configuration_declarative]]
 ====  Configuring caches declaratively
 
 Declarative configuration comes in a form of XML document that adheres to a provided {brandname} configuration XML
@@ -86,7 +88,7 @@ The following example shows the simplest possible configuration for each of the 
 </infinispan>
 
 ----
-
+[[cache_configuration_templates]]
 ===== Cache configuration templates
 
 As mentioned above, {brandname} supports the notion of _configuration templates_. These are full or partial configuration
@@ -96,7 +98,6 @@ The following example shows how a configuration named `local-template` is used t
 
 [source,xml]
 ----
-
 <infinispan>
    <cache-container default-cache="local">
       <!-- template configurations -->
@@ -108,14 +109,12 @@ The following example shows how a configuration named `local-template` is used t
       <local-cache name="local" configuration="local-template" />
    </cache-container>
 </infinispan>
-
 ----
 
 Templates can inherit from previously defined templates, augmenting and/or overriding some or all of the configuration elements:
 
 [source,xml]
 ----
-
 <infinispan>
    <cache-container default-cache="local">
       <!-- template configurations -->
@@ -135,7 +134,6 @@ Templates can inherit from previously defined templates, augmenting and/or overr
       <local-cache name="local-bounded" configuration="extended-template" />
    </cache-container>
 </infinispan>
-
 ----
 
 In the above example, `base-template` defines a local cache with a specific _expiration_ configuration. The `extended-template`
@@ -145,13 +143,13 @@ configuration and `local-bounded` which uses the `extended-template` configurati
 
 WARNING: Be aware that for multi-valued elements (such as `properties`) the inheritance is additive, i.e. the child configuration will be the result of merging the properties from the parent and its own.
 
+[[cache_configuration_wildcards]]
 ===== Cache configuration wildcards
 
 An alternative way to apply templates to caches is to use wildcards in the template name, e.g. `basecache*`. Any cache whose name matches the template wildcard will inherit that configuration.
 
 [source,xml]
 ----
-
 <infinispan>
     <cache-container>
         <local-cache-configuration name="basecache*">
@@ -161,7 +159,6 @@ An alternative way to apply templates to caches is to use wildcards in the templ
         <local-cache name="basecache-2"/>
     </cache-container>
 </infinispan>
-
 ----
 
 Above, caches `basecache-1` and `basecache-2` will use the `basecache*` configuration. The configuration will also
@@ -169,21 +166,21 @@ be applied when retrieving undefined caches programmatically.
 
 NOTE: If a cache name matches multiple wildcards, i.e. it is ambiguous, an exception will be thrown.
 
+[[cache_configuration_declarative_ref]]
 ===== Declarative configuration reference
 
 For more details on the declarative configuration schema, refer to the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs[configuration reference].
 If you are using XML editing tools for configuration writing you can use the provided {brandname} link:http://infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[schema] to assist you.
 
+[[cache_configuration_programmatic]]
 ====  Configuring caches programmatically
 Programmatic {brandname} configuration is centered around the CacheManager and ConfigurationBuilder API.
 Although every single aspect of {brandname} configuration could be set programmatically, the most usual approach is to create a starting point in a form of XML configuration file and then in runtime, if needed, programmatically tune a specific configuration to suit the use case best.
 
 [source,java]
 ----
-
 EmbeddedCacheManager manager = new DefaultCacheManager("my-config-file.xml");
 Cache defaultCache = manager.getCache();
-
 ----
 
 Let's assume that a new synchronously replicated cache is to be configured programmatically.
@@ -197,7 +194,6 @@ Configuration c = new ConfigurationBuilder().clustering().cacheMode(CacheMode.RE
 String newCacheName = "repl";
 manager.defineConfiguration(newCacheName, c);
 Cache<String, String> cache = manager.getCache(newCacheName);
-
 ----
 
 The default cache configuration (or any other cache configuration) can be used as a starting point for creation of a new cache.
@@ -213,7 +209,6 @@ Configuration c = new ConfigurationBuilder().read(dcc).clustering().cacheMode(Ca
 String newCacheName = "distributedWithL1";
 manager.defineConfiguration(newCacheName, c);
 Cache<String, String> cache = manager.getCache(newCacheName);
-
 ----
 
 As long as the base configuration is the default named cache, the previous code works perfectly fine. However, other times the base configuration might be another named cache. So, how can new configurations be defined based on other defined caches? Take the previous example and imagine that instead of taking the default cache as base, a named cache called "replicatedCache" is used as base. The code would look something like this:
@@ -227,11 +222,11 @@ Configuration c = new ConfigurationBuilder().read(rc).clustering().cacheMode(Cac
 String newCacheName = "distributedWithL1";
 manager.defineConfiguration(newCacheName, c);
 Cache<String, String> cache = manager.getCache(newCacheName);
-
 ----
 
 Refer to link:{javadocroot}/org/infinispan/manager/CacheManager.html[CacheManager] , link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[ConfigurationBuilder] , link:{javadocroot}/org/infinispan/configuration/cache/Configuration.html[Configuration] , and link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration] javadocs for more details.
 
+[[cache_configuration_programmatic_api]]
 ===== ConfigurationBuilder Programmatic Configuration API
 While the above paragraph shows how to combine declarative and programmatic configuration, starting from an XML configuration is completely optional.
 The ConfigurationBuilder fluent interface style allows for easier to write and more readable programmatic configuration.
@@ -277,7 +272,6 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
     .cacheManagerName("SalesCacheManager")
     .mBeanServerLookup(new JBossMBeanServerLookup())
   .build();
-
 ----
 
 Some of the {brandname} features are powered by a group of the thread pool executors which can also be tweaked at this global level. For example:
@@ -288,7 +282,6 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
    .replicationQueueThreadPool()
      .threadPoolFactory(ScheduledThreadPoolExecutorFactory.create())
   .build();
-
 ----
 
 You can not only configure global, cache manager level, options, but you can also configure cache level options such as the cluster mode:
@@ -302,10 +295,9 @@ Configuration config = new ConfigurationBuilder()
     .l1().lifespan(25000L)
     .hash().numOwners(3)
   .build();
-
 ----
 
-Or you can configure <<_eviction, eviction and expiration settings>>:
+Or you can configure link:#eviction_anchor[eviction and expiration settings]:
 
 [source,java]
 ----
@@ -316,7 +308,6 @@ Configuration config = new ConfigurationBuilder()
              .wakeUpInterval(5000L)
              .maxIdle(120000L)
            .build();
-
 ----
 
 An application might also want to interact with an {brandname} cache within the boundaries of JTA and to do that you need to configure the transaction layer and optionally tweak the locking settings. When interacting with transactional caches, you might want to enable recovery to deal with transactions that finished with an heuristic outcome and if you do that, you will often want to enable JMX management and statistics gathering too:
@@ -333,7 +324,6 @@ Configuration config = new ConfigurationBuilder()
     .recovery()
   .jmxStatistics()
   .build();
-
 ----
 
 Configuring {brandname} with chained cache stores is simple too:
@@ -346,6 +336,7 @@ Configuration config = new ConfigurationBuilder()
    .preload(false).shared(false).threadPoolSize(20).build();
 ----
 
+[[cache_configuration_programmatic_advanced]]
 ===== Advanced programmatic configuration
 
 The fluent configuration can also be used to configure more advanced or exotic options, such as advanced externalizers:
@@ -357,7 +348,6 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
     .addAdvancedExternalizer(998, new PersonExternalizer())
     .addAdvancedExternalizer(999, new AddressExternalizer())
   .build();
-
 ----
 
 Or, add custom interceptors:
@@ -372,11 +362,11 @@ Configuration config = new ConfigurationBuilder()
     .interceptor(new AfterInterceptor()).after(NonTransactionalLockingInterceptor.class)
     .interceptor(new BeforeInterceptor()).before(CallInterceptor.class)
   .build();
-
 ----
 
 For information on the individual configuration options, please check the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/[configuration guide] .
 
+[[cache_configuration_migration]]
 ====  Configuration Migration Tools
 The configuration format of {brandname} has changed since schema version 6.0 in order to align the embedded schema with the one used
 by the server. For this reason, when upgrading to schema 7.x or later, you should use the configuration converter included in the
@@ -403,6 +393,7 @@ bin\config-converter.bat oldconfig.xml newconfig.xml
 
 TIP: If you wish to help write conversion tools from other caching systems, please contact link:https://lists.jboss.org/mailman/listinfo/infinispan-dev[infinispan-dev].
 
+[[cache_configuration_clustered]]
 ====  Clustered Configuration
 {brandname} uses link:http://www.jgroups.org[JGroups] for network communications when in clustered mode.
 {brandname} ships with _pre-configured_ JGroups stacks that make it easy for you to jump-start a clustered configuration.

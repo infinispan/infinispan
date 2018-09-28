@@ -13,7 +13,7 @@
 
    <fileSets>
       <fileSet>
-         <directory>target/distribution/${infinispan.brand.prefix}-${project.version}-remote</directory>
+         <directory>target/distribution/${infinispan.brand.prefix}-${infinispan.brand.version}-remote</directory>
          <outputDirectory/>
          <includes>
             <include>**</include>

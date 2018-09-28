@@ -1,3 +1,4 @@
+[[jdbc_cache_store]]
 === JDBC String based Cache Store
 A cache store which relies on the provided JDBC driver to load/store values in the underlying database.
 

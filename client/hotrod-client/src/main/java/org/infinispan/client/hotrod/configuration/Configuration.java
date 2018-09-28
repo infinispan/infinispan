@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
@@ -52,8 +53,8 @@ public class Configuration {
    private final int batchSize;
    private final ClassWhiteList classWhiteList;
    private final StatisticsConfiguration statistics;
-
    private final TransactionConfiguration transaction;
+   private final Features features;
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                  ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate,
@@ -61,7 +62,7 @@ public class Configuration {
                  ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
                  int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
                  List<ClusterConfiguration> clusters, List<String> serialWhitelist, int batchSize,
-                 TransactionConfiguration transaction, StatisticsConfiguration statistics) {
+                 TransactionConfiguration transaction, StatisticsConfiguration statistics, Features features) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
@@ -88,6 +89,7 @@ public class Configuration {
       this.batchSize = batchSize;
       this.transaction = transaction;
       this.statistics = statistics;
+      this.features = features;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -240,6 +242,10 @@ public class Configuration {
 
    public TransactionConfiguration transaction() {
       return transaction;
+   }
+
+   public Features features() {
+      return features;
    }
 
    @Override

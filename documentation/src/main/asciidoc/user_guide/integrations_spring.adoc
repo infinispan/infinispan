@@ -1,3 +1,4 @@
+[[spring_boot_integration]]
 ===  Using {brandname} with Spring Boot
 
 {brandname} Spring Boot Starters allow to easily turn on {brandname} and Spring integration.

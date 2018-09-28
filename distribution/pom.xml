@@ -235,10 +235,12 @@
                   </goals>
                   <configuration>
                      <target>
-                        <property name="plugin_classpath" refid="maven.plugin.classpath" />
+			<property name="plugin_classpath" refid="maven.plugin.classpath" />
+                        <property name="server.output.dir.prefix" value="${infinispan.brand.prefix}-server" />
+			<property name="server.thin.dir.path" value="${basedir}/../server/integration/build/target/server-distribution-thin/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                         <echo message="Base dir: ${basedir}" />
                         <path id="xsd.fileset.path">
-                           <fileset casesensitive="yes" dir="${basedir}/../server/integration/build/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}/docs/schema">
+                           <fileset casesensitive="yes" dir="${server.thin.dir.path}/docs/schema">
                               <include name="*.xsd" />
                            </fileset>
                         </path>
@@ -389,8 +391,8 @@
             <configuration>
                <outputDirectory>${project.build.directory}/distribution</outputDirectory>
                <workDirectory>${project.build.directory}/assembly/work</workDirectory>
-               <!-- Do not attach ZIP files to the Maven repository -->
-               <attach>false</attach>
+               <!-- (Do not attach ZIP files to the Maven repository) -->
+               <attach>${org.infinispan.attachServerZip}</attach>
             </configuration>
          </plugin>
       </plugins>

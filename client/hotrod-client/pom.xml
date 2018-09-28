@@ -154,20 +154,32 @@
          <groupId>org.apache.geronimo.components</groupId>
          <artifactId>geronimo-transaction</artifactId>
          <scope>test</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>org.apache.geronimo.specs</groupId>
+               <artifactId>geronimo-jta_1.1_spec</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>org.objectweb.howl</groupId>
          <artifactId>howl</artifactId>
-         <version>${version.howl}</version>
          <scope>test</scope>
       </dependency>
 
-
+      <!-- We need the Karaf distribution as a dependency for karaf-maven-plugin -->
+      <!-- But we don't want to use its dependencies (e.g. pax-logging-api) in the tests -->
       <dependency>
         <groupId>org.apache.karaf.features</groupId>
         <artifactId>framework</artifactId>
         <type>kar</type>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
    </dependencies>

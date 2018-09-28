@@ -12,6 +12,9 @@
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
       <testNGListener />
+      <server.build.dist>${basedir}/../../server/integration/build/target/server-distribution-thin/</server.build.dist>
+      <server1.dist>${project.build.directory}/node1</server1.dist>
+      <server2.dist>${project.build.directory}/node2</server2.dist>
    </properties>
 
 
@@ -39,8 +42,7 @@
       <dependency>
          <groupId>org.infinispan.server</groupId>
          <artifactId>infinispan-server-build</artifactId>
-         <version>${project.version}</version>
-         <type>zip</type>
+         <type>pom</type>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -85,38 +87,6 @@
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>unpack-server-1</id>
-                  <phase>process-test-resources</phase>
-                  <goals>
-                     <goal>unpack</goal>
-                  </goals>
-                  <configuration>
-                     <skip>${skipTests}</skip>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>org.infinispan.server</groupId>
-                           <artifactId>infinispan-server-build</artifactId>
-                           <version>${project.version}</version>
-                           <type>zip</type>
-                           <outputDirectory>${project.build.directory}/node1</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.infinispan.server</groupId>
-                           <artifactId>infinispan-server-build</artifactId>
-                           <version>${project.version}</version>
-                           <type>zip</type>
-                           <outputDirectory>${project.build.directory}/node2</outputDirectory>
-                        </artifactItem>
-                     </artifactItems>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <parallel>none</parallel>
@@ -131,6 +101,32 @@
                   <listener>${junitListener}</listener>
                </properties>
             </configuration>
+         </plugin>
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>copy-server-dist</id>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <phase>process-test-resources</phase>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <target>
+                        <ant antfile="copy-server.xml" inheritRefs="true" target="create-distro" />
+                        <!-- It happens when you do not specify namespaces in the XSLT templates for the newly added nodes
+                             then the IBM jdk transformation is adding empty namespace there - not possible to influence this
+                             behaviour by any environmental property - this is a bit workaround for it -->
+                        <echo message="Removing empty xmlns attributes (xmlns=&apos;&apos;) which IBM JDK could produce" />
+                        <replace dir="target" value="">
+                           <include name="server/node*/standalone/configuration/**/*.xml" />
+                           <replacetoken><![CDATA[xmlns=""]]></replacetoken>
+                        </replace>
+                     </target>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
       </plugins>
    </build>

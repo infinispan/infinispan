@@ -1,3 +1,4 @@
+[[server_tasks]]
 === Server Tasks
 
 Server tasks are server-side scripts defined in Java language.

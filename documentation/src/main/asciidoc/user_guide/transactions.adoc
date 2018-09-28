@@ -8,6 +8,7 @@
 :wildfly-tm-lookup: link:{javadocroot}/org/infinispan/transaction/lookup/WildflyTransactionManagerLookup.html[WildflyTransactionManagerLookup]
 :generic-tm-lookup: link:{javadocroot}/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html[GenericTransactionManagerLookup]
 
+[[transactions]]
 == Transactions
 {brandname} can be configured to use and to participate in JTA compliant transactions.
 Alternatively, if transaction support is disabled, it is equivalent to using autocommit in JDBC calls, where modifications are potentially replicated after every change (if replication is enabled).
@@ -53,7 +54,8 @@ Cache cache = cacheManager.getCache();
 TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
 ----
 
-=== Configuring transactions [[tx:configuration]]
+[[tx_configuration]]
+=== Configuring transactions
 Transactions are configured at cache level.
 Below is the configuration that affects a transaction behaviour and a small description of each configuration attribute.
 
@@ -105,40 +107,41 @@ builder.versioning()
 ----
 
 
-* `isolation` - configures the isolation level. Check section <<tx:isolation-levels>> for more details.
+* `isolation` - configures the isolation level. Check section link:#tx_isolation_levels[Isolation Levels] for more details.
 Default is `REPEATABLE_READ`.
-* `write-skew` - enables write skew checks. Check section <<tx:write-skew>> for more details. Default is `true`. Defaults to `false` automatically for the `READ_COMMITTED` isolation level. This attribute is deprecated.
-* `locking` - configures whether the cache uses optimistic or pessimistic locking. Check section <<tx:locking>> for more details.
+* `write-skew` - enables write skew checks. Check section link:#tx_write_skew[Write Skews] for more details. Default is `true`. Defaults to `false` automatically for the `READ_COMMITTED` isolation level. This attribute is deprecated.
+* `locking` - configures whether the cache uses optimistic or pessimistic locking. Check section link:#tx_locking[Transaction Locking] for more details.
 Default is `OPTIMISTIC`.
 * `auto-commit` - if enable, the user does not need to start a transaction manually for a single operation. The transaction is automatically started and committed.
  Default is `true`.
 * `complete-timeout` - the duration in milliseconds to keep information about completed transactions. Default is `60000`.
 * `mode` - configures whether the cache is transactional or not. Default is `NONE`. The available options are:
 ** `NONE` - non transactional cache
-** `FULL_XA` - XA transactional cache with recovery enabled. Check section <<tx:recovery>> for more details about recovery.
+** `FULL_XA` - XA transactional cache with recovery enabled. Check section link:#tx_recovery[Transaction recovery] for more details about recovery.
 ** `NON_DURABLE_XA` - XA transactional cache with recovery disabled.
 ** `NON_XA` - transactional cache with integration via {sync} instead of XA.
-Check section <<tx:sync-enlist>> for details.
-** `BATCH`-  transactional cache using batch to group operations. Check section <<tx:batching>> for details.
+Check section link:#tx_sync_enlist[Enlisting Synchronizations] for details.
+** `BATCH`-  transactional cache using batch to group operations. Check section link:#tx_batching[Batching] for details.
 * `notifications` - enables/disables triggering transactional events in cache listeners. Default is `true`.
 * `protocol` - configures the protocol uses. Default is `DEFAULT`. Values available are:
 ** `DEFAULT` - uses the traditional Two-Phase-Commit protocol. It is described below.
-** `TOTAL_ORDER` - uses total order ensured by the `Transport` to commit transactions. Check section <<tx:total-order>> for details.
+** `TOTAL_ORDER` - uses total order ensured by the `Transport` to commit transactions. Check section link:#tx_total_order[Total Order based commit protocol] for details.
 * `reaper-interval` - the time interval in millisecond at which the thread that cleans up transaction completion information kicks in.
 Defaults is `30000`.
-* `recovery-cache` - configures the cache name to store the recovery information. Check section <<tx:recovery>> for more details about recovery.
+* `recovery-cache` - configures the cache name to store the recovery information. Check section link:#tx_recovery[Transaction recovery] for more details about recovery.
 Default is `__recoveryInfoCacheName__`.
 * `stop-timeout` - the time in millisecond to wait for ongoing transaction when the cache is stopping. Default is  `30000`.
 * `transaction-manager-lookup` - configures the fully qualified class name of a class that looks up a reference to a `javax.transaction.TransactionManager`.
 Default is `org.infinispan.transaction.lookup.GenericTransactionManagerLookup`.
 * Versioning `scheme` - configure the version scheme to use when write skew is enabled with optimistic or total order transactions.
-Check section <<tx:write-skew>> for more details. Default is `NONE`.
+Check section link:#tx_write_skew[Write Skews] for more details. Default is `NONE`.
 
 
 For more details on how Two-Phase-Commit (2PC) is implemented in {brandname} and how locks are being acquired see the section below.
 More details about the configuration settings are available in link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/[Configuration reference].
 
-=== Isolation levels [[tx:isolation-levels]]
+[[tx_isolation_levels]]
+=== Isolation levels
 {brandname} offers two isolation levels - link:https://en.wikipedia.org/wiki/Isolation_(database_systems)#Read_committed[READ_COMMITTED] and link:https://en.wikipedia.org/wiki/Isolation_(database_systems)#Repeatable_reads[REPEATABLE_READ].
 
 These isolation levels determine when readers see a concurrent write, and are internally implemented using different subclasses of `MVCCEntry`, which have different behaviour in how state is committed back to the data container.
@@ -178,7 +181,8 @@ Thread2:                                       cache.get("B") // returns 2
 Thread2:                                       tx2.commit()
 ----
 
-=== Transaction locking [[tx:locking]]
+[[tx_locking]]
+=== Transaction locking
 
 ==== Pessimistic transactional cache
 
@@ -235,7 +239,8 @@ That is because the optimistic transactions rollback if data has changed between
 On the other hand, pessimistic transactions might be a better fit when there is high contention on the keys and transaction rollbacks are less desirable.
 Pessimistic transactions are more costly by their nature: each write operation potentially involves a RPC for lock acquisition.
 
-=== Write Skews [[tx:write-skew]]
+[[tx_write_skew]]
+=== Write Skews
 
 Write skews occur when two transactions independently and simultaneously read and write to the same key. The result of a write skew is that both transactions successfully commit updates to the same key but with different values.
 
@@ -332,7 +337,8 @@ NOTE: deadlock detection only runs on an a per cache basis: deadlocks that sprea
 === Dealing with exceptions
 If a link:{javadocroot}/org/infinispan/commons/CacheException.html[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
 
-=== Enlisting Synchronizations [[tx:sync-enlist]]
+[[tx_sync_enlist]]
+=== Enlisting Synchronizations
 By default {brandname} registers itself as a first class participant in distributed transactions through {xa}.
 There are situations where {brandname} is not required to be a participant in the transaction, but only to be notified by its lifecycle (prepare, complete): e.g. in the case {brandname} is used as a 2nd level cache in Hibernate.
 
@@ -344,7 +350,8 @@ E.g. Hibernate second level cache: if {brandname} registers itself with the `Tra
 Having to coordinate between two resources it needs to write the tx log to disk.
 On the other hand, registering {brandname} as a `Synchronisation` makes the `TransactionManager` skip writing the log to the disk (performance improvement).
 
-===  Batching [[tx:batching]]
+[[tx_batching]]
+===  Batching
 Batching allows atomicity and some characteristics of a transaction, but not full-blown JTA or XA capabilities.
 Batching is often a lot lighter and cheaper than a full-blown transaction.
 
@@ -390,7 +397,8 @@ With batching, you get:
 . If synchronous replication or invalidation are used, a failure in replication/invalidation will cause the batch to roll back.
 . All the transaction related configurations apply for batching as well.
 
-===  Transaction recovery [[tx:recovery]]
+[[tx_recovery]]
+===  Transaction recovery
 Recovery is a feature of XA transactions, which deal with the eventuality of a resource or possibly even the transaction manager failing, and recovering accordingly from such a situation.
 
 ==== When to use recovery
@@ -405,12 +413,12 @@ The transaction manager works with {brandname} to determine the list of in-doubt
 This process is transaction manager specific, but generally requires some configuration on the transaction manager.  
 
 Knowing the in-doubt transaction ids, the system administrator can now connect to the {brandname} cluster and replay the commit of transactions or force the rollback.
-{brandname} provides JMX tooling for this - this is explained extensively in the <<tx:recovery-reconciliation>> section.
+{brandname} provides JMX tooling for this - this is explained extensively in the link:#tx_recovery_reconciliation[Transaction recovery and reconciliation] section.
 
 ==== Configuring recovery   
 Recovery is _not_ enabled by default in {brandname}.
 If disabled, the `TransactionManager` won't be able to work with {brandname} to determine the in-doubt transactions.
-The <<tx:configuration>> section shows how to enable it.
+The link:#tx_configuration[Transaction configuration] section shows how to enable it.
 
 NOTE: `recovery-cache` attribute is not mandatory and it is configured per-cache.
 
@@ -419,7 +427,7 @@ NOTE: For recovery to work, `mode` must be set to `FULL_XA`, since full-blown XA
 ===== Enable JMX support
 
 In order to be able to use JMX for managing recovery JMX support must be explicitly enabled.
-More about enabling JMX in <<jmx:chapter>> section.
+More about enabling JMX in the link:#jmx_mgmt_tooling[Management] chapter.
 
 ==== Recovery cache
 In order to track in-doubt transactions and be able to reply them, {brandname} caches all transaction state for future use.
@@ -445,7 +453,8 @@ It is a common practice to run the recovery in a different process from the one 
 At the moment it is not possible to do this with infinispan: the recovery must be run from the same process where the infinispan instance exists.
 This limitation will be dropped once link:https://issues.jboss.org/browse/ISPN-375[transactions over Hot Rod] are available.
 
-==== Reconciliation [[tx:recovery-reconciliation]]
+[[tx_recovery_reconciliation]]
+==== Reconciliation
 The transaction manager informs the system administrator on in-doubt transaction in a proprietary way.
 At this stage it is assumed that the system administrator knows transaction's XID (a byte array).
 
@@ -477,7 +486,8 @@ This process is plugged into transaction manager's recovery and has access to th
 ==== Want to know more?
 The link:https://community.jboss.org/wiki/TransactionRecoveryDesign[recovery design document] describes in more detail the insides of transaction recovery implementation.
 
-===  Total Order based commit protocol [[tx:total-order]]
+[[tx_total_order]]
+===  Total Order based commit protocol
 The Total Order based protocol is a multi-master scheme (in this context, multi-master scheme means that all nodes can update all the data) as the (optimistic/pessimist) locking mode implemented in {brandname}.
 This commit protocol relies on the concept of totally ordered delivery of messages which, informally, implies that each node which delivers a set of messages, delivers them in the same order.
 
@@ -535,7 +545,7 @@ In this case, _tx2_ will be enqueued and it will be validated only when _tx1_ is
 Eventually, the `TransactionManager` for _tx1_ will request the second phase (the commit) and all the nodes are free to perform the validation of _tx2_ .
 
 ===== Transaction Recovery
-<<tx:recovery, Transaction recovery>> is currently not available for Total Order based commit protocol.
+link:#tx_recovery[Transaction recovery] is currently not available for Total Order based commit protocol.
 
 ===== State Transfer
 For simplicity reasons, the total order based commit protocol uses a blocking version of the current state transfer.
@@ -567,9 +577,8 @@ NOTE: Check the link:http://jgroups.org/manual-3.x/html/index.html[JGroups Manua
 
 NOTE: If you are interested in detail how JGroups guarantees total order, check the link::http://jgroups.org/manual/index.html#TOA[TOA manual].
 
-Also, you need to set the `protocol=TOTAL_ORDER` in the `<transaction>` element, as shown in <<tx:configuration, Configuration section>>.
+Also, you need to set the `protocol=TOTAL_ORDER` in the `<transaction>` element, as shown in link:#tx_configuration[Transaction configuration].
 
 ==== When to use it?
 
-Total order shows benefits when used in write intensive and high contented workloads.
-It mitigates the cost associated with deadlock detection and avoids contention in the lock keys.
+Total order shows benefits when used in write intensive and high contented workloads. It mitigates the cost associated with deadlock detection and avoids contention in the lock keys.
