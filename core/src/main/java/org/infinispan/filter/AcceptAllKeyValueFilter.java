@@ -18,9 +18,10 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 7.0
  */
-public class AcceptAllKeyValueFilter implements KeyValueFilter<Object, Object> {
+public final class AcceptAllKeyValueFilter implements KeyValueFilter<Object, Object> {
 
-   private AcceptAllKeyValueFilter() { }
+   private AcceptAllKeyValueFilter() {
+   }
 
    private static class StaticHolder {
       private static final AcceptAllKeyValueFilter INSTANCE = new AcceptAllKeyValueFilter();
@@ -35,7 +36,7 @@ public class AcceptAllKeyValueFilter implements KeyValueFilter<Object, Object> {
       return true;
    }
 
-   public static class Externalizer extends AbstractExternalizer<AcceptAllKeyValueFilter> {
+   public static final class Externalizer extends AbstractExternalizer<AcceptAllKeyValueFilter> {
       @Override
       public Set<Class<? extends AcceptAllKeyValueFilter>> getTypeClasses() {
          return Collections.singleton(AcceptAllKeyValueFilter.class);
