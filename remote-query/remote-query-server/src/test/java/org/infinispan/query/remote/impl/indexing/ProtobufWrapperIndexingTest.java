@@ -44,7 +44,7 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
    }
 
    public void testIndexingWithWrapper() throws Exception {
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
 
       MarshallerRegistration.registerMarshallers(serCtx);
 

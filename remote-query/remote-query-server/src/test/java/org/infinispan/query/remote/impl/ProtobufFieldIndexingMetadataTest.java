@@ -52,7 +52,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
    }
 
    public void testProtobufFieldIndexingMetadata() throws Exception {
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("user_definition.proto", PROTO_DEFINITIONS));
       ProtobufFieldIndexingMetadata userIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User"));
       ProtobufFieldIndexingMetadata addressIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User.Address"));
@@ -78,7 +78,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
             "   required int32 age = 1;\n" +
             "}";
 
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("test.proto", testProto));
    }
 
@@ -90,7 +90,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
             "   required int32 age = 1;\n" +
             "}";
 
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", testProto));
    }
 
@@ -103,7 +103,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
             "   required string name = 1;\n" +
             "}";
 
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", testProto));
    }
 
@@ -115,7 +115,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
             "   required string name = 1;\n" +
             "}";
 
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("test2.proto", testProto));
    }
 }

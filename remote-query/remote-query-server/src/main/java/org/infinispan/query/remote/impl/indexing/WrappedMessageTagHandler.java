@@ -24,8 +24,8 @@ class WrappedMessageTagHandler implements TagHandler {
    protected final ProtobufValueWrapper valueWrapper;
    protected final SerializationContext serCtx;
 
-   protected Descriptor messageDescriptor;
-   protected byte[] bytes;          // message bytes
+   protected GenericDescriptor descriptor;
+   protected byte[] messageBytes;
    protected Number numericValue;
    protected String stringValue;
 
@@ -62,15 +62,18 @@ class WrappedMessageTagHandler implements TagHandler {
          case WrappedMessage.WRAPPED_SINT64:
             numericValue = (Number) value;
             break;
-         case WrappedMessage.WRAPPED_DESCRIPTOR_FULL_NAME:
-            messageDescriptor = serCtx.getMessageDescriptor((String) value);
+         case WrappedMessage.WRAPPED_DESCRIPTOR_FULL_NAME: {
+            String typeName = (String) value;
+            descriptor = serCtx.getDescriptorByName(typeName);
             break;
-         case WrappedMessage.WRAPPED_DESCRIPTOR_ID:
-            String typeName = serCtx.getTypeNameById((Integer) value);
-            messageDescriptor = serCtx.getMessageDescriptor(typeName);
+         }
+         case WrappedMessage.WRAPPED_DESCRIPTOR_ID: {
+            Integer typeId = (Integer) value;
+            descriptor = serCtx.getDescriptorByTypeId(typeId);
             break;
+         }
          case WrappedMessage.WRAPPED_MESSAGE:
-            bytes = (byte[]) value;
+            messageBytes = (byte[]) value;
             break;
          default:
             throw new IllegalStateException("Unexpected field : " + fieldNumber);
@@ -89,13 +92,13 @@ class WrappedMessageTagHandler implements TagHandler {
 
    @Override
    public void onEnd() {
-      if (bytes != null) {
+      if (messageBytes != null) {
          // it's a message, not a primitive value; we must have a type now
-         if (messageDescriptor == null) {
+         if (descriptor == null) {
             throw new IllegalStateException("Type name or type id is missing");
          }
 
-         valueWrapper.setMessageDescriptor(messageDescriptor);
+         valueWrapper.setMessageDescriptor((Descriptor) descriptor);
       }
    }
 }

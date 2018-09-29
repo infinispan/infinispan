@@ -7,9 +7,8 @@ import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 
 /**
- * A per {@link EmbeddedCacheManager} marshaller that should be used as compatibility mode marshaller (see {@link
- * org.infinispan.interceptors.compat.TypeConverterInterceptor}) in server. An instance cannot be shared between
- * multiple cache managers.
+ * A per {@link EmbeddedCacheManager} marshaller that should be used as compatibility mode marshaller in server. An
+ * instance cannot be shared between multiple cache managers.
  *
  * @author anistor@redhat.com
  * @since 6.0
@@ -26,6 +25,6 @@ public class CompatibilityProtoStreamMarshaller extends BaseProtoStreamMarshalle
       if (cacheManager == null) {
          throw new IllegalStateException("cacheManager not set");
       }
-      return ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      return ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
    }
 }

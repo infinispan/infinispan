@@ -7,10 +7,12 @@ import org.hibernate.search.bridge.LuceneOptions;
 import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.jboss.logging.Logger;
 
 /**
  * Protostream tag handler for {@code org.infinispan.protostream.WrappedMessage} protobuf type defined in
- * message-wrapping.proto which also indexes the message.
+ * message-wrapping.proto which adds all message fields that need to be indexed to a Lucene Document after parsing.
  *
  * @author anistor@redhat.com
  * @since 9.3
@@ -30,24 +32,31 @@ final class IndexingWrappedMessageTagHandler extends WrappedMessageTagHandler {
    public void onEnd() {
       super.onEnd();
 
-      if (bytes != null) {
-         IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+      // parsing of WrappedMessage completed, now index the inner message or scalar value
+
+      if (messageBytes != null) {
+         // we are dealing with a message
+         Descriptor descriptor = valueWrapper.getMessageDescriptor();
+         IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
          // if the message definition is not annotated at all we consider all fields indexed and stored (but not analyzed), just to be backwards compatible
-         if (indexingMetadata == null && IndexingMetadata.isLegacyIndexingEnabled(messageDescriptor) || indexingMetadata != null && indexingMetadata.isIndexed()) {
+         if (indexingMetadata == null && IndexingMetadata.isLegacyIndexingEnabled(descriptor) || indexingMetadata != null && indexingMetadata.isIndexed()) {
             if (indexingMetadata == null) {
-               log.legacyIndexingIsDeprecated(messageDescriptor.getFullName(), messageDescriptor.getFileDescriptor().getName());
+               if (log.isEnabled(Logger.Level.WARN)) {
+                  log.legacyIndexingIsDeprecated(descriptor.getFullName(), descriptor.getFileDescriptor().getName());
+               }
             }
-            valueWrapper.setMessageDescriptor(messageDescriptor);
             try {
-               ProtobufParser.INSTANCE.parse(new IndexingTagHandler(messageDescriptor, document), messageDescriptor, bytes);
+               ProtobufParser.INSTANCE.parse(new IndexingTagHandler(descriptor, document), descriptor, messageBytes);
             } catch (IOException e) {
                throw new CacheException(e);
             }
          }
       } else if (numericValue != null) {
+         // we are dealing with a numeric scalar
          //todo [anistor] how do we index a scalar value?
          luceneOptions.addNumericFieldToDocument("theValue", numericValue, document);
       } else if (stringValue != null) {
+         // we are dealing with a string
          luceneOptions.addFieldToDocument("theValue", stringValue, document);
       }
    }

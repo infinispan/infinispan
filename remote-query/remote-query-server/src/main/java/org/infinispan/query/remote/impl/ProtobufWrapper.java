@@ -10,7 +10,7 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
  *
  * @since 9.1
  */
-public class ProtobufWrapper implements Wrapper {
+public final class ProtobufWrapper implements Wrapper {
 
    public static final ProtobufWrapper INSTANCE = new ProtobufWrapper();
 
