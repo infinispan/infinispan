@@ -259,7 +259,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
     * @param cacheManager a cache manager instance
     * @return the protobuf {@link SerializationContext}
     */
-   public static SerializationContext getSerializationContextInternal(EmbeddedCacheManager cacheManager) {
+   public static SerializationContext getSerializationContext(EmbeddedCacheManager cacheManager) {
       return getProtobufMetadataManager(cacheManager).getSerializationContext();
    }
 }

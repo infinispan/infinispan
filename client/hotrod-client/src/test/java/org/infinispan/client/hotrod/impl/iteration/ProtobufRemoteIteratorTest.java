@@ -59,7 +59,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
 
       // Register extra marshallers in the ProtobufMetadataManager. In standalone servers this can be done with a deployment jar.
       for (EmbeddedCacheManager cm : cacheManagers) {
-         MarshallerRegistration.registerMarshallers(ProtobufMetadataManagerImpl.getSerializationContextInternal(cm));
+         MarshallerRegistration.registerMarshallers(ProtobufMetadataManagerImpl.getSerializationContext(cm));
       }
 
       //initialize client-side serialization context

@@ -57,7 +57,7 @@ public class ClientListenerWithFilterAndRawProtobufTest extends MultiHotRodServe
       // In standalone servers, those marshallers can be deployed using a jar to have the same effect.
       for (int i = 0; i < NUM_NODES; i++) {
          server(i).addCacheEventFilterFactory("custom-filter-factory", new CustomCacheEventFilterFactory());
-         MarshallerRegistration.registerMarshallers(ProtobufMetadataManagerImpl.getSerializationContextInternal(server(i).getCacheManager()));
+         MarshallerRegistration.registerMarshallers(ProtobufMetadataManagerImpl.getSerializationContext(server(i).getCacheManager()));
          assertFalse(client(i).getCache(PROTOBUF_METADATA_CACHE_NAME).containsKey(ERRORS_KEY_SUFFIX));
       }
 

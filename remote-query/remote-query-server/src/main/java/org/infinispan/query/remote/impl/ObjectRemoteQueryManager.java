@@ -34,7 +34,7 @@ class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
       super(cr, querySerializers);
       this.cr = cr;
       this.isIndexed = cache.getCacheConfiguration().indexing().index().isEnabled();
-      this.serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+      this.serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cache.getCacheManager());
    }
 
    @Override

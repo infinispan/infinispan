@@ -38,7 +38,7 @@ public final class IckleBinaryProtobufFilterAndConverter<K, V> extends AbstractK
    @SuppressWarnings("unused")
    protected void injectDependencies(ComponentRegistry componentRegistry, EmbeddedCacheManager cacheManager) {
       componentRegistry.wireDependencies(delegate);
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
    }
 
    public IckleBinaryProtobufFilterAndConverter(String queryString, Map<String, Object> namedParameters) {
