@@ -32,7 +32,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
  */
 @DefaultFactoryFor(classes = InternalDataContainer.class)
 public class DataContainerFactory extends AbstractNamedCacheComponentFactory implements
-         AutoInstantiableFactory {
+      AutoInstantiableFactory {
 
    public static final String SEGMENTATION_FEATURE = "data-segmentation";
 
@@ -58,18 +58,10 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          //handle case when < 0 value signifies unbounded container or when we are not removal based
          if (strategy.isExceptionBased() || !strategy.isEnabled()) {
             if (configuration.memory().storageType() == StorageType.OFF_HEAP) {
-
                int addressCount = memoryConfiguration.addressCount();
                if (shouldSegment) {
                   int segments = clusteringConfiguration.hash().numSegments();
-                  Supplier mapSupplier = () -> {
-                     OffHeapEntryFactory entryFactory = componentRegistry.getOrCreateComponent(OffHeapEntryFactory.class);
-                     OffHeapMemoryAllocator memoryAllocator = componentRegistry.getOrCreateComponent(OffHeapMemoryAllocator.class);
-                     // TODO: find better way to handle size here or is it okay? internally it will round to next power of 2
-                     OffHeapConcurrentMap offHeapMap = new OffHeapConcurrentMap(addressCount / segments, memoryAllocator, entryFactory, null);
-                     offHeapMap.start();
-                     return offHeapMap;
-                  };
+                  Supplier mapSupplier = () -> createAndStartOffHeapConcurrentMap(addressCount, segments);
                   if (clusteringConfiguration.l1().enabled()) {
                      return (T) new L1SegmentedDataContainer<>(mapSupplier, segments);
                   }
@@ -116,5 +108,15 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                dataContainer.resize(newSize.get()));
          return (T) dataContainer;
       }
+   }
+
+   /* visible for testing */
+   OffHeapConcurrentMap createAndStartOffHeapConcurrentMap(int addressCount, int segments) {
+      OffHeapEntryFactory entryFactory = componentRegistry.getOrCreateComponent(OffHeapEntryFactory.class);
+      OffHeapMemoryAllocator memoryAllocator = componentRegistry.getOrCreateComponent(OffHeapMemoryAllocator.class);
+      // TODO: find better way to handle size here or is it okay? internally it will round to next power of 2
+      OffHeapConcurrentMap offHeapMap = new OffHeapConcurrentMap(addressCount / segments, memoryAllocator, entryFactory, null);
+      offHeapMap.start();
+      return offHeapMap;
    }
 }
