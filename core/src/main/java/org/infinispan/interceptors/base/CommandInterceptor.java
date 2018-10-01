@@ -21,8 +21,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -159,8 +159,7 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
    }
 
    @Override
-   public Object visitCommand(InvocationContext ctx, VisitableCommand command)
-         throws Throwable {
+   public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return command.acceptVisitor(ctx, this);
    }
 }
