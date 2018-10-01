@@ -69,7 +69,7 @@ public class LocalCacheTest extends AbstractQueryTest {
    @Test
    public void testSimpleForNonField() {
       loadTestingData();
-      CacheQuery<?> cacheQuery = createCacheQuery(cache, "nonSearchableField", "test1");
+      CacheQuery<?> cacheQuery = createCacheQuery(cache, "nonIndexedField", "test1");
       List<?> found = cacheQuery.list();
 
       int elems = found.size();
@@ -520,19 +520,19 @@ public class LocalCacheTest extends AbstractQueryTest {
       person1.setName("Navin Surtani");
       person1.setAge(20);
       person1.setBlurb("Likes playing WoW");
-      person1.setNonSearchableField("test1");
+      person1.setNonIndexedField("test1");
 
       person2 = new Person();
       person2.setName("Big Goat");
       person2.setAge(30);
       person2.setBlurb("Eats grass");
-      person2.setNonSearchableField("test2");
+      person2.setNonIndexedField("test2");
 
       person3 = new Person();
       person3.setName("Mini Goat");
       person3.setAge(25);
       person3.setBlurb("Eats cheese");
-      person3.setNonSearchableField("test3");
+      person3.setNonIndexedField("test3");
    }
 
    private void assertPeopleInSortedList(List<?> actualList, Object... expected) {
