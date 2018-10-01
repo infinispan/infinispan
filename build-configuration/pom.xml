@@ -177,6 +177,7 @@
       <version.rocksdb>5.8.0</version.rocksdb>
       <version.rxjava>2.2.0</version.rxjava>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
+      <version.spark2>2.3.1</version.spark2>
       <version.spring4>4.3.4.RELEASE</version.spring4>
       <version.tomcat7>7.0.88</version.tomcat7>
       <version.tomcat80>8.0.52</version.tomcat80>

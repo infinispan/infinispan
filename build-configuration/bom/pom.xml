@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -248,6 +247,7 @@
         <versionx.net.jcip.jcip-annotations>1.0</versionx.net.jcip.jcip-annotations>
         <versionx.net.jpountz.lz4.lz4>1.3.0</versionx.net.jpountz.lz4.lz4>
         <versionx.net.razorvine.pyrolite>4.13</versionx.net.razorvine.pyrolite>
+        <versionx.net.sf.ehcache.ehcache>2.9.1</versionx.net.sf.ehcache.ehcache>
         <versionx.net.sf.opencsv.opencsv>2.3</versionx.net.sf.opencsv.opencsv>
         <versionx.net.sf.py4j.py4j>0.10.6</versionx.net.sf.py4j.py4j>
         <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
@@ -272,8 +272,13 @@
         <versionx.org.apache.calcite.calcite-core>1.2.0-incubating</versionx.org.apache.calcite.calcite-core>
         <versionx.org.apache.calcite.calcite-linq4j>1.2.0-incubating</versionx.org.apache.calcite.calcite-linq4j>
         <versionx.org.apache.camel.apache-camel>${version.component.camel}</versionx.org.apache.camel.apache-camel>
+        <versionx.org.apache.camel.apt>${version.camel}</versionx.org.apache.camel.apt>
         <versionx.org.apache.camel.camel-core>${version.camel}</versionx.org.apache.camel.camel-core>
         <versionx.org.apache.camel.camel-jbossdatagrid>${version.component.camel}</versionx.org.apache.camel.camel-jbossdatagrid>
+        <versionx.org.apache.camel.camel-spring>${version.camel}</versionx.org.apache.camel.camel-spring>
+        <versionx.org.apache.camel.camel-test>${version.camel}</versionx.org.apache.camel.camel-test>
+        <versionx.org.apache.camel.camel-test-spring>${version.camel}</versionx.org.apache.camel.camel-test-spring>
+        <versionx.org.apache.camel.spi-annotations>${version.camel}</versionx.org.apache.camel.spi-annotations>
         <versionx.org.apache.cassandra.cassandra-all>3.0.10</versionx.org.apache.cassandra.cassandra-all>
         <versionx.org.apache.cassandra.cassandra-thrift>3.0.10</versionx.org.apache.cassandra.cassandra-thrift>
         <versionx.org.apache.commons.commons-compress>1.4</versionx.org.apache.commons.commons-compress>
@@ -367,18 +372,18 @@
         <versionx.org.apache.parquet.parquet-format>2.3.1</versionx.org.apache.parquet.parquet-format>
         <versionx.org.apache.parquet.parquet-hadoop>1.8.2</versionx.org.apache.parquet.parquet-hadoop>
         <versionx.org.apache.parquet.parquet-jackson>1.8.2</versionx.org.apache.parquet.parquet-jackson>
-        <versionx.org.apache.spark.spark-catalyst_2.11>2.3.0</versionx.org.apache.spark.spark-catalyst_2.11>
-        <versionx.org.apache.spark.spark-core_2.11>2.3.0</versionx.org.apache.spark.spark-core_2.11>
-        <versionx.org.apache.spark.spark-hive_2.11>2.3.0</versionx.org.apache.spark.spark-hive_2.11>
-        <versionx.org.apache.spark.spark-kvstore_2.11>2.3.0</versionx.org.apache.spark.spark-kvstore_2.11>
-        <versionx.org.apache.spark.spark-launcher_2.11>2.3.0</versionx.org.apache.spark.spark-launcher_2.11>
-        <versionx.org.apache.spark.spark-network-common_2.11>2.3.0</versionx.org.apache.spark.spark-network-common_2.11>
-        <versionx.org.apache.spark.spark-network-shuffle_2.11>2.3.0</versionx.org.apache.spark.spark-network-shuffle_2.11>
-        <versionx.org.apache.spark.spark-sketch_2.11>2.3.0</versionx.org.apache.spark.spark-sketch_2.11>
-        <versionx.org.apache.spark.spark-sql_2.11>2.3.0</versionx.org.apache.spark.spark-sql_2.11>
-        <versionx.org.apache.spark.spark-streaming_2.11>2.3.0</versionx.org.apache.spark.spark-streaming_2.11>
-        <versionx.org.apache.spark.spark-tags_2.11>2.3.0</versionx.org.apache.spark.spark-tags_2.11>
-        <versionx.org.apache.spark.spark-unsafe_2.11>2.3.0</versionx.org.apache.spark.spark-unsafe_2.11>
+        <versionx.org.apache.spark.spark-catalyst_2.11>${version.spark2}</versionx.org.apache.spark.spark-catalyst_2.11>
+        <versionx.org.apache.spark.spark-core_2.11>${version.spark2}</versionx.org.apache.spark.spark-core_2.11>
+        <versionx.org.apache.spark.spark-hive_2.11>${version.spark2}</versionx.org.apache.spark.spark-hive_2.11>
+        <versionx.org.apache.spark.spark-kvstore_2.11>${version.spark2}</versionx.org.apache.spark.spark-kvstore_2.11>
+        <versionx.org.apache.spark.spark-launcher_2.11>${version.spark2}</versionx.org.apache.spark.spark-launcher_2.11>
+        <versionx.org.apache.spark.spark-network-common_2.11>${version.spark2}</versionx.org.apache.spark.spark-network-common_2.11>
+        <versionx.org.apache.spark.spark-network-shuffle_2.11>${version.spark2}</versionx.org.apache.spark.spark-network-shuffle_2.11>
+        <versionx.org.apache.spark.spark-sketch_2.11>${version.spark2}</versionx.org.apache.spark.spark-sketch_2.11>
+        <versionx.org.apache.spark.spark-sql_2.11>${version.spark2}</versionx.org.apache.spark.spark-sql_2.11>
+        <versionx.org.apache.spark.spark-streaming_2.11>${version.spark2}</versionx.org.apache.spark.spark-streaming_2.11>
+        <versionx.org.apache.spark.spark-tags_2.11>${version.spark2}</versionx.org.apache.spark.spark-tags_2.11>
+        <versionx.org.apache.spark.spark-unsafe_2.11>${version.spark2}</versionx.org.apache.spark.spark-unsafe_2.11>
         <versionx.org.apache.thrift.libfb303>0.9.3</versionx.org.apache.thrift.libfb303>
         <versionx.org.apache.thrift.libthrift>0.9.2</versionx.org.apache.thrift.libthrift>
         <versionx.org.apache.xbean.xbean-asm5-shaded>4.4</versionx.org.apache.xbean.xbean-asm5-shaded>
@@ -396,11 +401,11 @@
         <versionx.org.codehaus.janino.commons-compiler>3.0.8</versionx.org.codehaus.janino.commons-compiler>
         <versionx.org.codehaus.janino.janino>2.7.8</versionx.org.codehaus.janino.janino>
         <versionx.org.codehaus.jettison.jettison>1.3.8</versionx.org.codehaus.jettison.jettison>
-        <versionx.org.codehaus.mojo.xml-maven-plugin>1.0</versionx.org.codehaus.mojo.xml-maven-plugin>
         <versionx.org.codehaus.plexus.plexus-classworlds>2.5.2</versionx.org.codehaus.plexus.plexus-classworlds>
         <versionx.org.codehaus.plexus.plexus-component-annotations>1.7.1</versionx.org.codehaus.plexus.plexus-component-annotations>
         <versionx.org.codehaus.plexus.plexus-interpolation>1.24</versionx.org.codehaus.plexus.plexus-interpolation>
         <versionx.org.codehaus.plexus.plexus-utils>3.1.0</versionx.org.codehaus.plexus.plexus-utils>
+        <versionx.org.codehaus.woodstox.woodstox-core-asl>4.4.1</versionx.org.codehaus.woodstox.woodstox-core-asl>
         <versionx.org.conscrypt.conscrypt-openjdk>${version.netty-conscrypt-optional}</versionx.org.conscrypt.conscrypt-openjdk>
         <versionx.org.datanucleus.datanucleus-api-jdo>3.2.6</versionx.org.datanucleus.datanucleus-api-jdo>
         <versionx.org.datanucleus.datanucleus-core>3.2.10</versionx.org.datanucleus.datanucleus-core>
@@ -438,6 +443,7 @@
         <versionx.org.hibernate.elasticsearch-client-jbossmodules.elasticsearch-client-jbossmodules>5.6.8.hibernate01</versionx.org.hibernate.elasticsearch-client-jbossmodules.elasticsearch-client-jbossmodules>
         <versionx.org.hibernate.gson-jbossmodules.gson-jbossmodules>2.8.2.hibernate03</versionx.org.hibernate.gson-jbossmodules.gson-jbossmodules>
         <versionx.org.hibernate.hibernate-core>${version.hibernate.core}</versionx.org.hibernate.hibernate-core>
+        <versionx.org.hibernate.hibernate-entitymanager>${version.hibernate.core}</versionx.org.hibernate.hibernate-entitymanager>
         <versionx.org.hibernate.hibernate-osgi>${version.hibernate.core}</versionx.org.hibernate.hibernate-osgi>
         <versionx.org.hibernate.hibernate-search-backend-jgroups>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-backend-jgroups>
         <versionx.org.hibernate.hibernate-search-backend-jms>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-backend-jms>
@@ -453,8 +459,8 @@
         <versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>1.0.0.Final</versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>
         <versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>5.5.5.hibernate05</versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>
         <versionx.org.htrace.htrace-core>3.0.4</versionx.org.htrace.htrace-core>
-        <versionx.org.hyperic.sigar>1.6.5.132-7</versionx.org.hyperic.sigar>
-        <versionx.org.hyperic.sigar-dist>1.6.5.132-7</versionx.org.hyperic.sigar-dist>
+        <versionx.org.hyperic.sigar>1.6.5.132-6</versionx.org.hyperic.sigar>
+        <versionx.org.hyperic.sigar-dist>1.6.5.132-6</versionx.org.hyperic.sigar-dist>
         <versionx.org.infinispan.arquillian.container.infinispan-arquillian-impl>1.2.0.Beta3</versionx.org.infinispan.arquillian.container.infinispan-arquillian-impl>
         <versionx.org.infinispan.hadoop.base-sample>${version.component.hadoop}</versionx.org.infinispan.hadoop.base-sample>
         <versionx.org.infinispan.hadoop.infinispan-hadoop-aggregator>${version.component.hadoop}</versionx.org.infinispan.hadoop.infinispan-hadoop-aggregator>
@@ -481,12 +487,12 @@
         <versionx.org.infinispan.infinispan-clustered-lock>${version.infinispan}</versionx.org.infinispan.infinispan-clustered-lock>
         <versionx.org.infinispan.infinispan-commons>${version.infinispan}</versionx.org.infinispan.infinispan-commons>
         <versionx.org.infinispan.infinispan-commons-test>${version.infinispan}</versionx.org.infinispan.infinispan-commons-test>
-        <versionx.org.infinispan.infinispan-endpoint-interop-it>${version.infinispan}</versionx.org.infinispan.infinispan-endpoint-interop-it>
         <versionx.org.infinispan.infinispan-core>${version.infinispan}</versionx.org.infinispan.infinispan-core>
         <versionx.org.infinispan.infinispan-directory-provider>${version.infinispan}</versionx.org.infinispan.infinispan-directory-provider>
         <versionx.org.infinispan.infinispan-distribution>${version.infinispan}</versionx.org.infinispan.infinispan-distribution>
         <versionx.org.infinispan.infinispan-embedded>${version.infinispan}</versionx.org.infinispan.infinispan-embedded>
         <versionx.org.infinispan.infinispan-embedded-query>${version.infinispan}</versionx.org.infinispan.infinispan-embedded-query>
+        <versionx.org.infinispan.infinispan-endpoint-interop-it>${version.infinispan}</versionx.org.infinispan.infinispan-endpoint-interop-it>
         <versionx.org.infinispan.infinispan-extended-statistics>${version.infinispan}</versionx.org.infinispan.infinispan-extended-statistics>
         <versionx.org.infinispan.infinispan-feature-pack-client>${version.infinispan}</versionx.org.infinispan.infinispan-feature-pack-client>
         <versionx.org.infinispan.infinispan-feature-pack-commons>${version.infinispan}</versionx.org.infinispan.infinispan-feature-pack-commons>
@@ -506,10 +512,10 @@
         <versionx.org.infinispan.infinispan-jcache-commons>${version.infinispan}</versionx.org.infinispan.infinispan-jcache-commons>
         <versionx.org.infinispan.infinispan-jcache>${version.infinispan}</versionx.org.infinispan.infinispan-jcache>
         <versionx.org.infinispan.infinispan-jcache-remote>${version.infinispan}</versionx.org.infinispan.infinispan-jcache-remote>
-        <versionx.org.infinispan.infinispan-js-client>${version.infinispan}</versionx.org.infinispan.infinispan-js-client>
+        <versionx.org.infinispan.infinispan-js-client>${version.component.jsclient}</versionx.org.infinispan.infinispan-js-client>
         <versionx.org.infinispan.infinispan-license>${version.infinispan}</versionx.org.infinispan.infinispan-license>
         <versionx.org.infinispan.infinispan-lucene-directory>${version.infinispan}</versionx.org.infinispan.infinispan-lucene-directory>
-        <versionx.org.infinispan.infinispan-management-console>9.4.0.Alpha1</versionx.org.infinispan.infinispan-management-console>
+        <versionx.org.infinispan.infinispan-management-console>${version.infinispan}</versionx.org.infinispan.infinispan-management-console>
         <versionx.org.infinispan.infinispan-marshaller-kryo-bundle>${version.infinispan}</versionx.org.infinispan.infinispan-marshaller-kryo-bundle>
         <versionx.org.infinispan.infinispan-marshaller-kryo>${version.infinispan}</versionx.org.infinispan.infinispan-marshaller-kryo>
         <versionx.org.infinispan.infinispan-marshaller-protostuff-bundle>${version.infinispan}</versionx.org.infinispan.infinispan-marshaller-protostuff-bundle>
@@ -557,6 +563,7 @@
         <versionx.org.infinispan.server.infinispan-server-feature-pack>${version.infinispan}</versionx.org.infinispan.server.infinispan-server-feature-pack>
         <versionx.org.infinispan.server.infinispan-server-infinispan>${version.infinispan}</versionx.org.infinispan.server.infinispan-server-infinispan>
         <versionx.org.infinispan.server.infinispan-server-jgroups>${version.infinispan}</versionx.org.infinispan.server.infinispan-server-jgroups>
+        <versionx.org.infinispan.server.infinispan-server-testsuite>${version.infinispan}</versionx.org.infinispan.server.infinispan-server-testsuite>
         <versionx.org.iq80.snappy.snappy>0.2</versionx.org.iq80.snappy.snappy>
         <versionx.org.jacoco.org.jacoco.agent>${version.jacoco}</versionx.org.jacoco.org.jacoco.agent>
         <versionx.org.jacoco.org.jacoco>${version.jacoco}</versionx.org.jacoco.org.jacoco>
@@ -679,6 +686,7 @@
         <versionx.org.latencyutils.LatencyUtils>2.0.2</versionx.org.latencyutils.LatencyUtils>
         <versionx.org.lz4.lz4-java>1.4.0</versionx.org.lz4.lz4-java>
         <versionx.org.mindrot.jbcrypt>0.3m</versionx.org.mindrot.jbcrypt>
+        <versionx.org.mockito.mockito-all>1.10.19</versionx.org.mockito.mockito-all>
         <versionx.org.mockito.mockito-core>${version.mockito}</versionx.org.mockito.mockito-core>
         <versionx.org.mortbay.jetty.jetty>6.1.26</versionx.org.mortbay.jetty.jetty>
         <versionx.org.mortbay.jetty.jetty-util>6.1.26</versionx.org.mortbay.jetty.jetty-util>
@@ -4061,11 +4069,6 @@
                 <version>${versionx.org.codehaus.mojo.exec-maven-plugin}</version>
             </dependency>
             <dependency>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>xml-maven-plugin</artifactId>
-                <version>${versionx.org.codehaus.mojo.xml-maven-plugin}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.codehaus.plexus</groupId>
                 <artifactId>plexus-classworlds</artifactId>
                 <version>${versionx.org.codehaus.plexus.plexus-classworlds}</version>
@@ -4278,14 +4281,12 @@
             <dependency>
                 <groupId>org.hibernate.elasticsearch-client-jbossmodules</groupId>
                 <artifactId>elasticsearch-client-jbossmodules</artifactId>
-                <version>${versionx.org.hibernate.elasticsearch-client-jbossmodules.elasticsearch-client-jbossmodules}
-                </version>
+                <version>${versionx.org.hibernate.elasticsearch-client-jbossmodules.elasticsearch-client-jbossmodules}</version>
             </dependency>
             <dependency>
                 <groupId>org.hibernate.elasticsearch-client-jbossmodules</groupId>
                 <artifactId>elasticsearch-client-jbossmodules</artifactId>
-                <version>${versionx.org.hibernate.elasticsearch-client-jbossmodules.elasticsearch-client-jbossmodules}
-                </version>
+                <version>${versionx.org.hibernate.elasticsearch-client-jbossmodules.elasticsearch-client-jbossmodules}</version>
                 <type>zip</type>
             </dependency>
             <dependency>
@@ -4404,6 +4405,17 @@
                 <version>${versionx.org.hibernate.hibernate-validator}</version>
             </dependency>
             <dependency>
+                <groupId>org.hibernate.gson-jbossmodules</groupId>
+                <artifactId>gson-jbossmodules</artifactId>
+                <version>${versionx.org.hibernate.gson-jbossmodules.gson-jbossmodules}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate.gson-jbossmodules</groupId>
+                <artifactId>gson-jbossmodules</artifactId>
+                <version>${versionx.org.hibernate.gson-jbossmodules.gson-jbossmodules}</version>
+                <type>zip</type>
+            </dependency>
+            <dependency>
                 <groupId>org.hibernate.javax.persistence</groupId>
                 <artifactId>hibernate-jpa-2.1-api</artifactId>
                 <version>${versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api}</version>
@@ -4438,6 +4450,7 @@
                 <groupId>org.hyperic</groupId>
                 <artifactId>sigar-dist</artifactId>
                 <version>${versionx.org.hyperic.sigar-dist}</version>
+                <type>zip</type>
             </dependency>
             <dependency>
                 <groupId>org.infinispan.arquillian.container</groupId>
@@ -4615,25 +4628,14 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-commons-test</artifactId>
-                <version>${versionx.org.infinispan.infinispan-commons-test}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-endpoint-interop-it</artifactId>
-                <version>${versionx.org.infinispan.infinispan-endpoint-interop-it}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-endpoint-interop-it</artifactId>
-                <version>${versionx.org.infinispan.infinispan-endpoint-interop-it}</version>
-                <type>test-jar</type>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-commons</artifactId>
                 <version>${versionx.org.infinispan.infinispan-commons}</version>
                 <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-commons-test</artifactId>
+                <version>${versionx.org.infinispan.infinispan-commons-test}</version>
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
@@ -4681,6 +4683,17 @@
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-embedded-query</artifactId>
                 <version>${versionx.org.infinispan.infinispan-embedded-query}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-endpoint-interop-it</artifactId>
+                <version>${versionx.org.infinispan.infinispan-endpoint-interop-it}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-endpoint-interop-it</artifactId>
+                <version>${versionx.org.infinispan.infinispan-endpoint-interop-it}</version>
+                <type>test-jar</type>
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
@@ -6935,8 +6948,7 @@
                         <excludes>
                             <exclude>**/package-info.java</exclude>
                         </excludes>
-                        <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files
-                        </compilerArgument>
+                        <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
                     </configuration>
                 </plugin>
             </plugins>
