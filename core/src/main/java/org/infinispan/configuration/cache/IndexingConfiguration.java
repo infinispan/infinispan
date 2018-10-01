@@ -6,7 +6,6 @@ import java.util.Set;
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.CollectionAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
@@ -20,12 +19,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder("autoConfig", false).immutable().build();
    public static final AttributeDefinition<Set<Class<?>>> INDEXED_ENTITIES = AttributeDefinition.builder("indexed-entities", null, (Class<Set<Class<?>>>) (Class<?>) Set.class)
          .copier(CollectionAttributeCopier.INSTANCE)
-         .initializer(new AttributeInitializer<Set<Class<?>>>() {
-            @Override
-            public Set<Class<?>> initialize() {
-               return new HashSet<>(5);
-            }
-         }).immutable().build();
+         .initializer(HashSet::new).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, INDEXED_ENTITIES);
@@ -45,7 +39,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    private final Attribute<Boolean> autoConfig;
    private final Attribute<Set<Class<?>>> indexedEntities;
 
-   public IndexingConfiguration(AttributeSet attributes) {
+   IndexingConfiguration(AttributeSet attributes) {
       super(attributes);
       index = attributes.attribute(INDEX);
       autoConfig = attributes.attribute(AUTO_CONFIG);
