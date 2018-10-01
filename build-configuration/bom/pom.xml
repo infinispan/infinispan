@@ -666,6 +666,7 @@
         <versionx.org.jboss.weld.weld-core>2.3.4.Final</versionx.org.jboss.weld.weld-core>
         <versionx.org.jboss.xnio.xnio-api>3.6.3.Final</versionx.org.jboss.xnio.xnio-api>
         <versionx.org.jboss.xnio.xnio-nio>3.6.3.Final</versionx.org.jboss.xnio.xnio-nio>
+        <versionx.org.jdom.jdom>1.1.3</versionx.org.jdom.jdom>
         <versionx.org.jgroups.azure.jgroups-azure>1.2.0.Final</versionx.org.jgroups.azure.jgroups-azure>
         <versionx.org.jgroups.jgroups>${version.jgroups}</versionx.org.jgroups.jgroups>
         <versionx.org.jgroups.kubernetes.jgroups-kubernetes>1.0.6.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
