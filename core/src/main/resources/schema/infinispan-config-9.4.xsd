@@ -1090,25 +1090,31 @@
     <xs:attribute name="connection-attempts" type="xs:int" default="${Persistence.connectionAttempts}">
       <xs:annotation>
         <xs:documentation>
-          The maximum number of unsuccessful attempts to start each of the configured CacheWriter/CacheLoader before an
-          exception is thrown and the cache fails to start.
+          The maximum number of unsuccessful attempts to start each of the
+          configured CacheWriter/CacheLoader before an exception is thrown and
+          the cache fails to start.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="connection-interval" type="xs:int" default="${Persistence.connectionInterval}">
       <xs:annotation>
         <xs:documentation>
-          The time (in milliseconds) to wait between subsequent connection attempts on startup. A negative or zero interval results in no wait period being observed.
+          The time, in milliseconds, to wait between subsequent connection
+          attempts on startup. A negative or zero value means no wait between
+          connection attempts.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="availability-interval" type="xs:int" default="${Persistence.availabilityInterval}">
       <xs:annotation>
         <xs:documentation>
-          The time (in milliseconds) between each availability check that determines whether the PersistenceManager
-          is available, i.e. how regularly are stores/loaders polled via their `org.infinispan.persistence.spi.CacheWriter#isAvailable`
-          or `org.infinispan.persistence.spi.CacheLoader#isAvailable` implementation. If a single store/loader is unavailable,
-          then an exception is thrown during cache operations.
+          The time, in milliseconds, between availability checks to determine
+          if the PersistenceManager is available. In other words, this interval
+          sets how often stores/loaders are polled via their
+          `org.infinispan.persistence.spi.CacheWriter#isAvailable`
+          or `org.infinispan.persistence.spi.CacheLoader#isAvailable`
+          implementation. If a single store/loader is not available,
+          an exception is thrown during cache operations.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -1662,13 +1668,17 @@
     <xs:attribute name="fail-silently" type="xs:boolean" default="${AsyncStore.failSilently}">
       <xs:annotation>
         <xs:documentation>
-          When enabled, write operations are only attempted `connection-attempts` times by the async store and if all attempts
-          fail the errors are simply ignored and the operations are never executed on the store; where `connection-attempts`
-          is configured in the PersistenceConfiguration. When disabled, failed modifications are not discarded on failure.
-          Instead they are re-attempted when the underlying store becomes available. In the event that the modification-queue
-          becomes full before the underlying store becomes available, an error will be thrown on all future writes to the
-          store until the modification-queue is successfully flushed. In the event that the underlying store does not become
-          available before the Async store is stopped, queued modifications are not persisted.
+          If true, the async store attempts to perform write operations only
+          as many times as configured with `connection-attempts` in the
+          PersistenceConfiguration. If all attempts fail, the errors are
+          ignored and the write operations are not executed on the store.
+          If false, write operations that fail are attempted again when the
+          underlying store becomes available. If the modification queue becomes
+          full before the underlying store becomes available, an error is
+          thrown on all future write operations to the store until the
+          modification queue is flushed. The modification queue is not
+          persisted. If the underlying store does not become available before
+          the Async store is stopped, queued modifications are lost.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -2333,4 +2343,3 @@
   </xs:simpleType>
 
 </xs:schema>
-

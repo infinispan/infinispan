@@ -39,10 +39,11 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * @param interval The time (in milliseconds) between each availability check that determines whether the PersistenceManager
-    *           is available, i.e. how regularly are stores/loaders polled via their `org.infinispan.persistence.spi.CacheWriter#isAvailable`
-    *           or `org.infinispan.persistence.spi.CacheLoader#isAvailable` implementation. If a single store/loader is unavailable,
-    *           then an exception is thrown during cache operations.
+    * @param interval The time, in milliseconds, between availability checks to determine if the PersistenceManager
+    *           is available. In other words, this interval sets how often stores/loaders are polled via their
+    *           `org.infinispan.persistence.spi.CacheWriter#isAvailable` or
+    *           `org.infinispan.persistence.spi.CacheLoader#isAvailable` implementation. If a single store/loader is
+    *           not available, an exception is thrown during cache operations.
     */
    public PersistenceConfigurationBuilder availabilityInterval(int interval) {
       attributes.attribute(AVAILABILITY_INTERVAL).set(interval);
@@ -59,8 +60,8 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * @param interval The time (in milliseconds) to wait between subsequent connection attempts on startup. A negative or zero
-    *                 interval results in no wait period being observed.
+    * @param interval The time, in milliseconds, to wait between subsequent connection attempts on startup. A negative
+    *                 or zero value means no wait between connection attempts.
     */
    public PersistenceConfigurationBuilder connectionInterval(int interval) {
       attributes.attribute(CONNECTION_INTERVAL).set(interval);
@@ -68,20 +69,19 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * If true, data is only written to the cache store when it is evicted from memory, a phenomenon
-    * known as 'passivation'. Next time the data is requested, it will be 'activated' which means
-    * that data will be brought back to memory and removed from the persistent store. This gives you
-    * the ability to 'overflow' to disk, similar to swapping in an operating system. <br />
+    * If true, data is written to the cache store only when it is evicted from memory, which is known as 'passivation'.
+    * When the data is requested again it is activated, which returns the data to memory and removes it from the
+    * persistent store. As a result, you can overflow data to disk, similarly to swapping in an operating system. <br />
     * <br />
-    * If false, the cache store contains a copy of the contents in memory, so writes to cache result
-    * in cache store writes. This essentially gives you a 'write-through' configuration.
+    * If false, the cache store contains a copy of the contents in memory. Write operations to the cache result in
+    * writes to the cache store, which is equivalent to a 'write-through' configuration.
     */
    boolean passivation() {
       return attributes.attribute(PASSIVATION).get();
    }
 
    /**
-    * Adds a cache loader which uses the specified builder class to build its configuration
+    * Adds a cache loader that uses the specified builder class to build its configuration.
     */
    public <T extends StoreConfigurationBuilder<?, ?>> T addStore(Class<T> klass) {
       try {
@@ -96,9 +96,9 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * Adds a cache loader which uses the specified builder instance to build its configuration
+    * Adds a cache loader that uses the specified builder instance to build its configuration.
     *
-    * @param builder an instance of {@link StoreConfigurationBuilder}
+    * @param builder is an instance of {@link StoreConfigurationBuilder}.
     */
    public StoreConfigurationBuilder<?, ?> addStore(StoreConfigurationBuilder<?, ?> builder) {
       this.stores.add(builder);
@@ -106,7 +106,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * Adds a cluster cache loader
+    * Adds a cluster cache loader.
     */
    public ClusterLoaderConfigurationBuilder addClusterLoader() {
       ClusterLoaderConfigurationBuilder builder = new ClusterLoaderConfigurationBuilder(this);
@@ -115,7 +115,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * Adds a single file cache store
+    * Adds a single file cache store.
     */
    public SingleFileStoreConfigurationBuilder addSingleFileStore() {
       SingleFileStoreConfigurationBuilder builder = new SingleFileStoreConfigurationBuilder(this);
@@ -157,7 +157,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
       if (numFetchPersistentState > 1)
          throw log.onlyOneFetchPersistentStoreAllowed();
 
-      // If we have a store we have to guarantee the reaper expiration thread is enabled
+      // If a store is present, the reaper expiration thread must be enabled.
       if (!stores.isEmpty()) {
          boolean reaperEnabled = builder.expiration().reaperEnabled();
          long wakeupInterval = builder.expiration().wakeupInterval();

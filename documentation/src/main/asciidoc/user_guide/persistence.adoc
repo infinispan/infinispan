@@ -26,7 +26,11 @@ These SPIs allow for the following features:
 Stores (readers and/or writers) can be configured in a chain. Cache read operation looks at all of the specified `CacheLoader` s, in the order they are configured, until it finds a valid and non-null element of data. When performing writes all cache `CacheWriter` s are written to, except if the `ignoreModifications` element has been set to true for a specific cache writer.
 
 .Implementing both a CacheWriter and CacheLoader
-IMPORTANT: it is possible and recommended for a store provider to implement both the `CacheWriter` and the `CacheLoader` interface. The stores that do this are considered both for reading and writing(assuming `read-only=false`) data.
+
+[IMPORTANT]
+====
+Store providers should implement both the `CacheWriter` and the `CacheLoader` interfaces. Stores that do this are considered both for reading and writing (assuming `read-only=false`) data.
+====
 
 [source,xml]
 ----
@@ -47,18 +51,23 @@ This is the configuration of a custom(not shipped with infinispan) store:
 
 ----
 
-Explanation of the configuration options:
+Configuration parameters are as follows:
 
-* `connection-attempts` the maximum number of unsuccessful attempts to start each of the configured CacheWriter/CacheLoader
-before an exception is thrown and the cache fails to start.
+* `connection-attempts` the maximum number of unsuccessful attempts to start
+each of the configured CacheWriter/CacheLoader before an exception is thrown and
+the cache fails to start.
 
-* `connection-interval` the time (in milliseconds) to wait between subsequent connection attempts on startup. A
-negative or zero interval results in no wait period being observed.
+* `connection-interval` the time, in milliseconds, to wait between subsequent
+connection attempts on startup. A negative or zero value means no wait between
+connection attempts.
 
-* `availability-interval` the time (in milliseconds) between each availability check that determines whether the PersistenceManager
-is available, i.e. how regularly are stores/loaders polled via their `org.infinispan.persistence.spi.CacheWriter#isAvailable`
-or `org.infinispan.persistence.spi.CacheLoader#isAvailable` implementation. If a single store/loader is unavailable,
-then an exception is thrown during cache operations.
+* `availability-interval` the time, in milliseconds, between availability
+checks to determine if the PersistenceManager is available. In other words,
+this interval sets how often stores/loaders are polled via their
+`org.infinispan.persistence.spi.CacheWriter#isAvailable` or
+`org.infinispan.persistence.spi.CacheLoader#isAvailable` implementation. If a
+single store/loader is not available, an exception is thrown during cache
+operations.
 
 * `passivation` (false by default) has a significant impact on how {brandname} interacts with the loaders, and is discussed in the link:#cache_passivation[Cache Passivation] section.
 
@@ -226,17 +235,24 @@ Configuring a write-through or synchronous cache store does not require any part
 
 [[write_behind_asynchronous]]
 ==== Write-Behind (Asynchronous)
-In this mode, updates to the cache are asynchronously written to the cache store.
-{brandname} tries to store changes as quickly as possible by queueing the pending changes into a modification queue.
-This queue is then consumed by the configured number of threads, which apply the modifications to the underlying cache store.
-In the event that modification-queue becomes full, due to the configured number of threads not being able to consume the
-modifications fast enough or the underlying store becomes unavailable, the store becomes write-through until the queue can
-accept new entries.
+In this mode, updates to the cache are asynchronously written to the cache
+store. {brandname} puts pending changes into a modification queue so that it can quickly store changes.
 
-One of the major advantages of this mode is that the performance of a cache operation does not get affected by the update of the underlying store.
-On the other hand, since the update happens asynchronously, there's a time window during the which the cache store can contain stale data compared to the cache.
+The configured number of threads consume the queue and apply the modifications
+to the underlying cache store. If the configured number of threads cannot consume the modifications fast enough, or if the underlying store becomes unavailable, the modification queue becomes full. In this event, the cache store becomes write-through until the queue can accept new entries.
 
-This strategy is suited for cache stores with low latency and cheap operation cost. One such example would a local unshared file based cache store, where the cache store is local to the cache itself. With this strategy, the window of inconsistency between the contents of the cache and the cache store are reduced to the lowest possible time. Please find below a sample configuration file of this strategy:
+This mode provides an advantage in that cache operations are not affected by
+updates to the underlying store. However, because updates happen
+asynchronously, there is a period of time during which data in the cache store
+is inconsistent with data in the cache.
+
+The write-behind strategy is suitable for cache stores with low latency and
+small operational cost; for example, an unshared file-based cache store that is
+local to the cache itself. In this case, the time during which data is
+inconsistent between the cache store and the cache is reduced to the lowest
+possible period.
+
+The following is an example configuration for the write-behind strategy:
 
 [source,xml]
 ----
@@ -244,9 +260,9 @@ This strategy is suited for cache stores with low latency and cheap operation co
    <file-store fetch-state="true"
                read-only="false"
                purge="false" path="${java.io.tmpdir}">
-   <!-- write behind configuration starts here -->
+   <!-- start write-behind configuration -->
    <write-behind modification-queue-size="123" thread-pool-size="23" />
-   <!-- write behind configuration ends here -->
+   <!-- end write-behind configuration -->
    </file-store>
 </persistence>
 ----

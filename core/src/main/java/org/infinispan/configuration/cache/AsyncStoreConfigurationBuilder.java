@@ -12,8 +12,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
- * Configuration for the async cache store. If enabled, this provides you with asynchronous writes
- * to the cache store, giving you 'write-behind' caching.
+ * Configuration for the async cache store. If enabled, this configuration provides
+ * asynchronous writes to the cache store or 'write-behind' caching.
  *
  * @author pmuir
  *
@@ -27,7 +27,7 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    }
 
    /**
-    * If true, all modifications to this cache store happen asynchronously, on a separate thread.
+    * If true, all modifications to this cache store happen asynchronously on a separate thread.
     */
    public AsyncStoreConfigurationBuilder<S> enable() {
       attributes.attribute(ENABLED).set(true);
@@ -88,7 +88,7 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    }
 
    /**
-    * Size of the thread pool whose threads are responsible for applying the modifications.
+    * Configures the number of threads in the thread pool that is responsible for applying modifications.
     */
    public AsyncStoreConfigurationBuilder<S> threadPoolSize(int i) {
       attributes.attribute(THREAD_POOL_SIZE).set(i);
@@ -96,13 +96,16 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    }
 
    /**
-    * @param failSilently When true, write operations are only attempted `connection-attempts` times by the async store and if all attempts
-    *           fail the errors are simply ignored and the operations are never executed on the store; where `connection-attempts`
-    *           is configured in the PersistenceConfiguration. When disabled, failed modifications are not discarded on failure.
-    *           Instead they are re-attempted when the underlying store becomes available. In the event that the modification-queue
-    *           becomes full before the underlying store becomes available, an error will be thrown on all future writes to the
-    *           store until the modification-queue is successfully flushed. In the event that the underlying store does not become
-    *           available before the Async store is stopped, queued modifications are not persisted.
+    * @param failSilently If true, the async store attempts to perform write operations only
+    *           as many times as configured with `connection-attempts` in the PersistenceConfiguration.
+    *           If all attempts fail, the errors are ignored and the write operations are not executed
+    *           on the store.
+    *           If false, write operations that fail are attempted again when the underlying store
+    *           becomes available. If the modification queue becomes full before the underlying
+    *           store becomes available, an error is thrown on all future write operations to the store
+    *           until the modification queue is flushed. The modification queue is not persisted. If the
+    *           underlying store does not become available before the Async store is stopped, queued
+    *           modifications are lost.
     */
    public AsyncStoreConfigurationBuilder<S> failSilently(boolean failSilently) {
       attributes.attribute(FAIL_SILENTLY).set(failSilently);

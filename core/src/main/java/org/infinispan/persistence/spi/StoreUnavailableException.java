@@ -1,7 +1,7 @@
 package org.infinispan.persistence.spi;
 
 /**
- * An exception thrown by the {@link org.infinispan.persistence.manager.PersistenceManager} when one or more
+ * An exception thrown by the {@link org.infinispan.persistence.manager.PersistenceManager} if one or more
  * stores are unavailable when a cache operation is attempted.
  *
  * @author Ryan Emerson
