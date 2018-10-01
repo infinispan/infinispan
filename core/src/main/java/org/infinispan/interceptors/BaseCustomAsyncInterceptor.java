@@ -11,10 +11,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * Anyone using the {@link AsyncInterceptorChain#addInterceptor(AsyncInterceptor, int)} method (or any of its
  * overloaded forms) or registering custom interceptors via XML should extend this base class when creating their own
  * custom interceptors.
- * <p />
+ * <p>
  * Annotations on custom interceptors, including {@link Inject}, {@link Start} and {@link Stop}
  * will not be respected and callbacks will not be made.
- * <p />
+ * <p>
  * Instead, custom interceptor authors should extend this base class to gain access to {@link Cache} and {@link EmbeddedCacheManager},
  * from which other components may be accessed.  Further, lifecycle should be implemented by overriding {@link #start()}
  * and {@link #stop()} as defined in this class.

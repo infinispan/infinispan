@@ -44,7 +44,7 @@ import org.infinispan.context.impl.TxInvocationContext;
  * @since 9.0
  */
 public abstract class DDAsyncInterceptor extends BaseAsyncInterceptor implements Visitor {
-   @SuppressWarnings("unchecked")
+
    @Override
    public final Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return command.acceptVisitor(ctx, this);
