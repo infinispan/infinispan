@@ -24,18 +24,23 @@ import org.hibernate.search.bridge.builtin.IntegerBridge;
       @FullTextFilterDef(name = "personAgeFilter", impl = PersonAgeFilterFactory.class, cache = FilterCacheModeType.INSTANCE_AND_DOCIDSETRESULTS)
 })
 public class Person implements Serializable {
+
+   private static final long serialVersionUID = 0xBABEL;
+
    @Field(store = Store.YES)
    private String name;
+
    @Field(store = Store.YES)
    private String blurb;
+
    @Field(store = Store.YES, analyze = Analyze.NO, bridge = @FieldBridge(impl = IntegerBridge.class))
    private int age;
+
    @Field(store = Store.YES, analyze = Analyze.NO)
    @DateBridge(resolution = Resolution.DAY)
    private Date dateOfGraduation;
 
-   private String nonSearchableField;
-   private static final long serialVersionUID = 8251606115293644545L;
+   private String nonIndexedField;
 
    public Person() {
    }
@@ -77,12 +82,12 @@ public class Person implements Serializable {
       this.age = age;
    }
 
-   public String getNonSearchableField() {
-      return nonSearchableField;
+   public String getNonIndexedField() {
+      return nonIndexedField;
    }
 
-   public void setNonSearchableField(String nonSearchableField) {
-      this.nonSearchableField = nonSearchableField;
+   public void setNonIndexedField(String nonIndexedField) {
+      this.nonIndexedField = nonIndexedField;
    }
 
    public Date getDateOfGraduation() {
@@ -99,20 +104,19 @@ public class Person implements Serializable {
       if (o == null || getClass() != o.getClass()) return false;
 
       Person person = (Person) o;
-
       if (age != person.age) return false;
       if (blurb != null ? !blurb.equals(person.blurb) : person.blurb != null) return false;
       if (name != null ? !name.equals(person.name) : person.name != null) return false;
-      if (dateOfGraduation != null ? !dateOfGraduation.equals(person.dateOfGraduation) : person.dateOfGraduation != null) return false;
-
-      return true;
+      if (nonIndexedField != null ? !nonIndexedField.equals(person.nonIndexedField) : person.nonIndexedField != null)
+         return false;
+      return dateOfGraduation != null ? dateOfGraduation.equals(person.dateOfGraduation) : person.dateOfGraduation == null;
    }
 
    @Override
    public int hashCode() {
-      int result;
-      result = (name != null ? name.hashCode() : 0);
+      int result = (name != null ? name.hashCode() : 0);
       result = 31 * result + (blurb != null ? blurb.hashCode() : 0);
+      result = 31 * result + (nonIndexedField != null ? nonIndexedField.hashCode() : 0);
       result = 31 * result + (dateOfGraduation != null ? dateOfGraduation.hashCode() : 0);
       result = 31 * result + age;
       return result;
@@ -120,11 +124,7 @@ public class Person implements Serializable {
 
    @Override
    public String toString() {
-      return "Person{" +
-            "name='" + name + '\'' +
-            ", blurb='" + blurb + '\'' +
-            ", age=" + age +
-            ", dateOfGraduation=" + dateOfGraduation +
-            '}';
+      return "Person{name='" + name + "', blurb='" + blurb + "', age=" + age +
+            ", dateOfGraduation=" + dateOfGraduation + ", nonIndexedField='" + nonIndexedField + "'}";
    }
 }

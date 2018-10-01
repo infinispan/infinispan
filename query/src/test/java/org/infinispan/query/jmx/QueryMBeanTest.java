@@ -17,9 +17,9 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -32,7 +32,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
- * // TODO: Document this
+ * Test search statistics MBean.
  *
  * @author Galder Zamarreño
  * @since 5.2
@@ -40,16 +40,15 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.jmx.QueryMBeanTest")
 public class QueryMBeanTest extends SingleCacheManagerTest {
 
-   static final String JMX_DOMAIN = QueryMBeanTest.class.getSimpleName();
-   static final String CACHE_NAME = "queryable-cache";
-   MBeanServer server;
+   private static final String TEST_JMX_DOMAIN = QueryMBeanTest.class.getSimpleName();
+   private static final String CACHE_NAME = "queryable-cache";
+   private MBeanServer server;
 
-   private int numberOfEntries = 100;
+   private static final int numberOfEntries = 100;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm =
-            TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(TEST_JMX_DOMAIN);
 
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
       builder.indexing().index(Index.ALL)
@@ -69,7 +68,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
    public void testQueryStatsMBean() throws Exception {
       cacheManager.getCache(CACHE_NAME); // Start cache
-      ObjectName name = getQueryStatsObjectName(JMX_DOMAIN, CACHE_NAME);
+      ObjectName name = getQueryStatsObjectName(TEST_JMX_DOMAIN, CACHE_NAME);
       assertTrue(server.isRegistered(name));
       assertFalse((Boolean) server.getAttribute(name, "StatisticsEnabled"));
       server.setAttribute(name, new Attribute("StatisticsEnabled", true));
@@ -78,28 +77,28 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
    public void testQueryStats() throws Exception {
       cacheManager.getCache(CACHE_NAME); // Start cache
-      ObjectName name = getQueryStatsObjectName(JMX_DOMAIN, CACHE_NAME);
+      ObjectName name = getQueryStatsObjectName(TEST_JMX_DOMAIN, CACHE_NAME);
 
       try {
          assertTrue(server.isRegistered(name));
 
-         if(!(Boolean) server.getAttribute(name, "StatisticsEnabled")) {
+         if (!(Boolean) server.getAttribute(name, "StatisticsEnabled")) {
             server.setAttribute(name, new Attribute("StatisticsEnabled", true));
          }
 
-         Cache cache = cacheManager.getCache(CACHE_NAME);
+         Cache<String, Object> cache = cacheManager.getCache(CACHE_NAME);
 
          // check that our settings are not ignored
          SearchManager searchManager = Search.getSearchManager(cache);
          assertTrue(searchManager.getStatistics().isStatisticsEnabled());
 
          // add some test data
-         for(int i = 0; i < numberOfEntries; i++) {
+         for (int i = 0; i < numberOfEntries; i++) {
             Person person = new Person();
             person.setName("key" + i);
             person.setAge(i);
             person.setBlurb("value " + i);
-            person.setNonSearchableField("i: " + i);
+            person.setNonIndexedField("i: " + i);
 
             cache.put("key" + i, person);
          }
@@ -118,8 +117,8 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
          assertEquals(numberOfEntries, found.size());
          assertEquals(numberOfEntries, server.invoke(name, "getNumberOfIndexedEntities",
-                                       new Object[]{Person.class.getCanonicalName()},
-                                       new String[]{String.class.getCanonicalName()}));
+                                       new Object[]{Person.class.getName()},
+                                       new String[]{String.class.getName()}));
 
          assertEquals(1, searchManager.getStatistics().indexedEntitiesCount().size());
 
@@ -132,13 +131,13 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          assertEquals(numberOfEntries, found.size());
 
          assertEquals(1, server.invoke(name, "getNumberOfIndexedEntities",
-                                       new Object[]{AnotherGrassEater.class.getCanonicalName()},
-                                       new String[]{String.class.getCanonicalName()}));
+                                       new Object[]{AnotherGrassEater.class.getName()},
+                                       new String[]{String.class.getName()}));
 
          Set<String> classNames = (Set<String>) server.getAttribute(name, "IndexedClassNames");
          assertEquals(2, classNames.size());
-         assertTrue("The set should contain the Person class name.", classNames.contains(Person.class.getCanonicalName()));
-         assertTrue("The set should contain the AnotherGrassEater class name.", classNames.contains(AnotherGrassEater.class.getCanonicalName()));
+         assertTrue("The set should contain the Person class name.", classNames.contains(Person.class.getName()));
+         assertTrue("The set should contain the AnotherGrassEater class name.", classNames.contains(AnotherGrassEater.class.getName()));
          assertEquals(2, searchManager.getStatistics().indexedEntitiesCount().size());
 
          // check the statistics and see they have reasonable values
@@ -148,9 +147,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          assertTrue((Long) server.getAttribute(name, "SearchQueryExecutionMaxTime") > 0);
          assertTrue((Long) server.getAttribute(name, "SearchQueryExecutionAvgTime") > 0);
 
-         server.invoke(name, "clear",
-                       new Object[] {},
-                       new String[]{});
+         server.invoke(name, "clear", new Object[0], new String[0]);
 
          // after "clear" everything must be reset
          assertEquals(0L, server.getAttribute(name, "SearchQueryExecutionCount"));
@@ -174,8 +171,8 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
     */
    public void testJmxUnregistration() throws Exception {
       cacheManager.getCache(CACHE_NAME); // Start the cache belonging to first cache manager
-      ObjectName queryStatsObjectName = getQueryStatsObjectName(JMX_DOMAIN, CACHE_NAME);
-      Set<ObjectName> matchingNames = server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);
+      ObjectName queryStatsObjectName = getQueryStatsObjectName(TEST_JMX_DOMAIN, CACHE_NAME);
+      Set<ObjectName> matchingNames = server.queryNames(new ObjectName(TEST_JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);
       assertEquals(1, matchingNames.size());
       assertTrue(matchingNames.contains(queryStatsObjectName));
 
@@ -188,18 +185,18 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
                .addProperty("lucene_version", "LUCENE_CURRENT")
                .jmxStatistics().enable();
 
-         cm2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain("cm2", JMX_DOMAIN, true, true, defaultCacheConfig2, new PerThreadMBeanServerLookup());
+         cm2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain("cm2", TEST_JMX_DOMAIN, true, true, defaultCacheConfig2, new PerThreadMBeanServerLookup());
          cm2.defineConfiguration(CACHE_NAME, defaultCacheConfig2.build());
          cm2.getCache(CACHE_NAME); // Start the cache belonging to second cache manager
 
-         matchingNames = server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);
+         matchingNames = server.queryNames(new ObjectName(TEST_JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);
          assertEquals(2, matchingNames.size());
          assertTrue(matchingNames.contains(queryStatsObjectName));
       } finally {
          TestingUtil.killCacheManagers(cm2);
       }
 
-      matchingNames = server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);
+      matchingNames = server.queryNames(new ObjectName(TEST_JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);
       assertEquals(1, matchingNames.size());
       assertTrue(matchingNames.contains(queryStatsObjectName));
    }
@@ -214,5 +211,4 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          throw new CacheException("Malformed object name", e);
       }
    }
-
 }

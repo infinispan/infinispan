@@ -20,7 +20,7 @@ public class NonIndexedQuery extends SharedIndexTest {
 
    @Override
    protected String getQuery() {
-      return "From " + Person.class.getName() + " p where p.nonSearchableField = 'Pe'";
+      return "From " + Person.class.getName() + " p where p.nonIndexedField = 'Pe'";
    }
 
    @Override

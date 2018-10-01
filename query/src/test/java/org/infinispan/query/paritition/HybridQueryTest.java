@@ -11,6 +11,6 @@ public class HybridQueryTest extends SharedIndexTest {
 
    @Override
    protected String getQuery() {
-      return "From " + Person.class.getName() + " p where p.age >= 0 and p.nonSearchableField = 'Pe'";
+      return "From " + Person.class.getName() + " p where p.age >= 0 and p.nonIndexedField = 'Pe'";
    }
 }

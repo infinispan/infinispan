@@ -416,7 +416,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = ".*cannot be converted to an indexed query")
    public void testPreventHybridQuery() {
       CacheQuery<Person> hybridQuery = Search.getSearchManager(cacheAMachine1)
-            .getQuery(String.format("FROM %s p where p.nonSearchableField = 'nothing'", Person.class.getName()),
+            .getQuery(String.format("FROM %s p where p.nonIndexedField = 'nothing'", Person.class.getName()),
                   IndexedQueryMode.BROADCAST, Person.class);
 
       hybridQuery.list();
@@ -445,7 +445,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    @Test
    public void testBroadcastNativeInfinispanHybridQuery() {
-      String q = "FROM " + Person.class.getName() + " where age >= 40 and nonSearchableField = 'na'";
+      String q = "FROM " + Person.class.getName() + " where age >= 40 and nonIndexedField = 'na'";
       Query query = Search.getQueryFactory(cacheAMachine1).create(q, IndexedQueryMode.BROADCAST);
 
       assertEquals(10, query.list().size());
@@ -484,7 +484,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    @Test
    public void testNonIndexedBroadcastInfinispanQuery() {
       QueryFactory queryFactory = Search.getQueryFactory(cacheAMachine2);
-      Query slowQuery = queryFactory.create("FROM " + Person.class.getName() + " WHERE nonSearchableField LIKE 'na%'",
+      Query slowQuery = queryFactory.create("FROM " + Person.class.getName() + " WHERE nonIndexedField LIKE 'na%'",
             IndexedQueryMode.BROADCAST);
 
       assertEquals(NUM_ENTRIES, slowQuery.list().size());
