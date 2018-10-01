@@ -498,18 +498,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    /**
-    * Registers the default class loader.  This method *must* be called before any other components are registered,
-    * typically called by bootstrap code.  Defensively, it is called in the constructor of ComponentRegistry with a null
-    * parameter.
-    *
-    * @param loader a class loader to use by default.  If this is null, the class loader used to load this instance of
-    *               ComponentRegistry is used.
+    * @deprecated Since 9.4, not used
     */
    protected ClassLoader registerDefaultClassLoader(ClassLoader loader) {
       ClassLoader loaderToUse = loader == null ? getClass().getClassLoader() : loader;
       registerComponent(loaderToUse, ClassLoader.class);
-      // make sure the class loader is non-volatile, so it survives restarts.
-//      componentLookup.get(ClassLoader.class.getName()).survivesRestarts = true;
       return loaderToUse;
    }
 

@@ -1,6 +1,5 @@
 package org.infinispan.configuration.global;
 
-import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +34,10 @@ public class GlobalConfiguration {
 
    /**
     * Default replication version, from {@link org.infinispan.Version#getVersionShort}.
+    *
+    * @deprecated Since 9.4, use {@code Version.getVersionShort()} instead.
     */
+   @Deprecated
    public static final short DEFAULT_MARSHALL_VERSION = Version.getVersionShort();
 
    private final GlobalJmxStatisticsConfiguration globalJmxStatistics;
@@ -46,7 +48,7 @@ public class GlobalConfiguration {
    private final GlobalStateConfiguration globalState;
    private final Map<Class<?>, ?> modules;
    private final SiteConfiguration site;
-   private final WeakReference<ClassLoader> cl;
+   private final ClassLoader cl;
    private final ThreadPoolConfiguration expirationThreadPool;
    private final ThreadPoolConfiguration listenerThreadPool;
    private final ThreadPoolConfiguration replicationQueueThreadPool;
@@ -86,7 +88,7 @@ public class GlobalConfiguration {
       this.modules = Collections.unmodifiableMap(moduleMap);
       this.site = site;
       this.defaultCacheName = defaultCacheName;
-      this.cl = new WeakReference<>(cl);
+      this.cl = cl;
       this.features = features;
    }
 
@@ -210,7 +212,7 @@ public class GlobalConfiguration {
     * Get the classloader in use by this configuration.
     */
    public ClassLoader classLoader() {
-      return cl.get();
+      return cl;
    }
 
    public SiteConfiguration sites() {

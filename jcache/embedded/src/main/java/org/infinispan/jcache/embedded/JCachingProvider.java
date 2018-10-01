@@ -43,6 +43,6 @@ public class JCachingProvider extends AbstractJCachingProvider {
 
    @Override
    protected CacheManager createCacheManager(ClassLoader classLoader, URI uri, Properties properties) {
-      return new JCacheManager(uri, classLoader, this, properties);
+      return new JCacheManager(uri, new WeakClassLoader(classLoader), this, properties);
    }
 }
