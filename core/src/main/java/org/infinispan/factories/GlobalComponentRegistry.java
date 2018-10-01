@@ -1,6 +1,5 @@
 package org.infinispan.factories;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -91,7 +90,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    final ConcurrentMap<ByteString, ComponentRegistry> namedComponents = new ConcurrentHashMap<>(4);
 
-   protected final WeakReference<ClassLoader> defaultClassLoader;
+   protected final ClassLoader classLoader;
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
@@ -101,20 +100,20 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public GlobalComponentRegistry(GlobalConfiguration configuration,
                                   EmbeddedCacheManager cacheManager,
                                   Set<String> createdCaches) {
-      ClassLoader configuredClassLoader = configuration.classLoader();
-      moduleLifecycles = ModuleProperties.resolveModuleLifecycles(configuredClassLoader);
+      globalConfiguration = configuration;
+      classLoader = configuration.classLoader();
 
-      componentMetadataRepo = new ComponentMetadataRepo();
+      moduleLifecycles = ModuleProperties.resolveModuleLifecycles(classLoader);
 
       // Load up the component metadata
-      componentMetadataRepo.initialize(ModuleProperties.getModuleMetadataFiles(configuredClassLoader), configuredClassLoader);
+      componentMetadataRepo = new ComponentMetadataRepo();
+      componentMetadataRepo.initialize(ModuleProperties.getModuleMetadataFiles(classLoader), classLoader);
 
-      defaultClassLoader = new WeakReference<>(registerDefaultClassLoader(configuredClassLoader));
 
       try {
-         // this order is important ...
-         globalConfiguration = configuration;
+         registerComponent(classLoader, ClassLoader.class);
 
+         // this order is important ...
          registerComponent(this, GlobalComponentRegistry.class);
          registerComponent(configuration, GlobalConfiguration.class);
          registerComponent(cacheManager, EmbeddedCacheManager.class);
@@ -125,7 +124,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new EntryMergePolicyFactoryRegistry(), EntryMergePolicyFactoryRegistry.class);
          registerComponent(new GlobalXSiteAdminOperations(), GlobalXSiteAdminOperations.class);
 
-         moduleProperties.loadModuleCommandHandlers(configuredClassLoader);
+         moduleProperties.loadModuleCommandHandlers(classLoader);
          Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories();
          if (factories != null && !factories.isEmpty())
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
@@ -152,7 +151,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected ClassLoader getClassLoader() {
-      return defaultClassLoader.get();
+      return classLoader;
    }
 
    @Override

@@ -30,7 +30,7 @@ public class ServiceFinder {
       if (loaders.length == 0) {
          try {
             ServiceLoader<T> loadedServices = ServiceLoader.load(contract);
-            addServices( loadedServices, services );
+            addServices(loadedServices, services);
          } catch (Exception e) {
             // Ignore
          }
@@ -38,10 +38,10 @@ public class ServiceFinder {
       else {
          for (ClassLoader loader : loaders) {
             if (loader == null)
-               continue;
+               throw new NullPointerException();
             try {
                ServiceLoader<T> loadedServices = ServiceLoader.load(contract, loader);
-               addServices( loadedServices, services );
+               addServices(loadedServices, services);
             } catch (Exception e) {
                // Ignore
             }

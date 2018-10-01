@@ -366,8 +366,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     *
     * @return an {@link AdvancedCache} instance upon which operations can be called with a particular {@link
     * ClassLoader}.
-    * @deprecated A cache manager, and all caches within it, can only have one classloader associated to it, so it's no
-    * longer possible to read cached data with a different classloader.
+    * @deprecated Since 9.4, the classloader is ignored.
     */
    @Deprecated
    AdvancedCache<K, V> with(ClassLoader classLoader);

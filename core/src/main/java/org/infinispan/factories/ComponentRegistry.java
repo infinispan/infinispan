@@ -2,7 +2,6 @@ package org.infinispan.factories;
 
 import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
 
-import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Map;
 
@@ -58,18 +57,16 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private VersionGenerator versionGenerator;
    private DistributionManager distributionManager;
 
-   protected final WeakReference<ClassLoader> defaultClassLoader;
-
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
     *
     * @param configuration    configuration with which this is created
     * @param cache            cache
     * @param globalComponents Shared Component Registry to delegate to
+    * @param defaultClassLoader ignored
     */
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<?, ?> cache,
                             GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
-      this.defaultClassLoader = new WeakReference<>(defaultClassLoader);
       try {
          this.cacheName = cacheName;
          if (cacheName == null) throw new CacheConfigurationException("Cache name cannot be null!");
@@ -98,7 +95,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected ClassLoader getClassLoader() {
-      return defaultClassLoader.get();
+      return globalComponents.getClassLoader();
    }
 
    @Override

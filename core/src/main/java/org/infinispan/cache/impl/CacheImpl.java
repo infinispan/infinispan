@@ -2014,8 +2014,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public ClassLoader getClassLoader() {
-      ClassLoader classLoader = globalCfg.classLoader();
-      return classLoader != null ? classLoader : Thread.currentThread().getContextClassLoader();
+      return globalCfg.classLoader();
    }
 
    @Override
