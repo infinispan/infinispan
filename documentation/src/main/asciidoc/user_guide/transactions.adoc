@@ -435,7 +435,7 @@ This state is held only for in-doubt transaction, being removed for successfully
 
 This in-doubt transaction data is held within a local cache: this allows one to configure swapping this info to disk through cache loader in the case it gets too big.
 This cache can be specified through the `recovery-cache` configuration attribute.
-If not specified infinispan will configure a local cache for you.
+If not specified {brandname} will configure a local cache for you.
 
 It is possible (though not mandated) to share same recovery cache between all the {brandname} caches that have recovery enabled.
 If the default recovery cache is overridden, then the specified recovery cache must use a {tm-lookup} that returns a different transaction manager than the one used by the cache itself.
@@ -450,8 +450,12 @@ XAResource xar = cache.getAdvancedCache().getXAResource();
 ----
 
 It is a common practice to run the recovery in a different process from the one running the transaction.
-At the moment it is not possible to do this with infinispan: the recovery must be run from the same process where the infinispan instance exists.
-This limitation will be dropped once link:https://issues.jboss.org/browse/ISPN-375[transactions over Hot Rod] are available.
+//
+//At the moment it is not possible to do this with {brandname} the recovery
+//must be run from the same process where the {brandname} instance exists.
+//This limitation will be dropped once
+//link:https://issues.jboss.org/browse/ISPN-375[transactions over Hot Rod] are
+//available.
 
 [[tx_recovery_reconciliation]]
 ==== Reconciliation
@@ -469,7 +473,7 @@ The status of each in-doubt transaction is displayed(in this example " _PREPARED
 There might be multiple elements in the status field, e.g. "PREPARED" and "COMMITTED" in the case the transaction committed on certain nodes but not on all of them.  
 
 * *STEP 2*: The system administrator visually maps the XID received from the transaction manager to an {brandname} internal id, represented as a number.
-This step is needed because the XID, a byte array, cannot conveniently be passed to the JMX tool (e.g. JConsole) and then re-assembled on infinispan's side.
+This step is needed because the XID, a byte array, cannot conveniently be passed to the JMX tool (e.g. JConsole) and then re-assembled on {brandname}'s side.
 
 * *STEP 3*: The system administrator forces the transaction's commit/rollback through the corresponding jmx operation, based on the internal id.
 The image below is obtained by forcing the commit of the transaction based on its internal id.

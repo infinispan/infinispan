@@ -24,6 +24,7 @@ attribute of the eviction element to be greater than zero in order for eviction
 to be turned on. If size is too large you can run out of memory. The `size`
 attribute will probably take some tuning in each use case.
 
+[[eviction_enabling]]
 === Enabling Eviction
 
 Eviction is configured by adding the
@@ -34,6 +35,7 @@ API programmatic approach.
 
 All cache entry are evicted by piggybacking on user threads that are hitting the cache.
 
+[[eviction_strategy]]
 ==== Eviction strategy
 
 Strategies control how the eviction is handled.
@@ -64,6 +66,7 @@ a `ContainerFullException`. This strategy only works with transactional caches
 that always run with 2 phase commit, that is no 1 phase commit or synchronization
 optimizations allowed.
 
+[[eviction_types]]
 ==== Eviction types
 
 Eviction type applies only when the size is set to something greater than 0.
@@ -81,6 +84,7 @@ and will remove an entry when the total size of all entries is larger than
 the configured `size`.  This type does not work with `OBJECT` storage type
 below.
 
+[[eviction_storage_type]]
 ==== Storage type
 
 {brandname} allows the user to configure in what form their data is stored.  Each
@@ -105,6 +109,7 @@ Both `COUNT` and `MEMORY` eviction types are supported.
 WARNING: Both `BINARY` and `OFF-HEAP` violate equality and hashCode that they are
 dictated by the resulting byte[] they generate instead of the object instance.
 
+[[eviction_defaults]]
 ==== More defaults
 
 By default when no `<memory />` element is specified, no eviction takes place,
@@ -128,6 +133,7 @@ Supplied strategy column means that the attribute wasn't supplied)
 
 |===============
 
+[[expiration_anchor]]
 === Expiration
 
 Similar to, but unlike eviction, is expiration. Expiration allows you to attach
@@ -159,9 +165,10 @@ attribute or programmatically with the `enableReaper` method in the
 * The expiration reaper cannot be disabled when a cache store is present.
 * When using a maximum idle time in a clustered cache, you should always enable
 the expiration reaper. For more information, see
-link:#max_idle_clustered[Clustered Max Idle].
+link:#expiration_maxidle_clustered[Clustered Max Idle].
 ====
 
+[[expiration_settings]]
 ==== Difference between Eviction and Expiration
 
 Both Eviction and Expiration are means of cleaning the cache of unused entries
@@ -184,6 +191,7 @@ Specifies how long entries can remain idle before they expire. An entry in the
 cache is idle when no operation is performed with the key. The default value is
 `-1`, which is unlimited time.
 
+[[expiration_details]]
 ===  Expiration details
 
 .  _Expiration_ is a top-level construct, represented in the configuration as
@@ -196,11 +204,12 @@ clustered environments. For this reason, setting `maxIdle` in clustered caches
 can result in slower operation times.
 .  Expiration lifespan and `maxIdle` are also persisted in CacheStores, so this information survives eviction/passivation.
 
+[[expiration_maxidle]]
 ==== Maximum Idle Expiration
 
 Maximum idle expiration has different behavior in local and clustered cache environments.
 
-[[max_idle_local]]
+[[expiration_maxidle_local]]
 ===== Local Max Idle
 
 In non-clustered cache environments, the `maxIdle` configuration expires entries when:
@@ -209,7 +218,7 @@ In non-clustered cache environments, the `maxIdle` configuration expires entries
 * iterated upon (`Cache.size`).
 * the expiration reaper thread runs.
 
-[[max_idle_clustered]]
+[[expiration_maxidle_clustered]]
 ===== Clustered Max Idle
 
 In clustered environments, nodes in the cluster can have different access times
@@ -253,6 +262,7 @@ the new node with a last access time that is equal to the current time. As a
 result those entries are refreshed.
 ====
 
+[[eviction_expiration_config]]
 ==== Configuration
 
 Eviction and Expiration may be configured using the programmatic or
@@ -281,6 +291,7 @@ Configuration c = new ConfigurationBuilder()
 
 ----
 
+[[eviction_expiration_config_mem]]
 ==== Memory Based Eviction Configuration
 
 Memory based eviction may require some additional configuration options if you
@@ -306,6 +317,7 @@ Configuration c = new ConfigurationBuilder()
                .build();
 ----
 
+[[eviction_expiration_config_default]]
 ==== Default values
 
 Eviction is disabled by default. Default values are used:
@@ -315,6 +327,7 @@ Eviction is disabled by default. Default values are used:
 
 Expiration lifespan and maxIdle both default to -1, which means that entries will be created immortal by default. This can be overridden per entry with the API.
 
+[[expiration_using]]
 ==== Using expiration
 
 Expiration allows you to set either a lifespan or a maximum idle time on each key/value pair stored in the cache.  This can either be set cache-wide using the configuration, as described above, or it can be defined per-key/value pair using the Cache interface.  Any values defined per key/value pair overrides the cache-wide default for the specific entry in question.
@@ -346,6 +359,7 @@ cache.put("riesling", rieslingPrice, 5,
 
 ----
 
+[[expiration_designs]]
 === Expiration designs
 
 Central to expiration is an ExpirationManager.
@@ -360,5 +374,6 @@ The expiration manager processes expirations in the following manner:
 
 . Causes the data container to purge expired entries
 . Causes cache stores (if any) to purge expired entries
-
-
+//////////////////////
+//terminate list
+//////////////////////

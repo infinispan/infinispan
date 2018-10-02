@@ -751,7 +751,7 @@ CompletableFuture<Boolean> future = readWriteMap.eval("key1,
 future.thenAccept(stored -> System.out.printf("Value was put? %s%n", stored));
 ----
 
-==== Use cases for Functional API
+==== Use Cases for Functional API
 
 This new API is meant to complement existing Key/Value {brandname} API
 offerings, so you'll still be able to use
@@ -768,11 +768,12 @@ grid or caching data manipulation. The clear advantage here is that threads
 do not need to be idle waiting for remote operations to complete, but
 instead these can be notified when remote operations complete and then
 chain them with other subsequent operations.
-
-* Users wanting to go beyond the standard operations exposed by
+* Users who want to go beyond the standard operations exposed by
 link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 and
-link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`]
-, for example, if you want to do a replace
+link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`], for example, if you want to do a replace
 operation using metadata parameter equality instead of value equality, or
-if you want to retrieve metadata information from values...etc.
+if you want to retrieve metadata information from values and so on.
+//////////////////////////
+//terminate unordered list
+//////////////////////////

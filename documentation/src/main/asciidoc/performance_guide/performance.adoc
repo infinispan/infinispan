@@ -3,7 +3,6 @@ This guide will give you information and tweaks about tuning {brandname} perform
 == Capacity planning
 
 Data in {brandname} is either stored as plain Java objects or in a serialized form, depending on operating mode (embedded or server) or on specific configuration options such as store-as-binary.
-//dnaro: linking to fix for productized docs
 ifndef::productized[]
 For more information, see link:../user_guide/user_guide.html#store_as_binary[store-as-binary].
 endif::productized[]
@@ -122,7 +121,7 @@ The recommended values are:
 
 == Number of threads
 
-Infinispan tunes its thread pools according to the available CPU cores. Under Linux this
+{brandname} tunes its thread pools according to the available CPU cores. Under Linux this
 will also take into consideration taskset / CGroup quotas. It is possible to override the
 detected value by specifying the system property ``infinispan.activeprocessorcount``.
 
@@ -244,7 +243,6 @@ The Externalizer must be registered in cache configuration. See configuration ex
 GlobalConfigurationBuilder builder = ...
 builder.serialization().addAdvancedExternalizer(new Book.BookExternalizer());
 ----
-//dnaro: linking to fix for productized docs
 ifndef::productized[]
 For more information, please refer to the link:../user_guide/user_guide.html#benefits_of_externalizers[User's Guide].
 endif::productized[]
@@ -275,7 +273,6 @@ The CHM shows comparison for ConcurrentHashMap from JSR-166 with pluggable equal
 
 Even though we use http://openjdk.java.net/projects/code-tools/jmh/[JMH] to prevent some common pitfals of microbenchmarking, consider these results only aproximative. Your mileage may vary.
 
-//dnaro: linking to fix for productized docs
 ifndef::productized[]
 Please consult link:../user_guide/user_guide.html#simple_cache[User's Guide] for the limitations of simple cache and configuration.
 endif::productized[]

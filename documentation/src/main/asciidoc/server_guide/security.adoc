@@ -309,7 +309,6 @@ And then tell the connector to require a client certificate:
 
 The client, at this point, will also need to specify a keyStore which contains its certificate on top of the trustStore
 which trusts the server certificate.
-//dnaro: adding conditional statement to exclude this from productized builds
 ifndef::productized[]
 See the link:../user_guide/user_guide.html#hr_encryption[Hot Rod client encryption]
 endif::productized[]

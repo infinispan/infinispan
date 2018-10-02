@@ -4,9 +4,13 @@
 
 ==== Compatibility mode deprecation
 
-Compatibility mode has been deprecated and will be removed in the next Infinispan version.
+Compatibility mode has been deprecated and will be removed in the next {brandname} version.
 
-To use a cache from multiple endpoints, it is recommended to store data in binary format and to configure the MediaType for keys and values. More details in http://infinispan.org/docs/dev/user_guide/user_guide.html#endpoint.interop
+To use a cache from multiple endpoints, it is recommended to store data in binary format and to configure the MediaType for keys and values.
+ifndef::productized[]
+See link:http://infinispan.org/docs/dev/user_guide/user_guide.html#endpoint_interop[Embedded/Remote Interoperability] for more information.
+endif::productized[]
+
 
 If storing data as unmarshalled objects is still desired, the equivalent of compatibility mode is to configure keys and values to store object content:
 
@@ -141,13 +145,13 @@ Interfaces `DeltaAware`, `Delta` and `CopyableDeltaAware` have been deprecated. 
 
 Any partial updates to an entry should be replaced using the link:../user_guide/user_guide.html#functional_map_api[Functional API].
 
-=== Infinispan Query Configuration
+=== {brandname} Query Configuration
 
 The configuration property `directory_provider` now accepts a new value `local-heap`.
 This value replaces the now deprecated `ram`, and as its predecessor will cause the index to be stored in a `org.apache.lucene.store.RAMDirectory`.
 
 The configuration value `ram` is still accepted and will have the same effect, but failing to replace `ram` with `local-heap` will cause a warning to be logged.
-We suggest to perform this replacement, as the `ram` value will no longer be recognised by Infinispan in a future version.
+We suggest to perform this replacement, as the `ram` value will no longer be recognised by {brandname} in a future version.
 
 This change was made as the team believes the `local-heap` name better expresses the storage model, especially as this storage method will not allow real-time replication of the index across multiple nodes.
 This index storage option is mostly useful for single node integration testing of the query functionality.
