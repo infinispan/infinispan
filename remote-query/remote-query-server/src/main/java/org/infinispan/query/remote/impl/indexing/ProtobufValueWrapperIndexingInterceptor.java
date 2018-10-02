@@ -1,10 +1,8 @@
-package org.infinispan.query.remote.impl;
+package org.infinispan.query.remote.impl.indexing;
 
 import org.hibernate.search.indexes.interceptor.EntityIndexingInterceptor;
 import org.hibernate.search.indexes.interceptor.IndexingOverride;
 import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 
 /**
  * Hibernate Search interceptor for conditional indexing of protobuf message types based on the value of the

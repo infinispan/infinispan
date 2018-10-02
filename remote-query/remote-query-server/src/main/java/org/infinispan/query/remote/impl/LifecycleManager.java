@@ -13,27 +13,19 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
-import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.ManageableComponentMetadata;
-import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.impl.BatchingInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer;
@@ -48,7 +40,7 @@ import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCache
 import org.infinispan.query.remote.impl.filter.IckleProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapperInterceptor;
+import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapperSearchWorkCreator;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.kohsuke.MetaInfServices;
@@ -84,20 +76,20 @@ public final class LifecycleManager implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarted(GlobalComponentRegistry gcr) {
-      EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       encoderRegistry.registerWrapper(ProtobufWrapper.INSTANCE);
-      initProtobufMetadataManager((DefaultCacheManager) cacheManager, gcr);
+      initProtobufMetadataManager(gcr.getGlobalConfiguration(), gcr);
    }
 
-   private void initProtobufMetadataManager(DefaultCacheManager cacheManager, GlobalComponentRegistry gcr) {
+   private void initProtobufMetadataManager(GlobalConfiguration globalCfg, GlobalComponentRegistry gcr) {
       ProtobufMetadataManagerImpl protobufMetadataManager = new ProtobufMetadataManagerImpl();
       gcr.registerComponent(protobufMetadataManager, ProtobufMetadataManager.class);
       registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr);
-      ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
-      processContextInitializers(classLoader, protobufMetadataManager);
 
       SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
+      ClassLoader classLoader = globalCfg.classLoader();
+      processProtostreamSerializationContextInitializers(classLoader, serCtx);
+
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       encoderRegistry.registerTranscoder(new ProtostreamJsonTranscoder(serCtx));
       encoderRegistry.registerTranscoder(new ProtostreamTextTranscoder(serCtx));
@@ -105,17 +97,17 @@ public final class LifecycleManager implements ModuleLifecycle {
       encoderRegistry.registerTranscoder(new ProtostreamBinaryTranscoder());
    }
 
-   private void processContextInitializers(ClassLoader classLoader, ProtobufMetadataManagerImpl metadataManager) {
+   private void processProtostreamSerializationContextInitializers(ClassLoader classLoader, SerializationContext serCtx) {
       Collection<ProtostreamSerializationContextInitializer> initializers =
             ServiceFinder.load(ProtostreamSerializationContextInitializer.class, classLoader);
 
-      initializers.forEach(initCtx -> {
+      for (ProtostreamSerializationContextInitializer psci : initializers) {
          try {
-            initCtx.init(metadataManager.getSerializationContext());
+            psci.init(serCtx);
          } catch (Exception e) {
             throw log.errorInitializingSerCtx(e);
          }
-      });
+      }
    }
 
    private void registerProtobufMetadataManagerMBean(ProtobufMetadataManagerImpl protobufMetadataManager, GlobalComponentRegistry gcr) {
@@ -147,8 +139,10 @@ public final class LifecycleManager implements ModuleLifecycle {
    private void unregisterProtobufMetadataManagerMBean(GlobalComponentRegistry gcr) {
       if (mbeanServer != null) {
          try {
-            ObjectName objName = gcr.getComponent(ProtobufMetadataManager.class).getObjectName();
-            JmxUtil.unregisterMBean(objName, mbeanServer);
+            ProtobufMetadataManager protobufMetadataManager = gcr.getComponent(ProtobufMetadataManager.class);
+            if (protobufMetadataManager != null) {
+               JmxUtil.unregisterMBean(protobufMetadataManager.getObjectName(), mbeanServer);
+            }
          } catch (Exception e) {
             throw new CacheException("Unable to unregister ProtobufMetadataManager MBean", e);
          }
@@ -163,41 +157,9 @@ public final class LifecycleManager implements ModuleLifecycle {
       GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
       InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName)) {
-         ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class);
+         ProtobufMetadataManagerImpl protobufMetadataManager =
+            (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class);
          protobufMetadataManager.addCacheDependency(cacheName);
-
-         if (cfg.indexing().index().isEnabled()) {
-            log.infof("Registering ProtobufValueWrapperInterceptor for cache %s", cacheName);
-            EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
-            createProtobufValueWrapperInterceptor(cr, cfg, cacheManager);
-         }
-      }
-   }
-
-   private void createProtobufValueWrapperInterceptor(ComponentRegistry cr, Configuration cfg, EmbeddedCacheManager cacheManager) {
-      ProtobufValueWrapperInterceptor wrapperInterceptor = cr.getComponent(ProtobufValueWrapperInterceptor.class);
-      if (wrapperInterceptor == null) {
-         wrapperInterceptor = new ProtobufValueWrapperInterceptor(cacheManager);
-
-         // Interceptor registration not needed, core configuration handling
-         // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
-         AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class);
-
-         ConfigurationBuilder builder = new ConfigurationBuilder().read(cfg);
-         InterceptorConfigurationBuilder interceptorBuilder = builder.customInterceptors().addInterceptor();
-         interceptorBuilder.interceptor(wrapperInterceptor);
-
-         if (cfg.invocationBatching().enabled()) {
-            if (ic != null) ic.addInterceptorAfter(wrapperInterceptor, BatchingInterceptor.class);
-            interceptorBuilder.after(BatchingInterceptor.class);
-         } else {
-            if (ic != null) ic.addInterceptorAfter(wrapperInterceptor, InvocationContextInterceptor.class);
-            interceptorBuilder.after(InvocationContextInterceptor.class);
-         }
-         if (ic != null) {
-            cr.registerComponent(wrapperInterceptor, ProtobufValueWrapperInterceptor.class);
-         }
-         cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
       }
    }
 
@@ -226,14 +188,6 @@ public final class LifecycleManager implements ModuleLifecycle {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName)) {
          Configuration cfg = cr.getComponent(Configuration.class);
-         if (cfg.indexing().index().isEnabled()) {
-            if (!verifyChainContainsProtobufValueWrapperInterceptor(cr)) {
-               throw new IllegalStateException("It was expected to find the ProtobufValueWrapperInterceptor registered in the InterceptorChain but it wasn't found");
-            }
-         } else if (verifyChainContainsProtobufValueWrapperInterceptor(cr)) {
-            throw new IllegalStateException("It was NOT expected to find the ProtobufValueWrapperInterceptor registered in the InterceptorChain as indexing was disabled, but it was found");
-         }
-
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
 
@@ -242,31 +196,13 @@ public final class LifecycleManager implements ModuleLifecycle {
          Matcher matcher = remoteQueryManager.getMatcher();
          cr.registerComponent(matcher, matcher.getClass());
          cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
-      }
-   }
 
-   private boolean verifyChainContainsProtobufValueWrapperInterceptor(ComponentRegistry cr) {
-      AsyncInterceptorChain interceptorChain = cr.getComponent(AsyncInterceptorChain.class);
-      return interceptorChain != null && interceptorChain.containsInterceptorType(ProtobufValueWrapperInterceptor.class, true);
-   }
-
-   @Override
-   public void cacheStopped(ComponentRegistry cr, String cacheName) {
-      Configuration cfg = cr.getComponent(Configuration.class);
-      removeProtobufValueWrapperInterceptor(cfg);
-   }
-
-   private void removeProtobufValueWrapperInterceptor(Configuration cfg) {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      CustomInterceptorsConfigurationBuilder customInterceptorsBuilder = builder.customInterceptors();
-
-      for (InterceptorConfiguration interceptorConfig : cfg.customInterceptors().interceptors()) {
-         if (!(interceptorConfig.asyncInterceptor() instanceof ProtobufValueWrapperInterceptor)) {
-            customInterceptorsBuilder.addInterceptor().read(interceptorConfig);
+         if (cfg.indexing().index().isEnabled()) {
+            log.debugf("Wrapping the SearchWorkCreator for indexed cache %s", cacheName);
+            QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
+            queryInterceptor.setSearchWorkCreator(new ProtobufValueWrapperSearchWorkCreator(queryInterceptor.getSearchWorkCreator(), serCtx).get());
          }
       }
-
-      cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
    }
 
    @Override
