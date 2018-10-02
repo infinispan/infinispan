@@ -1,11 +1,8 @@
-package org.infinispan.query.remote.impl;
+package org.infinispan.query.remote.impl.indexing;
 
 import org.hibernate.search.analyzer.Discriminator;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.logging.Log;
-import org.infinispan.query.remote.impl.indexing.FieldMapping;
-import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -25,6 +22,10 @@ public final class ProtobufValueWrapperAnalyzerDiscriminator implements Discrimi
          Descriptor messageDescriptor = wrapper.getMessageDescriptor();
          if (messageDescriptor != null) {
             return getAnalyzerForField(messageDescriptor, field);
+         } else {
+            // this is either a scalar value (not indexed, why are we asked for analyzer -> bug)
+            // or this entry was not run through ProtobufValueWrapperSearchWorkCreator (bug again)
+            throw new IllegalStateException("Message descriptor not initialized for " + wrapper);
          }
       }
       return null;
