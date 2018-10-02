@@ -1,6 +1,6 @@
 [[store_migrator]]
 === Store Migrator
-Infinispan 9.0 introduced non-backwards compatible changes to Infinispan's internal marshalling. Consequently, cache stores
+Infinispan 9.0 introduced non-backwards compatible changes to Infinispan internal marshalling. Consequently, cache stores
 created with prior versions of Infinispan can no longer be read by Infinispan 9.x. Furthermore, some previous store
 implementations, such as the JDBC Mixed and Binary stores, are no longer provided. Therefore, in order to assist users,
 we have created a migration tool `StoreMigrator.java`, that reads data from Infinispan 8.2.x stores and rewrites their

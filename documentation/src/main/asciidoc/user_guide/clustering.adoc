@@ -39,6 +39,9 @@ nodes; reads are local.
 * *Distributed*: changes are replicated to a fixed number of nodes, reads request the
 value from at least one of the owner nodes.
 
+//dnaro: filtering this table from product docs. RH doc tooling does not
+//support asciimath or text coloring. Including this table throws a warning.
+ifndef::productized[]
 === Which cache mode should I use?
 
 Which cache you should use depends on the qualities/guarantees you need for your data. The following table summarizes the most important ones:
@@ -67,7 +70,7 @@ stem:[(sum_(i=1)^"nodes""node_capacity")/"2"]
 | Availability     | [red]*Single node*| [red]*Single node*| [red]*Single node*| [green]*All nodes*| [yellow]*Owner nodes* | [yellow]*Owner nodes*
 | Features         | [red]*No TX, persistence, indexing*| [green]*All* | [green]*All* | [green]*All* | [green]*All* | [yellow]*No TX*
 |============================================================
-
+endif::productized[]
 
 === Local Mode
 While {brandname} is particularly interesting in clustered mode, it also offers a very

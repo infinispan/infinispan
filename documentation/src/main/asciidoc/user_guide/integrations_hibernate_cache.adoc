@@ -458,7 +458,7 @@ link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hiber
 {brandname} cache provider supports all Hibernate cache strategies:
 `transactional`, `read-write`, `nonstrict-read-write` and `read-only`.
 
-Integrations with Hibernate 4.x required _transactional invalidation caches_ and in integrations with Hibernate &le; 5.2 _transactional invalidation caches_ are supported (in JTA environment). However for all 5.x versions _non-transactional caches_ are preferred. With Hibernate 5.3 the support for transactional caches has been dropped completely, and both `read-write` and `transactional` use the same implementation. Infinispan provides the same consistency guarantees for both `transactional` and `read-write` strategies, use of transactions is considered an implementation detail.
+Integrations with Hibernate 4.x required _transactional invalidation caches_ and in integrations with Hibernate &le; 5.2 _transactional invalidation caches_ are supported (in JTA environment). However for all 5.x versions _non-transactional caches_ are preferred. With Hibernate 5.3 the support for transactional caches has been dropped completely, and both `read-write` and `transactional` use the same implementation. {brandname} provides the same consistency guarantees for both `transactional` and `read-write` strategies, use of transactions is considered an implementation detail.
 
 In integrations with Hibernate 5.2 or lower the actual setting of cache concurrency mode (`read-write` vs. `transactional`) is not honored on invalidation caches, the appropriate strategy is selected based on the cache configuration (_non-transactional_ vs. _transactional_).
 
@@ -486,7 +486,7 @@ The available combinations are summarized in table below:
 
 Changing caches to behave different to the default behaviour explained in previous section is explained in the link:#configuration_properties[Configuration Properties] section.
 
-IMPORTANT: Use of transactional caches is possible only in JTA environment. Hibernate supports JDBC-only transactions but Infinispan transactional caches do not integrate with these. Therefore, in non-JTA environment the only option is to use `read-write`, `nonstrict-read-write` or `read-only` on non-transactional cache. Configuring the cache as transactional in non-JTA can lead to undefined behaviour.
+IMPORTANT: Use of transactional caches is possible only in JTA environment. Hibernate supports JDBC-only transactions but {brandname} transactional caches do not integrate with these. Therefore, in non-JTA environment the only option is to use `read-write`, `nonstrict-read-write` or `read-only` on non-transactional cache. Configuring the cache as transactional in non-JTA can lead to undefined behaviour.
 
 [[caching_provider_infinispan_stale_read_example]]
 .Stale read with `nonstrict-read-write` strategy
@@ -506,5 +506,5 @@ Tx3: read A = 1, B = 1 // reads after TX1 commit completes are consistent again
 
 ==== Using minimal puts
 
-Hibernate offers a configuration option `hibernate.cache.use_minimal_puts` which is off by default in Infinispan implementation. This option checks if the cache contains given key before updating the value from database (put-from-load) and omits the update if the cached value is already present.
+Hibernate offers a configuration option `hibernate.cache.use_minimal_puts` which is off by default in {brandname} implementation. This option checks if the cache contains given key before updating the value from database (put-from-load) and omits the update if the cached value is already present.
 When using invalidation caches it makes sense to keep this off as the put-from-load is local node-only and silently fails if the entry is locked. With replicated/distributed caches the update is applied to remote nodes, even if the local node already contains the entry, and this has higher performance impact, so it might make sense to turn this option on and avoid updating the cache.

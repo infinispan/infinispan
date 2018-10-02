@@ -5,14 +5,25 @@ ifndef::productized[]
 endif::productized[]
   the latest version of {brandname} and unzipped the archive. 
 
-I will refer to the {brandname} directory created by unzipping the archive as `${INFINISPAN_HOME}`.
+I will refer to the {brandname} directory created by unzipping the archive as
+ifndef::productized[]
+ `${INFINISPAN_HOME}`.
+endif::productized[]
+ifdef::productized[]
+ `${RHDG_HOME}`.
+endif::productized[]
 
 NOTE: You will need either the -bin.zip or -all.zip version for this demo.
 
 === Step 1: Start the demo GUI
-Open up a console and type:
+Open a console and enter:
 
- $ cd ${INFINISPAN_HOME}
+ifndef::productized[]
+$ cd ${INFINISPAN_HOME}
+endif::productized[]
+ifdef::productized[]
+$ cd ${RHDG_HOME}
+endif::productized[]
  $ bin/runGuiDemo.sh
 
 An equivalent `runGuiDemo.bat` file is also provided for Windows users.

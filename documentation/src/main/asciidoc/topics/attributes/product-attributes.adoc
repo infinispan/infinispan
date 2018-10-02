@@ -12,7 +12,7 @@
 //
 :FullProductName: Red Hat Data Grid
 :ProductName: Data Grid
-:ProductShortName: JDG
+:ProductShortName: RHDG
 :ProductRelease: 7.3
 :ProductVersion: 7.3
 :FullProductRelease: 7.3.1
@@ -30,13 +30,13 @@
 //
 :brandname: Red Hat Data Grid
 :infinispanversion: 9.4.0
-:moduleprefix:
-:infinispanslot:
-:javadocroot:
-:configdocroot:
-:wildflydocroot:
-:jdkdocroot:
-:javaeedocroot:
+:moduleprefix: ispn
+:infinispanslot: ispn-9.4
+:javadocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/api
+:configdocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/Configuration/
+:wildflydocroot: https://docs.jboss.org/author/display/WFLY11
+:jdkdocroot: https://docs.oracle.com/javase/8/docs/api
+:javaeedocroot: https://docs.oracle.com/javaee/7/api
 
 //
 // Component Versions

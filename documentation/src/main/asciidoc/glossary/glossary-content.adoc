@@ -118,7 +118,6 @@ link:http://www.jboss.org/jbossmarshalling[JBoss Marshalling] , and offers
 efficient payloads and stream caching. This provides much better performance
 than standard Java serialization.
 
-//dnaro: linking to fix for productized docs
 ifndef::productized[]
 .More resources
 * link:../user_guide/user_guide.html#plugging_infinispan_with_user_defined_externalizers[Plug your own Externalizer implementation] into {brandname}
@@ -139,7 +138,6 @@ the server that contains the key. This is made possible by {brandname} servers
 sending the cluster topology to clients, and the clients using the same
 consistent hash as the servers.
 
-//dnaro: linking to fix for productized docs
 ifndef::productized[]
 .More resources
 * Information about link:../user_guide/user_guide.html#hot_rod_protocol[the protocol]
@@ -199,7 +197,6 @@ Memcached itself to be replaced by {brandname}. Thanks to {brandname}'s
 clustering capabilities, it can offer data failover capabilities not present
 in original Memcached systems.
 
-//dnaro: linking to fix for productized docs
 ifndef::productized[]
 .More resources
 * link:../user_guide/user_guide.html#using_infinispan_memcached_server[{brandname}'s Memcached Server]
@@ -336,7 +333,6 @@ of GET, PUT, POST, DELETE and HEAD operations.
 {brandname}'s ReST server offers a ReSTful API based on these HTTP methods, and
  allow data to be stored, retrieved and deleted.
 
-//dnaro: linking to fix for productized docs
 ifndef::productized[]
 .More resources
 * link:../user_guide/user_guide.html#infinispan_rest_server[The {brandname} REST Server]
@@ -360,7 +356,6 @@ that updates to the cache store are not performed in the client thread.
 
 An alternative cache store update mode is _write-through_.
 
-//dnaro: linking to fix for productized docs
 ifndef::productized[]
 .More resources
 * link:../user_guide/user_guide.html#write_through_and_write_behind_caching[{brandname} User guide]
@@ -387,7 +382,6 @@ means that updates to the cache store are done in the client thread.
 
 An alternative mode in which cache stores can be updated is _write-behind_.
 
-//dnaro: linking to fix for productized docs
 ifndef::productized[]
 .More resources
 * link:../user_guide/user_guide.html#write_through_and_write_behind_caching[{brandname} User guide]

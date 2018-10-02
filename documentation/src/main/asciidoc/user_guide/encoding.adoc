@@ -42,14 +42,29 @@ public interface Encoder {
 
 {brandname} automatically picks the Encoder depending on the cache configuration. The table below shows which internal Encoder is used for several configurations:
 
-[options="header",cols="1,2,3,10"]
-|==============================================================================
+[options="header",cols="4"]
+|===
 | Mode | Configuration | Encoder | Description
-| Embedded/Server | Default | IdentityEncoder | Passthrough  encoder, no conversion done
-| Embedded | StorageType.OFF_HEAP  | GlobalMarshallerEncoder | Uses {brandname} internal marshaller to convert to byte[]. May delegate to the configured marshaller in the cache manager.
-| Embedded | link:#store_binary[StorageType.BINARY] | BinaryEncoder | Uses infinispan internal marshaller to convert to byte[], except for primitives and String.
-| Server | StorageType.OFF_HEAP  | IdentityEncoder | Just store byte[] directly as received by remote clients
-|==============================================================================
+| Embedded/Server
+| Default
+| IdentityEncoder
+| Passthrough encoder, no conversion done
+
+| Embedded
+| StorageType.OFF_HEAP
+| GlobalMarshallerEncoder
+| Use the {brandname} internal marshaller to convert to byte[]. May delegate to the configured marshaller in the cache manager.
+
+| Embedded
+| link:#store_binary[StorageType.BINARY]
+| BinaryEncoder
+| Use the {brandname} internal marshaller to convert to byte[], except for primitives and String.
+
+| Server
+| StorageType.OFF_HEAP
+| IdentityEncoder
+| Store byte[]s directly as received by remote clients
+|===
 
 
 

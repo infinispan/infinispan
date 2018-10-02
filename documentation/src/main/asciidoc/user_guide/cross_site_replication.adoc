@@ -32,7 +32,7 @@ image::images/xdc.png[Cross-site datacenters]
 
 The cross-site replication configuration spreads over the following files:
 
-.  the backup policy for each individual cache is defined in infinispan's .xml configuration file (link:https://gist.github.com/maniksurtani/cdd5420af764c907e342[infinispan.xml])
+.  the backup policy for each individual cache is defined in the {brandname} .xml configuration file (link:https://gist.github.com/maniksurtani/cdd5420af764c907e342[infinispan.xml])
 
 
 .  cluster's JGroups xml configuration file: link:http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced[RELAY2] protocol needs to be added to the JGroups protocol stack (link:https://gist.github.com/maniksurtani/409fe5ece5fe4bcf679f[jgroups.xml])
@@ -140,7 +140,7 @@ cb.sites().backupFor().remoteCache("users").remoteSite("LON");
 
 ==== Local cluster's jgroups .xml configuration
 
-This is the configuration file for the local (intra-site) infinispan cluster. It is referred from the infinispan configuration file, see "configurationFile" below:
+This is the configuration file for the local (intra-site) {brandname} cluster. It is referred from the {brandname} configuration file, see "configurationFile" below:
 
 .infinispan.xml
 [source,xml]

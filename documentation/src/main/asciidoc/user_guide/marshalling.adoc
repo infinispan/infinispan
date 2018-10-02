@@ -253,7 +253,7 @@ public class Person {
 
 ----
 
-At runtime JBoss Marshalling will inspect the object and discover that it's marshallable (thanks to the annotation) and so marshall it using the externalizer class passed. To make externalizer implementations easier to code and more typesafe, make sure you define type `<T>` as the type of object that's being marshalled/unmarshalled.
+At runtime JBoss Marshalling will inspect the object and discover that it is marshallable (thanks to the annotation) and so marshall it using the externalizer class passed. To make externalizer implementations easier to code and more typesafe, make sure you define type `<T>` as the type of object that's being marshalled/unmarshalled.
 
 Even though this way of defining externalizers is very user friendly, it has some disadvantages:
 

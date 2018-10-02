@@ -357,7 +357,7 @@ Also, there will be no conflict with WildFly / EAP's internal modules since the 
 [[modules_installation_section]]
 ==== Installation
 
-The modules for WildFly / EAP are available in the link:http://infinispan.org/download/[downloads] section of our site. The zip should be extracted to `WILDFLY_HOME/modules`, so that for example the infinispan core module would be under `WILDFLY_HOME/modules/system/add-ons/{moduleprefix}/org/infinispan/core`.
+The modules for WildFly / EAP are available in the link:http://infinispan.org/download/[downloads] section of our site. The zip should be extracted to `WILDFLY_HOME/modules`, so that for example the {brandname} core module would be under `WILDFLY_HOME/modules/system/add-ons/{moduleprefix}/org/infinispan/core`.
 
 ==== Application Dependencies
 
@@ -481,7 +481,7 @@ lifecycle of the underlying cache container being independent of the deployed ap
 To enable server mode, it is necessary to make the following additions to your wildfly configuration in standalone/domain.xml.
 Note, that only steps 1-4 are required for local cache instances:
 
-. Add the infinispan extensions to your `<extensions>` section
+. Add the {brandname} extensions to your `<extensions>` section
 
 [source,xml,subs=attributes+]
 ----
@@ -495,8 +495,8 @@ Note, that only steps 1-4 are required for local cache instances:
 ----
 
 [start=2]
-. Configure the infinispan subsystem, along with your required containers and caches, in the server profile which requires infinispan.
-Note, it's important that the module attribue is defined so that correct infinispan classes are loaded.
+. Configure the {brandname} subsystem, along with your required containers and caches, in the server profile which requires {brandname}.
+Note, it's important that the module attribue is defined so that correct {brandname} classes are loaded.
 
 [source,xml,subs=attributes+]
 ----

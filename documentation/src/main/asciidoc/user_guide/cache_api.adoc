@@ -20,7 +20,6 @@ Attempting to perform these operations globally would have large performance imp
 
 It should be noted that using certain flags with the link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags] method can mitigate some of these concerns, please check each method's documentation for more details.
 
-//dnaro: adding conditional statement to exclude this from productized builds
 ifndef::productized[]
 For more performance tips, have a look at our link:../performance_guide/performance_guide.html[Performance Guide].
 endif::productized[]
@@ -30,9 +29,8 @@ Further to simply storing entries, {brandname}'s cache API allows you to attach 
 
 In addition to _lifespan_ , {brandname} also supports _maxIdle_ as an additional metric with which to determine expiration.  Any combination of lifespans or maxIdles can be used.
 
-//dnaro: Need to fix this section. Broken linking.
-//==== Example of Using Expiry and Mortal Data
-//See <<_eviction_examples, these examples>> of using mortal data with {brandname}.
+==== Expiration and Mortal Data
+See link:#expiration_anchor[Expiration] for more information about using mortal data with {brandname}.
 
 ==== putForExternalRead operation
 {brandname}'s link:{javadocroot}/org/infinispan/Cache.html[Cache] class contains a different 'put' operation called link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] . This operation is particularly useful when {brandname} is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way.

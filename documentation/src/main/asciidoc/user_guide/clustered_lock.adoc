@@ -20,7 +20,7 @@ In order to start using the clustered locks, you needs to add the dependency in 
 
 Currently no extra configuration needs to be provided.
 
-=== The ClusteredLockConfiguration.
+=== The ClusteredLockConfiguration
 
 Currently there is a single type of `ClusteredLock` supported : non reentrant, NODE ownership lock.
 
@@ -28,23 +28,23 @@ Currently there is a single type of `ClusteredLock` supported : non reentrant, N
 ==== Ownership
 
 * `NODE`
-When a `ClusteredLock` is defined, this lock can be used from all the nodes in the infinispan cluster.
-When the ownership is NODE type, this means that the owner of the lock is the infinispan node that acquired the lock
+When a `ClusteredLock` is defined, this lock can be used from all the nodes in the {brandname} cluster.
+When the ownership is NODE type, this means that the owner of the lock is the {brandname} node that acquired the lock
 at a given time.
 This means that each time we get a `ClusteredLock` instance with the `ClusteredCacheManager`, this instance will be the
-same instance for each infinispan node.
-This lock can be used to synchronize code between infinispan nodes. The advantage of this lock is that any thread in the
+same instance for each {brandname} node.
+This lock can be used to synchronize code between {brandname} nodes. The advantage of this lock is that any thread in the
 node can release the lock at a given time.
 
 * `INSTANCE` - not yet supported
 
-When a `ClusteredLock` is defined, this lock can be used from all the nodes in the infinispan cluster.
+When a `ClusteredLock` is defined, this lock can be used from all the nodes in the {brandname} cluster.
 When the ownership is INSTANCE type, this means that the owner of the lock is the actual instance we acquired when
 `ClusteredLockManager.get("lockName")` is called.
 
 This means that each time we get a `ClusteredLock` instance with the `ClusteredCacheManager`, this instance will be
 a new instance.
-This lock can be used to synchronize code between infinispan nodes and inside each infinispan node.
+This lock can be used to synchronize code between {brandname} nodes and inside each {brandname} node.
 The advantage of this lock is that only the instance that called 'lock' can release the lock.
 
 ==== Reentrancy
