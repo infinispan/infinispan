@@ -86,6 +86,8 @@
         <versionx.asm.asm-commons>${version.asm}</versionx.asm.asm-commons>
         <versionx.asm.asm-tree>${version.asm}</versionx.asm.asm-tree>
         <versionx.asm.asm>${version.asm}</versionx.asm.asm>
+        <versionx.ca.uhn.hapi.hapi-structures-v24>2.3</versionx.ca.uhn.hapi.hapi-structures-v24>
+        <versionx.ca.uhn.hapi.hapi-structures-v25>2.3</versionx.ca.uhn.hapi.hapi-structures-v25>
         <versionx.ch.qos.logback.logback-classic>1.1.7</versionx.ch.qos.logback.logback-classic>
         <versionx.ch.qos.logback.logback-core>1.1.7</versionx.ch.qos.logback.logback-core>
         <versionx.com.addthis.metrics.reporter-config3>3.0.0</versionx.com.addthis.metrics.reporter-config3>
@@ -95,6 +97,7 @@
         <versionx.com.carrotsearch.hppc>0.7.2</versionx.com.carrotsearch.hppc>
         <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
         <versionx.com.datastax.cassandra.cassandra-driver-core>3.3.2</versionx.com.datastax.cassandra.cassandra-driver-core>
+        <versionx.com.dropbox.core.dropbox-core-sdk>3.0.9</versionx.com.dropbox.core.dropbox-core-sdk>
         <versionx.com.esotericsoftware.kryo>4.0.1</versionx.com.esotericsoftware.kryo>
         <versionx.com.esotericsoftware.kryo.kryo>2.24.0</versionx.com.esotericsoftware.kryo.kryo>
         <versionx.com.esotericsoftware.kryo-shaded>3.0.3</versionx.com.esotericsoftware.kryo-shaded>
@@ -121,6 +124,8 @@
         <versionx.com.google.code.gson.gson>${version.gson}</versionx.com.google.code.gson.gson>
         <versionx.com.googlecode.javaewah.JavaEWAH>0.3.2</versionx.com.googlecode.javaewah.JavaEWAH>
         <versionx.com.googlecode.json-simple.json-simple>1.1.1</versionx.com.googlecode.json-simple.json-simple>
+        <versionx.com.google.code.scriptengines.scriptengines-javascript>1.1.1</versionx.com.google.code.scriptengines.scriptengines-javascript>
+        <versionx.com.google.code.scriptengines.scriptengines-jruby>1.1.1</versionx.com.google.code.scriptengines.scriptengines-jruby>
         <versionx.com.google.guava.guava>25.0-jre</versionx.com.google.guava.guava>
         <versionx.com.google.inject.extensions.guice-servlet>3.0</versionx.com.google.inject.extensions.guice-servlet>
         <versionx.com.google.inject.guice>3.0</versionx.com.google.inject.guice>
@@ -128,6 +133,7 @@
         <versionx.com.h2database.h2>1.4.193</versionx.com.h2database.h2>
         <versionx.com.intellij.forms_rt>6.0.5</versionx.com.intellij.forms_rt>
         <versionx.com.jamesmurty.utils.java-xmlbuilder>0.4</versionx.com.jamesmurty.utils.java-xmlbuilder>
+        <versionx.com.jayway.awaitility.awaitility>1.7.0</versionx.com.jayway.awaitility.awaitility>
         <versionx.com.jcraft.jsch>0.1.42</versionx.com.jcraft.jsch>
         <versionx.com.jgoodies.forms>1.0.7</versionx.com.jgoodies.forms>
         <versionx.com.jolbox.bonecp>0.8.0.RELEASE</versionx.com.jolbox.bonecp>
@@ -151,6 +157,8 @@
         <versionx.commons-net.commons-net>3.1</versionx.commons-net.commons-net>
         <versionx.commons-pool.commons-pool>1.6</versionx.commons-pool.commons-pool>
         <versionx.com.ning.compress-lzf>0.8.4</versionx.com.ning.compress-lzf>
+        <versionx.com.puppycrawl.tools.checkstyle>8.12</versionx.com.puppycrawl.tools.checkstyle>
+        <versionx.com.sna-projects.krati.krati>0.4.9</versionx.com.sna-projects.krati.krati>
         <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
         <versionx.com.sun.istack.istack-commons-runtime>3.0.5</versionx.com.sun.istack.istack-commons-runtime>
         <versionx.com.sun.jersey.contribs.jersey-guice>1.9</versionx.com.sun.jersey.contribs.jersey-guice>
@@ -161,7 +169,9 @@
         <versionx.com.sun.tools>1.8.0_161</versionx.com.sun.tools>
         <versionx.com.sun.xml.bind.jaxb-core>2.2.11</versionx.com.sun.xml.bind.jaxb-core>
         <versionx.com.sun.xml.bind.jaxb-impl>2.2.11</versionx.com.sun.xml.bind.jaxb-impl>
+        <versionx.com.sun.xml.bind.jaxb-jxc>2.2.11</versionx.com.sun.xml.bind.jaxb-jxc>
         <versionx.com.sun.xml.fastinfoset.FastInfoset>1.2.13</versionx.com.sun.xml.fastinfoset.FastInfoset>
+        <versionx.com.sun.xml.parsers.jaxp-ri>1.4.5</versionx.com.sun.xml.parsers.jaxp-ri>
         <versionx.com.thinkaurelius.thrift.thrift-server>0.3.7</versionx.com.thinkaurelius.thrift.thrift-server>
         <versionx.com.thoughtworks.paranamer.paranamer>2.3</versionx.com.thoughtworks.paranamer.paranamer>
         <versionx.com.thoughtworks.xstream.xstream>1.4.10</versionx.com.thoughtworks.xstream.xstream>
@@ -176,9 +186,11 @@
         <versionx.com.univocity.univocity-parsers>2.5.9</versionx.com.univocity.univocity-parsers>
         <versionx.com.vlkan.flatbuffers>1.2.0-3f79e055</versionx.com.vlkan.flatbuffers>
         <versionx.com.zaxxer.HikariCP>${version.hikaricp}</versionx.com.zaxxer.HikariCP>
+        <versionx.de.flapdoodle.embed.de.flapdoodle.embed.mongo>2.1.1</versionx.de.flapdoodle.embed.de.flapdoodle.embed.mongo>
         <versionx.de.javakaffee.kryo-serializers>0.27</versionx.de.javakaffee.kryo-serializers>
         <versionx.dom4j.dom4j>1.6.1</versionx.dom4j.dom4j>
         <versionx.gnu.getopt.java-getopt>1.0.13</versionx.gnu.getopt.java-getopt>
+        <versionx.httpunit.httpunit>1.7</versionx.httpunit.httpunit>
         <versionx.i18nlog.i18nlog>1.0.10</versionx.i18nlog.i18nlog>
         <versionx.io.airlift.aircompressor>0.8</versionx.io.airlift.aircompressor>
         <versionx.io.dropwizard.metrics.metrics-core>3.1.2</versionx.io.dropwizard.metrics.metrics-core>
@@ -186,7 +198,6 @@
         <versionx.io.dropwizard.metrics.metrics-json>3.1.5</versionx.io.dropwizard.metrics.metrics-json>
         <versionx.io.dropwizard.metrics.metrics-jvm>3.1.0</versionx.io.dropwizard.metrics.metrics-jvm>
         <versionx.io.fabric8.agent-bond-agent>1.0.2</versionx.io.fabric8.agent-bond-agent>
-        <versionx.io.netty.netty>${version.netty}</versionx.io.netty.netty>
         <versionx.io.netty.netty-all>${version.netty}</versionx.io.netty.netty-all>
         <versionx.io.netty.netty-bom>${version.netty}</versionx.io.netty.netty-bom>
         <versionx.io.netty.netty-buffer>${version.netty}</versionx.io.netty.netty-buffer>
@@ -201,6 +212,7 @@
         <versionx.io.netty.netty-transport-native-epoll>${version.netty}</versionx.io.netty.netty-transport-native-epoll>
         <versionx.io.netty.netty-transport-native-unix-common>${version.netty}</versionx.io.netty.netty-transport-native-unix-common>
         <versionx.io.netty.netty-transport>${version.netty}</versionx.io.netty.netty-transport>
+        <versionx.io.opentracing.contrib.opentracing-jaxrs2>0.1.7</versionx.io.opentracing.contrib.opentracing-jaxrs2>
         <versionx.io.protostuff.protostuff-api>${version.protostuff}</versionx.io.protostuff.protostuff-api>
         <versionx.io.protostuff.protostuff-collectionschema>${version.protostuff}</versionx.io.protostuff.protostuff-collectionschema>
         <versionx.io.protostuff.protostuff-core>${version.protostuff}</versionx.io.protostuff.protostuff-core>
@@ -220,6 +232,7 @@
         <versionx.javax.interceptor.javax.interceptor-api>1.2</versionx.javax.interceptor.javax.interceptor-api>
         <versionx.javax.jdo.jdo-api>3.0.1</versionx.javax.jdo.jdo-api>
         <versionx.javax.persistence.javax.persistence-api>${version.javax.persistence}</versionx.javax.persistence.javax.persistence-api>
+        <versionx.javax.security.enterprise.javax.security.enterprise-api>1.0</versionx.javax.security.enterprise.javax.security.enterprise-api>
         <versionx.javax.servlet.javax.servlet-api>3.1.0</versionx.javax.servlet.javax.servlet-api>
         <versionx.javax.servlet.jsp.jsp-api>2.1</versionx.javax.servlet.jsp.jsp-api>
         <versionx.javax.servlet.jstl>1.2</versionx.javax.servlet.jstl>
@@ -242,15 +255,20 @@
         <versionx.net.bytebuddy.byte-buddy-agent>${version.mockito_dep.bytebuddy}</versionx.net.bytebuddy.byte-buddy-agent>
         <versionx.net.bytebuddy.byte-buddy>${version.mockito_dep.bytebuddy}</versionx.net.bytebuddy.byte-buddy>
         <versionx.net.hydromatic.eigenbase-properties>1.1.5</versionx.net.hydromatic.eigenbase-properties>
+        <versionx.net.java.dev.jaxb2-commons.jaxb-fluent-api>2.1.8</versionx.net.java.dev.jaxb2-commons.jaxb-fluent-api>
         <versionx.net.java.dev.jets3t.jets3t>0.9.0</versionx.net.java.dev.jets3t.jets3t>
         <versionx.net.java.dev.jna.jna>4.2.2</versionx.net.java.dev.jna.jna>
         <versionx.net.jcip.jcip-annotations>1.0</versionx.net.jcip.jcip-annotations>
         <versionx.net.jpountz.lz4.lz4>1.3.0</versionx.net.jpountz.lz4.lz4>
         <versionx.net.razorvine.pyrolite>4.13</versionx.net.razorvine.pyrolite>
+        <versionx.net.sf.dozer.dozer>5.5.1</versionx.net.sf.dozer.dozer>
         <versionx.net.sf.ehcache.ehcache>2.9.1</versionx.net.sf.ehcache.ehcache>
         <versionx.net.sf.opencsv.opencsv>2.3</versionx.net.sf.opencsv.opencsv>
         <versionx.net.sf.py4j.py4j>0.10.6</versionx.net.sf.py4j.py4j>
+        <versionx.net.sf.saxon.Saxon-HE>9.9.0-1</versionx.net.sf.saxon.Saxon-HE>
+        <versionx.net.shibboleth.utilities.java-support>7.3.0</versionx.net.shibboleth.utilities.java-support>
         <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
+        <versionx.ognl.ognl>3.2.6</versionx.ognl.ognl>
         <versionx.org.aesh.aesh>1.7</versionx.org.aesh.aesh>
         <versionx.org.aesh.aesh-extensions>1.6</versionx.org.aesh.aesh-extensions>
         <versionx.org.aesh.aesh-readline>1.10</versionx.org.aesh.aesh-readline>
@@ -258,9 +276,22 @@
         <versionx.org.antlr.antlr-runtime>${version.antlr3}</versionx.org.antlr.antlr-runtime>
         <versionx.org.antlr.antlr>${version.antlr3}</versionx.org.antlr.antlr>
         <versionx.org.antlr.ST4>4.0.8</versionx.org.antlr.ST4>
+        <versionx.org.apache.abdera.abdera-core>1.1.3</versionx.org.apache.abdera.abdera-core>
+        <versionx.org.apache.activemq.activemq-all>5.15.6</versionx.org.apache.activemq.activemq-all>
+        <versionx.org.apache.activemq.activemq-broker>5.15.6</versionx.org.apache.activemq.activemq-broker>
+        <versionx.org.apache.activemq.activemq-camel>5.15.6</versionx.org.apache.activemq.activemq-camel>
+        <versionx.org.apache.activemq.activemq-client>5.15.6</versionx.org.apache.activemq.activemq-client>
+        <versionx.org.apache.activemq.activemq-kahadb-store>5.15.6</versionx.org.apache.activemq.activemq-kahadb-store>
+        <versionx.org.apache.activemq.activemq-pool>5.15.6</versionx.org.apache.activemq.activemq-pool>
+        <versionx.org.apache.activemq.activemq-rar>5.15.6</versionx.org.apache.activemq.activemq-rar>
+        <versionx.org.apache.activemq.activemq-spring>5.15.6</versionx.org.apache.activemq.activemq-spring>
+        <versionx.org.apache.activemq.artemis-jdbc-store>2.6.3.jbossorg-001</versionx.org.apache.activemq.artemis-jdbc-store>
         <versionx.org.apache.ant.ant-launcher>${version.ant}</versionx.org.apache.ant.ant-launcher>
         <versionx.org.apache.ant.ant-nodeps>${version.ant}</versionx.org.apache.ant.ant-nodeps>
         <versionx.org.apache.ant.ant-trax>${version.ant}</versionx.org.apache.ant.ant-trax>
+        <versionx.org.apache.aries.blueprint.org.apache.aries.blueprint.api>1.0.1</versionx.org.apache.aries.blueprint.org.apache.aries.blueprint.api>
+        <versionx.org.apache.aries.blueprint.org.apache.aries.blueprint.cm>1.3.0</versionx.org.apache.aries.blueprint.org.apache.aries.blueprint.cm>
+        <versionx.org.apache.aries.blueprint.org.apache.aries.blueprint.core>1.10.0</versionx.org.apache.aries.blueprint.org.apache.aries.blueprint.core>
         <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
         <versionx.org.apache.arrow.arrow-format>0.8.0</versionx.org.apache.arrow.arrow-format>
         <versionx.org.apache.arrow.arrow-memory>0.8.0</versionx.org.apache.arrow.arrow-memory>
@@ -352,6 +383,8 @@
         <versionx.org.apache.lucene.lucene-queries>${version.lucene}</versionx.org.apache.lucene.lucene-queries>
         <versionx.org.apache.lucene.lucene-queryparser>${version.lucene}</versionx.org.apache.lucene.lucene-queryparser>
         <versionx.org.apache.lucene.lucene-sandbox>${version.lucene}</versionx.org.apache.lucene.lucene-sandbox>
+        <versionx.org.apache.lucene-lucene-spatial>${version.lucene}</versionx.org.apache.lucene-lucene-spatial>
+        <versionx.org.apache.lucene-lucene-spatial3d>${version.lucene}</versionx.org.apache.lucene-lucene-spatial3d>
         <versionx.org.apache.maven.maven-aether-provider>3.3.9</versionx.org.apache.maven.maven-aether-provider>
         <versionx.org.apache.maven.maven-artifact>3.5.4</versionx.org.apache.maven.maven-artifact>
         <versionx.org.apache.maven.maven-core>3.5.4</versionx.org.apache.maven.maven-core>
@@ -372,6 +405,8 @@
         <versionx.org.apache.parquet.parquet-format>2.3.1</versionx.org.apache.parquet.parquet-format>
         <versionx.org.apache.parquet.parquet-hadoop>1.8.2</versionx.org.apache.parquet.parquet-hadoop>
         <versionx.org.apache.parquet.parquet-jackson>1.8.2</versionx.org.apache.parquet.parquet-jackson>
+        <versionx.org.apache.qpid.proton-j>0.27.1</versionx.org.apache.qpid.proton-j>
+        <versionx.org.apache.santuario.xmlsec>2.1.2</versionx.org.apache.santuario.xmlsec>
         <versionx.org.apache.spark.spark-catalyst_2.11>${version.spark2}</versionx.org.apache.spark.spark-catalyst_2.11>
         <versionx.org.apache.spark.spark-core_2.11>${version.spark2}</versionx.org.apache.spark.spark-core_2.11>
         <versionx.org.apache.spark.spark-hive_2.11>${version.spark2}</versionx.org.apache.spark.spark-hive_2.11>
@@ -386,11 +421,16 @@
         <versionx.org.apache.spark.spark-unsafe_2.11>${version.spark2}</versionx.org.apache.spark.spark-unsafe_2.11>
         <versionx.org.apache.thrift.libfb303>0.9.3</versionx.org.apache.thrift.libfb303>
         <versionx.org.apache.thrift.libthrift>0.9.2</versionx.org.apache.thrift.libthrift>
+        <versionx.org.apache.ws.commons.axiom.axiom-api>1.2.20</versionx.org.apache.ws.commons.axiom.axiom-api>
+        <versionx.org.apache.ws.commons.axiom.axiom-impl>1.2.20</versionx.org.apache.ws.commons.axiom.axiom-impl>
+        <versionx.org.apache.ws.xmlschema.xmlschema-core>2.2.3</versionx.org.apache.ws.xmlschema.xmlschema-core>
         <versionx.org.apache.xbean.xbean-asm5-shaded>4.4</versionx.org.apache.xbean.xbean-asm5-shaded>
         <versionx.org.apache.zookeeper.zookeeper>3.4.6</versionx.org.apache.zookeeper.zookeeper>
         <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
         <versionx.org.assertj.assertj-core>3.4.1</versionx.org.assertj.assertj-core>
         <versionx.org.beanshell.bsh>2.0b4</versionx.org.beanshell.bsh>
+        <versionx.org.bouncycastle.bcmail-jdk15on>1.60</versionx.org.bouncycastle.bcmail-jdk15on>
+        <versionx.org.bouncycastle.bcprov-jdk15on>1.60</versionx.org.bouncycastle.bcprov-jdk15on>
         <versionx.org.caffinitas.ohc.ohc-core>0.4.3</versionx.org.caffinitas.ohc.ohc-core>
         <versionx.org.codehaus.groovy.groovy>${version.groovy}</versionx.org.codehaus.groovy.groovy>
         <versionx.org.codehaus.groovy.groovy-xml>${version.groovy}</versionx.org.codehaus.groovy.groovy-xml>
@@ -407,6 +447,7 @@
         <versionx.org.codehaus.plexus.plexus-utils>3.1.0</versionx.org.codehaus.plexus.plexus-utils>
         <versionx.org.codehaus.woodstox.woodstox-core-asl>4.4.1</versionx.org.codehaus.woodstox.woodstox-core-asl>
         <versionx.org.conscrypt.conscrypt-openjdk>${version.netty-conscrypt-optional}</versionx.org.conscrypt.conscrypt-openjdk>
+        <versionx.org.cryptacular.cryptacular>1.2.0</versionx.org.cryptacular.cryptacular>
         <versionx.org.datanucleus.datanucleus-api-jdo>3.2.6</versionx.org.datanucleus.datanucleus-api-jdo>
         <versionx.org.datanucleus.datanucleus-core>3.2.10</versionx.org.datanucleus.datanucleus-core>
         <versionx.org.datanucleus.datanucleus-rdbms>3.2.9</versionx.org.datanucleus.datanucleus-rdbms>
@@ -415,6 +456,7 @@
         <versionx.org.eclipse.jetty.jetty-http>${version.jetty}</versionx.org.eclipse.jetty.jetty-http>
         <versionx.org.eclipse.jetty.jetty-io>${version.jetty}</versionx.org.eclipse.jetty.jetty-io>
         <versionx.org.eclipse.jetty.jetty-util>${version.jetty}</versionx.org.eclipse.jetty.jetty-util>
+        <versionx.org.eclipse.microprofile.config.microprofile-config-api>1.3</versionx.org.eclipse.microprofile.config.microprofile-config-api>
         <versionx.org.elasticsearch.client.elasticsearch-rest-client-sniffer>${version.elasticsearch}</versionx.org.elasticsearch.client.elasticsearch-rest-client-sniffer>
         <versionx.org.elasticsearch.client.elasticsearch-rest-client>${version.elasticsearch}</versionx.org.elasticsearch.client.elasticsearch-rest-client>
         <versionx.org.elasticsearch.elasticsearch>${version.elasticsearch}</versionx.org.elasticsearch.elasticsearch>
@@ -601,6 +643,7 @@
         <versionx.org.jboss.jandex>${version.hibernate_dep.jandex}</versionx.org.jboss.jandex>
         <versionx.org.jboss.jboss-common-core>2.2.16.GA</versionx.org.jboss.jboss-common-core>
         <versionx.org.jboss.jboss-dmr>1.5.0.Final</versionx.org.jboss.jboss-dmr>
+        <versionx.org.jboss.jboss-ejb-client>4.0.11.Final</versionx.org.jboss.jboss-ejb-client>
         <versionx.org.jboss.jboss-transaction-spi>7.6.0.Final</versionx.org.jboss.jboss-transaction-spi>
         <versionx.org.jboss.jboss-vfs>3.2.12.Final</versionx.org.jboss.jboss-vfs>
         <versionx.org.jboss.jbossts.jbossjta>4.16.4.Final</versionx.org.jboss.jbossts.jbossjta>
@@ -608,6 +651,7 @@
         <versionx.org.jboss.logging.jboss-logging-annotations>2.1.0.Final</versionx.org.jboss.logging.jboss-logging-annotations>
         <versionx.org.jboss.logging.jboss-logging-processor>2.1.0.Final</versionx.org.jboss.logging.jboss-logging-processor>
         <versionx.org.jboss.logging.jboss-logging>${version.jboss.logging}</versionx.org.jboss.logging.jboss-logging>
+        <versionx.org.jboss.logging.jboss-logging-spi>2.1.0.GA</versionx.org.jboss.logging.jboss-logging-spi>
         <versionx.org.jboss.logmanager.jboss-logmanager>2.1.2.Final</versionx.org.jboss.logmanager.jboss-logmanager>
         <versionx.org.jboss.marshalling.jboss-marshalling-osgi>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling-osgi>
         <versionx.org.jboss.marshalling.jboss-marshalling-parent>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling-parent>
@@ -631,6 +675,7 @@
         <versionx.org.jboss.security.jboss-negotiation-common>3.0.4.Final</versionx.org.jboss.security.jboss-negotiation-common>
         <versionx.org.jboss.security.jboss-negotiation-extras>3.0.4.Final</versionx.org.jboss.security.jboss-negotiation-extras>
         <versionx.org.jboss.security.jboss-negotiation-spnego>3.0.4.Final</versionx.org.jboss.security.jboss-negotiation-spnego>
+        <versionx.org.jboss.security.jbossxacml>2.0.8</versionx.org.jboss.security.jbossxacml>
         <versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-api-base>2.0.0-alpha-10</versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-api-base>
         <versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-api-javaee>2.0.0-alpha-10</versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-api-javaee>
         <versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-base>2.0.0-alpha-10</versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-base>
@@ -658,6 +703,7 @@
         <versionx.org.jboss.spec.javax.interceptor.jboss-interceptors-api_1.2_spec>1.0.1.Final</versionx.org.jboss.spec.javax.interceptor.jboss-interceptors-api_1.2_spec>
         <versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>1.0.2.Final</versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>
         <versionx.org.jboss.spec.javax.resource.jboss-connector-api_1.7_spec>1.0.1.Final</versionx.org.jboss.spec.javax.resource.jboss-connector-api_1.7_spec>
+        <versionx.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>1.0.2.Final</versionx.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>
         <versionx.org.jboss.spec.javax.security.jacc.jboss-jacc-api_1.5_spec>1.0.2.Final</versionx.org.jboss.spec.javax.security.jacc.jboss-jacc-api_1.5_spec>
         <versionx.org.jboss.spec.javax.servlet.jboss-servlet-api_3.0_spec>1.0.1.Final</versionx.org.jboss.spec.javax.servlet.jboss-servlet-api_3.0_spec>
         <versionx.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.2.Final</versionx.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
@@ -665,12 +711,17 @@
         <versionx.org.jboss.spec.javax.transaction.jboss-transaction-api_1.1_spec>1.0.1.Final</versionx.org.jboss.spec.javax.transaction.jboss-transaction-api_1.1_spec>
         <versionx.org.jboss.spec.javax.transaction.jboss-transaction-api_1.2_spec>1.1.1.Final</versionx.org.jboss.spec.javax.transaction.jboss-transaction-api_1.2_spec>
         <versionx.org.jboss.spec.javax.xml.bind.jboss-jaxb-api_2.3_spec>1.0.1.Final</versionx.org.jboss.spec.javax.xml.bind.jboss-jaxb-api_2.3_spec>
+        <versionx.org.jboss.spec.javax.xml.soap.jboss-saaj-api_1.3_spec>1.0.6.Final</versionx.org.jboss.spec.javax.xml.soap.jboss-saaj-api_1.3_spec>
+        <versionx.org.jboss.spec.javax.xml.ws.jboss-jaxws-api_2.3_spec>1.0.0.Final</versionx.org.jboss.spec.javax.xml.ws.jboss-jaxws-api_2.3_spec>
         <versionx.org.jboss.spec.jboss-javaee-7.0>1.0.2.Final</versionx.org.jboss.spec.jboss-javaee-7.0>
         <versionx.org.jboss.staxmapper>1.3.0.Final</versionx.org.jboss.staxmapper>
         <versionx.org.jboss.stdio.jboss-stdio>1.0.2.GA</versionx.org.jboss.stdio.jboss-stdio>
         <versionx.org.jboss.threads.jboss-threads>2.3.2.Final</versionx.org.jboss.threads.jboss-threads>
         <versionx.org.jboss.weld.se.weld-se>2.3.4.Final</versionx.org.jboss.weld.se.weld-se>
+        <versionx.org.jboss.weld.weld-api>3.0.SP4</versionx.org.jboss.weld.weld-api>
         <versionx.org.jboss.weld.weld-core>2.3.4.Final</versionx.org.jboss.weld.weld-core>
+        <versionx.org.jboss.weld.weld-spi>3.0.SP4</versionx.org.jboss.weld.weld-spi>
+        <versionx.org.jboss.ws.jbossws-spi>3.2.2.Final</versionx.org.jboss.ws.jbossws-spi>
         <versionx.org.jboss.xnio.xnio-api>3.6.3.Final</versionx.org.jboss.xnio.xnio-api>
         <versionx.org.jboss.xnio.xnio-nio>3.6.3.Final</versionx.org.jboss.xnio.xnio-nio>
         <versionx.org.jdom.jdom>1.1.3</versionx.org.jdom.jdom>
@@ -681,6 +732,7 @@
         <versionx.org.json4s.json4s-ast_2.11>3.2.11</versionx.org.json4s.json4s-ast_2.11>
         <versionx.org.json4s.json4s-core_2.11>3.2.11</versionx.org.json4s.json4s-core_2.11>
         <versionx.org.json4s.json4s-jackson_2.11>3.2.11</versionx.org.json4s.json4s-jackson_2.11>
+        <versionx.org.jsoup.jsoup>1.8.3</versionx.org.jsoup.jsoup>
         <versionx.org.jvnet.staxex.stax-ex>1.7.8</versionx.org.jvnet.staxex.stax-ex>
         <versionx.org.kohsuke.metainf-services.metainf-services>${version.metainf-services}</versionx.org.kohsuke.metainf-services.metainf-services>
         <versionx.org.latencyutils.LatencyUtils>2.0.2</versionx.org.latencyutils.LatencyUtils>
@@ -698,6 +750,8 @@
         <versionx.org.ops4j.pax.exam.pax-exam-inject>${version.pax.exam}</versionx.org.ops4j.pax.exam.pax-exam-inject>
         <versionx.org.ops4j.pax.exam.pax-exam-junit4>${version.pax.exam}</versionx.org.ops4j.pax.exam.pax-exam-junit4>
         <versionx.org.ops4j.pax.exam.pax-exam>${version.pax.exam}</versionx.org.ops4j.pax.exam.pax-exam>
+        <versionx.org.ops4j.pax.swissbox.pax-swissbox-property>1.8.3</versionx.org.ops4j.pax.swissbox.pax-swissbox-property>
+        <versionx.org.ops4j.pax.swissbox.pax-swissbox-tinybundles>1.8.3</versionx.org.ops4j.pax.swissbox.pax-swissbox-tinybundles>
         <versionx.org.ops4j.pax.url.pax-url-aether>2.5.2</versionx.org.ops4j.pax.url.pax-url-aether>
         <versionx.org.ops4j.pax.url.pax-url-assembly>2.5.2</versionx.org.ops4j.pax.url.pax-url-assembly>
         <versionx.org.ops4j.pax.url.pax-url-wrap>2.5.2</versionx.org.ops4j.pax.url.pax-url-wrap>
@@ -831,6 +885,7 @@
         <versionx.oro.oro>2.0.8</versionx.oro.oro>
         <versionx.stax.stax-api>1.0.1</versionx.stax.stax-api>
         <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
+        <versionx.xalan.serializer>${version.xalan}</versionx.xalan.serializer>
         <versionx.xalan.xalan>${version.xalan}</versionx.xalan.xalan>
         <versionx.xerces.xercesImpl>${version.xerces}</versionx.xerces.xercesImpl>
         <versionx.xml-apis.xml-apis>1.0.b2</versionx.xml-apis.xml-apis>
@@ -1550,11 +1605,6 @@
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
-                <artifactId>netty</artifactId>
-                <version>${versionx.io.netty.netty}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
                 <artifactId>netty-buffer</artifactId>
                 <version>${versionx.io.netty.netty-buffer}</version>
             </dependency>
@@ -1642,6 +1692,11 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-unix-common</artifactId>
                 <version>${versionx.io.netty.netty-transport-native-unix-common}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentracing.contrib</groupId>
+                <artifactId>opentracing-jaxrs2</artifactId>
+                <version>${versionx.io.opentracing.contrib.opentracing-jaxrs2}</version>
             </dependency>
             <dependency>
                 <groupId>io.protostuff</groupId>
@@ -1749,6 +1804,11 @@
                 <groupId>javax.persistence</groupId>
                 <artifactId>javax.persistence-api</artifactId>
                 <version>${versionx.javax.persistence.javax.persistence-api}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.security.enterprise</groupId>
+                <artifactId>javax.security.enterprise-api</artifactId>
+                <version>${versionx.javax.security.enterprise.javax.security.enterprise-api}</version>
             </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
@@ -1916,6 +1976,11 @@
                 <version>${versionx.net.sf.saxon.Saxon-HE}</version>
             </dependency>
             <dependency>
+                <groupId>net.shibboleth.utilities</groupId>
+                <artifactId>java-support</artifactId>
+                <version>${versionx.net.shibboleth.utilities.java-support}</version>
+            </dependency>
+            <dependency>
                 <groupId>net.spy</groupId>
                 <artifactId>spymemcached</artifactId>
                 <version>${versionx.net.spy.spymemcached}</version>
@@ -2004,6 +2069,11 @@
                 <groupId>org.apache.activemq</groupId>
                 <artifactId>activemq-spring</artifactId>
                 <version>${versionx.org.apache.activemq.activemq-spring}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>artemis-jdbc-store</artifactId>
+                <version>${versionx.org.apache.activemq.artemis-jdbc-store}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.ant</groupId>
@@ -3739,6 +3809,16 @@
                 <version>${versionx.org.apache.lucene.lucene-sandbox}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-spatial</artifactId>
+                <version>${versionx.org.apache.lucene-lucene-spatial}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-spatial3d</artifactId>
+                <version>${versionx.org.apache.lucene-lucene-spatial3d}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.maven.archetype</groupId>
                 <artifactId>archetype-packaging</artifactId>
                 <version>${versionx.org.apache.maven.archetype.archetype-packaging}</version>
@@ -3869,6 +3949,16 @@
                 <version>${versionx.org.apache.parquet.parquet-jackson}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.qpid</groupId>
+                <artifactId>proton-j</artifactId>
+                <version>${versionx.org.apache.qpid.proton-j}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.santuario</groupId>
+                <artifactId>xmlsec</artifactId>
+                <version>${versionx.org.apache.santuario.xmlsec}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.servicemix.bundles</groupId>
                 <artifactId>org.apache.servicemix.bundles.castor</artifactId>
                 <version>${versionx.org.apache.servicemix.bundles.org.apache.servicemix.bundles.castor}</version>
@@ -3964,6 +4054,11 @@
                 <version>${versionx.org.apache.ws.commons.axiom.axiom-impl}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.ws.xmlschema</groupId>
+                <artifactId>xmlschema-core</artifactId>
+                <version>${versionx.org.apache.ws.xmlschema.xmlschema-core}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.xbean</groupId>
                 <artifactId>xbean-asm5-shaded</artifactId>
                 <version>${versionx.org.apache.xbean.xbean-asm5-shaded}</version>
@@ -3992,6 +4087,16 @@
                 <groupId>org.beanshell</groupId>
                 <artifactId>bsh</artifactId>
                 <version>${versionx.org.beanshell.bsh}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcmail-jdk15on</artifactId>
+                <version>${versionx.org.bouncycastle.bcmail-jdk15on}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>${versionx.org.bouncycastle.bcprov-jdk15on}</version>
             </dependency>
             <dependency>
                 <groupId>org.caffinitas.ohc</groupId>
@@ -4104,6 +4209,11 @@
                 <version>${versionx.org.conscrypt.conscrypt-openjdk}</version>
             </dependency>
             <dependency>
+                <groupId>org.cryptacular</groupId>
+                <artifactId>cryptacular</artifactId>
+                <version>${versionx.org.cryptacular.cryptacular}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.datanucleus</groupId>
                 <artifactId>datanucleus-api-jdo</artifactId>
                 <version>${versionx.org.datanucleus.datanucleus-api-jdo}</version>
@@ -4152,6 +4262,11 @@
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-util</artifactId>
                 <version>${versionx.org.eclipse.jetty.jetty-util}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.microprofile.config</groupId>
+                <artifactId>microprofile-config-api</artifactId>
+                <version>${versionx.org.eclipse.microprofile.config.microprofile-config-api}</version>
             </dependency>
             <dependency>
                 <groupId>org.elasticsearch.client</groupId>
@@ -5431,6 +5546,11 @@
             </dependency>
             <dependency>
                 <groupId>org.jboss</groupId>
+                <artifactId>jboss-ejb-client</artifactId>
+                <version>${versionx.org.jboss.jboss-ejb-client}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss</groupId>
                 <artifactId>jboss-transaction-spi</artifactId>
                 <version>${versionx.org.jboss.jboss-transaction-spi}</version>
                 <exclusions>
@@ -5491,6 +5611,11 @@
                 <groupId>org.jboss.logging</groupId>
                 <artifactId>jboss-logging-processor</artifactId>
                 <version>${versionx.org.jboss.logging.jboss-logging-processor}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging-spi</artifactId>
+                <version>${versionx.org.jboss.logging.jboss-logging-spi}</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.logmanager</groupId>
@@ -5754,6 +5879,11 @@
                 <version>${versionx.org.jboss.security.jboss-negotiation-spnego}</version>
             </dependency>
             <dependency>
+                <groupId>org.jboss.security</groupId>
+                <artifactId>jbossxacml</artifactId>
+                <version>${versionx.org.jboss.security.jbossxacml}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.jboss.shrinkwrap.descriptors</groupId>
                 <artifactId>shrinkwrap-descriptors-api-base</artifactId>
                 <version>${versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-api-base}</version>
@@ -5942,6 +6072,11 @@
                 <version>${versionx.org.jboss.spec.javax.resource.jboss-connector-api_1.7_spec}</version>
             </dependency>
             <dependency>
+                <groupId>org.jboss.spec.javax.security.auth.message</groupId>
+                <artifactId>jboss-jaspi-api_1.1_spec</artifactId>
+                <version>${versionx.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.jboss.spec.javax.security.jacc</groupId>
                 <artifactId>jboss-jacc-api_1.5_spec</artifactId>
                 <version>${versionx.org.jboss.spec.javax.security.jacc.jboss-jacc-api_1.5_spec}</version>
@@ -5977,6 +6112,16 @@
                 <version>${versionx.org.jboss.spec.javax.xml.bind.jboss-jaxb-api_2.3_spec}</version>
             </dependency>
             <dependency>
+                <groupId>org.jboss.spec.javax.xml.soap</groupId>
+                <artifactId>jboss-saaj-api_1.3_spec</artifactId>
+                <version>${versionx.org.jboss.spec.javax.xml.soap.jboss-saaj-api_1.3_spec}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.spec.javax.xml.ws</groupId>
+                <artifactId>jboss-jaxws-api_2.3_spec</artifactId>
+                <version>${versionx.org.jboss.spec.javax.xml.ws.jboss-jaxws-api_2.3_spec}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.jboss.stdio</groupId>
                 <artifactId>jboss-stdio</artifactId>
                 <version>${versionx.org.jboss.stdio.jboss-stdio}</version>
@@ -5988,13 +6133,28 @@
             </dependency>
             <dependency>
                 <groupId>org.jboss.weld</groupId>
+                <artifactId>weld-api</artifactId>
+                <version>${versionx.org.jboss.weld.weld-api}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.weld</groupId>
                 <artifactId>weld-core</artifactId>
                 <version>${versionx.org.jboss.weld.weld-core}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.weld</groupId>
+                <artifactId>weld-spi</artifactId>
+                <version>${versionx.org.jboss.weld.weld-spi}</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.weld.se</groupId>
                 <artifactId>weld-se</artifactId>
                 <version>${versionx.org.jboss.weld.se.weld-se}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.ws</groupId>
+                <artifactId>jbossws-spi</artifactId>
+                <version>${versionx.org.jboss.ws.jbossws-spi}</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.xnio</groupId>
@@ -6062,6 +6222,11 @@
                 <groupId>org.json4s</groupId>
                 <artifactId>json4s-jackson_2.11</artifactId>
                 <version>${versionx.org.json4s.json4s-jackson_2.11}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${versionx.org.jsoup.jsoup}</version>
             </dependency>
             <dependency>
                 <groupId>org.jvnet.staxex</groupId>
@@ -6157,6 +6322,11 @@
                 <groupId>org.ops4j.pax.exam</groupId>
                 <artifactId>pax-exam-link-mvn</artifactId>
                 <version>${versionx.org.ops4j.pax.exam.pax-exam-link-mvn}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ops4j.pax.swissbox</groupId>
+                <artifactId>pax-swissbox-property</artifactId>
+                <version>${versionx.org.ops4j.pax.swissbox.pax-swissbox-property}</version>
             </dependency>
             <dependency>
                 <groupId>org.ops4j.pax.swissbox</groupId>
@@ -6846,6 +7016,11 @@
                 <groupId>sun.jdk</groupId>
                 <artifactId>jconsole</artifactId>
                 <version>${versionx.sun.jdk.jconsole}</version>
+            </dependency>
+            <dependency>
+                <groupId>xalan</groupId>
+                <artifactId>serializer</artifactId>
+                <version>${versionx.xalan.serializer}</version>
             </dependency>
             <dependency>
                 <groupId>xalan</groupId>
