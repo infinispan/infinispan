@@ -329,7 +329,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    /**
-    * Remove entries from all indexes by key
+    * Remove entries from all indexes by key.
     */
    void removeFromIndexes(TransactionContext transactionContext, Object key) {
       Stream<IndexedTypeIdentifier> typeIdentifiers = getKnownClasses().stream()

@@ -44,9 +44,13 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    protected RemoteCache<Integer, User> remoteCache0;
    protected RemoteCache<Integer, User> remoteCache1;
 
+   protected boolean useTransactions() {
+      return false;
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
+      ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, useTransactions()));
       builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
@@ -113,7 +117,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       client(0).getCache().put("dummy", "a primitive value cannot be queried");
    }
 
-   public void testAttributeQuery() throws Exception {
+   public void testAttributeQuery() {
       // get user back from remote cache and check its attributes
       User fromCache = remoteCache0.get(1);
       assertNotNull(fromCache);
@@ -131,7 +135,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       assertUser1(list.get(0));
    }
 
-   public void testGroupByQuery() throws Exception {
+   public void testGroupByQuery() {
       // get user back from remote cache and check its attributes
       User fromCache = remoteCache0.get(1);
       assertNotNull(fromCache);
@@ -154,7 +158,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       assertEquals("Tom", list.get(1)[0]);
    }
 
-   public void testEmbeddedAttributeQuery() throws Exception {
+   public void testEmbeddedAttributeQuery() {
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
       Query query = qf.from(UserPB.class)
@@ -168,7 +172,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028503: Property addresses can not be selected from type sample_bank_account.User since it is an embedded entity.")
-   public void testInvalidEmbeddedAttributeQuery() throws Exception {
+   public void testInvalidEmbeddedAttributeQuery() {
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
 
       Query q = qf.from(UserPB.class)
@@ -177,7 +181,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       q.list();  // exception expected
    }
 
-   public void testProjections() throws Exception {
+   public void testProjections() {
       // get user back from remote cache and check its attributes
       User fromCache = remoteCache0.get(1);
       assertUser1(fromCache);

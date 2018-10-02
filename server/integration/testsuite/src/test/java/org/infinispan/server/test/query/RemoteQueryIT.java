@@ -61,7 +61,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
     }
 
     @Test
-    public void testAttributeQuery() throws Exception {
+    public void testAttributeQuery() {
         remoteCache.put(1, createUser1());
         remoteCache.put(2, createUser2());
 
@@ -82,7 +82,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
     }
 
     @Test
-    public void testEmbeddedAttributeQuery() throws Exception {
+    public void testEmbeddedAttributeQuery() {
         remoteCache.put(1, createUser1());
         remoteCache.put(2, createUser2());
 
@@ -99,7 +99,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
     }
 
     @Test
-    public void testProjections() throws Exception {
+    public void testProjections() {
         remoteCache.put(1, createUser1());
         remoteCache.put(2, createUser2());
 
@@ -126,7 +126,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
      * @see <a href="https://issues.jboss.org/browse/ISPN-5729">https://issues.jboss.org/browse/ISPN-5729</a>
      */
     @Test
-    public void testUninverting() throws Exception {
+    public void testUninverting() {
         remoteCache.put(1, createUser1());
         remoteCache.put(2, createUser2());
 
@@ -139,7 +139,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
     }
 
     @Test
-    public void testIteratorWithQuery() throws Exception {
+    public void testIteratorWithQuery() {
         remoteCache.put(1, createUser1());
         remoteCache.put(2, createUser2());
 
@@ -157,7 +157,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
     }
 
     @Test
-    public void testIteratorWithQueryAndProjections() throws Exception {
+    public void testIteratorWithQueryAndProjections() {
         remoteCache.put(1, createUser1());
         remoteCache.put(2, createUser2());
 
