@@ -269,58 +269,59 @@ While the primary is waiting for the confirmation message from the backup, reads
 backup will see the new value, but reads from the primary will see the old one.
 
 [[key_ownership]]
-==== Key ownership
-Distributed caches split entries into a fixed number of segments, and assign each segment
-to a list of owner nodes.
-Replicated caches do the same, except every node is an owner.
+==== Key Ownership
+Distributed caches split entries into a fixed number of segments and assign
+each segment to a list of owner nodes. Replicated caches do the same, with the
+exception that every node is an owner.
 
-The first node in the owners list is called the *primary owner*, and the others are
-called *backup owners*.
-The segment ownership table is broadcast to every node when the cache topology changes
-(i.e. a node joins or leaves the cluster).
-This way, a node can compute the location of a key itself, without resorting to multicast
-requests or maintaining per-key metadata.
+The first node in the list of owners is the *primary owner*. The other nodes in
+the list are *backup owners*. When the cache topology changes, because a node
+joins or leaves the cluster, the segment ownership table is broadcast to every
+node. This allows nodes to locate keys without making multicast requests or
+maintaining metadata for each key.
 
-The number of segments is configurable (`numSegments`), but it cannot be changed without
-restarting the cluster.
-The mapping of keys to segments is also fixed -- a key must map to the same segment,
-regardless of how the topology of the cluster changes.
-The key-to-segment mapping can be customized by configuring a
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner]
-or by using the link:#grouping_api[Grouping API].
+The `numSegments` property configures the number of segments available.
+However, the number of segments cannot change unless the cluster is restarted.
 
-There is no hard rule on how segments must be mapped to owners, but the goal is to
-balance the number of segments allocated to each node and at the same time minimize the
-number of segments that have to move after a node joins or leaves the cluster.
-The segment mapping is customizable, and in fact there are five implementations that
-ship with {brandname}:
+Likewise the key-to-segment mapping cannot change. Keys must always map to the
+same segments regardless of cluster topology changes. It is important that the
+key-to-segment mapping evenly distributes the number of segments allocated to each node while minimizing the number of segments that must move when the cluster topology changes.
+
+You can customize the key-to-segment mapping by configuring a
+link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner] or by using the
+link:#grouping_api[Grouping API].
+
+However, {brandname} provides the following implementations:
 
 SyncConsistentHashFactory::
-  An algorithm based on
-  link:http://en.wikipedia.org/wiki/Consistent_hashing[consistent hashing].
-  It always assigns a key to the same node in every cache as long as the cluster is
-  symmetric (i.e. all caches run on all nodes).
-  It does have some weaknesses: the load distribution is a bit uneven, and it also moves
-  more segments than strictly necessary on a join or leave.
-  Selected by default when server hinting is disabled.
-TopologyAwareSyncConsistentHashFactory::
-  Similar to `SyncConsistentHashFactory`, but adapted for
-  link:#server_hinting[Server Hinting].
-  Selected by default when server hinting is enabled.
-DefaultConsistentHashFactory::
-  It achieves a more even distribution than `SyncConsistentHashFactory`, but it has one
-  disadvantage: the mapping of segments to nodes depends on the order in which caches
-  joined the cluster, so a key's owners are not guaranteed to be the same in all the
-  caches running in a cluster.
-  Used to be the default from version 5.2 to version 8.1 (with server hinting disabled).
-TopologyAwareConsistentHashFactory::
-  Similar to _DefaultConsistentHashFactory_, but adapted for
-  link:#server_hinting[Server Hinting].
-  Used to be the default with from version 5.2 to version 8.1 (with server hinting enabled).
-ReplicatedConsistentHashFactory::
-  This algorithm is used internally to implement replicated caches.
-  Users should never select this explicitly in a distributed cache.
+Uses an algorithm based on
+link:http://en.wikipedia.org/wiki/Consistent_hashing[consistent hashing]. Selected by default when server hinting is disabled.
++
+This implementation always assigns keys to the same nodes in every cache as
+long as the cluster is symmetric. In other words, all caches run on all nodes.
+This implementation does have some negative points in that the load distribution is slightly uneven. It also moves more segments than strictly necessary on a join or leave.
 
+TopologyAwareSyncConsistentHashFactory::
+Similar to `SyncConsistentHashFactory`, but adapted for
+link:#server_hinting[Server Hinting]. Selected by default when server hinting is enabled.
+
+DefaultConsistentHashFactory::
+Achieves a more even distribution than `SyncConsistentHashFactory`, but with one
+disadvantage. The order in which nodes join the cluster determines which nodes
+own which segments. As a result, keys might be assigned to different nodes in
+different caches.
++
+Was the default from version 5.2 to version 8.1 with server hinting disabled.
+
+TopologyAwareConsistentHashFactory::
+Similar to _DefaultConsistentHashFactory_, but adapted for
+link:#server_hinting[Server Hinting].
++
+Was the default from version 5.2 to version 8.1 with server hinting enabled.
+
+ReplicatedConsistentHashFactory::
+Used internally to implement replicated caches. You should never explicitly
+select this algorithm in a distributed cache.
 
 ===== Capacity Factors
 Capacity factors are another way to customize the mapping of segments to nodes.
