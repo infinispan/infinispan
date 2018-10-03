@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -52,7 +53,7 @@ public class ScriptExecIT {
 
    @Before
    public void initialize() {
-      if (remoteCacheManager == null) {
+      if (remoteCacheManager == null || !remoteCacheManager.isStarted()) {
          Configuration config = createRemoteCacheManagerConfiguration();
          remoteCacheManager = new RemoteCacheManager(config, true);
       }
@@ -66,8 +67,13 @@ public class ScriptExecIT {
       remoteCacheManager.getCache(COMPATIBILITY_CACHE_NAME).clear();
    }
 
+   protected ProtocolVersion getProtocolVersion() {
+      return ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
+   }
+
    private Configuration createRemoteCacheManagerConfiguration() {
       ConfigurationBuilder config = new ConfigurationBuilder();
+      config.version(getProtocolVersion());
       config.addServer()
               .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
               .port(server1.getHotrodEndpoint().getPort());
