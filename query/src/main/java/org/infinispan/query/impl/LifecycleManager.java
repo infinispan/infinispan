@@ -34,7 +34,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
@@ -125,11 +124,6 @@ public class LifecycleManager implements ModuleLifecycle {
             createQueryInterceptorIfNeeded(cr, cfg, cache, searchFactory);
             addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
 
-            // initializing the query module command initializer.
-            // we can't inject Cache and CacheManager with @Inject in there
-            CommandInitializer initializer = cr.getComponent(CommandInitializer.class);
-            initializer.setCacheManager(cache.getCacheManager());
-
             cr.registerComponent(new QueryBox(), QueryBox.class);
          }
 
@@ -194,9 +188,9 @@ public class LifecycleManager implements ModuleLifecycle {
          lastLoadingInterceptor = wrappingInterceptor;
       }
 
-      InterceptorConfigurationBuilder queryInterceptorBuilder = builder.customInterceptors().addInterceptor();
-      queryInterceptorBuilder.interceptor(queryInterceptor);
-      queryInterceptorBuilder.after(lastLoadingInterceptor.getClass());
+      // add the interceptor to the configuration also
+      builder.customInterceptors().addInterceptor()
+            .interceptor(queryInterceptor).after(lastLoadingInterceptor.getClass());
 
       ic.addInterceptorAfter(queryInterceptor, lastLoadingInterceptor.getClass());
       cr.registerComponent(queryInterceptor, QueryInterceptor.class);
@@ -205,9 +199,9 @@ public class LifecycleManager implements ModuleLifecycle {
       if (cfg.transaction().transactionMode().isTransactional()) {
          TxQueryInterceptor txQueryInterceptor = new TxQueryInterceptor(txOldValues, queryInterceptor);
          ic.addInterceptorBefore(txQueryInterceptor, wrappingInterceptor.getClass());
-         InterceptorConfigurationBuilder txQueryInterceptorBuilder = builder.customInterceptors().addInterceptor();
-         txQueryInterceptorBuilder.interceptor(txQueryInterceptor);
-         txQueryInterceptorBuilder.before(wrappingInterceptor.getClass());
+         // add the interceptor to the configuration also
+         builder.customInterceptors().addInterceptor()
+               .interceptor(txQueryInterceptor).before(wrappingInterceptor.getClass());
       }
 
       cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
