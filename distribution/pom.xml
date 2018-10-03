@@ -265,7 +265,9 @@
                   </goals>
                   <configuration>
                      <target>
-                        <ant antfile="package.xml" inheritRefs="true" />
+                        <ant antfile="package.xml" inheritRefs="true">
+                           <property name="infinispan.brand.version" value="${infinispan.brand.version}"/>
+                        </ant>
                      </target>
                   </configuration>
                </execution>
@@ -367,7 +369,7 @@
                   </goals>
                   <configuration>
                      <appendAssemblyId>false</appendAssemblyId>
-                     <finalName>${infinispan.brand.prefix}-wildfly-modules-${project.version}</finalName>
+                     <finalName>${infinispan.brand.prefix}-wildfly-modules-${infinispan.brand.version}</finalName>
                      <descriptors>
                         <descriptor>src/main/assemblies/wildfly.xml</descriptor>
                      </descriptors>
@@ -397,4 +399,41 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>nexus-staging</id>
+         <activation>
+            <property><name>skipNexusStaging</name></property>
+         </activation>
+         <build>
+            <plugins>
+               <!-- Deploy the file we've explicitly installed.
+                    MUST provide properties repositoryId and url
+               -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-deploy-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>deploy-fat-server</id>
+                        <phase>deploy</phase>
+                        <goals>
+                           <goal>deploy-file</goal>
+                        </goals>
+                        <configuration>
+                           <groupId>org.infinispan.server</groupId>
+                           <artifactId>infinispan-server</artifactId>
+                           <version>${project.version}</version>
+                           <packaging>zip</packaging>
+                           <file>${project.build.directory}/distribution/${infinispan.brand.prefix}-server-${infinispan.brand.version}.zip</file>
+                           <generatePom>false</generatePom>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>
