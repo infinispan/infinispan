@@ -60,14 +60,20 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.kohsuke.MetaInfServices;
 
 /**
+ * Initializes components for remote query. Each cache manager has its own instance of this class during its lifetime.
+ *
  * @author anistor@redhat.com
  * @since 6.0
  */
 @MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
-@SuppressWarnings("unused")
 public final class LifecycleManager implements ModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
+
+   /**
+    * Caching the looked-up MBeanServer for the lifetime of the cache manager is safe.
+    */
+   private MBeanServer mbeanServer;
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
@@ -94,7 +100,7 @@ public final class LifecycleManager implements ModuleLifecycle {
    private void initProtobufMetadataManager(DefaultCacheManager cacheManager, GlobalComponentRegistry gcr) {
       ProtobufMetadataManagerImpl protobufMetadataManager = new ProtobufMetadataManagerImpl();
       gcr.registerComponent(protobufMetadataManager, ProtobufMetadataManager.class);
-      registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr, cacheManager.getName());
+      registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr);
       ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
       processContextInitializers(classLoader, protobufMetadataManager);
 
@@ -119,12 +125,14 @@ public final class LifecycleManager implements ModuleLifecycle {
       });
    }
 
-   private void registerProtobufMetadataManagerMBean(ProtobufMetadataManager protobufMetadataManager, GlobalComponentRegistry gcr, String cacheManagerName) {
+   private void registerProtobufMetadataManagerMBean(ProtobufMetadataManagerImpl protobufMetadataManager, GlobalComponentRegistry gcr) {
       GlobalJmxStatisticsConfiguration jmxConfig = gcr.getGlobalConfiguration().globalJmxStatistics();
-      MBeanServer mBeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
+      if (mbeanServer == null) {
+         mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
+      }
 
-      String groupName = "type=RemoteQuery,name=" + ObjectName.quote(cacheManagerName);
-      String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mBeanServer, groupName);
+      String groupName = "type=RemoteQuery,name=" + ObjectName.quote(jmxConfig.cacheManagerName());
+      String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, groupName);
       ComponentMetadataRepo metadataRepo = gcr.getComponentMetadataRepo();
       ManageableComponentMetadata metadata = metadataRepo.findComponentMetadata(ProtobufMetadataManagerImpl.class)
             .toManageableComponentMetadata();
@@ -132,7 +140,7 @@ public final class LifecycleManager implements ModuleLifecycle {
          ResourceDMBean mBean = new ResourceDMBean(protobufMetadataManager, metadata);
          ObjectName objName = new ObjectName(jmxDomain + ":" + groupName + ",component=" + metadata.getJmxObjectName());
          protobufMetadataManager.setObjectName(objName);
-         JmxUtil.registerMBean(mBean, objName, mBeanServer);
+         JmxUtil.registerMBean(mBean, objName, mbeanServer);
       } catch (Exception e) {
          throw new CacheException("Unable to register ProtobufMetadataManager MBean", e);
       }
@@ -144,13 +152,13 @@ public final class LifecycleManager implements ModuleLifecycle {
    }
 
    private void unregisterProtobufMetadataManagerMBean(GlobalComponentRegistry gcr) {
-      try {
-         ObjectName objName = gcr.getComponent(ProtobufMetadataManager.class).getObjectName();
-         GlobalJmxStatisticsConfiguration jmxConfig = gcr.getGlobalConfiguration().globalJmxStatistics();
-         MBeanServer mBeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
-         JmxUtil.unregisterMBean(objName, mBeanServer);
-      } catch (Exception e) {
-         throw new CacheException("Unable to unregister ProtobufMetadataManager MBean", e);
+      if (mbeanServer != null) {
+         try {
+            ObjectName objName = gcr.getComponent(ProtobufMetadataManager.class).getObjectName();
+            JmxUtil.unregisterMBean(objName, mbeanServer);
+         } catch (Exception e) {
+            throw new CacheException("Unable to unregister ProtobufMetadataManager MBean", e);
+         }
       }
    }
 
@@ -160,7 +168,6 @@ public final class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
-      EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
       InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName)) {
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class);
@@ -168,6 +175,7 @@ public final class LifecycleManager implements ModuleLifecycle {
 
          if (cfg.indexing().index().isEnabled()) {
             log.infof("Registering ProtobufValueWrapperInterceptor for cache %s", cacheName);
+            EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
             createProtobufValueWrapperInterceptor(cr, cfg, cacheManager);
          }
       }
@@ -255,10 +263,10 @@ public final class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheStopped(ComponentRegistry cr, String cacheName) {
       Configuration cfg = cr.getComponent(Configuration.class);
-      removeRemoteIndexingInterceptorFromConfig(cfg);
+      removeProtobufValueWrapperInterceptor(cfg);
    }
 
-   private void removeRemoteIndexingInterceptorFromConfig(Configuration cfg) {
+   private void removeProtobufValueWrapperInterceptor(Configuration cfg) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       CustomInterceptorsConfigurationBuilder customInterceptorsBuilder = builder.customInterceptors();
 
@@ -269,5 +277,10 @@ public final class LifecycleManager implements ModuleLifecycle {
       }
 
       cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
+   }
+
+   @Override
+   public void cacheManagerStopped(GlobalComponentRegistry gcr) {
+      mbeanServer = null;
    }
 }

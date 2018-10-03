@@ -129,8 +129,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       return objectName;
    }
 
-   @Override
-   public void setObjectName(ObjectName objectName) {
+   void setObjectName(ObjectName objectName) {
       this.objectName = objectName;
    }
 
@@ -239,6 +238,9 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
 
    /**
     * Obtains the ProtobufMetadataManagerImpl instance associated to a cache manager.
+    *
+    * @param cacheManager a cache manager instance
+    * @return the ProtobufMetadataManagerImpl instance associated to a cache manager.
     */
    private static ProtobufMetadataManagerImpl getProtobufMetadataManager(EmbeddedCacheManager cacheManager) {
       if (cacheManager == null) {
@@ -251,6 +253,12 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       return metadataManager;
    }
 
+   /**
+    * Obtains the protobuf serialization context of the ProtobufMetadataManager instance associated to a cache manager.
+    *
+    * @param cacheManager a cache manager instance
+    * @return the protobuf {@link SerializationContext}
+    */
    public static SerializationContext getSerializationContextInternal(EmbeddedCacheManager cacheManager) {
       return getProtobufMetadataManager(cacheManager).getSerializationContext();
    }
