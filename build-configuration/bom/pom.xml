@@ -4435,12 +4435,6 @@
                 <version>${versionx.org.hyperic.sigar-dist}</version>
             </dependency>
             <dependency>
-                <groupId>org.hyperic</groupId>
-                <artifactId>sigar-dist</artifactId>
-                <version>${versionx.org.hyperic.sigar-dist}</version>
-                <type>zip</type>
-            </dependency>
-            <dependency>
                 <groupId>org.infinispan.arquillian.container</groupId>
                 <artifactId>infinispan-arquillian-impl</artifactId>
                 <version>${versionx.org.infinispan.arquillian.container.infinispan-arquillian-impl}</version>

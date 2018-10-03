@@ -53,7 +53,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V -Pdistribution -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID -Djava10.home=$JAVA10_HOME"
+                sh "$MAVEN_HOME/bin/mvn -B -V -Pdistribution -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID -Djava10.home=$JAVA10_HOME -Dinfinispan.brand.version=${version}"
             }
         }
 

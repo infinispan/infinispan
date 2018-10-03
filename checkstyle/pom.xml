@@ -4,8 +4,9 @@
 
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-build-configuration-parent</artifactId>
+      <artifactId>infinispan-bom</artifactId>
       <version>9.4.0-SNAPSHOT</version>
+      <relativePath>../build-configuration/bom/pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-checkstyle</artifactId>
