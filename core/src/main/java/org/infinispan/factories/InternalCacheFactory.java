@@ -82,6 +82,9 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    public Cache<K, V> createCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
                                   String cacheName) throws CacheConfigurationException {
       try {
+         if (configuration.compatibility().enabled()) {
+            log.warnCompatibilityDeprecated(cacheName);
+         }
          if (configuration.simpleCache()) {
             return createSimpleCache(configuration, globalComponentRegistry, cacheName);
          } else {
