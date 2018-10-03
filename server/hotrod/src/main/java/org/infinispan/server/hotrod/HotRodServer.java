@@ -458,9 +458,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          // We don't need synchronization as long as we store the cache last
          knownCacheConfigurations.put(cacheName, cacheConfiguration);
          knownCacheRegistries.put(cacheName, SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()));
-         if (header != null) {
-            cache = cache.withMediaType(requestTypes.getKey(), requestTypes.getValue().toString());
-         }
+         cache = cache.withMediaType(requestTypes.getKey(), requestTypes.getValue());
          if (addToKnownCaches) {
             knownCaches.put(scopedCacheKey, cache);
          }
