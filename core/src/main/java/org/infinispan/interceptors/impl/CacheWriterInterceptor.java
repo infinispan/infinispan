@@ -36,19 +36,19 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.functional.Param;
-import org.infinispan.functional.Param.PersistenceMode;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.functional.Param;
+import org.infinispan.functional.Param.PersistenceMode;
 import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -59,6 +59,7 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.support.BatchModification;
+import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -263,7 +264,8 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
       Iterable<MarshalledEntry> iterable = () -> cmd.getMap().keySet().stream()
             .filter(filter)
-            .map(key -> createMarshalledEntry(ctx, key))
+            .map(key -> marshalledEntry(ctx, key))
+            .filter(StreamMarshalling.nonNullPredicate())
             .iterator();
       persistenceManager.writeBatchToAllNonTxStores(iterable, mode, cmd.getFlagsBitSet());
    }
@@ -460,15 +462,17 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    void storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command) {
-      MarshalledEntry entry = createMarshalledEntry(ctx, key);
-      persistenceManager.writeToAllNonTxStores(entry, SegmentSpecificCommand.extractSegment(command, key, keyPartitioner),
-            skipSharedStores(ctx, key, command) ? PRIVATE : BOTH, command.getFlagsBitSet());
-      if (trace) getLog().tracef("Stored entry %s under key %s", entry.getValue(), key);
+      MarshalledEntry entry = marshalledEntry(ctx, key);
+      if (entry != null) {
+         persistenceManager.writeToAllNonTxStores(entry, SegmentSpecificCommand.extractSegment(command, key, keyPartitioner),
+               skipSharedStores(ctx, key, command) ? PRIVATE : BOTH, command.getFlagsBitSet());
+         if (trace) getLog().tracef("Stored entry %s under key %s", entry.getValue(), key);
+      }
    }
 
-   MarshalledEntry createMarshalledEntry(InvocationContext ctx, Object key) {
-      InternalCacheValue sv = entryFactory.getValueFromCtxOrCreateNew(key, ctx);
-      return new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller);
+   MarshalledEntry marshalledEntry(InvocationContext ctx, Object key) {
+      InternalCacheValue sv = entryFactory.getValueFromCtx(key, ctx);
+      return sv != null ? new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller) : null;
    }
 
    protected boolean skipSharedStores(InvocationContext ctx, Object key, FlagAffectedCommand command) {

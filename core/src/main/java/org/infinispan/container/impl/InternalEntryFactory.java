@@ -158,12 +158,13 @@ public interface InternalEntryFactory {
    /**
     * Retrieve an {@link InternalCacheValue} from the provided {@link InvocationContext} if an {@link InternalCacheEntry}
     * exists, otherwise create {@link InternalCacheEntry} from the context's {@link CacheEntry} and return its value.
-    *
+    * <p>
+    * If the entry is not in the context a <b>null</b> value is returned
     * @param key the key of the entry to be retrieved
     * @param ctx the invocation context from which the value should be retrieved
     * @param <K> The key type for the entry
     * @param <V> The value type for the entry
     * @return an {@link InternalCacheValue}
     */
-   <K, V> InternalCacheValue<V> getValueFromCtxOrCreateNew(K key, InvocationContext ctx);
+   <K, V> InternalCacheValue<V> getValueFromCtx(K key, InvocationContext ctx);
 }
