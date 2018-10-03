@@ -1,6 +1,6 @@
 [[rocksdb_cache_store]]
 === RocksDB Cache Store
-The {brandname} Community
+{brandname} supports using RocksDB as a cache store.
 
 ==== Introduction
 link:http://rocksdb.org/[RocksDB] is a fast key-value filesystem-based storage from Facebook. It started as a fork of

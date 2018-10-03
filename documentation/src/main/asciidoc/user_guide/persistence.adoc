@@ -51,50 +51,130 @@ This is the configuration of a custom(not shipped with infinispan) store:
 
 ----
 
-Configuration parameters are as follows:
+Parameters that you can use to configure persistence are as follows:
 
-* `connection-attempts` the maximum number of unsuccessful attempts to start
-each of the configured CacheWriter/CacheLoader before an exception is thrown and
-the cache fails to start.
+`connection-attempts`::
+Sets the maximum number of attempts to start each configured
+CacheWriter/CacheLoader. If the attempts to start are not successful, an
+exception is thrown and the cache does not start.
 
-* `connection-interval` the time, in milliseconds, to wait between subsequent
-connection attempts on startup. A negative or zero value means no wait between
-connection attempts.
+`connection-interval`::
+Specifies the time, in milliseconds, to wait between connection attempts on
+startup. A negative or zero value means no wait between connection attempts.
 
-* `availability-interval` the time, in milliseconds, between availability
-checks to determine if the PersistenceManager is available. In other words,
-this interval sets how often stores/loaders are polled via their
+`availability-interval`::
+Specifies the time, in milliseconds, between availability checks to determine
+if the PersistenceManager is available. In other words, this interval sets how
+often stores/loaders are polled via their
 `org.infinispan.persistence.spi.CacheWriter#isAvailable` or
 `org.infinispan.persistence.spi.CacheLoader#isAvailable` implementation. If a
 single store/loader is not available, an exception is thrown during cache
 operations.
 
-* `passivation` (false by default) has a significant impact on how {brandname} interacts with the loaders, and is discussed in the link:#cache_passivation[Cache Passivation] section.
+`passivation`::
+Enables passivation. The default value is `false` (boolean).
++
+This property has a significant impact on {brandname} interactions with the loaders. See link:#cache_passivation[Cache Passivation] for more information.
 
-* `class` defines the class of the store and must implement CacheLoader, CacheWriter or both
+`class`::
+Defines the class of the store and must implement `CacheLoader`, `CacheWriter`,
+or both.
 
-* `fetch-state` (false by default) determines whether or not to fetch the persistent state of a cache when joining a cluster. The aim here is to take the persistent state of a cache and apply it to the local cache store of the joining node. Fetch persistent state is ignored if a cache store is configured to be shared, since they access the same data. Only one configured cache loader may set this property to true; if more than one cache loader does so, a configuration exception will be thrown when starting your cache service.
+`fetch-state`::
+Fetches the persistent state of a cache when joining a cluster. The default
+value is `false` (boolean).
++
+The purpose of this property is to retrieve the persistent state of a cache and
+apply it to the local cache store of a node when it joins a cluster. Fetching
+the persistent state does not apply if a cache store is shared because it
+accesses the same data as the other stores.
++
+This property can be `true` for one configured cache loader only. If more than
+one cache loader fetches the persistent state, a configuration exception is
+thrown when the cache service starts.
 
-* `preload` (false by default) if true, when the cache starts, data stored in the cache loader will be pre-loaded into memory. This is particularly useful when data in the cache loader is needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Note that preloading is done in a local fashion, so any data loaded is only stored locally in the node. No replication or distribution of the preloaded data happens. Also, {brandname} only preloads up to the maximum configured number of entries in link:#eviction_anchor[eviction].
+`preload`::
+Pre-loads data into memory from the cache loader when the cache starts. The
+default value is `false` (boolean).
++
+This property is useful when data in the cache loader is required immediately
+after startup to prevent delays with cache operations when the data is loaded
+lazily. This property can provide a "warm cache" on startup but it impacts
+performance because it affects start time.
++
+Pre-loading data is done locally, so any data loaded is stored locally in the node only. The pre-loaded data is not replicated or distributed. Likewise, {brandname} pre-loads data only up to the maximum configured number of entries in link:#eviction_anchor[eviction].
 
-* `shared` (false by default) indicates that the cache loader is shared among different cache instances, for example where all instances in a cluster use the same JDBC settings to talk to the same remote, shared database. Setting this to true prevents repeated and unnecessary writes of the same data to the cache loader by different cache instances.
+`shared`::
+Determines if the cache loader is shared between cache instances. The default value is `false` (boolean).
++
+This property prevents duplicate writes of data to the cache loader by
+different cache instances. An example is where all cache instances in a cluster
+use the same JDBC settings for the same remote, shared database.
 
-* `segmented` (false by default) indicates that the cache store segments its data. That is that data is stored in buckets of which there are hash.numSegments of. Depending on the store implementation this can slow down writes but will improve the performance of streaming over data (Cache.size, Cache.entrySet.stream), preloading cache and state transfer.
+`segmented`::
+Configures a cache store to segment data. The default value is `false`
+(boolean).
++
+If `true` the cache store stores data in buckets. The `hash.numSegments` property configures how many buckets there are for storing data.
++
+Depending on the cache store implementation, segmenting data can cause slower
+write operations. However, performance improves for other cache operations. See
+link:#segmented_stores[Segmented Stores] for more information.
 
-* `purge` (false by default) empties the specified cache loader (if `read-only` is false) when the cache loader starts up.
+`read-only`::
+Prevents new data from being persisted to the cache store. The default value is
+`false` (boolean).
 
-* `read-only` (false by default) prevents new data to be persisted to the store.
+`purge`::
+Empties the specified cache loader at startup. The default value is `false`
+(boolean). This property takes effect only if the `read-only` property is set
+to `false`.
 
-* `max-batch-size` (#{AbstractStore-maxBatchSize} by default) The maximum size of a batch to be inserted/deleted from the store. If the value is less than one, then no upper limit is placed on the number of operations in a batch.
+`max-batch-size`::
+ifndef::productized[]
+Sets the maximum size of a batch to insert of delete from the cache store. The
+default value is #{AbstractStore-maxBatchSize}.
+endif::productized[]
+ifdef::productized[]
+Sets the maximum size of a batch to insert of delete from the cache store. The
+default value is 100.
+endif::productized[]
++
+If the value is less than `1`, no upper limit applies to the number of
+operations in a batch.
 
-* `write-behind` (disabled by default) element has to do with a persisting data asynchronously to the actual store. It is discussed in detail link:#write_behind_asynchronous[here].
+`write-behind`::
+Asynchronously persists data to the cache store. The default value is `false`
+(boolean). See link:#write_behind_asynchronous[Asynchronous Write-Behind] for
+more information.
 
-* `singleton` (disabled by default) attribute enables modifications to be stored by only one node in the cluster, the coordinator. Essentially, whenever any data comes in to some node it is always replicated(or distributed) so as to keep the caches in-memory states in sync; the coordinator, though, has the sole responsibility of pushing that state to disk. This functionality must be configured by setting the enabled attribute to true in all nodes. Only the coordinator of the cluster will persist data, but all nodes must have this configured to prevent others from persisting as well. You cannot configure a store as shared and singleton.
+`singleton`::
+Enables one node in the cluster, the coordinator, to store modifications. The
+default value is `false` (boolean).
++
+Whenever data enters a node, it is replicated or distributed to keep the
+in-memory state of the caches synchronized. The coordinator is responsible for
+pushing that state to disk.
++
+If `true` you must set this property on all nodes in the cluster. Only the
+coordinator of the cluster persists data. However, all nodes must have this
+property enabled to prevent other nodes from persisting data.
++
+You cannot enable the `singleton` property if the cache store is shared.
 
-* additional attributes can be configures within the `properties` section. These attributes configure aspects specific to each cache loader, e.g. the `myProp` attribute in the previous example. Other loaders, with more complex configuration, also introduce additional sub-elements to the basic configuration. See for example the JDBC cache store configuration examples below
+[NOTE]
+====
+You can define additional attributes in the `properties` section to configure
+specific aspects of each cache loader, such as the `myProp` attribute in the previous example.
 
+Other cache loaders with more complex configurations also include additional
+properties. See the following JDBC cache store configuration for examples.
+====
 
-The configuration above is used for a generic store implementation. However the store implementation provided by default with {brandname} have a more rich configuration schema, in which the `properties` section is replaced with XML attributes:
+The preceding configuration applies a generic cache store implementation.
+However, the default {brandname} store implementation has a more complex
+configuration schema, in which the `properties` section is replaced with XML
+attributes:
 
 [source,xml]
 ----
@@ -155,10 +235,11 @@ configured is used and all others are ignored.
 
 Due to the unique nature of passivation, it is not supported with some other store configurations.
 
-* Transactional store - Passivation writes/removes entries from the store outside
-the scope of the actual Infinispan commit boundaries.
-* Shared store - Shared store requires entries always being in the store for other
-owners. Thus passivation makes no sense as we can't remove the entry from the store.
+* Transactional store - Passivation writes/removes entries from the store
+outside the scope of the actual Infinispan commit boundaries.
+* Shared store - Shared store requires entries always being in the store for
+other owners. Thus passivation makes no sense as we can't remove the entry from
+the store.
 
 ==== Cache Loader Behavior with Passivation Disabled vs Enabled
 When passivation is disabled, whenever an element is modified, added or removed, then that modification is persisted in
@@ -267,33 +348,43 @@ The following is an example configuration for the write-behind strategy:
 </persistence>
 ----
 
+[[segmented_stores]]
 ==== Segmented Stores
+You can configure stores so that data resides in segments to which keys map.
+See link:#key_ownership[Key Ownership] for more information about segments and
+ownership.
 
-A store can optionally be segmented. That is that data is stored by the segment
-that its key maps to. Information pertaining to segments and the ownership of
-them can be found at link:#key_ownership[Key Ownership].
+Segmented stores increase read performance for bulk operations; for example,
+streaming over data (`Cache.size`, `Cache.entrySet.stream`), pre-loading the
+cache, and doing state transfer operations.
 
-Segmenting a store has the benefit of increasing the read performance for
-bulk operations. Some examples of said methods are any stream operation
-performed upon the cache, Cache.size as well as preloading and state
-transfer in a cache.
+However, segmented stores can also result in loss of performance for write
+operations. This performance loss applies particularly to batch write
+operations that can take place with transactions or write-behind stores. For
+this reason, you should evaluate the overhead for write operations before you
+enable segmented stores. The performance gain for bulk read operations might
+not be acceptable if there is a significant performance loss for write
+operations.
 
-Unfortunately depending on the store implementation, there may be some performance
-loss for write operations. This is especially true for batch writes which can
-occur with transactions or write behind stores, which is mentioned in the previous
-section. Therefore, before enabling segmented stores, this overhead should be
-possibly measured to ensure it is acceptable in turn to gain bulk read performance.
+[IMPORTANT]
+====
+Loss of data can occur if the number of segments in a cache store are not
+changed gracefully. For this reason, if you change the `numSegments` setting in the store configuration, you must migrate the existing store to use the new configuration.
 
-If you reconfigure the `numSegments` setting, the cache store must be migrated
-between to the new one config. This is due to having a different amount of segments
-causes entries to be mapped to different segments. Failure to do so may cause a loss
-of data.
+The recommended method to migrate the cache store configuration is to perform a
+rolling upgrade. The store migrator supports migrating a non-segmented cache
+store to a segmented cache store only. The store migrator does not currently
+support migrating from a segmented cache store.
+====
 
-Not all stores support being segmented, please see the appropriate section
-for the store you are interested in to see if it supports being segmented.
-If you are interested in converting or writing a new store to support being
-segmented, please see the SPI section below that talks about more details
-when a store is segmented.
+[NOTE]
+====
+Not all cache stores support segmentation. See the appropriate section for each
+store to determine if it supports segmentation.
+
+If you plan to convert or write a new store to support segmentation, see the
+following SPI section that provides more details.
+====
 
 === Filesystem based cache stores
 
@@ -342,18 +433,16 @@ Some notes about the classes:
 
 * link:{javadocroot}/org/infinispan/persistence/spi/SegmentedAdvancedLoadWriteStore.html[SegmentedAdvancedLoadWriteStore] provide all the various operations that deal with segments.
 
-A cache store can be segmented if it does one of the following two things:
+A cache store can be segmented if it does one of the following:
 
-. Store implements the interface
-link:{javadocroot}/org/infinispan/persistence/spi/SegmentedAdvancedLoadWriteStore.html[SegmentedAdvancedLoadWriteStore].
-In this case only a single store instance is used per cache.
+* Implements the
+link:{javadocroot}/org/infinispan/persistence/spi/SegmentedAdvancedLoadWriteStore.html[SegmentedAdvancedLoadWriteStore] interface. In this case only a single
+store instance is used per cache.
 
-. Store confiiguration extends the abstract class
-link:{javadocroot}/org/infinispan/configuration/cache/AbstractSegmentedConfiguration.html[AbstractSegmentedConfiguration].
-This requires implementing the `newConfigurationFrom` method where it is expected
-that a new `StoreConfiguration` instance is created per invocation. This will then
-create a store instance per segment that a node can write to. Expect that stores
-may start and stop as data is moved between nodes.
+* Has a configuration that extends the link:{javadocroot}/org/infinispan/configuration/cache/AbstractSegmentedConfiguration.html[AbstractSegmentedConfiguration] abstract class. Doing this requires you to implement the `newConfigurationFrom` method where it is expected
+that a new `StoreConfiguration` instance is created per invocation. This
+creates a store instance per segment to which a node can write. Stores might
+start and stop as data is moved between nodes.
 
 
 A provider might choose to only implement a subset of these interfaces:
