@@ -28,6 +28,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+@Test(testName = "factories.DataContainerFactoryTest", groups = "functional")
 public class DataContainerFactoryTest extends AbstractInfinispanTest {
 
    private DataContainerFactory dataContainerFactory;
