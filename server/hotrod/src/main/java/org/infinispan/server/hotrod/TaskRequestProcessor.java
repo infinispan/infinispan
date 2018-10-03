@@ -6,13 +6,17 @@ import java.util.concurrent.Executor;
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
+import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 
 import io.netty.channel.Channel;
 
 public class TaskRequestProcessor extends BaseRequestProcessor {
+   private static final Log log = LogFactory.getLog(TaskRequestProcessor.class, Log.class);
+
    private final HotRodServer server;
    private final TaskManager taskManager;
 
@@ -36,8 +40,12 @@ public class TaskRequestProcessor extends BaseRequestProcessor {
       if (throwable != null) {
          writeException(header, throwable);
       } else {
-         writeResponse(header, header.encoder().valueResponse(header, server, channel.alloc(), OperationStatus.Success,
-               result == null ? Util.EMPTY_BYTE_ARRAY : (byte[]) result));
+         if (result != null && !(result instanceof byte[])) {
+            writeException(header, log.errorSerializingResponse(result));
+         } else {
+            writeResponse(header, header.encoder().valueResponse(header, server, channel.alloc(), OperationStatus.Success,
+                  result == null ? Util.EMPTY_BYTE_ARRAY : (byte[]) result));
+         }
       }
    }
 }

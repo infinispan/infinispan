@@ -6,6 +6,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.counter.exception.CounterException;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -133,4 +134,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Not wrapping custom marshaller with media type '%s' since the format is already supported by the server", id = 28024)
    void skippingMarshallerWrapping(String mediaType);
+
+   @Message(value = "Error serializing script response '%s'", id = 28025)
+   EncodingException errorSerializingResponse(Object o);
 }
