@@ -25,7 +25,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
- * Tests integration between HotRod client and ProtoStream marshalling library.
+ * Tests integration between HotRod client and ProtoStream marshalling library using the {@code @ProtoXyz} annotations.
  *
  * @author anistor@redhat.com
  * @since 7.1
