@@ -13,7 +13,6 @@
       <module name="org.apache.xerces" services="import" />
       <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
-      <module name="org.infinispan.counter" slot="@infinispan.module.slot@"/>
       <!-- Netty is exported by server core -->
       <module name="org.infinispan.server" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.scripting" services="import" slot="@infinispan.module.slot@"/>
