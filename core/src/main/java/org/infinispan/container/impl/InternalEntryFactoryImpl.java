@@ -185,11 +185,11 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
    }
 
    @Override
-   public InternalCacheValue getValueFromCtxOrCreateNew(Object key, InvocationContext ctx) {
+   public <K, V> InternalCacheValue<V> getValueFromCtx(K key, InvocationContext ctx) {
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry instanceof InternalCacheEntry) {
          return ((InternalCacheEntry) entry).toInternalCacheValue();
-      } else {
+      } else if (entry != null) {
          if (ctx.isInTxScope()) {
             EntryVersionsMap updatedVersions =
                   ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions();
@@ -213,6 +213,8 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
             }
          }
          return create(entry).toInternalCacheValue();
+      } else {
+         return null;
       }
    }
 

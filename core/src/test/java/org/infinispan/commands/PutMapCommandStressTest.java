@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
@@ -33,14 +34,26 @@ public class PutMapCommandStressTest extends StressTest {
    protected final static int THREAD_WORKER_COUNT = (CACHE_COUNT - 1) * THREAD_MULTIPLIER;
    protected final static int CACHE_ENTRY_COUNT = 50000;
 
+   protected boolean enableStore;
+
    @Override
    public Object[] factory() {
-      return new Object[] {
-         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
-         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
-         new PutMapCommandStressTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
-         new PutMapCommandStressTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE),
+      return new Object[]{
+            new PutMapCommandStressTest().enableStore(false).cacheMode(CacheMode.DIST_SYNC).transactional(false),
+            new PutMapCommandStressTest().enableStore(false).cacheMode(CacheMode.DIST_SYNC).transactional(true),
+            new PutMapCommandStressTest().enableStore(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
+            new PutMapCommandStressTest().enableStore(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE),
+
+            new PutMapCommandStressTest().enableStore(true).cacheMode(CacheMode.DIST_SYNC).transactional(false),
+            new PutMapCommandStressTest().enableStore(true).cacheMode(CacheMode.DIST_SYNC).transactional(true),
+            new PutMapCommandStressTest().enableStore(true).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
+            new PutMapCommandStressTest().enableStore(true).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE),
       };
+   }
+
+   PutMapCommandStressTest enableStore(boolean enableStore) {
+      this.enableStore = enableStore;
+      return this;
    }
 
    @Override
@@ -58,6 +71,12 @@ public class PutMapCommandStressTest extends StressTest {
       }
       if (biasAcquisition != null) {
          builderUsed.clustering().biasAcquisition(biasAcquisition);
+      }
+      if (enableStore) {
+         builderUsed.persistence()
+               .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+               .shared(true)
+               .storeName(PutMapCommandStressTest.class.toString());
       }
       createClusteredCaches(CACHE_COUNT, CACHE_NAME, builderUsed);
    }
@@ -79,7 +98,7 @@ public class PutMapCommandStressTest extends StressTest {
       return cm;
    }
 
-   public void testStressNodesLeavingWhileMultipleIterators() throws Throwable {
+   public void testStressNodesLeavingWhileMultiplePutMap() throws Throwable {
       final Map<Integer, Integer> masterValues = new HashMap<Integer, Integer>();
       final Map<Integer, Integer>[] keys = new Map[THREAD_WORKER_COUNT];
       for (int i = 0; i < keys.length; ++i) {
@@ -107,8 +126,8 @@ public class PutMapCommandStressTest extends StressTest {
 //               List<Cache<Integer, Integer>> caches = caches(CACHE_NAME);
 //               for (int key : keysToUse.keySet()) {
 //                  int hasValue = 0;
-//                  for (Cache<Integer, Integer> cache : caches) {
-//                     Integer value = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get(key);
+//                  for (Cache<Integer, Integer> cacheCheck : caches) {
+//                     Integer value = cacheCheck.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get(key);
 //                     if (value != null && value.intValue() == key) {
 //                        hasValue++;
 //                     }
