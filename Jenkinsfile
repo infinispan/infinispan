@@ -76,11 +76,11 @@ pipeline {
     post {
         always {
             // Archive logs and dump files
-            sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" \\) -exec xz {} \\;'
+            sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" -o -name "*.hprof" \\) -exec xz {} \\;'
             archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**,**/surefire-reports/TEST-*.xml'
 
             // Clean
-            sh 'git clean -fdx -e "*.hprof" || echo "git clean failed, exit code $?"'
+            sh 'git clean -qfdx || echo "git clean failed, exit code $?"'
         }
 
         changed {
