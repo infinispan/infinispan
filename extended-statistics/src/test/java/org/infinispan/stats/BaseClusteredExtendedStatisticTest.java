@@ -38,6 +38,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -509,13 +510,11 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
       PUT, REMOVE, REPLACE, CLEAR, PUT_MAP, COMPUTE, COMPUTE_IF_ABSENT
    }
 
-   private static class ControlledPerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
-
-      private final PerCacheInboundInvocationHandler delegate;
+   private static class ControlledPerCacheInboundInvocationHandler extends AbstractDelegatingHandler {
       private final Queue<Operation> operationQueue = new LinkedList<>();
 
       private ControlledPerCacheInboundInvocationHandler(PerCacheInboundInvocationHandler delegate) {
-         this.delegate = delegate;
+         super(delegate);
       }
 
       @Override

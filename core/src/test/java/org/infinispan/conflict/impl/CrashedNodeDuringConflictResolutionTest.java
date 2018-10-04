@@ -22,6 +22,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -138,15 +139,14 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
       return future;
    }
 
-   private class CompleteFutureOnStateRequestHandler implements PerCacheInboundInvocationHandler {
-      final PerCacheInboundInvocationHandler delegate;
+   private class CompleteFutureOnStateRequestHandler extends AbstractDelegatingHandler {
       final int segment;
       final EmbeddedCacheManager manager;
       final CompletableFuture<StateRequestCommand> future;
 
       CompleteFutureOnStateRequestHandler(PerCacheInboundInvocationHandler delegate, int segment, EmbeddedCacheManager manager,
                                           CompletableFuture<StateRequestCommand> future) {
-         this.delegate = delegate;
+         super(delegate);
          this.segment = segment;
          this.manager = manager;
          this.future = future;

@@ -19,6 +19,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
@@ -170,12 +171,11 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
       }
    }
 
-   private class BlockStateResponseCommandHandler implements PerCacheInboundInvocationHandler {
-      final PerCacheInboundInvocationHandler delegate;
+   private class BlockStateResponseCommandHandler extends AbstractDelegatingHandler {
       final CountDownLatch latch;
 
       BlockStateResponseCommandHandler(PerCacheInboundInvocationHandler delegate, CountDownLatch latch) {
-         this.delegate = delegate;
+         super(delegate);
          this.latch = latch;
       }
 

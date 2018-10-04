@@ -11,11 +11,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
@@ -48,19 +52,23 @@ public class PushTransferTest extends AbstractStateTransferTest {
       CountDownLatch stateAppliedLatch = new CountDownLatch(1);
       TestingUtil.addCacheStartingHook(cm4, (name, cr) -> {
          PerCacheInboundInvocationHandler originalHandler = cr.getComponent(PerCacheInboundInvocationHandler.class);
-         BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
-         bcr.replaceComponent(PerCacheInboundInvocationHandler.class.getName(), (PerCacheInboundInvocationHandler) (command, reply, order) -> {
-            // StateResponseCommand is topology-aware, so handle() just queues it on the remote executor
-            if (command instanceof StateResponseCommand) {
-               log.tracef("State received on %s", cm4.getAddress());
-               statePushedLatch.countDown();
+         AbstractDelegatingHandler newHandler = new AbstractDelegatingHandler(originalHandler) {
+            @Override
+            public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+               // StateResponseCommand is topology-aware, so handle() just queues it on the remote executor
+               if (command instanceof StateResponseCommand) {
+                  log.tracef("State received on %s", cm4.getAddress());
+                  statePushedLatch.countDown();
+               }
+               originalHandler.handle(command, response -> {
+                  log.tracef("State applied on %s", cm4.getAddress());
+                  stateAppliedLatch.countDown();
+                  reply.reply(response);
+               }, order);
             }
-            originalHandler.handle(command, response -> {
-               log.tracef("State applied on %s", cm4.getAddress());
-               stateAppliedLatch.countDown();
-               reply.reply(response);
-            }, order);
-         }, false);
+         };
+         BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+         bcr.replaceComponent(PerCacheInboundInvocationHandler.class.getName(), newHandler, false);
          cr.rewire();
          cr.cacheComponents();
       });

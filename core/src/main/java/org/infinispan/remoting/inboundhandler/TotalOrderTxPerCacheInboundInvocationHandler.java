@@ -12,6 +12,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
@@ -32,6 +33,7 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
    private static final Log log = LogFactory.getLog(TotalOrderTxPerCacheInboundInvocationHandler.class);
    private static final boolean trace = log.isTraceEnabled();
    @Inject private TotalOrderManager totalOrderManager;
+   @Inject private StateConsumer stateConsumer;
 
    @Override
    public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
@@ -48,7 +50,7 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
          switch (command.getCommandId()) {
             case TotalOrderVersionedPrepareCommand.COMMAND_ID:
             case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
-               if (!stateTransferManager.wired().ownsData()) {
+               if (!stateConsumer.ownsData()) {
                   log.debugf("No Data in local node.");
                   reply.reply(null);
                   return;

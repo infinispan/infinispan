@@ -18,6 +18,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -127,11 +128,9 @@ public class PessimisticDeadlockTest extends MultipleCacheManagersTest {
       }
    }
 
-   private class DropLockCommandHandler implements PerCacheInboundInvocationHandler {
-      final PerCacheInboundInvocationHandler delegate;
-
+   private class DropLockCommandHandler extends AbstractDelegatingHandler {
       DropLockCommandHandler(PerCacheInboundInvocationHandler delegate) {
-         this.delegate = delegate;
+         super(delegate);
       }
 
       @Override

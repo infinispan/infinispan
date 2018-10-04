@@ -26,6 +26,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -252,12 +253,11 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       }
    }
 
-   class ListeningHandler implements PerCacheInboundInvocationHandler {
-      final PerCacheInboundInvocationHandler delegate;
+   class ListeningHandler extends AbstractDelegatingHandler {
       final CountDownLatch txsReady, joinEnded, rehashStarted;
 
       public ListeningHandler(PerCacheInboundInvocationHandler delegate, CountDownLatch txsReady, CountDownLatch joinEnded, CountDownLatch rehashStarted) {
-         this.delegate = delegate;
+         super(delegate);
          this.txsReady = txsReady;
          this.joinEnded = joinEnded;
          this.rehashStarted = rehashStarted;

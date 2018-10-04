@@ -8,10 +8,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -50,22 +54,25 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
 
       Cache receiver = cache(1);
       PerCacheInboundInvocationHandler originalInvocationHandler = TestingUtil.extractComponent(receiver, PerCacheInboundInvocationHandler.class);
-      PerCacheInboundInvocationHandler blockingInvocationHandler = (command, reply, order) -> {
-         if (!(command instanceof PrepareCommand)) {
-            originalInvocationHandler.handle(command, reply, order);
-            return;
+      PerCacheInboundInvocationHandler blockingInvocationHandler = new AbstractDelegatingHandler(originalInvocationHandler) {
+         @Override
+         public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+            if (!(command instanceof PrepareCommand)) {
+               delegate.handle(command, reply, order);
+               return;
+            }
+            try {
+               prepareReceived.countDown();
+               prepareBlocked.await(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+               throw new IllegalLifecycleStateException(e);
+            }
+            log.trace("Processing belated prepare");
+            delegate.handle(command, returnValue -> {
+               prepareExecuted.countDown();
+               reply.reply(returnValue);
+            }, order);
          }
-         try {
-            prepareReceived.countDown();
-            prepareBlocked.await(10, TimeUnit.SECONDS);
-         } catch (InterruptedException e) {
-            throw new IllegalLifecycleStateException(e);
-         }
-         log.trace("Processing belated prepare");
-         originalInvocationHandler.handle(command, returnValue -> {
-            prepareExecuted.countDown();
-            reply.reply(returnValue);
-         }, order);
       };
       TestingUtil.replaceComponent(receiver, PerCacheInboundInvocationHandler.class, blockingInvocationHandler, true);
       TestingUtil.extractComponentRegistry(receiver).cacheComponents();

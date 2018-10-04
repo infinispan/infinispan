@@ -21,6 +21,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -104,12 +105,11 @@ public class BiasLeaseTest extends MultipleCacheManagersTest {
       return cache(index).getAdvancedCache().getComponentRegistry().getComponent(BiasManager.class);
    }
 
-   private class RenewWaitingInvocationHandler implements PerCacheInboundInvocationHandler {
-      private final PerCacheInboundInvocationHandler delegate;
+   private class RenewWaitingInvocationHandler extends AbstractDelegatingHandler {
       private volatile CountDownLatch latch;
 
       private RenewWaitingInvocationHandler(PerCacheInboundInvocationHandler delegate) {
-         this.delegate = delegate;
+         super(delegate);
       }
 
       @Override

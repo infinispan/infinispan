@@ -80,14 +80,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private Optional<Integer> persistentStateChecksum;
 
    private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
-   // The first topology in which the local node was a member. Any command with a lower
-   // topology id will be ignored.
-   private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
 
-   public StateTransferManagerImpl() {
-   }
-
-   // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
    @Start(priority = 60)
    @Override
    public void start() throws Exception {
@@ -187,10 +180,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
          log.tracef("Installing new cache topology %s on cache %s", newCacheTopology, cacheName);
       }
 
-      // No need for extra synchronization here, since LocalTopologyManager already serializes topology updates.
-      if (firstTopologyAsMember == Integer.MAX_VALUE && newCacheTopology.getMembers().contains(rpcManager.getAddress())) {
-         firstTopologyAsMember = newTopologyId;
-         if (trace) log.tracef("This is the first topology %d in which the local node is a member", firstTopologyAsMember);
+      // No need for extra synchronization here, since LocalTopologyManager already serializes topology updates.\
+      if (newCacheTopology.getMembers().contains(rpcManager.getAddress())) {
+         if (!distributionManager.getCacheTopology().isConnected() || !distributionManager.getCacheTopology().getMembersSet().contains(rpcManager.getAddress())) {
+            if (trace) log.tracef("This is the first topology %d in which the local node is a member", newTopologyId);
+            inboundInvocationHandler.setFirstTopologyAsMember(newTopologyId);
+         }
       }
 
       // handle the partitioner
@@ -335,7 +330,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Override
    public int getFirstTopologyAsMember() {
-      return firstTopologyAsMember;
+      return inboundInvocationHandler.getFirstTopologyAsMember();
    }
 
    @Override
