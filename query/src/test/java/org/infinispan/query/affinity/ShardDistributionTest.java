@@ -23,8 +23,8 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "query.ShardDistributionTest")
 public class ShardDistributionTest {
 
-   private static final int MAX_SEGMENTS = 256;
-   private static final int MAX_NODES = 10;
+   private static final int MAX_SEGMENTS = 64;
+   private static final int MAX_NODES = 3;
 
    @Test
    public void testAllocation() throws Exception {
