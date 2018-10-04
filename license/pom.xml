@@ -32,10 +32,6 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
-      <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
-      <jboss.releases.nexus.url>https://repository.jboss.org/nexus</jboss.releases.nexus.url>
-      <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
    </properties>
 
    <build>
@@ -110,12 +106,12 @@
 
    <distributionManagement>
       <repository>
-         <id>jboss-releases-repository</id>
+         <id>${jboss.releases.repo.id}</id>
          <name>JBoss Releases Repository</name>
          <url>${jboss.releases.repo.url}</url>
       </repository>
       <snapshotRepository>
-         <id>jboss-snapshots-repository</id>
+         <id>${jboss.snapshots.repo.id}</id>
          <name>JBoss Snapshots Repository</name>
          <url>${jboss.snapshots.repo.url}</url>
       </snapshotRepository>

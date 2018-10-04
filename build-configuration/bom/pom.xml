@@ -61,24 +61,20 @@
 
     <distributionManagement>
         <repository>
-            <id>jboss-releases-repository</id>
+            <id>${jboss.releases.repo.id}</id>
             <name>JBoss Release Repository</name>
-            <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</url>
+            <url>${jboss.releases.repo.url}</url>
         </repository>
         <snapshotRepository>
-            <id>jboss-snapshots-repository</id>
+            <id>${jboss.snapshots.repo.id}</id>
             <name>JBoss Snapshot Repository</name>
-            <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
+            <url>${jboss.snapshots.repo.url}</url>
         </snapshotRepository>
     </distributionManagement>
 
     <properties>
         <!-- Java source/target version -->
         <version.java>1.8</version.java>
-
-        <!-- Private release information -->
-        <jboss.releases.nexus.url>https://repository.jboss.org/nexus</jboss.releases.nexus.url>
-        <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
 
         <!-- Explicit dependency versions [versionx].[groupId].[artifactId] -->
         <versionx.ant-contrib.ant-contrib>${version.ant-contrib}</versionx.ant-contrib.ant-contrib>
