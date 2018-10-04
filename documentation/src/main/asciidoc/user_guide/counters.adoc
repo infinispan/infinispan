@@ -173,7 +173,7 @@ RemoteCacheManager manager = ...;
 CounterManager counterManager = RemoteCounterManagerFactory.asCounterManager(manager);
 ----
 
-NOTE: Hot Rod messages format can be found in link:#hot_rod_protocol_2_7[Hot Rod Protocol 2.7]
+NOTE: Hot Rod messages format can be found in link:../contributing/contributing.html#hot_rod_protocol_2_7[Hot Rod Protocol 2.7]
 
 ==== Remove a counter via CounterManager
 

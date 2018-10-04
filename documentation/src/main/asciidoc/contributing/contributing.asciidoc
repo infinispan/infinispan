@@ -17,4 +17,5 @@ include::tests.adoc[]
 include::help.adoc[]
 include::configuration.adoc[]
 include::docs.adoc[]
+include::hotrod_wire.adoc[]
 

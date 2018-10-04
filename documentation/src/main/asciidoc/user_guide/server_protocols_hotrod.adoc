@@ -7,13 +7,13 @@ To connect to {brandname} over this highly efficient Hot Rod protocol you can
 either use one of the clients described in this chapter, or use higher level
 tools such as link:#integrations_hibernate_ogm[Hibernate OGM].
 
-include::server_protocols_hotrod_wire.adoc[]
-
 [[hotrod_java_client]]
 ===  Java Hot Rod client
 Hot Rod is a binary, language neutral protocol. This article explains how a Java client can interact with a server via the Hot Rod protocol. A reference implementation of the protocol written in Java can be found in all {brandname} distributions, and this article focuses on the capabilities of this java client.
 
 TIP: Looking for more clients?  Visit link:http://infinispan.org/hotrod-clients[this website] for clients written in a variety of different languages.
+
+TIP: Interested in the Hot Rod wire protocol ? Check the link:../contributing/contributing.html#hot_rod_protocol[Hot Rod chapter] of the contributing guide.
 
 ==== Configuration
 The Java Hot Rod client can be configured both programmatically and externally, through a configuration file.
