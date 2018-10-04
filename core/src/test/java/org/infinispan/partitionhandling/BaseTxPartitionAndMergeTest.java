@@ -14,6 +14,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -195,13 +196,11 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
       boolean before(CacheRpcCommand command, Reply reply, DeliverOrder order);
    }
 
-   private static class ControlledInboundHandler implements PerCacheInboundInvocationHandler {
-
-      private final PerCacheInboundInvocationHandler delegate;
+   private static class ControlledInboundHandler extends AbstractDelegatingHandler {
       private final Filter filter;
 
       private ControlledInboundHandler(PerCacheInboundInvocationHandler delegate, Filter filter) {
-         this.delegate = delegate;
+         super(delegate);
          this.filter = filter;
       }
 

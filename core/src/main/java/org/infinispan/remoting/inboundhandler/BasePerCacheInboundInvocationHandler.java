@@ -17,7 +17,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -25,7 +24,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -43,12 +41,12 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    @Inject @ComponentName(REMOTE_COMMAND_EXECUTOR)
    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
    @Inject private StateTransferLock stateTransferLock;
-   @Inject protected ComponentRef<StateTransferManager> stateTransferManager;
    @Inject private ResponseGenerator responseGenerator;
    @Inject private CancellationService cancellationService;
    @Inject protected Configuration configuration;
 
    private volatile boolean stopped = false;
+   private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
 
    private static int extractCommandTopologyId(SingleRpcCommand command) {
       ReplicableCommand innerCmd = command.getCommand();
@@ -145,9 +143,9 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    public final boolean isCommandSentBeforeFirstTopology(int commandTopologyId) {
-      if (0 <= commandTopologyId && commandTopologyId < stateTransferManager.wired().getFirstTopologyAsMember()) {
+      if (0 <= commandTopologyId && commandTopologyId < firstTopologyAsMember) {
          if (isTraceEnabled()) {
-            getLog().tracef("Ignoring command sent before the local node was a member (command topology id is %d)", commandTopologyId);
+            getLog().tracef("Ignoring command sent before the local node was a member (command topology id is %d, first topology as member is %d)", commandTopologyId, firstTopologyAsMember);
          }
          return true;
       }
@@ -206,5 +204,15 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
             readyAction.onFinally();
          }
       };
+   }
+
+   @Override
+   public void setFirstTopologyAsMember(int firstTopologyAsMember) {
+      this.firstTopologyAsMember = firstTopologyAsMember;
+   }
+
+   @Override
+   public int getFirstTopologyAsMember() {
+         return firstTopologyAsMember;
    }
 }

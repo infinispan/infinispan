@@ -26,6 +26,16 @@ public abstract class AbstractDelegatingHandler implements PerCacheInboundInvoca
       afterHandle(command, order, canDelegate);
    }
 
+   @Override
+   public void setFirstTopologyAsMember(int firstTopologyAsMember) {
+      delegate.setFirstTopologyAsMember(firstTopologyAsMember);
+   }
+
+   @Override
+   public int getFirstTopologyAsMember() {
+      return delegate.getFirstTopologyAsMember();
+   }
+
    /**
     * Invoked before the command is handled by the real {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler}.
     *

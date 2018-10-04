@@ -38,6 +38,7 @@ import org.hibernate.mapping.SimpleValue;
 import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorBuilderImpl;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorBuilderImpl;
 
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -251,23 +252,22 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
    }
 
    protected void removeAfterEndInvalidationHandler(AdvancedCache cache) {
-      wrapInboundInvocationHandler(cache, handler -> ((ExpectingInboundInvocationHandler) handler).delegate);
+      wrapInboundInvocationHandler(cache, handler -> ((ExpectingInboundInvocationHandler) handler).getDelegate());
    }
 
 	protected boolean useTransactionalCache() {
 		return TestRegionFactoryProvider.load().supportTransactionalCaches() && accessType == AccessType.TRANSACTIONAL;
 	}
 
-	private static final class ExpectingInboundInvocationHandler implements PerCacheInboundInvocationHandler {
+	private static final class ExpectingInboundInvocationHandler extends AbstractDelegatingHandler {
 
       private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider
             .getLog(ExpectingInboundInvocationHandler.class);
 
-      final PerCacheInboundInvocationHandler delegate;
       final CountDownLatch latch;
 
       public ExpectingInboundInvocationHandler(PerCacheInboundInvocationHandler delegate, CountDownLatch latch) {
-         this.delegate = delegate;
+         super(delegate);
          this.latch = latch;
       }
 
@@ -284,6 +284,9 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
          }
       }
 
+      PerCacheInboundInvocationHandler getDelegate() {
+         return delegate;
+      }
    }
 
 }

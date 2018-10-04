@@ -37,6 +37,7 @@ import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -274,13 +275,12 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), delegate -> new DelayStateResponseCommandHandler(latch, delegate)));
    }
 
-   private class DelayStateResponseCommandHandler implements PerCacheInboundInvocationHandler {
+   private class DelayStateResponseCommandHandler extends AbstractDelegatingHandler {
       final CountDownLatch latch;
-      final PerCacheInboundInvocationHandler delegate;
 
       DelayStateResponseCommandHandler(CountDownLatch latch, PerCacheInboundInvocationHandler delegate) {
+         super(delegate);
          this.latch = latch;
-         this.delegate = delegate;
       }
 
       @Override
@@ -299,11 +299,9 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       }
    }
 
-   private class DropClusteredGetCommandHandler implements PerCacheInboundInvocationHandler {
-      final PerCacheInboundInvocationHandler delegate;
-
+   private class DropClusteredGetCommandHandler extends AbstractDelegatingHandler {
       DropClusteredGetCommandHandler(PerCacheInboundInvocationHandler delegate) {
-         this.delegate = delegate;
+         super(delegate);
       }
 
       @Override

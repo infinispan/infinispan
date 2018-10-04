@@ -64,13 +64,18 @@ public interface StateTransferManager {
 
    /**
     * @return  true if this node has already received the first rebalance start
+    * @deprecated Since 9.4, will be removed.
     */
+   @Deprecated
    boolean ownsData();
 
    /**
     * @return The id of the first cache topology in which the local node was a member
     *    (even if it didn't own any data).
+    *
+    * @deprecated Since 9.4, will be removed.
     */
+   @Deprecated
    int getFirstTopologyAsMember();
 
    @ManagedAttribute(description = "Retrieves the rebalancing status for this cache. Possible values are PENDING, SUSPENDED, IN_PROGRESS, BALANCED", displayName = "Rebalancing progress", dataType = DataType.TRAIT)

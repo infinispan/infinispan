@@ -7,6 +7,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -60,15 +61,14 @@ public class InboundRpcSequencerAction {
       return this;
    }
 
-   public static class SequencerPerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
+   public static class SequencerPerCacheInboundInvocationHandler extends AbstractDelegatingHandler {
       private final StateSequencer stateSequencer;
       private final CommandMatcher matcher;
-      private final PerCacheInboundInvocationHandler handler;
       private volatile List<String> statesBefore;
       private volatile List<String> statesAfter;
 
-      public SequencerPerCacheInboundInvocationHandler(PerCacheInboundInvocationHandler handler, StateSequencer stateSequencer, CommandMatcher matcher) {
-         this.handler = handler;
+      public SequencerPerCacheInboundInvocationHandler(PerCacheInboundInvocationHandler delegate, StateSequencer stateSequencer, CommandMatcher matcher) {
+         super(delegate);
          this.stateSequencer = stateSequencer;
          this.matcher = matcher;
       }
@@ -78,7 +78,7 @@ public class InboundRpcSequencerAction {
          boolean accepted = matcher.accept(command);
          advance(accepted, statesBefore, reply);
          try {
-            handler.handle(command, reply, order);
+            delegate.handle(command, reply, order);
          } finally {
             advance(accepted, statesAfter, Reply.NO_OP);
          }

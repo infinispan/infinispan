@@ -20,4 +20,17 @@ public interface PerCacheInboundInvocationHandler {
     */
    void handle(CacheRpcCommand command, Reply reply, DeliverOrder order);
 
+
+   /**
+    * @param firstTopologyAsMember The first topology in which the local node was a member.
+    *                              Any command with a lower topology id will be ignored.
+    */
+   void setFirstTopologyAsMember(int firstTopologyAsMember);
+
+   /**
+    * @return The first topology in which the local node was a member.
+    *
+    * Any command with a lower topology id will be ignored.
+    */
+   int getFirstTopologyAsMember();
 }

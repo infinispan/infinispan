@@ -29,6 +29,7 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -268,13 +269,11 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       }
    }
 
-   private class ControllerInboundInvocationHandler implements PerCacheInboundInvocationHandler {
-
-      private final PerCacheInboundInvocationHandler realOne;
+   private class ControllerInboundInvocationHandler extends AbstractDelegatingHandler {
       private volatile boolean discardRemoteGet;
 
-      private ControllerInboundInvocationHandler(PerCacheInboundInvocationHandler realOne) {
-         this.realOne = realOne;
+      private ControllerInboundInvocationHandler(PerCacheInboundInvocationHandler delegate) {
+         super(delegate);
       }
 
       @Override
@@ -282,7 +281,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
          if (discardRemoteGet && command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {
             return;
          }
-         realOne.handle(command, reply, order);
+         delegate.handle(command, reply, order);
       }
    }
 
