@@ -16,8 +16,6 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <jboss.releases.nexus.url>https://repository.jboss.org/nexus</jboss.releases.nexus.url>
-      <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
    </properties>
 
    <dependencies>

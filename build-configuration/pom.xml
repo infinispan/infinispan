@@ -94,6 +94,13 @@
       <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
 
+      <!-- jboss repository urls -->
+      <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
+      <jboss.releases.nexus.url>https://repository.jboss.org/nexus</jboss.releases.nexus.url>
+      <jboss.releases.repo.url>${jboss.releases.nexus.url}/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
+      <jboss.snapshots.repo.id>jboss-snapshots-repository</jboss.snapshots.repo.id>
+      <jboss.snapshots.repo.url>${jboss.releases.nexus.url}/content/repositories/snapshots/</jboss.snapshots.repo.url>
+
       <!-- === Application Server Configuration === -->
 
       <!-- org.wildfly / org.jboss.eap -->
