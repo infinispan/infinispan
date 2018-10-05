@@ -51,9 +51,11 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterConverterAsCacheEventFilterConverter;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.TimeoutException;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.EventLoop;
 
 /**
  * @author Galder Zamarreño
@@ -324,6 +326,7 @@ class ClientListenerRegistry {
          return ch == channel;
       }
 
+      // This method can only be invoked from the Event Loop thread!
       void writeEventsIfPossible() {
          boolean written = false;
          while (!eventQueue.isEmpty() && ch.isWritable()) {
@@ -388,16 +391,37 @@ class ClientListenerRegistry {
          if (isTrace)
             log.tracef("Queue event %s, before queuing event queue size is %d", remoteEvent, eventQueue.size());
 
-         boolean waitingForFlush = !ch.isWritable();
-         try {
-            eventQueue.put(remoteEvent);
-         } catch (InterruptedException e) {
-            throw new CacheException(e);
+         EventLoop loop = ch.eventLoop();
+         // We shouldn't be in the event loop, but just in case we can't get stuck blocking on putting into the queue
+         // so we offer and try to catch up on events if possible
+         if (loop.inEventLoop()) {
+            boolean offered = eventQueue.offer(remoteEvent);
+            while (!offered) {
+               // If the event queue is full, we have to try to write some events to free up space since we are in the
+               // event loop and no other thread can drain this queue but us
+               writeEventsIfPossible();
+               // We again try to offer, but if we weren't able to write any events this will not offer - so we
+               // have to wait for the client to catch up to us - we put a little wait to not cause CPU to spin
+               try {
+                  offered = eventQueue.offer(remoteEvent, 1, TimeUnit.MILLISECONDS);
+               } catch (InterruptedException e) {
+                  throw new CacheException(e);
+               }
+            }
+         } else {
+            try {
+               // TODO: replace with a better number
+               if (!eventQueue.offer(remoteEvent, 30, TimeUnit.SECONDS)) {
+                  throw new TimeoutException("Timed out attempting to offer remote event into queue");
+               }
+            } catch (InterruptedException e) {
+               throw new CacheException(e);
+            }
          }
 
-         if (!waitingForFlush) {
+         if (ch.isWritable()) {
             // Make sure we write any event in main event loop
-            ch.eventLoop().submit(writeEventsIfPossible);
+            loop.submit(writeEventsIfPossible);
          }
       }
 

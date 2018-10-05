@@ -51,7 +51,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private boolean isBlockingWrite(AdvancedCache<byte[], byte[]> cache, HotRodHeader header) {
       CacheInfo info = server.getCacheInfo(cache, header);
       // Note: cache store cannot be skipped (yet)
-      return info.persistence || info.indexing && !header.isSkipIndexing();
+      return info.persistence || info.indexing && !header.isSkipIndexing() || info.syncListener;
    }
 
    void ping(HotRodHeader header, Subject subject) {

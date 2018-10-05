@@ -10,6 +10,7 @@ import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstant
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -19,7 +20,6 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -67,6 +67,13 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.multimap.impl.EmbeddedMultimapCache;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
@@ -93,6 +100,8 @@ import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.KeyValuePair;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
@@ -117,13 +126,20 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       super("HotRod");
    }
 
+   private static Map<String, CacheInfo> expirationMap(long time, TimeUnit unit) {
+      com.github.benmanes.caffeine.cache.Cache<String, CacheInfo> cache = Caffeine.newBuilder()
+            .expireAfterWrite(time, unit).build();
+      return cache.asMap();
+   }
+
    private Address clusterAddress;
    private ServerAddress address;
    private Cache<Address, ServerAddress> addressCache;
    private Map<String, AdvancedCache> knownCaches = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private Map<String, Configuration> knownCacheConfigurations = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private Map<String, ComponentRegistry> knownCacheRegistries = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
-   private final Map<String, CacheInfo> cacheInfo = new ConcurrentHashMap<>();
+   // This needs to be an expiration map so we can update knowledge about if sync listeners are registered
+   private final Map<String, CacheInfo> cacheInfo = expirationMap(10, TimeUnit.SECONDS);
    private QueryFacade queryFacade;
    private Map<String, SaslServerFactory> saslMechFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private ClientListenerRegistry clientListenerRegistry;
@@ -424,6 +440,18 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       cacheInfo.keySet().stream().filter(k -> k.startsWith(cacheName)).forEach(cacheInfo::remove);
    }
 
+   boolean hasSyncListener(CacheNotifierImpl<?, ?> cacheNotifier) {
+      for (Class<? extends Annotation> annotation :
+            new Class[]{CacheEntryCreated.class, CacheEntryRemoved.class, CacheEntryExpired.class, CacheEntryModified.class}) {
+         for (CacheEntryListenerInvocation invocation : cacheNotifier.getListenerCollectionForAnnotation(annotation)) {
+            if (invocation.isSync()) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
    public CacheInfo getCacheInfo(AdvancedCache<byte[], byte[]> cache, HotRodHeader header) {
       // Fetching persistence manager would require security action, and would be too expensive
       CacheInfo info = cacheInfo.get(cache.getName() + header.getKeyMediaType().getTypeSubtype() + header.getValueMediaType().getTypeSubtype());
@@ -432,12 +460,14 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
                .noFlags().withFlags(LOCAL_NON_BLOCKING_GET);
          if (cache.getStatus() != ComponentStatus.RUNNING) {
             // stay on the safe side
-            return new CacheInfo(localNonBlocking, true, true);
+            return new CacheInfo(localNonBlocking, true, true, true);
          }
          ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
+
          PersistenceManager pm = cr.getComponent(PersistenceManager.class);
          boolean hasIndexing = SecurityActions.getCacheConfiguration(cache).indexing().index().isEnabled();
-         info = new CacheInfo(localNonBlocking, pm.isEnabled(), hasIndexing);
+         CacheNotifierImpl cacheNotifier = (CacheNotifierImpl) cr.getComponent(CacheNotifier.class);
+         info = new CacheInfo(localNonBlocking, pm.isEnabled(), hasIndexing, hasSyncListener(cacheNotifier));
          cacheInfo.put(cache.getName() + header.getKeyMediaType().getTypeSubtype() + header.getValueMediaType().getTypeSubtype(), info);
       }
       return info;
@@ -668,11 +698,14 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       final AdvancedCache<byte[], byte[]> localNonBlocking;
       final boolean persistence;
       final boolean indexing;
+      final boolean syncListener;
 
-      CacheInfo(AdvancedCache<byte[], byte[]> localNonBlocking, boolean persistence, boolean indexing) {
+      CacheInfo(AdvancedCache<byte[], byte[]> localNonBlocking, boolean persistence, boolean indexing,
+            boolean syncListener) {
          this.localNonBlocking = localNonBlocking;
          this.persistence = persistence;
          this.indexing = indexing;
+         this.syncListener = syncListener;
       }
 
       AdvancedCache<byte[], byte[]> localNonBlocking(Subject subject) {
