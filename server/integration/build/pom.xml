@@ -73,13 +73,6 @@
             </plugin>
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
-                <configuration>
-                    <target>
-                        <ant antfile="build.xml" inheritRefs="true">
-                            <target name="trim-server" />
-                        </ant>
-                    </target>
-                </configuration>
                 <executions>
                     <execution>
                         <id>trim-thin-server</id>
@@ -89,8 +82,9 @@
                         <phase>package</phase>
                         <configuration>
                             <target>
+                                <property name="output.dir"
+                                          value="${project.build.directory}/server-distribution-thin/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                                 <ant antfile="build.xml" inheritRefs="true">
-                                    <property name="output.dir" value="${project.build.directory}/server-distribution-thin/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                                     <target name="trim-server" />
                                 </ant>
                             </target>
@@ -151,13 +145,6 @@
                     </plugin>
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <configuration>
-                            <target>
-                                <ant antfile="build.xml" inheritRefs="true">
-                                    <target name="trim-server"/>
-                                </ant>
-                            </target>
-                        </configuration>
                         <executions>
                             <execution>
                                 <id>trim-fat-server</id>
