@@ -89,8 +89,8 @@
                         <phase>package</phase>
                         <configuration>
                             <target>
-				                <property name="output.dir" value="${project.build.directory}/server-distribution-thin/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                                 <ant antfile="build.xml" inheritRefs="true">
+                                    <property name="output.dir" value="${project.build.directory}/server-distribution-thin/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                                     <target name="trim-server" />
                                 </ant>
                             </target>
