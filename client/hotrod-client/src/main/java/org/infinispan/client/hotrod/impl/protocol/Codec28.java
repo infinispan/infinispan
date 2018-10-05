@@ -40,7 +40,7 @@ public class Codec28 extends Codec27 {
       if (mediaType == null) {
          buf.writeByte(0);
       } else {
-         Short id = MediaTypeIds.getId(mediaType.toString());
+         Short id = MediaTypeIds.getId(mediaType);
          if (id != null) {
             buf.writeByte(1);
             ByteBufUtil.writeVInt(buf, id);
