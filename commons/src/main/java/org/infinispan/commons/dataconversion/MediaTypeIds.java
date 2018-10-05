@@ -1,21 +1,22 @@
 package org.infinispan.commons.dataconversion;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_INFINISPAN_MARSHALLING_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PDF_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_RTF_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_ZIP_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.IMAGE_GIF_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.IMAGE_JPEG_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.IMAGE_PNG_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSS_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSV_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_INFINISPAN_MARSHALLING;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PDF;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_RTF;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_ZIP;
+import static org.infinispan.commons.dataconversion.MediaType.IMAGE_GIF;
+import static org.infinispan.commons.dataconversion.MediaType.IMAGE_JPEG;
+import static org.infinispan.commons.dataconversion.MediaType.IMAGE_PNG;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSS;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSV;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,35 +26,37 @@ import java.util.Map;
  */
 public final class MediaTypeIds {
 
-   private static final Map<String, Short> idByType = new HashMap<>(32);
-   private static final Map<Short, String> typeById = new HashMap<>(32);
+   private static final Map<MediaType, Short> idByType = new HashMap<>(16);
+   private static final Map<Short, MediaType> typeById = new HashMap<>(16);
 
    static {
-      idByType.put(APPLICATION_OBJECT_TYPE, (short) 1);
-      idByType.put(APPLICATION_JSON_TYPE, (short) 2);
-      idByType.put(APPLICATION_OCTET_STREAM_TYPE, (short) 3);
-      idByType.put(APPLICATION_PDF_TYPE, (short) 4);
-      idByType.put(APPLICATION_RTF_TYPE, (short) 5);
-      idByType.put(APPLICATION_ZIP_TYPE, (short) 6);
-      idByType.put(IMAGE_GIF_TYPE, (short) 7);
-      idByType.put(IMAGE_JPEG_TYPE, (short) 8);
-      idByType.put(IMAGE_PNG_TYPE, (short) 9);
-      idByType.put(TEXT_CSS_TYPE, (short) 10);
-      idByType.put(TEXT_CSV_TYPE, (short) 11);
-      idByType.put(APPLICATION_PROTOSTREAM_TYPE, (short) 12);
-      idByType.put(TEXT_PLAIN_TYPE, (short) 13);
-      idByType.put(TEXT_HTML_TYPE, (short) 14);
-      idByType.put(APPLICATION_JBOSS_MARSHALLING_TYPE, (short) 15);
-      idByType.put(APPLICATION_INFINISPAN_MARSHALLING_TYPE, (short) 16);
+      idByType.put(APPLICATION_OBJECT, (short) 1);
+      idByType.put(APPLICATION_JSON, (short) 2);
+      idByType.put(APPLICATION_OCTET_STREAM, (short) 3);
+      idByType.put(APPLICATION_PDF, (short) 4);
+      idByType.put(APPLICATION_RTF, (short) 5);
+      idByType.put(APPLICATION_ZIP, (short) 6);
+      idByType.put(IMAGE_GIF, (short) 7);
+      idByType.put(IMAGE_JPEG, (short) 8);
+      idByType.put(IMAGE_PNG, (short) 9);
+      idByType.put(TEXT_CSS, (short) 10);
+      idByType.put(TEXT_CSV, (short) 11);
+      idByType.put(APPLICATION_PROTOSTREAM, (short) 12);
+      idByType.put(TEXT_PLAIN, (short) 13);
+      idByType.put(TEXT_HTML, (short) 14);
+      idByType.put(APPLICATION_JBOSS_MARSHALLING, (short) 15);
+      idByType.put(APPLICATION_INFINISPAN_MARSHALLING, (short) 16);
+      idByType.put(APPLICATION_UNKNOWN, (short) 17);
 
       idByType.forEach((key, value) -> typeById.put(value, key));
    }
 
-   public static Short getId(String mediaType) {
-      return idByType.get(mediaType);
+   public static Short getId(MediaType mediaType) {
+      if (mediaType == null) return null;
+      return idByType.get(mediaType.withoutParameters());
    }
 
-   public static String getMediaType(Short id) {
+   public static MediaType getMediaType(Short id) {
       return typeById.get(id);
    }
 

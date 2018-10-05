@@ -48,8 +48,7 @@ public final class CodecUtils {
 
    static MediaType readPredefinedMediaType(ByteBuf buffer) {
       int mediaTypeId = ByteBufUtil.readVInt(buffer);
-      String strMediaType = MediaTypeIds.getMediaType((short) mediaTypeId);
-      MediaType mediaType = MediaType.parse(strMediaType);
+      MediaType mediaType = MediaTypeIds.getMediaType((short) mediaTypeId);
       return mediaType.withParameters(readMediaTypeParams(buffer));
    }
 

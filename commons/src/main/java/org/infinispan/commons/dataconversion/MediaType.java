@@ -69,10 +69,18 @@ public final class MediaType {
    public static MediaType APPLICATION_WWW_FORM_URLENCODED = fromString(WWW_FORM_URLENCODED_TYPE);
    public static MediaType IMAGE_PNG = fromString(IMAGE_PNG_TYPE);
    public static MediaType TEXT_PLAIN = fromString(TEXT_PLAIN_TYPE);
+   public static MediaType TEXT_CSS = fromString(TEXT_CSS_TYPE);
+   public static MediaType TEXT_CSV = fromString(TEXT_CSV_TYPE);
    public static MediaType TEXT_HTML = fromString(TEXT_HTML_TYPE);
+   public static MediaType IMAGE_GIF = fromString(IMAGE_GIF_TYPE);
+   public static MediaType IMAGE_JPEG = fromString(IMAGE_JPEG_TYPE);
    public static MediaType APPLICATION_PROTOSTUFF = fromString(APPLICATION_PROTOSTUFF_TYPE);
    public static MediaType APPLICATION_KRYO = fromString(APPLICATION_KRYO_TYPE);
    public static MediaType APPLICATION_INFINISPAN_BINARY = fromString(APPLICATION_INFINISPAN_BINARY_TYPE);
+   public static MediaType APPLICATION_PDF = fromString(APPLICATION_PDF_TYPE);
+   public static MediaType APPLICATION_RTF = fromString(APPLICATION_RTF_TYPE);
+   public static MediaType APPLICATION_ZIP = fromString(APPLICATION_ZIP_TYPE);
+   public static MediaType APPLICATION_INFINISPAN_MARSHALLING = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
    public static MediaType APPLICATION_UNKNOWN = fromString(APPLICATION_UNKNOWN_TYPE);
    public static MediaType MATCH_ALL = fromString(MATCH_ALL_TYPE);
 
@@ -193,6 +201,7 @@ public final class MediaType {
    }
 
    public MediaType withoutParameters() {
+      if (params.isEmpty()) return this;
       return new MediaType(type, subType);
    }
 
@@ -297,8 +306,7 @@ public final class MediaType {
    public static final class MediaTypeExternalizer implements Externalizer<MediaType> {
       @Override
       public void writeObject(ObjectOutput output, MediaType mediaType) throws IOException {
-         String type = mediaType.type + "/" + mediaType.subType;
-         Short id = MediaTypeIds.getId(type);
+         Short id = MediaTypeIds.getId(mediaType);
          if (id == null) {
             output.writeBoolean(false);
             output.writeUTF(mediaType.type);
@@ -317,10 +325,8 @@ public final class MediaType {
          boolean isInternal = input.readBoolean();
          if (isInternal) {
             short id = input.readShort();
-            MediaType mediaType = MediaType.fromString(MediaTypeIds.getMediaType(id));
             Map<String, String> params = (Map<String, String>) input.readObject();
-            params.forEach(mediaType.params::put);
-            return mediaType;
+            return MediaTypeIds.getMediaType(id).withParameters(params);
          } else {
             String type = input.readUTF();
             String subType = input.readUTF();

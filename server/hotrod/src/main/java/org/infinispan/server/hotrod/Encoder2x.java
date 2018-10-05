@@ -507,7 +507,7 @@ class Encoder2x implements VersionedEncoder {
       if (mediaType == null) {
          buf.writeByte(0);
       } else {
-         Short id = MediaTypeIds.getId(mediaType.toString());
+         Short id = MediaTypeIds.getId(mediaType);
          if (id != null) {
             buf.writeByte(1);
             VInt.write(buf, id);
