@@ -285,7 +285,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          if (log.isTraceEnabled()) {
             log.tracef("Invoking %s.cacheManagerStopping()", l);
          }
-         l.cacheManagerStopping(this);
+         try {
+            l.cacheManagerStopping(this);
+         } catch (Throwable t) {
+            log.moduleStopError(l.getClass().getName(), t);
+         }
       }
    }
 
@@ -296,7 +300,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             if (log.isTraceEnabled()) {
                log.tracef("Invoking %s.cacheManagerStopped()", l);
             }
-            l.cacheManagerStopped(this);
+            try {
+               l.cacheManagerStopped(this);
+            } catch (Throwable t) {
+               log.moduleStopError(l.getClass().getName(), t);
+            }
          }
       }
    }
