@@ -16,6 +16,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.hotrod.logging.Log;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
@@ -62,11 +63,15 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    @Override
    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
       super.channelWritabilityChanged(ctx);
+      Channel channel = ctx.channel();
+      boolean writeable = channel.isWritable();
       if (trace) {
-         log.tracef("Channel %s writability changed", ctx.channel());
+         log.tracef("Channel %s writability changed to %b", channel, writeable);
       }
-      server.getClientListenerRegistry().findAndWriteEvents(ctx.channel());
-      server.getClientCounterNotificationManager().channelActive(ctx.channel());
+      if (writeable) {
+         server.getClientListenerRegistry().findAndWriteEvents(channel);
+         server.getClientCounterNotificationManager().channelActive(channel);
+      }
    }
 
    @Override
