@@ -195,7 +195,11 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          if (log.isTraceEnabled()) {
             log.tracef("Invoking %s.cacheStopping()", l);
          }
-         l.cacheStopping(this, cacheName);
+         try {
+            l.cacheStopping(this, cacheName);
+         } catch (Throwable t) {
+            log.moduleStopError(l.getClass().getName() + ":" + cacheName, t);
+         }
       }
    }
 
@@ -205,7 +209,11 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          if (log.isTraceEnabled()) {
             log.tracef("Invoking %s.cacheStopped()", l);
          }
-         l.cacheStopped(this, cacheName);
+         try {
+            l.cacheStopped(this, cacheName);
+         } catch (Throwable t) {
+            log.moduleStopError(l.getClass().getName() + ":" + cacheName, t);
+         }
       }
       cacheManagerNotifier.notifyCacheStopped(cacheName);
    }

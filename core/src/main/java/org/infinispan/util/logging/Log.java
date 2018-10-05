@@ -1833,4 +1833,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Factory doesn't know how to construct component %s", id = 537)
    CacheConfigurationException factoryCannotConstructComponent(String componentName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error stopping module %s", id = 538)
+   void moduleStopError(String module, @Cause Throwable t);
 }
