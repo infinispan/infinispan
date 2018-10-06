@@ -25,6 +25,7 @@
 -ga('send', 'pageview');
 -} catch(err) {}&lt;/script&gt;
       </analytics.code>
+      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
    </properties>
 
    <dependencies>

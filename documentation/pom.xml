@@ -23,6 +23,7 @@
         <jdk.docroot>${jdk.root}/api</jdk.docroot>
         <javaee.docroot>https://docs.oracle.com/javaee/7/api</javaee.docroot>
         <skipTests>true</skipTests>
+        <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
         <asciidoctor.version>1.5.7</asciidoctor.version>
         <asciidoctorj.pdf.version>1.5.0-alpha.16</asciidoctorj.pdf.version>
