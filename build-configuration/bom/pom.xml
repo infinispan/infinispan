@@ -505,7 +505,7 @@
         <versionx.org.infinispan.infinispan-js-client>${version.infinispan}</versionx.org.infinispan.infinispan-js-client>
         <versionx.org.infinispan.infinispan-license>${version.infinispan}</versionx.org.infinispan.infinispan-license>
         <versionx.org.infinispan.infinispan-lucene-directory>${version.infinispan}</versionx.org.infinispan.infinispan-lucene-directory>
-        <versionx.org.infinispan.infinispan-management-console>${version.infinispan}</versionx.org.infinispan.infinispan-management-console>
+        <versionx.org.infinispan.infinispan-management-console>9.4.0.Final</versionx.org.infinispan.infinispan-management-console>
         <versionx.org.infinispan.infinispan-marshaller-kryo-bundle>${version.infinispan}</versionx.org.infinispan.infinispan-marshaller-kryo-bundle>
         <versionx.org.infinispan.infinispan-marshaller-kryo>${version.infinispan}</versionx.org.infinispan.infinispan-marshaller-kryo>
         <versionx.org.infinispan.infinispan-marshaller-protostuff-bundle>${version.infinispan}</versionx.org.infinispan.infinispan-marshaller-protostuff-bundle>
