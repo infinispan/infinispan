@@ -33,30 +33,25 @@
       </dependency>
    </dependencies>
 
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>attach-sources</id>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <inherited>true</inherited>
+         </plugin>
+      </plugins>
+   </build>
+
    <profiles>
-      <profile>
-         <id>extras</id>
-         <activation>
-            <activeByDefault>true</activeByDefault>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-source-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                           <goal>jar</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-                  <inherited>true</inherited>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
 
       <profile>
          <!-- nexus-staging-maven-plugin blocks maven-deploy-plugin -->
