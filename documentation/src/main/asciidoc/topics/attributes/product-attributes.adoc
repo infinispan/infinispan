@@ -26,6 +26,16 @@
 :underscores: ___
 
 //
+// OpenShift
+//
+:openshift: Red Hat OpenShift
+:openshiftshort: OpenShift
+:ossecrets: OpenShift Secrets
+:osweb: OpenShift Web Console
+:osproduct: Red Hat Data Grid for OpenShift
+:osproductshort: Data Grid for OpenShift
+
+//
 // ISPN Attributes
 //
 :brandname: Red Hat Data Grid
@@ -54,3 +64,4 @@
 :Performance: {FullProductName} Performance Guide
 :ServerGuide: {FullProductName} Server Guide
 :Upgrading: Upgrading {FullProductName}
+:OpenShiftGuide: {FullProductName} for OpenShift
