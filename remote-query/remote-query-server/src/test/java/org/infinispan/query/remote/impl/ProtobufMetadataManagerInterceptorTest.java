@@ -7,11 +7,15 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletionException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -49,7 +53,7 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
 
    @AfterMethod
    @Override
-   protected void clearContent() throws Throwable {
+   protected void clearContent() {
       // the base method cleans only the data container without invoking the interceptor stack...
       cache(0).clear();
    }
@@ -264,6 +268,38 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertFalse(cache1.containsKey("test.proto.errors"));
       assertFalse(cache0.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
       assertFalse(cache1.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+
+      assertNoTransactionsAndLocks();
+   }
+
+   public void testUnsupportedCommands() {
+      Cache<String, String> cache0 = cache(0);
+
+      assertTrue(cache0.isEmpty());
+
+      try {
+         cache0.compute("test.proto", (k, v) -> "import \"missing.proto\";");
+      } catch (Exception e) {
+         assertTrue(e instanceof CacheException);
+         assertTrue(e.getMessage().contains("ISPN028014"));
+      }
+
+      assertTrue(cache0.isEmpty());
+
+      try {
+         FunctionalMap.ReadWriteMap<String, String> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache0.getAdvancedCache()));
+
+         rwMap.eval("test.proto", "val", (value, view) -> {
+            view.set(value);
+            return "ret";
+         }).join();
+
+      } catch (CompletionException e) {
+         assertTrue(e.getCause() instanceof CacheException);
+         assertTrue(e.getCause().getMessage().contains("ISPN028014"));
+      }
+
+      assertTrue(cache0.isEmpty());
 
       assertNoTransactionsAndLocks();
    }

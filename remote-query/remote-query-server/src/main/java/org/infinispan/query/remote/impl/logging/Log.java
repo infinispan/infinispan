@@ -61,4 +61,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Error during execution of protostream serialization context initializer", id = 28013)
    CacheException errorInitializingSerCtx(@Cause Throwable cause);
+
+   @Message(value = "The '%s' cache does not support commands of type %s", id = 28014)
+   CacheException cacheDoesNotSupportCommand(String cacheName, String commandType);
 }
