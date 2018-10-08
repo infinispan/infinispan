@@ -731,7 +731,6 @@
         <versionx.org.spark-project.hive.hive-exec>1.2.1.spark2</versionx.org.spark-project.hive.hive-exec>
         <versionx.org.spark-project.hive.hive-metastore>1.2.1.spark2</versionx.org.spark-project.hive.hive-metastore>
         <versionx.org.spark-project.spark.unused>1.0.0</versionx.org.spark-project.spark.unused>
-        <versionx.org.springframework.boot.spring-boot-dependencies>1.4.0.RELEASE</versionx.org.springframework.boot.spring-boot-dependencies>
         <versionx.org.springframework.session.spring-session>1.2.2.RELEASE</versionx.org.springframework.session.spring-session>
         <versionx.org.springframework.spring-aop>${version.spring4}</versionx.org.springframework.spring-aop>
         <versionx.org.springframework.spring-beans>${version.spring4}</versionx.org.springframework.spring-beans>
@@ -6897,14 +6896,6 @@
                 <scope>import</scope>
                 <version>${versionx.org.wildfly.core.wildfly-core-parent}</version>
                 <type>pom</type>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${versionx.org.springframework.boot.spring-boot-dependencies}</version>
-                <type>pom</type>
-                <scope>import</scope>
             </dependency>
 
 
