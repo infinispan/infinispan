@@ -127,7 +127,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    protected void start() {
       Set<Class<?>> indexedEntities = cacheConfiguration.indexing().indexedEntities();
       this.indexedEntities = indexedEntities.isEmpty() ? null : indexedEntities.toArray(new Class<?>[indexedEntities.size()]);
-      queryKnownClasses = indexedEntities.isEmpty() ? new QueryKnownClasses(cache.getName(), cache.getCacheManager(), internalCacheRegistry) : new QueryKnownClasses(indexedEntities);
+      queryKnownClasses = indexedEntities.isEmpty() ? new QueryKnownClasses(cache.getName(), cache.getCacheManager(), internalCacheRegistry) : new QueryKnownClasses(cache.getName(), indexedEntities);
       searchFactoryHandler = new SearchFactoryHandler(searchFactory, queryKnownClasses, new TransactionHelper(cache.getTransactionManager()));
       if (this.indexedEntities == null) {
          queryKnownClasses.start(searchFactoryHandler);
@@ -468,7 +468,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          ExtendedSearchWorkCreator eswc = (ExtendedSearchWorkCreator) searchWorkCreator;
          return eswc.shouldRemove(new SearchWorkCreatorContext(previousValue, value));
       } else {
-         return !(value == null || previousValue == null) && !value.getClass().equals(previousValue.getClass());
+         return value != null && previousValue != null && value.getClass() != previousValue.getClass();
       }
    }
 

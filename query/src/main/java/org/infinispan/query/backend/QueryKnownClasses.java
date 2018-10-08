@@ -12,14 +12,12 @@ import javax.transaction.Transaction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
@@ -52,6 +50,9 @@ public final class QueryKnownClasses {
 
    public static final String QUERY_KNOWN_CLASSES_CACHE_NAME = "___query_known_classes";
 
+   /**
+    * A fixed set of entities to be indexed, coming from config, or null if nothing was configured.
+    */
    private final Set<Class<?>> indexedEntities;
 
    private final String cacheName;
@@ -70,25 +71,25 @@ public final class QueryKnownClasses {
    private volatile TransactionHelper transactionHelper;
 
    /**
-    * A second level cache. Not using a ConcurrentHashMap as this will degenerate into a read-only Map at runtime;
-    * in the Query specific case we're only adding new class types while they are being discovered,
-    * after this initial phase this is supposed to be a read-only immutable map.
+    * A 'second level cache' on top of knownClassesCache. Not using a ConcurrentHashMap as this will eventually
+    * degenerate into a read-only Map at runtime; in the Query specific case we're only adding new class types while
+    * they are being discovered, after this initial phase this is supposed to be a read-only immutable map.
     */
    private final AtomicReference<Map<Class<?>, Boolean>> localCache;
 
    /**
-    * Constructor used only in pre-declared mode.
+    * Constructor used only in pre-declared indexed classes mode.
     */
-   QueryKnownClasses(Set<Class<?>> indexedEntities) {
-      this.indexedEntities = Collections.unmodifiableSet(new HashSet<>(indexedEntities));
-      this.cacheName = null;
+   QueryKnownClasses(String cacheName, Set<Class<?>> indexedEntities) {
+      this.indexedEntities = Collections.unmodifiableSet(new HashSet<>(indexedEntities)); // copy collection, healthy paranoia
+      this.cacheName = cacheName;
       this.cacheManager = null;
       this.internalCacheRegistry = null;
       this.localCache = null;
    }
 
    /**
-    * Constructor used only in autodetect mode.
+    * Constructor used only in autodetect indexed classes mode.
     *
     * @deprecated will be removed in Infinispan 10.0
     */
@@ -151,23 +152,23 @@ public final class QueryKnownClasses {
       }
    }
 
-   boolean containsKey(final Class<?> clazz) {
+   boolean containsKey(Class<?> clazz) {
       if (indexedEntities != null) {
          return indexedEntities.contains(clazz);
       }
       return localCache.get().containsKey(clazz);
    }
 
-   Boolean get(final Class<?> clazz) {
+   Boolean get(Class<?> clazz) {
       if (indexedEntities != null) {
          return indexedEntities.contains(clazz);
       }
       return localCache.get().get(clazz);
    }
 
-   void put(final Class<?> clazz, final Boolean value) {
+   void put(Class<?> clazz, Boolean value) {
       if (indexedEntities != null) {
-         throw new IllegalStateException("Autodetect mode is not enabled");
+         throw new IllegalStateException("Autodetect mode is not enabled for cache " + cacheName);
       }
 
       if (value == null) {
@@ -176,7 +177,7 @@ public final class QueryKnownClasses {
       startInternalCache();
       Transaction tx = transactionHelper.suspendTxIfExists();
       try {
-         runCommand(() -> knownClassesCache.put(new KeyValuePair<>(cacheName, clazz), value));
+         knownClassesCache.put(new KeyValuePair<>(cacheName, clazz), value);
       } finally {
          transactionHelper.resume(tx);
       }
@@ -184,7 +185,7 @@ public final class QueryKnownClasses {
       localCacheInsert(clazz, value);
    }
 
-   private void localCacheInsert(final Class<?> key, final Boolean value) {
+   private void localCacheInsert(Class<?> key, Boolean value) {
       synchronized (localCache) {
          final Map<Class<?>, Boolean> currentContent = localCache.get();
          final int currentSize = currentContent.size();
@@ -215,6 +216,9 @@ public final class QueryKnownClasses {
       }
    }
 
+   /**
+    * Create the configuration for the internal cache.
+    */
    private Configuration getInternalCacheConfig() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 
@@ -231,23 +235,11 @@ public final class QueryKnownClasses {
       return configurationBuilder.build();
    }
 
-   /**
-    * Run command and retry if suspect exception was thrown.
-    */
-   private void runCommand(Runnable runnable) {
-      while (true) {
-         try {
-            runnable.run();
-            break;
-         } catch (CacheException e) {
-            if (SuspectException.isSuspectExceptionInChain(e)) {
-               // Retry the command
-               log.trace("Ignoring suspect exception and retrying operation for internal cache.");
-            } else {
-               throw e;
-            }
-         }
-      }
+   @Override
+   public String toString() {
+      return "QueryKnownClasses{cacheName='" + cacheName
+            + "', isAutodetectEnabled=" + isAutodetectEnabled()
+            + ", indexedEntities=" + indexedEntities
+            + ", localCache=" + (localCache != null ? localCache.get() : null) + '}';
    }
-
 }
