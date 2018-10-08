@@ -8,8 +8,6 @@
       <module name="javax.api" />
       <module name="javax.servlet.api" />
       <module name="io.netty" slot="@infinispan.module.slot@"/>
-      <module name="org.apache.xerces" services="import" />
-      <module name="org.hibernate.validator" services="import" />
       <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.scripting" services="import" slot="@infinispan.module.slot@"/>
@@ -37,7 +35,6 @@
       <module name="org.jboss.msc" />
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" services="import" slot="@infinispan.module.slot@"/>
-      <module name="org.jboss.resteasy.resteasy-jaxrs" services="import" />
       <module name="org.jboss.security.negotiation" />
       <module name="org.jgroups" slot="@infinispan.module.slot@"/>
       <module name="org.wildfly.security.elytron-private" services="import"/>
