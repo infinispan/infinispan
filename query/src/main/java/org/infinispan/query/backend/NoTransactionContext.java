@@ -4,7 +4,8 @@ import javax.transaction.Synchronization;
 
 import org.hibernate.search.backend.TransactionContext;
 
-public class NoTransactionContext implements TransactionContext {
+final class NoTransactionContext implements TransactionContext {
+
    public static final NoTransactionContext INSTANCE = new NoTransactionContext();
 
    private NoTransactionContext() {

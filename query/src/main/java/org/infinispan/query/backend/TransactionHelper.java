@@ -7,27 +7,28 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Transaction related helper
+ * Transaction related helper. Wraps a (possibly {@code null}) {@link TransactionManager} and performs transaction
+ * suspend and resume on request.
  *
  * @author gustavonalle
  * @since 7.0
  */
 public final class TransactionHelper {
 
-   private static final Log LOGGER = LogFactory.getLog(TransactionHelper.class, Log.class);
+   private static final Log log = LogFactory.getLog(TransactionHelper.class, Log.class);
 
    private final TransactionManager transactionManager;
 
-   public TransactionHelper(final TransactionManager transactionManager) {
+   public TransactionHelper(TransactionManager transactionManager) {
       this.transactionManager = transactionManager;
    }
 
-   public void resume(final Transaction transaction) {
+   public void resume(Transaction transaction) {
       if (transaction != null) {
          try {
             transactionManager.resume(transaction);
          } catch (Exception e) {
-            throw LOGGER.unableToResumeSuspendedTx(transaction, e);
+            throw log.unableToResumeSuspendedTx(transaction, e);
          }
       }
    }
@@ -37,14 +38,9 @@ public final class TransactionHelper {
          return null;
       }
       try {
-         Transaction tx;
-         if ((tx = transactionManager.getTransaction()) != null) {
-            transactionManager.suspend();
-         }
-         return tx;
+         return transactionManager.suspend();
       } catch (Exception e) {
-         throw LOGGER.unableToSuspendTx(e);
+         throw log.unableToSuspendTx(e);
       }
    }
-
 }
