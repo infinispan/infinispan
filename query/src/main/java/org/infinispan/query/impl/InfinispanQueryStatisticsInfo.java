@@ -3,110 +3,120 @@ package org.infinispan.query.impl;
 import java.util.Map;
 import java.util.Set;
 
+import javax.management.ObjectName;
+
 import org.hibernate.search.spi.SearchIntegrator;
 
 /**
- * This MBean exposes the query statistics from the Hibernate Search statistics object.
+ * This MBean exposes the query statistics from the Hibernate Search's SearchIntegrator Statistics object via
+ * delegation. The Statistics object is transient during search factory in-flight reconfiguration so the instance
+ * returned by getStatistics() cannot be registered directly as an MBean.
  *
  * @author anistor@redhat.com
  * @since 6.1
  */
 public class InfinispanQueryStatisticsInfo implements InfinispanQueryStatisticsInfoMBean {
 
-   private final SearchIntegrator sf;
+   private final SearchIntegrator searchIntegrator;
 
-   public InfinispanQueryStatisticsInfo(SearchIntegrator sf) {
-      this.sf = sf;
+   private final ObjectName objectName;
+
+   public InfinispanQueryStatisticsInfo(SearchIntegrator searchIntegrator, ObjectName objectName) {
+      this.searchIntegrator = searchIntegrator;
+      this.objectName = objectName;
+   }
+
+   public ObjectName getObjectName() {
+      return objectName;
    }
 
    @Override
    public void clear() {
-      sf.getStatistics().clear();
+      searchIntegrator.getStatistics().clear();
    }
 
    @Override
    public long getSearchQueryExecutionCount() {
-      return sf.getStatistics().getSearchQueryExecutionCount();
+      return searchIntegrator.getStatistics().getSearchQueryExecutionCount();
    }
 
    @Override
    public long getSearchQueryTotalTime() {
-      return sf.getStatistics().getSearchQueryTotalTime();
+      return searchIntegrator.getStatistics().getSearchQueryTotalTime();
    }
 
    @Override
    public long getSearchQueryExecutionMaxTime() {
-      return sf.getStatistics().getSearchQueryExecutionMaxTime();
+      return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTime();
    }
 
    @Override
    public long getSearchQueryExecutionAvgTime() {
-      return sf.getStatistics().getSearchQueryExecutionAvgTime();
+      return searchIntegrator.getStatistics().getSearchQueryExecutionAvgTime();
    }
 
    @Override
    public String getSearchQueryExecutionMaxTimeQueryString() {
-      return sf.getStatistics().getSearchQueryExecutionMaxTimeQueryString();
+      return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTimeQueryString();
    }
 
    @Override
    public long getObjectLoadingTotalTime() {
-      return sf.getStatistics().getObjectLoadingTotalTime();
+      return searchIntegrator.getStatistics().getObjectLoadingTotalTime();
    }
 
    @Override
    public long getObjectLoadingExecutionMaxTime() {
-      return sf.getStatistics().getObjectLoadingExecutionMaxTime();
+      return searchIntegrator.getStatistics().getObjectLoadingExecutionMaxTime();
    }
 
    @Override
    public long getObjectLoadingExecutionAvgTime() {
-      return sf.getStatistics().getObjectLoadingExecutionAvgTime();
+      return searchIntegrator.getStatistics().getObjectLoadingExecutionAvgTime();
    }
 
    @Override
    public long getObjectsLoadedCount() {
-      return sf.getStatistics().getObjectsLoadedCount();
+      return searchIntegrator.getStatistics().getObjectsLoadedCount();
    }
 
    @Override
    public boolean isStatisticsEnabled() {
-      return sf.getStatistics().isStatisticsEnabled();
+      return searchIntegrator.getStatistics().isStatisticsEnabled();
    }
 
    @Override
    public void setStatisticsEnabled(boolean isStatisticsEnabled) {
-      sf.getStatistics().setStatisticsEnabled(isStatisticsEnabled);
+      searchIntegrator.getStatistics().setStatisticsEnabled(isStatisticsEnabled);
    }
 
    @Override
    public String getSearchVersion() {
-      return sf.getStatistics().getSearchVersion();
+      return searchIntegrator.getStatistics().getSearchVersion();
    }
 
    @Override
    public Set<String> getIndexedClassNames() {
-      return sf.getStatistics().getIndexedClassNames();
+      return searchIntegrator.getStatistics().getIndexedClassNames();
    }
 
    @Override
    public int getNumberOfIndexedEntities(String entity) {
-      return sf.getStatistics().getNumberOfIndexedEntities(entity);
+      return searchIntegrator.getStatistics().getNumberOfIndexedEntities(entity);
    }
 
    @Override
    public Map<String, Integer> indexedEntitiesCount() {
-      return sf.getStatistics().indexedEntitiesCount();
+      return searchIntegrator.getStatistics().indexedEntitiesCount();
    }
 
    @Override
    public long getIndexSize(String indexName) {
-      return sf.getStatistics().getIndexSize(indexName);
+      return searchIntegrator.getStatistics().getIndexSize(indexName);
    }
 
    @Override
    public Map<String, Long> indexSizes() {
-      return sf.getStatistics().indexSizes();
+      return searchIntegrator.getStatistics().indexSizes();
    }
-
 }
