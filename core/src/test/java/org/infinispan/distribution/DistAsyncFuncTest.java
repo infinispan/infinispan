@@ -32,8 +32,8 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
 
    ReplListener r1, r2, r3, r4;
    ReplListener[] r;
-   Map<Cache<?, ?>, ReplListener> listenerLookup;
-   ConcurrentMap<Cache<?, ?>, List<InvalidateL1Command>> expectedL1Invalidations = new ConcurrentHashMap<>();
+   Map<Address, ReplListener> listenerLookup;
+   ConcurrentMap<Address, List<InvalidateL1Command>> expectedL1Invalidations = new ConcurrentHashMap<>();
 
    @Override
    public Object[] factory() {
@@ -57,7 +57,7 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
       r4 = new ReplListener(c4, true, true);
       r = new ReplListener[]{r1, r2, r3, r4};
       listenerLookup = new HashMap<>();
-      for (ReplListener rl : r) listenerLookup.put(rl.getCache(), rl);
+      for (ReplListener rl : r) listenerLookup.put(rl.getCache().getCacheManager().getAddress(), rl);
 
       for (Cache c : caches) {
          TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractDelegatingRpcManager(original) {
@@ -72,15 +72,10 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
                if (command instanceof InvalidateL1Command) {
                   InvalidateL1Command invalidateL1Command = (InvalidateL1Command) command;
                   log.tracef("Sending invalidation %s to %s", command, targets);
-                  if (targets != null) {
-                     targets.stream()
-                            .map(address -> caches.stream()
-                                                  .filter(c -> c.getCacheManager().getAddress().equals(address))
-                                                  .findFirst()
-                                                  .orElseThrow(
-                                                     () -> new IllegalStateException("Missing cache for " + address)))
-                            .forEach(c -> expectedL1Invalidations.computeIfAbsent(
-                               c, ignored -> Collections.synchronizedList(new ArrayList<>())).add(invalidateL1Command));
+                  Collection<Address> realTargets = targets != null ? targets : cacheAddresses;
+                  for (Address target : realTargets) {
+                     expectedL1Invalidations.computeIfAbsent(
+                        target, ignored -> Collections.synchronizedList(new ArrayList<>())).add(invalidateL1Command);
                   }
                }
                return super.performRequest(targets, command, collector, invoker);
@@ -105,8 +100,8 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
          for (ReplListener rl : r) rl.waitForRpc();
       } else {
          for (Cache<?, ?> c : getOwners(key)) {
-            listenerLookup.get(c).expect(command);
-            listenerLookup.get(c).waitForRpc();
+            listenerLookup.get(address(c)).expect(command);
+            listenerLookup.get(address(c)).waitForRpc();
          }
       }
 
@@ -114,12 +109,12 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
    }
 
    private void waitForInvalidations() {
-      for (Map.Entry<Cache<?, ?>, List<InvalidateL1Command>> expected : expectedL1Invalidations.entrySet()) {
-         Cache<?, ?> cache = expected.getKey();
-         ReplListener replListener = listenerLookup.get(cache);
+      for (Map.Entry<Address, List<InvalidateL1Command>> expected : expectedL1Invalidations.entrySet()) {
+         Address address = expected.getKey();
+         ReplListener replListener = listenerLookup.get(address);
          List<InvalidateL1Command> list = expected.getValue();
          if (!list.isEmpty()) {
-            log.tracef("Waiting for invalidations on %s: %s", cache, list);
+            log.tracef("Waiting for invalidations on %s: %s", address, list);
             synchronized (list) {
                for (InvalidateL1Command cmd : list) {
                   replListener.expect(InvalidateL1Command.class);
@@ -134,22 +129,10 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
    @Override
    protected void asyncWaitOnPrimary(Object key, Class<? extends VisitableCommand> command) {
       assert key != null;
-      if (key == null) {
-         // test all caches.
-         for (ReplListener rl : r) rl.expect(command);
-         for (ReplListener rl : r) rl.waitForRpc();
-      } else {
-         Cache<?, ?> primary = getFirstOwner(key);
-         listenerLookup.get(primary).expect(command);
-         listenerLookup.get(primary).waitForRpc();
-      }
+      Cache<?, ?> primary = getFirstOwner(key);
+      listenerLookup.get(address(primary)).expect(command);
+      listenerLookup.get(address(primary)).waitForRpc();
 
       waitForInvalidations();
-   }
-
-   @Test(groups = "unstable", description = "ISPN-8298")
-   @Override
-   public void testLockedStreamSetValue() {
-      super.testLockedStreamSetValue();
    }
 }
