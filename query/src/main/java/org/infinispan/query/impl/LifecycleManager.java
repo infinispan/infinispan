@@ -6,7 +6,6 @@ import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheN
 import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
@@ -36,6 +35,7 @@ import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ManageableComponentMetadata;
@@ -93,13 +93,11 @@ import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 /**
- * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
- * at cache stop.
+ * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down at cache stop.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
 @MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
-@SuppressWarnings("unused")
 public class LifecycleManager implements ModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
@@ -117,19 +115,18 @@ public class LifecycleManager implements ModuleLifecycle {
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
-         boolean isIndexed = cfg.indexing().index().isEnabled();
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-
+         ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
          SearchIntegrator searchFactory = null;
+         boolean isIndexed = cfg.indexing().index().isEnabled();
          if (isIndexed) {
-            log.registeringQueryInterceptor(cacheName);
             cr.registerComponent(new ShardAllocationManagerImpl(), ShardAllocatorManager.class);
-            searchFactory = getSearchFactory(cacheName, cfg.indexing(), cr);
-            createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
+            searchFactory = getSearchFactory(cfg.indexing(), cr, aggregatedClassLoader);
+            createQueryInterceptorIfNeeded(cr, cfg, cache, searchFactory);
             addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
 
             // initializing the query module command initializer.
-            // we can t inject Cache and CacheManager with @inject in there
+            // we can't inject Cache and CacheManager with @Inject in there
             CommandInitializer initializer = cr.getComponent(CommandInitializer.class);
             initializer.setCacheManager(cache.getCacheManager());
 
@@ -138,15 +135,14 @@ public class LifecycleManager implements ModuleLifecycle {
             cr.registerComponent(queryBox, QueryBox.class);
          }
 
-         registerMatcher(cr, searchFactory);
+         registerMatcher(cr, searchFactory, aggregatedClassLoader);
 
          EmbeddedQueryEngine queryEngine = new EmbeddedQueryEngine(cache, isIndexed);
          cr.registerComponent(queryEngine, EmbeddedQueryEngine.class);
       }
    }
 
-   private void registerMatcher(ComponentRegistry cr, SearchIntegrator searchFactory) {
-      ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
+   private void registerMatcher(ComponentRegistry cr, SearchIntegrator searchFactory, ClassLoader classLoader) {
       ReflectionMatcher reflectionMatcher;
       if (searchFactory == null) {
          reflectionMatcher = new ReflectionMatcher(classLoader);
@@ -175,12 +171,14 @@ public class LifecycleManager implements ModuleLifecycle {
       }
    }
 
-   private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, SearchIntegrator searchFactory) {
+   private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache, SearchIntegrator searchIntegrator) {
+      log.registeringQueryInterceptor(cache.getName());
+
       QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
       if (queryInterceptor == null) {
          ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues = new ConcurrentHashMap<>();
-         IndexModificationStrategy indexingStrategy = IndexModificationStrategy.configuredStrategy(searchFactory, cfg);
-         queryInterceptor = new QueryInterceptor(searchFactory, indexingStrategy, txOldValues, cr.getComponent(Cache.class));
+         IndexModificationStrategy indexingStrategy = IndexModificationStrategy.configuredStrategy(searchIntegrator, cfg);
+         queryInterceptor = new QueryInterceptor(searchIntegrator, indexingStrategy, txOldValues, cache);
 
          // Interceptor registration not needed, core configuration handling
          // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
@@ -198,17 +196,13 @@ public class LifecycleManager implements ModuleLifecycle {
          queryInterceptorBuilder.interceptor(queryInterceptor);
          queryInterceptorBuilder.after(lastLoadingInterceptor.getClass());
 
-         if (ic != null) {
-            ic.addInterceptorAfter(queryInterceptor, lastLoadingInterceptor.getClass());
-            cr.registerComponent(queryInterceptor, QueryInterceptor.class);
-            cr.registerComponent(queryInterceptor, queryInterceptor.getClass().getName(), true);
-         }
+         ic.addInterceptorAfter(queryInterceptor, lastLoadingInterceptor.getClass());
+         cr.registerComponent(queryInterceptor, QueryInterceptor.class);
+         cr.registerComponent(queryInterceptor, queryInterceptor.getClass().getName(), true);
 
          if (cfg.transaction().transactionMode().isTransactional()) {
             TxQueryInterceptor txQueryInterceptor = new TxQueryInterceptor(txOldValues, queryInterceptor);
-            if (ic != null) {
-               ic.addInterceptorBefore(txQueryInterceptor, wrappingInterceptor.getClass());
-            }
+            ic.addInterceptorBefore(txQueryInterceptor, wrappingInterceptor.getClass());
             InterceptorConfigurationBuilder txQueryInterceptorBuilder = builder.customInterceptors().addInterceptor();
             txQueryInterceptorBuilder.interceptor(txQueryInterceptor);
             txQueryInterceptorBuilder.before(wrappingInterceptor.getClass());
@@ -265,27 +259,28 @@ public class LifecycleManager implements ModuleLifecycle {
       }
    }
 
+   /**
+    * Register query statistics and mass-indexer MBeans.
+    */
    private void registerQueryMBeans(ComponentRegistry cr, Configuration cfg, SearchIntegrator sf) {
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       // Resolve MBean server instance
       GlobalConfiguration globalCfg = cr.getGlobalComponentRegistry().getGlobalConfiguration();
+      GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
       mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
 
       // Resolve jmx domain to use for query mbeans
-      String cacheManagerName = globalCfg.globalJmxStatistics().cacheManagerName();
-      String queryGroupName = getQueryGroupName(cacheManagerName, cache.getName());
+      String queryGroupName = getQueryGroupName(jmxConfig.cacheManagerName(), cache.getName());
       jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, queryGroupName);
 
       // Register statistics MBean, but only enable if Infinispan config says so
       InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(sf);
       stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
       try {
-         ObjectName statsObjName = new ObjectName(
-               jmxDomain + ":" + queryGroupName + ",component=Statistics");
+         ObjectName statsObjName = new ObjectName(jmxDomain + ":" + queryGroupName + ",component=Statistics");
          JmxUtil.registerMBean(stats, statsObjName, mbeanServer);
       } catch (Exception e) {
-         throw new CacheException(
-               "Unable to register query module statistics mbean", e);
+         throw new CacheException("Unable to register query statistics MBean", e);
       }
 
       // Register mass indexer MBean, picking metadata from repo
@@ -300,7 +295,7 @@ public class LifecycleManager implements ModuleLifecycle {
                + queryGroupName + ",component=" + massIndexerCompMetadata.getJmxObjectName());
          JmxUtil.registerMBean(mbean, massIndexerObjName, mbeanServer);
       } catch (Exception e) {
-         throw new CacheException("Unable to create ", e);
+         throw new CacheException("Unable to create MassIndexer MBean", e);
       }
    }
 
@@ -313,7 +308,7 @@ public class LifecycleManager implements ModuleLifecycle {
       return interceptorChain != null && interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 
-   private SearchIntegrator getSearchFactory(String cacheName, IndexingConfiguration indexingConfiguration, ComponentRegistry cr) {
+   private SearchIntegrator getSearchFactory(IndexingConfiguration indexingConfiguration, ComponentRegistry cr, ClassLoader aggregatedClassLoader) {
       Object component = cr.getComponent(SearchIntegrator.class);
       SearchIntegrator searchFactory = null;
       if (component instanceof SearchIntegrator) { //could be the placeholder Object REMOVED_REGISTRY_COMPONENT
@@ -321,10 +316,14 @@ public class LifecycleManager implements ModuleLifecycle {
       }
       //defend against multiple initialization:
       if (searchFactory == null) {
-         ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
-         Collection<ProgrammaticSearchMappingProvider> programmaticSearchMappingProviders = new HashSet<>(ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader));
-         programmaticSearchMappingProviders.add(new DefaultSearchMappingProvider());
+         // load ProgrammaticSearchMappingProviders from classpath
+         Collection<ProgrammaticSearchMappingProvider> programmaticSearchMappingProviders = new LinkedHashSet<>();
+         programmaticSearchMappingProviders.add(new DefaultSearchMappingProvider());  // make sure our DefaultSearchMappingProvider is first
+         programmaticSearchMappingProviders.addAll(ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader));
+
+         // load LuceneAnalysisDefinitionProvider from classpath
          Collection<LuceneAnalysisDefinitionProvider> analyzerDefProviders = ServiceFinder.load(LuceneAnalysisDefinitionProvider.class, aggregatedClassLoader);
+
          // Set up the search factory for Hibernate Search first.
          SearchConfiguration config = new SearchableCacheConfiguration(indexingConfiguration.indexedEntities(),
                indexingConfiguration.properties(), programmaticSearchMappingProviders, analyzerDefProviders, cr, aggregatedClassLoader);
@@ -338,18 +337,22 @@ public class LifecycleManager implements ModuleLifecycle {
    /**
     * Create a class loader that delegates loading to an ordered set of class loaders.
     *
-    * @param globalClassLoader the cache manager's global ClassLoader
-    * @return the aggreated ClassLoader
+    * @param globalClassLoader the cache manager's global ClassLoader from GlobalConfiguration
+    * @return the aggregated ClassLoader
     */
    private ClassLoader makeAggregatedClassLoader(ClassLoader globalClassLoader) {
-      Set<ClassLoader> classLoaders = new LinkedHashSet<>();  // use an ordered set to deduplicate possible duplicates!
+      // use an ordered set to deduplicate them
+      Set<ClassLoader> classLoaders = new LinkedHashSet<>(6);
 
       // add the cache manager's CL
       if (globalClassLoader != null) {
          classLoaders.add(globalClassLoader);
       }
 
-      // add Infinispan core's CL
+      // add Infinispan's CL
+      classLoaders.add(AggregatedClassLoader.class.getClassLoader());
+
+      // add Hibernate Search's CL
       classLoaders.add(ClassLoaderService.class.getClassLoader());
 
       // add this module's CL
@@ -381,7 +384,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
    @Override
    public void cacheStopping(ComponentRegistry cr, String cacheName) {
-      final QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
+      QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
       if (queryInterceptor != null) {
          queryInterceptor.prepareForStopping();
       }
@@ -449,5 +452,4 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_FUZZY, new LuceneFuzzyQueryExternalizer());
       externalizerMap.put(ExternalizerIds.QUERY_DEFINITION, new QueryDefinitionExternalizer());
    }
-
 }

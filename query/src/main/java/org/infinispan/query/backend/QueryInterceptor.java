@@ -18,7 +18,7 @@ import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -61,13 +61,13 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
- * <p/>
+ * <p>
  * This type of interceptor will allow the indexing of data even when it comes from other caches within a cluster.
- * <p/>
+ * <p>
  * However, if the a cache would not be putting the data locally, the interceptor will not index it.
  *
  * @author Navin Surtani
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
  * @author anistor@redhat.com
  * @since 4.0
@@ -106,17 +106,18 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * were declared and we are running in the (deprecated) autodetect mode. Autodetect mode will be removed in 9.0.
     */
    private Class<?>[] indexedEntities;
-   private final Cache cache;
+
+   private final AdvancedCache<?, ?> cache;
 
    private final InvocationSuccessAction processClearCommand = this::processClearCommand;
 
-   public QueryInterceptor(SearchIntegrator searchFactory, IndexModificationStrategy indexingMode, ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues, Cache cache) {
+   public QueryInterceptor(SearchIntegrator searchFactory, IndexModificationStrategy indexingMode, ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues, AdvancedCache<?, ?> cache) {
       this.searchFactory = searchFactory;
       this.indexingMode = indexingMode;
       this.txOldValues = txOldValues;
       this.cache = cache;
-      this.valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
-      this.keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
+      this.valueDataConversion = cache.getValueDataConversion();
+      this.keyDataConversion = cache.getKeyDataConversion();
    }
 
    @Start
@@ -124,7 +125,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       Set<Class<?>> indexedEntities = cacheConfiguration.indexing().indexedEntities();
       this.indexedEntities = indexedEntities.isEmpty() ? null : indexedEntities.toArray(new Class<?>[indexedEntities.size()]);
       queryKnownClasses = indexedEntities.isEmpty() ? new QueryKnownClasses(cache.getName(), cache.getCacheManager(), internalCacheRegistry) : new QueryKnownClasses(indexedEntities);
-      searchFactoryHandler = new SearchFactoryHandler(searchFactory, queryKnownClasses, new TransactionHelper(cache.getAdvancedCache().getTransactionManager()));
+      searchFactoryHandler = new SearchFactoryHandler(searchFactory, queryKnownClasses, new TransactionHelper(cache.getTransactionManager()));
       if (this.indexedEntities == null) {
          queryKnownClasses.start(searchFactoryHandler);
          Set<Class<?>> classes = queryKnownClasses.keys();
