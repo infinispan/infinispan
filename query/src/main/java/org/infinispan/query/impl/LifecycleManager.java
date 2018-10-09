@@ -93,7 +93,8 @@ import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 /**
- * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down at cache stop.
+ * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down at cache stop. Each cache
+ * manager has its own instance of this class during its lifetime.
  *
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
@@ -104,9 +105,10 @@ public class LifecycleManager implements ModuleLifecycle {
 
    private static final Object REMOVED_REGISTRY_COMPONENT = new Object();
 
+   /**
+    * Caching the looked-up MBeanServer for the lifetime of the cache manager is safe.
+    */
    private MBeanServer mbeanServer;
-
-   private String jmxDomain;
 
    /**
     * Registers the Search interceptor in the cache before it gets started
@@ -244,7 +246,6 @@ public class LifecycleManager implements ModuleLifecycle {
          }
       }
 
-      // Register query mbeans
       registerQueryMBeans(cr, configuration, searchFactory);
    }
 
@@ -260,25 +261,31 @@ public class LifecycleManager implements ModuleLifecycle {
    }
 
    /**
-    * Register query statistics and mass-indexer MBeans.
+    * Register query statistics and mass-indexer MBeans for a cache.
     */
-   private void registerQueryMBeans(ComponentRegistry cr, Configuration cfg, SearchIntegrator sf) {
+   private void registerQueryMBeans(ComponentRegistry cr, Configuration cfg, SearchIntegrator searchIntegrator) {
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       // Resolve MBean server instance
       GlobalConfiguration globalCfg = cr.getGlobalComponentRegistry().getGlobalConfiguration();
       GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
-      mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
+      if (mbeanServer == null) {
+         mbeanServer = JmxUtil.lookupMBeanServer(globalCfg);
+      }
 
-      // Resolve jmx domain to use for query mbeans
+      // Resolve jmx domain to use for query MBeans
       String queryGroupName = getQueryGroupName(jmxConfig.cacheManagerName(), cache.getName());
-      jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, queryGroupName);
+      String jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, queryGroupName);
 
-      // Register statistics MBean, but only enable if Infinispan config says so
-      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(sf);
-      stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
+      // Register query statistics MBean, but only enable it if Infinispan config says so
       try {
          ObjectName statsObjName = new ObjectName(jmxDomain + ":" + queryGroupName + ",component=Statistics");
+
+         InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchIntegrator, statsObjName);
+         stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
+
          JmxUtil.registerMBean(stats, statsObjName, mbeanServer);
+
+         cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
       } catch (Exception e) {
          throw new CacheException("Unable to register query statistics MBean", e);
       }
@@ -289,7 +296,7 @@ public class LifecycleManager implements ModuleLifecycle {
             .toManageableComponentMetadata();
       try {
          // TODO: MassIndexer should be some kind of query cache component?
-         DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, sf);
+         DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchIntegrator);
          ResourceDMBean mbean = new ResourceDMBean(massIndexer, massIndexerCompMetadata);
          ObjectName massIndexerObjName = new ObjectName(jmxDomain + ":"
                + queryGroupName + ",component=" + massIndexerCompMetadata.getJmxObjectName());
@@ -396,11 +403,24 @@ public class LifecycleManager implements ModuleLifecycle {
          cr.registerComponent(REMOVED_REGISTRY_COMPONENT, SearchIntegrator.class);
       }
 
-      // Unregister MBeans
+      unregisterQueryMBeans(cr, cacheName);
+   }
+
+   /**
+    * Unregister query related MBeans for a cache, primarily the statistics, but also all other MBeans from the same
+    * related group.
+    */
+   private void unregisterQueryMBeans(ComponentRegistry cr, String cacheName) {
       if (mbeanServer != null) {
-         String cacheManagerName = cr.getGlobalComponentRegistry().getGlobalConfiguration().globalJmxStatistics().cacheManagerName();
-         String queryMBeanFilter = jmxDomain + ":" + getQueryGroupName(cacheManagerName, cacheName) + ",*";
-         JmxUtil.unregisterMBeans(queryMBeanFilter, mbeanServer);
+         try {
+            GlobalJmxStatisticsConfiguration jmxConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration().globalJmxStatistics();
+            String queryGroupName = getQueryGroupName(jmxConfig.cacheManagerName(), cacheName);
+            InfinispanQueryStatisticsInfo stats = cr.getComponent(InfinispanQueryStatisticsInfo.class);
+            String queryMBeanFilter = stats.getObjectName().getDomain() + ":" + queryGroupName + ",*";
+            JmxUtil.unregisterMBeans(queryMBeanFilter, mbeanServer);
+         } catch (Exception e) {
+            throw new CacheException("Unable to unregister query MBeans", e);
+         }
       }
    }
 
@@ -425,8 +445,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
-      QueryCache queryCache = new QueryCache();
-      gcr.registerComponent(queryCache, QueryCache.class);
+      gcr.registerComponent(new QueryCache(), QueryCache.class);
 
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.ICKLE_FILTER_AND_CONVERTER, new IckleFilterAndConverter.IckleFilterAndConverterExternalizer());
@@ -451,5 +470,10 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_WILDCARD, new LuceneWildcardQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_FUZZY, new LuceneFuzzyQueryExternalizer());
       externalizerMap.put(ExternalizerIds.QUERY_DEFINITION, new QueryDefinitionExternalizer());
+   }
+
+   @Override
+   public void cacheManagerStopped(GlobalComponentRegistry gcr) {
+      mbeanServer = null;
    }
 }
