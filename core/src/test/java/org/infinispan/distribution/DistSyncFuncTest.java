@@ -269,12 +269,12 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       c1.getAdvancedCache().lockedStream().forEach((c, e) -> e.setValue(e.getValue() + "-changed"));
 
       for (int i = 0; i < size; i++) {
-         int offset = i;
          String key = "k" + i;
+         asyncWait(key, PutKeyValueCommand.class);
          Cache<Object, String>[] caches = getOwners(key);
          for (Cache<Object, String> cache : caches) {
-            eventuallyEquals("value" + offset + "-changed",
-                  () -> cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get("k" + offset));
+            assertEquals("value" + i + "-changed",
+                         cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get(key));
          }
       }
    }
@@ -291,12 +291,12 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       c1.getAdvancedCache().lockedStream().forEach((c, e) -> c.put(e.getKey(), e.getValue() + "-changed"));
 
       for (int i = 0; i < size; i++) {
-         int offset = i;
          String key = "k" + i;
+         asyncWait(key, PutKeyValueCommand.class);
          Cache<Object, String>[] caches = getOwners(key);
          for (Cache<Object, String> cache : caches) {
-            eventuallyEquals("value" + offset + "-changed",
-                  () -> cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get("k" + offset));
+            assertEquals("value" + i + "-changed",
+                  cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get(key));
          }
       }
    }

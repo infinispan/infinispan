@@ -162,11 +162,7 @@ public class ReplListener {
       }
    }
 
-   private void info(String str) {
-      log.debugf("[" + cache.getCacheManager().getAddress() + "] " + str);
-   }
-
-   private void infof(String format, Object... params) {
+   private void debugf(String format, Object... params) {
       log.debugf("[" + cache.getCacheManager().getAddress() + "] " + format, params);
    }
 
@@ -188,14 +184,14 @@ public class ReplListener {
       try {
          long remainingNanos = unit.toNanos(time);
          while (true) {
-            infof("Waiting for %d command(s)", expectedCommands.size());
+            debugf("Waiting for %d command(s)", expectedCommands.size());
             for (Iterator<VisitableCommand> itCommand = loggedCommands.iterator(); itCommand.hasNext(); ) {
                VisitableCommand command = itCommand.next();
                for (Iterator<Predicate<VisitableCommand>> itExpectation = expectedCommands.iterator();
                     itExpectation.hasNext(); ) {
                   Predicate<VisitableCommand> expectation = itExpectation.next();
                   if (expectation.test(command)) {
-                     infof("Matched command %s", command);
+                     debugf("Matched command %s", command);
                      itCommand.remove();
                      itExpectation.remove();
                      break;
@@ -259,13 +255,17 @@ public class ReplListener {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          try {
-            // first pass up chain
+            if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) {
+               debugf("Delaying command %s", cmd);
+               TestingUtil.sleepThread(5);
+            }
+            // pass up chain
             return invokeNextInterceptor(ctx, cmd);
          } finally {//make sure we do mark this command as received even in the case of exceptions(e.g. timeouts)
             if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) {
                logCommand(cmd);
             } else {
-               infof("Not logging command (watchLocal=%b) %s", watchLocal, cmd);
+               debugf("Not logging command (watchLocal=%b) %s", watchLocal, cmd);
             }
          }
       }
@@ -286,7 +286,7 @@ public class ReplListener {
       private void logCommand(VisitableCommand cmd) {
          lock.lock();
          try {
-            infof("ReplListener saw command %s", cmd);
+            debugf("ReplListener saw command %s", cmd);
             loggedCommands.add(cmd);
             newCommandCondition.signalAll();
          } finally {
