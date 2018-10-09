@@ -4741,6 +4741,7 @@
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-feature-pack-wf-modules</artifactId>
                 <version>${versionx.org.infinispan.infinispan-feature-pack-wf-modules}</version>
+                <type>zip</type>
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
