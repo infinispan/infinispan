@@ -49,7 +49,7 @@ public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
    private static final int DEFAULT_NUM_ENTRIES = 50;
    private static final int DEFAULT_NUM_SEGMENTS = 256;
    private static final int DEFAULT_NUM_OWNERS = 2;
-   private static final int DEFAULT_NUM_SHARDS = DEFAULT_NUM_SEGMENTS;
+   private static final int DEFAULT_NUM_SHARDS = AffinityShardIdentifierProvider.DEFAULT_NUMBER_SHARDS;
    private static final int DEFAULT_REMOTE_TIMEOUT_MINUTES = 1;
    private static final int DEFAULT_INDEXING_THREADS_PER_NODE = 3;
    private static final int DEFAULT_QUERYING_THREADS_PER_NODE = 10;
