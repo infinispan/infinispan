@@ -7,8 +7,8 @@
    <version>9.4.1-SNAPSHOT</version>
    <packaging>pom</packaging>
 
-   <name>Infinispan Common Parent</name>
-   <description>Infinispan common parent POM module</description>
+   <name>Infinispan Build Configuration Parent</name>
+   <description>Infinispan build configuration POM module</description>
    <url>http://www.infinispan.org</url>
    <organization>
       <name>JBoss, a division of Red Hat</name>
@@ -76,6 +76,7 @@
    </distributionManagement>
    <modules>
       <module>bom</module>
+      <module>internal-bom</module>
    </modules>
 
    <properties>
