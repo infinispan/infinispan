@@ -413,11 +413,13 @@ public class LifecycleManager implements ModuleLifecycle {
    private void unregisterQueryMBeans(ComponentRegistry cr, String cacheName) {
       if (mbeanServer != null) {
          try {
-            GlobalJmxStatisticsConfiguration jmxConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration().globalJmxStatistics();
-            String queryGroupName = getQueryGroupName(jmxConfig.cacheManagerName(), cacheName);
             InfinispanQueryStatisticsInfo stats = cr.getComponent(InfinispanQueryStatisticsInfo.class);
-            String queryMBeanFilter = stats.getObjectName().getDomain() + ":" + queryGroupName + ",*";
-            JmxUtil.unregisterMBeans(queryMBeanFilter, mbeanServer);
+            if (stats != null) {
+               GlobalJmxStatisticsConfiguration jmxConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration().globalJmxStatistics();
+               String queryGroupName = getQueryGroupName(jmxConfig.cacheManagerName(), cacheName);
+               String queryMBeanFilter = stats.getObjectName().getDomain() + ":" + queryGroupName + ",*";
+               JmxUtil.unregisterMBeans(queryMBeanFilter, mbeanServer);
+            }
          } catch (Exception e) {
             throw new CacheException("Unable to unregister query MBeans", e);
          }
