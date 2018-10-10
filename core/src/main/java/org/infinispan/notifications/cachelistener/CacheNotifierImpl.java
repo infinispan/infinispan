@@ -1671,24 +1671,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          if (needsTransform) {
             CacheEntryEvent<K, V> event = wrapped.getEvent();
             EventImpl<K, V> eventImpl = (EventImpl<K, V>) event;
-            MediaType fromFormat = null;
-            if (converter != null) {
-               fromFormat = converter.format() == null || useStorageFormat() ? keyDataConversion.getStorageMediaType() : converter.format();
-            } else {
-               if (filter != null) {
-                  fromFormat = filter.format() == null || useStorageFormat() ? keyDataConversion.getStorageMediaType() : filter.format();
-               } else {
-                  fromFormat = keyDataConversion.getStorageMediaType();
-               }
-            }
-            Object newKey2 = keyDataConversion.convertToRequestFormat(eventImpl.getKey(), fromFormat);
-            Object newValue2 = valueDataConversion.convertToRequestFormat(eventImpl.getValue(), fromFormat);
-            Object oldValue2 = valueDataConversion.convertToRequestFormat(eventImpl.getOldValue(), fromFormat);
-            EventImpl<K, V> clone = eventImpl.clone();
-            clone.setKey((K) newKey2);
-            clone.setValue((V) newValue2);
-            clone.setOldValue((V) oldValue2);
-            wrapped.setEvent(clone);
+            wrapped.setEvent(convertEventToRequestFormat(eventImpl, filter, converter, eventImpl.getValue()));
          }
 
          if (skipQueue) {
@@ -1725,20 +1708,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                   Object newValue = ((CacheEventFilterConverter) filter).filterAndConvert(eventImpl.getKey(),
                         eventImpl.getOldValue(), eventImpl.getOldMetadata(), eventImpl.getValue(),
                         eventImpl.getMetadata(), eventType);
-                  if (newValue != null) {
-                     MediaType keyFilterFormat = filter.format() == null || useStorageFormat() ? keyDataConversion.getStorageMediaType() : filter.format();
-                     // Convert from the filter output to the request output
-                     Object newKey2 = keyDataConversion.convertToRequestFormat(eventImpl.getKey(), keyFilterFormat);
-                     Object newValue2 = valueDataConversion.convertToRequestFormat(newValue, keyFilterFormat);
-                     Object newOldValue2 = valueDataConversion.convertToRequestFormat(eventImpl.getOldValue(), keyFilterFormat);
-                     EventImpl<K, V> clone = eventImpl.clone();
-                     clone.setValue((V) newValue2);
-                     clone.setKey((K) newKey2);
-                     clone.setOldValue((V) newOldValue2);
-                     return clone;
-                  } else {
-                     return null;
-                  }
+                  return newValue != null ? convertEventToRequestFormat(eventImpl, filter, null, newValue) : null;
                } else {
                   boolean accept = filter.accept(eventImpl.getKey(), eventImpl.getOldValue(), eventImpl.getOldMetadata(),
                         eventImpl.getValue(), eventImpl.getMetadata(), eventType);
@@ -1746,18 +1716,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                      return null;
                   }
                   if (converter == null) {
-                     EventImpl<K, V> clone = eventImpl.clone();
-                     MediaType keyFilterFormat = filter.format() == null || useStorageFormat() ? keyDataConversion.getStorageMediaType() : filter.format();
-                     MediaType valueFilterFormat = filter.format() == null || useStorageFormat() ? valueDataConversion.getStorageMediaType() : filter.format();
-
-                     Object newKey2 = keyDataConversion.convertToRequestFormat(eventImpl.getKey(), keyFilterFormat);
-                     Object newValue2 = valueDataConversion.convertToRequestFormat(eventImpl.getValue(), valueFilterFormat);
-                     Object newOldValue2 = valueDataConversion.convertToRequestFormat(eventImpl.getOldValue(), valueFilterFormat);
-
-                     clone.setKey((K) newKey2);
-                     clone.setValue((V) newValue2);
-                     clone.setOldValue((V) newOldValue2);
-                     return clone;
+                     return convertEventToRequestFormat(eventImpl, filter, null, eventImpl.getValue());
                   }
 
                }
@@ -1843,7 +1802,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       protected CacheEntryEvent<K, V> convertValue(CacheEventConverter<? super K, ? super V, ?> converter, CacheEntryEvent<K, V> event) {
          CacheEntryEvent<K, V> returnedEvent;
          if (converter != null) {
-            MediaType converterFormat = useStorageFormat() ? null : converter.format();
             if (event instanceof EventImpl) {
                // This is a bit hacky to let the C type be passed in for the V type
                EventImpl<K, V> eventImpl = (EventImpl<K, V>) event;
@@ -1853,16 +1811,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                      eventImpl.getMetadata(), evType);
                if (newValue != eventImpl.getValue()) {
                   // Convert from the filter output to the request output
-                  MediaType keyFilterFormat = converterFormat == null || useStorageFormat() ? keyDataConversion.getStorageMediaType() : converterFormat;
-                  MediaType valueFilterFormat = converterFormat == null || useStorageFormat() ? valueDataConversion.getStorageMediaType() : converterFormat;
-                  Object newKey2 = keyDataConversion.convertToRequestFormat(eventImpl.getKey(), keyFilterFormat);
-                  Object newValue2 = valueDataConversion.convertToRequestFormat(newValue, valueFilterFormat);
-                  Object newOldValue2 = valueDataConversion.convertToRequestFormat(eventImpl.getOldValue(), valueFilterFormat);
-                  EventImpl<K, V> clone = eventImpl.clone();
-                  clone.setKey((K) newKey2);
-                  clone.setValue((V) newValue2);
-                  clone.setOldValue((V) newOldValue2);
-                  return clone;
+                  return convertEventToRequestFormat(eventImpl, null, converter, newValue);
                } else {
                   returnedEvent = eventImpl;
                }
@@ -1874,6 +1823,35 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             returnedEvent = event;
          }
          return returnedEvent;
+      }
+
+      private EventImpl<K, V> convertEventToRequestFormat(EventImpl<K, V> eventImpl,
+                                                          CacheEventFilter<? super K, ? super V> filter,
+                                                          CacheEventConverter<? super K, ? super V, ?> converter,
+                                                          Object newValue) {
+         MediaType keyFromFormat = keyDataConversion.getStorageMediaType();
+         MediaType valueFromFormat = valueDataConversion.getStorageMediaType();
+         if (converter != null) {
+            if (converter.format() != null && !useStorageFormat) {
+               keyFromFormat = converter.format();
+               valueFromFormat = converter.format();
+            }
+         } else {
+            if (filter != null) {
+               if (filter.format() != null && !useStorageFormat) {
+                  keyFromFormat = filter.format();
+                  valueFromFormat = filter.format();
+               }
+            }
+         }
+         Object convertedKey = keyDataConversion.convertToRequestFormat(eventImpl.getKey(), keyFromFormat);
+         Object convertedValue = valueDataConversion.convertToRequestFormat(newValue, valueFromFormat);
+         Object convertedOlfValue = valueDataConversion.convertToRequestFormat(eventImpl.getOldValue(), valueFromFormat);
+         EventImpl<K, V> clone = eventImpl.clone();
+         clone.setKey((K) convertedKey);
+         clone.setValue((V) convertedValue);
+         clone.setOldValue((V) convertedOlfValue);
+         return clone;
       }
 
       @Override
