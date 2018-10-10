@@ -117,7 +117,8 @@ public class JGroupsConfigBuilder {
    }
 
    private static void removeMerge(JGroupsProtocolCfg jgroupsCfg) {
-      jgroupsCfg.removeProtocol(MERGE3);
+      // FIXME Dan: Workaround for ISPN-9588, uncomment once fixed
+//      jgroupsCfg.removeProtocol(MERGE3);
    }
 
    public static String getUdpConfig(String fullTestName, TransportFlags flags) {
@@ -146,8 +147,9 @@ public class JGroupsConfigBuilder {
     * protocols from the given JGroups stack.
     */
    private static void removeFailureDetection(JGroupsProtocolCfg jgroupsCfg) {
-      jgroupsCfg.removeProtocol(FD).removeProtocol(FD_SOCK).removeProtocol(FD_ALL).removeProtocol(FD_ALL2)
-            .removeProtocol(VERIFY_SUSPECT);
+      // FIXME Dan: Workaround for ISPN-9588, uncomment once fixed
+//      jgroupsCfg.removeProtocol(FD).removeProtocol(FD_SOCK).removeProtocol(FD_ALL).removeProtocol(FD_ALL2)
+//            .removeProtocol(VERIFY_SUSPECT);
    }
 
    private static void removeRelay2(JGroupsProtocolCfg jgroupsCfg) {
