@@ -51,8 +51,7 @@ class RunningTestsRegistry {
       try {
          String safeTestName = testName.replaceAll("[^a-zA-Z0-9=]", "_");
          System.err.printf(
-            "Test %s has been running for more than %d seconds. Interrupting the test thread and dumping " +
-               "thread stacks of the test suite process and its children.\n",
+            "Test %s has been running for more than %d seconds. Interrupting the test and/or stopping the JVM.\n",
             testName, MAX_TEST_SECONDS);
 
          String jvmName = ManagementFactory.getRuntimeMXBean().getName();
@@ -71,7 +70,7 @@ class RunningTestsRegistry {
                   psOutput.lines().forEach(line -> {
                      // Add children to the list excluding the ps command we just ran
                      String[] pidAndCommand = line.split("\\s+");
-                     if (!"ps".equals(pidAndCommand[1].trim())) {
+                     if ("java".equals(pidAndCommand[1].trim())) {
                         pids.add(pidAndCommand[0].trim());
                      }
                   });
@@ -80,8 +79,12 @@ class RunningTestsRegistry {
                ps.waitFor(10, SECONDS);
             }
 
+            // Log the interrupted test in the failures log
+            TestSuiteProgress progressLogger = new TestSuiteProgress();
+            progressLogger.testFailed(testName, new InterruptedException());
+
             File dumpFile =
-               new File(String.format("threaddump-%1$s-%2$tY-%2$tm-%2$td-%3$s.log", safeTestName, new Date(), pid));
+               new File(String.format("threaddump_%1$s_%2$tY%2$tm%2$td-%2$tH%2$tM_%3$s.log", safeTestName, new Date(), pid));
             System.out.printf("Dumping thread stacks of process %s to %s\n", pid, dumpFile.getAbsolutePath());
             Process jstack = new ProcessBuilder()
                .command(System.getProperty("java.home") + "/../bin/jstack", pid)
@@ -93,10 +96,15 @@ class RunningTestsRegistry {
          }
 
          // Interrupt the test thread
+         System.out.printf("Interrupting thread %s (%d).\n", testThread.getName(), testThread.getId());
          testThread.interrupt();
-         System.out.printf("Interrupted thread %s (%d).\n", testThread.getName(), testThread.getId());
 
-         testThread.join(SECONDS.toMillis(MAX_TEST_SECONDS) / 10);
+         try {
+            testThread.join(SECONDS.toMillis(MAX_TEST_SECONDS) / 10);
+         } catch (InterruptedException e) {
+            System.out.printf("Test watchdog thread %s (%d) was interrupted.\n",
+                              Thread.currentThread().getName(), Thread.currentThread().getId());
+         }
          if (testThread.isAlive()) {
             // Thread.interrupt() doesn't work if the thread is waiting to enter a synchronized block or in lock()
             // Thread.stop() works for lock(), but not if the thread is waiting to enter a synchronized block

@@ -20,24 +20,30 @@ fi
 ROOT_DIR="$1"
 DEST_PREFIX="$2"
 
-for FAILURES_LOG in $(find "$ROOT_DIR" -name 'test-failures*.log'); do
+FAILURES_LOG_PATTERN='test-failures*.log'
+
+for FAILURES_LOG in $(find "${ROOT_DIR}" -name "${FAILURES_LOG_PATTERN}"); do
   LOG_DIR=$(dirname "$FAILURES_LOG")
 
   # Find the failed tests in this failures log and move them
-  FAILED_TESTS=$(sed -n -r 's/.*TestSuiteProgress.*[^[:alnum:]]([[:alnum:]]+Test).*/\1/ p' "$FAILURES_LOG" | sort -u)
-  for TEST in $FAILED_TESTS; do
+  FAILED_TESTS=$(sed -n -r 's/.*TestSuiteProgress.*[^[:alnum:]]([[:alnum:]]+Test).*/\1/ p' ${LOG_DIR}/${FAILURES_LOG_PATTERN} | sort -u)
+  for TEST in ${FAILED_TESTS}; do
     for LOG in ${LOG_DIR}/*${TEST}*; do
-      BASENAME=$(basename "$LOG")
-      echo "${DEST_PREFIX}${BASENAME}"
-      mv "$LOG" "${DEST_PREFIX}${BASENAME}"
+      if [[ -r ${LOG} ]]; then
+        BASENAME=$(basename "$LOG")
+        echo "${DEST_PREFIX}${BASENAME}"
+        mv "$LOG" "${DEST_PREFIX}${BASENAME}"
+      else
+        echo "Ignoring non-existent ${DEST_PREFIX}${BASENAME}"
+      fi
     done
   done
 
   # Remove the tests that didn't fail
   rm -f ${LOG_DIR}/*Test*.log.gz
 
-  # Move any remaining logs
-  for LOG in ${LOG_DIR}/*.log.gz; do
+  # Move any remaining logs, including the failures log
+  for LOG in ${LOG_DIR}/*.log*; do
     BASENAME=$(basename "$LOG")
     echo "${DEST_PREFIX}${BASENAME}"
     mv "$LOG" "${DEST_PREFIX}${BASENAME}"

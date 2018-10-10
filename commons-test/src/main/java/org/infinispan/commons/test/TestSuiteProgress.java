@@ -96,7 +96,7 @@ public class TestSuiteProgress {
          actualColor = color;
          actualReset = RESET;
       }
-      out.printf("%s[OK: %5s, KO: %5s, SKIP: %5s] %s%s%n", actualColor, succeeded.get(), failed.get(), skipped.get(), message, actualReset);
+      out.printf("%s[OK:%5s, KO:%3s, SKIP:%3s] %s%s%n", actualColor, succeeded.get(), failed.get(), skipped.get(), message, actualReset);
       if (t != null) {
          t.printStackTrace(out);
       }
