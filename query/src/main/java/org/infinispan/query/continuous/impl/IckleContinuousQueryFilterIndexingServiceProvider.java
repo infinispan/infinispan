@@ -11,7 +11,7 @@ import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.objectfilter.Matcher;
-import org.infinispan.query.dsl.embedded.impl.BaseJPAFilterIndexingServiceProvider;
+import org.infinispan.query.dsl.embedded.impl.BaseIckleFilterIndexingServiceProvider;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -20,7 +20,7 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices(FilterIndexingServiceProvider.class)
 @SuppressWarnings("unused")
-public class IckleContinuousQueryFilterIndexingServiceProvider extends BaseJPAFilterIndexingServiceProvider {
+public class IckleContinuousQueryFilterIndexingServiceProvider extends BaseIckleFilterIndexingServiceProvider {
 
    private final Object joiningEvent;
    private final Object updatedEvent;
