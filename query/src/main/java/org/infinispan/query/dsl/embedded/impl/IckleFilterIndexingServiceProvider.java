@@ -17,7 +17,7 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices(FilterIndexingServiceProvider.class)
 @SuppressWarnings("unused")
-public class IckleFilterIndexingServiceProvider extends BaseJPAFilterIndexingServiceProvider {
+public class IckleFilterIndexingServiceProvider extends BaseIckleFilterIndexingServiceProvider {
 
    @Override
    public boolean supportsFilter(IndexedFilter<?, ?, ?> indexedFilter) {

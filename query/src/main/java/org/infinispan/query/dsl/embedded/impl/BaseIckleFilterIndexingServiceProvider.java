@@ -43,7 +43,7 @@ import org.infinispan.objectfilter.Matcher;
  * @author anistor@redhat.com
  * @since 8.1
  */
-public abstract class BaseJPAFilterIndexingServiceProvider implements FilterIndexingServiceProvider {
+public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIndexingServiceProvider {
 
    private final ConcurrentMap<Matcher, FilteringListenerInvocation<?, ?>> filteringInvocations = new ConcurrentHashMap<>(4);
 
@@ -294,7 +294,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
 
       @Override
       public Object getTarget() {
-         return BaseJPAFilterIndexingServiceProvider.this;
+         return BaseIckleFilterIndexingServiceProvider.this;
       }
 
       @Override
