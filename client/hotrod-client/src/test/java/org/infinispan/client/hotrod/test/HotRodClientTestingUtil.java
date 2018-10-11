@@ -12,11 +12,14 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.Consumer;
 
+import javax.management.ObjectName;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.event.RemoteCacheSupplier;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
@@ -358,6 +361,16 @@ public class HotRodClientTestingUtil {
          log.tracef("Pending Transactions in %s: %s", cacheManager, txs.keySet());
          AssertJUnit.assertEquals(0, txs.size());
       }
+   }
+
+   public static ObjectName remoteCacheManagerObjectName(RemoteCacheManager rcm) throws Exception {
+      StatisticsConfiguration cfg = rcm.getConfiguration().statistics();
+      return new ObjectName(String.format("%s:type=HotRodClient,name=%s", cfg.jmxDomain(), cfg.jmxName()));
+   }
+
+   public static ObjectName remoteCacheObjectName(RemoteCacheManager rcm, String cacheName) throws Exception {
+      StatisticsConfiguration cfg = rcm.getConfiguration().statistics();
+      return new ObjectName(String.format("%s:type=HotRodClient,name=%s,cache=%s", cfg.jmxDomain(), cfg.jmxName(), cacheName));
    }
 
 }

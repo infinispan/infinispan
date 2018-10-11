@@ -17,8 +17,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
@@ -188,26 +190,33 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
     * @author Mircea.Markus@jboss.com
     * @since 4.1
     */
-   public static class HitCountInterceptor extends BaseAsyncInterceptor{
+   public static class HitCountInterceptor extends BaseAsyncInterceptor {
       private static final Log log = LogFactory.getLog(HitCountInterceptor.class);
 
-      private final AtomicInteger invocationCount = new AtomicInteger(0);
+      private final AtomicInteger localSiteInvocationCount = new AtomicInteger(0);
+      private final AtomicInteger backupSiteInvocationCount = new AtomicInteger(0);
 
       @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) {
          if (ctx.isOriginLocal()) {
-            int count = invocationCount.incrementAndGet();
-            log.infof("Hit %d for %s", count, command);
+            if ((command instanceof AbstractDataCommand) && ((AbstractDataCommand)command).hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
+               int count = backupSiteInvocationCount.incrementAndGet();
+               log.infof("Backup Hit %d for %s", count, command);
+            } else {
+               int count = localSiteInvocationCount.incrementAndGet();
+               log.infof("Local Hit %d for %s", count, command);
+            }
          }
          return invokeNext(ctx, command);
       }
 
       public int getHits() {
-         return invocationCount.get();
+         return localSiteInvocationCount.get();
       }
 
       public void reset() {
-         invocationCount.set(0);
+         localSiteInvocationCount.set(0);
+         backupSiteInvocationCount.set(0);
       }
    }
 }

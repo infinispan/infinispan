@@ -136,6 +136,18 @@
  *          <td>Size of the thread pool</td>
  *       </tr>
  *       <tr>
+ *          <td><b>infinispan.client.hotrod.default_executor_factory.threadname_prefix</b></td>
+ *          <td>String</td>
+ *          <td>HotRod-client-async-pool</td>
+ *          <td>Prefix for the default executor thread names</td>
+ *       </tr>
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.default_executor_factory.threadname_suffix</b></td>
+ *          <td>String</td>
+ *          <td>(empty)</td>
+ *          <td>Suffix for the default executor thread names</td>
+ *       </tr>
+ *       <tr>
  *          <th colspan="4">Marshalling properties</th>
  *       </tr>
  *       <tr>

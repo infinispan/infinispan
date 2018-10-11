@@ -14,8 +14,10 @@ import java.util.stream.Stream;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.HitsAwareCacheManagersTest.HitCountInterceptor;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -25,6 +27,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.xsite.AbstractXSiteTest;
 import org.testng.annotations.AfterClass;
 
@@ -40,13 +43,20 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       HotRodServer server = siteServers.get(siteName).get(0);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
          new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      /*
+       * Use 127.0.0.1 as host address to avoid the first PING after a cluster switch causing an invalidation of the
+       * channel pools just to switch from localhost -> 127.0.0.1. This causes immediately subsequent ops to be
+       * executed twice.
+       */
       clientBuilder
-         .addServer().host("localhost").port(server.getPort())
+         .addServer().host("127.0.0.1").port(server.getPort())
          .maxRetries(3); // Some retries so that shutdown nodes can be skipped
+      clientBuilder.statistics().jmxEnable().jmxName(backupSiteName.orElse("default")).mBeanServerLookup(new PerThreadMBeanServerLookup());
+      clientBuilder.asyncExecutorFactory().addExecutorProperty(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX, TestResourceTracker.getCurrentTestShortName());
 
       Optional<Integer> backupPort = backupSiteName.map(name -> {
          HotRodServer backupServer = siteServers.get(name).get(0);
-         clientBuilder.addCluster(name).addClusterNode("localhost", backupServer.getPort());
+         clientBuilder.addCluster(name).addClusterNode("127.0.0.1", backupServer.getPort());
          return backupServer.getPort();
       });
 
@@ -99,8 +109,8 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       TestSite site = createSite(siteName, NODES_PER_SITE, globalBuilder, builder);
       Collection<EmbeddedCacheManager> cacheManagers = site.cacheManagers();
       List<HotRodServer> servers = cacheManagers.stream().map(cm -> serverPort
-         .map(port -> HotRodClientTestingUtil.startHotRodServer(cm, port, new HotRodServerConfigurationBuilder()))
-         .orElseGet(() -> HotRodClientTestingUtil.startHotRodServer(cm))).collect(Collectors.toList());
+         .map(port -> HotRodClientTestingUtil.startHotRodServer(cm, port, new HotRodServerConfigurationBuilder().name(cm.getCacheManagerConfiguration().transport().nodeName())))
+         .orElseGet(() -> HotRodClientTestingUtil.startHotRodServer(cm, new HotRodServerConfigurationBuilder().name(cm.getCacheManagerConfiguration().transport().nodeName())))).collect(Collectors.toList());
       siteServers.put(siteName, servers);
 
       log.debugf("Create site '%s' with ports: %s", siteName,
@@ -144,7 +154,6 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
          return interceptor.getHits() == expectedHits;
       });
       assertEquals(1, serversHit.count());
-      resetHitCounters();
    }
 
    protected void assertSiteNotHit(String siteName) {

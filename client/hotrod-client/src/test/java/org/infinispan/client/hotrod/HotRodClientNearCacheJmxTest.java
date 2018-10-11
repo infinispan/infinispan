@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.remoteCacheObjectName;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -11,7 +12,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
-import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -90,10 +90,4 @@ public class HotRodClientNearCacheJmxTest extends AbstractInfinispanTest {
       remoteCache[1].put("a", "b"); // cause an invalidation from the other client
       eventually(() -> ((Long)mbeanServer.getAttribute(objectName, "NearCacheInvalidations")).longValue() == 1, 1000);
    }
-
-   private static ObjectName remoteCacheObjectName(RemoteCacheManager rcm, String cacheName) throws Exception {
-      StatisticsConfiguration cfg = rcm.getConfiguration().statistics();
-      return new ObjectName(String.format("%s:type=HotRodClient,name=%s,cache=%s", cfg.jmxDomain(), cfg.jmxName(), cacheName));
-   }
-
 }

@@ -15,6 +15,7 @@ import org.infinispan.commons.util.Util;
  * @since 9.0
  */
 public class WrappedByteArray implements WrappedBytes {
+   public static final WrappedByteArray EMPTY_BYTES = new WrappedByteArray(Util.EMPTY_BYTE_ARRAY);
    private final byte[] bytes;
    private transient int hashCode;
    private transient boolean initializedHashCode;
