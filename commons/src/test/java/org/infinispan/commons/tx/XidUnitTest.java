@@ -13,6 +13,7 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Util;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,7 +30,7 @@ public class XidUnitTest {
       long seed = System.currentTimeMillis();
       log.infof("[testInvalidGlobalTransaction] seed: %s", seed);
       Random random = new Random(seed);
-      Xid xid = XidImpl.create(random.nextInt(), new byte[0], new byte[]{0});
+      Xid xid = XidImpl.create(random.nextInt(), Util.EMPTY_BYTE_ARRAY, new byte[]{0});
       log.debugf("Invalid XID: %s", xid);
    }
 
@@ -49,7 +50,7 @@ public class XidUnitTest {
       long seed = System.currentTimeMillis();
       log.infof("[testInvalidBranch] seed: %s", seed);
       Random random = new Random(seed);
-      Xid xid = XidImpl.create(random.nextInt(), new byte[]{0}, new byte[0]);
+      Xid xid = XidImpl.create(random.nextInt(), new byte[]{0}, Util.EMPTY_BYTE_ARRAY);
       log.debugf("Invalid XID: %s", xid);
    }
 

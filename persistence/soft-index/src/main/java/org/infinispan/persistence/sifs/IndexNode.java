@@ -14,6 +14,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -626,8 +627,8 @@ class IndexNode {
          } else {
             overwriteHook.setOverwritten(true, oldLeafNode.file, oldLeafNode.offset);
             if (keyParts.length <= 1) {
-               newPrefix = new byte[0];
-               newKeyParts = new byte[0][];
+               newPrefix = Util.EMPTY_BYTE_ARRAY;
+               newKeyParts = Util.EMPTY_BYTE_ARRAY_ARRAY;
             } else {
                newPrefix = prefix;
                newKeyParts = new byte[keyParts.length - 1][];
@@ -758,7 +759,7 @@ class IndexNode {
       } else {
          System.arraycopy(keyParts, childFrom, newKeyParts, 0, childTo - childFrom);
       }
-      byte[] newPrefix = childFrom == childTo ? new byte[0] : concat(prefix, newPrefixExtension);
+      byte[] newPrefix = childFrom == childTo ? Util.EMPTY_BYTE_ARRAY : concat(prefix, newPrefixExtension);
       if (innerNodes != null) {
          InnerNode[] newInnerNodes = new InnerNode[childTo - childFrom + 1];
          System.arraycopy(innerNodes, childFrom, newInnerNodes, 0, childTo - childFrom + 1);
@@ -798,7 +799,7 @@ class IndexNode {
    }
 
    private static byte[] substring(byte[] key, int begin, int end) {
-      if (end <= begin) return new byte[0];
+      if (end <= begin) return Util.EMPTY_BYTE_ARRAY;
       byte[] sub = new byte[end - begin];
       System.arraycopy(key, begin, sub, 0, end - begin);
       return sub;
@@ -874,11 +875,11 @@ class IndexNode {
    }
 
    public static IndexNode emptyWithLeaves(Index.Segment segment) {
-      return new IndexNode(segment, new byte[0], new byte[0][], LeafNode.EMPTY_ARRAY);
+      return new IndexNode(segment, Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY_ARRAY, LeafNode.EMPTY_ARRAY);
    }
 
    private static IndexNode emptyWithInnerNodes(Index.Segment segment) {
-      return new IndexNode(segment, new byte[0], new byte[0][], new InnerNode[]{ new InnerNode(-1L, (short) -1) });
+      return new IndexNode(segment, Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY_ARRAY, new InnerNode[]{ new InnerNode(-1L, (short) -1) });
    }
 
    public static class OverwriteHook {

@@ -7,6 +7,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import org.infinispan.commons.util.Util;
+
 /**
  * A simple class which encapsulates a byte[] representation of a String using a predefined encoding (currently UTF-8).
  * This avoids repeated invocation of the expensive {@link ObjectOutput#writeUTF(String)} on marshalling
@@ -16,7 +18,7 @@ import java.util.Arrays;
  */
 public class ByteString {
    private static final Charset CHARSET = StandardCharsets.UTF_8;
-   private static final ByteString EMPTY = new ByteString(new byte[0]);
+   private static final ByteString EMPTY = new ByteString(Util.EMPTY_BYTE_ARRAY);
    private final byte[] b;
    private String s;
    private final transient int hash;

@@ -64,6 +64,7 @@ public final class Util {
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
    public static final String[] EMPTY_STRING_ARRAY = new String[0];
    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+   public static final byte[][] EMPTY_BYTE_ARRAY_ARRAY = new byte[0][];
 
    private static final Log log = LogFactory.getLog(Util.class);
 

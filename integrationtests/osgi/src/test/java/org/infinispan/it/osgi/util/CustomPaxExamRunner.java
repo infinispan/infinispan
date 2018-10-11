@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 
+import org.infinispan.commons.util.Util;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.Description;
 import org.junit.runner.notification.RunListener;
@@ -39,7 +40,7 @@ public class CustomPaxExamRunner extends PaxExam {
          // Replace System.in so that KarafJavaRunner's can't steal master commands from surefire's CommandReader
          savedIn = System.in;
 
-         System.setIn(new ByteArrayInputStream(new byte[0]));
+         System.setIn(new ByteArrayInputStream(Util.EMPTY_BYTE_ARRAY));
       }
       return klass;
    }

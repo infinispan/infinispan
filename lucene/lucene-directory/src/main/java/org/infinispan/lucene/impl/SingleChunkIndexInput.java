@@ -3,6 +3,7 @@ package org.infinispan.lucene.impl;
 import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
+import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.ChunkCacheKey;
 
 /**
@@ -25,7 +26,7 @@ public final class SingleChunkIndexInput extends IndexInput {
       ChunkCacheKey key = new ChunkCacheKey(iic.fileKey.getIndexName(), iic.fileKey.getFileName(), 0, iic.fileMetadata.getBufferSize(), iic.affinitySegmentId);
       byte[] b = (byte[]) iic.chunksCache.get(key);
       if (b == null) {
-         buffer = new byte[0];
+         buffer = Util.EMPTY_BYTE_ARRAY;
       }
       else {
          buffer = b;

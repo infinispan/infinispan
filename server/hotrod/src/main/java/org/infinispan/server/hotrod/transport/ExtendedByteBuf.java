@@ -49,7 +49,7 @@ public class ExtendedByteBuf {
          bf.readBytes(array);
          return array;
       } else {
-         return new byte[0];
+         return Util.EMPTY_BYTE_ARRAY;
       }
    }
 

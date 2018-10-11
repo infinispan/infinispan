@@ -1,5 +1,7 @@
 package org.infinispan.server.core.transport;
 
+import org.infinispan.commons.util.Util;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.CharsetUtil;
@@ -45,7 +47,7 @@ public class ExtendedByteBuf {
          bf.readBytes(array);
          return array;
       } else {
-         return new byte[0];
+         return Util.EMPTY_BYTE_ARRAY;
       }
    }
 

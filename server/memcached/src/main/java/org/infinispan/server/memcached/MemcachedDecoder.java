@@ -55,6 +55,7 @@ import org.infinispan.Version;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -257,7 +258,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
          rawValue = new byte[params.valueLength];
          checkpoint(MemcachedDecoderState.DECODE_VALUE);
       } else if (params.valueLength == 0) {
-         rawValue = new byte[0];
+         rawValue = Util.EMPTY_BYTE_ARRAY;
          decodeValue(ctx, buffer, state);
       } else {
          decodeValue(ctx, buffer, state);

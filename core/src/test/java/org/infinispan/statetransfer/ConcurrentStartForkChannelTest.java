@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -39,7 +40,7 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
 
-   public static final byte[] FORK_NOT_FOUND_BUFFER = new byte[0];
+   public static final byte[] FORK_NOT_FOUND_BUFFER = Util.EMPTY_BYTE_ARRAY;
    public static final String CACHE_NAME = "repl";
 
    @Override
