@@ -255,7 +255,7 @@ public class HotRodClient {
    }
 
    public TestResponse removeIfUnmodified(byte[] k, long dataVersion, int flags) {
-      return execute(0xA0, (byte) 0x0D, defaultCacheName, k, 0, 0, new byte[0], dataVersion, flags);
+      return execute(0xA0, (byte) 0x0D, defaultCacheName, k, 0, 0, Util.EMPTY_BYTE_ARRAY, dataVersion, flags);
    }
 
    public TestResponse execute(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
@@ -404,7 +404,7 @@ public class HotRodClient {
    }
 
    public TestAuthResponse auth(SaslClient sc) throws SaslException {
-      byte[] saslResponse = sc.hasInitialResponse() ? sc.evaluateChallenge(new byte[0]) : new byte[0];
+      byte[] saslResponse = sc.hasInitialResponse() ? sc.evaluateChallenge(Util.EMPTY_BYTE_ARRAY) : Util.EMPTY_BYTE_ARRAY;
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
       AuthOp op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, sc.getMechanismName(), saslResponse);
       writeOp(op);
@@ -584,7 +584,7 @@ class Encoder extends MessageToByteEncoder<Object> {
             return;
          }
          if (protocolVersion < 20)
-            writeRangedBytes(new byte[0], buffer); // transaction id
+            writeRangedBytes(Util.EMPTY_BYTE_ARRAY, buffer); // transaction id
          if (op.code != 0x13 && op.code != 0x15
                && op.code != 0x17 && op.code != 0x19
                && op.code != 0x1D && op.code != 0x1F

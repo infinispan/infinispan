@@ -12,12 +12,13 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.infinispan.commons.util.Util;
+
 final class ExternalSaslServer implements SaslServer {
    private final AtomicBoolean complete = new AtomicBoolean();
    private String authorizationID;
    private final Principal peerPrincipal;
    private final CallbackHandler callbackHandler;
-   private static final byte[] EMPTY = new byte[0];
 
    ExternalSaslServer(final CallbackHandler callbackHandler, final Principal peerPrincipal) {
       this.callbackHandler = callbackHandler;
@@ -49,7 +50,7 @@ final class ExternalSaslServer implements SaslServer {
          throw new SaslException("EXTERNAL: " + peerPrincipal.getName() + " is not authorized to act as " + userName);
       }
 
-      return EMPTY;
+      return Util.EMPTY_BYTE_ARRAY;
    }
 
    private static void handleCallback(CallbackHandler handler, Callback callback) throws SaslException {

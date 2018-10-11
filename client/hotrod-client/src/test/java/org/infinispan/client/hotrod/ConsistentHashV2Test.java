@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.util.Util;
 import org.testng.annotations.Test;
 
 /**
@@ -50,51 +51,51 @@ public class ConsistentHashV2Test {
    public void simpleTest() {
       setUp(1);
       hash.value = 0;
-      assert v1.getServer(new byte[0]).equals(a1);
+      assert v1.getServer(Util.EMPTY_BYTE_ARRAY).equals(a1);
       hash.value = 1;
-      assert v1.getServer(new byte[0]).equals(a2);
+      assert v1.getServer(Util.EMPTY_BYTE_ARRAY).equals(a2);
       hash.value = 1001;
-      assert v1.getServer(new byte[0]).equals(a3);
+      assert v1.getServer(Util.EMPTY_BYTE_ARRAY).equals(a3);
       hash.value = 2001;
-      assertEquals(v1.getServer(new byte[0]), a4);
+      assertEquals(v1.getServer(Util.EMPTY_BYTE_ARRAY), a4);
       hash.value = 3001;
-      assert v1.getServer(new byte[0]).equals(a1);
+      assert v1.getServer(Util.EMPTY_BYTE_ARRAY).equals(a1);
    }
 
    public void numOwners2Test() {
       setUp(2);
       hash.value = 0;
-      assert list(a1, a2).contains(v1.getServer(new byte[0]));
+      assert list(a1, a2).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1;
-      assert list(a2, a3).contains(v1.getServer(new byte[0]));
+      assert list(a2, a3).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1001;
-      assert list(a3, a4).contains(v1.getServer(new byte[0]));
+      assert list(a3, a4).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 2001;
-      assert list(a4, a1).contains(v1.getServer(new byte[0]));
+      assert list(a4, a1).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 3001;
-      assert list(a1, a2).contains(v1.getServer(new byte[0]));
+      assert list(a1, a2).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
    }
 
    public void numOwners3Test() {
       setUp(3);
       hash.value = 0;
-      assert list(a1, a2, a3).contains(v1.getServer(new byte[0]));
+      assert list(a1, a2, a3).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1;
-      assert list(a2, a3, a4).contains(v1.getServer(new byte[0]));
+      assert list(a2, a3, a4).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1001;
-      assert list(a3, a4, a1).contains(v1.getServer(new byte[0]));
+      assert list(a3, a4, a1).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 2001;
-      assert list(a4, a1, a2).contains(v1.getServer(new byte[0]));
+      assert list(a4, a1, a2).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 3001;
-      assert list(a1, a2, a3).contains(v1.getServer(new byte[0]));
+      assert list(a1, a2, a3).contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
    }
 
    //now a bit more extreme...
@@ -104,19 +105,19 @@ public class ConsistentHashV2Test {
       List<InetSocketAddress> list = list(a1, a2, a3, a4);
 
       hash.value = 0;
-      assert list.contains(v1.getServer(new byte[0]));
+      assert list.contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1;
-      assert list.contains(v1.getServer(new byte[0]));
+      assert list.contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 1001;
-      assert list.contains(v1.getServer(new byte[0]));
+      assert list.contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 2001;
-      assert list.contains(v1.getServer(new byte[0]));
+      assert list.contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
 
       hash.value = 3001;
-      assert list.contains(v1.getServer(new byte[0]));
+      assert list.contains(v1.getServer(Util.EMPTY_BYTE_ARRAY));
    }
 
    private List<InetSocketAddress> list(InetSocketAddress... a) {
@@ -126,7 +127,7 @@ public class ConsistentHashV2Test {
 
    public void testCorrectHash() {
       hash.value = 1;
-      v1.getServer(new byte[0]);
+      v1.getServer(Util.EMPTY_BYTE_ARRAY);
    }
 
    public static class DummyHash implements Hash {

@@ -507,7 +507,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    private byte[][] marshallParams(Object[] params) {
       if (params == null)
-         return new byte[0][];
+         return org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY_ARRAY;
 
       byte[][] marshalledParams = new byte[params.length][];
       for (int i = 0; i < marshalledParams.length; i++) {

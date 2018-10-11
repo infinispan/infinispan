@@ -6,6 +6,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.ExpiryHelper;
@@ -25,7 +26,6 @@ import org.infinispan.commons.time.TimeService;
  */
 public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
-   private static final byte[] EMPTY_BYTES = new byte[0];
 
    @Inject private Marshaller marshaller;
    @Inject private OffHeapMemoryAllocator allocator;
@@ -81,7 +81,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
             }
          } else {
             type = 0;
-            versionBytes = EMPTY_BYTES;
+            versionBytes = Util.EMPTY_BYTE_ARRAY;
          }
 
          long lifespan = metadata.lifespan();
@@ -269,7 +269,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       byte[] metadataBytes;
       switch (metadataType) {
          case IMMORTAL:
-            metadataBytes = EMPTY_BYTES;
+            metadataBytes = Util.EMPTY_BYTE_ARRAY;
             break;
          case MORTAL:
             metadataBytes = new byte[16];

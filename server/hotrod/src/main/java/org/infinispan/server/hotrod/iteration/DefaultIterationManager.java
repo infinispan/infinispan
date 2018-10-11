@@ -121,7 +121,7 @@ public class DefaultIterationManager implements IterationManager {
          filteredStream = stream.segmentCompletionListener(segmentListener);
       } else {
          KeyValueFilterConverterFactory factory = getFactory(filterConverterFactory);
-         KeyValuePair<KeyValueFilterConverter, Boolean> filter = buildFilter(factory, filterConverterParams.toArray(new byte[0][]), unmarshaller);
+         KeyValuePair<KeyValueFilterConverter, Boolean> filter = buildFilter(factory, filterConverterParams.toArray(Util.EMPTY_BYTE_ARRAY_ARRAY), unmarshaller);
          KeyValueFilterConverter customFilter = filter.getKey();
          MediaType filterMediaType = customFilter.format();
 

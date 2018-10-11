@@ -45,6 +45,7 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -194,7 +195,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
       public static ToEmptyBytesKeyValueFilterConverter INSTANCE = new ToEmptyBytesKeyValueFilterConverter();
 
-      static final byte[] bytes = new byte[0];
+      static final byte[] bytes = Util.EMPTY_BYTE_ARRAY;
 
       @Override
       public Object filterAndConvert(Object key, Object value, Metadata metadata) {

@@ -171,7 +171,7 @@ public class MarshallUtilTest {
       Assert.assertEquals(0, io.buffer.size());
       io.reset();
 
-      byte[] array = new byte[0];
+      byte[] array = Util.EMPTY_BYTE_ARRAY;
       MarshallUtil.marshallByteArray(array, io);
       Assert.assertTrue(Arrays.equals(array, MarshallUtil.unmarshallByteArray(io)));
       Assert.assertEquals(0, io.buffer.size());

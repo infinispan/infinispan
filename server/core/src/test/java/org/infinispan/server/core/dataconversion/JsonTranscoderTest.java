@@ -17,6 +17,7 @@ import java.util.Collections;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.Util;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
@@ -62,7 +63,7 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
 
    @Test
    public void testEmptyContent() {
-      byte[] empty = new byte[0];
+      byte[] empty = Util.EMPTY_BYTE_ARRAY;
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_JSON, APPLICATION_JSON.withCharset(US_ASCII)));
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_UNKNOWN, APPLICATION_JSON));
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_OCTET_STREAM, APPLICATION_JSON));

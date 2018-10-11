@@ -14,6 +14,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadata;
@@ -106,7 +107,6 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(SoftIndexFileStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final byte[] EMPTY_BYTES = new byte[0];
 
    private SoftIndexFileStoreConfiguration configuration;
    private boolean started = false;
@@ -541,7 +541,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                if (serializedValue != null && (filter == null || filter.test(key)) && !isSeqIdOld(seqId, key, serializedKey)) {
                   return marshalledEntryFactory.newMarshalledEntry(key,
                         // EMPTY_BYTES is used to symbolize when fetchValue is false but there was an entry
-                        serializedValue != EMPTY_BYTES ? marshaller.objectFromByteBuffer(serializedValue) : null,
+                        serializedValue != Util.EMPTY_BYTE_ARRAY ? marshaller.objectFromByteBuffer(serializedValue) : null,
                         serializedMetadata == null ? null : (InternalMetadata) marshaller.objectFromByteBuffer(serializedMetadata));
                }
                return null;
@@ -593,7 +593,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                      } else if (fetchValue) {
                         serializedValue = EntryRecord.readValue(handle, header, innerOffset);
                      } else {
-                        serializedValue = EMPTY_BYTES;
+                        serializedValue = Util.EMPTY_BYTE_ARRAY;
                      }
                   } else {
                      offsetOrNegation = ~innerOffset;

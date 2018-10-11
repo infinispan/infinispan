@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
@@ -31,7 +32,7 @@ public class BaseProtoStreamMarshallerTest {
       roundtrip(true);
 //      roundtrip(new Date(0));
 //      roundtrip(Instant.now());
-      roundtrip(new byte[0]);
+      roundtrip(Util.EMPTY_BYTE_ARRAY);
    }
 
    private void roundtrip(Object in) throws Exception {
