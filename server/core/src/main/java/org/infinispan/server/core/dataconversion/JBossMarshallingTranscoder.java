@@ -54,7 +54,7 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
          if (contentType.match(APPLICATION_JSON)) {
             decoded = jsonObjectTranscoder.transcode(content, contentType, MediaType.APPLICATION_OBJECT);
          }
-         if (contentType.match(APPLICATION_UNKNOWN)) {
+         if (contentType.match(APPLICATION_UNKNOWN) || contentType.match(APPLICATION_JBOSS_MARSHALLING)) {
             return content;
          }
          return marshall(decoded);

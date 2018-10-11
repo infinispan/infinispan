@@ -1806,10 +1806,19 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                // This is a bit hacky to let the C type be passed in for the V type
                EventImpl<K, V> eventImpl = (EventImpl<K, V>) event;
                EventType evType = new EventType(eventImpl.isCommandRetried(), eventImpl.isPre(), eventImpl.getType());
-               Object newValue = converter.convert(eventImpl.getKey(), (V) eventImpl.getOldValue(),
-                     eventImpl.getOldMetadata(), (V) eventImpl.getValue(),
-                     eventImpl.getMetadata(), evType);
-               if (newValue != eventImpl.getValue()) {
+               Object newValue;
+               if (converter.useRequestFormat()) {
+                  eventImpl = convertEventToRequestFormat(eventImpl, null, converter, eventImpl.getValue());
+                  newValue = converter.convert(eventImpl.getKey(), (V) eventImpl.getOldValue(),
+                        eventImpl.getOldMetadata(), (V) eventImpl.getValue(),
+                        eventImpl.getMetadata(), evType);
+                  eventImpl.setValue((V) newValue);
+               } else {
+                  newValue = converter.convert(eventImpl.getKey(), (V) eventImpl.getOldValue(),
+                        eventImpl.getOldMetadata(), (V) eventImpl.getValue(),
+                        eventImpl.getMetadata(), evType);
+               }
+               if (newValue != eventImpl.getValue() && !converter.useRequestFormat()) {
                   // Convert from the filter output to the request output
                   return convertEventToRequestFormat(eventImpl, null, converter, newValue);
                } else {
