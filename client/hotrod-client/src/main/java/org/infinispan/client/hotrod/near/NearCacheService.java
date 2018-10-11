@@ -5,12 +5,14 @@ import java.nio.ByteBuffer;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
+import org.infinispan.client.hotrod.event.ClientCacheEntryExpiredEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheFailoverEvent;
@@ -170,6 +172,12 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
          invalidate(event.getKey());
       }
 
+      @ClientCacheEntryExpired
+      @SuppressWarnings("unused")
+      public void handleExpiredEvent(ClientCacheEntryExpiredEvent<K> event) {
+         invalidate(event.getKey());
+      }
+
       @ClientCacheFailover
       @SuppressWarnings("unused")
       public void handleFailover(ClientCacheFailoverEvent e) {
@@ -228,6 +236,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       }
 
       @ClientCacheEntryRemoved
+      @ClientCacheEntryExpired
       @SuppressWarnings("unused")
       public void handleRemovedEvent(ClientCacheEntryCustomEvent<byte[]> e) {
          ByteBuffer in = ByteBuffer.wrap(e.getEventData());
