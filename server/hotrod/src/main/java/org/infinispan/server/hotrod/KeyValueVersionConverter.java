@@ -56,6 +56,11 @@ class KeyValueVersionConverter implements CacheEventConverter<byte[], byte[], by
       return offset + 8;
    }
 
+   @Override
+   public boolean useRequestFormat() {
+      return true;
+   }
+
    static class Externalizer extends AbstractExternalizer<KeyValueVersionConverter> {
       @Override
       public Set<Class<? extends KeyValueVersionConverter>> getTypeClasses() {
