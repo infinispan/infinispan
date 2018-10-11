@@ -34,7 +34,6 @@ public final class TopologyInfo {
 
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final WrappedByteArray EMPTY_BYTES = new WrappedByteArray(new byte[0]);
 
    private Map<WrappedByteArray, Collection<SocketAddress>> servers = new ConcurrentHashMap<>();
    private Map<WrappedByteArray, ConsistentHash> consistentHashes = new ConcurrentHashMap<>();
@@ -43,8 +42,8 @@ public final class TopologyInfo {
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
    public TopologyInfo(AtomicInteger topologyId, Collection<SocketAddress> initialServers, Configuration configuration) {
-      this.topologyIds.put(EMPTY_BYTES, topologyId);
-      this.servers.put(EMPTY_BYTES, initialServers);
+      this.topologyIds.put(WrappedByteArray.EMPTY_BYTES, topologyId);
+      this.servers.put(WrappedByteArray.EMPTY_BYTES, initialServers);
       this.hashFactory.init(configuration);
    }
 
@@ -63,7 +62,7 @@ public final class TopologyInfo {
    }
 
    public Collection<SocketAddress> getServers(WrappedByteArray cacheName) {
-      return servers.computeIfAbsent(cacheName, k -> servers.get(EMPTY_BYTES));
+      return servers.computeIfAbsent(cacheName, k -> servers.get(WrappedByteArray.EMPTY_BYTES));
    }
 
    public Collection<SocketAddress> getServers() {
@@ -136,7 +135,7 @@ public final class TopologyInfo {
       // here would get out of sync with balancer.
       WrappedByteArray wrappedCacheName;
       if (cacheName == null || cacheName.length == 0) {
-         wrappedCacheName = EMPTY_BYTES;
+         wrappedCacheName = WrappedByteArray.EMPTY_BYTES;
       } else {
          wrappedCacheName = new WrappedByteArray(cacheName);
       }

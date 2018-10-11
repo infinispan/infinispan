@@ -33,6 +33,8 @@ public class ConfigurationProperties {
    public static final String ASYNC_EXECUTOR_FACTORY = ICH + "async_executor_factory";
    public static final String CLIENT_INTELLIGENCE = ICH + "client_intelligence";
    public static final String DEFAULT_EXECUTOR_FACTORY_POOL_SIZE = ICH + "default_executor_factory.pool_size";
+   public static final String DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX = ICH + "default_executor_factory.threadname_prefix";
+   public static final String DEFAULT_EXECUTOR_FACTORY_THREADNAME_SUFFIX = ICH + "default_executor_factory.threadname_suffix";
    public static final String TCP_NO_DELAY = ICH + "tcp_no_delay";
    public static final String TCP_KEEP_ALIVE = ICH + "tcp_keep_alive";
    @Deprecated
@@ -149,6 +151,22 @@ public class ConfigurationProperties {
 
    public void setDefaultExecutorFactoryPoolSize(int poolSize) {
       props.setProperty(DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, poolSize);
+   }
+
+   public String getDefaultExecutorFactoryThreadNamePrefix() {
+      return props.getProperty(DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX, DefaultAsyncExecutorFactory.THREAD_NAME);
+   }
+
+   public void setDefaultExecutorFactoryThreadNamePrefix(String threadNamePrefix) {
+      props.setProperty(DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX, threadNamePrefix);
+   }
+
+   public String getDefaultExecutorFactoryThreadNameSuffix() {
+      return props.getProperty(DEFAULT_EXECUTOR_FACTORY_THREADNAME_SUFFIX, "");
+   }
+
+   public void setDefaultExecutorFactoryThreadNameSuffix(String threadNameSuffix) {
+      props.setProperty(DEFAULT_EXECUTOR_FACTORY_THREADNAME_SUFFIX, threadNameSuffix);
    }
 
    public boolean getTcpNoDelay() {

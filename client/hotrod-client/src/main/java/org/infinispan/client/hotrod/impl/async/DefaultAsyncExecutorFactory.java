@@ -14,7 +14,8 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.executors.ExecutorFactory;
 
 /**
- * Default implementation for {@link org.infinispan.commons.executors.ExecutorFactory} based on an {@link ThreadPoolExecutor}.
+ * Default implementation for {@link org.infinispan.commons.executors.ExecutorFactory} based on an {@link
+ * ThreadPoolExecutor}.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -27,17 +28,19 @@ public class DefaultAsyncExecutorFactory implements ExecutorFactory {
    @Override
    public ThreadPoolExecutor getExecutor(Properties p) {
       ConfigurationProperties cp = new ConfigurationProperties(p);
-       ThreadFactory tf = r -> {
-           Thread th = new Thread(r, THREAD_NAME + "-" + counter.getAndIncrement());
-           th.setDaemon(true);
-           return th;
-       };
+      final String threadNamePrefix = cp.getDefaultExecutorFactoryThreadNamePrefix();
+      final String threadNameSuffix = cp.getDefaultExecutorFactoryThreadNameSuffix();
+      ThreadFactory tf = r -> {
+         Thread th = new Thread(r, threadNamePrefix + "-" + counter.getAndIncrement() + threadNameSuffix);
+         th.setDaemon(true);
+         return th;
+      };
 
       return new ThreadPoolExecutor(cp.getDefaultExecutorFactoryPoolSize(), cp.getDefaultExecutorFactoryPoolSize(),
             0L, TimeUnit.MILLISECONDS, new SynchronousQueue<>(), tf, (r, executor) -> {
-            int poolSize = cp.getDefaultExecutorFactoryPoolSize();
-            log.cannotCreateAsyncThread(poolSize);
-            throw new RejectedExecutionException("Too few threads: " + poolSize);
-         });
+         int poolSize = cp.getDefaultExecutorFactoryPoolSize();
+         log.cannotCreateAsyncThread(poolSize);
+         throw new RejectedExecutionException("Too few threads: " + poolSize);
+      });
    }
 }

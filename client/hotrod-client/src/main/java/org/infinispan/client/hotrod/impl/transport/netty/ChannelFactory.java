@@ -48,6 +48,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.Util;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -324,7 +325,7 @@ public class ChannelFactory {
    private void updateServers(Collection<SocketAddress> newServers) {
       lock.writeLock().lock();
       try {
-         Collection<SocketAddress> servers = updateTopologyInfo(null, newServers, true);
+         Collection<SocketAddress> servers = updateTopologyInfo(Util.EMPTY_BYTE_ARRAY, newServers, true);
          if (!servers.isEmpty()) {
             for (FailoverRequestBalancingStrategy balancer : balancers.values())
                balancer.setServers(servers);
@@ -492,7 +493,7 @@ public class ChannelFactory {
                }
             } else {
                // One successful response is enough to be able to switch to this cluster
-               log.tracef("Ping to server %s succeeded");
+               log.tracef("Ping to server %s succeeded", server);
                allFuture.complete(true);
             }
          });

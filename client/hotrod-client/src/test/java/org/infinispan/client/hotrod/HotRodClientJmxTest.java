@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.remoteCacheManagerObjectName;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.remoteCacheObjectName;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
@@ -17,10 +19,9 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -133,16 +134,6 @@ public class HotRodClientJmxTest extends AbstractInfinispanTest {
 
       assertNull(remoteCache.streaming().get("t"));
       assertEquals(6l, mbeanServer.getAttribute(objectName, "RemoteHits"));
-   }
-
-   private static ObjectName remoteCacheManagerObjectName(RemoteCacheManager rcm) throws Exception {
-      StatisticsConfiguration cfg = rcm.getConfiguration().statistics();
-      return new ObjectName(String.format("%s:type=HotRodClient,name=%s", cfg.jmxDomain(), cfg.jmxName()));
-   }
-
-   private static ObjectName remoteCacheObjectName(RemoteCacheManager rcm, String cacheName) throws Exception {
-      StatisticsConfiguration cfg = rcm.getConfiguration().statistics();
-      return new ObjectName(String.format("%s:type=HotRodClient,name=%s,cache=%s", cfg.jmxDomain(), cfg.jmxName(), cacheName));
    }
 
 }
