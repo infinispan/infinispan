@@ -182,7 +182,7 @@
       <version.protostream>4.2.1.Final</version.protostream>
       <version.protostuff>1.6.0</version.protostuff>
       <version.reactivestreams>1.0.2</version.reactivestreams>
-      <version.rocksdb>5.8.0</version.rocksdb>
+      <version.rocksdb>5.15.10</version.rocksdb>
       <version.rxjava>2.2.0</version.rxjava>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.spring4>4.3.4.RELEASE</version.spring4>
