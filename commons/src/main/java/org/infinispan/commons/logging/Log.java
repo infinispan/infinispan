@@ -202,16 +202,16 @@ public interface Log extends BasicLogger {
 
    //----- counters exceptions // don't use the same id range ------
 
-   @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 28001)
+   @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)
    CounterOutOfBoundsException counterOurOfBounds(String bound);
 
-   @Message(value = "Invalid counter type. Expected=%s but got %s", id = 28014)
+   @Message(value = "Invalid counter type. Expected=%s but got %s", id = 29514)
    CounterException invalidCounterType(String expected, String actual);
 
-   @Message(value = "Counter '%s' is not defined.", id = 28016)
+   @Message(value = "Counter '%s' is not defined.", id = 29516)
    CounterException undefinedCounter(String name);
 
-   @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 28022)
+   @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 29522)
    CounterException invalidCounterTypeEncoded();
 
    //----- counters exceptions // don't use the same id range  ------

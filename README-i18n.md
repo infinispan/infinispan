@@ -41,3 +41,5 @@ Infinispan logs fully support internationalization. The following is a list of m
     27001 - 28000    tasks
     28001 - 28500    remote query server
     28501 - 29000    object filter
+    29001 - 29500    soft-index file store
+    29501 - 30000    clustered counter
