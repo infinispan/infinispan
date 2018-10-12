@@ -268,6 +268,7 @@ The last thing to figure out is which id to give to the message. Each module tha
 |remote query server|28001 - 28500
 |object filter|28501 - 29000
 |soft-index file store|29001 - 29500
+|clustered counter|29501 - 30000
 |===============
 
 NOTE: When editing the above table, remember to update the README-i18n.txt file in the project sources!
