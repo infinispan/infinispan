@@ -4,9 +4,9 @@
 
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-parent</artifactId>
+      <artifactId>infinispan-integrationtests-parent</artifactId>
       <version>9.4.1-SNAPSHOT</version>
-      <relativePath>../../pom.xml</relativePath>
+      <relativePath>../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-wildfly-module-integrationtests</artifactId>
