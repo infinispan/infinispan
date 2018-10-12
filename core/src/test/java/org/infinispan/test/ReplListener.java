@@ -257,7 +257,7 @@ public class ReplListener {
          try {
             if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) {
                debugf("Delaying command %s", cmd);
-               TestingUtil.sleepThread(5);
+               TestingUtil.sleepRandom(10);
             }
             // pass up chain
             return invokeNextInterceptor(ctx, cmd);
