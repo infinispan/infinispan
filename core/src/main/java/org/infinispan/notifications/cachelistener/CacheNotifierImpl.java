@@ -1145,8 +1145,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       DataConversion keyConversion = keyDataConversion == null ? DataConversion.IDENTITY_KEY : keyDataConversion;
       DataConversion valueConversion = valueDataConversion == null ? DataConversion.IDENTITY_VALUE : valueDataConversion;
       if (filter instanceof IndexedFilter) {
-         IndexedFilter indexedFilter = (IndexedFilter) filter;
-         indexingProvider = findIndexingServiceProvider(indexedFilter);
+         indexingProvider = findIndexingServiceProvider((IndexedFilter) filter);
          if (indexingProvider != null) {
             DelegatingCacheInvocationBuilder builder = new DelegatingCacheInvocationBuilder(indexingProvider);
             builder

@@ -35,7 +35,7 @@ public final class QueryFacadeImpl implements QueryFacade {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
       }
       RemoteQueryManager remoteQueryManager = SecurityActions.getRemoteQueryManager(cache);
-      if (!remoteQueryManager.isQueryEnabled(cache)) {
+      if (!remoteQueryManager.isQueryEnabled(cache)) {  //todo [anistor] remoteQueryManager should be null if not queryable
          throw log.queryingNotEnabled(cache.getName());
       }
 

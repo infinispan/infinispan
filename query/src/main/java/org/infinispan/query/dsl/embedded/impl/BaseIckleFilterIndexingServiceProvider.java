@@ -47,7 +47,7 @@ public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIn
 
    private final ConcurrentMap<Matcher, FilteringListenerInvocation<?, ?>> filteringInvocations = new ConcurrentHashMap<>(4);
 
-   private CacheNotifierImpl cacheNotifier;
+   private CacheNotifierImpl<?, ?> cacheNotifier;
 
    private ClusteringDependentLogic clusteringDependentLogic;
 
@@ -142,7 +142,7 @@ public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIn
       }
    }
 
-   private class Callback<K, V> implements FilterCallback {
+   private final class Callback<K, V> implements FilterCallback {
 
       private final boolean isClustered;
       private final boolean isPrimaryOnly;
@@ -160,7 +160,7 @@ public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIn
       private final DelegatingCacheEntryListenerInvocation<K, V>[] expired_invocations;
 
       private final Matcher matcher;
-      protected volatile FilterSubscription subscription;
+      volatile FilterSubscription subscription;
 
       Callback(Matcher matcher, boolean isClustered, boolean isPrimaryOnly, boolean filterAndConvert, Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners) {
          this.matcher = matcher;
@@ -264,7 +264,7 @@ public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIn
       }
    }
 
-   private class DelegatingCacheEntryListenerInvocationImpl<K, V> extends DelegatingCacheEntryListenerInvocation<K, V> {
+   private final class DelegatingCacheEntryListenerInvocationImpl<K, V> extends DelegatingCacheEntryListenerInvocation<K, V> {
 
       protected Callback<K, V> callback;
 
@@ -280,7 +280,7 @@ public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIn
       }
    }
 
-   private class FilteringListenerInvocation<K, V> implements CacheEntryListenerInvocation<K, V> {
+   private final class FilteringListenerInvocation<K, V> implements CacheEntryListenerInvocation<K, V> {
 
       private final Matcher matcher;
       private final DataConversion keyDataConversion;

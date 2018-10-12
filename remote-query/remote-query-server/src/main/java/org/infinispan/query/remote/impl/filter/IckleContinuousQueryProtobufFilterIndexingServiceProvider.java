@@ -20,6 +20,7 @@ import org.kohsuke.MetaInfServices;
 public final class IckleContinuousQueryProtobufFilterIndexingServiceProvider extends IckleContinuousQueryFilterIndexingServiceProvider {
 
    private RemoteQueryManager remoteQueryManager;
+
    @Inject private Cache cache;
 
    public IckleContinuousQueryProtobufFilterIndexingServiceProvider() {
@@ -46,7 +47,7 @@ public final class IckleContinuousQueryProtobufFilterIndexingServiceProvider ext
          instance = getRemoteQueryManager().convertValue(instance, MediaType.APPLICATION_PROTOSTREAM);
       }
 
-      Object result = new ContinuousQueryResult((ContinuousQueryResult.ResultType) eventType, (byte[]) key, (byte[]) instance, projection);
+      ContinuousQueryResult result = new ContinuousQueryResult((ContinuousQueryResult.ResultType) eventType, (byte[]) key, (byte[]) instance, projection);
       return getRemoteQueryManager().encodeFilterResult(result);
    }
 }

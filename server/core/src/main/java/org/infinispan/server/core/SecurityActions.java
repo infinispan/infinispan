@@ -20,7 +20,7 @@ final class SecurityActions {
    private SecurityActions() {
    }
 
-   static <T> T doPrivileged(PrivilegedAction<T> action) {
+   private static <T> T doPrivileged(PrivilegedAction<T> action) {
       return System.getSecurityManager() != null ?
             AccessController.doPrivileged(action) : Security.doPrivileged(action);
    }

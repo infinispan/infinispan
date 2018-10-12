@@ -31,7 +31,7 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
 
    private RemoteQueryManager remoteQueryManager;
 
-   public IckleContinuousQueryProtobufCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
+   IckleContinuousQueryProtobufCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
       super(queryString, namedParameters, matcherImplClass);
    }
 
@@ -63,12 +63,12 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
       }
    }
 
-   protected Object makeFilterResult(ContinuousQueryResult.ResultType resultType, Object key, Object value, Object[] projection) {
+   private Object makeFilterResult(ContinuousQueryResult.ResultType resultType, Object key, Object value, Object[] projection) {
       key = remoteQueryManager.convertKey(key, MediaType.APPLICATION_PROTOSTREAM);
       if (value != null) {
          value = remoteQueryManager.convertValue(value, MediaType.APPLICATION_PROTOSTREAM);
       }
-      Object result = new ContinuousQueryResult(resultType, (byte[]) key, (byte[]) value, projection);
+      ContinuousQueryResult result = new ContinuousQueryResult(resultType, (byte[]) key, (byte[]) value, projection);
       return remoteQueryManager.encodeFilterResult(result);
    }
 
