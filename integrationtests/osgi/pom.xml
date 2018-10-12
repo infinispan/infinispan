@@ -4,15 +4,26 @@
 
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-parent</artifactId>
+      <artifactId>infinispan-integrationtests-parent</artifactId>
       <version>9.4.1-SNAPSHOT</version>
-      <relativePath>../../pom.xml</relativePath>
+      <relativePath>../pom.xml</relativePath>
    </parent>
 
    <artifactId>integrationtests-osgi</artifactId>
    <name>Integration tests - OSGi/Karaf</name>
    <packaging>bundle</packaging>
    <description>Integration tests for Infinispan running in OSGi/Karaf</description>
+
+   <properties>
+      <defaultTestGroup />
+      <defaultExcludedTestGroup />
+      <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
+      <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+      <forkJvmArgs>-Xmx500m -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
+      <target.tmp.dir>${project.build.directory}/tmp/</target.tmp.dir>
+      <skipOSGiTests>${skipTests}</skipOSGiTests>
+      <verbose.karaf>false</verbose.karaf>
+   </properties>
 
    <dependencies>
       <dependency>
@@ -220,17 +231,6 @@
          <!--<version>${version.pax.exam}</version>-->
       <!--</dependency>-->
    </dependencies>
-
-   <properties>
-      <defaultTestGroup />
-      <defaultExcludedTestGroup />
-      <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
-      <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-      <forkJvmArgs>-Xmx500m -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
-      <target.tmp.dir>${project.build.directory}/tmp/</target.tmp.dir>
-      <skipOSGiTests>${skipTests}</skipOSGiTests>
-      <verbose.karaf>false</verbose.karaf>
-   </properties>
 
    <build>
       <testResources>
