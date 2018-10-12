@@ -250,10 +250,12 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       }
       //TODO This is executed twice because component CacheNotifier is also ClusterCacheNotifier (see https://issues.jboss.org/browse/ISPN-5353)
       if (filterIndexingServiceProviders == null) {
-         filterIndexingServiceProviders = ServiceFinder.load(FilterIndexingServiceProvider.class);
-         for (FilterIndexingServiceProvider provider : filterIndexingServiceProviders) {
+         Collection<FilterIndexingServiceProvider> providers = ServiceFinder.load(FilterIndexingServiceProvider.class);
+         filterIndexingServiceProviders = new ArrayList<>(providers.size());
+         for (FilterIndexingServiceProvider provider : providers) {
             componentRegistry.wireDependencies(provider);
             provider.start();
+            filterIndexingServiceProviders.add(provider);
          }
       }
    }
@@ -848,8 +850,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       DataConversion keyConversion = keyDataConversion == null ? DataConversion.IDENTITY_KEY : keyDataConversion;
       DataConversion valueConversion = valueDataConversion == null ? DataConversion.IDENTITY_VALUE : valueDataConversion;
       if (filter instanceof IndexedFilter) {
-         IndexedFilter indexedFilter = (IndexedFilter) filter;
-         indexingProvider = findIndexingServiceProvider(indexedFilter);
+         indexingProvider = findIndexingServiceProvider((IndexedFilter) filter);
          if (indexingProvider != null) {
             DelegatingCacheInvocationBuilder builder = new DelegatingCacheInvocationBuilder(indexingProvider);
             builder
@@ -1032,10 +1033,18 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       addListenerInternal(listener, DataConversion.IDENTITY_KEY, DataConversion.IDENTITY_VALUE, filter, converter, classLoader, false);
    }
 
+   /**
+    * Gets a suitable indexing provider for the given indexed filter.
+    *
+    * @param indexedFilter the filter
+    * @return the FilterIndexingServiceProvider that supports the given IndexedFilter or {@code null} if none was found
+    */
    private FilterIndexingServiceProvider findIndexingServiceProvider(IndexedFilter indexedFilter) {
-      for (FilterIndexingServiceProvider provider : filterIndexingServiceProviders) {
-         if (provider.supportsFilter(indexedFilter)) {
-            return provider;
+      if (filterIndexingServiceProviders != null) {
+         for (FilterIndexingServiceProvider provider : filterIndexingServiceProviders) {
+            if (provider.supportsFilter(indexedFilter)) {
+               return provider;
+            }
          }
       }
       log.noFilterIndexingServiceProviderFound(indexedFilter.getClass().getName());
