@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
@@ -270,7 +271,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       for (int i = 0; i < size; i++) {
          String key = "k" + i;
-         asyncWait(key, PutKeyValueCommand.class);
+         asyncWait(key, c -> commandIsPutForKey(key, c));
          Cache<Object, String>[] caches = getOwners(key);
          for (Cache<Object, String> cache : caches) {
             assertEquals("value" + i + "-changed",
@@ -292,13 +293,17 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       for (int i = 0; i < size; i++) {
          String key = "k" + i;
-         asyncWait(key, PutKeyValueCommand.class);
+         asyncWait(key, c -> commandIsPutForKey(key, c));
          Cache<Object, String>[] caches = getOwners(key);
          for (Cache<Object, String> cache : caches) {
             assertEquals("value" + i + "-changed",
                   cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get(key));
          }
       }
+   }
+
+   private boolean commandIsPutForKey(String key, VisitableCommand c) {
+      return c instanceof PutKeyValueCommand && key.equals(((PutKeyValueCommand) c).getKey());
    }
 
    public void testComputeFromNonOwner() throws InterruptedException {
