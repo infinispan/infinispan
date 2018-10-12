@@ -1,8 +1,5 @@
 package org.infinispan.query.remote.impl.filter;
 
-import static org.infinispan.query.remote.impl.filter.IckleFilterConverterUtils.unmarshallParams;
-import static org.infinispan.query.remote.impl.filter.IckleFilterConverterUtils.unmarshallQueryString;
-
 import java.util.Map;
 
 import org.infinispan.filter.KeyValueFilterConverter;
@@ -18,16 +15,16 @@ import org.kohsuke.MetaInfServices;
  * @since 8.1
  */
 @NamedFactory(name = IckleProtobufFilterAndConverterFactory.FACTORY_NAME)
-@MetaInfServices
+@MetaInfServices(ParamKeyValueFilterConverterFactory.class)
 @SuppressWarnings("unused")
-public final class IckleProtobufFilterAndConverterFactory implements ParamKeyValueFilterConverterFactory {
+public final class IckleProtobufFilterAndConverterFactory
+      extends AbstractIckleFilterConverterFactory<KeyValueFilterConverter>
+      implements ParamKeyValueFilterConverterFactory {
 
    public static final String FACTORY_NAME = "iteration-filter-converter-factory";
 
    @Override
-   public KeyValueFilterConverter getFilterConverter(Object[] params) {
-      String queryString = unmarshallQueryString(params);
-      Map<String, Object> namedParams = unmarshallParams(params);
+   protected KeyValueFilterConverter getFilterConverter(String queryString, Map<String, Object> namedParams) {
       return new IckleBinaryProtobufFilterAndConverter<>(queryString, namedParams);
    }
 

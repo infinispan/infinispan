@@ -13,7 +13,7 @@ import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 /**
  * @author gustavonalle
  */
-class IckleFilterConverterUtils {
+abstract class AbstractIckleFilterConverterFactory<T> {
 
    // This marshaller is able to handle primitive/scalar types only
    private static final BaseProtoStreamMarshaller paramMarshaller = new BaseProtoStreamMarshaller() {
@@ -26,10 +26,7 @@ class IckleFilterConverterUtils {
       }
    };
 
-   private IckleFilterConverterUtils() {
-   }
-
-   static String unmarshallQueryString(Object[] params) {
+   private String unmarshallQueryString(Object[] params) {
       try {
          return (String) paramMarshaller.objectFromByteBuffer((byte[]) params[0]);
       } catch (IOException | ClassNotFoundException e) {
@@ -37,7 +34,7 @@ class IckleFilterConverterUtils {
       }
    }
 
-   static Map<String, Object> unmarshallParams(Object[] params) {
+   private Map<String, Object> unmarshallParams(Object[] params) {
       Map<String, Object> namedParams = null;
       try {
          if (params.length > 1) {
@@ -55,4 +52,11 @@ class IckleFilterConverterUtils {
       return namedParams;
    }
 
+   public final T getFilterConverter(Object[] params) {
+      String queryString = unmarshallQueryString(params);
+      Map<String, Object> namedParams = unmarshallParams(params);
+      return getFilterConverter(queryString, namedParams);
+   }
+
+   protected abstract T getFilterConverter(String queryString, Map<String, Object> namedParams);
 }

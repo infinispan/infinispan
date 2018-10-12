@@ -1,8 +1,5 @@
 package org.infinispan.query.remote.impl.filter;
 
-import static org.infinispan.query.remote.impl.filter.IckleFilterConverterUtils.unmarshallParams;
-import static org.infinispan.query.remote.impl.filter.IckleFilterConverterUtils.unmarshallQueryString;
-
 import java.util.Map;
 
 import org.infinispan.filter.NamedFactory;
@@ -16,15 +13,15 @@ import org.kohsuke.MetaInfServices;
  * @since 8.0
  */
 @NamedFactory(name = IckleContinuousQueryProtobufCacheEventFilterConverterFactory.FACTORY_NAME)
-@MetaInfServices
-public final class IckleContinuousQueryProtobufCacheEventFilterConverterFactory implements CacheEventFilterConverterFactory {
+@MetaInfServices(CacheEventFilterConverterFactory.class)
+public final class IckleContinuousQueryProtobufCacheEventFilterConverterFactory
+      extends AbstractIckleFilterConverterFactory<CacheEventFilterConverter>
+      implements CacheEventFilterConverterFactory {
 
    public static final String FACTORY_NAME = "continuous-query-filter-converter-factory";
 
    @Override
-   public CacheEventFilterConverter<?, ?, ?> getFilterConverter(Object[] params) {
-      String queryString = unmarshallQueryString(params);
-      Map<String, Object> namedParams = unmarshallParams(params);
+   protected CacheEventFilterConverter getFilterConverter(String queryString, Map<String, Object> namedParams) {
       return new IckleContinuousQueryProtobufCacheEventFilterConverter(queryString, namedParams, ProtobufMatcher.class);
    }
 }

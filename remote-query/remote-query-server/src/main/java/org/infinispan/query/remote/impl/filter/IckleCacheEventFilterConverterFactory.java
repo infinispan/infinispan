@@ -1,8 +1,5 @@
 package org.infinispan.query.remote.impl.filter;
 
-import static org.infinispan.query.remote.impl.filter.IckleFilterConverterUtils.unmarshallParams;
-import static org.infinispan.query.remote.impl.filter.IckleFilterConverterUtils.unmarshallQueryString;
-
 import java.util.Map;
 
 import org.infinispan.filter.NamedFactory;
@@ -15,15 +12,15 @@ import org.kohsuke.MetaInfServices;
  * @since 7.2
  */
 @NamedFactory(name = IckleCacheEventFilterConverterFactory.FACTORY_NAME)
-@MetaInfServices
-public final class IckleCacheEventFilterConverterFactory implements CacheEventFilterConverterFactory {
+@MetaInfServices(CacheEventFilterConverterFactory.class)
+public final class IckleCacheEventFilterConverterFactory
+      extends AbstractIckleFilterConverterFactory<CacheEventFilterConverter>
+      implements CacheEventFilterConverterFactory {
 
    public static final String FACTORY_NAME = "query-dsl-filter-converter-factory";
 
    @Override
-   public CacheEventFilterConverter<?, ?, ?> getFilterConverter(Object[] params) {
-      String queryString = unmarshallQueryString(params);
-      Map<String, Object> namedParams = unmarshallParams(params);
+   protected CacheEventFilterConverter getFilterConverter(String queryString, Map<String, Object> namedParams) {
       return new IckleProtobufCacheEventFilterConverter(new IckleProtobufFilterAndConverter(queryString, namedParams));
    }
 }

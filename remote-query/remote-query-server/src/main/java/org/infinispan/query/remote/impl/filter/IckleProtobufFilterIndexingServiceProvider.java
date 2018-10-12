@@ -18,6 +18,7 @@ import org.kohsuke.MetaInfServices;
 public final class IckleProtobufFilterIndexingServiceProvider extends IckleFilterIndexingServiceProvider {
 
    private RemoteQueryManager remoteQueryManager;
+
    @Inject private Cache cache;
 
    private RemoteQueryManager getRemoteQueryManager() {
@@ -34,7 +35,7 @@ public final class IckleProtobufFilterIndexingServiceProvider extends IckleFilte
 
    @Override
    protected Object makeFilterResult(Object userContext, Object eventType, Object key, Object instance, Object[] projection, Comparable[] sortProjection) {
-      Object result = new FilterResult(instance, projection, sortProjection);
-      return getRemoteQueryManager().encodeFilterResult(result);
+      Object filterResult = new FilterResult(instance, projection, sortProjection);
+      return getRemoteQueryManager().encodeFilterResult(filterResult);
    }
 }

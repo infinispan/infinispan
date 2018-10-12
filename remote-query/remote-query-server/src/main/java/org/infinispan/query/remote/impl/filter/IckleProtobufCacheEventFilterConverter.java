@@ -26,13 +26,12 @@ public final class IckleProtobufCacheEventFilterConverter extends IckleCacheEven
 
    private RemoteQueryManager remoteQueryManager;
 
-   public IckleProtobufCacheEventFilterConverter(IckleFilterAndConverter<Object, Object> filterAndConverter) {
+   IckleProtobufCacheEventFilterConverter(IckleFilterAndConverter<Object, Object> filterAndConverter) {
       super(filterAndConverter);
    }
 
    @Inject
-   @SuppressWarnings("unused")
-   protected void injectDependencies(Cache cache) {
+   void injectDependencies(Cache cache) {
       remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
    }
 
@@ -40,7 +39,7 @@ public final class IckleProtobufCacheEventFilterConverter extends IckleCacheEven
    public Object filterAndConvert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
       ObjectFilter.FilterResult filterResult = filterAndConverter.filterAndConvert(key, newValue, newMetadata);
       if (filterResult != null) {
-         Object result = new FilterResult(filterResult.getInstance(), filterResult.getProjection(), filterResult.getSortProjection());
+         FilterResult result = new FilterResult(filterResult.getInstance(), filterResult.getProjection(), filterResult.getSortProjection());
          return remoteQueryManager.encodeFilterResult(result);
       }
       return null;
@@ -55,7 +54,7 @@ public final class IckleProtobufCacheEventFilterConverter extends IckleCacheEven
 
       @Override
       public IckleProtobufCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         IckleFilterAndConverter filterAndConverter = (IckleFilterAndConverter) input.readObject();
+         IckleFilterAndConverter<Object, Object> filterAndConverter = (IckleFilterAndConverter<Object, Object>) input.readObject();
          return new IckleProtobufCacheEventFilterConverter(filterAndConverter);
       }
 
