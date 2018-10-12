@@ -6,9 +6,11 @@ pipeline {
     }
 
     parameters {
-        string(name: 'version', defaultValue: '0.0.0.Qualifier', description: 'Release version')
-        string(name: 'nextVersion', defaultValue: '', description: 'Next release (blank to stay on current SNAPSHOT)')
-        string(name: 'branch', defaultValue: 'master', description: 'Branch to release from')
+        string(name: 'VERSION', defaultValue: '0.0.0.Qualifier', description: 'Release version')
+        string(name: 'NEXT_VERSION', defaultValue: '', description: 'Next release (blank to stay on current SNAPSHOT)')
+        //string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to release from')
+        gitParameter(name: 'BRANCH', branchFilter: 'origin/(.*)', defaultValue: 'master', type: 'PT_BRANCH')
+        booleanParam(name: 'DRY_RUN', defaultValue: false, description: 'Do not actually build/deploy/push')
     }
 
     options {
@@ -23,6 +25,7 @@ pipeline {
                     env.MAVEN_OPTS = "-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"
                     env.JAVA_HOME = tool('JDK 8')
                     env.JAVA10_HOME = tool('JDK 10')
+                    GIT_PUSH = params.DRY_RUN ? '-DpushChanges=true' : '-DpushChanges=true'
                 }
 
                 sh returnStdout: true, script: 'cleanup.sh'
@@ -31,17 +34,20 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: "${params.BRANCH}"
             }
         }
 
         stage('Version') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${version}"
+                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${VERSION}"
             }
         }
 
         stage('Create Staging repository') {
+            when {
+                expression { !params.DRY_RUN }
+            }
             steps {
                 // Create a staging repository on Nexus
                 script {
@@ -52,12 +58,18 @@ pipeline {
         }
 
         stage('Deploy') {
+            when {
+                expression { !params.DRY_RUN }
+            }
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V -Pdistribution -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID -Djava10.home=$JAVA10_HOME -Dinfinispan.brand.version=${version}"
+                sh "$MAVEN_HOME/bin/mvn -B -V -Pdistribution -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID -Djava10.home=$JAVA10_HOME -Dinfinispan.brand.version=${VERSION}"
             }
         }
 
         stage('Close Staging repository') {
+            when {
+                expression { !params.DRY_RUN }
+            }
             steps {
                 // This ensures that Nexus validates the repository for correctness
                 sh "$MAVEN_HOME/bin/mvn -B -V org.sonatype.plugins:nexus-staging-maven-plugin:rc-close -pl . -DstagingRepositoryId=$STAGING_REPO_ID"
@@ -67,8 +79,19 @@ pipeline {
         stage('Tag') {
             steps {
                 // Commit and tag once everything is good
-                sh "$MAVEN_HOME/bin/mvn -B -V scm:checkin -Dmessage=\"Releasing version ${version}\" -DpushChanges=false"
-                sh "$MAVEN_HOME/bin/mvn -B -V scm:tag"
+                sh "$MAVEN_HOME/bin/mvn -B -V scm:checkin -Dmessage=\"Releasing version ${VERSION}\" -DpushChanges=false"
+                sh "$MAVEN_HOME/bin/mvn -B -V scm:tag ${GIT_PUSH}"
+            }
+        }
+
+        stage('Bump version') {
+            when {
+                expression { params.NEXT_VERSION != ''}
+            }
+            steps {
+                git branch: "${params.BRANCH}"
+                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${NEXT_VERSION}"
+                sh "$MAVEN_HOME/bin/mvn -B -V scm:checkin -Dmessage=\"Updating to version ${NEXT_VERSION}\" ${GIT_PUSH}"
             }
         }
     }
