@@ -247,20 +247,18 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       if (!config.simpleCache()) {
          this.distExecutorService = SecurityActions.getDefaultExecutorService(cache.wired());
       }
-      //TODO This is executed twice because component CacheNotifier is also ClusterCacheNotifier (see https://issues.jboss.org/browse/ISPN-5353)
-      if (filterIndexingServiceProviders == null) {
-         filterIndexingServiceProviders = ServiceFinder.load(FilterIndexingServiceProvider.class);
-         for (FilterIndexingServiceProvider provider : filterIndexingServiceProviders) {
-            componentRegistry.wireDependencies(provider, false);
-            provider.start();
-         }
+
+      filterIndexingServiceProviders = ServiceFinder.load(FilterIndexingServiceProvider.class);
+      for (FilterIndexingServiceProvider provider : filterIndexingServiceProviders) {
+         componentRegistry.wireDependencies(provider, false);
+         provider.start();
       }
    }
 
    @Override
    public void stop() {
       super.stop();
-      //TODO This is executed twice because component CacheNotifier is also ClusterCacheNotifier (see https://issues.jboss.org/browse/ISPN-5353)
+
       if (filterIndexingServiceProviders != null) {
          for (FilterIndexingServiceProvider provider : filterIndexingServiceProviders) {
             provider.stop();
