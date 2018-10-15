@@ -10,7 +10,7 @@
         ip_ttl="${jgroups.ip_ttl:2}"
         thread_naming_pattern="pl"
         enable_diagnostics="false"
-        bundler_type="transfer-queue"
+        bundler_type="ring-buffer-lockless2"
         max_bundle_size="8500"
 
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
@@ -46,10 +46,10 @@
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:5000}"
    />
-   <UFC max_credits="2m" 
+   <UFC max_credits="2m"
         min_threshold="0.40"
    />
-   <MFC max_credits="2m" 
+   <MFC max_credits="2m"
         min_threshold="0.40"
    />
    <FRAG3 frag_size="8000"/>
