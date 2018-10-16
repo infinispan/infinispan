@@ -10,7 +10,7 @@
         ip_ttl="${jgroups.ip_ttl:2}"
         thread_naming_pattern="pl"
         enable_diagnostics="false"
-        bundler_type="ring-buffer-lockless2"
+        bundler_type="org.jgroups.protocols.SimplifiedTransferQueueBundler"
         max_bundle_size="8500"
 
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
