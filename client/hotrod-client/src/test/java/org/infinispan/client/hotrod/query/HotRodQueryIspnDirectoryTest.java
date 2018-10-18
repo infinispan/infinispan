@@ -35,7 +35,7 @@ public class HotRodQueryIspnDirectoryTest extends HotRodQueryTest {
 
    public void testReadAsJSON() throws Exception {
       DataFormat acceptJSON = DataFormat.builder().valueType(APPLICATION_JSON).valueMarshaller(new UTF8StringMarshaller()).build();
-      RemoteCache<Integer, String> jsonCache = this.remoteCache.withDataFormat(acceptJSON);
+      RemoteCache<Integer, String> jsonCache = remoteCache.withDataFormat(acceptJSON);
 
       JsonNode user1 = new ObjectMapper().readTree(jsonCache.get(1));
 

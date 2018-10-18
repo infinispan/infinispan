@@ -25,8 +25,8 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
    BaseRemoteQueryManager(ComponentRegistry cr, QuerySerializers querySerializers) {
       this.cache = cr.getComponent(Cache.class).getAdvancedCache();
       this.querySerializers = querySerializers;
-      this.keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
-      this.valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
+      this.keyDataConversion = cache.getKeyDataConversion();
+      this.valueDataConversion = cache.getValueDataConversion();
    }
 
    public byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
@@ -34,14 +34,9 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
       QuerySerializer querySerializer = querySerializers.getSerializer(outputFormat);
       Query query = getQueryEngine(cache).makeQuery(queryString, namedParametersMap, offset, maxResults, queryMode);
       List<Object> results = query.list();
-      String[] projection = query.getProjection();
       int totalResults = query.getResultSize();
-      RemoteQueryResult remoteQueryResult;
-      if (projection == null) {
-         remoteQueryResult = new RemoteQueryResult(null, totalResults, results);
-      } else {
-         remoteQueryResult = new RemoteQueryResult(projection, totalResults, results);
-      }
+      String[] projection = query.getProjection();
+      RemoteQueryResult remoteQueryResult = new RemoteQueryResult(projection, totalResults, results);
       Object response = querySerializer.createQueryResponse(remoteQueryResult);
       return querySerializer.encodeQueryResponse(response, outputFormat);
    }

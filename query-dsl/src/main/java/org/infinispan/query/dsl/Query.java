@@ -2,6 +2,7 @@ package org.infinispan.query.dsl;
 
 import java.util.List;
 
+//todo [anistor] We need to deprecate the 'always caching' behaviour and provide a clearCachedResults method
 /**
  * An immutable object representing both the query and the result. The result is obtained lazily when one of the methods
  * in this interface is executed first time. The query is executed only once. Further calls will just return the
