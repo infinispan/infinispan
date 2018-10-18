@@ -82,8 +82,8 @@ public class PersistenceManagerAvailabilityTest extends SingleCacheManagerTest {
       } catch (PersistenceException ignore) {
       }
       dims.setAvailable(true);
-      eventually(pm::isAvailable);
-      assertEquals(1, pal.availableCount.get());
+      eventuallyEquals(1, () -> pal.availableCount.get());
+      assertTrue(pm.isAvailable());
 
       cache.put(1, 3);
       assertEquals(3, cache.get(1));

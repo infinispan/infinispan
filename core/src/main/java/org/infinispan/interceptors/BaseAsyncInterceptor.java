@@ -10,6 +10,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Base class for an interceptor in the new asynchronous invocation chain.
@@ -215,12 +217,17 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    /**
     * Suspend the invocation until {@code delay} completes, then if successful invoke the next interceptor.
     *
+    * <p>If {@code delay} is null or already completed normally, immediately invoke the next interceptor in this thread.</p>
+    *
     * <p>If {@code delay} completes exceptionally, skip the next interceptor and continue with the exception.</p>
     *
     * <p>You need to wrap the result with {@link #makeStage(Object)} if you need to add another handler.</p>
     */
    public final Object asyncInvokeNext(InvocationContext ctx, VisitableCommand command,
                                        CompletionStage<?> delay) {
+      if (delay == null || CompletionStages.isCompletedSuccessfully(delay)) {
+         return invokeNext(ctx, command);
+      }
       return asyncValue(delay).thenApply(ctx, command, invokeNextFunction);
    }
 
@@ -279,6 +286,69 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          return (InvocationStage) rv;
       } else {
          return new SyncInvocationStage(rv);
+      }
+   }
+
+   /**
+    * Returns an InvocationStage if the provided CompletionStage is null, not completed or completed via exception.
+    * If these are not true the sync value is returned directly.
+    * @param stage wait for completion of this if not null
+    * @param syncValue sync value to return if stage is complete or as stage value
+    * @return invocation stage or sync value
+    */
+   public static Object delayedValue(CompletionStage<Void> stage, Object syncValue) {
+      if (stage != null) {
+         CompletableFuture<?> future = stage.toCompletableFuture();
+         if (!future.isDone()) {
+            return asyncValue(stage.thenApply(v -> syncValue));
+         }
+         if (future.isCompletedExceptionally()) {
+            return asyncValue(stage);
+         }
+      }
+      return syncValue;
+   }
+
+   /**
+    * This method should be used instead of {@link #delayedValue(CompletionStage, Object)} when a
+    * {@link InvocationFinallyFunction} is used to properly handle the exception if any is present.
+    * @param stage
+    * @param syncValue
+    * @param throwable
+    * @return
+    */
+   public static Object delayedValue(CompletionStage<Void> stage, Object syncValue, Throwable throwable) {
+      if (throwable == null) {
+         return delayedValue(stage, syncValue);
+      }
+      if (stage != null) {
+         CompletableFuture<?> future = stage.toCompletableFuture();
+         if (!future.isDone() || future.isCompletedExceptionally()) {
+            return asyncValue(
+                  stage.handle((ignore, t) -> {
+                     if (t != null) {
+                        throwable.addSuppressed(t);
+                     }
+                     return null;
+                  }).thenCompose(ignore -> CompletableFutures.completedExceptionFuture(throwable))
+            );
+         }
+      }
+      return new SimpleAsyncInvocationStage(throwable);
+   }
+
+   /**
+    * The same as {@link #delayedValue(CompletionStage, Object)}, except that it is optimizes cases where the return
+    * value is null.
+    * @param stage wait for completion of this if not null
+    * @return invocation stage or null sync value
+    */
+   public static Object delayedNull(CompletionStage<Void> stage) {
+      // If stage was null - meant we didn't notify or if it already completed, no reason to create a stage instance
+      if (stage == null || CompletionStages.isCompletedSuccessfully(stage)) {
+         return null;
+      } else {
+         return asyncValue(stage);
       }
    }
 

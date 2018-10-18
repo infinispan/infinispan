@@ -52,6 +52,7 @@ import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteAdminOperations;
@@ -525,8 +526,8 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       public V get(Object key) {
          V value = super.get(key);
          if (value != null/* && hasListeners.get()*/) {
-            cacheNotifier.notifyCacheEntryVisited((K) key, value, true, ImmutableContext.INSTANCE, null);
-            cacheNotifier.notifyCacheEntryVisited((K) key, value, false, ImmutableContext.INSTANCE, null);
+            CompletionStages.join(cacheNotifier.notifyCacheEntryVisited((K) key, value, true, ImmutableContext.INSTANCE, null));
+            CompletionStages.join(cacheNotifier.notifyCacheEntryVisited((K) key, value, false, ImmutableContext.INSTANCE, null));
          }
          return value;
       }

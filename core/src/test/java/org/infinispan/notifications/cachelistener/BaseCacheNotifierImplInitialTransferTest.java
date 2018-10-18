@@ -42,6 +42,7 @@ import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -61,6 +62,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MockBasicComponentRegistry;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.BeforeMethod;
@@ -141,7 +143,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       cdl.init(null, config, mock(KeyPartitioner.class));
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
-                         new InternalEntryFactoryImpl(), mock(ClusterEventManager.class), mock(KeyPartitioner.class));
+                         new InternalEntryFactoryImpl(), mock(ClusterEventManager.class), mock(KeyPartitioner.class),
+                         TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()));
       n.start();
       ctx = new NonTxInvocationContext(null);
    }

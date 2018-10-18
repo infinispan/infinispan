@@ -87,6 +87,8 @@ import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
+import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.PublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
@@ -574,5 +576,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    public <K, V, R> PublisherRequestCommand<K> buildEntryPublisherCommand(boolean parallelStream, DeliveryGuarantee deliveryGuarantee, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer, Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       return actual.buildEntryPublisherCommand(parallelStream, deliveryGuarantee, segments, keys, excludedKeys,
             includeLoader, transformer, finalizer);
+   }
+
+   @Override
+   public <K, V> MultiClusterEventCommand<K, V> buildMultiClusterEventCommand(Map<UUID, Collection<ClusterEvent<K, V>>> events) {
+      return actual.buildMultiClusterEventCommand(events);
    }
 }

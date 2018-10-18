@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -535,6 +536,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   public CompletionStage<Void> addListenerAsync(Object listener) {
+      return cache.addListenerAsync(listener);
+   }
+
+   @Override
    public void addListener(Object listener, KeyFilter<? super K> filter) {
       cache.addListener(listener, filter);
    }
@@ -546,8 +552,18 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   public <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
+      return cache.addListenerAsync(listener, filter, converter);
+   }
+
+   @Override
    public void removeListener(Object listener) {
       cache.removeListener(listener);
+   }
+
+   @Override
+   public CompletionStage<Void> removeListenerAsync(Object listener) {
+      return cache.removeListenerAsync(listener);
    }
 
    @Override
@@ -563,8 +579,20 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   public <C> CompletionStage<Void> addFilteredListenerAsync(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
+      return cache.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
+   }
+
+   @Override
    public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
       cache.addStorageFormatFilteredListener(listener, filter, converter, filterAnnotations);
+   }
+
+   @Override
+   public <C> CompletionStage<Void> addStorageFormatFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+      return cache.addStorageFormatFilteredListenerAsync(listener, filter, converter, filterAnnotations);
    }
 
    @Override

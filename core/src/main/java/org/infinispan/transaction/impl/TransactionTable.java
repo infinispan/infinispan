@@ -48,6 +48,7 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
+import org.infinispan.notifications.cachelistener.annotation.TransactionRegistered;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -63,6 +64,7 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -433,7 +435,10 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          if (trace) log.tracef("Created a new local transaction: %s", current);
          localTransactions.put(transaction, current);
          globalToLocalTransactions.put(current.getGlobalTransaction(), current);
-         notifier.notifyTransactionRegistered(tx, true);
+         if (notifier.hasListener(TransactionRegistered.class)) {
+            // TODO: this should be allowed to be async at some point
+            CompletionStages.join(notifier.notifyTransactionRegistered(tx, true));
+         }
       }
       return current;
    }

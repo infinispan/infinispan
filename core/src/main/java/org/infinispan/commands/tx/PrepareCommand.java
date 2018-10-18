@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -42,6 +43,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -105,8 +107,13 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
       if (trace)
          log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
-      notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);
-      return invoker.invokeAsync(ctx, this);
+      CompletionStage<Void> stage = notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);
+
+      if (CompletionStages.isCompletedSuccessfully(stage)) {
+         return invoker.invokeAsync(ctx, this);
+      } else {
+         return stage.thenCompose(v -> invoker.invokeAsync(ctx, this)).toCompletableFuture();
+      }
    }
 
    @Override

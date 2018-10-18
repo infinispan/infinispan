@@ -1,5 +1,9 @@
 package org.infinispan.notifications;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotSame;
+
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.Cache;
@@ -9,6 +13,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -32,15 +37,19 @@ public class AsyncNotificationTest extends AbstractInfinispanTest {
    }
 
    public void testAsyncNotification() throws InterruptedException {
-      CountDownLatch latch = new CountDownLatch(2);
+      CountDownLatch latch = new CountDownLatch(3);
+      AbstractListener nonBlockingListener = new NonBlockingListener(latch);
       AbstractListener syncListener = new SyncListener(latch);
       AbstractListener asyncListener = new AsyncListener(latch);
+      c.addListener(nonBlockingListener);
       c.addListener(syncListener);
       c.addListener(asyncListener);
       c.put("k", "v");
       latch.await();
-      assert syncListener.caller == Thread.currentThread();
-      assert asyncListener.caller != Thread.currentThread();
+      Thread currentThread = Thread.currentThread();
+      assertEquals(currentThread, nonBlockingListener.caller);
+      assertEquals(currentThread, syncListener.caller);
+      assertNotSame(currentThread, asyncListener.caller);
    }
 
    public abstract static class AbstractListener {
@@ -49,6 +58,21 @@ public class AsyncNotificationTest extends AbstractInfinispanTest {
 
       protected AbstractListener(CountDownLatch latch) {
          this.latch = latch;
+      }
+   }
+
+   @Listener
+   public static class NonBlockingListener extends AbstractListener {
+      public NonBlockingListener(CountDownLatch latch) {
+         super(latch);
+      }
+      @CacheEntryCreated
+      public CompletionStage<Void> handle(CacheEntryCreatedEvent e) {
+         if (e.isPre()) {
+            caller = Thread.currentThread();
+            latch.countDown();
+         }
+         return CompletableFutures.completedNull();
       }
    }
 

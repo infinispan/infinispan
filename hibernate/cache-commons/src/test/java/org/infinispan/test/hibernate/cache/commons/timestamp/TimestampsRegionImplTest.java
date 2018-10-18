@@ -7,6 +7,7 @@
 package org.infinispan.test.hibernate.cache.commons.timestamp;
 
 import java.util.Properties;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.hibernate.boot.registry.StandardServiceRegistry;
@@ -92,7 +93,12 @@ public class TimestampsRegionImplTest extends AbstractGeneralDataRegionTest {
             public void addListener(Object listener) {
                super.addListener(new MockClassLoaderAwareListener(listener, this));
             }
-         }
+
+				@Override
+				public CompletionStage<Void> addListenerAsync(Object listener) {
+					return super.addListenerAsync(new MockClassLoaderAwareListener(listener, this));
+				}
+			}
 		);
 		return ssrb;
 	}

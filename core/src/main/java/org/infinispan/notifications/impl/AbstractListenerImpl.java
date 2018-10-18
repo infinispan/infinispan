@@ -14,7 +14,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 import javax.security.auth.Subject;
 import javax.transaction.Transaction;
@@ -24,7 +26,6 @@ import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.Listener;
@@ -33,7 +34,9 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.security.Security;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -110,15 +113,9 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
 
    }
 
-   // two separate executor services, one for sync and one for async listeners
-   protected ExecutorService syncProcessor;
+   // Processor used to handle async listener notifications.
    @Inject @ComponentName(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR)
-   protected ExecutorService asyncProcessor;
-
-   @Start(priority = 9)
-   public void start() {
-      syncProcessor = new WithinThreadExecutor();
-   }
+   protected Executor asyncProcessor;
 
    /**
     * Removes all listeners from the notifier
@@ -128,13 +125,16 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       for (List<L> list : listenersMap.values()) {
          if (list != null) list.clear();
       }
-
-      if (syncProcessor != null) syncProcessor.shutdownNow();
    }
 
    protected abstract Log getLog();
 
    protected abstract Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations(Listener l);
+
+   public boolean hasListener(Class<? extends Annotation> annotationClass) {
+      List<L> annotations = listenersMap.get(annotationClass);
+      return annotations != null && !annotations.isEmpty();
+   }
 
    protected List<L> getListenerCollectionForAnnotation(Class<? extends Annotation> annotation) {
       List<L> list = listenersMap.get(annotation);
@@ -142,7 +142,29 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       return list;
    }
 
-   public void removeListener(Object listener) {
+   public abstract CompletionStage<Void> removeListenerAsync(Object listener);
+
+   /**
+    * If the given <b>stage</b> is null or normally completed returns the provided <b>aggregateCompletionStage</b> as is.
+    * Otherwise the <b>stage</b> is used as a dependant for the provided <b>aggregateCompletionStage</b> if provided or a
+    * new one is created that depends upon the provided <b>stage</b>. The existing or new <b>aggregateCompletionStage</b> is then
+    * returned to the caller.
+    * @param aggregateCompletionStage the existing composed stage or null
+    * @param stage the stage to rely upon
+    * @return null or a composed stage that relies upon the provided stage
+    */
+   protected static AggregateCompletionStage<Void> composeStageIfNeeded(
+         AggregateCompletionStage<Void> aggregateCompletionStage, CompletionStage<Void> stage) {
+      if (stage != null && !CompletionStages.isCompletedSuccessfully(stage)) {
+         if (aggregateCompletionStage == null) {
+            aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+         }
+         aggregateCompletionStage.dependsOn(stage);
+      }
+      return aggregateCompletionStage;
+   }
+
+   protected void removeListenerFromMaps(Object listener) {
       for (Class<? extends Annotation> annotation :
             getAllowedMethodAnnotations(testListenerClassValidity(listener.getClass())).keySet())
          removeListenerInvocation(annotation, listener);
@@ -320,11 +342,22 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       return l;
    }
 
+   /**
+    * Tests that a method is a valid listener method, that is that it has a single argument that is assignable to
+    * <b>allowedParameter</b>. The method must also return either void or a CompletionStage, meaning the
+    * method promises not block.
+    * @param m method to test
+    * @param allowedParameter what parameter is allowed for the method argument
+    * @param annotationName name of the annotation
+    * @throws IncorrectListenerException if the listener is not a valid target
+    */
    protected static void testListenerMethodValidity(Method m, Class<?> allowedParameter, String annotationName) {
       if (m.getParameterTypes().length != 1 || !m.getParameterTypes()[0].isAssignableFrom(allowedParameter))
          throw new IncorrectListenerException("Methods annotated with " + annotationName + " must accept exactly one parameter, of assignable from type " + allowedParameter.getName());
-      if (!m.getReturnType().equals(void.class))
-         throw new IncorrectListenerException("Methods annotated with " + annotationName + " should have a return type of void.");
+      Class<?> returnType = m.getReturnType();
+      if (!returnType.equals(void.class) && !CompletionStage.class.isAssignableFrom(returnType)) {
+         throw new IncorrectListenerException("Methods annotated with " + annotationName + " should have a return type of void or CompletionStage.");
+      }
    }
 
    protected abstract Transaction suspendIfNeeded();
@@ -336,11 +369,11 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
     * to be invoked as well as the target object.
     */
    protected class ListenerInvocationImpl<A> implements ListenerInvocation<A> {
-      public final Object target;
-      public final Method method;
-      public final boolean sync;
-      public final WeakReference<ClassLoader> classLoader;
-      public final Subject subject;
+      final Object target;
+      final Method method;
+      final boolean sync;
+      final WeakReference<ClassLoader> classLoader;
+      final Subject subject;
 
       public ListenerInvocationImpl(Object target, Method method, boolean sync, ClassLoader classLoader, Subject subject) {
          this.target = target;
@@ -351,21 +384,22 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       }
 
       @Override
-      public void invoke(final A event) {
-         Runnable r = () -> {
+      public CompletionStage<Void> invoke(final A event) {
+         Supplier<Object> r = () -> {
             ClassLoader contextClassLoader = null;
             Transaction transaction = suspendIfNeeded();
             if (classLoader.get() != null) {
                contextClassLoader = SecurityActions.setContextClassLoader(classLoader.get());
             }
+
             try {
+               Object result;
                if (subject != null) {
                   try {
-                     Security.doAs(subject, (PrivilegedExceptionAction<Void>) () -> {
+                     result = Security.doAs(subject, (PrivilegedExceptionAction<Object>) () -> {
                         // Don't want to print out Subject as it could have sensitive information
                         getLog().tracef("Invoking listener: %s passing event %s using subject", target, event);
-                        method.invoke(target, event);
-                        return null;
+                        return method.invoke(target, event);
                      });
                   } catch (PrivilegedActionException e) {
                      Throwable cause = e.getCause();
@@ -379,8 +413,10 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                   }
                } else {
                   getLog().tracef("Invoking listener: %s passing event %s", target, event);
-                  method.invoke(target, event);
+                  result = method.invoke(target, event);
                }
+               getLog().tracef("Listener %s has completed event %s", target, event);
+               return result;
             } catch (InvocationTargetException exception) {
                Throwable cause = getRealException(exception);
                if (sync) {
@@ -391,19 +427,27 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                }
             } catch (IllegalAccessException exception) {
                getLog().unableToInvokeListenerMethodAndRemoveListener(method, target, exception);
-               removeListener(target);
+               // Don't worry about return, just let it fire async
+               removeListenerAsync(target);
             } finally {
                if (classLoader.get() != null) {
                   SecurityActions.setContextClassLoader(contextClassLoader);
                }
                resumeIfNeeded(transaction);
             }
+            return null;
          };
 
-         if (sync)
-            syncProcessor.execute(r);
-         else
-            asyncProcessor.execute(r);
+         if (sync) {
+            // Sync can run in a blocking (null) or non blocking (CompletionStage) fashion
+            Object result = r.get();
+            if (result instanceof CompletionStage) {
+               return (CompletionStage<Void>) result;
+            }
+         } else {
+            asyncProcessor.execute(r::get);
+         }
+         return CompletableFutures.completedNull();
       }
 
       @Override

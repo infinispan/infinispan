@@ -15,10 +15,10 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.SyncInvocationStage;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
@@ -358,7 +358,11 @@ public class InfinispanLock {
 
       @Override
       public void addListener(LockListener listener) {
-         notifier.thenAccept(listener::onEvent);
+         if (notifier.isDone() && !notifier.isCompletedExceptionally()) {
+            listener.onEvent(notifier.join());
+         } else {
+            notifier.thenAccept(listener::onEvent);
+         }
       }
 
       @Override

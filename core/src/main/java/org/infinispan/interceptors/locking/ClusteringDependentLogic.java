@@ -6,6 +6,8 @@ import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCh
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
@@ -13,6 +15,7 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -40,6 +43,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.NotifyHelper;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.LocalModeAddress;
@@ -48,7 +52,9 @@ import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.commons.time.TimeService;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
 
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a
@@ -120,7 +126,18 @@ public interface ClusteringDependentLogic {
       return getCacheTopology().getDistribution(key).primary();
    }
 
-   void commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation);
+   /**
+    * Commits the entry to the data container. The commit operation is always done synchronously in the current thread.
+    * However notifications for said operations can be performed asynchronously and the returned CompletionStage will
+    * complete when the notifications if any are completed.
+    * @param entry
+    * @param command
+    * @param ctx
+    * @param trackFlag
+    * @param l1Invalidation
+    * @return completion stage that is complete when all notifications for the commit are complete or null if already complete
+    */
+   CompletionStage<Void> commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation);
 
    /**
     * Determines what type of commit this is. Whether we shouldn't commit, or if this is a commit due to owning the key
@@ -182,28 +199,35 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public final void commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
+      public final CompletionStage<Void> commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          if (entry instanceof ClearCacheEntry) {
             //noinspection unchecked
-            commitClearCommand(dataContainer, (ClearCacheEntry<Object, Object>) entry, ctx, command);
+            return commitClearCommand(dataContainer, ctx, command);
          } else {
-            commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation);
+            return commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation);
          }
       }
 
-      private void commitClearCommand(DataContainer<Object, Object> dataContainer, ClearCacheEntry<Object, Object> cacheEntry,
-                                      InvocationContext context, FlagAffectedCommand command) {
-         Iterator<InternalCacheEntry<Object, Object>> iterator = dataContainer.iteratorIncludingExpired();
+      private CompletionStage<Void> commitClearCommand(DataContainer<Object, Object> dataContainer, InvocationContext context,
+            FlagAffectedCommand command) {
+         if (notifier.hasListener(CacheEntryRemoved.class)) {
+            Iterator<InternalCacheEntry<Object, Object>> iterator = dataContainer.iteratorIncludingExpired();
 
-         while (iterator.hasNext()) {
-            InternalCacheEntry entry = iterator.next();
-            // Iterator doesn't support remove
-            dataContainer.remove(entry.getKey());
-            notifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), false, context, command);
+            AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+            while (iterator.hasNext()) {
+               InternalCacheEntry entry = iterator.next();
+               // Iterator doesn't support remove
+               dataContainer.remove(entry.getKey());
+               aggregateCompletionStage.dependsOn(notifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), false, context, command));
+            }
+            return aggregateCompletionStage.freeze();
+         } else {
+            dataContainer.clear();
+            return CompletableFutures.completedNull();
          }
       }
 
-      protected abstract void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
+      protected abstract CompletionStage<Void> commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
                                                 InvocationContext ctx, Flag trackFlag, boolean l1Invalidation);
 
       protected Commit clusterCommitType(FlagAffectedCommand command, InvocationContext ctx, int segment, boolean removed) {
@@ -333,18 +357,13 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      protected void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx,
+      protected CompletionStage<Void> commitSingleEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx,
                                        Flag trackFlag, boolean l1Invalidation) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
          boolean created = entry.isCreated();
          boolean removed = entry.isRemoved();
-         boolean expired;
-         if (removed && entry instanceof MVCCEntry) {
-            expired = ((MVCCEntry) entry).isExpired();
-         } else {
-            expired = false;
-         }
+         boolean expired = removed && entry instanceof MVCCEntry && ((MVCCEntry) entry).isExpired();
 
          Object key = entry.getKey();
          int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
@@ -359,7 +378,7 @@ public interface ClusteringDependentLogic {
          commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
 
          // Notify after events if necessary
-         NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+         return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
                entry, ctx, command, previousValue, previousMetadata);
       }
 
@@ -380,7 +399,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      protected void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
+      protected CompletionStage<Void> commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
@@ -406,7 +425,7 @@ public interface ClusteringDependentLogic {
          commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
 
          // Notify after events if necessary
-         NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+         return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
                entry, ctx, command, previousValue, previousMetadata);
       }
 
@@ -444,7 +463,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      protected void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
+      protected CompletionStage<Void> commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          Object key = entry.getKey();
          int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
@@ -478,9 +497,10 @@ public interface ClusteringDependentLogic {
                expired = ((MVCCEntry) entry).isExpired();
             }
 
-            NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+            return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
                                         entry, ctx, command, previousValue, previousMetadata);
          }
+         return CompletableFutures.completedNull();
       }
 
       @Override
@@ -513,7 +533,7 @@ public interface ClusteringDependentLogic {
       };
 
       @Override
-      protected void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
+      protected CompletionStage<Void> commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          Object key = entry.getKey();
          int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
@@ -573,9 +593,10 @@ public interface ClusteringDependentLogic {
                expired = ((MVCCEntry) entry).isExpired();
             }
 
-            NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+            return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
                                         entry, ctx, command, previousValue, previousMetadata);
          }
+         return CompletableFutures.completedNull();
       }
 
       @Override
@@ -590,7 +611,7 @@ public interface ClusteringDependentLogic {
 
    class ScatteredLogic extends DistributionLogic {
       @Override
-      protected void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
+      protected CompletableFuture<Void> commitSingleEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          // the logic is in ScatteredDistributionInterceptor
          throw new UnsupportedOperationException();
       }

@@ -15,6 +15,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -79,6 +80,7 @@ import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.impl.CacheContainerStatsImpl;
 import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -808,20 +810,21 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    }
 
    @Override
-   public void addListener(Object listener) {
+   public CompletionStage<Void> addListenerAsync(Object listener) {
       authzHelper.checkPermission(AuthorizationPermission.LISTEN);
       CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
-      notifier.addListener(listener);
+      return notifier.addListenerAsync(listener);
    }
 
    @Override
-   public void removeListener(Object listener) {
+   public CompletionStage<Void> removeListenerAsync(Object listener) {
       authzHelper.checkPermission(AuthorizationPermission.LISTEN);
       try {
          CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
-         notifier.removeListener(listener);
+         return notifier.removeListenerAsync(listener);
       } catch (IllegalLifecycleStateException e) {
          // Ignore the exception for backwards compatibility
+         return CompletableFutures.completedNull();
       }
    }
 

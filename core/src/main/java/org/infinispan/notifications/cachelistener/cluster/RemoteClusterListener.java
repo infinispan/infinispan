@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -23,6 +24,8 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -69,25 +72,26 @@ public class RemoteClusterListener {
    }
 
    @ViewChanged
-   public void viewChange(ViewChangedEvent event) {
+   public CompletionStage<Void> viewChange(ViewChangedEvent event) {
       if (!event.getNewMembers().contains(origin)) {
          if (trace) {
             log.tracef("Origin %s storing cluster listener is gone, removing local listener", origin);
          }
-         removeListener();
+         return removeListener();
       }
+      return CompletableFutures.completedNull();
    }
 
-   public void removeListener() {
-      cacheNotifier.removeListener(this);
-      cacheManagerNotifier.removeListener(this);
+   public CompletionStage<Void> removeListener() {
+      return CompletionStages.allOf(cacheNotifier.removeListenerAsync(this),
+            cacheManagerNotifier.removeListenerAsync(this));
    }
 
    @CacheEntryCreated
    @CacheEntryModified
    @CacheEntryRemoved
    @CacheEntryExpired
-   public void handleClusterEvents(CacheEntryEvent event) throws Exception {
+   public CompletionStage<Void> handleClusterEvents(CacheEntryEvent event) throws Exception {
       GlobalTransaction transaction = event.getGlobalTransaction();
       if (transaction != null) {
          // If we are in a transaction, queue up those events so we can send them as 1 batch.
@@ -107,10 +111,11 @@ public class RemoteClusterListener {
          }
          eventManager.addEvents(origin, id, Collections.singleton(ClusterEvent.fromEvent(event)), sync);
       }
+      return CompletableFutures.completedNull();
    }
 
    @TransactionCompleted
-   public void transactionCompleted(TransactionCompletedEvent event) throws Exception {
+   public CompletionStage<Void> transactionCompleted(TransactionCompletedEvent event) throws Exception {
       Queue<CacheEntryEvent> events = transactionChanges.remove(event.getGlobalTransaction());
       if (event.isTransactionSuccessful() && events != null) {
          List<ClusterEvent> eventsToSend = new ArrayList<>(events.size());
@@ -123,5 +128,6 @@ public class RemoteClusterListener {
          }
          eventManager.addEvents(origin, id, eventsToSend, sync);
       }
+      return CompletableFutures.completedNull();
    }
 }

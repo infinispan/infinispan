@@ -2,6 +2,7 @@ package org.infinispan.container.offheap;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -22,6 +23,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -226,9 +228,10 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             }
             try {
                InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(addressToRemove);
-               passivator.running().passivate(ice);
                map.remove(ice.getKey(), addressToRemove);
-               evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice));
+               CompletionStage<Void> passivationStage = passivator.running().passivateAsync(ice);
+               CompletionStage<Void> evictionStage = evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice));
+               CompletionStages.join(CompletionStages.allOf(passivationStage, evictionStage));
             } finally {
                entryWriteLock.unlock();
             }

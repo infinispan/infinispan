@@ -98,6 +98,7 @@ import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
 import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -202,12 +203,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
             if (availabilityChanged && !status.availability && !failureDetected) {
                failureDetected = true;
                unavailableException = new StoreUnavailableException(String.format("Store %s is unavailable", status.store));
-               cacheNotifier.notifyPersistenceAvailabilityChanged(false);
+               CompletionStages.join(cacheNotifier.notifyPersistenceAvailabilityChanged(false));
             }
          }
          if (!failureDetected && availabilityChanged) {
             unavailableException = null;
-            cacheNotifier.notifyPersistenceAvailabilityChanged(true);
+            CompletionStages.join(cacheNotifier.notifyPersistenceAvailabilityChanged(true));
          }
       } finally {
          storesMutex.readLock().unlock();

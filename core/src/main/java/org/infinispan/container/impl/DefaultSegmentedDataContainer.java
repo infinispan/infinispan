@@ -59,6 +59,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
 
    @Start
    public void start() {
+      super.start();
       // Local (invalidation), replicated and scattered cache we just instantiate all the maps immediately
       // Scattered needs this for backups as they can be for any segment
       // Distributed needs them all only at beginning for preload of data - rehash event will remove others

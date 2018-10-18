@@ -1,5 +1,7 @@
 package org.infinispan.eviction;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -10,6 +12,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.util.concurrent.CompletionStages;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -26,8 +29,22 @@ public interface PassivationManager extends JmxStatisticsExposer {
 
    boolean isEnabled();
 
-   void passivate(InternalCacheEntry entry);
+   default void passivate(InternalCacheEntry entry) {
+      CompletionStages.join(passivateAsync(entry));
+   }
 
+   /**
+    * This method will block the current thread while passivating the entry. This should be fixed when non blocking
+    * cache stores are implemented. This method does not block while notifying listeners however.
+    * @param entry entry to passivate
+    * @return CompletionStage that when complete will have notified all listeners
+    */
+   CompletionStage<Void> passivateAsync(InternalCacheEntry entry);
+
+   /**
+    * Passivates all entries that are in memory. This method does not notify listeners of passivation.
+    * @throws PersistenceException
+    */
    @Stop(priority = 9)
    @ManagedOperation(
          description = "Passivate all entries to the CacheStore",

@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachelistener;
 import java.lang.invoke.MethodHandles;
 import java.util.PrimitiveIterator;
 import java.util.Queue;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Supplier;
@@ -14,6 +15,9 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -77,47 +81,59 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    }
 
    @Override
-   public void transferComplete() {
+   public CompletionStage<Void> transferComplete() {
+      AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       // Complete any segments that are still open - means we just didn't receive the completion yet
       // Iterator is guaranteed to not complete until all segments are complete.
       for (int i = 0; i < queues.length(); ++i) {
          if (queues.get(i) != null) {
-            completeSegment(i);
+            CompletionStage<Void> segmentStage = completeSegment(i);
+            if (segmentStage != null) {
+               aggregateCompletionStage.dependsOn(segmentStage);
+            }
          }
       }
       completed.set(true);
       notifiedKeys.clear();
-   }
-
-   public Object markKeyAsProcessing(K key) {
-      // By putting the NOTIFIED value it has signaled that any more updates for this key have to be enqueud instead
-      // of taking the last one
-      return notifiedKeys.put(key, NOTIFIED);
+      return aggregateCompletionStage.freeze();
    }
 
    @Override
-   public void notifiedKey(K key) {
+   public CompletionStage<Void> notifiedKey(K key) {
       // This relies on the fact that notifiedKey is immediately called after the entry has finished being iterated on
       PrimitiveIterator.OfInt iter = justCompletedSegments;
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       if (iter != null) {
          while (iter.hasNext()) {
-            completeSegment(iter.nextInt());
+            CompletionStage<Void> segmentStage = completeSegment(iter.nextInt());
+            if (segmentStage != null) {
+               if (aggregateCompletionStage == null) {
+                  aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+               }
+               aggregateCompletionStage.dependsOn(segmentStage);
+            }
          }
       }
       justCompletedSegments = null;
+      return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
    }
 
-   private void completeSegment(int segment) {
+   private CompletionStage<Void> completeSegment(int segment) {
       Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>> queue = queues.getAndSet(segment, null);
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       if (queue != null) {
          if (trace) {
             log.tracef("Completed segment %s", segment);
          }
-         for (KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>> event : queue) {
-            // The InitialTransferInvocation already did the converter if needed
-            event.getValue().invoke(event.getKey());
+         if (!queue.isEmpty()) {
+            aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+            for (KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>> event : queue) {
+               // The InitialTransferInvocation already did the converter if needed
+               aggregateCompletionStage.dependsOn(event.getValue().invoke(event.getKey()));
+            }
          }
       }
+      return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null;
    }
 
    @Override

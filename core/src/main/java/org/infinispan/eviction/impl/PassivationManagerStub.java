@@ -1,9 +1,12 @@
 package org.infinispan.eviction.impl;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -16,7 +19,8 @@ public class PassivationManagerStub implements PassivationManager {
    }
 
    @Override
-   public void passivate(InternalCacheEntry entry) {
+   public CompletionStage<Void> passivateAsync(InternalCacheEntry entry) {
+      return CompletableFutures.completedNull();
    }
 
    @Override

@@ -38,6 +38,7 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -115,6 +116,17 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
             cancellationService.register(Thread.currentThread(), ((CancellableCommand) cmd).getUUID());
          }
          CompletableFuture<Object> future = cmd.invokeAsync();
+         if (CompletionStages.isCompletedSuccessfully(future)) {
+            Object obj = future.join();
+            if (cmd instanceof CancellableCommand) {
+               cancellationService.unregister(((CancellableCommand) cmd).getUUID());
+            }
+            Response response = responseGenerator.getResponse(cmd, obj);
+            if (response == null) {
+               return CompletableFutures.completedNull();
+            }
+            return CompletableFuture.completedFuture(response);
+         }
          return future.handle((rv, throwable) -> {
             if (cmd instanceof CancellableCommand) {
                cancellationService.unregister(((CancellableCommand) cmd).getUUID());

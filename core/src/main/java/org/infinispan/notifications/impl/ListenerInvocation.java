@@ -1,5 +1,7 @@
 package org.infinispan.notifications.impl;
 
+import java.util.concurrent.CompletionStage;
+
 /**
  * Defines simple listener invocation.
  *
@@ -11,8 +13,10 @@ public interface ListenerInvocation<T> {
    /**
     * Invokes the event
     * @param event
+    * @return null if event was ignored or already complete otherwise the event will be completely notified when
+    * the provided stage is completed
     */
-   void invoke(T event);
+   CompletionStage<Void> invoke(T event);
 
    /**
     * The listener instance that is notified of events

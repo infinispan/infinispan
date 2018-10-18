@@ -4,6 +4,7 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.DataCommand;
@@ -62,15 +63,18 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationFinallyAction;
-import org.infinispan.interceptors.InvocationSuccessAction;
+import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -95,7 +99,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Inject private StateTransferLock stateTransferLock;
    @Inject private ComponentRef<XSiteStateConsumer> xSiteStateConsumer;
    @Inject private GroupManager groupManager;
-   @Inject private CacheNotifier notifier;
+   @Inject private CacheNotifier<Object, Object> notifier;
    @Inject private KeyPartitioner keyPartitioner;
 
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
@@ -119,7 +123,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private final InvocationSuccessAction dataReadReturnHandler = (rCtx, rCommand, rv) -> {
+   private final InvocationSuccessFunction dataReadReturnHandler = (rCtx, rCommand, rv) -> {
       AbstractDataCommand dataCommand = (AbstractDataCommand) rCommand;
 
       if (rCtx.isInTxScope() && useRepeatableRead) {
@@ -132,17 +136,26 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       // We do it at the end to avoid adding another try/finally block around the notifications
       if (rv != null && !(rv instanceof Response)) {
          Object value = dataCommand instanceof GetCacheEntryCommand ? ((CacheEntry) rv).getValue() : rv;
-         notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, true, rCtx, dataCommand);
-         notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, false, rCtx, dataCommand);
+         CompletionStage<Void> stage = notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, true, rCtx, dataCommand);
+         // If stage is already complete, we can avoid allocating lambda below
+         if (CompletionStages.isCompletedSuccessfully(stage)) {
+            stage = notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, false, rCtx, dataCommand);
+         } else {
+            // Make sure to fire the events serially
+            stage = stage.thenCompose(v -> notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, false, rCtx, dataCommand));
+         }
+         return delayedValue(stage, rv);
       }
+      return rv;
    };
 
-   private final InvocationSuccessAction commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> commitContextEntries(rCtx, null);
+   private final InvocationSuccessFunction commitEntriesSuccessHandler = (rCtx, rCommand, rv) ->
+         delayedValue(commitContextEntries(rCtx, null), rv);
 
-   private final InvocationFinallyAction commitEntriesFinallyHandler = this::commitEntriesFinally;
+   private final InvocationFinallyFunction commitEntriesFinallyHandler = this::commitEntriesFinally;
    private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
-   private final InvocationSuccessAction applyAndFixVersion = this::applyAndFixVersion;
-   private final InvocationSuccessAction applyAndFixVersionForMany = this::applyAndFixVersionForMany;
+   private final InvocationSuccessFunction applyAndFixVersion = this::applyAndFixVersion;
+   private final InvocationSuccessFunction applyAndFixVersionForMany = this::applyAndFixVersionForMany;
 
    @Start
    public void start() {
@@ -175,7 +188,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    private Object prepareHandler(InvocationContext ctx, VisitableCommand command, Object rv) {
       if (shouldCommitDuringPrepare((PrepareCommand) command, (TxInvocationContext) ctx)) {
-         return invokeNextThenAccept(ctx, command, commitEntriesSuccessHandler);
+         return invokeNextThenApply(ctx, command, commitEntriesSuccessHandler);
       } else {
          return invokeNext(ctx, command);
       }
@@ -183,7 +196,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNextAndFinally(ctx, command, commitEntriesFinallyHandler);
+      return invokeNextAndHandle(ctx, command, commitEntriesFinallyHandler);
    }
 
    @Override
@@ -201,7 +214,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
       final Object key = command.getKey();
       entryFactory.wrapEntryForReading(ctx, key, command.getSegment(), ignoreOwnership(command) || canRead(command));
-      return invokeNextThenAccept(ctx, command, dataReadReturnHandler);
+      return invokeNextThenApply(ctx, command, dataReadReturnHandler);
    }
 
    @Override
@@ -210,7 +223,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       for (Object key : command.getKeys()) {
          entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key), ignoreOwnership || canReadKey(key));
       }
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+      return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, t) -> {
          GetAllCommand getAllCommand = (GetAllCommand) rCommand;
          if (useRepeatableRead) {
             for (Object key : getAllCommand.getKeys()) {
@@ -224,24 +237,25 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             }
          }
 
+         AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
          // Entry visit notifications used to happen in the CallInterceptor
          // instanceof check excludes the case when the command returns UnsuccessfulResponse
          if (t == null && rv instanceof Map) {
-            log.tracef("Notifying getAll? %s; result %s", !command.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION), rv);
-            Map<Object, Object> map = (Map<Object, Object>) rv;
-            // TODO: it would be nice to know if a listener was registered for this and
-            // not do the full iteration if there was no visitor listener registered
-            if (!command.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION)) {
+            boolean notify = !command.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION) && notifier.hasListener(CacheEntryVisited.class);
+            log.tracef("Notifying getAll? %s; result %s", notify, rv);
+            if (notify) {
+               Map<Object, Object> map = (Map<Object, Object>) rv;
                for (Map.Entry<Object, Object> entry : map.entrySet()) {
                   Object value = entry.getValue();
                   if (value != null) {
-                     value = command.isReturnEntries() ? ((CacheEntry) value).getValue() : entry.getValue();
-                     notifier.notifyCacheEntryVisited(entry.getKey(), value, true, rCtx, getAllCommand);
-                     notifier.notifyCacheEntryVisited(entry.getKey(), value, false, rCtx, getAllCommand);
+                     Object finalValue = command.isReturnEntries() ? ((CacheEntry) value).getValue() : entry.getValue();
+                     CompletionStage<Void> innerStage = notifier.notifyCacheEntryVisited(entry.getKey(), finalValue, true, rCtx, getAllCommand);
+                     stage.dependsOn(innerStage.thenCompose(ig -> notifier.notifyCacheEntryVisited(entry.getKey(), finalValue, false, rCtx, getAllCommand)));
                   }
                }
             }
          }
+         return delayedValue(stage.freeze(), rv, t);
       });
    }
 
@@ -261,7 +275,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          // If we are committing a ClearCommand now then no keys should be written by state transfer from
          // now on until current rebalance ends.
          if (stateConsumer.running() != null) {
@@ -271,13 +285,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             xSiteStateConsumer.running().endStateTransfer(null);
          }
 
+         CompletionStage<Void> stage = null;
          if (!rCtx.isInTxScope()) {
             ClearCommand clearCommand = (ClearCommand) rCommand;
-            applyChanges(rCtx, clearCommand);
+            stage = applyChanges(rCtx, clearCommand);
          }
 
          if (trace)
             log.tracef("The return value is %s", rv);
+         return delayedValue(stage, rv);
       });
    }
 
@@ -558,33 +574,35 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
 
-   protected final void commitContextEntries(InvocationContext ctx, FlagAffectedCommand command) {
+   protected final CompletionStage<Void> commitContextEntries(InvocationContext ctx, FlagAffectedCommand command) {
       final Flag stateTransferFlag = FlagBitSets.extractStateTransferFlag(ctx, command);
 
       if (ctx instanceof SingleKeyNonTxInvocationContext) {
          SingleKeyNonTxInvocationContext singleKeyCtx = (SingleKeyNonTxInvocationContext) ctx;
-         commitEntryIfNeeded(ctx, command,
+         return commitEntryIfNeeded(ctx, command, singleKeyCtx.getKey(),
                              singleKeyCtx.getCacheEntry(), stateTransferFlag);
       } else {
-         ctx.forEachEntry((key, entry) -> {
-            if (!commitEntryIfNeeded(ctx, command, entry, stateTransferFlag)) {
-               if (trace) {
-                  if (entry == null)
-                     log.tracef("Entry for key %s is null : not calling commitUpdate", toStr(key));
-                  else
-                     log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", toStr(key), entry);
+         AggregateCompletionStage<Void> aggregateCompletionStage = null;
+         Map<Object, CacheEntry> entries = ctx.getLookedUpEntries();
+         for (Map.Entry<Object, CacheEntry> entry : entries.entrySet()) {
+            CompletionStage<Void> stage = commitEntryIfNeeded(ctx, command, entry.getKey(), entry.getValue(), stateTransferFlag);
+            if (!CompletionStages.isCompletedSuccessfully(stage)) {
+               if (aggregateCompletionStage == null) {
+                  aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
                }
+               aggregateCompletionStage.dependsOn(stage);
             }
-         });
+         }
+         return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
       }
    }
 
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
+   protected CompletionStage<Void> commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
                                      Flag stateTransferFlag, boolean l1Invalidation) {
-      cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
+      return cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
    }
 
-   private void applyChanges(InvocationContext ctx, WriteCommand command) {
+   private CompletionStage<Void> applyChanges(InvocationContext ctx, WriteCommand command) {
       stateTransferLock.acquireSharedTopologyLock();
       try {
          // We only retry non-tx write commands
@@ -613,7 +631,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             }
          }
 
-         commitContextEntries(ctx, command);
+         return commitContextEntries(ctx, command);
       } finally {
          stateTransferLock.releaseSharedTopologyLock();
       }
@@ -623,14 +641,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
    protected Object setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command) {
-      return invokeNextThenAccept(ctx, command, applyAndFixVersionForMany);
+      return invokeNextThenApply(ctx, command, applyAndFixVersionForMany);
    }
 
-   private void applyAndFixVersionForMany(InvocationContext ctx, VisitableCommand cmd, Object rv) {
+   private Object applyAndFixVersionForMany(InvocationContext ctx, VisitableCommand cmd, Object rv) {
       WriteCommand writeCommand = (WriteCommand) cmd;
       if (!ctx.isInTxScope()) {
-         applyChanges(ctx, writeCommand);
-         return;
+         return delayedValue(applyChanges(ctx, writeCommand), rv);
       }
 
       if (trace)
@@ -649,6 +666,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             }
          }
       }
+      return rv;
    }
 
    private void addVersionRead(TxInvocationContext rCtx, CacheEntry cacheEntry, Object key) {
@@ -668,14 +686,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
     */
    protected Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx,
                                                                DataWriteCommand command) {
-      return invokeNextThenAccept(ctx, command, applyAndFixVersion);
+      return invokeNextThenApply(ctx, command, applyAndFixVersion);
    }
 
-   private void applyAndFixVersion(InvocationContext ctx, VisitableCommand cmd, Object rv) {
+   private Object applyAndFixVersion(InvocationContext ctx, VisitableCommand cmd, Object rv) {
       DataWriteCommand dataWriteCommand = (DataWriteCommand) cmd;
       if (!ctx.isInTxScope()) {
-         applyChanges(ctx, dataWriteCommand);
-         return;
+         return delayedValue(applyChanges(ctx, dataWriteCommand), rv);
       }
 
       if (trace)
@@ -692,14 +709,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             ((MVCCEntry) cacheEntry).updatePreviousValue();
          }
       }
+      return rv;
    }
 
-   private void commitEntriesFinally(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) {
+   private Object commitEntriesFinally(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) {
       // Do not commit if the command will be retried
       if (t instanceof OutdatedTopologyException)
-         return;
+         return new SimpleAsyncInvocationStage(t);
 
-      commitContextEntries(rCtx, null);
+      return delayedValue(commitContextEntries(rCtx, null), rv, t);
    }
 
    // This visitor replays the entry wrapping during remote prepare.
@@ -800,20 +818,23 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private boolean commitEntryIfNeeded(final InvocationContext ctx, final FlagAffectedCommand command,
-                                       final CacheEntry entry, final Flag stateTransferFlag) {
+   private CompletionStage<Void> commitEntryIfNeeded(final InvocationContext ctx, final FlagAffectedCommand command,
+         Object key, final CacheEntry entry, final Flag stateTransferFlag) {
       if (entry == null) {
-         return false;
+         if (trace) {
+            log.tracef("Entry for key %s is null : not calling commitUpdate", toStr(key));
+         }
+         return CompletableFutures.completedNull();
       }
       final boolean l1Invalidation = command instanceof InvalidateL1Command;
 
       if (entry.isChanged()) {
          if (trace) log.tracef("About to commit entry %s", entry);
-         commitContextEntry(entry, ctx, command, stateTransferFlag, l1Invalidation);
-
-         return true;
+         return commitContextEntry(entry, ctx, command, stateTransferFlag, l1Invalidation);
+      } else if (trace) {
+         log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", toStr(key), entry);
       }
-      return false;
+      return CompletableFutures.completedNull();
    }
 
    /**

@@ -23,6 +23,7 @@ public class CacheManagerNotifierImplTest extends AbstractInfinispanTest {
    public void setUp() {
       n = new CacheManagerNotifierImpl();
       cl = new CacheManagerListener();
+
       n.start();
       n.addListener(cl);
    }

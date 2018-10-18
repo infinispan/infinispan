@@ -2,9 +2,9 @@ package org.infinispan.notifications.cachelistener.cluster;
 
 import java.util.Collection;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 
 /**
  * This interface describes methods required for a cluster listener to be able to be bootstrapped and properly notified
@@ -21,7 +21,7 @@ public interface ClusterCacheNotifier<K, V> extends CacheNotifier<K, V> {
     * @param events
     * @param listenerId
     */
-   void notifyClusterListeners(Collection<? extends CacheEntryEvent<K, V>> events, UUID listenerId);
+   CompletionStage<Void> notifyClusterListeners(Collection<ClusterEvent<K, V>> events, UUID listenerId);
 
    /**
     * This method is invoked so that this node can send the details required for a new node to be bootstrapped with

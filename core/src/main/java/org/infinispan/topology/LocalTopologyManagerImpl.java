@@ -46,6 +46,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -343,7 +344,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
          boolean updateAvailabilityModeFirst = availabilityMode != AvailabilityMode.AVAILABLE;
          if (updateAvailabilityModeFirst && availabilityMode != null) {
-            cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
+            // TODO: handle this async?
+            CompletionStages.join(cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode));
          }
 
          boolean startConflictResolution = cacheTopology.getPhase() == CacheTopology.Phase.CONFLICT_RESOLUTION;
@@ -358,7 +360,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          }
 
          if (!updateAvailabilityModeFirst) {
-            cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
+            // TODO: handle this async?
+            CompletionStages.join(cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode));
          }
          return true;
       }

@@ -65,6 +65,7 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
@@ -88,6 +89,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -264,8 +266,10 @@ public class StateConsumerImpl implements StateConsumer {
          // response with a smaller topology id
          stateTransferTopologyId.compareAndSet(NO_STATE_TRANSFER_IN_PROGRESS, cacheTopology.getTopologyId());
          conflictManager.cancelVersionRequests();
-         cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
-               cacheTopology.getUnionCH(), cacheTopology.getTopologyId(), true);
+         if (cacheNotifier.hasListener(DataRehashed.class)) {
+            CompletionStages.join(cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
+                  cacheTopology.getUnionCH(), cacheTopology.getTopologyId(), true));
+         }
       }
 
       if (startConflictResolution) {
@@ -384,8 +388,11 @@ public class StateConsumerImpl implements StateConsumer {
                if (nextConsistentHash == null) {
                   nextConsistentHash = cacheTopology.getCurrentCH();
                }
-               cacheNotifier.notifyDataRehashed(previousReadCh, nextConsistentHash, previousWriteCh,
-                     cacheTopology.getTopologyId(), false);
+               if (cacheNotifier.hasListener(DataRehashed.class)) {
+                  // TODO: this should be nonblocking in the future
+                  CompletionStages.join(cacheNotifier.notifyDataRehashed(previousReadCh, nextConsistentHash, previousWriteCh,
+                        cacheTopology.getTopologyId(), false));
+               }
 
                if (trace) {
                   log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());

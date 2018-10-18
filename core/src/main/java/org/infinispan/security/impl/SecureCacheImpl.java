@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -91,10 +92,10 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
-                               CacheEventConverter<? super K, ? super V, C> converter) {
+   public <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter,
+         CacheEventConverter<? super K, ? super V, C> converter) {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
-      delegate.addListener(listener, filter, converter);
+      return delegate.addListenerAsync(listener, filter, converter);
    }
 
    @Override
@@ -104,23 +105,23 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public void addListener(Object listener) {
+   public CompletionStage<Void> addListenerAsync(Object listener) {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
-      delegate.addListener(listener);
+      return delegate.addListenerAsync(listener);
    }
 
    @Override
-   public <C> void addFilteredListener(Object listener,
-                                       CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
-                                       Set<Class<? extends Annotation>> filterAnnotations) {
+   public <C> CompletionStage<Void> addFilteredListenerAsync(Object listener,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Set<Class<? extends Annotation>> filterAnnotations) {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
-      delegate.addFilteredListener(listener, filter, converter, filterAnnotations);
+      return delegate.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
    }
 
    @Override
-   public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+   public <C> CompletionStage<Void> addStorageFormatFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
-      delegate.addStorageFormatFilteredListener(listener, filter, converter, filterAnnotations);
+      return delegate.addStorageFormatFilteredListenerAsync(listener, filter, converter, filterAnnotations);
    }
 
    @Override
@@ -148,9 +149,9 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public void removeListener(Object listener) {
+   public CompletionStage<Void> removeListenerAsync(Object listener) {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
-      delegate.removeListener(listener);
+      return delegate.removeListenerAsync(listener);
    }
 
    @Override

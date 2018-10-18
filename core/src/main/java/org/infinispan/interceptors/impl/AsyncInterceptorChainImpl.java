@@ -235,6 +235,10 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
          if (result instanceof InvocationStage) {
             return ((InvocationStage) result).toCompletableFuture();
          } else {
+            // Don't allocate future if result was already null
+            if (result == null) {
+               return CompletableFutures.completedNull();
+            }
             return CompletableFuture.completedFuture(result);
          }
       } catch (Throwable t) {

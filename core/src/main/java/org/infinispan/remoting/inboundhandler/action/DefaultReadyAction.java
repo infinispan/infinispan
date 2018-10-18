@@ -29,7 +29,9 @@ public class DefaultReadyAction implements ReadyAction, ActionListener {
    }
 
    public void registerListener() {
-      InfinispanCollections.forEach(actions, action -> action.addListener(this));
+      for (Action action : actions) {
+         action.addListener(this);
+      }
    }
 
    @Override
@@ -54,7 +56,11 @@ public class DefaultReadyAction implements ReadyAction, ActionListener {
 
    @Override
    public void addListener(ActionListener listener) {
-      notifier.thenRun(listener::onComplete);
+      if (notifier.isDone()) {
+         listener.onComplete();
+      } else {
+         notifier.thenRun(listener::onComplete);
+      }
    }
 
    @Override

@@ -1,6 +1,7 @@
 package org.infinispan.eviction;
 
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -22,5 +23,5 @@ public interface EvictionManager<K, V> {
     * Handles notifications of evicted entries
     * @param evicted The entries that were just evicted
     */
-   void onEntryEviction(Map<K, Map.Entry<K, V>> evicted);
+   CompletionStage<Void> onEntryEviction(Map<K, Map.Entry<K, V>> evicted);
 }

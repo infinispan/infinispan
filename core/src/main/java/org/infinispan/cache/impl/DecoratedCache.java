@@ -2,12 +2,14 @@ package org.infinispan.cache.impl;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -22,9 +24,10 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.local.ValueCacheCollection;
 
@@ -643,13 +646,23 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
-   public void addListener(Object listener) {
-      cacheImplementation.notifier.addListener(listener, (ClassLoader) null);
+   public CompletionStage<Void> addListenerAsync(Object listener) {
+      return cacheImplementation.notifier.addListenerAsync(listener, (ClassLoader) null);
    }
 
    @Override
-   public void addListener(Object listener, KeyFilter<? super K> filter) {
-      cacheImplementation.notifier.addListener(listener, filter, null);
+   public <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
+      return cacheImplementation.notifier.addListenerAsync(listener, filter, converter);
+   }
+
+   @Override
+   public <C> CompletionStage<Void> addFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+      return cacheImplementation.notifier.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
+   }
+
+   @Override
+   public <C> CompletionStage<Void> addStorageFormatFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+      return cacheImplementation.notifier.addStorageFormatFilteredListenerAsync(listener, filter, converter, filterAnnotations);
    }
 
    @Override

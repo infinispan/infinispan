@@ -1398,7 +1398,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Caught exception while invoking a cache manager listener!", id = 405)
-   void failedInvokingCacheManagerListener(@Cause Exception e);
+   void failedInvokingCacheManagerListener(@Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "The replication queue is no longer supported since version 9.0. Attribute %s on line %d will be ignored.", id = 406)

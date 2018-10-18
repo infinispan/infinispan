@@ -40,6 +40,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.TraceException;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -677,9 +678,9 @@ public class JGroupsTransport implements Transport {
       if (hasNotifier) {
          if (!subGroups.isEmpty()) {
             final Address address1 = getAddress();
-            notifier.notifyMerge(members, oldView.getMembers(), address1, (int) viewId, subGroups);
+            CompletionStages.join(notifier.notifyMerge(members, oldView.getMembers(), address1, (int) viewId, subGroups));
          } else {
-            notifier.notifyViewChange(members, oldView.getMembers(), getAddress(), (int) viewId);
+            CompletionStages.join(notifier.notifyViewChange(members, oldView.getMembers(), getAddress(), (int) viewId));
          }
       }
 

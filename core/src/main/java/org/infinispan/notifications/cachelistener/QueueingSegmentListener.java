@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.CacheStream;
 import org.infinispan.container.entries.CacheEntry;
@@ -45,10 +46,12 @@ public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends Ca
 
    /**
     * This should invoked after the key has been successfully processed to tell the handler that the
-    * key is done.
+    * key is done. This method is used to know when a key has been notified, which if the key was the last one
+    * for a given segment when iterating it can complete it and chain additional notifications.
     * @param key The key that was processed
+    * @return null if no notifications are required or a non null CompletionStage that when completed all notifications are done
     */
-   public void notifiedKey(K key);
+   public CompletionStage<Void> notifiedKey(K key);
 
    /**
     * This should be called by any listener when an event is generated to possibly queue it.  If it is not
@@ -63,5 +66,5 @@ public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends Ca
     * This is needed to tell the handler when the complete iteration is done.  Depending on the implementation
     * this could also fire all queued events that are remaining.
     */
-   public void transferComplete();
+   public CompletionStage<Void> transferComplete();
 }

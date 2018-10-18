@@ -3,12 +3,14 @@ package org.infinispan.notifications.cachelistener;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -73,7 +75,8 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
    }
 
    @Override
-   public void notifiedKey(K key) {
+   public CompletionStage<Void> notifiedKey(K key) {
+      return CompletableFutures.completedNull();
    }
 
    @Override

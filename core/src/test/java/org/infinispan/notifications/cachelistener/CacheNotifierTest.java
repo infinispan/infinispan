@@ -5,6 +5,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -54,7 +56,8 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
          .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       cm = TestCacheManagerFactory.createCacheManager(c);
       cache = getCache();
-      CacheNotifier mockNotifier = mock(CacheNotifier.class);
+      CacheNotifier mockNotifier = mock(CacheNotifier.class, i -> CompletableFutures.completedNull());
+      doReturn(true).when(mockNotifier).hasListener(any());
       TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
    }
 

@@ -1,5 +1,8 @@
 package org.infinispan.interceptors.impl;
 
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.NOT_ASYNC;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
+
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Collections;
@@ -7,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -42,6 +46,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.EnumUtil;
@@ -80,15 +85,13 @@ import org.infinispan.stream.impl.local.PersistenceKeyStreamSupplier;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.LazyConcatIterator;
-import org.infinispan.commons.time.TimeService;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
-
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.NOT_ASYNC;
 
 /**
  * @since 9.0
@@ -140,22 +143,37 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command)
          throws Throwable {
-      for (Object key : command.getKeys()) {
-         loadIfNeeded(ctx, key, command);
+      CompletionStage<Void> aggregatedStage = null;
+      Collection<?> keys = command.getKeys();
+      if (keys != null && !keys.isEmpty()) {
+         AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+         for (Object key : command.getKeys()) {
+            CompletionStage<Void> stage = loadIfNeeded(ctx, key, command);
+            if (stage != null) {
+               aggregateCompletionStage.dependsOn(stage);
+            }
+         }
+         aggregatedStage = aggregateCompletionStage.freeze();
       }
-      return invokeNext(ctx, command);
+      return asyncInvokeNext(ctx, command, aggregatedStage);
    }
 
    @Override
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
          throws Throwable {
       Object[] keys;
+      CompletionStage<Void> aggregatedStage = null;
       if ((keys = command.getKeys()) != null && keys.length > 0) {
-         for (Object key : command.getKeys()) {
-            loadIfNeeded(ctx, key, command);
+         AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+         for (Object key : keys) {
+            CompletionStage<Void> stage = loadIfNeeded(ctx, key, command);
+            if (stage != null) {
+               aggregateCompletionStage.dependsOn(stage);
+            }
          }
+         aggregatedStage = aggregateCompletionStage.freeze();
       }
-      return invokeNext(ctx, command);
+      return asyncInvokeNext(ctx, command, aggregatedStage);
    }
 
    @Override
@@ -182,19 +200,21 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
    private Object visitManyDataCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys)
          throws Throwable {
+      CompletionStage<Void> stage = null;
       for (Object key : keys) {
-         loadIfNeeded(ctx, key, command);
+         stage = loadIfNeeded(ctx, key, command);
       }
-      return invokeNext(ctx, command);
+      return asyncInvokeNext(ctx, command, stage);
    }
 
    private Object visitDataCommand(InvocationContext ctx, AbstractDataCommand command)
          throws Throwable {
       Object key;
+      CompletionStage<Void> stage = null;
       if ((key = command.getKey()) != null) {
-         loadIfNeeded(ctx, key, command);
+         stage = loadIfNeeded(ctx, key, command);
       }
-      return invokeNext(ctx, command);
+      return asyncInvokeNext(ctx, command, stage);
    }
 
    @Override
@@ -316,11 +336,10 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
     * @param ctx The current invocation's context
     * @param key The key for the entry to look up
     * @param cmd The command that was called that now wants to query the cache loader
-    * @return Whether or not the entry was found in the cache loader.  A value of null means the cache loader was never
-    * queried for the value, so it was neither a hit or a miss.
+    * @return null or a CompletionStage that when complete all listeners will be notified
     * @throws Throwable
     */
-   protected final Boolean loadIfNeeded(final InvocationContext ctx, Object key, final FlagAffectedCommand cmd) {
+   protected final CompletionStage<Void> loadIfNeeded(final InvocationContext ctx, Object key, final FlagAffectedCommand cmd) {
       if (skipLoad(cmd, key, ctx)) {
          return null;
       }
@@ -328,7 +347,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return loadInContext(ctx, key, cmd);
    }
 
-   private Boolean loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
+   private CompletionStage<Void> loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
       final AtomicReference<Boolean> isLoaded = new AtomicReference<>();
       InternalCacheEntry<K, V> entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer,
             SegmentSpecificCommand.extractSegment(cmd, key, partitioner), persistenceManager, (K) key, ctx, timeService,
@@ -347,21 +366,26 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          }
       }
 
+      CompletionStage<Void> stage = null;
       if (entry != null) {
          entryFactory.wrapExternalEntry(ctx, key, entry, true, cmd instanceof WriteCommand);
 
-         if (isLoadedValue != null && isLoadedValue.booleanValue()) {
+         if (isLoadedValue != null && isLoadedValue) {
             Object value = entry.getValue();
             // FIXME: There's no point to trigger the entryLoaded/Activated event twice.
-            sendNotification(key, value, true, ctx, cmd);
-            sendNotification(key, value, false, ctx, cmd);
+            stage = sendNotification(key, value, true, ctx, cmd);
+            if (CompletionStages.isCompletedSuccessfully(stage)) {
+               stage = sendNotification(key, value, false, ctx, cmd);
+            } else {
+               stage = stage.thenCompose(v -> sendNotification(key, value, false, ctx, cmd));
+            }
          }
       }
       CacheEntry contextEntry = ctx.lookupEntry(key);
       if (contextEntry instanceof MVCCEntry) {
          ((MVCCEntry) contextEntry).setLoaded(true);
       }
-      return isLoadedValue;
+      return stage;
    }
 
    private boolean skipLoad(FlagAffectedCommand cmd, Object key, InvocationContext ctx) {
@@ -421,12 +445,17 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return true;
    }
 
-   protected void sendNotification(Object key, Object value, boolean pre,
+   protected CompletionStage<Void> sendNotification(Object key, Object value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand cmd) {
-      notifier.notifyCacheEntryLoaded(key, value, pre, ctx, cmd);
+      CompletionStage<Void> stage = notifier.notifyCacheEntryLoaded(key, value, pre, ctx, cmd);
       if (activation) {
-         notifier.notifyCacheEntryActivated(key, value, pre, ctx, cmd);
+         if (CompletionStages.isCompletedSuccessfully(stage)) {
+            stage = notifier.notifyCacheEntryActivated(key, value, pre, ctx, cmd);
+         } else {
+            stage = CompletionStages.allOf(stage, notifier.notifyCacheEntryActivated(key, value, pre, ctx, cmd));
+         }
       }
+      return stage;
    }
 
    @ManagedAttribute(

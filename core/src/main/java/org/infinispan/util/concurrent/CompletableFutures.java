@@ -25,10 +25,11 @@ public class CompletableFutures {
 
    private static final CompletableFuture<Boolean> completedTrueFuture = CompletableFuture.completedFuture(Boolean.TRUE);
    private static final CompletableFuture<Boolean> completedFalseFuture = CompletableFuture.completedFuture(Boolean.FALSE);
-   private static final Function<?, CompletionStage<Boolean>> composeTrue = obj -> completedTrue();
-   private static final Function<?, CompletionStage<Boolean>> composeFalse = obj -> completedFalse();
    private static final CompletableFuture completedEmptyMapFuture = CompletableFuture.completedFuture(Collections.emptyMap());
    private static final CompletableFuture completedNullFuture = CompletableFuture.completedFuture(null);
+   private static final Function<?, CompletionStage<Boolean>> composeTrue = obj -> completedTrueFuture;
+   private static final Function<?, CompletionStage<Boolean>> composeFalse = obj -> completedFalseFuture;
+   private static final Function composeNull = obj -> completedNullFuture;
    private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
 
    @SuppressWarnings("unchecked")
@@ -54,7 +55,11 @@ public class CompletableFutures {
    }
 
    public static <T> Function<T, CompletionStage<Boolean>> composeFalse() {
-      return (Function<T, CompletionStage<Boolean>>) completedFalse();
+      return (Function<T, CompletionStage<Boolean>>) composeFalse;
+   }
+
+   public static <T, R> Function<T, CompletionStage<R>> composeNull() {
+      return composeNull;
    }
 
    public static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> futures) {

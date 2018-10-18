@@ -2,6 +2,7 @@ package org.infinispan.notifications.cachelistener;
 
 import java.util.AbstractMap;
 import java.util.Collections;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.EvictCommand;
@@ -15,31 +16,33 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 public class NotifyHelper {
-   public static void entryCommitted(CacheNotifier notifier, FunctionalNotifier functionalNotifier,
+   public static CompletionStage<Void> entryCommitted(CacheNotifier notifier, FunctionalNotifier functionalNotifier,
                                      boolean created, boolean removed, boolean expired, CacheEntry entry,
                                      InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
       // We only notify if there is no state transfer flag
       if (FlagBitSets.extractStateTransferFlag(ctx, command) != null) {
-         return;
+         return CompletableFutures.completedNull();
       }
+      CompletionStage<Void> stage;
       boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
       if (removed) {
          if (command instanceof RemoveExpiredCommand) {
-            notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, entry.getMetadata(), ctx);
+            stage = notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, entry.getMetadata(), ctx);
          } else if (command instanceof EvictCommand) {
-            notifier.notifyCacheEntriesEvicted(Collections.singleton(
+            stage = notifier.notifyCacheEntriesEvicted(Collections.singleton(
                   new AbstractMap.SimpleEntry(entry.getKey(), previousValue)), ctx, command);
          } else if (command instanceof RemoveCommand) {
-            notifier.notifyCacheEntryRemoved(entry.getKey(), previousValue, entry.getMetadata(), false, ctx, command);
+            stage = notifier.notifyCacheEntryRemoved(entry.getKey(), previousValue, entry.getMetadata(), false, ctx, command);
          } else if (command instanceof InvalidateCommand) {
-            notifier.notifyCacheEntryInvalidated(entry.getKey(), previousValue, entry.getMetadata(), false, ctx, command);
+            stage = notifier.notifyCacheEntryInvalidated(entry.getKey(), previousValue, entry.getMetadata(), false, ctx, command);
          } else {
             if (expired) {
-               notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, previousMetadata, ctx);
+               stage = notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, previousMetadata, ctx);
             } else {
-               notifier.notifyCacheEntryRemoved(entry.getKey(), previousValue, previousMetadata, false, ctx, command);
+               stage = notifier.notifyCacheEntryRemoved(entry.getKey(), previousValue, previousMetadata, false, ctx, command);
             }
 
             // A write-only command only writes and so can't 100% guarantee
@@ -53,7 +56,7 @@ public class NotifyHelper {
       } else {
          // Notify entry event after container has been updated
          if (created) {
-            notifier.notifyCacheEntryCreated(
+            stage = notifier.notifyCacheEntryCreated(
                   entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, command);
 
             // A write-only command only writes and so can't 100% guarantee
@@ -64,7 +67,7 @@ public class NotifyHelper {
 
             functionalNotifier.notifyOnWrite(entry);
          } else {
-            notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), entry.getMetadata(), previousValue,
+            stage = notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), entry.getMetadata(), previousValue,
                   previousMetadata, false, ctx, command);
 
             // A write-only command only writes and so can't 100% guarantee
@@ -76,5 +79,6 @@ public class NotifyHelper {
             functionalNotifier.notifyOnWrite(entry);
          }
       }
+      return stage;
    }
 }

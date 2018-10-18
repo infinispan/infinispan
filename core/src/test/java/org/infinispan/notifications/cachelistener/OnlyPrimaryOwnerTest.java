@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commands.CancellationService;
@@ -98,7 +99,7 @@ public class OnlyPrimaryOwnerTest {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx,
+      public CompletionStage<Void> commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx,
                               Flag trackFlag, boolean l1Invalidation) {
          throw new UnsupportedOperationException();
       }
