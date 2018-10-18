@@ -30,6 +30,7 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
    private static final int INITIAL_CAPACITY = 1000;
 
    protected final AdvancedCache<?, ?> cache;
+
    protected final PartitionHandlingSupport partitionHandlingSupport;
 
    /**

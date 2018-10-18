@@ -22,7 +22,6 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
-import org.infinispan.query.dsl.embedded.impl.RowProcessor;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;

@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.query.engine.spi.HSQuery;
@@ -624,7 +625,7 @@ public class QueryEngine<TypeMetadata> {
                      RowProcessor projectionProcessor = makeProjectionProcessor(projectedTypes, deduplicatedProjectedNullMarkers);
                      rowProcessor = inRow -> {
                         if (projectionProcessor != null) {
-                           inRow = projectionProcessor.process(inRow);
+                           inRow = projectionProcessor.apply(inRow);
                         }
                         Object[] outRow = new Object[map.length];
                         for (int i = 0; i < map.length; i++) {
@@ -876,5 +877,15 @@ public class QueryEngine<TypeMetadata> {
          return getSearchManager().getQuery(queryDefinition, queryMode, null);
       }
       return getSearchManager().getQuery(luceneQuery, queryMode, getTargetedClass(ickleParsingResult));
+   }
+
+   /**
+    * A result processor that processes projections (rows). The input row is never {@code null}.
+    * <p>
+    * Applies some data conversion to some elements of the row. The input row can be modified in-place or a new one (of
+    * equal or different size) can be created and returned. Some of the possible processing are type conversions and the
+    * processing of null markers.
+    */
+   protected interface RowProcessor extends Function<Object[], Object[]> {
    }
 }
