@@ -45,6 +45,17 @@
 
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-multimap</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
             <exclusions>
                 <exclusion>
