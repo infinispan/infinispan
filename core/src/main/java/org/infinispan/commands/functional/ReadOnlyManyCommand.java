@@ -1,7 +1,5 @@
 package org.infinispan.commands.functional;
 
-import static org.infinispan.functional.impl.EntryViews.snapshot;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -13,15 +11,11 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadEntryView;
-import org.infinispan.functional.Param;
-import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.functional.impl.StatsEnvelope;
 
 public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
    public static final int COMMAND_ID = 63;
@@ -112,26 +106,6 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      // lazy execution triggers exceptions on unexpected places
-      ArrayList<Object> retvals = new ArrayList<>(keys.size());
-      boolean skipStats = Param.StatisticsMode.isSkip(params);
-      for (Object k : keys) {
-         CacheEntry me = lookupCacheEntry(ctx, k);
-         ReadEntryView<K, V> view = me.isNull() ?
-               EntryViews.noValue(k, keyDataConversion) :
-               EntryViews.readOnly(me, keyDataConversion, valueDataConversion);
-         R ret = snapshot(f.apply(view));
-         retvals.add(skipStats ? ret : StatsEnvelope.create(ret, me.isNull()));
-      }
-      return retvals.stream();
-   }
-
-   protected CacheEntry lookupCacheEntry(InvocationContext ctx, Object key) {
-      return ctx.lookupEntry(key);
-   }
-
-   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReadOnlyManyCommand(ctx, this);
    }
@@ -148,6 +122,14 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
 
    public DataConversion getValueDataConversion() {
       return valueDataConversion;
+   }
+
+   public Params getParams() {
+      return params;
+   }
+
+   public Function<ReadEntryView<K, V>, R> getFunction() {
+      return f;
    }
 
    @Override

@@ -34,17 +34,6 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       throw new UnsupportedOperationException();
    }
 
-   /**
-    * Performs an application of delta on a specified entry
-    *
-    * @param ctx invocation context
-    * @return null
-    */
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      throw new UnsupportedOperationException();
-   }
-
    @Override
    public byte getCommandId() {
       return COMMAND_ID;

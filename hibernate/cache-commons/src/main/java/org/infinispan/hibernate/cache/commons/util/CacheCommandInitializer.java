@@ -63,7 +63,7 @@ public class CacheCommandInitializer implements ModuleCommandInitializer {
 
 	public BeginInvalidationCommand buildBeginInvalidationCommand(long flagsBitSet, Object[] keys, Object lockOwner) {
 		Address address = transport != null ? transport.getAddress() : LocalModeAddress.INSTANCE;
-		return new BeginInvalidationCommand(null, flagsBitSet, CommandInvocationId.generateId(address), keys, lockOwner);
+		return new BeginInvalidationCommand(flagsBitSet, CommandInvocationId.generateId(address), keys, lockOwner);
 	}
 
 	public EndInvalidationCommand buildEndInvalidationCommand(ByteString cacheName, Object[] keys, Object lockOwner) {

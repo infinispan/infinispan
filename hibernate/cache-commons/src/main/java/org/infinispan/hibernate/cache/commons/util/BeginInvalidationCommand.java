@@ -6,15 +6,14 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Objects;
+
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.write.InvalidateCommand;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -25,8 +24,8 @@ public class BeginInvalidationCommand extends InvalidateCommand {
 	public BeginInvalidationCommand() {
 	}
 
-	public BeginInvalidationCommand(CacheNotifier notifier, long flagsBitSet, CommandInvocationId commandInvocationId, Object[] keys, Object lockOwner) {
-		super(notifier, flagsBitSet, commandInvocationId, keys);
+	public BeginInvalidationCommand(long flagsBitSet, CommandInvocationId commandInvocationId, Object[] keys, Object lockOwner) {
+		super(flagsBitSet, commandInvocationId, keys);
 		this.lockOwner = lockOwner;
 	}
 

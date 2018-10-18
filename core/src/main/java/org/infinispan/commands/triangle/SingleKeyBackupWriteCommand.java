@@ -14,12 +14,10 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.ByteString;
 
 /**
@@ -38,9 +36,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    private Object valueOrFunction;
    private Metadata metadata;
 
-   private CacheNotifier cacheNotifier;
    private ComponentRegistry componentRegistry;
-   private VersionGenerator versionGenerator;
 
    //for testing
    @SuppressWarnings("unused")
@@ -56,12 +52,9 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       return CACHED_OPERATION[index];
    }
 
-   public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         CacheNotifier cacheNotifier, ComponentRegistry componentRegistry, VersionGenerator versionGenerator) {
+   public void init(InvocationContextFactory factory, AsyncInterceptorChain chain, ComponentRegistry componentRegistry) {
       injectDependencies(factory, chain);
-      this.cacheNotifier = cacheNotifier;
       this.componentRegistry = componentRegistry;
-      this.versionGenerator = versionGenerator;
    }
 
    @Override
@@ -161,26 +154,26 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    WriteCommand createWriteCommand() {
       switch (operation) {
          case REMOVE:
-            return new RemoveCommand(key, null, cacheNotifier, segmentId, getFlags(), getCommandInvocationId());
+            return new RemoveCommand(key, null, segmentId, getFlags(), getCommandInvocationId());
          case WRITE:
-            return new PutKeyValueCommand(key, valueOrFunction, false, cacheNotifier, metadata, segmentId, getTopologyId(),
+            return new PutKeyValueCommand(key, valueOrFunction, false, metadata, segmentId, getTopologyId(),
                   getCommandInvocationId());
          case COMPUTE:
             return new ComputeCommand(key, (BiFunction) valueOrFunction, false, segmentId, getFlags(), getCommandInvocationId(),
-                  metadata, cacheNotifier, componentRegistry);
+                  metadata, componentRegistry);
          case REPLACE:
-            return new ReplaceCommand(key, null, valueOrFunction, cacheNotifier, metadata, segmentId, getFlags(),
+            return new ReplaceCommand(key, null, valueOrFunction, metadata, segmentId, getFlags(),
                   getCommandInvocationId());
          case REMOVE_EXPIRED:
             // Doesn't matter if it is max idle or not - important thing is that it raises expired event
-            return new RemoveExpiredCommand(key, valueOrFunction, null, false, cacheNotifier, segmentId, getFlags(),
-                  getCommandInvocationId(), versionGenerator.nonExistingVersion(), componentRegistry.getTimeService());
+            return new RemoveExpiredCommand(key, valueOrFunction, null, false, segmentId, getFlags(),
+                  getCommandInvocationId());
          case COMPUTE_IF_PRESENT:
             return new ComputeCommand(key, (BiFunction) valueOrFunction, true, segmentId, getFlags(), getCommandInvocationId(),
-                  metadata, cacheNotifier, componentRegistry);
+                  metadata, componentRegistry);
          case COMPUTE_IF_ABSENT:
             return new ComputeIfAbsentCommand(key, (Function) valueOrFunction, segmentId, getFlags(), getCommandInvocationId(),
-                  metadata, cacheNotifier, componentRegistry);
+                  metadata, componentRegistry);
          default:
             throw new IllegalStateException("Unknown operation " + operation);
       }

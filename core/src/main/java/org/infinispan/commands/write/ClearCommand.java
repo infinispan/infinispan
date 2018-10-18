@@ -9,10 +9,8 @@ import java.util.Collections;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -21,33 +19,17 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 public class ClearCommand extends AbstractTopologyAffectedCommand implements WriteCommand {
 
    public static final byte COMMAND_ID = 5;
-   private CacheNotifier<Object, Object> notifier;
-   private DataContainer<?,?> dataContainer;
 
    public ClearCommand() {
    }
 
-   public ClearCommand(CacheNotifier<Object, Object> notifier, DataContainer<?, ?> dataContainer, long flagsBitSet) {
-      this.notifier = notifier;
-      this.dataContainer = dataContainer;
+   public ClearCommand(long flagsBitSet) {
       setFlagsBitSet(flagsBitSet);
-   }
-
-   public void init(CacheNotifier<Object, Object> notifier, DataContainer<?, ?> dataContainer) {
-      this.notifier = notifier;
-      this.dataContainer = dataContainer;
    }
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitClearCommand(ctx, this);
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      dataContainer.forEach(e ->
-            notifier.notifyCacheEntryRemoved(e.getKey(), e.getValue(), e.getMetadata(), true, ctx, this));
-      return null;
    }
 
    @Override

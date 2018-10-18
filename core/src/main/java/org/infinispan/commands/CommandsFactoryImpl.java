@@ -13,6 +13,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
 import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
@@ -87,6 +88,7 @@ import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.LambdaExternalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.Configuration;
@@ -140,7 +142,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -220,46 +221,43 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, int segment, Metadata metadata,
          long flagsBitSet) {
       boolean reallyTransactional = transactional && !EnumUtil.containsAny(flagsBitSet, FlagBitSets.PUT_FOR_EXTERNAL_READ);
-      return new PutKeyValueCommand(key, value, false, notifier, metadata, segment, flagsBitSet,
-                                    generateUUID(reallyTransactional));
+      return new PutKeyValueCommand(key, value, false, metadata, segment, flagsBitSet, generateUUID(reallyTransactional));
    }
 
    @Override
    public RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet) {
-      return new RemoveCommand(key, value, notifier, segment, flagsBitSet, generateUUID(transactional));
+      return new RemoveCommand(key, value, segment, flagsBitSet, generateUUID(transactional));
    }
 
    @Override
    public InvalidateCommand buildInvalidateCommand(long flagsBitSet, Object... keys) {
       // StateConsumerImpl always uses non-tx invalidation
-      return new InvalidateCommand(notifier, flagsBitSet, generateUUID(false), keys);
+      return new InvalidateCommand(flagsBitSet, generateUUID(false), keys);
    }
 
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(long flagsBitSet, Collection<Object> keys) {
       // StateConsumerImpl always uses non-tx invalidation
-      return new InvalidateL1Command(dataContainer, distributionManager, notifier, flagsBitSet, keys,
-            generateUUID(transactional));
+      return new InvalidateL1Command(flagsBitSet, keys, generateUUID(transactional));
    }
 
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(Address origin, long flagsBitSet, Collection<Object> keys) {
       // L1 invalidation is always non-transactional
-      return new InvalidateL1Command(origin, dataContainer, distributionManager, notifier, flagsBitSet, keys,
-            generateUUID(false));
+      return new InvalidateL1Command(origin, flagsBitSet, keys, generateUUID(false));
    }
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan,
          long flagsBitSet) {
-      return new RemoveExpiredCommand(key, value, lifespan, false, notifier, segment, flagsBitSet,
-            generateUUID(transactional), versionGenerator.nonExistingVersion(), timeService);
+      return new RemoveExpiredCommand(key, value, lifespan, false, segment, flagsBitSet,
+            generateUUID(transactional));
    }
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, long flagsBitSet) {
-      return new RemoveExpiredCommand(key, value, null, true, notifier, segment, flagsBitSet,
-            generateUUID(transactional), versionGenerator.nonExistingVersion(), timeService);
+      return new RemoveExpiredCommand(key, value, null, true, segment, flagsBitSet,
+            generateUUID(transactional));
    }
 
    @Override
@@ -274,33 +272,32 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment, Metadata metadata, long flagsBitSet) {
-      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, segment, flagsBitSet,
-                                generateUUID(transactional));
+      return new ReplaceCommand(key, oldValue, newValue, metadata, segment, flagsBitSet, generateUUID(transactional));
    }
 
    @Override
    public ComputeCommand buildComputeCommand(Object key, BiFunction mappingFunction, boolean computeIfPresent, int segment, Metadata metadata, long flagsBitSet) {
-      return new ComputeCommand(key, mappingFunction, computeIfPresent, segment, flagsBitSet, generateUUID(transactional), metadata, notifier, componentRegistry);
+      return new ComputeCommand(key, mappingFunction, computeIfPresent, segment, flagsBitSet, generateUUID(transactional), metadata, componentRegistry);
    }
 
    @Override
    public ComputeIfAbsentCommand buildComputeIfAbsentCommand(Object key, Function mappingFunction, int segment, Metadata metadata, long flagsBitSet) {
-      return new ComputeIfAbsentCommand(key, mappingFunction, segment, flagsBitSet, generateUUID(transactional), metadata, notifier, componentRegistry);
+      return new ComputeIfAbsentCommand(key, mappingFunction, segment, flagsBitSet, generateUUID(transactional), metadata, componentRegistry);
    }
 
    @Override
    public SizeCommand buildSizeCommand(long flagsBitSet) {
-      return new SizeCommand(cache.wired(), flagsBitSet);
+      return new SizeCommand(flagsBitSet);
    }
 
    @Override
    public KeySetCommand buildKeySetCommand(long flagsBitSet) {
-      return new KeySetCommand<>(cache.wired(), dataContainer, keyPartitioner, flagsBitSet);
+      return new KeySetCommand<>(flagsBitSet);
    }
 
    @Override
    public EntrySetCommand buildEntrySetCommand(long flagsBitSet) {
-      return new EntrySetCommand<>(cache.wired(), dataContainer, keyPartitioner, flagsBitSet);
+      return new EntrySetCommand<>(flagsBitSet);
    }
 
    @Override
@@ -310,22 +307,22 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public GetAllCommand buildGetAllCommand(Collection<?> keys, long flagsBitSet, boolean returnEntries) {
-      return new GetAllCommand(keys, flagsBitSet, returnEntries, entryFactory);
+      return new GetAllCommand(keys, flagsBitSet, returnEntries);
    }
 
    @Override
    public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet) {
-      return new PutMapCommand(map, notifier, metadata, flagsBitSet, generateUUID(transactional));
+      return new PutMapCommand(map, metadata, flagsBitSet, generateUUID(transactional));
    }
 
    @Override
    public ClearCommand buildClearCommand(long flagsBitSet) {
-      return new ClearCommand(notifier, dataContainer, flagsBitSet);
+      return new ClearCommand(flagsBitSet);
    }
 
    @Override
    public EvictCommand buildEvictCommand(Object key, int segment, long flagsBitSet) {
-      return new EvictCommand(key, notifier, segment, flagsBitSet, generateUUID(transactional), entryFactory);
+      return new EvictCommand(key, segment, flagsBitSet, generateUUID(transactional));
    }
 
    @Override
@@ -374,37 +371,17 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public void initializeReplicableCommand(ReplicableCommand c, boolean isRemote) {
       if (c == null) return;
       switch (c.getCommandId()) {
-         case PutKeyValueCommand.COMMAND_ID:
-            ((PutKeyValueCommand) c).init(notifier);
-            break;
-         case ReplaceCommand.COMMAND_ID:
-            ((ReplaceCommand) c).init(notifier);
-            break;
-         case PutMapCommand.COMMAND_ID:
-            ((PutMapCommand) c).init(notifier);
-            break;
-         case RemoveCommand.COMMAND_ID:
-            ((RemoveCommand) c).init(notifier);
-            break;
          case ComputeCommand.COMMAND_ID:
-            ((ComputeCommand)c).init(notifier, componentRegistry);
+            ((ComputeCommand)c).init(componentRegistry);
             break;
          case ComputeIfAbsentCommand.COMMAND_ID:
-            ((ComputeIfAbsentCommand)c).init(notifier, componentRegistry);
+            ((ComputeIfAbsentCommand)c).init(componentRegistry);
             break;
          case SingleRpcCommand.COMMAND_ID:
             SingleRpcCommand src = (SingleRpcCommand) c;
             src.init(interceptorChain.running(), icf.running());
             if (src.getCommand() != null)
                initializeReplicableCommand(src.getCommand(), false);
-            break;
-         case InvalidateCommand.COMMAND_ID:
-            InvalidateCommand ic = (InvalidateCommand) c;
-            ic.init(notifier);
-            break;
-         case InvalidateL1Command.COMMAND_ID:
-            InvalidateL1Command ilc = (InvalidateL1Command) c;
-            ilc.init(distributionManager, notifier, dataContainer);
             break;
          case PrepareCommand.COMMAND_ID:
          case VersionedPrepareCommand.COMMAND_ID:
@@ -432,10 +409,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             RollbackCommand rollbackCommand = (RollbackCommand) c;
             rollbackCommand.init(interceptorChain.running(), icf.running(), txTable.running());
             rollbackCommand.markTransactionAsRemote(isRemote);
-            break;
-         case ClearCommand.COMMAND_ID:
-            ClearCommand cc = (ClearCommand) c;
-            cc.init(notifier, dataContainer);
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
@@ -493,10 +466,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             XSiteStatePushCommand xSiteStatePushCommand = (XSiteStatePushCommand) c;
             xSiteStatePushCommand.initialize(xSiteStateConsumer.running());
             break;
-         case GetKeysInGroupCommand.COMMAND_ID:
-            GetKeysInGroupCommand getKeysInGroupCommand = (GetKeysInGroupCommand) c;
-            getKeysInGroupCommand.setGroupManager(groupManager);
-            break;
          case ClusteredGetAllCommand.COMMAND_ID:
             ClusteredGetAllCommand clusteredGetAllCommand = (ClusteredGetAllCommand) c;
             clusteredGetAllCommand.init(icf.running(), this, entryFactory, interceptorChain.running(), txTable.running());
@@ -521,10 +490,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             StreamIteratorCloseCommand streamIteratorCloseCommand = (StreamIteratorCloseCommand) c;
             streamIteratorCloseCommand.inject(iteratorHandler);
             break;
-         case RemoveExpiredCommand.COMMAND_ID:
-            RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
-            removeExpiredCommand.init(notifier, versionGenerator.nonExistingVersion(), timeService);
-            break;
          case RetrieveLastAccessCommand.COMMAND_ID:
             RetrieveLastAccessCommand retrieveLastAccessCommand = (RetrieveLastAccessCommand) c;
             retrieveLastAccessCommand.inject(dataContainer, timeService);
@@ -538,14 +503,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
             command.setCommandAckCollector(commandAckCollector);
             break;
          case SingleKeyBackupWriteCommand.COMMAND_ID:
-            ((SingleKeyBackupWriteCommand) c)
-                  .init(icf.running(), interceptorChain.running(), notifier, componentRegistry, versionGenerator);
+            ((SingleKeyBackupWriteCommand) c).init(icf.running(), interceptorChain.running(), componentRegistry);
             break;
          case SingleKeyFunctionalBackupWriteCommand.COMMAND_ID:
             ((SingleKeyFunctionalBackupWriteCommand) c).init(icf.running(), interceptorChain.running(), componentRegistry);
             break;
          case PutMapBackupWriteCommand.COMMAND_ID:
-            ((PutMapBackupWriteCommand) c).init(icf.running(), interceptorChain.running(), notifier);
+            ((PutMapBackupWriteCommand) c).init(icf.running(), interceptorChain.running());
             break;
          case MultiEntriesFunctionalBackupWriteCommand.COMMAND_ID:
             ((MultiEntriesFunctionalBackupWriteCommand) c).init(icf.running(), interceptorChain.running(), componentRegistry);
@@ -703,7 +667,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName) {
-      return new GetKeysInGroupCommand(flagsBitSet, groupName).setGroupManager(groupManager);
+      return new GetKeysInGroupCommand(flagsBitSet, groupName);
    }
 
    @Override
@@ -741,7 +705,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, int segment, long flagsBitSet) {
-      return new GetCacheEntryCommand(key, segment, flagsBitSet, entryFactory);
+      return new GetCacheEntryCommand(key, segment, flagsBitSet);
    }
 
    @Override

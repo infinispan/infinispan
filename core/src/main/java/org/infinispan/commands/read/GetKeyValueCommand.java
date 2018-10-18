@@ -8,11 +8,8 @@ import java.io.ObjectOutput;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and
@@ -24,8 +21,6 @@ import org.infinispan.util.logging.LogFactory;
 public class GetKeyValueCommand extends AbstractDataCommand {
 
    public static final byte COMMAND_ID = 4;
-   private static final Log log = LogFactory.getLog(GetKeyValueCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    public GetKeyValueCommand(Object key, int segment, long flagsBitSet) {
       super(key, segment, flagsBitSet);
@@ -42,19 +37,6 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    @Override
    public LoadType loadType() {
       return LoadType.OWNER;
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      CacheEntry entry = ctx.lookupEntry(key);
-      if (entry.isRemoved()) {
-         if (trace) {
-            log.tracef("Entry has been deleted and is of type %s", entry.getClass().getSimpleName());
-         }
-         return null;
-      }
-
-      return entry.getValue();
    }
 
    @Override

@@ -1,7 +1,6 @@
 package org.infinispan.commands.functional;
 
 import static org.infinispan.commons.util.Util.toStr;
-import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -14,17 +13,12 @@ import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.functional.Param.StatisticsMode;
-import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.functional.impl.StatsEnvelope;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -82,30 +76,6 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    @Override
    public boolean isConditional() {
       return true;
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      // It's not worth looking up the entry if we're never going to apply the change.
-      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
-         successful = false;
-         return null;
-      }
-
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-
-      // Could be that the key is not local, 'null' is how this is signalled
-      if (e == null) return null;
-
-      R ret;
-      boolean exists = e.getValue() != null;
-      AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(e, keyDataConversion, valueDataConversion);
-      ret = snapshot(f.apply(view));
-      // The effective result of retried command is not safe; we'll go to backup anyway
-      if (!e.isChanged() && !hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
-         successful = false;
-      }
-      return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, e, exists, view.isRead());
    }
 
    @Override

@@ -12,14 +12,10 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.Metadatas;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.util.UserRaisedFunctionalException;
 
 public class ComputeCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
@@ -27,9 +23,8 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
 
    private BiFunction remappingBiFunction;
    private Metadata metadata;
-   private CacheNotifier<Object, Object> notifier;
    private boolean computeIfPresent;
-   private boolean successful;
+   private boolean successful = true;
 
    public ComputeCommand() {
    }
@@ -40,14 +35,12 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
                          int segment, long flagsBitSet,
                          CommandInvocationId commandInvocationId,
                          Metadata metadata,
-                         CacheNotifier notifier,
                          ComponentRegistry componentRegistry) {
 
       super(key, segment, flagsBitSet, commandInvocationId);
       this.remappingBiFunction = remappingBiFunction;
       this.computeIfPresent = computeIfPresent;
       this.metadata = metadata;
-      this.notifier = notifier;
       componentRegistry.wireDependencies(this.remappingBiFunction);
    }
 
@@ -59,9 +52,8 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
       this.computeIfPresent = computeIfPresent;
    }
 
-   public void init(CacheNotifier notifier, ComponentRegistry componentRegistry) {
+   public void init(ComponentRegistry componentRegistry) {
       //noinspection unchecked
-      this.notifier = notifier;
       componentRegistry.wireDependencies(remappingBiFunction);
    }
 
@@ -98,63 +90,6 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public void fail() {
       successful = false;
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
-
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
-
-      Object oldValue = e.getValue();
-      Object newValue;
-
-
-      if(computeIfPresent && oldValue == null) {
-         return null;
-      }
-
-      try {
-         newValue = remappingBiFunction.apply(key, oldValue);
-      } catch (RuntimeException ex) {
-         throw new UserRaisedFunctionalException(ex);
-      }
-
-      successful = true;
-      if (oldValue == null && newValue == null) {
-         return null;
-      }
-
-      if (oldValue != null) {
-         // The key already has a value
-         if (newValue != null) {
-            //replace with the new value if there is a modification on the value
-            notifier.notifyCacheEntryModified(key, newValue, metadata, oldValue, e.getMetadata(), true, ctx, this);
-            e.setChanged(true);
-            e.setValue(newValue);
-            Metadatas.updateMetadata(e, metadata);
-         } else {
-            // remove when new value is null
-            notifier.notifyCacheEntryRemoved(key, oldValue, e.getMetadata(), true, ctx, this);
-            e.setRemoved(true);
-            e.setChanged(true);
-            e.setValue(null);
-         }
-      } else {
-         // put if not present
-         notifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, this);
-         e.setValue(newValue);
-         e.setChanged(true);
-         Metadatas.updateMetadata(e, metadata);
-         if (e.isRemoved()) {
-            e.setCreated(true);
-            e.setExpired(false);
-            e.setRemoved(false);
-         }
-      }
-      return newValue;
    }
 
    @Override

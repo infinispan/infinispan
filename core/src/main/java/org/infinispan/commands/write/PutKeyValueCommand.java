@@ -11,12 +11,9 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.Metadatas;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#put(Object, Object)}
@@ -30,7 +27,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    private Object value;
    private boolean putIfAbsent;
-   private CacheNotifier<Object, Object> notifier;
    private boolean successful = true;
    private Metadata metadata;
    private ValueMatcher valueMatcher;
@@ -38,21 +34,14 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    public PutKeyValueCommand() {
    }
 
-   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent,
-                             CacheNotifier notifier, Metadata metadata, int segment,long flagsBitSet,
-                             CommandInvocationId commandInvocationId) {
+   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, Metadata metadata, int segment,
+                             long flagsBitSet, CommandInvocationId commandInvocationId) {
       super(key, segment, flagsBitSet, commandInvocationId);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
       //noinspection unchecked
-      this.notifier = notifier;
       this.metadata = metadata;
-   }
-
-   public void init(CacheNotifier notifier) {
-      //noinspection unchecked
-      this.notifier = notifier;
    }
 
    public Object getValue() {
@@ -75,29 +64,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       } else {
          return LoadType.DONT_LOAD;
       }
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      // It's not worth looking up the entry if we're never going to apply the change.
-      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
-         successful = false;
-         return null;
-      }
-      //noinspection unchecked
-      MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
-
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
-
-      Object prevValue = e.getValue();
-      if (!valueMatcher.matches(prevValue, null, value)) {
-         successful = false;
-         return prevValue;
-      }
-
-      return performPut(e, ctx);
    }
 
    @Override
@@ -215,31 +181,5 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    @Override
    public boolean isReturnValueExpected() {
       return isConditional() || super.isReturnValueExpected();
-   }
-
-   private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx) {
-      Object entryValue = e.getValue();
-      Object o;
-
-      // Non tx and tx both have this set if it was state transfer
-      if (!hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER)) {
-         if (e.isCreated()) {
-            notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, this);
-         } else {
-            notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, this);
-         }
-      }
-
-      o = e.setValue(value);
-      Metadatas.updateMetadata(e, metadata);
-      if (e.isRemoved()) {
-         e.setCreated(true);
-         e.setExpired(false);
-         e.setRemoved(false);
-         o = null;
-      }
-      e.setChanged(true);
-      // Return the expected value when retrying a putIfAbsent command (i.e. null)
-      return valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW ? o : null;
    }
 }

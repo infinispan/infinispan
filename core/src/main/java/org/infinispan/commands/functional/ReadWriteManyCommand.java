@@ -1,29 +1,21 @@
 package org.infinispan.commands.functional;
 
-import static org.infinispan.functional.impl.EntryViews.snapshot;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.functional.Param;
-import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.functional.impl.StatsEnvelope;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -59,7 +51,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    public ReadWriteManyCommand() {
    }
 
-   public Function<ReadWriteEntryView<K, V>, R> getBiFunction() {
+   public Function<ReadWriteEntryView<K, V>, R> getFunction() {
       return f;
    }
 
@@ -119,25 +111,6 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReadWriteManyCommand(ctx, this);
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      // Can't return a lazy stream here because the current code in
-      // EntryWrappingInterceptor expects any changes to be done eagerly,
-      // otherwise they're not applied. So, apply the function eagerly and
-      // return a lazy stream of the void returns.
-      List<Object> returns = new ArrayList<>(keys.size());
-      boolean skipStats = Param.StatisticsMode.isSkip(params);
-      keys.forEach(k -> {
-         MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(k);
-
-         boolean exists = entry.getValue() != null;
-         AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
-         R r = snapshot(f.apply(view));
-         returns.add(skipStats ? r : StatsEnvelope.create(r, entry, exists, view.isRead()));
-      });
-      return returns;
    }
 
    @Override

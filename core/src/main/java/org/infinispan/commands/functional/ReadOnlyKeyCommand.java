@@ -1,7 +1,5 @@
 package org.infinispan.commands.functional;
 
-import static org.infinispan.functional.impl.EntryViews.snapshot;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -12,12 +10,10 @@ import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadEntryView;
-import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
@@ -79,21 +75,6 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
       valueDataConversion = DataConversion.readFrom(input);
    }
 
-   // Not really invoked unless in local mode
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      CacheEntry<K, V> entry = ctx.lookupEntry(key);
-
-      if (entry == null) {
-         throw new IllegalStateException();
-      }
-
-      ReadEntryView<K, V> ro = entry.isNull() ? EntryViews.noValue((K) key, keyDataConversion) : EntryViews.readOnly(entry, keyDataConversion, valueDataConversion);
-      R ret = snapshot(f.apply(ro));
-      // We'll consider the entry always read for stats purposes even if the function is a noop
-      return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, entry.isNull());
-   }
-
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReadOnlyKeyCommand(ctx, this);
@@ -120,6 +101,10 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
       sb.append(", valueDataConversion=").append(valueDataConversion);
       sb.append('}');
       return sb.toString();
+   }
+
+   public Function<ReadEntryView<K, V>, R> getFunction() {
+      return f;
    }
 
    public DataConversion getKeyDataConversion() {

@@ -102,7 +102,13 @@ public interface Visitor {
 
    Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
 
-   <V> Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<V> command) throws Throwable;
+   /**
+    * @deprecated since 10.0, DistributedExecutor is planned on being removed
+    */
+   @Deprecated
+   default <V> Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<V> command) throws Throwable {
+      return null;
+   }
 
    Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable;
 

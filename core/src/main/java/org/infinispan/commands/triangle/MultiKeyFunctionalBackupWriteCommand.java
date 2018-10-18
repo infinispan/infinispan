@@ -65,7 +65,7 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
       setFunctionalCommand(command);
       this.writeOnly = false;
       this.keys = keys;
-      this.function = command.getBiFunction();
+      this.function = command.getFunction();
    }
 
    @Override

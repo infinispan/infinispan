@@ -7,7 +7,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,12 +17,9 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.Metadatas;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
@@ -34,7 +30,6 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    public static final byte COMMAND_ID = 9;
 
    private Map<Object, Object> map;
-   private CacheNotifier<Object, Object> notifier;
    private Metadata metadata;
    private boolean isForwarded = false;
 
@@ -48,9 +43,8 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    @SuppressWarnings("unchecked")
-   public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, Metadata metadata, long flagsBitSet, CommandInvocationId commandInvocationId) {
+   public PutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet, CommandInvocationId commandInvocationId) {
       this.map = (Map<Object, Object>) map;
-      this.notifier = notifier;
       this.metadata = metadata;
       this.commandInvocationId = commandInvocationId;
       setFlagsBitSet(flagsBitSet);
@@ -58,15 +52,10 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
    public PutMapCommand(PutMapCommand command) {
       this.map = command.map;
-      this.notifier = command.notifier;
       this.metadata = command.metadata;
       this.isForwarded = command.isForwarded;
       this.commandInvocationId = command.commandInvocationId;
       setFlagsBitSet(command.getFlagsBitSet());
-   }
-
-   public void init(CacheNotifier<Object, Object> notifier) {
-      this.notifier = notifier;
    }
 
    @Override
@@ -92,45 +81,6 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    @Override
    public boolean hasSkipLocking() {
       return hasAnyFlag(FlagBitSets.SKIP_LOCKING);
-   }
-
-   private MVCCEntry<Object, Object> lookupMvccEntry(InvocationContext ctx, Object key) {
-      //noinspection unchecked
-      return (MVCCEntry) ctx.lookupEntry(key);
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      // Previous values are used by the query interceptor to locate the index for the old value
-      Map<Object, Object> previousValues = hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES) ? null : new HashMap<>(map.size());
-      for (Entry<Object, Object> e : map.entrySet()) {
-         Object key = e.getKey();
-         MVCCEntry<Object, Object> contextEntry = lookupMvccEntry(ctx, key);
-         if (contextEntry != null) {
-            Object newValue = e.getValue();
-            Object previousValue = contextEntry.getValue();
-            Metadata previousMetadata = contextEntry.getMetadata();
-
-            // Even though putAll() returns void, QueryInterceptor reads the previous values
-            // TODO The previous values are not correct if the entries exist only in a store
-            // We have to add null values due to the handling in distribution interceptor, see ISPN-7975
-            if (previousValues != null) {
-               previousValues.put(key, previousValue);
-            }
-
-            if (contextEntry.isCreated()) {
-               notifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, this);
-            } else {
-               notifier.notifyCacheEntryModified(key, newValue, metadata, previousValue,
-                     previousMetadata, true, ctx, this);
-            }
-
-            contextEntry.setValue(newValue);
-            Metadatas.updateMetadata(contextEntry, metadata);
-            contextEntry.setChanged(true);
-         }
-      }
-      return previousValues;
    }
 
    public Map<Object, Object> getMap() {

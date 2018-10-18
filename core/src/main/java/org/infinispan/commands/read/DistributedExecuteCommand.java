@@ -13,11 +13,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CancellableCommand;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.Visitor;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.util.ByteString;
@@ -30,7 +27,7 @@ import org.infinispan.util.ByteString;
  * @since 5.0
  */
 
-public class DistributedExecuteCommand<V> extends BaseRpcCommand implements VisitableCommand, CancellableCommand{
+public class DistributedExecuteCommand<V> extends BaseRpcCommand implements CancellableCommand {
 
    public static final int COMMAND_ID = 19;
 
@@ -53,7 +50,7 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
       if (inputKeys == null || inputKeys.isEmpty())
          this.keys = Collections.emptySet();
       else
-         this.keys = new HashSet<Object>(inputKeys);
+         this.keys = new HashSet<>(inputKeys);
       this.callable = callable;
       this.uuid = UUID.randomUUID();
    }
@@ -64,21 +61,6 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
 
    public void init(Cache<Object, Object> cache) {
       this.cache = cache;
-   }
-
-   @Override
-   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitDistributedExecuteCommand(ctx, this);
-   }
-
-   @Override
-   public LoadType loadType() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      throw new UnsupportedOperationException();
    }
 
    /**

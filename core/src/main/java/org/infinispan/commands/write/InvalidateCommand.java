@@ -14,13 +14,9 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 
 /**
@@ -31,59 +27,20 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class InvalidateCommand extends AbstractTopologyAffectedCommand implements WriteCommand, RemoteLockCommand {
    public static final int COMMAND_ID = 6;
-   private static final Log log = LogFactory.getLog(InvalidateCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
    protected Object[] keys;
    protected CommandInvocationId commandInvocationId;
-   protected CacheNotifier notifier;
 
    public InvalidateCommand() {
    }
 
-   public InvalidateCommand(CacheNotifier notifier, long flagsBitSet, CommandInvocationId commandInvocationId, Object... keys) {
+   public InvalidateCommand(long flagsBitSet, CommandInvocationId commandInvocationId, Object... keys) {
       this.keys = keys;
-      this.notifier = notifier;
       this.commandInvocationId = commandInvocationId;
       setFlagsBitSet(flagsBitSet);
    }
 
-   public InvalidateCommand(CacheNotifier notifier, long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      this(notifier, flagsBitSet, commandInvocationId, keys == null || keys.isEmpty() ? Util.EMPTY_OBJECT_ARRAY : keys.toArray(new Object[keys.size()]));
-   }
-
-   public void init(CacheNotifier notifier) {
-      this.notifier = notifier;
-   }
-
-   /**
-    * Performs an invalidation on a specified entry
-    *
-    * @param ctx invocation context
-    * @return null
-    */
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      if (trace) {
-         log.tracef("Invalidating keys %s", toStr(Arrays.asList(keys)));
-      }
-      for (Object key : keys) {
-         MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-         if (e != null) {
-            notify(ctx, e, true);
-            e.setChanged(true);
-            e.setRemoved(true);
-            e.setCreated(false);
-            e.setValid(false);
-         }
-      }
-      return null;
-   }
-
-   protected void notify(InvocationContext ctx, MVCCEntry e, boolean pre) {
-      // notifier is null for remote BeginInvalidationCommands
-      if (notifier != null) {
-         notifier.notifyCacheEntryInvalidated(e.getKey(), e.getValue(), e.getMetadata(), pre, ctx, this);
-      }
+   public InvalidateCommand(long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
+      this(flagsBitSet, commandInvocationId, keys == null || keys.isEmpty() ? Util.EMPTY_OBJECT_ARRAY : keys.toArray(new Object[keys.size()]));
    }
 
    @Override
