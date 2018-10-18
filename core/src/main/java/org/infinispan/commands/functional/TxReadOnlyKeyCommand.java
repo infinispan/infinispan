@@ -1,7 +1,5 @@
 package org.infinispan.commands.functional;
 
-import static org.infinispan.functional.impl.EntryViews.snapshot;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -9,15 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.functional.EntryView;
-import org.infinispan.functional.Param.StatisticsMode;
-import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.functional.impl.StatsEnvelope;
 
 public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    public static final byte COMMAND_ID = 64;
@@ -73,25 +65,6 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      if (mutations == null || mutations.isEmpty()) {
-         return super.perform(ctx);
-      }
-      MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(key);
-      EntryView.ReadWriteEntryView<K, V> rw = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
-      Object ret = null;
-      for (Mutation<K, V, ?> mutation : mutations) {
-         ret = mutation.apply(rw);
-         entry.updatePreviousValue();
-      }
-      if (f != null) {
-         ret = f.apply(rw);
-      }
-      ret = snapshot(ret);
-      return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, entry.isNull());
-   }
-
-   @Override
    public String toString() {
       final StringBuilder sb = new StringBuilder("TxReadOnlyKeyCommand{");
       sb.append("key=").append(key);
@@ -102,5 +75,9 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
       sb.append(", valueDataConversion=").append(valueDataConversion);
       sb.append('}');
       return sb.toString();
+   }
+
+   public List<Mutation<K, V, ?>> getMutations() {
+      return mutations;
    }
 }

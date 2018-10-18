@@ -13,7 +13,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -162,12 +161,6 @@ public abstract class DDAsyncInterceptor extends BaseAsyncInterceptor implements
 
    @Override
    public Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return handleDefault(ctx, command);
-   }
-
-   @Override
-   public <V> Object visitDistributedExecuteCommand(InvocationContext ctx,
-                                                    DistributedExecuteCommand<V> command) throws Throwable {
       return handleDefault(ctx, command);
    }
 

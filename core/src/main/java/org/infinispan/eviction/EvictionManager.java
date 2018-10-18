@@ -2,7 +2,6 @@ package org.infinispan.eviction;
 
 import java.util.Map;
 
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -23,5 +22,5 @@ public interface EvictionManager<K, V> {
     * Handles notifications of evicted entries
     * @param evicted The entries that were just evicted
     */
-   void onEntryEviction(Map<? extends K, InternalCacheEntry<? extends K, ? extends V>> evicted);
+   void onEntryEviction(Map<K, Map.Entry<K, V>> evicted);
 }

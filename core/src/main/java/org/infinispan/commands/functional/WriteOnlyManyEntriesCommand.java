@@ -12,12 +12,10 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.WriteEntryView;
-import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
 public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteManyCommand<K, V> {
@@ -98,21 +96,6 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
       flags = input.readLong();
       keyDataConversion = DataConversion.readFrom(input);
       valueDataConversion = DataConversion.readFrom(input);
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      for (Map.Entry<?, ?> entry : arguments.entrySet()) {
-         CacheEntry cacheEntry = ctx.lookupEntry(entry.getKey());
-
-         // Could be that the key is not local, 'null' is how this is signalled
-         if (cacheEntry == null) {
-            throw new IllegalStateException();
-         }
-         T decodedValue = (T) valueDataConversion.fromStorage(entry.getValue());
-         f.accept(decodedValue, EntryViews.writeOnly(cacheEntry, valueDataConversion));
-      }
-      return null;
    }
 
    @Override

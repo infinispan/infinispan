@@ -13,7 +13,6 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
 
@@ -30,8 +29,6 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
    private Map<Object, Object> map;
    private Metadata metadata;
 
-   private CacheNotifier cacheNotifier;
-
    //for testing
    @SuppressWarnings("unused")
    public PutMapBackupWriteCommand() {
@@ -42,10 +39,8 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
       super(cacheName);
    }
 
-   public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         CacheNotifier cacheNotifier) {
+   public void init(InvocationContextFactory factory, AsyncInterceptorChain chain) {
       injectDependencies(factory, chain);
-      this.cacheNotifier = cacheNotifier;
    }
 
    @Override
@@ -80,7 +75,7 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
 
    @Override
    WriteCommand createWriteCommand() {
-      PutMapCommand cmd = new PutMapCommand(map, cacheNotifier, metadata, getFlags(), getCommandInvocationId());
+      PutMapCommand cmd = new PutMapCommand(map, metadata, getFlags(), getCommandInvocationId());
       cmd.setForwarded(true);
       return cmd;
    }

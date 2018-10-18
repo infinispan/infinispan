@@ -35,4 +35,9 @@ public abstract class AbstractLocalCommand extends AbstractFlagAffectedCommand i
    public boolean canBlock() {
       return false;
    }
+
+   @Override
+   public LoadType loadType() {
+      throw new UnsupportedOperationException();
+   }
 }

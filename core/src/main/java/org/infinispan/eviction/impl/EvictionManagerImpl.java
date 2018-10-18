@@ -3,7 +3,6 @@ package org.infinispan.eviction.impl;
 import java.util.Map;
 
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.eviction.EvictionManager;
@@ -22,7 +21,7 @@ public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
    @Inject private Configuration cfg;
 
    @Override
-   public void onEntryEviction(Map<? extends K, InternalCacheEntry<? extends K, ? extends V>> evicted) {
+   public void onEntryEviction(Map<K, Map.Entry<K,V>> evicted) {
       // don't reuse the threadlocal context as we don't want to include eviction
       // operations in any ongoing transaction, nor be affected by flags
       // especially see ISPN-1154: it's illegal to acquire locks in a committing transaction
@@ -40,7 +39,7 @@ public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
       }
    }
 
-   private void updateEvictionStatistics(Map<? extends K, InternalCacheEntry<? extends K, ? extends V>> evicted) {
+   private void updateEvictionStatistics(Map<K, Map.Entry<K, V>> evicted) {
       CacheMgmtInterceptor mgmtInterceptor =
             interceptorChain.running().findInterceptorExtending(CacheMgmtInterceptor.class);
       if (mgmtInterceptor != null) {

@@ -12,14 +12,10 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.Metadatas;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.util.UserRaisedFunctionalException;
 
 public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
@@ -27,8 +23,7 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
 
    private Function mappingFunction;
    private Metadata metadata;
-   private CacheNotifier<Object, Object> notifier;
-   private boolean successful = false;
+   private boolean successful = true;
 
    public ComputeIfAbsentCommand() {
    }
@@ -38,19 +33,15 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
                                  int segment, long flagsBitSet,
                                  CommandInvocationId commandInvocationId,
                                  Metadata metadata,
-                                 CacheNotifier notifier,
                                  ComponentRegistry componentRegistry) {
 
       super(key, segment, flagsBitSet, commandInvocationId);
       this.mappingFunction = mappingFunction;
       this.metadata = metadata;
-      this.notifier = notifier;
       componentRegistry.wireDependencies(this.mappingFunction);
    }
 
-   public void init(CacheNotifier notifier, ComponentRegistry componentRegistry) {
-      //noinspection unchecked
-      this.notifier = notifier;
+   public void init(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(mappingFunction);
    }
 
@@ -87,41 +78,6 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    @Override
    public void fail() {
       successful = false;
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
-
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
-
-      Object value = e.getValue();
-
-      if (value == null) {
-         try {
-            value = mappingFunction.apply(key);
-         } catch (RuntimeException ex) {
-            throw new UserRaisedFunctionalException(ex);
-         }
-
-         if (value != null) {
-            e.setValue(value);
-            Metadatas.updateMetadata(e, metadata);
-            if (e.isCreated()) {
-               notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, this);
-            }
-            if (e.isRemoved()) {
-               e.setCreated(true);
-               e.setExpired(false);
-               e.setRemoved(false);
-            }
-            e.setChanged(true);
-         }
-         successful = true;
-      }
-      return value;
    }
 
    public Function getMappingFunction() {

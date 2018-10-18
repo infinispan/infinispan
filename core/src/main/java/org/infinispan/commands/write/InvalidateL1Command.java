@@ -3,21 +3,13 @@ package org.infinispan.commands.write;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Invalidates an entry in a L1 cache (used with DIST mode)
@@ -28,69 +20,31 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class InvalidateL1Command extends InvalidateCommand {
    public static final int COMMAND_ID = 7;
-   private static final Log log = LogFactory.getLog(InvalidateL1Command.class);
-   private DistributionManager dm;
-   private DataContainer dataContainer;
    private Address writeOrigin;
 
    public InvalidateL1Command() {
       writeOrigin = null;
    }
 
-   public InvalidateL1Command(DataContainer dc, DistributionManager dm, CacheNotifier notifier, long flagsBitSet,
+   public InvalidateL1Command(long flagsBitSet,
                               CommandInvocationId commandInvocationId, Object... keys) {
-      super(notifier, flagsBitSet, commandInvocationId, keys);
+      super(flagsBitSet, commandInvocationId, keys);
       writeOrigin = null;
-      this.dm = dm;
-      this.dataContainer = dc;
    }
 
-   public InvalidateL1Command(DataContainer dc, DistributionManager dm, CacheNotifier notifier, long flagsBitSet,
-                              Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      this(null, dc, dm, notifier, flagsBitSet, keys, commandInvocationId);
+   public InvalidateL1Command(long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
+      this(null, flagsBitSet, keys, commandInvocationId);
    }
 
-   public InvalidateL1Command(Address writeOrigin, DataContainer dc, DistributionManager dm, CacheNotifier notifier,
-                              long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      super(notifier, flagsBitSet, keys, commandInvocationId);
+   public InvalidateL1Command(Address writeOrigin, long flagsBitSet, Collection<Object> keys,
+         CommandInvocationId commandInvocationId) {
+      super(flagsBitSet, keys, commandInvocationId);
       this.writeOrigin = writeOrigin;
-      this.dm = dm;
-      this.dataContainer = dc;
    }
 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   public void init( DistributionManager dm, CacheNotifier n, DataContainer dc) {
-      super.init(n);
-      this.dm = dm;
-      this.dataContainer = dc;
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      final boolean trace = log.isTraceEnabled();
-      if (trace) log.tracef("Preparing to invalidate keys %s", Arrays.asList(keys));
-      for (Object k : getKeys()) {
-         InternalCacheEntry ice = dataContainer.get(k);
-         if (ice != null) {
-            boolean isLocal = dm.getCacheTopology().isWriteOwner(k);
-            if (!isLocal) {
-               if (trace) log.tracef("Invalidating key %s.", k);
-               MVCCEntry e = (MVCCEntry) ctx.lookupEntry(k);
-               notify(ctx, e, true);
-               e.setRemoved(true);
-               e.setChanged(true);
-               e.setCreated(false);
-               e.setValid(false);
-            } else {
-               log.tracef("Not invalidating key %s as it is local now", k);
-            }
-         }
-      }
-      return null;
    }
 
    public void setKeys(Object[] keys) {

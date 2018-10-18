@@ -12,13 +12,9 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 
 /**
@@ -27,9 +23,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public class RemoveCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
-   private static final Log log = LogFactory.getLog(RemoveCommand.class);
    public static final byte COMMAND_ID = 10;
-   protected CacheNotifier<Object, Object> notifier;
    protected boolean successful = true;
    private boolean nonExistent = false;
 
@@ -42,18 +36,11 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
     */
    protected Object value;
 
-   public RemoveCommand(Object key, Object value, CacheNotifier notifier, int segment, long flagsBitSet,
+   public RemoveCommand(Object key, Object value, int segment, long flagsBitSet,
                         CommandInvocationId commandInvocationId) {
       super(key, segment, flagsBitSet, commandInvocationId);
       this.value = value;
-      //noinspection unchecked
-      this.notifier = notifier;
       this.valueMatcher = value != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
-   }
-
-   public void init(CacheNotifier notifier) {
-      //noinspection unchecked
-      this.notifier = notifier;
    }
 
    public RemoveCommand() {
@@ -62,50 +49,6 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitRemoveCommand(ctx, this);
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      // It's not worth looking up the entry if we're never going to apply the change.
-      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
-         successful = false;
-         return null;
-      }
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      Object prevValue = e.getValue();
-      if (prevValue == null) {
-         nonExistent = true;
-         if (valueMatcher.matches(null, value, null)) {
-            e.setChanged(true);
-            e.setRemoved(true);
-            e.setCreated(false);
-            if (this instanceof EvictCommand) {
-               e.setEvicted(true);
-            }
-            e.setValue(null);
-            return isConditional() ? true : null;
-         } else {
-            log.trace("Nothing to remove since the entry doesn't exist in the context or it is null");
-            successful = false;
-            return false;
-         }
-      }
-
-      if (!valueMatcher.matches(prevValue, value, null)) {
-         successful = false;
-         return false;
-      }
-
-      if (this instanceof EvictCommand) {
-         e.setEvicted(true);
-      }
-
-      return performRemove(e, prevValue, ctx);
-   }
-
-   public void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata, boolean isPre) {
-      if (removedValue != null)
-         notifier.notifyCacheEntryRemoved(key, removedValue, removedMetadata, isPre, ctx, this);
    }
 
    @Override
@@ -167,6 +110,10 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       return value != null;
    }
 
+   public void nonExistant() {
+      nonExistent = false;
+   }
+
    public boolean isNonExistent() {
       return nonExistent;
    }
@@ -225,23 +172,5 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    public final boolean isReturnValueExpected() {
       // IGNORE_RETURN_VALUES ignored for conditional remove
       return isConditional() || super.isReturnValueExpected();
-   }
-
-   protected Object performRemove(MVCCEntry e, Object prevValue, InvocationContext ctx) {
-      notify(ctx, prevValue, e.getMetadata(), true);
-
-      e.setRemoved(true);
-      e.setChanged(true);
-      e.setValue(null);
-      if (metadata != null) {
-         e.setMetadata(metadata);
-      }
-
-      if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
-         return isConditional() ? true : prevValue;
-      } else {
-         // Return the expected value when retrying
-         return isConditional() ? true : value;
-      }
    }
 }

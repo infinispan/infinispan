@@ -11,12 +11,9 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.Metadatas;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -29,7 +26,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    private Object oldValue;
    private Object newValue;
    private Metadata metadata;
-   private CacheNotifier<Object, Object> notifier;
    private boolean successful = true;
 
    private ValueMatcher valueMatcher;
@@ -38,20 +34,14 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    public ReplaceCommand(Object key, Object oldValue, Object newValue,
-                         CacheNotifier notifier, Metadata metadata, int segment, long flagsBitSet,
+                         Metadata metadata, int segment, long flagsBitSet,
                          CommandInvocationId commandInvocationId) {
       super(key, segment, flagsBitSet, commandInvocationId);
       this.oldValue = oldValue;
       this.newValue = newValue;
       //noinspection unchecked
-      this.notifier = notifier;
       this.metadata = metadata;
       this.valueMatcher = oldValue != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_NON_NULL;
-   }
-
-   public void init(CacheNotifier notifier) {
-      //noinspection unchecked
-      this.notifier = notifier;
    }
 
    @Override
@@ -62,49 +52,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public LoadType loadType() {
       return LoadType.PRIMARY;
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      // It's not worth looking up the entry if we're never going to apply the change.
-      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
-         successful = false;
-         return null;
-      }
-      //noinspection unchecked
-      MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
-      // We need the null check as in non-tx caches we don't always wrap the entry on the origin
-      Object prevValue = e.getValue();
-      if (valueMatcher.matches(prevValue, oldValue, newValue)) {
-         e.setChanged(true);
-         Object old = e.setValue(newValue);
-         Metadatas.updateMetadata(e, metadata);
-         if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
-            return returnValue(old, e.getMetadata(), true, ctx);
-         } else {
-            // Return the expected value when retrying
-            return returnValue(oldValue, e.getMetadata(), true, ctx);
-         }
-      }
-
-      return returnValue(null, null, false, ctx);
-   }
-
-   private Object returnValue(Object beingReplaced, Metadata previousMetadata, boolean successful,
-         InvocationContext ctx) {
-      this.successful = successful;
-
-      Object previousValue = oldValue == null ? beingReplaced : oldValue;
-
-      if (successful) {
-         notifier.notifyCacheEntryModified(key, newValue, metadata, previousValue, previousMetadata, true, ctx, this);
-      }
-
-      if (oldValue == null) {
-         return beingReplaced;
-      } else {
-         return successful;
-      }
    }
 
    @Override

@@ -5,7 +5,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -81,11 +80,6 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
     * @return return value to respond to a remote caller with if the transaction context is invalid.
     */
    protected Object invalidRemoteTxReturnValue() {
-      return null;
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
       return null;
    }
 

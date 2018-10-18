@@ -1,14 +1,10 @@
 package org.infinispan.commands.functional;
 
-import static org.infinispan.functional.impl.EntryViews.snapshot;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -16,16 +12,11 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.functional.Param;
-import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.functional.impl.StatsEnvelope;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -127,25 +118,6 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReadWriteManyEntriesCommand(ctx, this);
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      List<Object> returns = new ArrayList<>(arguments.size());
-      boolean skipStats = Param.StatisticsMode.isSkip(params);
-      arguments.forEach((k, arg) -> {
-         MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(k);
-
-         if (entry == null) {
-            throw new IllegalStateException();
-         }
-         T decodedArgument = (T) valueDataConversion.fromStorage(arg);
-         boolean exists = entry.getValue() != null;
-         AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
-         R r = snapshot(f.apply(decodedArgument, view));
-         returns.add(skipStats ? r : StatsEnvelope.create(r, entry, exists, view.isRead()));
-      });
-      return returns;
    }
 
    @Override

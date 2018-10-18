@@ -8,8 +8,6 @@ import java.io.ObjectOutput;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 
@@ -24,11 +22,8 @@ public final class GetCacheEntryCommand extends AbstractDataCommand {
 
    public static final byte COMMAND_ID = 45;
 
-   private InternalEntryFactory entryFactory;
-
-   public GetCacheEntryCommand(Object key, int segment, long flagsBitSet, InternalEntryFactory entryFactory) {
+   public GetCacheEntryCommand(Object key, int segment, long flagsBitSet) {
       super(key, segment, flagsBitSet);
-      this.entryFactory = entryFactory;
    }
 
    public GetCacheEntryCommand() {
@@ -42,16 +37,6 @@ public final class GetCacheEntryCommand extends AbstractDataCommand {
    @Override
    public LoadType loadType() {
       return LoadType.OWNER;
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      CacheEntry entry = ctx.lookupEntry(key);
-      if (entry.isNull() || entry.isRemoved()) {
-         return null;
-      }
-
-      return entryFactory.copy(entry);
    }
 
    @Override

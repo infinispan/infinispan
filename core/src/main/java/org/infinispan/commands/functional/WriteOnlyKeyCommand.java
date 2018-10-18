@@ -11,16 +11,12 @@ import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.WriteEntryView;
-import org.infinispan.functional.Param;
-import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.functional.impl.StatsEnvelope;
 
 public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
@@ -88,23 +84,6 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    @Override
    public LoadType loadType() {
       return LoadType.DONT_LOAD;
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      CacheEntry e = ctx.lookupEntry(key);
-
-      // Could be that the key is not local
-      if (e == null) return null;
-
-      // should we leak this to stats in write-only commands? we do that for events anyway...
-      boolean exists = e.getValue() != null;
-      f.accept(EntryViews.writeOnly(e, valueDataConversion));
-      // The effective result of retried command is not safe; we'll go to backup anyway
-      if (!e.isChanged() && !hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
-         successful = false;
-      }
-      return Param.StatisticsMode.isSkip(params) ? null : StatsEnvelope.create(null, e, exists, false);
    }
 
    @Override

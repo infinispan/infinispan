@@ -1,8 +1,13 @@
 package org.infinispan.notifications.cachelistener;
 
+import java.util.AbstractMap;
+import java.util.Collections;
+
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -21,10 +26,15 @@ public class NotifyHelper {
       }
       boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
       if (removed) {
-         if (command instanceof RemoveCommand) {
-            ((RemoveCommand) command).notify(ctx, previousValue, previousMetadata, false);
+         if (command instanceof RemoveExpiredCommand) {
+            notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, entry.getMetadata(), ctx);
+         } else if (command instanceof EvictCommand) {
+            notifier.notifyCacheEntriesEvicted(Collections.singleton(
+                  new AbstractMap.SimpleEntry(entry.getKey(), previousValue)), ctx, command);
+         } else if (command instanceof RemoveCommand) {
+            notifier.notifyCacheEntryRemoved(entry.getKey(), previousValue, entry.getMetadata(), false, ctx, command);
          } else if (command instanceof InvalidateCommand) {
-            notifier.notifyCacheEntryInvalidated(entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, command);
+            notifier.notifyCacheEntryInvalidated(entry.getKey(), previousValue, entry.getMetadata(), false, ctx, command);
          } else {
             if (expired) {
                notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, previousMetadata, ctx);

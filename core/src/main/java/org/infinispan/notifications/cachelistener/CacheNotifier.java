@@ -1,9 +1,9 @@
 package org.infinispan.notifications.cachelistener;
 
 import java.util.Collection;
+import java.util.Map;
 
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
@@ -55,8 +55,7 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent}
     * event.
     */
-   void notifyCacheEntriesEvicted(Collection<InternalCacheEntry<? extends K, ? extends V>> entries,
-                                  InvocationContext ctx, FlagAffectedCommand command);
+   void notifyCacheEntriesEvicted(Collection<Map.Entry<K, V>> entries, InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryExpired event.

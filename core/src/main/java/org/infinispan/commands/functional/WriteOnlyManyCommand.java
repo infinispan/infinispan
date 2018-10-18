@@ -11,12 +11,10 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.WriteEntryView;
-import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
 public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K, V> {
@@ -97,18 +95,6 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitWriteOnlyManyCommand(ctx, this);
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      for (Object k : keys) {
-         CacheEntry cacheEntry = ctx.lookupEntry(k);
-         if (cacheEntry == null) {
-            throw new IllegalStateException();
-         }
-         f.accept(EntryViews.writeOnly(cacheEntry, valueDataConversion));
-      }
-      return null;
    }
 
    @Override
