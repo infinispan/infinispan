@@ -105,16 +105,18 @@ Events trigger a notification which is dispatched to listeners.   Listeners are 
 
 NOTE: Both Cache and CacheManager implement Listenable, which means you can attach listeners to either a cache or a cache manager, to receive either cache-level or cache manager-level notifications.
 
-For example, the following class defines a listener to print out some information every time a new entry is added to the cache:
+For example, the following class defines a listener to print out some information every time a new entry is added to the cache, in a non blocking fashion:
 
 [source,java]
 ----
 @Listener
 public class PrintWhenAdded {
+  Queue<CacheEntryCreatedEvent> events = new ConcurrentLinkedQueue<>();
 
   @CacheEntryCreated
-  public void print(CacheEntryCreatedEvent event) {
-    System.out.println("New entry " + event.getKey() + " created in the cache");
+  public CompletionStage<Void> print(CacheEntryCreatedEvent event) {
+    events.add(event);
+    return null;
   }
 
 }
@@ -217,14 +219,43 @@ Cache manager-level events occur on a cache manager.  These too are global and  
 Please see the link:{javadocroot}/org/infinispan/notifications/cachemanagerlistener/annotation/package-summary.html[Javadocs  on the org.infinispan.notifications.cachemanagerlistener.annotation package] for a comprehensive list of all cache manager-level notifications,  and their respective method-level annotations.
 
 ==== Synchronicity of events
-By default, all notifications are dispatched in the same thread that generates the event.  This means that you _must_ write your listener such that it does not block or do anything that takes too long, as it would prevent the thread from progressing.  Alternatively, you could annotate your listener as _asynchronous_ , in which case a separate thread pool will be used to dispatch the notification and prevent blocking the event originating thread.  To do this, simply annotate your listener such:
+By default, all blocking and async notifications are dispatched in the notification thread pool. Blocking and non blocking
+notifications will also delay the operation from continuing until the listner method completes or the CompletionStage
+completes. Alternatively, you could annotate your listener as _asynchronous_, but do not define it is a non blocking, in
+which case the operation will continue immediately, while the notification is completed asynchronously. To do this, simply
+annotate your listener such:
 
+Asynchronous Listener
 [source,java]
 ----
 @Listener (sync = false)
-public class MyAsyncListener { .... }
-
+public class MyAsyncListener {
+   @CacheEntryCreated
+   void listen(CacheEntryCreatedEvent event) { }
+}
 ----
+
+Blocking Synchronous Listener
+[source,java]
+----
+@Listener
+public class MySyncListener {
+   @CacheEntryCreated
+   void listen(CacheEntryCreatedEvent event) { }
+}
+----
+
+Non-Blocking Listener
+[source,java]
+----
+@Listener
+public class MyNonBlockingListener {
+   @CacheEntryCreated
+   CompletionStage<Void> listen(CacheEntryCreatedEvent event) { }
+}
+----
+
+Note that if the method returns CompletionStage it will always treat it as non blocking, even if the Listener is annotated with `sync = false`.
 
 ===== Asynchronous thread pool
 To tune the thread pool used to dispatch such asynchronous notifications, use the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<listener-executor />`] XML element in your configuration file.

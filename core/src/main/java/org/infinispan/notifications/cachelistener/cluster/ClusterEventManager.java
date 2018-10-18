@@ -2,6 +2,7 @@ package org.infinispan.notifications.cachelistener.cluster;
 
 import java.util.Collection;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.remoting.transport.Address;
@@ -16,15 +17,15 @@ public interface ClusterEventManager<K, V> {
     * @param events The events that were generated
     * @param sync Whether these events need to be sent synchronously or not
     */
-   public void addEvents(Address target, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync);
+   void addEvents(Address target, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync);
 
    /**
     * Sends all previously added events on this thread
     */
-   public void sendEvents() throws CacheException;
+   CompletionStage<Void> sendEvents() throws CacheException;
 
    /**
     * Drops and ignores all previously added events on this thread.
     */
-   public void dropEvents();
+   void dropEvents();
 }

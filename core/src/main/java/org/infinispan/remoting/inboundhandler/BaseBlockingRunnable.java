@@ -9,6 +9,7 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.BlockingRunnable;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Common logic to handle {@link org.infinispan.commands.remote.CacheRpcCommand}.
@@ -106,22 +107,29 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
          onFinally();
          return;
       }
-      commandFuture.whenComplete((rsp, throwable) -> {
-         try {
-            if (throwable == null) {
-               response = rsp;
-               afterInvoke();
-            } else {
-               afterCommandException(unwrap(throwable));
-            }
-         } finally {
-            if (handler.isStopped()) {
-               response = CacheNotFoundResponse.INSTANCE;
-            }
-            reply.reply(response);
-            onFinally();
+      if (CompletionStages.isCompleteSuccessfully(commandFuture)) {
+         invokedComplete(commandFuture.join(), null);
+      } else {
+         // Not worried about caching this method invocation, as this runnable is only used once
+         commandFuture.whenComplete(this::invokedComplete);
+      }
+   }
+
+   private void invokedComplete(Response rsp, Throwable throwable) {
+      try {
+         if (throwable == null) {
+            response = rsp;
+            afterInvoke();
+         } else {
+            afterCommandException(unwrap(throwable));
          }
-      });
+      } finally {
+         if (handler.isStopped()) {
+            response = CacheNotFoundResponse.INSTANCE;
+         }
+         reply.reply(response);
+         onFinally();
+      }
    }
 
    private Throwable unwrap(Throwable throwable) {

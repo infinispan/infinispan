@@ -42,6 +42,7 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -56,7 +57,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    @Inject private String cacheName;
    @Inject protected DistributionManager distributionManager;
    @Inject private LocalTopologyManager localTopologyManager;
-   @Inject private CacheNotifier notifier;
+   @Inject private CacheNotifier<Object, Object> notifier;
    @Inject private CommandsFactory commandsFactory;
    @Inject private Configuration configuration;
    @Inject private RpcManager rpcManager;
@@ -81,13 +82,22 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       return availabilityMode;
    }
 
+   private CompletionStage<Void> updateAvailabilityMode(AvailabilityMode mode) {
+      log.debugf("Updating availability for cache %s: %s -> %s", cacheName, this.availabilityMode, mode);
+      this.availabilityMode = mode;
+      return CompletableFutures.completedNull();
+   }
+
    @Override
-   public void setAvailabilityMode(AvailabilityMode availabilityMode) {
+   public CompletionStage<Void> setAvailabilityMode(AvailabilityMode availabilityMode) {
       if (availabilityMode != this.availabilityMode) {
-         log.debugf("Updating availability for cache %s: %s -> %s", cacheName, this.availabilityMode, availabilityMode);
-         notifier.notifyPartitionStatusChanged(availabilityMode, true);
-         this.availabilityMode = availabilityMode;
-         notifier.notifyPartitionStatusChanged(availabilityMode, false);
+         return notifier.notifyPartitionStatusChanged(availabilityMode, true)
+               .thenCompose(ignore -> {
+                  updateAvailabilityMode(availabilityMode);
+                  return notifier.notifyPartitionStatusChanged(availabilityMode, false);
+               });
+      } else {
+         return CompletableFutures.completedNull();
       }
    }
 

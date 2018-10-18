@@ -3,6 +3,7 @@ package org.infinispan.partitionhandling.impl;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -10,6 +11,7 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * {@link PartitionHandlingManager} implementation when the cluster is always available.
@@ -31,7 +33,10 @@ public class AvailablePartitionHandlingManager implements PartitionHandlingManag
    }
 
    @Override
-   public void setAvailabilityMode(AvailabilityMode availabilityMode) {/*no-op*/}
+   public CompletionStage<Void> setAvailabilityMode(AvailabilityMode availabilityMode) {
+      /*no-op*/
+      return CompletableFutures.completedNull();
+   }
 
    @Override
    public void checkWrite(Object key) {/*no-op*/}

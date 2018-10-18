@@ -41,6 +41,7 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
 
    @Start
    public void start() {
+      super.start();
       map = new OffHeapConcurrentMap(desiredSize, allocator, offHeapEntryFactory, null);
       map.start();
    }

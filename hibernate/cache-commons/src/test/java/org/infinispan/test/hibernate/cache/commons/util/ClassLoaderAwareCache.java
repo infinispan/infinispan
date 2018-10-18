@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AbstractDelegatingAdvancedCache;
 import org.infinispan.AdvancedCache;
@@ -60,8 +61,8 @@ public class ClassLoaderAwareCache<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    @Override
-   public void addListener(Object listener) {
-      super.addListener(new ClassLoaderAwareListener(listener, this));
+   public CompletionStage<Void> addListenerAsync(Object listener) {
+      return super.addListenerAsync(new ClassLoaderAwareListener(listener, this));
    }
 
    void setContextClassLoader(final ClassLoader classLoader) {

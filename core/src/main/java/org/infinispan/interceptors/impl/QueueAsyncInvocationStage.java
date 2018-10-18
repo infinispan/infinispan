@@ -7,6 +7,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InvocationCallback;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.annotations.GuardedBy;
@@ -42,7 +43,11 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
       this.command = command;
 
       queueAdd(function);
-      valueFuture.whenComplete(this);
+      if (CompletionStages.isCompleteSuccessfully(valueFuture)) {
+         accept(valueFuture.join(), null);
+      } else {
+         valueFuture.whenComplete(this);
+      }
    }
 
    @Override
@@ -124,15 +129,8 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
          if (rv instanceof SimpleAsyncInvocationStage) {
             SimpleAsyncInvocationStage currentStage = (SimpleAsyncInvocationStage) rv;
             if (!currentStage.isDone()) {
-               if (currentStage instanceof QueueAsyncInvocationStage) {
-                  QueueAsyncInvocationStage queueAsyncInvocationStage = (QueueAsyncInvocationStage) currentStage;
-                  queueAsyncInvocationStage.future.whenComplete(this);
-                  return;
-               } else {
-                  // Use the CompletableFuture directly, without creating another AsyncInvocationStage instance
-                  currentStage.future.whenComplete(this);
-                  return;
-               }
+               currentStage.future.whenComplete(this);
+               return;
             } else {
                try {
                   rv = currentStage.get();

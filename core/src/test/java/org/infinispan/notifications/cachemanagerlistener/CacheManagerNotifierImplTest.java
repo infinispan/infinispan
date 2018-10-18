@@ -5,12 +5,15 @@ import static org.mockito.Mockito.mock;
 import java.util.Collections;
 import java.util.List;
 
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -23,6 +26,9 @@ public class CacheManagerNotifierImplTest extends AbstractInfinispanTest {
    public void setUp() {
       n = new CacheManagerNotifierImpl();
       cl = new CacheManagerListener();
+
+      TestingUtil.inject(n, TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()));
+
       n.start();
       n.addListener(cl);
    }

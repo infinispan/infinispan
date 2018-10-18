@@ -121,7 +121,7 @@ public class CacheNotifierPersistenceFilterTest extends MultipleCacheManagersTes
       assertEquals(Event.Type.CACHE_ENTRY_PASSIVATED, listener.events.get(0).getType());
       assertEquals(key, listener.events.get(0).getKey());
       assertEquals(value, listener.events.get(0).getValue());
-      assertEquals(Event.Type.CACHE_ENTRY_PASSIVATED, listener.events.get(0).getType());
+      assertEquals(Event.Type.CACHE_ENTRY_PASSIVATED, listener.events.get(1).getType());
       assertEquals(key, listener.events.get(1).getKey());
       assertNull(listener.events.get(1).getValue());
 

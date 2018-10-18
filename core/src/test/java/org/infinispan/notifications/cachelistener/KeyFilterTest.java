@@ -15,6 +15,7 @@ import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -27,6 +28,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MockBasicComponentRegistry;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -59,7 +61,8 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       Configuration config = new ConfigurationBuilder().build();
       cdl.init(null, config, mock(KeyPartitioner.class));
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
-                         mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(KeyPartitioner.class));
+                         mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(KeyPartitioner.class),
+                         TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()));
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);

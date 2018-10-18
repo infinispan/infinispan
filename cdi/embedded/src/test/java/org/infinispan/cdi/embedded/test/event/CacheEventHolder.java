@@ -44,7 +44,7 @@ public class CacheEventHolder {
     * @param event Event itself.
     * @param <T> Generic information about event type.
     */
-   public <T extends org.infinispan.notifications.cachelistener.event.Event> void addEvent
+   public synchronized <T extends org.infinispan.notifications.cachelistener.event.Event> void addEvent
          (Class<?> cacheAnnotationClass, Class<T> eventStaticClass, T event) {
       addEventClass(cacheAnnotationClass, eventStaticClass);
       eventMap.get(cacheAnnotationClass).get(eventStaticClass).add(event);
@@ -58,12 +58,12 @@ public class CacheEventHolder {
     * @param event Event itself.
     * @param <T> Generic information about event type.
     */
-   public <T extends Event> void addEvent(Class<?> cacheAnnotationClass, Class<T> eventStaticClass, T event) {
+   public synchronized <T extends Event> void addEvent(Class<?> cacheAnnotationClass, Class<T> eventStaticClass, T event) {
       addEventClass(cacheAnnotationClass,eventStaticClass);
       eventMap.get(cacheAnnotationClass).get(eventStaticClass).add(event);
    }
 
-   public void clear() {
+   public synchronized void clear() {
       eventMap.clear();
    }
 
@@ -75,7 +75,7 @@ public class CacheEventHolder {
     * @param <T> Generic information about event type.
     * @return List of events occurred. Empty list if there was no events.
     */
-   public <T> List<T> getEvents(Class<?> cacheAnnotationClass, Class<T> eventClass) {
+   public synchronized <T> List<T> getEvents(Class<?> cacheAnnotationClass, Class<T> eventClass) {
       ArrayList<T> toBeReturned = new ArrayList<>();
       Map<Class<?>, List<Object>> eventsMapForGivenCache = eventMap.get(cacheAnnotationClass);
       if(eventsMapForGivenCache == null) {

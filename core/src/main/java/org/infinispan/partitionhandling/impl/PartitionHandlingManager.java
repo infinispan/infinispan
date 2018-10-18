@@ -2,6 +2,7 @@ package org.infinispan.partitionhandling.impl;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -17,7 +18,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 public interface PartitionHandlingManager {
    AvailabilityMode getAvailabilityMode();
 
-   void setAvailabilityMode(AvailabilityMode availabilityMode);
+   CompletionStage<Void> setAvailabilityMode(AvailabilityMode availabilityMode);
 
    void checkWrite(Object key);
 

@@ -3,6 +3,7 @@ package org.infinispan.manager.impl;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.ClassWhiteList;
@@ -213,8 +214,18 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    }
 
    @Override
+   public CompletionStage<Void> addListenerAsync(Object listener) {
+      return cm.addListenerAsync(listener);
+   }
+
+   @Override
    public void removeListener(Object listener) {
       cm.removeListener(listener);
+   }
+
+   @Override
+   public CompletionStage<Void> removeListenerAsync(Object listener) {
+      return cm.removeListenerAsync(listener);
    }
 
    @Override

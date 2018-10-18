@@ -17,6 +17,7 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -114,7 +115,7 @@ public class CacheEventTest extends Arquillian {
 
    public void testFiringEntryActivatedEventWhenUsingCacheNotifier() throws Exception {
       //when
-      cache1Notifier.notifyCacheEntryActivated("pete", "Edinburgh", true, invocationContext, null);
+      CompletionStages.join(cache1Notifier.notifyCacheEntryActivated("pete", "Edinburgh", true, invocationContext, null));
 
       //then
       ObserverAssertion.assertThat(cacheObserver, Cache1.class).hasEntryActivatedEvent("pete");
@@ -155,7 +156,7 @@ public class CacheEventTest extends Arquillian {
 
    public void testFiringEntryInvalidatedWhenUsingCacheNotifier() throws Exception {
       //when
-      cache1Notifier.notifyCacheEntryInvalidated("pete", "Edinburgh", null, true, invocationContext, null);
+      CompletionStages.join(cache1Notifier.notifyCacheEntryInvalidated("pete", "Edinburgh", null, true, invocationContext, null));
 
       //then
       ObserverAssertion.assertThat(cacheObserver, Cache1.class).hasEntryInvalidatedEvent("pete");
@@ -163,7 +164,7 @@ public class CacheEventTest extends Arquillian {
 
    public void testFiringEntryLoadedWhenUsingCacheNotifier() throws Exception {
       //when
-      cache1Notifier.notifyCacheEntryLoaded("pete", "Edinburgh", true, invocationContext, null);
+      CompletionStages.join(cache1Notifier.notifyCacheEntryLoaded("pete", "Edinburgh", true, invocationContext, null));
 
       //then
       ObserverAssertion.assertThat(cacheObserver, Cache1.class).hasEntryLoadedEvent("pete");
@@ -171,7 +172,7 @@ public class CacheEventTest extends Arquillian {
 
    public void testFiringEntryPassivatedWhenUsingCacheNotifier() throws Exception {
       //when
-      cache1Notifier.notifyCacheEntryPassivated("pete", "Edinburgh", true, invocationContext, null);
+      CompletionStages.join(cache1Notifier.notifyCacheEntryPassivated("pete", "Edinburgh", true, invocationContext, null));
 
       //then
       ObserverAssertion.assertThat(cacheObserver, Cache1.class).hasEntryPassivatedEvent("pete");
@@ -179,7 +180,7 @@ public class CacheEventTest extends Arquillian {
 
    public void testFiringEntryVisitedWhenUsingCacheNotifier() throws Exception {
       //when
-      cache1Notifier.notifyCacheEntryVisited("pete", "Edinburgh", true, invocationContext, null);
+      CompletionStages.join(cache1Notifier.notifyCacheEntryVisited("pete", "Edinburgh", true, invocationContext, null));
 
       //then
       ObserverAssertion.assertThat(cacheObserver, Cache1.class).hasEntryVisitedEvent("pete");
@@ -192,7 +193,7 @@ public class CacheEventTest extends Arquillian {
       ConsistentHash mockUnionHash = mock(ConsistentHash.class);
 
       //when
-      cache1Notifier.notifyDataRehashed(mockOldHash, mockNewHash, mockUnionHash, 0, true);
+      CompletionStages.join(cache1Notifier.notifyDataRehashed(mockOldHash, mockNewHash, mockUnionHash, 0, true));
 
       //then
       ObserverAssertion.assertThat(cacheObserver, Cache1.class).hasDataRehashEvent(mockNewHash);
@@ -203,7 +204,7 @@ public class CacheEventTest extends Arquillian {
       GlobalTransaction mockGlobalTransaction = mock(GlobalTransaction.class);
 
       //when
-      cache1Notifier.notifyTransactionCompleted(mockGlobalTransaction, true, invocationContext);
+      CompletionStages.join(cache1Notifier.notifyTransactionCompleted(mockGlobalTransaction, true, invocationContext));
 
       //then
       ObserverAssertion.assertThat(cacheObserver, Cache1.class).hasTransactionCompletedEvent(true);
@@ -214,7 +215,7 @@ public class CacheEventTest extends Arquillian {
       GlobalTransaction mockGlobalTransaction = mock(GlobalTransaction.class);
 
       //when
-      cache1Notifier.notifyTransactionRegistered(mockGlobalTransaction, true);
+      CompletionStages.join(cache1Notifier.notifyTransactionRegistered(mockGlobalTransaction, true));
 
       //then
       ObserverAssertion.assertThat(cacheObserver, Cache1.class).hasTransactionRegisteredEvent(true);
@@ -225,7 +226,7 @@ public class CacheEventTest extends Arquillian {
       Address mockMyAddress = mock(Address.class);
 
       //when
-      cache1ManagerNotifier.notifyViewChange(Arrays.asList(mockMyAddress), Arrays.asList(mockMyAddress), mockMyAddress, 0);
+      CompletionStages.join(cache1ManagerNotifier.notifyViewChange(Arrays.asList(mockMyAddress), Arrays.asList(mockMyAddress), mockMyAddress, 0));
 
       //then
       ObserverAssertion.assertThat(cacheObserver, Cache1.class).hasViewChangedEvent(mockMyAddress);
@@ -236,7 +237,7 @@ public class CacheEventTest extends Arquillian {
       CacheTopology mockCacheTopology = mock(CacheTopology.class);
 
       //when
-      cache1Notifier.notifyTopologyChanged(mockCacheTopology, mockCacheTopology, 0, true);
+      CompletionStages.join(cache1Notifier.notifyTopologyChanged(mockCacheTopology, mockCacheTopology, 0, true));
 
       //then
       ObserverAssertion.assertThat(cacheObserver, Cache1.class).hasTopologyChangedEvent(0);

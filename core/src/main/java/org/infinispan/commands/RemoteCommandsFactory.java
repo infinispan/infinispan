@@ -66,6 +66,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.impl.ReplicableManagerFunctionCommand;
 import org.infinispan.manager.impl.ReplicableRunnableCommand;
+import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
 import org.infinispan.reactive.publisher.impl.PublisherRequestCommand;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -357,6 +358,9 @@ public class RemoteCommandsFactory {
                break;
             case PublisherRequestCommand.COMMAND_ID:
                command = new PublisherRequestCommand<>(cacheName);
+               break;
+            case MultiClusterEventCommand.COMMAND_ID:
+               command = new MultiClusterEventCommand<>(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

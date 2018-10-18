@@ -82,6 +82,8 @@ import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
+import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.PublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
@@ -605,4 +607,6 @@ public interface CommandsFactory {
          IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
+
+   <K, V> MultiClusterEventCommand<K, V> buildMultiClusterEventCommand(Map<UUID, Collection<ClusterEvent<K, V>>> events);
 }

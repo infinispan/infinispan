@@ -19,11 +19,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.github.benmanes.caffeine.cache.CacheWriter;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalCause;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.EvictionListener;
@@ -41,12 +39,17 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.util.CoreImmutables;
-import org.infinispan.commons.time.TimeService;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+
+import com.github.benmanes.caffeine.cache.CacheWriter;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 
 /**
  * Abstract class implemenation for a segmented data container. All methods delegate to
@@ -68,10 +71,17 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    @Inject protected Configuration configuration;
    @Inject protected KeyPartitioner keyPartitioner;
 
+   protected boolean hasPassivation;
+
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
 
    protected abstract ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment);
    protected abstract int getSegmentForKey(Object key);
+
+   @Start
+   public void start() {
+      hasPassivation = configuration.persistence().passivation();
+   }
 
    @Override
    public InternalCacheEntry<K, V> get(int segment, Object k) {
@@ -144,11 +154,16 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          if (trace)
             log.tracef("Store %s in container", copy);
 
-         entries.compute(copy.getKey(), (key, entry) -> {
-            computeEntryWritten(key, copy);
-            activator.onUpdate(key, entry == null);
-            return copy;
-         });
+         // Passivation should be non blocking at some point in https://issues.jboss.org/browse/ISPN-9723
+         if (hasPassivation) {
+            entries.compute(k, (key, entry) -> {
+               computeEntryWritten(key, copy);
+               activator.onUpdate(key, entry == null);
+               return copy;
+            });
+         } else {
+            entries.put(k, copy);
+         }
       } else {
          log.tracef("Insertion attempted for key: %s but there was no map created for it at segment: %d", k, segment);
       }
@@ -513,7 +528,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
       @Override
       public void onEntryEviction(Map<K, InternalCacheEntry<K, V>> evicted) {
-         evictionManager.onEntryEviction(evicted);
+         CompletionStages.join(evictionManager.onEntryEviction(evicted));
       }
 
       @Override

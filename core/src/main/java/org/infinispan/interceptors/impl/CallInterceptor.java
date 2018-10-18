@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -99,12 +100,18 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.stream.impl.local.SegmentedEntryStreamSupplier;
 import org.infinispan.stream.impl.local.SegmentedKeyStreamSupplier;
 import org.infinispan.util.DataContainerRemoveIterator;
 import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.UserRaisedFunctionalException;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
@@ -199,12 +206,13 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Object entryValue = e.getValue();
       Object o;
 
+      CompletionStage<Void> stage = null;
       // Non tx and tx both have this set if it was state transfer
       if (!skipNotification) {
-         if (e.isCreated()) {
-            cacheNotifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, command);
-         } else {
-            cacheNotifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, command);
+         if (e.isCreated() && cacheNotifier.hasListener(CacheEntryCreated.class)) {
+            stage = cacheNotifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, command);
+         } else if (cacheNotifier.hasListener(CacheEntryModified.class)) {
+            stage = cacheNotifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, command);
          }
       }
 
@@ -218,7 +226,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       }
       e.setChanged(true);
       // Return the expected value when retrying a putIfAbsent command (i.e. null)
-      return valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW ? o : null;
+      return delayedValue(stage, valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW ? o : null);
    }
 
    @Override
@@ -271,9 +279,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    protected Object performRemove(MVCCEntry e, InvocationContext ctx, ValueMatcher valueMatcher, Object key,
          Object prevValue, Object optionalValue, boolean notifyRemove, RemoveCommand command) {
 
-      if (notifyRemove) {
-         cacheNotifier.notifyCacheEntryRemoved(key, prevValue, e.getMetadata(), true, ctx, command);
-      }
+      CompletionStage<Void> stage = notifyRemove && cacheNotifier.hasListener(CacheEntryRemoved.class) ?
+         cacheNotifier.notifyCacheEntryRemoved(key, prevValue, e.getMetadata(), true, ctx, command) : null;
 
       e.setRemoved(true);
       e.setChanged(true);
@@ -283,12 +290,15 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          e.setMetadata(commandMetadata);
       }
 
+      Object returnValue;
       if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
-         return command.isConditional() ? true : prevValue;
+         returnValue = command.isConditional() ? true : prevValue;
       } else {
          // Return the expected value when retrying
-         return command.isConditional() ? true : optionalValue;
+         returnValue = command.isConditional() ? true : optionalValue;
       }
+
+      return delayedValue(stage, returnValue);
    }
 
    @Override
@@ -313,12 +323,13 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          Metadata newMetadata = command.getMetadata();
          Metadata prevMetadata = e.getMetadata();
 
-         cacheNotifier.notifyCacheEntryModified(key, newValue, newMetadata,
-               expectedValue == null ? prevValue : expectedValue, prevMetadata, true, ctx, command);
+         CompletionStage<Void> stage = cacheNotifier.hasListener(CacheEntryModified.class) ?
+               cacheNotifier.notifyCacheEntryModified(key, newValue, newMetadata,
+               expectedValue == null ? prevValue : expectedValue, prevMetadata, true, ctx, command) : null;
 
          Metadatas.updateMetadata(e, newMetadata);
 
-         return expectedValue == null ? prevValue : true;
+         return delayedValue(stage, expectedValue == null ? prevValue : true);
       }
 
       command.fail();
@@ -353,25 +364,29 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return null;
       }
 
+      CompletionStage<Void> stage;
       Metadata metadata = command.getMetadata();
       if (oldValue != null) {
          // The key already has a value
          if (newValue != null) {
             //replace with the new value if there is a modification on the value
-            cacheNotifier.notifyCacheEntryModified(key, newValue, metadata, oldValue, e.getMetadata(), true, ctx, command);
+            stage = cacheNotifier.hasListener(CacheEntryModified.class) ?
+                  cacheNotifier.notifyCacheEntryModified(key, newValue, metadata, oldValue, e.getMetadata(), true, ctx, command) : null;
             e.setChanged(true);
             e.setValue(newValue);
             Metadatas.updateMetadata(e, metadata);
          } else {
             // remove when new value is null
-            cacheNotifier.notifyCacheEntryRemoved(key, oldValue, e.getMetadata(), true, ctx, command);
+            stage = cacheNotifier.hasListener(CacheEntryRemoved.class) ?
+                  cacheNotifier.notifyCacheEntryRemoved(key, oldValue, e.getMetadata(), true, ctx, command) : null;
             e.setRemoved(true);
             e.setChanged(true);
             e.setValue(null);
          }
       } else {
          // put if not present
-         cacheNotifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, command);
+         stage = cacheNotifier.hasListener(CacheEntryCreated.class) ?
+               cacheNotifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, command) : null;
          e.setValue(newValue);
          e.setChanged(true);
          Metadatas.updateMetadata(e, metadata);
@@ -381,7 +396,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             e.setRemoved(false);
          }
       }
-      return newValue;
+      return delayedValue(stage, newValue);
    }
 
    @Override
@@ -394,6 +409,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       }
 
       Object value = e.getValue();
+
+      CompletionStage<Void> stage = null;
 
       if (value == null) {
          try {
@@ -408,7 +425,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             Metadatas.updateMetadata(e, metadata);
             // TODO: should this be below?
             if (e.isCreated()) {
-               cacheNotifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, command);
+               stage = cacheNotifier.hasListener(CacheEntryCreated.class) ?
+                     cacheNotifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, command) : null;
             }
             if (e.isRemoved()) {
                e.setCreated(true);
@@ -420,15 +438,20 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       } else {
          command.fail();
       }
-      return value;
+      return delayedValue(stage, value);
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      for (InternalCacheEntry e : dataContainer) {
-         cacheNotifier.notifyCacheEntryRemoved(e.getKey(), e.getValue(), e.getMetadata(), true, ctx, command);
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      if (cacheNotifier.hasListener(CacheEntryRemoved.class)) {
+         aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+         for (InternalCacheEntry e : dataContainer) {
+            aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryRemoved(e.getKey(), e.getValue(),
+                  e.getMetadata(), true, ctx, command));
+         }
       }
-      return null;
+      return delayedNull(aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null);
    }
 
    @Override
@@ -438,6 +461,12 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       // Previous values are used by the query interceptor to locate the index for the old value
       Map<Object, Object> previousValues = command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES) ? null :
             new HashMap<>(inputMap.size());
+      AggregateCompletionStage<Void> aggregateCompletionStage;
+      if (cacheNotifier.hasListener(CacheEntryCreated.class) || cacheNotifier.hasListener(CacheEntryModified.class)) {
+         aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+      } else {
+         aggregateCompletionStage = null;
+      }
       for (Map.Entry<Object, Object> e : inputMap.entrySet()) {
          Object key = e.getKey();
          MVCCEntry<Object, Object> contextEntry = lookupMvccEntry(ctx, key);
@@ -453,11 +482,14 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
                previousValues.put(key, previousValue);
             }
 
-            if (contextEntry.isCreated()) {
-               cacheNotifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, command);
-            } else {
-               cacheNotifier.notifyCacheEntryModified(key, newValue, metadata, previousValue,
-                     previousMetadata, true, ctx, command);
+            if (aggregateCompletionStage != null) {
+               if (contextEntry.isCreated()) {
+                  aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryCreated(key, newValue, metadata, true,
+                        ctx, command));
+               } else {
+                  aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryModified(key, newValue, metadata, previousValue,
+                        previousMetadata, true, ctx, command));
+               }
             }
 
             contextEntry.setValue(newValue);
@@ -465,7 +497,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             contextEntry.setChanged(true);
          }
       }
-      return previousValues;
+
+      return delayedValue(aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null, previousValues);
    }
 
    private MVCCEntry<Object, Object> lookupMvccEntry(InvocationContext ctx, Object key) {
@@ -670,18 +703,25 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       if (trace) {
          log.tracef("Invalidating keys %s", toStr(Arrays.asList(keys)));
       }
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      if (cacheNotifier.hasListener(CacheEntryInvalidated.class)) {
+         aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+      }
       for (Object key : keys) {
          MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
          if (e != null) {
-            // TODO: this was null possibly before, what should we do?
-            cacheNotifier.notifyCacheEntryInvalidated(key, e.getValue(), e.getMetadata(), true, ctx, invalidateCommand);
             e.setChanged(true);
             e.setRemoved(true);
             e.setCreated(false);
             e.setValid(false);
+            if (aggregateCompletionStage != null) {
+               aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryInvalidated(key, e.getValue(),
+                     e.getMetadata(), true, ctx, invalidateCommand));
+            }
          }
       }
-      return null;
+
+      return delayedNull(aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null);
    }
 
    @Override
@@ -690,6 +730,10 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       if (trace) {
          log.tracef("Preparing to invalidate keys %s", Arrays.asList(keys));
       }
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      if (cacheNotifier.hasListener(CacheEntryInvalidated.class)) {
+         aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+      }
       for (Object key : keys) {
          InternalCacheEntry ice = dataContainer.get(key);
          if (ice != null) {
@@ -697,17 +741,20 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             if (!isLocal) {
                if (trace) log.tracef("Invalidating key %s.", key);
                MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-               cacheNotifier.notifyCacheEntryInvalidated(key, e.getValue(), e.getMetadata(), true, ctx, invalidateL1Command);
                e.setRemoved(true);
                e.setChanged(true);
                e.setCreated(false);
                e.setValid(false);
+               if (aggregateCompletionStage != null) {
+                  aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryInvalidated(key, e.getValue(),
+                        e.getMetadata(), true, ctx, invalidateL1Command));
+               }
             } else {
                log.tracef("Not invalidating key %s as it is local now", key);
             }
          }
       }
-      return null;
+      return delayedNull(aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null);
    }
 
    @Override

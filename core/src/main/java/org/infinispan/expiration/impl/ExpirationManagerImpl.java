@@ -8,6 +8,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -23,8 +24,8 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -200,11 +201,9 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     */
    private void deleteFromStoresAndNotify(K key, V value, Metadata metadata) {
       deleteFromStores(key);
-      if (cacheNotifier != null) {
-         // To guarantee ordering of events this must be done on the entry, so that another write cannot be
-         // done at the same time
-         cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null);
-      }
+      // To guarantee ordering of events this must be done on the entry, so that another write cannot be
+      // done at the same time
+      CompletionStages.join(cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null));
    }
 
    private void deleteFromStores(K key) {

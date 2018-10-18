@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.fail;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -504,16 +505,18 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       }
 
       @Override
-      public void passivate(InternalCacheEntry entry) {
+      public CompletionStage<Void> passivateAsync(InternalCacheEntry entry) {
          final Runnable before = beforePassivate;
          if (before != null) {
             before.run();
          }
-         delegate.passivate(entry);
+
+         CompletionStage<Void> stage = delegate.passivateAsync(entry);
          final Runnable after = afterPassivate;
          if (after != null) {
-            after.run();
+            return stage.thenRun(after);
          }
+         return stage;
       }
 
       @Override

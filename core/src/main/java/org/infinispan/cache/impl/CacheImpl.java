@@ -21,9 +21,11 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
 import javax.security.auth.Subject;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -951,23 +953,22 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public void addListener(Object listener) {
-      notifier.addListener(listener);
+   public CompletionStage<Void> addListenerAsync(Object listener) {
+      return notifier.addListenerAsync(listener);
    }
 
-   void addListener(ListenerHolder listenerHolder) {
-      notifier.addListener(listenerHolder, null, null, null);
+   CompletionStage<Void> addListenerAsync(ListenerHolder listenerHolder) {
+      return notifier.addListenerAsync(listenerHolder, null, null, null);
    }
 
-   <C> void addListener(ListenerHolder listenerHolder, CacheEventFilter<? super K, ? super V> filter,
+   <C> CompletionStage<Void> addListenerAsync(ListenerHolder listenerHolder, CacheEventFilter<? super K, ? super V> filter,
                         CacheEventConverter<? super K, ? super V, C> converter) {
-      notifier.addListener(listenerHolder, filter, converter, null);
+      return notifier.addListenerAsync(listenerHolder, filter, converter, null);
    }
 
    <C> void addListener(ListenerHolder listenerHolder, KeyFilter<? super K> filter) {
       notifier.addListener(listenerHolder, filter);
    }
-
 
    @Override
    public void addListener(Object listener, KeyFilter<? super K> filter) {
@@ -975,14 +976,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
+   public <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter,
                                CacheEventConverter<? super K, ? super V, C> converter) {
-      notifier.addListener(listener, filter, converter);
+      return notifier.addListenerAsync(listener, filter, converter);
    }
 
    @Override
-   public void removeListener(Object listener) {
-      notifier.removeListener(listener);
+   public CompletionStage<Void> removeListenerAsync(Object listener) {
+      return notifier.removeListenerAsync(listener);
    }
 
    @Override
@@ -991,23 +992,23 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public <C> void addFilteredListener(Object listener,
+   public <C> CompletionStage<Void> addFilteredListenerAsync(Object listener,
                                        CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
                                        Set<Class<? extends Annotation>> filterAnnotations) {
-      notifier.addFilteredListener(listener, filter, converter, filterAnnotations);
+      return notifier.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
    }
 
    @Override
-   public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
+   public <C> CompletionStage<Void> addStorageFormatFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter,
                                                     CacheEventConverter<? super K, ? super V, C> converter,
                                                     Set<Class<? extends Annotation>> filterAnnotations) {
-      notifier.addStorageFormatFilteredListener(listener, filter, converter, filterAnnotations);
+      return notifier.addStorageFormatFilteredListenerAsync(listener, filter, converter, filterAnnotations);
    }
 
-   <C> void addFilteredListener(ListenerHolder listener,
+   <C> CompletionStage<Void> addFilteredListenerAsync(ListenerHolder listener,
                                 CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
                                 Set<Class<? extends Annotation>> filterAnnotations) {
-      notifier.addFilteredListener(listener, filter, converter, filterAnnotations);
+      return notifier.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
    }
 
    /**

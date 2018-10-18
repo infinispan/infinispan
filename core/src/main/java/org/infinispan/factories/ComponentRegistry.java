@@ -34,6 +34,7 @@ import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.LocalStreamManager;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
@@ -178,7 +179,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    protected void postStart() {
-      cacheManagerNotifier.notifyCacheStarted(cacheName);
+      CompletionStages.join(cacheManagerNotifier.notifyCacheStarted(cacheName));
    }
 
    private void notifyCacheStarting(Configuration configuration) {
@@ -216,7 +217,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
             log.moduleStopError(l.getClass().getName() + ":" + cacheName, t);
          }
       }
-      cacheManagerNotifier.notifyCacheStopped(cacheName);
+      CompletionStages.join(cacheManagerNotifier.notifyCacheStopped(cacheName));
    }
 
    @Override
@@ -282,6 +283,14 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     */
    public PerCacheInboundInvocationHandler getPerCacheInboundInvocationHandler() {
       return inboundInvocationHandler;
+   }
+
+   /**
+    * Returns the cache configuration for this component registry
+    * @return config
+    */
+   public Configuration getConfiguration() {
+      return configuration;
    }
 
    /**

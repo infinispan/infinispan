@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachelistener;
 import java.lang.invoke.MethodHandles;
 import java.util.Iterator;
 import java.util.Queue;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -11,6 +12,8 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -52,9 +55,10 @@ class QueueingAllSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V,
                   new KeyValuePair<Event<K, V>, ListenerInvocation<Event<K, V>>>(event, invocation);
             queue.add(eventPair);
 
-            // If it completed since we last added and ours is in the queue, we have to run the event
+            // If it completed since we last added and ours is in the queue, we have to run the event - so say it wasn't
+            // queued, so caller has to run it
             if (completed.get() && queue.remove(eventPair)) {
-               invocation.invoke(event);
+               return false;
             }
          }
       }
@@ -62,14 +66,19 @@ class QueueingAllSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V,
    }
 
    @Override
-   public void transferComplete() {
+   public CompletionStage<Void> transferComplete() {
+      AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       Iterator<KeyValuePair<Event<K, V>, ListenerInvocation<Event<K, V>>>> iterator = queue.iterator();
       while (iterator.hasNext()) {
          KeyValuePair<Event<K, V>, ListenerInvocation<Event<K, V>>> eventPair = iterator.next();
-         eventPair.getValue().invoke(eventPair.getKey());
+         CompletionStage<Void> eventStage = eventPair.getValue().invoke(eventPair.getKey());
+         if (eventStage != null) {
+            aggregateCompletionStage.dependsOn(eventStage);
+         }
          iterator.remove();
       }
       completed.set(true);
+      return aggregateCompletionStage.freeze();
    }
 
    @Override

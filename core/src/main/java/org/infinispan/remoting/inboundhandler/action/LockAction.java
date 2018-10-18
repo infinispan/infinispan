@@ -83,7 +83,11 @@ public class LockAction extends BaseLockingAction implements LockListener {
 
    @Override
    public void addListener(ActionListener listener) {
-      notifier.thenRun(listener::onComplete);
+      if (notifier.isDone()) {
+         listener.onComplete();
+      } else {
+         notifier.thenRun(listener::onComplete);
+      }
    }
 
    @Override

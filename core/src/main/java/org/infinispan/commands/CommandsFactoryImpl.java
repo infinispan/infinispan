@@ -118,6 +118,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
+import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
+import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
@@ -172,6 +175,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Inject private InternalDataContainer dataContainer;
    @Inject private CacheNotifier<Object, Object> notifier;
+   @Inject private ClusterCacheNotifier<Object, Object> clusterNotifier;
    @Inject private EmbeddedCacheManager cacheManager;
    @Inject private ComponentRef<Cache<Object, Object>> cache;
    @Inject private ComponentRef<AsyncInterceptorChain> interceptorChain;
@@ -563,6 +567,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case RenewBiasCommand.COMMAND_ID:
             ((RenewBiasCommand) c).init(biasManager.running());
             break;
+
+         case MultiClusterEventCommand.COMMAND_ID:
+            ((MultiClusterEventCommand) c).init(cache.wired(), clusterNotifier);
+            break;
+
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -862,5 +871,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       return new PublisherRequestCommand<>(cacheName, parallelStream, deliveryGuarantee, segments, keys, excludedKeys,
             includeLoader, true, transformer, finalizer);
+   }
+
+   @Override
+   public <K, V> MultiClusterEventCommand<K, V> buildMultiClusterEventCommand(Map<UUID, Collection<ClusterEvent<K, V>>> events) {
+      return new MultiClusterEventCommand<>(cacheName, events);
    }
 }

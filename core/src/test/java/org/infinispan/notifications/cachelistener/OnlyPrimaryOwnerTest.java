@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commands.CancellationService;
@@ -33,6 +34,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -45,6 +47,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MockBasicComponentRegistry;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -74,7 +77,8 @@ public class OnlyPrimaryOwnerTest {
                                  CommandsFactory.class, Encoder.class);
       Configuration config = new ConfigurationBuilder().memory().storageType(StorageType.OBJECT).build();
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
-                         mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(KeyPartitioner.class));
+                         mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(KeyPartitioner.class),
+                         TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()));
       cl = new PrimaryOwnerCacheListener();
       n.start();
       n.addListener(cl);
@@ -98,7 +102,7 @@ public class OnlyPrimaryOwnerTest {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx,
+      public CompletionStage<Void> commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx,
                               Flag trackFlag, boolean l1Invalidation) {
          throw new UnsupportedOperationException();
       }

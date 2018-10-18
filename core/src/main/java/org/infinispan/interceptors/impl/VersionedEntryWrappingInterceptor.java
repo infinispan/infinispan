@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -69,10 +71,11 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
                   .setUpdatedEntryVersions(versionedPrepareCommand.getVersionsSeen());
          }
 
+         CompletionStage<Void> stage = null;
          if (onePhaseCommit) {
-            commitContextEntries(txInvocationContext, null);
+             stage = commitContextEntries(txInvocationContext, null);
          }
-         return newVersionData;
+         return delayedValue(stage, newVersionData);
       });
    }
 
@@ -83,20 +86,20 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
       }
 
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) ->
-            doCommit(rCtx, ((VersionedCommitCommand) rCommand)));
+      return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, t) ->
+            delayedValue(doCommit(rCtx, ((VersionedCommitCommand) rCommand)), rv, t));
    }
 
-   private void doCommit(InvocationContext rCtx, VersionedCommitCommand versionedCommitCommand) {
+   private CompletionStage<Void> doCommit(InvocationContext rCtx, VersionedCommitCommand versionedCommitCommand) {
       if (!rCtx.isOriginLocal()) {
          ((TxInvocationContext<?>) rCtx).getCacheTransaction().setUpdatedEntryVersions(
                versionedCommitCommand.getUpdatedVersions());
       }
-      commitContextEntries(rCtx, null);
+      return commitContextEntries(rCtx, null);
    }
 
    @Override
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
+   protected CompletionStage<Void> commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
                                      Flag stateTransferFlag, boolean l1Invalidation) {
       if (ctx.isInTxScope() && stateTransferFlag == null) {
          EntryVersion updatedEntryVersion = ((TxInvocationContext) ctx)
@@ -113,10 +116,10 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          }
 
          entry.setMetadata(commitMetadata);
-         cdl.commitEntry(entry, command, ctx, null, l1Invalidation);
+         return cdl.commitEntry(entry, command, ctx, null, l1Invalidation);
       } else {
          // This could be a state transfer call!
-         cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
+         return cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
       }
    }
 

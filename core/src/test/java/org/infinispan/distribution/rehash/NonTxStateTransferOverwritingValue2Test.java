@@ -10,6 +10,7 @@ import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -194,12 +195,11 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       ClusteringDependentLogic cdl1 = cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
       ClusteringDependentLogic replaceCdl = new ClusteringDependentLogicDelegator(cdl1) {
          @Override
-         public void commitEntry(CacheEntry entry, FlagAffectedCommand command,
+         public CompletionStage<Void> commitEntry(CacheEntry entry, FlagAffectedCommand command,
                                  InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
             //skip for clear command!
             if (entry instanceof ClearCacheEntry) {
-               super.commitEntry(entry, command, ctx, trackFlag, l1Invalidation);
-               return;
+               return super.commitEntry(entry, command, ctx, trackFlag, l1Invalidation);
             }
             final Address source = ctx.getOrigin();
             CacheEntry newEntry = new CacheEntryDelegator(entry) {
@@ -216,7 +216,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
                   checkPoint.trigger("post_commit_entry_" + getKey() + "_from_" + source);
                }
             };
-            super.commitEntry(newEntry, command, ctx, trackFlag, l1Invalidation);
+            return super.commitEntry(newEntry, command, ctx, trackFlag, l1Invalidation);
          }
       };
       TestingUtil.replaceComponent(cache, ClusteringDependentLogic.class, replaceCdl, true);

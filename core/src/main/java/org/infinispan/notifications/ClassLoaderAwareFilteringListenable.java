@@ -1,8 +1,11 @@
 package org.infinispan.notifications;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Interface that enhances {@link FilteringListenable} with the possibility of specifying the
@@ -41,6 +44,11 @@ public interface ClassLoaderAwareFilteringListenable<K, V> extends FilteringList
     * @param <C> The type that the converter returns.  The listener must handle this type in any methods that handle
     *            events being returned
     */
-   <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
+   default <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
+         CacheEventConverter<? super K, ? super V, C> converter, ClassLoader classLoader) {
+      CompletionStages.join(addListenerAsync(listener, filter, converter, classLoader));
+   }
+
+   <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter,
                     CacheEventConverter<? super K, ? super V, C> converter, ClassLoader classLoader);
 }

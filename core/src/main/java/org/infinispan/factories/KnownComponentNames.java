@@ -42,13 +42,15 @@ public class KnownComponentNames {
       TRANSACTION_VERSION_GENERATOR
    );
 
-   private static final Map<String, Integer> DEFAULT_THREAD_COUNT = new HashMap<>(8);
-   private static final Map<String, Integer> DEFAULT_QUEUE_SIZE = new HashMap<>(8);
-   private static final Map<String, Integer> DEFAULT_THREAD_PRIORITY = new HashMap<>(9);
+   private static final Map<String, Integer> DEFAULT_THREAD_COUNT = new HashMap<>(7);
+   private static final Map<String, Integer> DEFAULT_QUEUE_SIZE = new HashMap<>(7);
+   private static final Map<String, Integer> DEFAULT_THREAD_PRIORITY = new HashMap<>(8);
 
    static {
-      DEFAULT_THREAD_COUNT.put(ASYNC_NOTIFICATION_EXECUTOR, 1);
-      DEFAULT_THREAD_COUNT.put(ASYNC_TRANSPORT_EXECUTOR, 25);
+      // Unfortunately notifications can do things like start caches in them, which require more threads - thus
+      // we need a decent amount
+      DEFAULT_THREAD_COUNT.put(ASYNC_NOTIFICATION_EXECUTOR, 25);
+      DEFAULT_THREAD_COUNT.put(ASYNC_TRANSPORT_EXECUTOR, 4);
       DEFAULT_THREAD_COUNT.put(EXPIRATION_SCHEDULED_EXECUTOR, 1);
       // Persistence Executor default to # of CPUs
       DEFAULT_THREAD_COUNT.put(PERSISTENCE_EXECUTOR, ProcessorInfo.availableProcessors());
@@ -56,15 +58,15 @@ public class KnownComponentNames {
       DEFAULT_THREAD_COUNT.put(STATE_TRANSFER_EXECUTOR, 60);
       DEFAULT_THREAD_COUNT.put(ASYNC_OPERATIONS_EXECUTOR, 25);
 
-      DEFAULT_QUEUE_SIZE.put(ASYNC_NOTIFICATION_EXECUTOR, 100000);
-      DEFAULT_QUEUE_SIZE.put(ASYNC_TRANSPORT_EXECUTOR, 100000);
+      DEFAULT_QUEUE_SIZE.put(ASYNC_NOTIFICATION_EXECUTOR, 0);
+      DEFAULT_QUEUE_SIZE.put(ASYNC_TRANSPORT_EXECUTOR, 1_000);
       DEFAULT_QUEUE_SIZE.put(EXPIRATION_SCHEDULED_EXECUTOR, 0);
       DEFAULT_QUEUE_SIZE.put(PERSISTENCE_EXECUTOR, 0);
       DEFAULT_QUEUE_SIZE.put(REMOTE_COMMAND_EXECUTOR, 0);
       DEFAULT_QUEUE_SIZE.put(STATE_TRANSFER_EXECUTOR, 0);
       DEFAULT_QUEUE_SIZE.put(ASYNC_OPERATIONS_EXECUTOR, 1000);
 
-      DEFAULT_THREAD_PRIORITY.put(ASYNC_NOTIFICATION_EXECUTOR, Thread.MIN_PRIORITY);
+      DEFAULT_THREAD_PRIORITY.put(ASYNC_NOTIFICATION_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(ASYNC_TRANSPORT_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(EXPIRATION_SCHEDULED_EXECUTOR, Thread.MIN_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(PERSISTENCE_EXECUTOR, Thread.NORM_PRIORITY);

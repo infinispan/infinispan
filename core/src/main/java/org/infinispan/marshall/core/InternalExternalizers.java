@@ -84,10 +84,8 @@ import org.infinispan.marshall.persistence.impl.MarshalledValueImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
-import org.infinispan.notifications.cachelistener.cluster.ClusterEventCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
-import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCallable;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterAsConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterAsKeyValueFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterAsKeyValueFilterConverter;
@@ -164,7 +162,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new CacheStatusResponse.Externalizer(), exts);
       addInternalExternalizer(new CacheTopology.Externalizer(), exts);
       addInternalExternalizer(new ClusterEvent.Externalizer(), exts);
-      addInternalExternalizer(new ClusterEventCallable.Externalizer(), exts);
       addInternalExternalizer(new ClusterListenerRemoveCallable.Externalizer(), exts);
       addInternalExternalizer(new ClusterListenerReplicateCallable.Externalizer(), exts);
       addInternalExternalizer(new CollectionExternalizer(), exts);
@@ -225,7 +222,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new MIMECacheEntry.Externalizer(), exts); // new
       addInternalExternalizer(new MortalCacheEntry.Externalizer(), exts);
       addInternalExternalizer(new MortalCacheValue.Externalizer(), exts);
-      addInternalExternalizer(new MultiClusterEventCallable.Externalizer(), exts);
       addInternalExternalizer(new MurmurHash3.Externalizer(), exts);
       addInternalExternalizer(new NumericVersion.Externalizer(), exts);
       addInternalExternalizer(new OptionalExternalizer(), exts);

@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachelistener.filter;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.notifications.Listener;
@@ -42,16 +43,18 @@ public abstract class DelegatingCacheEntryListenerInvocation<K, V> implements Ca
    }
 
    @Override
-   public void invoke(Event<K, V> event) {
+   public CompletionStage<Void> invoke(Event<K, V> event) {
+      return invocation.invoke(event);
    }
 
    @Override
-   public void invoke(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean isLocalNodePrimaryOwner) {
+   public CompletionStage<Void> invoke(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean isLocalNodePrimaryOwner) {
+      return null;
    }
 
    @Override
-   public void invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean skipQueue, boolean skipConverter, boolean needsTransform) {
-      invocation.invokeNoChecks(event, skipQueue, skipConverter, needsTransform);
+   public CompletionStage<Void> invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean skipQueue, boolean skipConverter, boolean needsTransform) {
+      return invocation.invokeNoChecks(event, skipQueue, skipConverter, needsTransform);
    }
 
    @Override

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +33,8 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.commons.util.AbstractDelegatingCollection;
+import org.infinispan.commons.util.AbstractDelegatingSet;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
@@ -65,8 +68,6 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
-import org.infinispan.commons.util.AbstractDelegatingCollection;
-import org.infinispan.commons.util.AbstractDelegatingSet;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> {
@@ -869,18 +870,20 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
-      // TODO: Customise this generated block
+   public <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
+      return null;
    }
 
    @Override
-   public void addListener(Object listener) {
+   public CompletionStage<Void> addListenerAsync(Object listener) {
       // TODO: Customise this generated block
+      return null;
    }
 
    @Override
-   public void removeListener(Object listener) {
+   public CompletionStage<Void> removeListenerAsync(Object listener) {
       // TODO: Customise this generated block
+      return null;
    }
 
    @Override
@@ -889,14 +892,15 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public <C> void addFilteredListener(Object listener,
-                                       CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
-                                       Set<Class<? extends Annotation>> filterAnnotations) {
+   public <C> CompletionStage<Void> addFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
       // TODO: Customise this generated block
+      return null;
    }
 
    @Override
-   public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+   public <C> CompletionStage<Void> addStorageFormatFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+      // TODO: Customise this generated block
+      return null;
    }
 
    public static <T> T await(CompletableFuture<T> cf) {

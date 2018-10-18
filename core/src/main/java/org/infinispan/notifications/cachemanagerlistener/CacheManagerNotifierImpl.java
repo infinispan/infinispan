@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.transaction.Transaction;
@@ -24,6 +25,9 @@ import org.infinispan.notifications.cachemanagerlistener.event.impl.EventImpl;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -38,7 +42,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
 
    private static final Log log = LogFactory.getLog(CacheManagerNotifierImpl.class);
 
-   private static final Map<Class<? extends Annotation>, Class<?>> allowedListeners = new HashMap<Class<? extends Annotation>, Class<?>>(4);
+   private static final Map<Class<? extends Annotation>, Class<?>> allowedListeners = new HashMap<>(4);
 
    static {
       allowedListeners.put(CacheStarted.class, CacheStartedEvent.class);
@@ -47,10 +51,10 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
       allowedListeners.put(Merged.class, MergeEvent.class);
    }
 
-   final List<ListenerInvocation<Event>> cacheStartedListeners = new CopyOnWriteArrayList<ListenerInvocation<Event>>();
-   final List<ListenerInvocation<Event>> cacheStoppedListeners = new CopyOnWriteArrayList<ListenerInvocation<Event>>();
-   final List<ListenerInvocation<Event>> viewChangedListeners = new CopyOnWriteArrayList<ListenerInvocation<Event>>();
-   final List<ListenerInvocation<Event>> mergeListeners = new CopyOnWriteArrayList<ListenerInvocation<Event>>();
+   final List<ListenerInvocation<Event>> cacheStartedListeners = new CopyOnWriteArrayList<>();
+   final List<ListenerInvocation<Event>> cacheStoppedListeners = new CopyOnWriteArrayList<>();
+   final List<ListenerInvocation<Event>> viewChangedListeners = new CopyOnWriteArrayList<>();
+   final List<ListenerInvocation<Event>> mergeListeners = new CopyOnWriteArrayList<>();
 
    @Inject private EmbeddedCacheManager cacheManager;
 
@@ -65,12 +69,23 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
 
       @Override
       public ListenerInvocation<Event> build() {
-         return new ListenerInvocationImpl(target, method, sync, classLoader, subject);
+         return new ListenerInvocationImpl<>(target, method, sync, nonBlocking, classLoader, subject);
       }
    }
 
+   private CompletionStage<Void> invokeListeners(EventImpl event, List<ListenerInvocation<Event>> listeners) {
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      for (ListenerInvocation<Event> listener : listeners) {
+         aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage, invokeListener(listener, event));
+      }
+      if (aggregateCompletionStage != null) {
+         return aggregateCompletionStage.freeze();
+      }
+      return CompletableFutures.completedNull();
+   }
+
    @Override
-   public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId) {
+   public CompletionStage<Void> notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId) {
       if (!viewChangedListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setLocalAddress(myAddress);
@@ -80,12 +95,13 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
          e.setOldMembers(oldMembers);
          e.setCacheManager(cacheManager);
          e.setType(Event.Type.VIEW_CHANGED);
-         for (ListenerInvocation listener : viewChangedListeners) invokeListener(listener, e);
+         return invokeListeners(e, viewChangedListeners);
       }
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, List<List<Address>> subgroupsMerged) {
+   public CompletionStage<Void> notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, List<List<Address>> subgroupsMerged) {
       if (!mergeListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setLocalAddress(myAddress);
@@ -96,45 +112,66 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
          e.setCacheManager(cacheManager);
          e.setSubgroupsMerged(subgroupsMerged);
          e.setType(Event.Type.MERGED);
-         for (ListenerInvocation listener : mergeListeners) invokeListener(listener, e);
+         return invokeListeners(e, mergeListeners);
       }
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void notifyCacheStarted(String cacheName) {
+   public CompletionStage<Void> notifyCacheStarted(String cacheName) {
       if (!cacheStartedListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setCacheName(cacheName);
          e.setCacheManager(cacheManager);
          e.setType(Event.Type.CACHE_STARTED);
-         for (ListenerInvocation listener : cacheStartedListeners) invokeListener(listener, e);
+         return invokeListeners(e, cacheStartedListeners);
       }
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void notifyCacheStopped(String cacheName) {
+   public CompletionStage<Void> notifyCacheStopped(String cacheName) {
       if (!cacheStoppedListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setCacheName(cacheName);
          e.setCacheManager(cacheManager);
          e.setType(Event.Type.CACHE_STOPPED);
-         for (ListenerInvocation listener : cacheStoppedListeners) invokeListener(listener, e);
+         return invokeListeners(e, cacheStoppedListeners);
       }
+      return CompletableFutures.completedNull();
    }
 
-   private void invokeListener(ListenerInvocation listener, EventImpl e) {
+   private void handleException(Throwable t) {
+      // Only cache entry-related listeners should be able to throw an exception to veto the operation.
+      // Just log the exception thrown by the invoker, it should contain all the relevant information.
+      log.failedInvokingCacheManagerListener(t);
+   }
+
+   private CompletionStage<Void> invokeListener(ListenerInvocation<Event> listener, EventImpl e) {
       try {
-         listener.invoke(e);
+         CompletionStage<Void> stage = listener.invoke(e);
+         if (stage != null && !CompletionStages.isCompleteSuccessfully(stage)) {
+            return stage.exceptionally(t -> {
+               handleException(t);
+               return null;
+            });
+         }
       } catch (Exception x) {
-         // Only cache entry-related listeners should be able to throw an exception to veto the operation.
-         // Just log the exception thrown by the invoker, it should contain all the relevant information.
-         log.failedInvokingCacheManagerListener(x);
+         handleException(x);
       }
+      return null;
    }
 
    @Override
-   public void addListener(Object listener) {
+   public CompletionStage<Void> addListenerAsync(Object listener) {
       validateAndAddListenerInvocations(listener, new DefaultBuilder());
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Void> removeListenerAsync(Object listener) {
+      removeListenerFromMaps(listener);
+      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -155,5 +192,9 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
    @Override
    protected final void resumeIfNeeded(Transaction transaction) {
       //no-op
+   }
+
+   public void start() {
+      // no-op
    }
 }

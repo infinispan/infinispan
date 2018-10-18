@@ -236,8 +236,9 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
    }
 
    @Override
-   protected void handleClear(InvocationContext ctx, VisitableCommand command, Object ignored) {
-      super.handleClear(ctx, command, ignored);
+   protected Object handleClear(InvocationContext ctx, VisitableCommand command, Object ignored) {
+      Object superStage = super.handleClear(ctx, command, ignored);
       biasManager.clear();
+      return superStage;
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.totalorder;
 
 import java.util.ArrayList;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -81,7 +82,7 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    }
 
    @Override
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
+   protected CompletionStage<Void> commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
                                      Flag stateTransferFlag, boolean l1Invalidation) {
       if (ctx.isInTxScope() && stateTransferFlag == null) {
          // If user provided version, use it, otherwise generate/increment accordingly
@@ -95,10 +96,10 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
          }
 
          entry.setMetadata(new EmbeddedMetadata.Builder().version(newVersion).build());
-         cdl.commitEntry(entry, command, ctx, null, l1Invalidation);
+         return cdl.commitEntry(entry, command, ctx, null, l1Invalidation);
       } else {
          // This could be a state transfer call!
-         cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
+         return cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
       }
    }
 }

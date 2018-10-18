@@ -45,6 +45,7 @@ import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -195,7 +196,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
       int newRebalanceId = newCacheTopology.getRebalanceId();
       CacheTopology.Phase phase = newCacheTopology.getPhase();
 
-      cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, true);
+      // TODO: these should be non blocking at some point
+      CompletionStages.join(cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, true));
 
       CompletableFuture<Void> consumerFuture = stateConsumer.onTopologyUpdate(newCacheTopology, isRebalance);
       CompletableFuture<Void> providerFuture = stateProvider.onTopologyUpdate(newCacheTopology, isRebalance);
@@ -209,7 +211,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
          }
       });
 
-      cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, false);
+      // TODO: these should be non blocking at some point
+      CompletionStages.join(cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, false));
 
       if (initialStateTransferComplete.getCount() > 0) {
          assert distributionManager.getCacheTopology().getTopologyId() == newCacheTopology.getTopologyId();

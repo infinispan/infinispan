@@ -26,6 +26,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.util.concurrent.CompletionStages;
 
 public class SecureCacheTestDriver {
 
@@ -101,8 +102,12 @@ public class SecureCacheTestDriver {
 
    @TestCachePermission(AuthorizationPermission.LISTEN)
    public void testRemoveListener_Object(SecureCache<String, String> cache) {
-      cache.addListener(listener);
       cache.removeListener(listener);
+   }
+
+   @TestCachePermission(AuthorizationPermission.LISTEN)
+   public void testRemoveListenerAsync_Object(SecureCache<String, String> cache) {
+      CompletionStages.join(cache.removeListenerAsync(listener));
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
@@ -160,6 +165,16 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.LISTEN)
    public void testAddListener_Object_CacheEventFilter_CacheEventConverter(SecureCache<String, String> cache) {
       cache.addListener(listener, keyValueFilter, converter);
+   }
+
+   @TestCachePermission(AuthorizationPermission.LISTEN)
+   public void testAddListenerAsync_Object_CacheEventFilter_CacheEventConverter(SecureCache<String, String> cache) {
+      CompletionStages.join(cache.addListenerAsync(listener, keyValueFilter, converter));
+   }
+
+   @TestCachePermission(AuthorizationPermission.LISTEN)
+   public void testAddFilteredListenerAsync_Object_CacheEventFilter_CacheEventConverter_Set(SecureCache<String, String> cache) {
+      CompletionStages.join(cache.addListenerAsync(listener, keyValueFilter, converter));
    }
 
    @TestCachePermission(AuthorizationPermission.LISTEN)
@@ -543,6 +558,11 @@ public class SecureCacheTestDriver {
       cache.removeListener(listener);
    }
 
+   @TestCachePermission(AuthorizationPermission.LISTEN)
+   public void testAddListenerAsync_Object(SecureCache<String, String> cache) {
+      CompletionStages.join(cache.addListenerAsync(listener));
+   }
+
    @TestCachePermission(AuthorizationPermission.NONE)
    public void testGetXAResource(SecureCache<String, String> cache) {
       // requires setting up a xa transaction, but since we don't test permissions, let's not bother
@@ -853,6 +873,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.LISTEN)
    public void testAddStorageFormatFilteredListener_Object_CacheEventFilter_CacheEventConverter_Set(SecureCache<String, String> cache) {
       cache.addStorageFormatFilteredListener(listener, keyValueFilter, converter, Collections.emptySet());
+   }
+
+   @TestCachePermission(AuthorizationPermission.LISTEN)
+   public void testAddStorageFormatFilteredListenerAsync_Object_CacheEventFilter_CacheEventConverter_Set(SecureCache<String, String> cache) {
+      CompletionStages.join(cache.addStorageFormatFilteredListenerAsync(listener, keyValueFilter, converter, Collections.emptySet()));
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
