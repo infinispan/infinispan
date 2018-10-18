@@ -33,6 +33,7 @@
       <module name="org.infinispan.tasks" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.tasks.api" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.counter" services="import" slot="@infinispan.module.slot@"/>
+      <module name="org.infinispan.multimap" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.jgroups" slot="@infinispan.module.slot@" />
       <module name="org.jgroups.extension" slot="@infinispan.module.slot@" />
 

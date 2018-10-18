@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan.multimap" slot="@infinispan.module.slot@">
+    <resources>
+        <artifact name="${org.infinispan:infinispan-multimap}"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+        <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
+        <module name="org.jboss.logging"/>
+    </dependencies>
+</module>
