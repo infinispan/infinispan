@@ -123,7 +123,7 @@ Supplied strategy column means that the attribute wasn't supplied)
 |===============
 |Supplied size|Example|Eviction behaviour
 |-| `<memory />` |no eviction as an object
-|-| `<memory strategy="MANUAL">` |no eviction as an object and won't log warning if passivation is enabled
+|-| `<memory> <object strategy="MANUAL" /> </memory>` |no eviction as an object and won't log warning if passivation is enabled
 |&gt; 0| `<memory> <object size="100" /> </memory>` |eviction takes place and stored as objects
 |&gt; 0| `<memory> <binary size="100" eviction="MEMORY"/> </memory>` |eviction takes place and stored as a binary removing to make sure memory doens't go higher than 100
 |&gt; 0| `<memory> <off-heap size="100" /> </memory>` |eviction takes place and stored in off-heap
