@@ -249,8 +249,8 @@ public abstract class AbstractNodeAuthentication {
    /**
     * A {@link ServerSetupTask} instance which creates security domains for this test case.
     *
-    * @author jcacek@redhat,com
-    * @author vchepeli@redhat,com
+    * @author jcacek@redhat.com
+    * @author vchepeli@redhat.com
     */
    static class SecurityDomainsSetupTask extends AbstractSecurityDomainsServerSetupTask {
 
