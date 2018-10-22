@@ -25,6 +25,7 @@ public interface Listenable {
     * Removes a listener from the component.
     *
     * @param listener listener to remove.  Must not be null.
+    * @throws org.infinispan.IllegalLifecycleStateException may be thrown if the {@code Listenable} is stopped.
     */
    void removeListener(Object listener);
 
