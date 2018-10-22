@@ -85,17 +85,52 @@ public class BlockingBundlerTest extends AbstractInfinispanTest {
       bundler.send(new Message(null, BYTES_500));
       bundler.send(new Message(null, BYTES_500));
 
+      // Current bundle and serialization buffer are full, the 3rd send blocks
       Future<Void> send3Future = fork(() -> bundler.send(new Message(null, BYTES_500)));
       Thread.sleep(10);
       assertFalse(send3Future.isDone());
 
-      bundler.send(new Message(null, BYTES_100));
-
+      // Empty the serialization buffer and unblock the 3rd send
       assertTrue(bundler.sendQueued());
 
       Message message1 = transport.pollMulticast();
       assertMulticastMessage(message1, BYTES_500);
 
+      send3Future.get(10, TimeUnit.SECONDS);
+
+      // Current bundle and serialization buffer are again full
+      assertTrue(bundler.sendQueued());
+
+      Message message2 = transport.pollMulticast();
+      assertMulticastMessage(message2, BYTES_500);
+
+      assertTrue(bundler.sendQueued());
+
+      Message message3 = transport.pollMulticast();
+      assertMulticastMessage(message3, BYTES_500);
+   }
+
+   public void testMulticast5BlockReorder() throws Exception {
+      bundler.send(new Message(null, BYTES_500));
+      bundler.send(new Message(null, BYTES_500));
+
+      // Current bundle and serialization buffer are full, the 3rd send blocks
+      Future<Void> send3Future = fork(() -> bundler.send(new Message(null, BYTES_500)));
+      Thread.sleep(10);
+      assertFalse(send3Future.isDone());
+
+      // A smaller message fits into the current bundle
+      bundler.send(new Message(null, BYTES_100));
+
+      // Empty the serialization buffer and unblock the 3rd send
+      assertTrue(bundler.sendQueued());
+
+      Message message1 = transport.pollMulticast();
+      assertMulticastMessage(message1, BYTES_500);
+
+      send3Future.get(10, TimeUnit.SECONDS);
+
+      // Current bundle and serialization buffer are again full
       assertTrue(bundler.sendQueued());
 
       List<Message> batch = transport.pollMulticastBatch();
@@ -104,7 +139,6 @@ public class BlockingBundlerTest extends AbstractInfinispanTest {
       Message message3 = batch.get(1);
       assertMulticastMessage(message3, BYTES_100);
 
-      send3Future.get(10, TimeUnit.SECONDS);
       assertTrue(bundler.sendQueued());
 
       Message message4 = transport.pollMulticast();
