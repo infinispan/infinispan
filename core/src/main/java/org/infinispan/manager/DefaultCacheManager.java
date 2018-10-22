@@ -805,8 +805,12 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public void removeListener(Object listener) {
       authzHelper.checkPermission(AuthorizationPermission.LISTEN);
-      CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
-      notifier.removeListener(listener);
+      try {
+         CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
+         notifier.removeListener(listener);
+      } catch (IllegalLifecycleStateException e) {
+         // Ignore the exception for backwards compatibility
+      }
    }
 
    @Override
