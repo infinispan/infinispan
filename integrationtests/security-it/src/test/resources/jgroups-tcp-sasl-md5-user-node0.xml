@@ -5,7 +5,7 @@
    <TCP  bind_port="7800" port_range="10"
          recv_buf_size="20000000"
          send_buf_size="640000"
-         bundler_type="transfer-queue"
+         bundler_type="org.infinispan.remoting.transport.jgroups.BlockingBundler"
          enable_diagnostics="true"
          thread_naming_pattern="cl"
 
