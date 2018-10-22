@@ -103,11 +103,14 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    /**
-    * Registers a component in the registry under the given type, and injects any dependencies needed.  If a component
-    * of this type already exists, it is overwritten.
+    * Registers a component in the registry under the given type, and injects any dependencies needed.
+    *
+    * Note: Until 9.4, if a component of this type already existed, it was overwritten.
     *
     * @param component component to register
     * @param type      type of component
+    * @throws org.infinispan.commons.CacheConfigurationException If a component is already registered with that
+    *         name, or if a dependency cannot be resolved
     */
    public final void registerComponent(Object component, Class<?> type) {
       registerComponent(component, type.getName(), type.equals(component.getClass()));
