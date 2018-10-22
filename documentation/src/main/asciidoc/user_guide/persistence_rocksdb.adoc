@@ -47,8 +47,8 @@ Note that you do not have to supply properties and this is entirely optional.
 [source,java]
 ----
 Properties props = new Properties();
-props.addProperty("database.max_background_compactions", "2");
-props.addProperty("data.write_buffer_size", "512MB");
+props.put("database.max_background_compactions", "2");
+props.put("data.write_buffer_size", "512MB");
 
 Configuration cacheConfig = new ConfigurationBuilder().persistence()
 				.addStore(RocksDBStoreConfigurationBuilder.class)
@@ -83,8 +83,8 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
    <persistence>
       <rocksdb-store path="/tmp/rocksdb/data">
          <expiration path="/tmp/rocksdb/expired"/>
-         <property name="database.max_background_compactions" value="2"/>
-         <property name="data.write_buffer_size" value="512MB"/>
+         <property name="database.max_background_compactions">2</property>
+         <property name="data.write_buffer_size">512MB</property>
       </rocksdb-store>
    </persistence>
 </local-cache>
