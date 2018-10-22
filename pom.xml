@@ -1735,7 +1735,7 @@
                      <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant-nodeps</artifactId>
-                        <version>${version.ant}</version>
+                        <version>${version.ant-nodeps}</version>
                      </dependency>
                   </dependencies>
                   <executions>
