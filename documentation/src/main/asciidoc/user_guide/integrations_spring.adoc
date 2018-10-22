@@ -190,7 +190,7 @@ An example is shown below:
 ----
 
 Spring Session integration has been based on {brandname} Spring Cache support so it requires creating a `SpringEmbeddedCacheManagerFactoryBean` or `SpringRemoteCacheManagerFactoryBean`.
-The next step it to use `@Enable{brandname}EmbeddedHttpSession` or `@Enable{brandname}RemoteHttpSession` configuration annotation which turns on Spring Session.
+The next step it to use `@EnableInfinispanEmbeddedHttpSession` or `@EnableInfinispanRemoteHttpSession` configuration annotation which turns on Spring Session.
 
 `@EnableInfinispanEmbeddedHttpSession` or `@EnableInfinispanRemoteHttpSession` annotations have 2 optional parameters:
 
@@ -201,7 +201,7 @@ A complete, annotation based configuration example is shown below:
 
 [source, java]
 ----
-@Enable{brandname}EmbeddedHttpSession
+@EnableInfinispanEmbeddedHttpSession
 @Configuration
 public class Config {
 
