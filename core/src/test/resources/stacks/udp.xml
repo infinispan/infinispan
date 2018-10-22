@@ -12,7 +12,7 @@
          max_bundle_size="8500"
          ip_ttl="${jgroups.udp.ip_ttl:2}"
          enable_diagnostics="false"
-         bundler_type="transfer-queue"
+         bundler_type="org.infinispan.remoting.transport.jgroups.BlockingBundler"
 
          thread_naming_pattern="pl"
 

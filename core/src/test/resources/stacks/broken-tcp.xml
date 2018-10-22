@@ -10,7 +10,7 @@
          max_bundle_size="8500"
          enable_diagnostics="false"
          tcp_nodelay="true"
-         bundler_type="transfer-queue"
+         bundler_type="org.infinispan.remoting.transport.jgroups.BlockingBundler"
 
          thread_naming_pattern="pl"
 
