@@ -1333,6 +1333,24 @@
                   </executions>
                </plugin>
                <plugin>
+                  <artifactId>maven-jar-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>default-jar</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                           <archive>
+                              <manifestEntries>
+                                 <Multi-Release>true</Multi-Release>
+                              </manifestEntries>
+                           </archive>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <executions>
                      <execution>
@@ -1365,7 +1383,6 @@
                         </configuration>
                      </execution>
                   </executions>
-
                </plugin>
             </plugins>
          </build>
