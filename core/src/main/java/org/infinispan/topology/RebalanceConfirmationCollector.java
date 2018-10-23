@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,8 +37,8 @@ class RebalanceConfirmationCollector {
    public void confirmPhase(Address node, int receivedTopologyId) {
       synchronized (this) {
          if (topologyId > receivedTopologyId) {
-            throw new CacheException(String.format("Received invalid rebalance confirmation from %s " +
-                  "for cache %s, expecting topology id %d but got %d", node, cacheName, topologyId, receivedTopologyId));
+            log.tracef("Ignoring rebalance confirmation with old topology from %s " +
+                  "for cache %s, expecting topology id %d but got %d", node, cacheName, topologyId, receivedTopologyId);
          }
 
          boolean removed = confirmationsNeeded.remove(node);
