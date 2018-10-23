@@ -155,7 +155,6 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-extended-statistics</artifactId>
-         <version>${project.version}</version>
       </dependency>
       <!-- /javadoc-embedded dependencies -->
 
@@ -317,7 +316,7 @@
                <dependency>
                   <groupId>org.infinispan</groupId>
                   <artifactId>infinispan-doclets</artifactId>
-                  <version>${project.version}</version>
+                  <version>${version.infinispan}</version>
                </dependency>
             </dependencies>
          </plugin>

@@ -78,7 +78,6 @@
       <dependency>
          <groupId>org.infinispan.server</groupId>
          <artifactId>infinispan-server-build</artifactId>
-         <version>${project.version}</version>
          <type>pom</type>
          <scope>test</scope>
       </dependency>
