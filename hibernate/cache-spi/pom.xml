@@ -17,13 +17,6 @@
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
    </properties>
 
-   <dependencies>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-core</artifactId>
-      </dependency>
-   </dependencies>
-
    <build>
       <plugins>
          <plugin>

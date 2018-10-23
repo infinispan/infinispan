@@ -106,7 +106,7 @@
                <dependency>
                   <groupId>org.infinispan</groupId>
                   <artifactId>infinispan-tools</artifactId>
-                  <version>${project.version}</version>
+                  <version>${version.infinispan}</version>
                </dependency>
             </dependencies>
          </plugin>

@@ -84,10 +84,7 @@
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
       <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
       <infinispan.brand.short-name>infinispan</infinispan.brand.short-name>
-      <infinispan.brand.version.major>9</infinispan.brand.version.major>
-      <infinispan.brand.version.minor>4</infinispan.brand.version.minor>
-      <infinispan.brand.version.micro>1</infinispan.brand.version.micro>
-      <infinispan.brand.version>${infinispan.brand.version.major}.${infinispan.brand.version.minor}.${infinispan.brand.version.micro}-SNAPSHOT</infinispan.brand.version>
+      <infinispan.brand.version>${project.version}</infinispan.brand.version>
       <infinispan.codename>Infinity Minus ONE +2</infinispan.codename>
       <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
       <infinispan.base.version>9.4</infinispan.base.version>
@@ -127,18 +124,25 @@
       <version.antlr2>2.7.7</version.antlr2>
       <version.antlr3>3.5.2</version.antlr3>
       <version.antlr>${version.antlr3}</version.antlr>
+      <version.apache.maven>3.5.4</version.apache.maven>
+      <version.apache.maven.resolver>1.1.0</version.apache.maven.resolver>
+      <version.apache.maven.wagon>2.6</version.apache.maven.wagon>
+      <version.arquillian>1.1.13.Final</version.arquillian>
       <version.asm>2.2.3</version.asm>
       <version.asm.ow2>6.1.1</version.asm.ow2>
       <version.byteman>4.0.2</version.byteman>
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
       <version.caffeine>2.6.2</version.caffeine>
-      <version.camel>2.17.0</version.camel>
       <version.cdi>2.0</version.cdi>
+      <version.codehaus.jackson>1.9.13</version.codehaus.jackson>
+      <version.eclipse.aether>1.0.0.v20140518</version.eclipse.aether>
+      <version.eclipse.sisu>0.3.3</version.eclipse.sisu>
       <version.elasticsearch>5.6.8</version.elasticsearch>
+      <version.glassfish.jaxb>2.3.0</version.glassfish.jaxb>
       <version.groovy>2.4.8</version.groovy>
       <version.gson>2.8.2</version.gson>
-      <version.hadoop>2.7.1</version.hadoop>
+      <version.hamcrest>1.3</version.hamcrest>
       <version.hibernate.core>5.3.6.Final</version.hibernate.core>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.classmate>1.3.4</version.hibernate_dep.classmate>
@@ -148,23 +152,34 @@
       <version.hibernate_dep.javassist>3.23.1-GA</version.hibernate_dep.javassist>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
       <version.hibernate.search>5.10.3.Final</version.hibernate.search>
-      <version.hibernate.search.modules>5.7.3.Final</version.hibernate.search.modules>
       <version.hibernate.search.module.slot>5.10</version.hibernate.search.module.slot>
       <version.hikaricp>2.4.6</version.hikaricp>
       <version.infinispan>${version.component.infinispan}</version.infinispan>
       <version.jackson>2.9.5</version.jackson>
+      <version.jackson.dataformat>2.8.1</version.jackson.dataformat>
       <version.jacoco>0.7.5.201505241946</version.jacoco>
+      <version.javaparser>3.5.17</version.javaparser>
       <version.javax.cache>1.1.0</version.javax.cache>
       <version.javax.persistence>2.2</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jaxb>2.3.0</version.jaxb>
       <version.jboss.logging>3.3.2.Final</version.jboss.logging>
+      <version.jboss.metadata>11.0.0.Final</version.jboss.metadata>
       <version.jboss.marshalling>2.0.6.Final</version.jboss.marshalling>
+      <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
+      <version.jboss.narayana>5.8.1.Final</version.jboss.narayana>
+      <version.jboss.security>3.0.4.Final</version.jboss.security>
+      <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
+      <version.jboss.shrinkwrap.descriptors>2.0.0-alpha-10</version.jboss.shrinkwrap.descriptors>
+      <version.jboss.shrinkwrap.resolver>2.2.4</version.jboss.shrinkwrap.resolver>
+      <version.jboss.xnio>3.6.3.Final</version.jboss.xnio>
       <version.jetty>9.4.5.v20170502</version.jetty>
       <version.jgroups>4.0.15.Final</version.jgroups>
+      <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.12</version.junit>
       <version.karaf>4.2.0</version.karaf>
       <version.log4j>2.8.2</version.log4j>
+      <version.logback>1.1.7</version.logback>
       <version.lucene>5.5.5</version.lucene>
       <version.lucene.module.slot>5.5.5</version.lucene.module.slot>
       <version.metainf-services>1.7</version.metainf-services>
@@ -172,27 +187,39 @@
       <version.mockito_dep.bytebuddy>1.8.12</version.mockito_dep.bytebuddy>
       <version.mockito_dep.hamcrest>1.3</version.mockito_dep.hamcrest>
       <version.mockito_dep.objenesis>2.6</version.mockito_dep.objenesis>
+      <version.net.bytebuddy>1.8.12</version.net.bytebuddy>
       <version.netty>4.1.28.Final</version.netty>
       <version.netty-conscrypt-optional>1.0.0</version.netty-conscrypt-optional>
       <version.netty.tcnative>2.0.17.Final</version.netty.tcnative>
       <version.netty-tcnative-boringssl-static>${version.netty.tcnative}</version.netty-tcnative-boringssl-static>
+      <version.openjdk.jmh>1.12</version.openjdk.jmh>
+      <version.ops4j.base>1.5.0</version.ops4j.base>
+      <version.ops4j.pax.exam>4.11.0</version.ops4j.pax.exam>
+      <version.ops4j.pax.logging>1.10.1</version.ops4j.pax.logging>
+      <version.ops4j.pax.swissbox>1.8.3</version.ops4j.pax.swissbox>
+      <version.ops4j.pax.url>2.5.2</version.ops4j.pax.url>
       <version.org.wildfly>${appserver.version}</version.org.wildfly>
+      <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>5.0.0.Final</version.org.wildfly.core>
       <version.osgi>4.3.1</version.osgi>
       <version.pax.exam>4.11.0</version.pax.exam>
+      <version.picketbox>5.0.3.Final</version.picketbox>
+      <version.projectodd>1.1.6</version.projectodd>
       <version.protostream>4.2.1.Final</version.protostream>
       <version.protostuff>1.6.0</version.protostuff>
       <version.reactivestreams>1.0.2</version.reactivestreams>
       <version.rocksdb>5.15.10</version.rocksdb>
       <version.rxjava>2.2.0</version.rxjava>
+      <version.slf4j>1.7.22</version.slf4j>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
+      <version.sonatype.plexus>1.4</version.sonatype.plexus>
+      <version.spring.boot>1.4.0.RELEASE</version.spring.boot>
+      <version.spring.security>4.1.1.RELEASE</version.spring.security>
       <version.spring4>4.3.4.RELEASE</version.spring4>
-      <version.tomcat7>7.0.88</version.tomcat7>
-      <version.tomcat80>8.0.52</version.tomcat80>
       <version.tomcat85>8.5.31</version.tomcat85>
-      <version.tomcat9>9.0.8</version.tomcat9>
       <version.xalan>2.7.1.jbossorg-2</version.xalan>
       <version.xerces>2.11.0.SP5</version.xerces>
+      <version.xpp3>1.1.4c</version.xpp3>
 
       <!-- Versions of feature packs we consume: must match expected versions manually for the time being
         See also note in wildfly-modules/provisioning-of-hibernatesearch.xml -->
@@ -226,7 +253,6 @@
 
       <!-- configuration properties -->
       <org.infinispan.attachServerZip>false</org.infinispan.attachServerZip>
-
    </properties>
 
    <profiles>

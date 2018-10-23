@@ -89,33 +89,31 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-extended-statistics</artifactId>
-         <version>${project.version}</version>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-javadoc-embedded</artifactId>
-         <version>${project.version}</version>
+         <version>${version.infinispan}</version>
          <classifier>javadoc</classifier>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-javadoc-remote</artifactId>
-         <version>${project.version}</version>
+         <version>${version.infinispan}</version>
          <classifier>javadoc</classifier>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-javadoc-all</artifactId>
-         <version>${project.version}</version>
+         <version>${version.infinispan}</version>
          <classifier>javadoc</classifier>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-feature-pack-wf-modules</artifactId>
-         <version>${project.version}</version>
          <type>zip</type>
       </dependency>
 
@@ -267,6 +265,8 @@
                      <target>
                         <ant antfile="package.xml" inheritRefs="true">
                            <property name="infinispan.brand.version" value="${infinispan.brand.version}"/>
+                           <property name="infinispan.brand.prefix" value="${infinispan.brand.prefix}"/>
+                           <property name="infinispan.brand.name" value="${infinispan.brand.name}"/>
                         </ant>
                      </target>
                   </configuration>
@@ -320,7 +320,7 @@
                <dependency>
                   <groupId>org.infinispan</groupId>
                   <artifactId>infinispan-tools</artifactId>
-                  <version>${project.version}</version>
+                  <version>${version.infinispan}</version>
                </dependency>
             </dependencies>
          </plugin>
