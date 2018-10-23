@@ -46,7 +46,7 @@ public class BooleShannonExpansionTest {
    /**
     * @param queryString     the input query to parse and expand
     * @param expectedExprStr the expected 'toString()' of the output AST
-    * @param expectedQuery   the expected equivalent JPA of the AST
+    * @param expectedQuery   the expected equivalent Ickle query string of the AST
     */
    private void assertExpectedTree(String queryString, String expectedExprStr, String expectedQuery) {
       IckleParsingResult<Class<?>> parsingResult = IckleParser.parse(queryString, propertyHelper);
@@ -65,14 +65,14 @@ public class BooleShannonExpansionTest {
    }
 
    @Test
-   public void testNothingToExpand() throws Exception {
+   public void testNothingToExpand() {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person",
             null,
             "FROM org.infinispan.objectfilter.test.model.Person");
    }
 
    @Test
-   public void testExpansionNotNeeded() throws Exception {
+   public void testExpansionNotNeeded() {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
                   "p.surname = 'Adrian' or p.name = 'Nistor'",
             "OR(EQUAL(PROP(surname), CONST(\"Adrian\")), EQUAL(PROP(name), CONST(\"Nistor\")))",
@@ -80,7 +80,7 @@ public class BooleShannonExpansionTest {
    }
 
    @Test
-   public void testExpansionNotPossible() throws Exception {
+   public void testExpansionNotPossible() {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
                   "p.license = 'A' or p.name = 'Nistor'",
             "CONST_TRUE",
@@ -88,7 +88,7 @@ public class BooleShannonExpansionTest {
    }
 
    @Test
-   public void testExpansionNotPossible2() throws Exception {
+   public void testExpansionNotPossible2() {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
                   "p.name = 'A' and p.name > 'A'",
             "CONST_FALSE",
@@ -96,7 +96,7 @@ public class BooleShannonExpansionTest {
    }
 
    @Test
-   public void testExpansionPossible() throws Exception {
+   public void testExpansionPossible() {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
                   "p.phoneNumbers.number != '1234' and p.surname = 'Adrian' or p.name = 'Nistor'",
             "OR(EQUAL(PROP(surname), CONST(\"Adrian\")), EQUAL(PROP(name), CONST(\"Nistor\")))",
@@ -104,7 +104,7 @@ public class BooleShannonExpansionTest {
    }
 
    @Test
-   public void testExpansionTooBig() throws Exception {
+   public void testExpansionTooBig() {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
                   "p.phoneNumbers.number != '1234' and p.surname = 'Adrian' or p.name = 'Nistor' and license = 'PPL'",
             "CONST_TRUE",
