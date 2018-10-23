@@ -3,6 +3,7 @@ package org.infinispan.objectfilter.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -67,7 +68,7 @@ public abstract class AbstractMatcherTest {
 
    protected abstract Matcher createMatcher();
 
-   protected boolean match(String queryString, Object obj) throws Exception {
+   protected boolean match(String queryString, Object obj) {
       Matcher matcher = createMatcher();
 
       int[] matchCount = {0};
@@ -77,7 +78,7 @@ public abstract class AbstractMatcherTest {
       return matchCount[0] == 1;
    }
 
-   protected boolean match(Query query, Object obj) throws Exception {
+   protected boolean match(Query query, Object obj) {
       Matcher matcher = createMatcher();
 
       int[] matchCount = {0};
@@ -379,7 +380,7 @@ public abstract class AbstractMatcherTest {
       assertEquals(1, matchCount[0]);
 
       ObjectFilter.FilterResult result = objectFilter.filter(person);
-      assertTrue(result.getInstance() == person);
+      assertSame(person, result.getInstance());
 
       assertEquals(1, matchCount[0]); // check that the object filter did not also mistakenly trigger a match in the parent matcher
    }
@@ -395,7 +396,7 @@ public abstract class AbstractMatcherTest {
 
       ObjectFilter.FilterResult result = objectFilter.filter(person);
       assertNotNull(result);
-      assertTrue(result.getInstance() == person);
+      assertSame(person, result.getInstance());
    }
 
    @Test
@@ -416,7 +417,7 @@ public abstract class AbstractMatcherTest {
 
       ObjectFilter.FilterResult result = objectFilter.filter(person);
       assertNotNull(result);
-      assertTrue(result.getInstance() == person);
+      assertSame(person, result.getInstance());
    }
 
    @Test
@@ -436,7 +437,7 @@ public abstract class AbstractMatcherTest {
 
       ObjectFilter.FilterResult result = objectFilter.filter(person);
       assertNotNull(result);
-      assertTrue(result.getInstance() == person);
+      assertSame(person, result.getInstance());
    }
 
    @Test
@@ -455,7 +456,7 @@ public abstract class AbstractMatcherTest {
 
       ObjectFilter.FilterResult result = objectFilter.filter(person);
       assertNotNull(result);
-      assertTrue(result.getInstance() == person);
+      assertSame(person, result.getInstance());
 
       matcher.match(null, null, person);
       assertTrue(b[0]);
@@ -475,7 +476,7 @@ public abstract class AbstractMatcherTest {
 
       ObjectFilter.FilterResult result = objectFilter.filter(person);
       assertNotNull(result);
-      assertTrue(result.getInstance() == person);
+      assertSame(person, result.getInstance());
    }
 
    @Test
@@ -695,7 +696,7 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
-   public void testProjectionOnEmbeddedEntity() throws Exception {
+   public void testProjectionOnEmbeddedEntity() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("ISPN028503");
 
@@ -735,7 +736,7 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
-   public void testDisallowGroupingAndAggregations() throws Exception {
+   public void testDisallowGroupingAndAggregations() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("Filters cannot use grouping or aggregations");
 
