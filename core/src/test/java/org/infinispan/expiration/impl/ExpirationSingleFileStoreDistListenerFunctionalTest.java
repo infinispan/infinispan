@@ -12,12 +12,27 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "expiration.impl.ExpirationSingleFileStoreDistListenerFunctionalTest")
 public class ExpirationSingleFileStoreDistListenerFunctionalTest extends ExpirationStoreListenerFunctionalTest {
    private EmbeddedCacheManager extraManager;
    private Cache<Object, Object> extraCache;
+
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            // Test is for single file store with a listener in a dist cache and we don't care about memory storage types
+            new ExpirationSingleFileStoreDistListenerFunctionalTest(),
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return null;
+   }
 
    @Override
    protected void configure(ConfigurationBuilder config) {

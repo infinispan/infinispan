@@ -180,7 +180,18 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          metadataLength = MEMORY.getInt(entryAddress, headerOffset);
          headerOffset += 4;
       } else {
-         metadataLength = 0;
+         switch (type) {
+            case MORTAL:
+            case TRANSIENT:
+               metadataLength = 16;
+               break;
+            case TRANSIENT_MORTAL:
+               metadataLength = 32;
+               break;
+            default:
+               metadataLength = 0;
+               break;
+         }
       }
 
       int valueLength = MEMORY.getInt(entryAddress, headerOffset);

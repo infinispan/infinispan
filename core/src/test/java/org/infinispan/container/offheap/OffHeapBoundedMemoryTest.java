@@ -3,6 +3,8 @@ package org.infinispan.container.offheap;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -85,6 +87,59 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
       AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
 
       cache.put(1, 2, new EmbeddedMetadata.Builder().version(new NumericVersion(23)).build());
+
+      OffHeapMemoryAllocator allocator = cache.getComponentRegistry().getComponent(
+            OffHeapMemoryAllocator.class);
+      BoundedOffHeapDataContainer container = (BoundedOffHeapDataContainer) getContainer(cache);
+      assertEquals(allocator.getAllocatedAmount(), container.currentSize);
+
+      cache.clear();
+
+      assertEquals(allocator.getAllocatedAmount(), container.currentSize);
+   }
+
+   public void testAllocatedAmountEqualWithExpiration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.memory()
+            .size(MemoryUnit.MEGABYTES.toBytes(20))
+            .evictionType(EvictionType.MEMORY)
+            .storageType(StorageType.OFF_HEAP);
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
+      AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
+
+      cache.put("lifespan", "value", 1, TimeUnit.MINUTES);
+      cache.put("both", "value", 1, TimeUnit.MINUTES, 1, TimeUnit.MINUTES);
+      cache.put("maxidle", "value", -1, TimeUnit.MINUTES, 1, TimeUnit.MINUTES);
+
+      OffHeapMemoryAllocator allocator = cache.getComponentRegistry().getComponent(
+            OffHeapMemoryAllocator.class);
+      BoundedOffHeapDataContainer container = (BoundedOffHeapDataContainer) getContainer(cache);
+      assertEquals(allocator.getAllocatedAmount(), container.currentSize);
+
+      cache.clear();
+
+      assertEquals(allocator.getAllocatedAmount(), container.currentSize);
+   }
+
+   public void testAllocatedAmountEqualWithVersionAndExpiration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.memory()
+            .size(MemoryUnit.MEGABYTES.toBytes(20))
+            .evictionType(EvictionType.MEMORY)
+            .storageType(StorageType.OFF_HEAP);
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
+      AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
+
+      cache.put("lifespan", 2, new EmbeddedMetadata.Builder()
+            .lifespan(1, TimeUnit.MINUTES)
+            .version(new NumericVersion(23)).build());
+      cache.put("both", 2, new EmbeddedMetadata.Builder()
+            .lifespan(1, TimeUnit.MINUTES)
+            .maxIdle(1, TimeUnit.MINUTES)
+            .version(new NumericVersion(23)).build());
+      cache.put("maxidle", 2, new EmbeddedMetadata.Builder()
+            .maxIdle(1, TimeUnit.MINUTES)
+            .version(new NumericVersion(23)).build());
 
       OffHeapMemoryAllocator allocator = cache.getComponentRegistry().getComponent(
             OffHeapMemoryAllocator.class);
