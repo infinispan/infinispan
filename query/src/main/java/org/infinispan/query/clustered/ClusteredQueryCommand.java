@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,11 +19,14 @@ import org.infinispan.util.ByteString;
 
 /**
  * Encapsulates all rpc calls for distributed queries actions.
+ * <p>
+ * This class is public so it can be used by other internal Infinispan packages but should not be considered part of a
+ * public API.
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
-public final class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableCommand, CustomQueryCommand {
+public final class ClusteredQueryCommand extends BaseRpcCommand implements CustomQueryCommand {
 
    public static final byte COMMAND_ID = ModuleCommandIds.CLUSTERED_QUERY;
 
