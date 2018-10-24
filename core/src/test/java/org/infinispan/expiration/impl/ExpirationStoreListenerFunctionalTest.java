@@ -14,12 +14,27 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "expiration.impl.ExpirationStoreListenerFunctionalTest")
 public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFunctionalTest {
    protected ExpiredCacheListener listener = new ExpiredCacheListener();
    protected ExpirationManager manager;
+
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            // Test is for dummy store with a listener and we don't care about memory storage types
+            new ExpirationStoreListenerFunctionalTest(),
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return null;
+   }
 
    @Override
    protected void afterCacheCreated(EmbeddedCacheManager cm) {
