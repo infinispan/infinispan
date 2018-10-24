@@ -29,6 +29,9 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 /**
+ * A remote listener over a slow channel that requires the initial state can lead to OOME in the server.
+ * See https://issues.jboss.org/browse/ISPN-6005.
+ *
  * @author anistor@redhat.com
  * @since 8.2
  */
@@ -36,11 +39,11 @@ import org.testng.annotations.Test;
 public class ClientEventsOOMTest extends MultiHotRodServersTest {
 
    private static final int NUM_ENTRIES = Integer.getInteger("client.stress.num_entries", 100);
-   private static final long SLEEP_TIME = Long.getLong("client.stress.sleep_time", 10); // ms
+   private static final long SLEEP_TIME_MS = Long.getLong("client.stress.sleep_time", 10); // ms
 
    private static final int NUM_NODES = 2;
 
-   private static BufferPoolMXBean DIRECT_POOL = getDirectMemoryPool();
+   private static final BufferPoolMXBean DIRECT_POOL = getDirectMemoryPool();
 
    private RemoteCache<Integer, byte[]> remoteCache;
 
@@ -80,19 +83,19 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
          }
          log.debugf("ADDED %d BABY GODZILLAS\n", NUM_ENTRIES);
 
-         log.debugf("ADDING LISTENER!");
+         log.debug("ADDING LISTENER!");
          CountDownLatch latch = new CountDownLatch(1);
          ClientEntryListener listener = new ClientEntryListener(latch);
          logDirectMemory(log);
          remoteCache.addClientListener(listener);  // the world ends here
-         log.debugf("ADDED LISTENER");
+         log.debug("ADDED LISTENER");
          logDirectMemory(log);
 
          latch.await(1, TimeUnit.MINUTES);
 
          remoteCache.removeClientListener(listener);
          assertEquals(NUM_ENTRIES, listener.eventCount);
-      } catch(Throwable t) {
+      } catch (Throwable t) {
          logDirectMemory(log);
          log.debug("Exception reported", t);
          throw t;
@@ -130,7 +133,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
       int unit = si ? 1000 : 1024;
       if (bytes < unit) return bytes + " B";
       int exp = (int) (Math.log(bytes) / Math.log(unit));
-      String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
+      String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
       return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
    }
 
@@ -153,7 +156,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
          logDirectMemory(log);
          if (eventCount == NUM_ENTRIES) latch.countDown();
          try {
-            Thread.sleep(SLEEP_TIME);
+            Thread.sleep(SLEEP_TIME_MS);
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
          }
@@ -164,7 +167,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    private static class CustomConverterFactory implements CacheEventConverterFactory {
       @Override
       public <K, V, C> CacheEventConverter<K, V, C> getConverter(Object[] params) {
-         return new CustomConverter<K, V, C>();
+         return new CustomConverter<>();
       }
 
       static class CustomConverter<K, V, C> implements CacheEventConverter<K, V, C>, Serializable, ExternalPojo {
