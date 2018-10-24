@@ -41,7 +41,7 @@ public class BlockingBundler implements Bundler, Runnable {
 
    private Destination multicasts;
    private Map<Address, Destination> unicasts;
-   private volatile boolean shouldTrySend;
+   private volatile boolean blockBundlerThread;
 
    private Thread bundlerThread;
    private volatile boolean running;
@@ -113,24 +113,27 @@ public class BlockingBundler implements Bundler, Runnable {
    @Override
    public void run() {
       while (running) {
-         runIteration();
-      }
-   }
-
-   private void runIteration() {
-      shouldTrySend = false;
-      boolean sent = sendQueued();
-
-      if (!sent) {
-         bundlerLock.lock();
-         try {
-            while (!shouldTrySend) {
-               bundlerCondition.await();
+         boolean sent = sendQueued();
+         if (sent) {
+            // Run at least one more iteration before blocking
+            blockBundlerThread = false;
+         } else {
+            bundlerLock.lock();
+            try {
+               if (!blockBundlerThread) {
+                  // We didn't send any message, block after the next iteration
+                  blockBundlerThread = true;
+               } else {
+                  // Previous 2 iterations didn't send any message, block now
+                  while (blockBundlerThread) {
+                     bundlerCondition.await();
+                  }
+               }
+            } catch (InterruptedException e) {
+               assert !running;
+            } finally {
+               bundlerLock.unlock();
             }
-         } catch (InterruptedException e) {
-            assert !running;
-         } finally {
-            bundlerLock.unlock();
          }
       }
    }
@@ -162,13 +165,13 @@ public class BlockingBundler implements Bundler, Runnable {
 
 
    private void signalBundlerThread() {
-      if (shouldTrySend)
+      if (!blockBundlerThread)
          return;
 
       bundlerLock.lock();
       try {
-         shouldTrySend = true;
-         bundlerCondition.signal();
+         blockBundlerThread = false;
+         bundlerCondition.signalAll();
       } finally {
          bundlerLock.unlock();
       }
@@ -187,8 +190,8 @@ public class BlockingBundler implements Bundler, Runnable {
       int currentBundleSize;
       List<Message> currentBundle;
       ByteArrayDataOutputStream serializationBuffer;
-      volatile boolean canSend;
-      volatile boolean bufferInUse;
+      volatile boolean currentBundleEmpty = true;
+      volatile boolean bufferEmpty = true;
 
       Destination(Address destination) {
          this.destination = destination;
@@ -205,7 +208,10 @@ public class BlockingBundler implements Bundler, Runnable {
             assert size < maxBundleSize;
 
             // Wait for space in the current bundle or for the serialization buffer to be free
-            while (bufferInUse && currentBundleSize + size > maxBundleSize) {
+            // TODO This penalizes threads sending large messages, because they wake up and go back to the end of the queue
+            // We should implement a wait queue that can skip large messages when writing a bundle, but preserves
+            // their priority for the next bundle
+            while (!bufferEmpty && currentBundleSize + size > maxBundleSize) {
                // TODO Add a time limit and drop messages if waiting too long
                addCondition.await();
             }
@@ -218,46 +224,53 @@ public class BlockingBundler implements Bundler, Runnable {
 
             currentBundle.add(message);
             currentBundleSize += size;
-            if (!canSend) {
-               canSend = true;
+            if (currentBundleEmpty) {
+               currentBundleEmpty = false;
             }
-
-            signalBundlerThread();
          } finally {
             destinationLock.unlock();
          }
+
+         signalBundlerThread();
       }
 
       boolean trySendBundle() {
-         if (!canSend)
+         if (currentBundleEmpty)
             return false;
 
          try {
-            destinationLock.lock();
-            try {
-               if (!bufferInUse && canSend) {
+            if (bufferEmpty) {
+               destinationLock.lock();
+               try {
+                  // No other thread can empty the buffer or the current bundle
+                  assert bufferEmpty;
+                  assert !currentBundleEmpty;
+
                   // The bundle isn't full, so we have to serialize it on the bundler thread
                   // TODO Serialize the messages when they are added, and only serialize the header here
                   writeCurrentBundle();
+
+                  // Application threads could wait for room in the current bundle only if it's not empty
+                  if (!currentBundleEmpty) {
+                     addCondition.signalAll();
+                  }
+               } finally {
+                  destinationLock.unlock();
                }
-            } finally {
-               destinationLock.unlock();
             }
 
-            // There's only one bundler thread, so we know there's something in the buffer
-            assert bufferInUse;
             sendBundle(serializationBuffer, destination);
 
             destinationLock.lock();
             try {
                serializationBuffer.position(0);
-               bufferInUse = false;
-               if (currentBundleSize == 0) {
-                  canSend = false;
+               bufferEmpty = true;
+
+               // Even if we didn't serialize the current bundle, we made room for an application thread
+               // to serialize the current bundle itself and add its message
+               if (!currentBundleEmpty) {
+                  addCondition.signalAll();
                }
-               // Even if we didn't change the current bundle, the application thread might need to serialize
-               // the current bundle to make room for its message
-               addCondition.signalAll();
             } finally {
                destinationLock.unlock();
             }
@@ -283,7 +296,8 @@ public class BlockingBundler implements Bundler, Runnable {
          }
          currentBundle.clear();
          currentBundleSize = 0;
-         bufferInUse = true;
+         currentBundleEmpty = true;
+         bufferEmpty = false;
       }
    }
 }
