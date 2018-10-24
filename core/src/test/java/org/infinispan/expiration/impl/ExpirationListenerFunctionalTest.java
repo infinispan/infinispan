@@ -4,10 +4,12 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "expiration.impl.ExpirationListenerFunctionalTest")
@@ -15,6 +17,16 @@ public class ExpirationListenerFunctionalTest extends ExpirationFunctionalTest {
 
    protected ExpiredCacheListener listener = new ExpiredCacheListener();
    protected ExpirationManager manager;
+
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            new ExpirationListenerFunctionalTest().withStorage(StorageType.BINARY),
+            new ExpirationListenerFunctionalTest().withStorage(StorageType.OBJECT),
+            new ExpirationListenerFunctionalTest().withStorage(StorageType.OFF_HEAP)
+      };
+   }
 
    @Override
    protected void afterCacheCreated(EmbeddedCacheManager cm) {
