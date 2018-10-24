@@ -44,6 +44,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateConsumerImpl;
@@ -162,6 +163,8 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             try {
                svm.startKeyTransfer(addedSegments);
                requestKeyTransfer(addedSegments);
+            } catch (SuspectException e) {
+               log.tracef("Key transfer source %s was suspected, another source will be selected", e.getSuspect());
             } catch (Throwable t) {
                log.failedToRequestSegments(cacheName, null, addedSegments, t);
             }
