@@ -16,6 +16,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "expiration.impl.ExpirationFunctionalTest")
@@ -25,6 +26,7 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
    protected ControlledTimeService timeService = new ControlledTimeService();
    protected StorageType storage;
 
+   @Factory
    public Object[] factory() {
       return new Object[]{
             new ExpirationFunctionalTest().withStorage(StorageType.BINARY),
