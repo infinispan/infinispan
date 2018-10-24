@@ -31,7 +31,7 @@ public class IckleContinuousQueryCacheEventFilterConverter<K, V, C> extends Abst
       implements IndexedFilter<K, V, C> {
 
    /**
-    * The JPA query to execute.
+    * The Ickle query to execute.
     */
    protected final String queryString;
 

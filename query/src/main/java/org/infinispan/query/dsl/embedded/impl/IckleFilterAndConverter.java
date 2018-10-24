@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -23,12 +24,12 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 
 /**
  * A filter implementation that is both a KeyValueFilter and a converter. The implementation relies on the Matcher and a
- * JPA query string.
+ * Ickle query string.
  *
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> {
+public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> implements Function<Map.Entry<K, V>, ObjectFilter.FilterResult> {
 
    /**
     * Optional cache for query objects.
@@ -36,7 +37,7 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
    private QueryCache queryCache;
 
    /**
-    * The JPA query to execute.
+    * The Ickle query to execute.
     */
    private final String queryString;
 
@@ -109,8 +110,13 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
    }
 
    @Override
+   public ObjectFilter.FilterResult apply(Map.Entry<K, V> cacheEntry) {
+      return filterAndConvert(cacheEntry.getKey(), cacheEntry.getValue(), null);
+   }
+
+   @Override
    public String toString() {
-      return "IckleFilterAndConverter{queryString='" + queryString + "'}";
+      return getClass().getSimpleName() + "{queryString='" + queryString + "'}";
    }
 
    public static final class IckleFilterAndConverterExternalizer extends AbstractExternalizer<IckleFilterAndConverter> {
