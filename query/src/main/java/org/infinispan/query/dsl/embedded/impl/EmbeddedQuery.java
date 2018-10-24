@@ -3,24 +3,26 @@ package org.infinispan.query.dsl.embedded.impl;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Objects;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.filter.CacheFilters;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.util.function.SerializablePredicate;
 
 
 /**
  * Non-indexed embedded-mode query.
  *
- * @author anistor@redhat,com
+ * @author anistor@redhat.com
  * @since 7.0
  */
 final class EmbeddedQuery extends BaseEmbeddedQuery {
+
+   private static final SerializablePredicate<ObjectFilter.FilterResult> NON_NULL_PREDICATE = Objects::nonNull;
 
    private final QueryEngine queryEngine;
 
@@ -39,12 +41,12 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
       filter = null;
    }
 
-   private IckleFilterAndConverter createFilter() {
-      // filter is created first time only
+   private IckleFilterAndConverter<?, ?> createFilter() {
+      // filter is created first time only, or again if reset was called meanwhile
       if (filter == null) {
          filter = queryEngine.createAndWireFilter(queryString, namedParameters);
 
-         // force early validation!
+         // force early query validation, at creation time rather than deferring to execution time
          filter.getObjectFilter();
       }
       return filter;
@@ -57,8 +59,10 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
 
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
-      CacheStream<CacheEntry<?, ObjectFilter.FilterResult>> stream = (CacheStream<CacheEntry<?, ObjectFilter.FilterResult>>) CacheFilters.filterAndConvert(cache.cacheEntrySet().stream(), createFilter());
-      return Closeables.iterator(stream.map(CacheEntry::getValue));
+      IckleFilterAndConverter<Object, Object> ickleFilter = (IckleFilterAndConverter<Object, Object>) createFilter();
+      CacheStream<Map.Entry<Object, Object>> entryStream = ((AdvancedCache<Object, Object>) cache).entrySet().stream();
+      CacheStream<ObjectFilter.FilterResult> resultStream = entryStream.map(ickleFilter).filter(NON_NULL_PREDICATE);
+      return Closeables.iterator(resultStream);
    }
 
    @Override
