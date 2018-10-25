@@ -4,7 +4,7 @@ The {brandname} Server distribution contains a server module that implements the
 Please refer to {brandname} Server's link:../server_guide/server_guide.html#memcached[memcached server guide] for instructions on how to configure and run a Memcached server.
 
 [[memcached_client_encoding]]
-==== Client encoding
+==== Client Encoding
 
 The memcached text protocol assumes data values read and written by clients are raw bytes. The support for type negotiation will come
 with link:https://github.com/memcached/memcached/wiki/BinaryProtocolRevamped#data-types[the memcached binary protocol] implementation, as part

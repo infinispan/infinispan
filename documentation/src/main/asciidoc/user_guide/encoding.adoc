@@ -247,7 +247,7 @@ cfg.encoding().value().mediaType("application/json");
 ----
 
 [[mediatype_override]]
-===== Overriding the MediaType programmatically
+===== Overriding the MediaType Programmatically
 
 It's possible to decorate the Cache with a different MediaType, allowing cache operations to be executed sending and receiving different data formats.
 
