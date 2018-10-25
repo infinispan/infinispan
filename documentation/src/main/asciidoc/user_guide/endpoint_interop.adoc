@@ -1,54 +1,77 @@
 [[endpoint_interop]]
-== Embedded/Remote Interoperability
+== Protocol Interoperability
 
-{brandname} offers the possibility to store and retrieve data in a local embedded way, and also remotely thanks to multiple endpoints offered.
+Clients exchange data with {brandname} through endpoints such as REST or Hot Rod.
 
-When configuring the cache with the link:#encoding_media_type[MediaType] of the data to be stored, users can read and write data in multiple formats taking advantage of the internal support for data conversion.
+Each endpoint uses a different protocol so that clients can read and write data in a suitable format. Because {brandname} can interoperate with multiple clients at the same time, it must convert data between client formats and the storage formats.
 
-Depending on the level of interoperability required of a single cache being accessed from multiple endpoints by different clients, a specific storage format must be configured, clients may need to use different strategies when interacting with cache or even custom classes may be required to be deployed in the server.
+To configure {brandname} endpoint interoperability, you should define the link:#encoding_media_type[MediaType] that sets the format for data stored in the cache.
 
+=== Considerations with Media Types and Endpoint Interoperability
 
-=== Planning for interoperability
+Configuring {brandname} to store data with a specific media type affects client interoperability.
 
-In general REST clients are better suited to deal with text formats such as JSON, XML or plain text instead of binary, although the REST endpoint does support link:#rest_key_content_type[representing binary values in hexadecimal or base64 format].
+Although REST clients do support sending and receiving link:#rest_key_content_type[encoded binary data], they are better at handling text formats such as JSON, XML, or plain text.
 
-Memcached text clients, due to how the protocol is defined, expect String based keys and byte[] values, and can't negotiate the data types
-with the server, so they have less flexibility when it comes to data formats than the other clients.
+Memcached text clients can handle String-based keys and byte[] values but cannot negotiate data types with the server. These clients do not offer much flexibility when handling data formats because of the protocol definition.
 
-Java Hot Rod clients usually deal with objects representing the entities stored in the cache, and through the marshalling operation, will have those entities mapped to/from bytes to be sent across the wire.
+Java Hot Rod clients are suitable for handling Java objects that represent entities that reside in the cache. Java Hot Rod clients use marshalling operations to serialize and deserialize those objects into byte arrays.
 
-Similarly, non-java Hot Rod clients (C++/C#/Javascript) are also better suited to deal with native objects in those languages. The caveat is, if they must interoperate with Java clients, a platform independent format must be chosen.
+Similarly, non-Java Hot Rod clients, such as the C++, C#, and Javascript clients, are suitable for handling objects in the respective languages. However, non-Java Hot Rod clients can interoperate with Java Hot Rod clients using platform independent data formats.
 
+=== REST, Hot Rod, and Memcached Interoperability with Text-Based Storage
 
-=== Basic Interoperability between REST/Hot Rod/Memcached using text
+You can configure key and values with a text-based storage format.
 
-If querying/indexing is not required, and the cache will store only text, it's enough to configure the cache keys and values MediaType with `text/plain; charset=UTF-8` (or any other charset) or another text based format such as JSON and XML (optionally carrying a custom charset).
+For example, specify `text/plain; charset=UTF-8`, or any other character set, to set plain text as the media type. You can also specify a media type for other text-based formats such as JSON (`application/json`) or XML (`application/xml`) with an optional character set.
 
-The Hot Rod client must be configured with a `org.infinispan.commons.marshall.StringMarshaller`, and the REST clients must send the correct headers when writing:
+The following example configures the cache to store entries with the `text/plain; charset=UTF-8` media type:
 
- Content-Type: text/plain; charset=UTF-8
+[source,xml,options="nowrap"]
+----
+<cache>
+   <encoding>
+      <key media-type="text/plain; charset=UTF-8"/>
+      <value media-type="text/plain; charset=UTF-8"/>
+   </encoding>
+</cache>
+----
 
-and reading:
+To handle the exchange of data in a text-based format, you must configure Hot Rod clients with the `org.infinispan.commons.marshall.StringMarshaller` marshaller.
 
- Accept: text/plain; charset=UTF-8 (or any other charset)
+REST clients must also send the correct headers when writing and reading from the cache, as follows:
 
-Memcached clients will work without any specific configuration.
+* Write: `Content-Type: text/plain; charset=UTF-8`
+* Read: `Accept: text/plain; charset=UTF-8`
 
-In summary:
+Memcached clients do not require any configuration to handle text-based formats.
 
+[%header,cols=2*]
 |===
-|REST clients|Java Hot Rod clients|Memcached clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
-|[green]*Y*|[green]*Y* |[green]*Y*|[red]*N*|[red]*N*|[red]*N* |[green]*Y*
+2+| This configuration is compatible with...
+| REST clients
+| Yes
+| Java Hot Rod clients
+| Yes
+| Memcached clients
+| Yes
+| Non-Java Hot Rod clients
+| No
+| Querying and Indexing
+| No
+| Custom Java objects
+| No
 |===
 
+=== REST, Hot Rod, and Memcached Interoperability with Custom Java Objects
 
-=== Interoperability between REST/Hot Rod/Memcached using custom Java objects
+If you store entries in the cache as marshalled, custom Java objects, you should configure the cache with the MediaType of the marshalled storage.
 
-If the storage is done using a marshalled, custom java object (this is the default behaviour when using the Java Hot Rod client) and no query is required, it's necessary to configure the cache with the MediaType of the marshalled storage.
+Java Hot Rod clients use the JBoss marshalling storage format as the default to store entries in the cache as custom Java objects.
 
-By default, the Java Hot Rod client uses JBoss marshalling format to send data to the server and the entries get stored in this format. To configure the MediaType for keys and values when using the default marshaller in the Hot Rod client:
+The following example configures the cache to store entries with the `application/x-jboss-marshalling` media type:
 
-[source,xml]
+[source,xml,options=nowrap]
 ----
 <distributed-cache name="my-cache">
    <encoding>
@@ -58,31 +81,52 @@ By default, the Java Hot Rod client uses JBoss marshalling format to send data t
 </distributed-cache>
 ----
 
-If the protostream marshaller is used, the media type should be `application/x-protostream`, and for the UTF8Marshaller, `text/plain` should be used.
+If you use the Protostream marshaller, configure the MediaType as `application/x-protostream`. For UTF8Marshaller, configure the MediaType as `text/plain`.
 
-TIP: When only Hot Rod clients are used to interact with a certain cache, it's not mandatory to configure the MediaType.
+[TIP]
+====
+If only Hot Rod clients interact with the cache, you do not need to configure the MediaType.
+====
 
-Since REST clients will probably deal with a text friendly format, it's recommended to use as keys `java.lang.String` or any primitive, otherwise they will need to handle byte[] as the key using one of the link:#rest_key_content_type[supported binary encoding] (Base64 or Hex).
+Because REST clients are most suitable for handling text formats, you should use primitives such as `java.lang.String` for keys. Otherwise, REST clients must handle keys as `bytes[]` using a link:#rest_key_content_type[supported binary encoding].
 
-The values can be read from REST in XML or JSON format, but the link:#entities_deploy[classes must be available in the server].
+REST clients can read values for cache entries in XML or JSON format. However, the classes must be available in the server.
 
-To read and write data from memcached, the keys must be Strings (it will be stored as a marshalled java.lang.String) and the value by default will be returned as it is stored (marshalled objects).
-Some Java Memcached clients allow to plug-in data transformers to marshall and umarshall objects, or alternatively the
-memcached server can be configured to encode the response in a different format, potentially a language neutral format such as JSON, allowing non-java clients to interact even if the cache storage is Java specific. More details in link:#memcached_client_encoding[Configuring memcached client encoding].
+To read and write data from Memcached clients, you must use `java.lang.String` for keys. Values are stored and returned as marshalled objects.
 
+Some Java Memcached clients allow data transformers that marshall and unmarshall objects. You can also configure the Memcached server module to encode responses in different formats, such as 'JSON' which is language neutral. This allows non-Java clients to interact with the data even if the storage format for the cache is Java-specific. See link:#memcached_client_encoding[Client Encoding] details for the {brandname} Memcached server module.
+
+[NOTE]
+====
+Storing Java objects in the cache requires you to deploy entity classes to {ProductName}. See link:#entities_deploy[Deploying Entity Classes].
+====
+
+[%header,cols=2*]
 |===
-|REST clients|Java Hot Rod clients|Memcached clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
-|[green]*Y*|[green]*Y*|[green]*Y*|[red]*N*|[red]*N*|[green]*Y* |[red]*N*
+2+| This configuration is compatible with...
+| REST clients
+| Yes
+| Java Hot Rod clients
+| Yes
+| Memcached clients
+| Yes
+| Non-Java Hot Rod clients
+| No
+| Querying and Indexing
+| No
+| Custom Java objects
+| Yes
 |===
 
+=== Java and Non-Java Client Interoperability with Protobuf
 
-=== Interoperability between Java and non-Java clients
+Storing data in the cache as Protobuf encoded entries provides a platform independent configuration that enables Java and Non-Java clients to access and query the cache from any endpoint.
 
-When dealing with clients in java and non-java, from both REST and Hot Rod endpoints, the recommended configuration is to store data as protobuf. Protobuf storage also allows data to be queried from all endpoints/clients.
+If indexing is configured for the cache, {brandname} automatically stores keys and values with the `application/x-protostream` media type.
 
-If a cache is indexed, {brandname} will automatically configure `application/x-protostream` storage for both keys and values, otherwise keys and values should be configured with:
+If indexing is not configured for the cache, you can configure it to store entries with the `application/x-protostream` media type as follows:
 
-[source,xml]
+[source,xml,options=nowrap]
 ----
 <distributed-cache name="my-cache">
    <encoding>
@@ -92,39 +136,62 @@ If a cache is indexed, {brandname} will automatically configure `application/x-p
 </distributed-cache>
 ----
 
-TIP: The `application/x-protostream` format is the same as protobuf. A protobuf schema must be registered in the server describing the entities and extra marshallers need to be provided for Java and non-Java clients. More details in link:#storing_protobuf[storing protobuf entities].
+{brandname} converts between `application/x-protostream` and `application/json`, which allows REST clients to read and write JSON formatted data. However REST clients must send the correct headers, as follows:
 
-Both Java and non-Java Hot Rod clients should interop well since protobuf is a platform neutral format and REST clients can deal with JSON data only, due to the protobuf/JSON data conversion supported by {brandname}. For an example of how REST clients can read/write and query protobuf data, see https://blog.infinispan.org/2018/02/restful-queries-coming-to-infinispan-92.html
+Read Header::
+[source,http,options=nowrap]
+----
+Read: Accept: application/json
+----
 
+Write Header::
+[source,http,options=nowrap]
+----
+Write: Content-Type: application/json
+----
+
+[IMPORTANT]
+====
+The `application/x-protostream` media type uses Protobuf encoding, which requires you to register a Protocol Buffers schema definition that describes the entities and marshallers that the clients use. See link:#storing_protobuf[Storing Protobuf Entities].
+====
+
+[%header,cols=2*]
 |===
-|REST clients|Java Hot Rod clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
-|[green]*Y*|[green]*Y*|[green]*Y*|[green]*Y*|[green]*Y* |[green]*Y*
+2+| This configuration is compatible with...
+| REST clients
+| Yes
+| Java Hot Rod clients
+| Yes
+| Non-Java Hot Rod clients
+| Yes
+| Querying and Indexing
+| Yes
+| Custom Java objects
+| Yes
 |===
 
 [[embedded_remote_interop]]
-=== Interoperability between deployed code and remote endpoints
+=== Custom Code Interoperability
 
-{brandname} allows deployment of custom code such as scripts, tasks, listeners, filters, converters and merge policies. Those artifacts, when
- reading and writing data from the cache that is written by remote clients, can be faced with a binary storage when expecting do deal with custom objects instead.
+You can deploy custom code with {brandname}. For example, you can deploy scripts, tasks, listeners, converters, and merge policies. Because your custom code can access data directly in the cache, it must interoperate with clients that access data in the cache through different endpoints.
 
-There are two strategies of handling this scenario: either converting data on demand or storing data as plain objects.
+For example, you might create a remote task to handle custom objects stored in the cache while other clients store data in binary format.
 
-==== On demand conversion
+To handle interoperability with custom code you can either convert data on demand or store data as Plain Old Java Objects (POJOs).
 
-If the data is stored in a binary format (protobuf, JBoss marshalled, etc), the deployed code can link:#mediatype_override[convert the data on-demand].
+==== Converting Data On Demand
 
-The advantage of this approach is that storage can still be binary, that is optimal for remote clients.
+If the cache is configured to store data in a binary format such as `application/x-protostream` or `application/x-jboss-marshalling`, you can configure your deployed code to perform cache operations using Java objects as the media type. See link:#mediatype_override[Overriding the MediaType Programmatically].
 
-Still, entities classes must be available in the server to allow such conversion.
+This approach allows remote clients to use a binary format for storing cache entries, which is optimal. However, you must make entity classes available to the server so that it can convert between binary format and Java objects.
 
-In addition, if the binary storage is protobuf, link:#protostream_deployment[deployment of extra protostream marshallers are required].
+Additionally, if the cache uses Protobuf (`application/x-protostream`) as the binary format, you must deploy protostream marshallers so that {ProductName} can unmarshall data from your custom code. See link:#protostream_deployment[Deploying Protostream Marshallers].
 
+==== Storing Data as POJOs
 
-==== Store data as POJOs
+Storing unmarshalled Java objects in the server is not recommended. Doing so requires {brandname} to serialize data when remote clients read from the cache and then deserialize data when remote clients write to the cache.
 
-Storing java objects in the server is not recommended, since it will cause all data sent by remote clients to be deserialized before storing, and serialized again during reads to be sent across the wire.
-
-With this limitation in mind, it's possible to store java objects in the server by configuring the cache with "application/x-java-object" for keys and values:
+The following example configures the cache to store entries with the `application/x-java-object` media type:
 
 [source,xml]
 ----
@@ -136,30 +203,53 @@ With this limitation in mind, it's possible to store java objects in the server 
 </distributed-cache>
 ----
 
-Hot Rod clients will need to use a marshaller that is supported by {brandname}, either JBoss marshaller or standard Java serialization, and the classes must be link:#entities_deploy[deployed in the server].
+Hot Rod clients must use a supported marshaller when data is stored as POJOs in the cache, either the JBoss marshaller or the default Java serialization mechanism. You must also deploy the classes must be deployed in the server.
 
-REST clients need to use a format that can be converted to/from java objects, currently JSON or XML.
+REST clients must use a storage format that {brandname} can convert to and from Java objects, currently JSON or XML.
 
-Memcached clients will need to send and receive a serialized version of the stored Pojo, by default it will be a JBoss marshalled payload, but
-by configuring the link:#memcached_client_encoding[client-encoding] in the appropriated memcached connector, it is possible to change the format so that memcached clients can use a platform neutral format such as JSON.
+[NOTE]
+====
+Storing Java objects in the cache requires you to deploy entity classes to {brandname}. See link:#entities_deploy[Deploying Entity Classes].
+====
 
-Querying and indexing will work provided that the entities are link:#query_library[annotated].
+Memcached clients must send and receive a serialized version of the stored POJO, which is a JBoss marshalled payload by default. However if you configure the link:#memcached_client_encoding[Client Encoding] in the appropriate Memcached connector, you change the storage format so that Memcached clients use a platform neutral format such as `JSON`.
 
+[%header,cols=2*]
 |===
-|REST clients|Java Hot Rod clients|Memcached clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
-|[green]*Y*|[green]*Y*|[green]*Y*|[green]*Y*|[red]*N*|[green]*Y* |[red]*N*|
+2+| This configuration is compatible with...
+| REST clients
+| Yes
+| Java Hot Rod clients
+| Yes
+| Non-Java Hot Rod clients
+| No
+| Querying and Indexing
+| Yes. However, querying and indexing works with POJOs only if the entities are link:#query_library[annotated].
+| Custom Java objects
+| Yes
 |===
 
 [[entities_deploy]]
-=== Deploying entities to the server
+=== Deploying Entity Classes
 
-In case deployment of entity classes are needed in the server, follow the steps:
+If you plan to store entries in the cache as custom Java objects or POJOs, you must deploy entity classes to {brandname}. Clients always exchange objects as `bytes[]`. The entity classes represent those custom objects so that {brandname} can serialize and deserialize them.
 
-* Create a jar with the entities and their dependencies
-* Copy the jar in the `deployments` folder of the server
-* In the cache manager configuration section, add a module configuration:
+To make entity classes available to the server, do the following:
 
-[source,xml]
+* Create a `JAR` file that contains the entities and dependencies.
+* Stop {brandname} if it is running.
++
+{brandname} loads entity classes during boot. You cannot make entity classes available to {brandname} if the server is running.
++
+ifdef::productized[]
+* Copy the `JAR` file to the *_$RHDG_HOME/standalone/deployments/_* directory.
+endif::productized[]
+ifndef::productized[]
+* Copy the `JAR` file to the *_$INFINISPAN_HOME/standalone/deployments/_* directory.
+endif::productized[]
+* Specify the `JAR` file as a module in the cache manager configuration, as in the following example:
+
+[source,xml,options=nowrap]
 ----
 <cache-container name="local" default-cache="default">
    <modules>
@@ -169,8 +259,8 @@ In case deployment of entity classes are needed in the server, follow the steps:
 </cache-container>
 ----
 
-WARNING: Entities must be visible to the server during startup!
+ifndef::productized[]
+=== Trying the Interoperability Demo
 
-=== Demos
-
-Please refer to https://github.com/infinispan-demos/endpoint-interop to try out the interoperability support using the {brandname} docker image.
+Try the demo for protocol interoperability using the {brandname} Docker image at: https://github.com/infinispan-demos/endpoint-interop
+endif::productized[]
