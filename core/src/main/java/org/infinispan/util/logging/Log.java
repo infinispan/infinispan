@@ -1824,9 +1824,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Grouping requires OBJECT storage type but was: %s", id = 534)
    CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(StorageType storageType);
 
-   @Message(value = "Store is configured as segmented, but data-segmentation feature is disabled", id = 535)
-   CacheConfigurationException storeSegmentedButSegmentationDisabled();
-
    @LogMessage(level = WARN)
    @Message(value = "Cache '%s' uses the deprecated compatibility mode configuration. See 'Embedded/Remote Interoperability' in the user guide for a replacement", id = 536)
    void warnCompatibilityDeprecated(String cacheName);

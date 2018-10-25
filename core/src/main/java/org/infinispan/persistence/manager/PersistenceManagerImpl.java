@@ -10,6 +10,7 @@ import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
 import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,12 +31,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
-import io.reactivex.Flowable;
-import io.reactivex.internal.functions.Functions;
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
@@ -99,6 +98,10 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
+import io.reactivex.internal.functions.Functions;
+import net.jcip.annotations.GuardedBy;
 
 public class PersistenceManagerImpl implements PersistenceManager {
 
@@ -879,7 +882,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
          final Object bareInstance;
          if (cfg.segmented()) {
             if (!features.isAvailable(DataContainerFactory.SEGMENTATION_FEATURE)) {
-               throw log.storeSegmentedButSegmentationDisabled();
+               throw org.infinispan.commons.logging.LogFactory.getLog(MethodHandles.lookup().lookupClass())
+                     .featureDisabled(DataContainerFactory.SEGMENTATION_FEATURE);
             }
             if (cfg instanceof AbstractSegmentedStoreConfiguration) {
                bareInstance = new ComposedSegmentedLoadWriteStore<>((AbstractSegmentedStoreConfiguration) cfg);

@@ -200,6 +200,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Could not register object with name: %s", id = 943)
    void couldNotRegisterObjectName(ObjectName objectName, @Cause InstanceAlreadyExistsException e);
 
+   @Message(value = "Feature %s is disabled!", id = 944)
+   CacheConfigurationException featureDisabled(String feature);
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)

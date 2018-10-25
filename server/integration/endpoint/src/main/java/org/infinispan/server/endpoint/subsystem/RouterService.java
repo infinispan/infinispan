@@ -20,10 +20,13 @@ package org.infinispan.server.endpoint.subsystem;
 
 import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
+import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Optional;
 
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Features;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.router.Router;
@@ -49,6 +52,8 @@ import org.jboss.msc.value.InjectedValue;
  * @author Sebastian Łaskawiec
  */
 class RouterService implements Service<Router> {
+
+    public static final String SINGLE_PORT_FEATURE = "single-port";
 
     static class HotRodRouting {
         private final InjectedValue<HotRodServer> hotRod = new InjectedValue<>();
@@ -120,6 +125,23 @@ class RouterService implements Service<Router> {
         return name.orElse(DEFAULT_NAME);
     }
 
+   /**
+    * Verify that the single port feature is enabled. Initializes features if the provided one is null, allowing for
+    * lazily initialized Features instance.
+    * @param features existing instance or null
+    * @return the features instance that was checked, always non null
+    * @throws StartException thrown if the single port feature was disabled
+    */
+    private Features checkSinglePortEnabled(Features features) throws StartException {
+        if (features == null) {
+            features = new Features(getClass().getClassLoader());
+        }
+        if (!features.isAvailable(SINGLE_PORT_FEATURE)) {
+            throw LogFactory.getLog(MethodHandles.lookup().lookupClass()).featureDisabled(SINGLE_PORT_FEATURE);
+        }
+        return features;
+    }
+
     @Override
     public synchronized void start(final StartContext context) throws StartException {
         ROOT_LOGGER.endpointStarting(name);
@@ -141,7 +163,10 @@ class RouterService implements Service<Router> {
                 configurationBuilder.rest().ip(restAddress.getAddress());
                 configurationBuilder.rest().port(restAddress.getPort());
             }
+            // Only initialize features if we have a valid feature configured - such as single port
+            Features features = null;
             if (singlePortAddress != null) {
+                features = checkSinglePortEnabled(features);
                 configurationBuilder.singlePort().ip(singlePortAddress.getAddress());
                 configurationBuilder.singlePort().port(singlePortAddress.getPort());
             }
@@ -182,6 +207,7 @@ class RouterService implements Service<Router> {
                     configurationBuilder.routing().add(new Route<>(singlePortRouteSource, destination));
                 }
                 if (singlePortSecurityRealm != null) {
+                    features = checkSinglePortEnabled(features);
                     configurationBuilder.singlePort().sslWithAlpn(singlePortSecurityRealm.getSSLContext());
                 }
             }
