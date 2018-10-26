@@ -97,6 +97,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    protected boolean isL1Enabled;
    protected boolean isReplicated;
+   protected boolean isWriteBehind;
 
    private final ReadOnlyManyHelper readOnlyManyHelper = new ReadOnlyManyHelper();
    private final InvocationSuccessFunction primaryReturnHandler = this::primaryReturnHandler;
@@ -111,11 +112,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       // Can't rely on the super injectConfiguration() to be called before our injectDependencies() method2
       isL1Enabled = cacheConfiguration.clustering().l1().enabled();
       isReplicated = cacheConfiguration.clustering().cacheMode().isReplicated();
+      isWriteBehind = cacheConfiguration.persistence().usingAsyncStore();
    }
 
    @Override
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
-      if (isReplicated) {
+      if (isReplicated && !isWriteBehind) {
          // Replicated size command has no reason to be distributed as we do is count entries, no processing
          // done upon these entries and the overhead of coordinating remote nodes and network calls is more expensive
          command.setFlagsBitSet(command.getFlagsBitSet() | FlagBitSets.CACHE_MODE_LOCAL);
