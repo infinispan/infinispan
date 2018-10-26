@@ -8,6 +8,8 @@ public interface ModelFactory {
 
    Account makeAccount();
 
+   Limits makeLimits();
+
    Class<?> getAccountImplClass();
 
    String getAccountTypeName();

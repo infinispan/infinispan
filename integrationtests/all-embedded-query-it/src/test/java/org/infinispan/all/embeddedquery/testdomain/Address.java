@@ -17,4 +17,8 @@ public interface Address {
    int getNumber();
 
    void setNumber(int number);
+
+   boolean isCommercial();
+
+   void setCommercial(boolean isCommercial);
 }

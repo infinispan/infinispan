@@ -212,7 +212,7 @@ public class UserHS extends UserBase {
             ", age=" + age +
             ", gender=" + gender +
             ", notes=" + notes +
-            ", creationDate=" + creationDate +
+            ", creationDate='" + creationDate + '\'' +
             ", passwordExpirationDate=" + passwordExpirationDate +
             '}';
    }

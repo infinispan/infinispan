@@ -71,7 +71,7 @@ public class EmbeddedUserMarshaller implements MessageMarshaller<UserHS> {
       writer.writeString("salutation", user.getSalutation());
       writer.writeCollection("addresses", user.getAddresses(), AddressHS.class);
       writer.writeInt("age", user.getAge());
-      writer.writeEnum("gender", user.getGender(), User.Gender.class);
+      writer.writeEnum("gender", user.getGender());
       writer.writeString("notes", user.getNotes());
       writer.writeInstant("creationDate", user.getCreationDate());
       writer.writeInstant("passwordExpirationDate", user.getPasswordExpirationDate());

@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.Limits;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
@@ -20,6 +21,11 @@ public class ModelFactoryPB implements ModelFactory {
    @Override
    public Account makeAccount() {
       return new AccountPB();
+   }
+
+   @Override
+   public Limits makeLimits() {
+      return new LimitsPB();
    }
 
    @Override

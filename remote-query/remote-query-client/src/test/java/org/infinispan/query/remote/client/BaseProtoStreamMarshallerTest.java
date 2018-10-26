@@ -5,10 +5,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.infinispan.commons.util.Util;
+import java.time.Instant;
+import java.util.Date;
+
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.config.Configuration;
 import org.junit.Test;
 
 /**
@@ -30,13 +31,13 @@ public class BaseProtoStreamMarshallerTest {
       roundtrip((byte) 0);
       roundtrip((short) 0);
       roundtrip(true);
-//      roundtrip(new Date(0));
-//      roundtrip(Instant.now());
-      roundtrip(Util.EMPTY_BYTE_ARRAY);
+      roundtrip(new Date(0));
+      roundtrip(Instant.now());
+      roundtrip(new byte[0]);
    }
 
    private void roundtrip(Object in) throws Exception {
-      BaseProtoStreamMarshaller marshaller = makeIstance();
+      BaseProtoStreamMarshaller marshaller = makeInstance();
 
       assertTrue(marshaller.isMarshallable(in));
 
@@ -58,10 +59,10 @@ public class BaseProtoStreamMarshallerTest {
    /**
     * BaseProtoStreamMarshaller is abstract. To test it we need to extend it and make it a concrete class.
     */
-   private BaseProtoStreamMarshaller makeIstance() {
+   private BaseProtoStreamMarshaller makeInstance() {
       return new BaseProtoStreamMarshaller() {
 
-         private final SerializationContext serCtx = ProtobufUtil.newSerializationContext(Configuration.builder().build());
+         private final SerializationContext serCtx = ProtobufUtil.newSerializationContext();
 
          @Override
          protected SerializationContext getSerializationContext() {

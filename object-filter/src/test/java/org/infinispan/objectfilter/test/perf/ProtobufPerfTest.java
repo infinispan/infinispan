@@ -6,7 +6,6 @@ import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.test.model.MarshallerRegistration;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.config.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
@@ -23,11 +22,11 @@ public class ProtobufPerfTest extends PerfTest {
 
    @Before
    public void setUp() throws Exception {
-      serCtx = ProtobufUtil.newSerializationContext(Configuration.builder().build());
+      serCtx = ProtobufUtil.newSerializationContext();
       MarshallerRegistration.registerMarshallers(serCtx);
    }
 
-   protected Matcher createMatcher() throws Exception {
+   protected Matcher createMatcher() {
       return new ProtobufMatcher(serCtx, null);
    }
 

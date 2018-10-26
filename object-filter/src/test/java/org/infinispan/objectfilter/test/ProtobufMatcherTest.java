@@ -4,7 +4,6 @@ import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.test.model.MarshallerRegistration;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.config.Configuration;
 import org.junit.Before;
 
 /**
@@ -19,7 +18,7 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
 
    @Before
    public void setUp() throws Exception {
-      serCtx = ProtobufUtil.newSerializationContext(Configuration.builder().build());
+      serCtx = ProtobufUtil.newSerializationContext();
       MarshallerRegistration.registerMarshallers(serCtx);
       queryFactory = new FilterQueryFactory(serCtx);
    }

@@ -1,18 +1,16 @@
 package org.infinispan.query.remote.impl.dataconversion;
 
 
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.config.Configuration;
-import org.infinispan.test.dataconversion.AbstractTranscoderTest;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.test.dataconversion.AbstractTranscoderTest;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.remote.impl.ProtostreamTextTranscoderTest")
 public class ProtostreamTextTranscoderTest extends AbstractTranscoderTest {
@@ -22,8 +20,7 @@ public class ProtostreamTextTranscoderTest extends AbstractTranscoderTest {
    @BeforeClass(alwaysRun = true)
    public void setUp() throws IOException {
       dataSrc = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-      SerializationContext serCtx = ProtobufUtil.newSerializationContext(Configuration.builder().build());
-      transcoder = new ProtostreamTextTranscoder(serCtx);
+      transcoder = new ProtostreamTextTranscoder(ProtobufUtil.newSerializationContext());
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

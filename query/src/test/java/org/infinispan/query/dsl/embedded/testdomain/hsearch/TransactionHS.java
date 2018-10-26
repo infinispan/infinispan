@@ -192,7 +192,7 @@ public class TransactionHS implements Transaction, Serializable, ExternalPojo {
             ", longDescription='" + longDescription + '\'' +
             ", notes='" + notes + '\'' +
             ", accountId=" + accountId +
-            ", date=" + date +
+            ", date='" + date + '\'' +
             ", amount=" + amount +
             ", isDebit=" + isDebit +
             ", isValid=" + isValid +

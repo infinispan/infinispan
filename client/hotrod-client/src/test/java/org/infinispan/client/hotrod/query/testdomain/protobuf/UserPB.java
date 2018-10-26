@@ -147,7 +147,7 @@ public class UserPB implements User {
             ", age=" + age +
             ", gender=" + gender +
             ", notes=" + notes +
-            ", creationDate=" + creationDate +
+            ", creationDate='" + creationDate + '\'' +
             ", passwordExpirationDate=" + passwordExpirationDate +
             '}';
    }
