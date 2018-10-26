@@ -24,7 +24,7 @@ public interface BaseCacheStream<T, S extends BaseStream<T, S>> extends BaseStre
    /**
     * This would disable sending requests to all other remote nodes compared to one at a time. This can reduce memory
     * pressure on the originator node at the cost of performance.
-    * <p>Parallel distribution is enabled by default except for {@link CacheStream#iterator()} &
+    * <p>Parallel distribution is enabled by default except for {@link CacheStream#iterator()} and
     * {@link CacheStream#spliterator()}</p>
     * @return a stream with parallel distribution disabled
     */
@@ -34,7 +34,7 @@ public interface BaseCacheStream<T, S extends BaseStream<T, S>> extends BaseStre
     * This would enable sending requests to all other remote nodes when a terminal operator is performed.  This
     * requires additional overhead as it must process results concurrently from various nodes, but should perform
     * faster in the majority of cases.
-    * <p>Parallel distribution is enabled by default except for {@link CacheStream#iterator()} &
+    * <p>Parallel distribution is enabled by default except for {@link CacheStream#iterator()} and
     * {@link CacheStream#spliterator()}</p>
     * @return a stream with parallel distribution enabled.
     */

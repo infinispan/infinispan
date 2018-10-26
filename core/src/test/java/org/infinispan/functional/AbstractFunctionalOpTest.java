@@ -43,7 +43,7 @@ import static org.infinispan.test.Exceptions.expectExceptionNonStrict;
 import static org.testng.Assert.assertEquals;
 
 /**
- * @author Radim Vansa &lt;rvansa@redhat.com&gt; && Krzysztof Sobolewski &lt;Krzysztof.Sobolewski@atende.pl&gt;
+ * @author Radim Vansa &lt;rvansa@redhat.com&gt; and Krzysztof Sobolewski &lt;Krzysztof.Sobolewski@atende.pl&gt;
  */
 @Test(groups = "functional", testName = "functional.AbstractFunctionalOpTest")
 public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
