@@ -1,4 +1,4 @@
-package org.infinispan.query.paritition;
+package org.infinispan.query.partition;
 
 import java.util.List;
 

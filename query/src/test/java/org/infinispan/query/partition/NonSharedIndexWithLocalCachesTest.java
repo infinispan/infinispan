@@ -1,4 +1,4 @@
-package org.infinispan.query.paritition;
+package org.infinispan.query.partition;
 
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME;
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME;
