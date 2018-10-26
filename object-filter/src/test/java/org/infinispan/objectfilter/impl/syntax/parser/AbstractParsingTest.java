@@ -49,7 +49,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    }
 
    @Test
-   public void testInvalidNumericLiteral() throws Exception {
+   public void testInvalidNumericLiteral() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("ISPN028505");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where age = 'xyz'";
@@ -57,7 +57,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    }
 
    @Test
-   public void testInvalidDateLiteral() throws Exception {
+   public void testInvalidDateLiteral() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("ISPN028506");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where lastUpdate = '20140101zzzzzzzz'";
@@ -65,7 +65,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    }
 
    @Test
-   public void testInvalidEnumLiteral() throws Exception {
+   public void testInvalidEnumLiteral() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("ISPN028508");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where gender = 'SomeUndefinedValue'";
@@ -73,7 +73,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    }
 
    @Test
-   public void testInvalidBooleanLiteral() throws Exception {
+   public void testInvalidBooleanLiteral() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("ISPN028507");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where deleted = 'maybe'";
@@ -81,7 +81,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    }
 
    @Test
-   public void testInvalidPredicateOnEmbeddedEntity() throws Exception {
+   public void testInvalidPredicateOnEmbeddedEntity() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("ISPN028504");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where address = 5";
@@ -89,7 +89,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    }
 
    @Test
-   public void testInvalidPredicateOnCollectionOfEmbeddedEntity() throws Exception {
+   public void testInvalidPredicateOnCollectionOfEmbeddedEntity() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("ISPN028504");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where phoneNumbers = 5";
@@ -97,7 +97,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    }
 
    @Test
-   public void testFullTextQueryNotAccepted() throws Exception {
+   public void testFullTextQueryNotAccepted() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("ISPN028521");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where name : 'Joe'";

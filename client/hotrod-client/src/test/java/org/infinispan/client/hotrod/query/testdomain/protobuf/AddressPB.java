@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
+import java.util.Objects;
+
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 
 /**
@@ -9,8 +11,11 @@ import org.infinispan.query.dsl.embedded.testdomain.Address;
 public class AddressPB implements Address {
 
    private String street;
+
    private String postCode;
+
    private int number;
+
    private boolean isCommercial;
 
    @Override
@@ -43,19 +48,38 @@ public class AddressPB implements Address {
       this.number = number;
    }
 
+   @Override
    public boolean isCommercial() {
       return isCommercial;
    }
 
-   public void setCommercial(boolean commercial) {
-      isCommercial = commercial;
+   @Override
+   public void setCommercial(boolean isCommercial) {
+      this.isCommercial = isCommercial;
    }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      AddressPB address = (AddressPB) o;
+      return number == address.number &&
+            isCommercial == address.isCommercial &&
+            Objects.equals(street, address.street) &&
+            Objects.equals(postCode, address.postCode);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(street, postCode, number, isCommercial);
+   }
+
    @Override
    public String toString() {
       return "AddressPB{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
-            ", number='" + number + '\'' +
+            ", number=" + number +
             ", isCommercial=" + isCommercial +
             '}';
    }

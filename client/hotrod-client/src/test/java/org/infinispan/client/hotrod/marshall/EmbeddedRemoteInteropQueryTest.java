@@ -22,6 +22,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.CurrencyMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
@@ -109,6 +110,8 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertNull(protobufMetadataManager.getFilesWithErrors());
 
       protobufMetadataManager.registerMarshaller(new EmbeddedAccountMarshaller());
+      protobufMetadataManager.registerMarshaller(new CurrencyMarshaller());
+      protobufMetadataManager.registerMarshaller(new EmbeddedLimitsMarshaller());
       protobufMetadataManager.registerMarshaller(new EmbeddedUserMarshaller());
       protobufMetadataManager.registerMarshaller(new GenderMarshaller());
       protobufMetadataManager.registerMarshaller(new EmbeddedTransactionMarshaller());
@@ -134,7 +137,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       super.teardown();
    }
 
-   public void testPutAndGet() throws Exception {
+   public void testPutAndGet() {
       Account account = createAccountPB(1);
       remoteCache.put(1, account);
 
@@ -149,7 +152,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertAccount(fromRemoteCache, AccountPB.class);
    }
 
-   public void testPutAndGetForEmbeddedEntry() throws Exception {
+   public void testPutAndGetForEmbeddedEntry() {
       AccountHS account = new AccountHS();
       account.setId(1);
       account.setDescription("test description");
@@ -166,7 +169,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertAccount(fromEmbeddedCache, AccountHS.class);
    }
 
-   public void testRemoteQuery() throws Exception {
+   public void testRemoteQuery() {
       Account account = createAccountPB(1);
       remoteCache.put(1, account);
 
@@ -182,7 +185,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertAccount(list.get(0), AccountPB.class);
    }
 
-   public void testRemoteQueryForEmbeddedEntry() throws Exception {
+   public void testRemoteQueryForEmbeddedEntry() {
       AccountHS account = new AccountHS();
       account.setId(1);
       account.setDescription("test description");
@@ -201,7 +204,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertAccount(list.get(0), AccountPB.class);
    }
 
-   public void testRemoteQueryForEmbeddedEntryOnNonIndexedField() throws Exception {
+   public void testRemoteQueryForEmbeddedEntryOnNonIndexedField() {
       UserHS user = new UserHS();
       user.setId(1);
       user.setName("test name");
@@ -225,7 +228,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals("1234567890", list.get(0).getNotes());
    }
 
-   public void testRemoteQueryForEmbeddedEntryOnNonIndexedType() throws Exception {
+   public void testRemoteQueryForEmbeddedEntryOnNonIndexedType() {
       cache.put(1, new NotIndexed("testing 123"));
 
       // get user back from remote cache via query and check its attributes
@@ -241,7 +244,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals("testing 123", list.get(0).notIndexedField);
    }
 
-   public void testRemoteQueryForEmbeddedEntryOnIndexedAndNonIndexedField() throws Exception {
+   public void testRemoteQueryForEmbeddedEntryOnIndexedAndNonIndexedField() {
       UserHS user = new UserHS();
       user.setId(1);
       user.setName("test name");
@@ -268,7 +271,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals("test surname", list.get(0).getSurname());
    }
 
-   public void testRemoteQueryWithProjectionsForEmbeddedEntry() throws Exception {
+   public void testRemoteQueryWithProjectionsForEmbeddedEntry() {
       AccountHS account = new AccountHS();
       account.setId(1);
       account.setDescription("test description");
@@ -326,7 +329,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertAccount(list.get(0), AccountHS.class);
    }
 
-   public void testEmbeddedQueryForEmbeddedEntryOnNonIndexedField() throws Exception {
+   public void testEmbeddedQueryForEmbeddedEntryOnNonIndexedField() {
       UserHS user = new UserHS();
       user.setId(1);
       user.setName("test name");
@@ -350,7 +353,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals("1234567890", list.get(0).getNotes());
    }
 
-   public void testEmbeddedQueryForEmbeddedEntryOnNonIndexedType() throws Exception {
+   public void testEmbeddedQueryForEmbeddedEntryOnNonIndexedType() {
       cache.put(1, new NotIndexed("testing 123"));
 
       // get user back from remote cache via query and check its attributes
@@ -366,7 +369,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals("testing 123", list.get(0).notIndexedField);
    }
 
-   public void testEmbeddedQueryForEmbeddedEntryOnIndexedAndNonIndexedField() throws Exception {
+   public void testEmbeddedQueryForEmbeddedEntryOnIndexedAndNonIndexedField() {
       UserHS user = new UserHS();
       user.setId(1);
       user.setName("test name");
@@ -393,7 +396,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals("test surname", list.get(0).getSurname());
    }
 
-   public void testIterationForRemote() throws Exception {
+   public void testIterationForRemote() {
       IntStream.range(0, 10).forEach(id -> remoteCache.put(id, createAccountPB(id)));
 
       // Remote unfiltered iteration
@@ -402,7 +405,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
          Integer key = (Integer) e.getKey();
          AccountPB value = (AccountPB) e.getValue();
          assertTrue(key < 10);
-         assertTrue(value.getId() == key);
+         assertEquals((int) key, value.getId());
       });
 
       // Remote filtered iteration
@@ -424,7 +427,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
          Integer key = (Integer) e.getKey();
          String value = (String) e.getValue();
          assertTrue(key < 10);
-         assertTrue(value.equals(createAccountHS(key).toString()));
+         assertEquals(createAccountHS(key).toString(), value);
       });
 
       // Embedded  iteration
@@ -435,11 +438,11 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
          Integer key = e.getKey();
          AccountHS value = e.getValue();
          assertTrue(key < 10);
-         assertTrue(value.getId() == key);
+         assertEquals((int) key, value.getId());
       });
    }
 
-   public void testEqEmptyStringRemote() throws Exception {
+   public void testEqEmptyStringRemote() {
       UserHS user = new UserHS();
       user.setId(1);
       user.setName("test name");
@@ -458,7 +461,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertTrue(list.isEmpty());
    }
 
-   public void testEqSentenceRemote() throws Exception {
+   public void testEqSentenceRemote() {
       AccountHS account = new AccountHS();
       account.setId(1);
       account.setDescription("John Doe's first bank account");
@@ -476,7 +479,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals(1, list.get(0).getId());
    }
 
-   public void testEqEmptyStringEmbedded() throws Exception {
+   public void testEqEmptyStringEmbedded() {
       UserHS user = new UserHS();
       user.setId(1);
       user.setName("test name");
@@ -495,7 +498,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertTrue(list.isEmpty());
    }
 
-   public void testEqSentenceEmbedded() throws Exception {
+   public void testEqSentenceEmbedded() {
       AccountHS account = new AccountHS();
       account.setId(1);
       account.setDescription("John Doe's first bank account");

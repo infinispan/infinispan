@@ -1,6 +1,7 @@
 package org.infinispan.all.embeddedquery.testdomain.hsearch;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
@@ -21,6 +22,8 @@ public class AddressHS implements Address, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int number;
+
+   private boolean isCommercial;
 
    @Override
    public String getStreet() {
@@ -53,25 +56,29 @@ public class AddressHS implements Address, Serializable {
    }
 
    @Override
+   public boolean isCommercial() {
+      return isCommercial;
+   }
+
+   @Override
+   public void setCommercial(boolean isCommercial) {
+      this.isCommercial = isCommercial;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
-      AddressHS other = (AddressHS) o;
-
-      if (postCode != null ? !postCode.equals(other.postCode) : other.postCode != null) return false;
-      if (street != null ? !street.equals(other.street) : other.street != null) return false;
-      if (number != other.number) return false;
-
-      return true;
+      AddressHS address = (AddressHS) o;
+      return number == address.number &&
+            isCommercial == address.isCommercial &&
+            Objects.equals(street, address.street) &&
+            Objects.equals(postCode, address.postCode);
    }
 
    @Override
    public int hashCode() {
-      int result = street != null ? street.hashCode() : 0;
-      result = 31 * result + (postCode != null ? postCode.hashCode() : 0);
-      result = 31 * result + number;
-      return result;
+      return Objects.hash(street, postCode, number, isCommercial);
    }
 
    @Override
@@ -79,7 +86,8 @@ public class AddressHS implements Address, Serializable {
       return "AddressHS{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
-            ", number='" + number + '\'' +
+            ", number=" + number +
+            ", isCommercial=" + isCommercial +
             '}';
    }
 }

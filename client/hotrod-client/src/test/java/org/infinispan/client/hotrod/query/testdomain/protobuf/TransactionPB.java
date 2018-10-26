@@ -119,7 +119,7 @@ public class TransactionPB implements Transaction {
             ", longDescription='" + longDescription + '\'' +
             ", notes='" + notes + '\'' +
             ", accountId=" + accountId +
-            ", date=" + date +
+            ", date='" + date + '\'' +
             ", amount=" + amount +
             ", isDebit=" + isDebit +
             ", isValid=" + isValid +

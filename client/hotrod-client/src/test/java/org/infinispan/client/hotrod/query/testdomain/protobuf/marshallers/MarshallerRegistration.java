@@ -29,6 +29,8 @@ public final class MarshallerRegistration {
       ctx.registerMarshaller(new GenderMarshaller());
       ctx.registerMarshaller(new AddressMarshaller());
       ctx.registerMarshaller(new AccountMarshaller());
+      ctx.registerMarshaller(new CurrencyMarshaller());
+      ctx.registerMarshaller(new LimitsMarshaller());
       ctx.registerMarshaller(new TransactionMarshaller());
    }
 }

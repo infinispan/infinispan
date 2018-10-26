@@ -205,7 +205,7 @@
       <version.pax.exam>4.11.0</version.pax.exam>
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.projectodd>1.1.6</version.projectodd>
-      <version.protostream>4.2.1.Final</version.protostream>
+      <version.protostream>4.2.2.Final</version.protostream>
       <version.protostuff>1.6.0</version.protostuff>
       <version.reactivestreams>1.0.2</version.reactivestreams>
       <version.rocksdb>5.15.10</version.rocksdb>

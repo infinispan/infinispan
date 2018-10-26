@@ -2,6 +2,7 @@ package org.infinispan.all.embeddedquery.testdomain.hsearch;
 
 import org.infinispan.all.embeddedquery.testdomain.Account;
 import org.infinispan.all.embeddedquery.testdomain.Address;
+import org.infinispan.all.embeddedquery.testdomain.Limits;
 import org.infinispan.all.embeddedquery.testdomain.ModelFactory;
 import org.infinispan.all.embeddedquery.testdomain.Transaction;
 import org.infinispan.all.embeddedquery.testdomain.User;
@@ -20,6 +21,11 @@ public class ModelFactoryHS implements ModelFactory {
    @Override
    public Account makeAccount() {
       return new AccountHS();
+   }
+
+   @Override
+   public Limits makeLimits() {
+      return new LimitsHS();
    }
 
    @Override
