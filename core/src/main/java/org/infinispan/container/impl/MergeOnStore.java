@@ -14,7 +14,7 @@ package org.infinispan.container.impl;
  * in a different order on different owners. Therefore it's strongly recommended that all operations on such entry
  * are commutative (order-independent).
  *
- * <p>As the atomicity of load & store into persistence layer cannot be guaranteed, it is recommended to use such values
+ * <p>As the atomicity of load and store into persistence layer cannot be guaranteed, it is recommended to use such values
  * only with {@link org.infinispan.context.Flag#SKIP_CACHE_LOAD} and
  * {@link org.infinispan.context.Flag#SKIP_CACHE_STORE} or implementing a custom externalizer that will deal with this.
  */

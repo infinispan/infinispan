@@ -54,13 +54,13 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
     * This test is to verify then when a new node joins and a cluster listener is installed after the cluster listener
     * request is finished that it finds it.
     *
-    * Node 1, 2 & 3 exists
+    * Node 1, 2, 3 exists
     * Node 2 adds cluster listener - knows to send to listener to Node 1
     * Node 4 starts up
     * Node 4 asks Node 1 for listeners (gets none)
     * Node 1 receives Node 2 listener
     *
-    * Test needs to verify in this case that Nod3 3 gets the listener from Node 2
+    * Test needs to verify in this case that Node 3 gets the listener from Node 2
     */
    @Test
    public void testMemberJoinsWhileClusterListenerInstalled() throws TimeoutException, InterruptedException,

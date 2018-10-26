@@ -18,7 +18,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /**
- * Base class for clustered JCache annotations tests. Implementations must provide cache & {@link
+ * Base class for clustered JCache annotations tests. Implementations must provide cache and {@link
  * org.infinispan.jcache.JCacheAnnotatedClass} references.
  *
  * @author Matej Cimbora

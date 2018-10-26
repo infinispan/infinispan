@@ -217,7 +217,7 @@ public class Machine {
    }
 
    /**
-    * Try to inline all states that contain only action & state shift
+    * Try to inline all states that contain only action and state shift.
     */
    public void contractStates() {
       boolean contracted;

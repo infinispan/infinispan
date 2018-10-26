@@ -275,7 +275,7 @@ public class CacheTopology {
     *
     * 1. T(x+1).writeCH contains all nodes from Tx.readCH (this is the requirement for ISPN-5021)
     * 2. Tx.readCH and T(x+1).readCH has non-empty subset of nodes (that will allow no blocking for read commands
-    *    && reading only entries node owns according to readCH)
+    *    and reading only entries node owns according to readCH)
     *
     * Old entries should be wiped out only after coming to the {@link #NO_REBALANCE} phase.
     */

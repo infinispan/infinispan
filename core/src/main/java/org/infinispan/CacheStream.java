@@ -56,7 +56,7 @@ import static org.infinispan.util.Casting.toSupplierCollect;
  * to a local stream there and finally the terminal operation is completed.  If this stream is parallel the processing
  * on remote nodes is also done using a parallel stream.</p>
  *
- * <p>Parallel distribution is enabled by default for all operations except for {@link CacheStream#iterator()} &
+ * <p>Parallel distribution is enabled by default for all operations except for {@link CacheStream#iterator()} and
  * {@link CacheStream#spliterator()}.  Please see {@link CacheStream#sequentialDistribution()} and
  * {@link CacheStream#parallelDistribution()}.  With this disabled only a single node will process the operation
  * at a time (includes locally).</p>

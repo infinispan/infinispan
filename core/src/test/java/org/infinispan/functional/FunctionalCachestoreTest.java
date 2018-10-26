@@ -15,7 +15,7 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.testng.annotations.Test;
 
 /**
- * @author Radim Vansa &lt;rvansa@redhat.com&gt; && Krzysztof Sobolewski &lt;Krzysztof.Sobolewski@atende.pl&gt;
+ * @author Radim Vansa &lt;rvansa@redhat.com&gt; and Krzysztof Sobolewski &lt;Krzysztof.Sobolewski@atende.pl&gt;
  */
 @Test(groups = "functional", testName = "functional.FunctionalCachestoreTest")
 public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {

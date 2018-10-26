@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests verifying that the instantiation of TransactionalLockFactory in case of NON_TRANSACTIONAL cache fails.
- * The cases with started & stopped caches are checked.
+ * The cases with started and stopped caches are checked.
  *
  * @author Anna Manukyan
  */
