@@ -48,44 +48,38 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
 
    public void testQuerySkipsNullsInList() throws Exception {
       prepareData();
-      withTx(tm(1), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            cache2.remove("2");   // cache will now be out of sync with the index
+      withTx(tm(1), (Callable<Void>) () -> {
+         cache2.remove("2");   // cache will now be out of sync with the index
 
-            // Query a cache where key "2" is not present in the index
-            Cache queryCache = getKeyLocation("2").equals(cache1) ? cache2 : cache1;
+         // Query a cache where key "2" is not present in the index
+         Cache queryCache = getKeyLocation("2").equals(cache1) ? cache2 : cache1;
 
-            searchManager = Search.getSearchManager(queryCache);
+         searchManager = Search.getSearchManager(queryCache);
 
-            Query query = createQueryBuilder().keyword().onField("bar").matching("2").createQuery();
-            List list = searchManager.getQuery(query).list();
-            assertEquals("Wrong list size.", 0, list.size());
-            return null;
-         }
+         Query query = createQueryBuilder().keyword().onField("bar").matching("2").createQuery();
+         List list = searchManager.getQuery(query).list();
+         assertEquals("Wrong list size.", 0, list.size());
+         return null;
       });
    }
 
    public void testQuerySkipsNullsInEagerIterator() throws Exception {
       prepareData();
 
-      withTx(tm(0), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            cache1.remove("1");   // cache will now be out of sync with the index
-            searchManager = Search.getSearchManager(cache1);
+      withTx(tm(0), (Callable<Void>) () -> {
+         cache1.remove("1");   // cache will now be out of sync with the index
+         searchManager = Search.getSearchManager(cache1);
 
-            Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-            ResultIterator<?> iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(EAGER));
-            assertFalse("Iterator should not have elements.", iterator.hasNext());
-            try {
-               iterator.next();
-               fail("Expected NoSuchElementException");
-            } catch (NoSuchElementException e) {
-               // pass
-            }
-            return null;
+         Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
+         ResultIterator<?> iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(EAGER));
+         assertFalse("Iterator should not have elements.", iterator.hasNext());
+         try {
+            iterator.next();
+            fail("Expected NoSuchElementException");
+         } catch (NoSuchElementException e) {
+            // pass
          }
+         return null;
       });
    }
 
@@ -93,24 +87,21 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
    public void testQuerySkipsNullsInDefaultIterator() throws Exception {
       prepareData();
 
-      withTx(tm(0), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            Cache<String, Foo> cache = getKeyLocation("1");
-            cache.remove("1");   // cache will now be out of sync with the index
-            searchManager = Search.getSearchManager(cache);
+      withTx(tm(0), (Callable<Void>) () -> {
+         Cache<String, Foo> cache = getKeyLocation("1");
+         cache.remove("1");   // cache will now be out of sync with the index
+         searchManager = Search.getSearchManager(cache);
 
-            Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-            ResultIterator<?> iterator = searchManager.getQuery(query).iterator();
-            assertFalse(iterator.hasNext());
-            try {
-               iterator.next();
-               fail("Expected NoSuchElementException");
-            } catch (NoSuchElementException e) {
-               // pass
-            }
-            return null;
+         Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
+         ResultIterator<?> iterator = searchManager.getQuery(query).iterator();
+         assertFalse(iterator.hasNext());
+         try {
+            iterator.next();
+            fail("Expected NoSuchElementException");
+         } catch (NoSuchElementException e) {
+            // pass
          }
+         return null;
       });
    }
 
@@ -118,71 +109,62 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
    public void testQuerySkipsNullsInCacheQueryIterator() throws Exception {
       prepareData();
 
-      withTx(tm(0), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            Cache<String, Foo> cache = getKeyLocation("1");
-            cache.remove("1");   // cache will now be out of sync with the index
-            searchManager = Search.getSearchManager(cache);
+      withTx(tm(0), (Callable<Void>) () -> {
+         Cache<String, Foo> cache = getKeyLocation("1");
+         cache.remove("1");   // cache will now be out of sync with the index
+         searchManager = Search.getSearchManager(cache);
 
-            Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-            CacheQuery<?> cacheQuery = searchManager.getQuery(query);
-            //pruivo: the result size includes the null elements...
-            assertEquals("Wrong result size.", 1, cacheQuery.getResultSize());
+         Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
+         CacheQuery<?> cacheQuery = searchManager.getQuery(query);
+         //pruivo: the result size includes the null elements...
+         assertEquals("Wrong result size.", 1, cacheQuery.getResultSize());
 
-            for (Object obj : cacheQuery) {
-               fail("The iterator should not contain any data but it contains " + obj);
-            }
-
-            return null;
+         for (Object obj : cacheQuery) {
+            fail("The iterator should not contain any data but it contains " + obj);
          }
+
+         return null;
       });
    }
 
    public void testQuerySkipsNullsInLazyIterator() throws Exception {
       prepareData();
 
-      withTx(tm(1), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            cache2.remove("2");   // cache will now be out of sync with the index
-            // Query a cache where key "2" is present in the index
-            Cache queryCache = getKeyLocation("2").equals(cache1) ? cache2 : cache1;
-            searchManager = Search.getSearchManager(queryCache);
+      withTx(tm(1), (Callable<Void>) () -> {
+         cache2.remove("2");   // cache will now be out of sync with the index
+         // Query a cache where key "2" is present in the index
+         Cache queryCache = getKeyLocation("2").equals(cache1) ? cache2 : cache1;
+         searchManager = Search.getSearchManager(queryCache);
 
-            Query query = createQueryBuilder().keyword().onField("bar").matching("2").createQuery();
-            ResultIterator<?> iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(LAZY));
-            assertFalse(iterator.hasNext());
-            try {
-               iterator.next();
-               fail("Expected NoSuchElementException");
-            } catch (NoSuchElementException e) {
-               // pass
-            }
-            return null;
+         Query query = createQueryBuilder().keyword().onField("bar").matching("2").createQuery();
+         ResultIterator<?> iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(LAZY));
+         assertFalse(iterator.hasNext());
+         try {
+            iterator.next();
+            fail("Expected NoSuchElementException");
+         } catch (NoSuchElementException e) {
+            // pass
          }
+         return null;
       });
    }
 
    public void testQueryReturnsNullWhenProjectingCacheValue() throws Exception {
       prepareData();
 
-      withTx(tm(0), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            Cache<String, Foo> cache = getKeyLocation("1");
-            cache.remove("1");   // cache will now be out of sync with the index
-            searchManager = Search.getSearchManager(cache);
+      withTx(tm(0), (Callable<Void>) () -> {
+         Cache<String, Foo> cache = getKeyLocation("1");
+         cache.remove("1");   // cache will now be out of sync with the index
+         searchManager = Search.getSearchManager(cache);
 
-            Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-            ResultIterator<Object[]> iterator = searchManager.getQuery(query).projection(ProjectionConstants.VALUE, "bar")
-                  .iterator(new FetchOptions().fetchMode(LAZY));
-            assertTrue("Expected an element in iterator.", iterator.hasNext());
-            Object[] projection = iterator.next();
-            assertNull(projection[0]);
-            assertEquals("1", projection[1]);
-            return null;
-         }
+         Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
+         ResultIterator<Object[]> iterator = searchManager.getQuery(query).projection(ProjectionConstants.VALUE, "bar")
+               .iterator(new FetchOptions().fetchMode(LAZY));
+         assertTrue("Expected an element in iterator.", iterator.hasNext());
+         Object[] projection = iterator.next();
+         assertNull(projection[0]);
+         assertEquals("1", projection[1]);
+         return null;
       });
    }
 
@@ -206,20 +188,14 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
    }
 
    private void prepareData() throws Exception {
-      withTx(tm(0), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            cache1.put("1", new Foo("1"));
-            return null;
-         }
+      withTx(tm(0), (Callable<Void>) () -> {
+         cache1.put("1", new Foo("1"));
+         return null;
       });
 
-      withTx(tm(1), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            cache2.put("2", new Foo("2"));
-            return null;
-         }
+      withTx(tm(1), (Callable<Void>) () -> {
+         cache2.put("2", new Foo("2"));
+         return null;
       });
    }
 
@@ -230,7 +206,6 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       Address primary = distribution.primary();
       return primary.equals(cache1Address) ? cache1 : cache2;
    }
-
 
    @Indexed(index = "FooIndex")
    public static class Foo implements Serializable, ExternalPojo {
