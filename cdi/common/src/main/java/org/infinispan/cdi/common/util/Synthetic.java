@@ -17,7 +17,7 @@ import javax.inject.Qualifier;
  * <p/>
  * <p/>
  *
- * @author Stuart Douglas <stuart@baileyroberts.com.au>
+ * @author Stuart Douglas &lt;stuart@baileyroberts.com.au&gt;
  * @author Pete Muir
  */
 @Retention(RetentionPolicy.RUNTIME)

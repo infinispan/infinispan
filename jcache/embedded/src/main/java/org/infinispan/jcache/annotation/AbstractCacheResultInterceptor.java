@@ -29,7 +29,7 @@ import org.infinispan.jcache.logging.Log;
  * value put into the cache. The cache is not checked for the key before method body invocation, skipping steps 2 and 3
  * from the list above. This can be used for annotating methods that do a cache.put() with no other consequences.</p>
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  * @author Galder Zamarreño
  */
 public abstract class AbstractCacheResultInterceptor implements Serializable {

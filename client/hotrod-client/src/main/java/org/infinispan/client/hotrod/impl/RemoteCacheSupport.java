@@ -84,7 +84,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
     * alter the signature even if it might look like unreachable code. Implementors should perform a put operation but
     * optimizing it as return values are not required.
     *
-    * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+    * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2011 Red Hat Inc.
     * @since 5.0
     */
    protected abstract void set(K key, V value);

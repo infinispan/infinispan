@@ -25,7 +25,7 @@ import org.infinispan.remoting.transport.Address;
 /**
  * An extension of CacheQueryImpl used for distributed queries.
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
 public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {

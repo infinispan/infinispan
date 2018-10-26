@@ -23,7 +23,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * mechanism provided by Seam Solder.
  *
  * @author Pete Muir
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
 @ApplicationScoped
 public class AdvancedCacheProducer {

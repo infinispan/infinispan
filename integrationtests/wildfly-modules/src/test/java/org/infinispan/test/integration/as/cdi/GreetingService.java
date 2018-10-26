@@ -9,7 +9,7 @@ import javax.cache.annotation.CacheResult;
  * the {@linkplain javax.cache.annotation.CacheKey CacheKey} will be the name). If this method has been already called
  * with the same name the cached value will be returned and this method will not be called.</p>
  *
- * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011
+ * @author Kevin Pollet &lt;pollet.kevin@gmail.com&gt; (C) 2011
  * @see CacheResult
  */
 public class GreetingService {

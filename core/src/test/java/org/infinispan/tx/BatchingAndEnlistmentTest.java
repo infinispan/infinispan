@@ -16,7 +16,7 @@ import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
 
 /**
- * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
+ * @author Mircea Markus &lt;mircea.markus@jboss.com&gt; (C) 2011 Red Hat Inc.
  * @since 5.1
  */
 @Test (groups = "functional", testName = "tx.BatchingAndEnlistmentTest")

@@ -5,7 +5,7 @@ import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
 
 /**
- * @author Radim Vansa &ltrvansa@redhat.com&gt;
+ * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Test(groups = "functional", testName = "server.hotrod.configuration.BuilderMutationTest")
 public class BuilderMutationTest {

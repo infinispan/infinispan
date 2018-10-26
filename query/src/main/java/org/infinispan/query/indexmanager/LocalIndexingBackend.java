@@ -14,7 +14,7 @@ import org.infinispan.util.logging.LogFactory;
  * Normally this will be the "lucene" backend, writing to the index.
  *
  * @see org.hibernate.search.backend.impl.lucene.WorkspaceHolder
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 final class LocalIndexingBackend implements IndexingBackend {

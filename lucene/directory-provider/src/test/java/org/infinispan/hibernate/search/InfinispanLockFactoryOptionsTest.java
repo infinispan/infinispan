@@ -23,7 +23,7 @@ import org.junit.Test;
  * Verifies the locking_strategy option is being applied as expected, even if the DirectoryProvider is set to
  * Infinispan.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  */
 public class InfinispanLockFactoryOptionsTest {
 
