@@ -12,7 +12,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Lazily iterates on a distributed query.
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
 final class DistributedLazyIterator<E> extends DistributedIterator<E> {

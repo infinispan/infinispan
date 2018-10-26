@@ -5,7 +5,7 @@ package org.infinispan.query.indexmanager;
  * to be used for non-clustered caches: much simpler as we have no
  * states nor transitions to manage.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 public class LocalOnlyBackend implements SwitchingBackend {

@@ -14,7 +14,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 /**
- * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2011 Red Hat Inc.
  */
 @Test(groups = "functional", testName = "query.indexedembedded.BooksExampleTest")
 public class BooksExampleTest extends SingleCacheManagerTest {

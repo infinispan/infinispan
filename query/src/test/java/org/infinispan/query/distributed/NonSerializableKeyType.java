@@ -10,7 +10,7 @@ import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
 
 /**
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
  */
 @SerializeWith(NonSerializableKeyType.CustomExternalizer.class)
 @Transformable(transformer = NonSerializableKeyType.CustomTransformer.class)

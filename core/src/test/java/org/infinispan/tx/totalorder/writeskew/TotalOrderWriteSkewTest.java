@@ -11,7 +11,7 @@ import org.infinispan.transaction.TransactionProtocol;
 import org.testng.annotations.Test;
 
 /**
- * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
+ * @author Mircea Markus &lt;mircea.markus@jboss.com&gt; (C) 2011 Red Hat Inc.
  * @since 5.3
  */
 @Test(groups = "functional", testName = "tx.totalorder.writeskew.TotalOrderWriteSkewTest")

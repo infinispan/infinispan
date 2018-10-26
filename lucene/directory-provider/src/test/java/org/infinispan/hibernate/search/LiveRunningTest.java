@@ -32,7 +32,7 @@ import org.junit.experimental.categories.Category;
  * able to see changes as soon as committed by the main node; this results in a very stressfull test as the cluster
  * topology is changed at each step (though it doesn't rehash as it's replicating).
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
 public class LiveRunningTest {
 

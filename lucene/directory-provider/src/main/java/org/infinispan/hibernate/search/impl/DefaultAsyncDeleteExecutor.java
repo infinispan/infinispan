@@ -15,7 +15,7 @@ import org.kohsuke.MetaInfServices;
 /**
  * A shared service used among all InfinispanDirectoryProvider instances to delete segments asynchronously.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  */
 @MetaInfServices(AsyncDeleteExecutorService.class)
 public class DefaultAsyncDeleteExecutor implements AsyncDeleteExecutorService, Startable, Stoppable {

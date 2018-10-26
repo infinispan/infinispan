@@ -8,7 +8,7 @@ import javax.cache.annotation.CacheInvocationParameter;
 /**
  * The {@link javax.cache.annotation.CacheInvocationParameter} implementation.
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  * @author Galder Zamarreño
  */
 public class CacheInvocationParameterImpl implements CacheInvocationParameter {

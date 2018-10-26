@@ -7,7 +7,7 @@ import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 
 /**
- * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
+ * @author Mircea Markus &lt;mircea.markus@jboss.com&gt; (C) 2011 Red Hat Inc.
  * @since 5.1
  * @deprecated use {@link EmbeddedTransactionManagerLookup}
  */

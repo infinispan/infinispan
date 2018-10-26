@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * Contains the metadata for a parameter of a method annotated with A JCACHE annotation.
  *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
 public class ParameterMetaData {
 

@@ -34,7 +34,7 @@ import org.junit.Test;
  * This results in a very stressfull test as the cluster topology is changed frequently, but since it uses replication
  * it doesn't need to perform rehashing.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2017 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2017 Red Hat Inc.
  */
 public class AsyncLiveRunningTest {
 

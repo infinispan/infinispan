@@ -17,7 +17,7 @@ import org.infinispan.eviction.EvictionType;
  *
  * <p>This manager is used to collect informations on the greeting cache and to clear it's content if needed.</p>
  *
- * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011
+ * @author Kevin Pollet &lt;pollet.kevin@gmail.com&gt; (C) 2011
  * @see javax.cache.annotation.CacheRemoveAll
  */
 @Named

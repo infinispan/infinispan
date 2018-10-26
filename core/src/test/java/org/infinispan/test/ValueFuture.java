@@ -9,7 +9,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * A simple <code>Future</code> implementation whose <code>get()</code> method blocks until another thread calls <code>set()</code>.
  *
- * @author Dan Berindei <dberinde@redhat.com>
+ * @author Dan Berindei &lt;dberinde@redhat.com&gt;
  * @since 5.0
  */
 public class ValueFuture<V> implements Future<V> {

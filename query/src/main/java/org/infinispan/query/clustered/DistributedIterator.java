@@ -18,7 +18,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Iterates on a distributed query.
  *
- * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  * @author Sanne Grinovero
  * @since 5.1

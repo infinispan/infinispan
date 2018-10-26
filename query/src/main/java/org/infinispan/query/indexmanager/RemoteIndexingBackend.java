@@ -22,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  * The IndexingBackend which forwards all operations to a different node
  * using Infinispan's custom commands.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 final class RemoteIndexingBackend implements IndexingBackend {

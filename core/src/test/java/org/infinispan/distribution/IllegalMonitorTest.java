@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
  * This is by design, so that we don't have to keep track of them:
  * @see org.infinispan.util.concurrent.locks.LockManager#possiblyLocked(org.infinispan.container.entries.CacheEntry)
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @since 5.0
  */
 @Test(groups = "functional", testName = IllegalMonitorTest.TEST_NAME)

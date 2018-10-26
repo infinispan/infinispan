@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
  * Verifies the {@link org.infinispan.hibernate.search.spi.InfinispanIntegration#WRITE_METADATA_ASYNC} setting is
  * correctly applied to the Infinispan directory.
  *
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2014 Red Hat Inc.
  * @author Gunnar Morling
  * @since 5.0
  */

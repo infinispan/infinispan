@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  * Tests that the default cache is available and can be injected with no configuration.
  *
  * @author Pete Muir
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
 @Test(groups = {"functional", "smoke"}, testName = "cdi.test.cache.embedded.DefaultCacheTest")
 public class DefaultCacheTest extends Arquillian {

@@ -8,7 +8,7 @@ import org.jboss.marshalling.ContextClassResolver;
  * This class refines <code>ContextClassLoader</code> to add a default class loader.
  * The context class loader is only used when the default is <code>null</code>.
  *
- * @author Dan Berindei <dberinde@redhat.com>
+ * @author Dan Berindei &lt;dberinde@redhat.com&gt;
  * @since 4.2
  */
 public class DefaultContextClassResolver extends ContextClassResolver {

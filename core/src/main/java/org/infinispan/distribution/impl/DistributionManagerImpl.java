@@ -37,7 +37,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Vladimir Blagojevic
  * @author Mircea.Markus@jboss.com
  * @author Bela Ban
- * @author Dan Berindei <dan@infinispan.org>
+ * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @author anistor@redhat.com
  * @since 4.0
  */

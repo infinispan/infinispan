@@ -29,7 +29,7 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2013 Red Hat Inc.
+ * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2013 Red Hat Inc.
  * @since 5.2
  */
 @Test(groups = "functional", testName = "lucene.cachestore.CacheLoaderAPITest")
