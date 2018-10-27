@@ -1,13 +1,13 @@
 package org.infinispan.server.test.client.rest;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.server.test.category.RESTClustered;
 import org.infinispan.commons.test.categories.Smoke;
+import org.infinispan.server.test.category.RESTClustered;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -34,10 +34,7 @@ public class RESTClusteredIT extends AbstractRESTClusteredIT {
 
     @Override
     protected List<RemoteInfinispanServer> getServers() {
-        List<RemoteInfinispanServer> servers = new ArrayList<RemoteInfinispanServer>();
-        servers.add(server1);
-        servers.add(server2);
-        return Collections.unmodifiableList(servers);
+        return Collections.unmodifiableList(Arrays.asList(server1, server2));
     }
 
     @Override

@@ -42,7 +42,7 @@ import org.testng.annotations.Test;
 public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implements AbstractRemoteIteratorTest {
 
    private static final int NUM_NODES = 2;
-   public static final int CACHE_SIZE = 10;
+   private static final int CACHE_SIZE = 10;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -64,7 +64,6 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(client(0)));
-
    }
 
    @Override
@@ -143,5 +142,4 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
          return value[0] == id && value[1].equals("description for " + id);
       });
    }
-
 }

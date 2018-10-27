@@ -43,8 +43,7 @@ public class HotRodCounterIT {
    }
 
    @Test
-   public void testCounters() throws Exception {
-
+   public void testCounters() {
       CounterManager counterManager = RemoteCounterManagerFactory.asCounterManager(remoteCacheManager);
       counterManager.defineCounter("c1", CounterConfiguration.builder(CounterType.BOUNDED_STRONG)
             .upperBound(10)
