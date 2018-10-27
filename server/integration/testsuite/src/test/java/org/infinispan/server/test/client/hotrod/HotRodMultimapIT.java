@@ -43,7 +43,7 @@ public class HotRodMultimapIT {
    }
 
    @Test
-   public void testMultimap() throws Exception {
+   public void testMultimap() {
       remoteCacheManager.administration().getOrCreateCache("cutes", "default");
       MultimapCacheManager multimapCacheManager = RemoteMultimapCacheManagerFactory.from(remoteCacheManager);
 
@@ -66,5 +66,4 @@ public class HotRodMultimapIT {
 
       return config.build();
    }
-
 }

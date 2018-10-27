@@ -2,7 +2,7 @@ package org.infinispan.server.test.client.rest;
 
 import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -75,9 +75,6 @@ public class RESTAsyncClusteredDomainIT extends AbstractRESTAsyncIT {
 
     @Override
     protected List<RemoteInfinispanServer> getServers() {
-        List<RemoteInfinispanServer> servers = new ArrayList<RemoteInfinispanServer>();
-        servers.add(server1);
-        servers.add(server2);
-        return Collections.unmodifiableList(servers);
+        return Collections.unmodifiableList(Arrays.asList(server1, server2));
     }
 }

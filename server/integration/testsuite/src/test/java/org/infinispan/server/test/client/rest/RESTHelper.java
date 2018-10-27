@@ -70,7 +70,7 @@ public class RESTHelper {
 
     private int port = 8080;
     private String protocol = "http";
-    private List<Server> servers = new ArrayList<Server>();
+    private List<Server> servers = new ArrayList<>();
     private CredentialsProvider credsProvider = new BasicCredentialsProvider();
     public CloseableHttpClient client = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
 
@@ -114,7 +114,7 @@ public class RESTHelper {
         servers.add(new Server(hostname, restServerPath));
     }
 
-    public static String addDay(String aDate, int days) throws Exception {
+    public static String addDay(String aDate, int days) {
         ZonedDateTime date = ZonedDateTime.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(aDate));
         date = date.plusDays(days);
         return DateTimeFormatter.RFC_1123_DATE_TIME.format(date);

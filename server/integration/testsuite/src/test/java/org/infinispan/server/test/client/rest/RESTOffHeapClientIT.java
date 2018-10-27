@@ -31,21 +31,21 @@ public class RESTOffHeapClientIT extends AbstractRESTClientIT {
 
    @Test
    @Ignore
-   public void testPutDataWithTimeToLive() throws Exception {
+   public void testPutDataWithTimeToLive() {
    }
 
    @Test
    @Ignore("ISPN-8370")
-   public void testPutDataTTLMaxIdleCombo1() throws Exception {
+   public void testPutDataTTLMaxIdleCombo1() {
    }
 
    @Test
    @Ignore("ISPN-8370")
-   public void testPutDataTTLMaxIdleCombo2() throws Exception {
+   public void testPutDataTTLMaxIdleCombo2() {
    }
 
    @Test
    @Ignore("ISPN-8370")
-   public void testPutDataWithMaxIdleTime() throws Exception {
+   public void testPutDataWithMaxIdleTime() {
    }
 }
