@@ -167,7 +167,7 @@
       <version.jboss.metadata>11.0.0.Final</version.jboss.metadata>
       <version.jboss.marshalling>2.0.6.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
-      <version.jboss.narayana>5.8.1.Final</version.jboss.narayana>
+      <version.jboss.narayana>5.9.0.Final</version.jboss.narayana>
       <version.jboss.security>3.0.4.Final</version.jboss.security>
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0-alpha-10</version.jboss.shrinkwrap.descriptors>
