@@ -39,10 +39,12 @@ public class PessimisticTxPartitionAndMergeDuringPrepareTest extends BasePessimi
       doTest(SplitMode.ORIGINATOR_ISOLATED, false, false);
    }
 
+   @Test(groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-8232")
    public void testPrimaryOwnerIsolatedPartitionWithDiscard() throws Exception {
       doTest(SplitMode.PRIMARY_OWNER_ISOLATED, false, true);
    }
 
+   @Test(groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-8232")
    public void testPrimaryOwnerIsolatedPartition() throws Exception {
       doTest(SplitMode.PRIMARY_OWNER_ISOLATED, false, false);
    }

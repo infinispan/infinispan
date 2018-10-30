@@ -39,6 +39,7 @@ public class OptimisticTxPartitionAndMergeDuringRollbackTest extends BaseOptimis
       doTest(SplitMode.ORIGINATOR_ISOLATED, true, false);
    }
 
+   @Test(groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-8232")
    public void testPrimaryOwnerIsolatedPartitionWithDiscard() throws Exception {
       doTest(SplitMode.PRIMARY_OWNER_ISOLATED, true, true);
    }
