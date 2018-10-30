@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 8.0
  */
-@Test(groups = "functional", testName = "partitionhandling.OptimisticTxPartitionAndMergeDuringCommitTest")
+@Test(groups = {"functional", "unstable"}, testName = "partitionhandling.OptimisticTxPartitionAndMergeDuringCommitTest", description = "ISPN-8232")
 public class OptimisticTxPartitionAndMergeDuringCommitTest extends BaseOptimisticTxPartitionAndMergeTest {
 
    private static final Log log = LogFactory.getLog(OptimisticTxPartitionAndMergeDuringCommitTest.class);
@@ -39,6 +39,7 @@ public class OptimisticTxPartitionAndMergeDuringCommitTest extends BaseOptimisti
       doTest(SplitMode.ORIGINATOR_ISOLATED, false, false);
    }
 
+   @Test(groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-8232")
    public void testPrimaryOwnerIsolatedPartitionWithDiscard() throws Exception {
       doTest(SplitMode.PRIMARY_OWNER_ISOLATED, false, true);
    }
