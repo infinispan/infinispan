@@ -1,15 +1,16 @@
 package org.infinispan.test.fwk;
 
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
 import org.testng.IClass;
 import org.testng.IRetryAnalyzer;
 import org.testng.ITestClass;
 import org.testng.ITestNGMethod;
 import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlTest;
-
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
 
 public class NamedTestMethod implements ITestNGMethod {
    private final ITestNGMethod method;
@@ -263,6 +264,16 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
+   public void setMoreInvocationChecker(Callable<Boolean> moreInvocationChecker) {
+      method.setMoreInvocationChecker(moreInvocationChecker);
+   }
+
+   @Override
+   public boolean hasMoreInvocation() {
+      return method.hasMoreInvocation();
+   }
+
+   @Override
    public ITestNGMethod clone() {
       return method.clone();
    }
@@ -348,8 +359,8 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
-   public int compareTo(Object o) {
-      return method.compareTo(o);
+   public String getQualifiedName() {
+      return method.getQualifiedName();
    }
 
    @Override

@@ -1,6 +1,6 @@
 package org.infinispan.spring.remote.provider;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.springframework.test.annotation.DirtiesContext;

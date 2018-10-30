@@ -5,8 +5,8 @@ import static java.util.Collections.singletonList;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertArrayEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.test.data.Address;
