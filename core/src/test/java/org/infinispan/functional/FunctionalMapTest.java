@@ -65,6 +65,8 @@ import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.function.SerializableFunction;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -603,6 +605,18 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
             rw.set("one");
             return rw;
          };
+   }
+
+   @Override
+   @BeforeClass
+   public void createBeforeClass() throws Throwable {
+      super.createBeforeClass();
+   }
+
+   @Override
+   @BeforeMethod
+   public void createBeforeMethod() throws Throwable {
+      super.createBeforeMethod();
    }
 
 }

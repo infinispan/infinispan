@@ -5,8 +5,8 @@ import static java.util.Collections.singletonList;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
-import static org.junit.Assert.assertArrayEquals;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertArrayEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.test.data.Address;
@@ -31,7 +31,7 @@ public class XMLTranscoderTest {
    public void testObjectToXML() {
       String xmlString = new String((byte[]) xmlTranscoder.transcode(person, APPLICATION_OBJECT, APPLICATION_XML));
       Object transcodedBack = xmlTranscoder.transcode(xmlString, APPLICATION_XML, APPLICATION_OBJECT);
-      assertEquals(person, transcodedBack, "Must be an equal objects");
+      assertEquals("Must be an equal objects", person, transcodedBack);
    }
 
    public void testTextToXML() {
