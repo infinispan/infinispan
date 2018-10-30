@@ -6,7 +6,7 @@
       <subsystem>deployment-scanner.xml</subsystem>
       <subsystem>datasources.xml</subsystem>
       <subsystem>elytron.xml</subsystem>
-      <subsystem>io.xml</subsystem>
+      <subsystem>infinispan-io.xml</subsystem>
       <subsystem supplement="default">infinispan-core.xml</subsystem>
       <subsystem>infinispan-endpoint.xml</subsystem>
       <subsystem>jca.xml</subsystem>

@@ -9,7 +9,7 @@
       <subsystem supplement="clustered">infinispan-core.xml</subsystem>
       <subsystem supplement="clustered">infinispan-endpoint.xml</subsystem>
       <subsystem>cloud-jgroups.xml</subsystem>
-      <subsystem>io.xml</subsystem>
+      <subsystem>infinispan-io.xml</subsystem>
       <subsystem>jca.xml</subsystem>
       <subsystem>jdr.xml</subsystem>
       <subsystem>jmx.xml</subsystem>
