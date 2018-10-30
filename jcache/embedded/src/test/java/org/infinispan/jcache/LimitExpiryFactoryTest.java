@@ -1,6 +1,6 @@
-package org.infinispan.jcache.embedded;
+package org.infinispan.jcache;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
@@ -8,7 +8,8 @@ import javax.cache.expiry.Duration;
 import javax.cache.expiry.EternalExpiryPolicy;
 import javax.cache.expiry.ExpiryPolicy;
 
-import org.junit.Test;
+import org.infinispan.jcache.embedded.LimitExpiryFactory;
+import org.testng.annotations.Test;
 
 public class LimitExpiryFactoryTest {
 

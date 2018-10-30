@@ -3,7 +3,7 @@ package org.infinispan.rest.framework.impl;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
-import static org.junit.Assert.assertNull;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Arrays;

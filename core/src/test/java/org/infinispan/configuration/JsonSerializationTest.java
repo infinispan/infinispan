@@ -38,7 +38,7 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.junit.Assert;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(testName = "config.JsonSerializationTest", groups = "functional")
