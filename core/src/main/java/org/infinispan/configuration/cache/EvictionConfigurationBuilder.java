@@ -37,6 +37,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
     * @param evictionStrategy
     */
    public EvictionConfigurationBuilder strategy(EvictionStrategy evictionStrategy) {
+      memory().evictionStrategy(evictionStrategy);
       attributes.attribute(STRATEGY).set(evictionStrategy);
       return this;
    }
@@ -103,32 +104,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public void validate() {
-      EvictionStrategy strategy = attributes.attribute(STRATEGY).get();
-      Long size = attributes.attribute(SIZE).get();
-      if (strategy == EvictionStrategy.FIFO)
-         log.warnFifoStrategyIsDeprecated();
-      if (strategy.isEnabled() && size <= 0)
-         throw log.invalidEvictionSize();
-      if (!strategy.isEnabled()) {
-         if (size > 0) {
-            strategy(EvictionStrategy.LIRS);
-            log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s", size, strategy);
-         } else if (getBuilder().persistence().passivation() && strategy != EvictionStrategy.MANUAL && !getBuilder().template()) {
-            log.passivationWithoutEviction();
-         }
-      }
-      if (strategy == EvictionStrategy.LIRS && attributes.attribute(TYPE).get() == EvictionType.MEMORY) {
-         throw log.memoryEvictionInvalidStrategyLIRS();
-      }
-      if (size > EVICTION_MAX_SIZE) {
-         throw log.evictionSizeTooLarge(size);
-      }
-      if (attributes.attribute(TYPE).get() == EvictionType.MEMORY) {
-         String javaVM = SecurityActions.getSystemProperty("java.vm.name");
-         if (!javaVM.contains("HotSpot") && !javaVM.contains("OpenJDK")) {
-            log.memoryApproximationUnsupportedVM(javaVM);
-         }
-      }
+      // Validation is all done in the new MemoryConfigurationBuilder
    }
 
    @Override
