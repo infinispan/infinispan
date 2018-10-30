@@ -331,7 +331,7 @@
       <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
       <versionx.org.apache.ant.ant-launcher>${version.ant}</versionx.org.apache.ant.ant-launcher>
       <versionx.org.apache.avro.avro>1.7.6</versionx.org.apache.avro.avro>
-      <versionx.org.apache.commons.commons-compress>1.4</versionx.org.apache.commons.commons-compress>
+      <versionx.org.apache.commons.commons-compress>1.18</versionx.org.apache.commons.commons-compress>
       <versionx.org.apache.commons.commons-lang3>3.6</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.commons.commons-math3>3.2</versionx.org.apache.commons.commons-math3>
