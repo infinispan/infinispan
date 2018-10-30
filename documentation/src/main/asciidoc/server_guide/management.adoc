@@ -72,3 +72,48 @@ You can also expose JMX beans using link:https://jolokia.org/[Jolokia]. In order
 additional parameter `--jmx`, for example: `./standalone.xml -c cloud.xml --jmx`. Jolokia configuration is stored in
 `agent.conf` file. It is possible to override this file by specifying it after `--jmx` parameter. For example:
 `./standalone.sh -c cloud.xml --jmx my-config.properties`.
+
+=== Access Logs
+
+The Hot Rod and REST endpoints can generate access logs similar to those output by traditional HTTP servers.
+
+Access logs are generated using the following logger categories using the `TRACE` level:
+
+* `org.infinispan.HOTROD_ACCESS_LOG` for Hot Rod
+* `org.infinispan.REST_ACCESS_LOG` for REST
+
+Both of these are disabled by default. To enable either one of them, modify the server configuration file by setting the
+level from `INFO` to `TRACE` in the corresponding `logger`:
+
+[source,xml]
+----
+<logger category="org.infinispan.HOTROD_ACCESS_LOG" use-parent-handlers="false">
+    <level name="TRACE"/>
+    <handlers>
+       <handler name="HR-ACCESS-FILE"/>
+    </handlers>
+</logger>
+----
+
+By default, the loggers will output entriess similar to the following:
+
+`127.0.0.1 - [30/Oct/2018:12:41:50 CET] "PUT /rest/default/key HTTP/1.1" 404 5 77 10`
+
+You can change the content of the log by modifying the formatter. The default `ACCESS_LOG` formatter which generated the
+above entry is:
+
+`%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss z}] &quot;%X{method} %m %X{protocol}&quot; %X{status} %X{requestSize} %X{responseSize} %X{duration}%n`
+
+The following is a list of available properties you can reference using the `%X{name}` notation:
+
+* `address` `X-Forwarded-For` header is set, otherwise the client address
+* `user` the principal name, if using authentication
+* `method` the method (e.g. `PUT/GET/...`).
+* `protocol` the protocol (e.g. `HTTP/1.1`, `HTTP/2`, `HOTROD/2.9`)
+* `status` the status of the request (the HTTP status code for REST, `OK` or the exception for Hot Rod)
+* `responseSize` the size in bytes of the response
+* `requestSize` the size in bytes of the request
+* `duration` the number of milliseconds the server took to handle the request
+
+You can also include any header which was part of a request, just by using its name prefixed by `h:`, e.g. `%X{h:User-Agent}`.
+
