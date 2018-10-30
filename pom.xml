@@ -721,7 +721,7 @@
       <versionx.org.springframework.spring5-webmvc>${version.spring5}</versionx.org.springframework.spring5-webmvc>
 
       <versionx.org.syslog4j.syslog4j>0.9.30</versionx.org.syslog4j.syslog4j>
-      <versionx.org.testng.testng>6.9.9</versionx.org.testng.testng>
+      <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.tukaani.xz>1.0</versionx.org.tukaani.xz>
       <versionx.org.twdata.maven.mojo-executor>2.2.0</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.arquillian.wildfly-arquillian-common>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-common>

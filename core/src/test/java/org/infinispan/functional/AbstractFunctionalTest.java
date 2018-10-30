@@ -8,6 +8,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 
 abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
 
@@ -102,6 +103,7 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    }
 
    @Override
+   @BeforeMethod
    public void createBeforeMethod() throws Throwable {
       super.createBeforeMethod();
       if (cleanupAfterMethod()) initMaps();
