@@ -1,6 +1,7 @@
 package org.infinispan.rest.logging;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.logging.Logger;
@@ -60,6 +61,9 @@ public class RestAccessLoggingHandler {
          // Response time
          long duration = now - requestTime;
          MDC.clear();
+         for(Map.Entry<String, String> s : request.headers().entries()) {
+            MDC.put("h:" + s.getKey(), s.getValue());
+         }
          MDC.put("address", remoteAddress);
          MDC.put("user", who);
          MDC.put("method", requestMethod);
