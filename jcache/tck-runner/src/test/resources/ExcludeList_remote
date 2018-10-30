@@ -4,3 +4,6 @@
 
 # This is a dummy test that fails if not in the exclude list.
 org.jsr107.tck.CachingTest#dummyTest
+
+# This is due to remote client always notifying https://issues.jboss.org/browse/ISPN-9665
+org.jsr107.tck.event.CacheListenerTest#testCacheClearListener
