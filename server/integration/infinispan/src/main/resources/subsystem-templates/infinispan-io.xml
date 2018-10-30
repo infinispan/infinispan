@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--  See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
+<config>
+   <extension-module>org.wildfly.extension.io</extension-module>
+    <subsystem xmlns="urn:jboss:domain:io:3.0">
+        <worker name="default" io-threads="2" task-max-threads="2"/>
+        <buffer-pool name="default"/>
+    </subsystem>
+</config>
