@@ -136,12 +136,6 @@
       </dependency>
 
       <dependency>
-         <groupId>com.mchange</groupId>
-         <artifactId>c3p0</artifactId>
-         <optional>${uberjar.deps.optional}</optional>
-      </dependency>
-
-      <dependency>
          <groupId>org.jgroups.kubernetes</groupId>
          <artifactId>jgroups-kubernetes</artifactId>
          <optional>${uberjar.deps.optional}</optional>
@@ -230,12 +224,6 @@
                            <artifact>org.infinispan:infinispan-commons</artifact>
                            <excludes>
                               <exclude>org/infinispan/commons/util/OsgiClassLoader*.class</exclude>
-                           </excludes>
-                        </filter>
-                        <filter>
-                           <artifact>com.mchange:mchange-commons-java</artifact>
-                           <excludes>
-                              <exclude>com/mchange/v3/hocon/*</exclude>
                            </excludes>
                         </filter>
                         <filter>
@@ -333,12 +321,11 @@
                         </_exportcontents>
                         <Import-Package>
                            !com.jcraft.jzlib,
-                           !com.mchange.v2.c3p0,
                            !com.ning.compress.*,
-                           !com.zaxxer.hikari,
                            !com.codahale.metrics.*,
                            !com.sun.jmx.mbeanserver,
                            !infinispan.*,
+                           !io.agroal.*,
                            !io.netty.internal.tcnative.*,
                            !org.conscrypt.*,
                            !javax.annotation.*,
@@ -447,7 +434,7 @@
             <artifactId>karaf-maven-plugin</artifactId>
             <configuration>
                <features>
-                  <feature>infinispan-embedded,c3p0,hikaricp,hibernate,rocksdb</feature>
+                  <feature>infinispan-embedded,agroal,hibernate,rocksdb</feature>
                </features>
             </configuration>
          </plugin>

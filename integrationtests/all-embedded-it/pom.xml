@@ -42,15 +42,9 @@
            <groupId>org.glassfish.jaxb</groupId>
            <artifactId>jaxb-runtime</artifactId>
        </dependency>
-      <!-- JDBC test dependecies -->
        <dependency>
-           <groupId>com.mchange</groupId>
-           <artifactId>c3p0</artifactId>
-           <scope>provided</scope>
-       </dependency>
-       <dependency>
-           <groupId>com.zaxxer</groupId>
-           <artifactId>HikariCP</artifactId>
+           <groupId>io.agroal</groupId>
+           <artifactId>agroal-pool</artifactId>
            <scope>provided</scope>
        </dependency>
        <dependency>

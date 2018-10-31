@@ -282,14 +282,9 @@
                            <version>${version.hibernate.core}</version>
                         </additionalDependency>
                         <additionalDependency>
-                           <groupId>com.mchange</groupId>
-                           <artifactId>c3p0</artifactId>
-                           <version>${version.c3p0}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                           <groupId>com.zaxxer</groupId>
-                           <artifactId>HikariCP</artifactId>
-                           <version>${version.hikaricp}</version>
+                           <groupId>io.agroal</groupId>
+                           <artifactId>agroal-api</artifactId>
+                           <version>${version.io.agroal}</version>
                         </additionalDependency>
                      </additionalDependencies>
                   </configuration>

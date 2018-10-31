@@ -146,7 +146,7 @@ public class UnitTestDatabaseManager {
          PooledConnectionFactory pcf = (PooledConnectionFactory) connectionFactory;
          try {
             Thread.sleep(500); // C3P0 needs a little delay before reporting the correct number of connections. Bah!
-            assertEquals(pcf.getNumBusyConnectionsAllUsers(), 0);
+            assertEquals(pcf.getActiveConnections(), 0);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }

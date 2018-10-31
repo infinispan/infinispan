@@ -5,17 +5,11 @@
       <feature>aries-blueprint</feature>
       <bundle>mvn:org.infinispan/infinispan-embedded/${project.version}</bundle>
    </feature>
-   <!-- c3p0 dependencies required only when using PooledConnectionFactory with JDBC cache store -->
-   <feature name="c3p0" version="${project.version}">
-      <feature prerequisite="true">wrap</feature>
-      <bundle>wrap:mvn:com.mchange/c3p0/${version.c3p0}$DynamicImport-Package=*</bundle>
-      <bundle>wrap:mvn:com.mchange/mchange-commons-java/${version.c3p0_dep.mchange-commons-java}</bundle>
-   </feature>
 
-   <feature name="hikaricp" version="${project.version}">
+   <feature name="agroal" version="${project.version}">
       <feature prerequisite="true">wrap</feature>
-      <bundle>mvn:com.zaxxer/HikariCP/${version.hikaricp}</bundle>
-      <bundle>wrap:mvn:org.jboss.slf4j/slf4j-jboss-logging/${version.slf4j-jboss-logging}</bundle>
+      <bundle>mvn:io.agroal/agroal-api/${version.io.agroal}</bundle>
+      <bundle>mvn:io.agroal/agroal-pool/${version.io.agroal}</bundle>
    </feature>
    <!-- Hibernate dependencies required only when using JPACacheStore -->
    <feature name="hibernate" version="${project.version}">

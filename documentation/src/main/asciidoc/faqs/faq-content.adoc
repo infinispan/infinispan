@@ -374,29 +374,6 @@ link:https://github.com/infinispan/infinispan/blob/master/core/src/test/resource
 as base for any {brandname} related logging, and you can pass it to your system via system parameter (e.g.,
 `-Dlog4j.configurationFile=file:/path/to/log4j2.xml`).
 
-==== Slf4j Multiple Bindings Warning
-If you are using an SLF4J implementation for logging, then it is possible you will receive a `Class path contains multiple SLF4J bindings`
-warning at runtime. This is caused by the `infinispan-cachestore-jdbc` jar's dependency on `org.jboss.slf4j:slf4j-jboss-logging`.
-To avoid this warning you must utilise the fine grained jars, e.g `infinispan-core` and `infinispan-cachestore-jdbc` and
-explicitly exclude `slf4j-jboss-logging` as shown below:
-
-....
-<dependency>
-    <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-cachestore-jdbc</artifactId>
-    <version>9.0.0.Final</version>
-    <exclusions>
-        <exclusion>
-            <groupId>org.jboss.slf4j</groupId>
-            <artifactId>slf4j-jboss-logging</artifactId>
-        </exclusion>
-    </exclusions>
-</dependency>
-....
-
-NOTE: It is not possible to avoid such warnings when using the `infinispan-embedded` uber jar with SLF4J, instead you should
-declare individual dependencies on the required {brandname} jars.
-
 === Third Party Container questions
 
 ==== Can I use {brandname} on Google App Engine for Java?
