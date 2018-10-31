@@ -243,8 +243,6 @@
       <versionx.com.io7m.xom.xom>1.2.10</versionx.com.io7m.xom.xom>
       <versionx.com.jayway.jsonpath.json-path>2.2.0</versionx.com.jayway.jsonpath.json-path>
       <versionx.com.jgoodies.forms>1.0.7</versionx.com.jgoodies.forms>
-      <versionx.com.mchange.c3p0>${version.c3p0}</versionx.com.mchange.c3p0>
-      <versionx.com.mchange.mchange-commons-java>0.2.7</versionx.com.mchange.mchange-commons-java>
       <versionx.com.microsoft.azure.azure-storage>6.1.0</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.puppycrawl.tools.checkstyle>8.1</versionx.com.puppycrawl.tools.checkstyle>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
@@ -255,7 +253,6 @@
       <versionx.com.tdunning.t-digest>3.0</versionx.com.tdunning.t-digest>
       <versionx.com.thoughtworks.paranamer.paranamer>2.3</versionx.com.thoughtworks.paranamer.paranamer>
       <versionx.com.thoughtworks.xstream.xstream>1.4.10</versionx.com.thoughtworks.xstream.xstream>
-      <versionx.com.zaxxer.HikariCP>2.4.6</versionx.com.zaxxer.HikariCP>
       <versionx.commons-beanutils.commons-beanutils>1.9.3</versionx.commons-beanutils.commons-beanutils>
       <versionx.commons-cli.commons-cli>1.4</versionx.commons-cli.commons-cli>
       <versionx.commons-codec.commons-codec>1.10</versionx.commons-codec.commons-codec>
@@ -558,7 +555,6 @@
       <versionx.org.jboss.shrinkwrap.shrinkwrap-api>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.shrinkwrap-api>
       <versionx.org.jboss.shrinkwrap.shrinkwrap-impl-base>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.shrinkwrap-impl-base>
       <versionx.org.jboss.shrinkwrap.shrinkwrap-spi>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.shrinkwrap-spi>
-      <versionx.org.jboss.slf4j.slf4j-jboss-logging>1.1.0.Final</versionx.org.jboss.slf4j.slf4j-jboss-logging>
       <versionx.org.jboss.slf4j.slf4j-jboss-logmanager>1.0.3.GA</versionx.org.jboss.slf4j.slf4j-jboss-logmanager>
       <versionx.org.jboss.spec.javax.annotation.jboss-annotations-api_1.2_spec>1.0.2.Final</versionx.org.jboss.spec.javax.annotation.jboss-annotations-api_1.2_spec>
       <versionx.org.jboss.spec.javax.annotation.jboss-annotations-api_1.3_spec>1.0.1.Final</versionx.org.jboss.spec.javax.annotation.jboss-annotations-api_1.3_spec>
@@ -983,16 +979,6 @@
             <version>${versionx.com.jgoodies.forms}</version>
          </dependency>
          <dependency>
-            <groupId>com.mchange</groupId>
-            <artifactId>c3p0</artifactId>
-            <version>${versionx.com.mchange.c3p0}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.mchange</groupId>
-            <artifactId>mchange-commons-java</artifactId>
-            <version>${versionx.com.mchange.mchange-commons-java}</version>
-         </dependency>
-         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>azure-storage</artifactId>
             <version>${versionx.com.microsoft.azure.azure-storage}</version>
@@ -1043,11 +1029,6 @@
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
             <version>${versionx.com.thoughtworks.xstream.xstream}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP</artifactId>
-            <version>${versionx.com.zaxxer.HikariCP}</version>
          </dependency>
          <dependency>
             <groupId>commons-beanutils</groupId>
@@ -1119,6 +1100,16 @@
             <groupId>gnu.getopt</groupId>
             <artifactId>java-getopt</artifactId>
             <version>${versionx.gnu.getopt.java-getopt}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.agroal</groupId>
+            <artifactId>agroal-api</artifactId>
+            <version>${version.io.agroal}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.agroal</groupId>
+            <artifactId>agroal-pool</artifactId>
+            <version>${version.io.agroal}</version>
          </dependency>
          <dependency>
             <groupId>io.fabric8</groupId>
@@ -2943,11 +2934,6 @@
             <artifactId>shrinkwrap-resolver-spi-maven-archive</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-spi-maven-archive}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.slf4j</groupId>
-            <artifactId>slf4j-jboss-logging</artifactId>
-            <version>${versionx.org.jboss.slf4j.slf4j-jboss-logging}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.slf4j</groupId>

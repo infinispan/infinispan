@@ -31,14 +31,31 @@ or simpleConnection() methods on the JdbcStringBasedStoreConfigurationBuilder cl
 
 
 *  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html[PooledConnectionFactory]
-is a factory based on link:https://github.com/brettwooldridge/HikariCP[HikariCP]. Additional properties for HikariCP can
-be provided by a properties file, either via placing a `hikari.properties` file on the classpath or by specifying the
-path to the file via `PooledConnectionFactoryConfiguration.propertyFile` or `properties-file` in the connection pool's
-xml config. N.B. a properties file specified explicitly in the configuration is loaded instead of the `hikari.properties`
-file on the class path and Connection pool characteristics which are explicitly set in PooledConnectionFactoryConfiguration
-always override the values loaded from a properties file.
+is a factory based on link:https://agroal.github.io/[Agroal], which is configured via the PooledConnectionFactoryConfiguration or
+by specifying a properties file via `PooledConnectionFactoryConfiguration.propertyFile`. Properties must be specified with
+the prefix "org.infinispan.agroal.". An example `agroal.properties` file is shown below:
 
-Refer to the official link:https://github.com/brettwooldridge/HikariCP[documentation] for details of all configuration properties.
+[source,properties]
+----
+org.infinispan.agroal.metricsEnabled=false
+
+org.infinispan.agroal.minSize=10
+org.infinispan.agroal.maxSize=100
+org.infinispan.agroal.initialSize=20
+org.infinispan.agroal.acquisitionTimeout_s=1
+org.infinispan.agroal.validationTimeout_m=1
+org.infinispan.agroal.leakTimeout_s=10
+org.infinispan.agroal.reapTimeout_m=10
+
+org.infinispan.agroal.metricsEnabled=false
+org.infinispan.agroal.autoCommit=true
+org.infinispan.agroal.jdbcTransactionIsolation=READ_COMMITTED
+org.infinispan.agroal.jdbcUrl=jdbc:h2:mem:PooledConnectionFactoryTest;DB_CLOSE_DELAY=-1
+org.infinispan.agroal.driverClassName=org.h2.Driver.class
+org.infinispan.agroal.principal=sa
+org.infinispan.agroal.credential=sa
+
+----
 
 
 *  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html[ManagedConnectionFactory]

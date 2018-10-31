@@ -4,14 +4,9 @@
 
    <feature name="infinispan-cachestore-jdbc" version="${project.version}">
       <feature version="${project.version}">infinispan-core</feature>
-
       <bundle>mvn:org.infinispan/infinispan-cachestore-jdbc/${project.version}</bundle>
-
-      <bundle>wrap:mvn:com.mchange/c3p0/${version.c3p0}$DynamicImport-Package=*</bundle>
-      <bundle>wrap:mvn:com.mchange/mchange-commons-java/${version.c3p0_dep.mchange-commons-java}</bundle>
-      <bundle>mvn:com.zaxxer/HikariCP/${version.hikaricp}</bundle>
-      <bundle>wrap:mvn:org.jboss.slf4j/slf4j-jboss-logging/${version.slf4j-jboss-logging}</bundle>
-
+      <bundle>mvn:io.agroal/agroal-api/${version.io.agroal}</bundle>
+      <bundle>mvn:io.agroal/agroal-pool/${version.io.agroal}</bundle>
       <feature version="${project.version}">infinispan-core</feature>
    </feature>
 </features>

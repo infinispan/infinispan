@@ -98,13 +98,13 @@ public interface Log extends BasicLogger {
    @Message(value = "Issues while closing connection %s", id = 8019)
    void sqlFailureClosingConnection(Connection conn, @Cause SQLException e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Error while instatianting JDBC driver: '%s'", id = 8020)
-   void errorInstantiatingJdbcDriver(String driverClass, @Cause Exception e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Error while instatianting JDBC driver: '%s'", id = 8020)
+//   void errorInstantiatingJdbcDriver(String driverClass, @Cause Exception e);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Could not destroy C3P0 connection pool: %s", id = 8021)
-   void couldNotDestroyC3p0ConnectionPool(String pooledDataSource, @Cause SQLException e);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Could not destroy C3P0 connection pool: %s", id = 8021)
+//   void couldNotDestroyC3p0ConnectionPool(String pooledDataSource, @Cause SQLException e);
 
    @LogMessage(level = WARN)
    @Message(value = "Unexpected sql failure", id = 8022)
@@ -153,13 +153,13 @@ public interface Log extends BasicLogger {
    @Message(value = "Exception encountered when preparing JDBC store Tx", id = 8033)
    PersistenceException prepareTxFailure(@Cause Throwable e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Error when creating Hikari connection pool", id = 8034)
-   void errorCreatingHikariCP(@Cause Exception e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Error when creating Hikari connection pool", id = 8034)
+//   void errorCreatingHikariCP(@Cause Exception e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Error loading HikariCP properties file, only the properties set in %s will be loaded", id = 8035)
-   void errorLoadingHikariCPProperties(String name);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Error loading HikariCP properties file, only the properties set in %s will be loaded", id = 8035)
+//   void errorLoadingHikariCPProperties(String name);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to notify the PurgeListener of expired cache entries as the configured key2StringMapper " +
