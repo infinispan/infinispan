@@ -1,0 +1,76 @@
+<subsystem xmlns="urn:infinispan:server:endpoint:10.0">
+    <hotrod-connector name="hotrod1" socket-binding="hotrod" ignored-caches="cache1" cache-container="default" idle-timeout="100" tcp-nodelay="true" io-threads="2" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000">
+        <topology-state-transfer external-host="localhost" external-port="1234" lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+    </hotrod-connector>
+    <hotrod-connector name="hotrod2" socket-binding="hotrod" cache-container="default" idle-timeout="100" tcp-nodelay="true" io-threads="2" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000">
+        <topology-state-transfer external-host="localhost" external-port="1234" lazy-retrieval="false" await-initial-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+        <encryption security-realm="other" />
+    </hotrod-connector>
+    <hotrod-connector name="hotrod3" socket-binding="hotrod" cache-container="default" idle-timeout="100" tcp-nodelay="true" tcp-keepalive="false" io-threads="2" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000">
+        <topology-state-transfer external-host="localhost" external-port="1234" lazy-retrieval="false" await-initial-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+        <authentication security-realm="other">
+            <sasl server-context-name="host" server-name="localhost" mechanisms="GSSAPI DIGEST-MD5 PLAIN" qop="auth" strength="high medium low">
+                <policy>
+                    <no-anonymous value="true" />
+                </policy>
+                <property name="com.sun.security.sasl.digest.realm">ServerRealm</property>
+            </sasl>
+        </authentication>
+    </hotrod-connector>
+    <hotrod-connector name="hotrod5" socket-binding="hotrod" cache-container="default">
+        <encryption security-realm="other">
+            <sni host-name="sni" security-realm="other" />
+            <sni host-name="sni2" security-realm="other2" />
+            <sni host-name="sni3" />
+        </encryption>
+    </hotrod-connector>
+    <memcached-connector cache="memcachedCache" socket-binding="memcached" client-encoding="application/x-protostream"
+                         cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5"
+                         receive-buffer-size="10000" send-buffer-size="10000"/>
+    <rest-connector name="rest1" socket-binding="rest" cache-container="default" ignored-caches="cache1 cache2 cache3" context-path="/" extended-headers="ON_DEMAND" max-content-length="500000" compression-level="7">
+        <authentication security-realm="other" auth-method="BASIC"/>
+        <encryption security-realm="other">
+            <sni host-name="sni" security-realm="other" />
+            <sni host-name="sni2" security-realm="other2" />
+            <sni host-name="sni3" />
+        </encryption>
+        <cors-rules>
+            <cors-rule name="restrict host1" allow-credentials="false">
+                <allowed-methods>GET</allowed-methods>
+                <allowed-origins>http://host1</allowed-origins>
+            </cors-rule>
+            <cors-rule name="allow host2" allow-credentials="true" max-age-seconds="2000">
+                <allowed-headers>Key-Content-Type</allowed-headers>
+                <allowed-methods>GET,OPTIONS,POST,PUT,DELETE</allowed-methods>
+                <allowed-origins>http://host2:8080</allowed-origins>
+                <expose-headers>X-Custom-Header</expose-headers>
+            </cors-rule>
+            <cors-rule max-age-seconds="2000" name="allow from all">
+                <allowed-methods>GET,OPTIONS,POST,PUT,DELETE</allowed-methods>
+                <allowed-origins>*</allowed-origins>
+            </cors-rule>
+        </cors-rules>
+    </rest-connector>
+    <router-connector name="router" hotrod-socket-binding="router-hotrood" rest-socket-binding="router-restStatsChannelHandler" single-port-socket-binding="router-single-port" tcp-nodelay="true" tcp-keepalive="true" receive-buffer-size="10000" send-buffer-size="10000">
+        <single-port security-realm="other">
+            <rest name="rest-1"/>
+            <hotrod name="hotrod-2"/>
+        </single-port>
+        <multi-tenancy>
+            <hotrod name="hotrod-multi-tenant-1">
+                <sni host-name="sni" security-realm="other" />
+                <sni host-name="sni2" security-realm="other2" />
+            </hotrod>
+            <hotrod name="hotrod-multi-tenant-2">
+                <sni host-name="sni" security-realm="other" />
+            </hotrod>
+            <rest name="rest-multi-tenant-1">
+                <prefix path="rest1" />
+                <prefix path="rest2" />
+            </rest>
+            <rest name="rest-multi-tenant-2">
+                <prefix path="rest3" />
+            </rest>
+        </multi-tenancy>
+    </router-connector>
+</subsystem>

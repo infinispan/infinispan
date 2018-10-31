@@ -1,0 +1,303 @@
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:10.0 http://www.infinispan.org/schemas/infinispan-config-10.0.xsd"
+      xmlns="urn:infinispan:config:10.0">
+   <jgroups transport="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
+      <stack-file name="udp" path="jgroups-udp.xml"/>
+      <stack-file name="tcp" path="jgroups-tcp.xml"/>
+   </jgroups>
+   <threads>
+      <thread-factory name="infinispan-factory" group-name="infinispan" thread-name-pattern="%G %i" priority="5"/>
+      <!-- listener-executor -->
+      <blocking-bounded-queue-thread-pool name="infinispan-async" thread-factory="infinispan-factory"
+            core-threads="5" max-threads="5" queue-length="0" keepalive-time="0"/>
+      <!-- listener-executor -->
+      <blocking-bounded-queue-thread-pool name="infinispan-listener" thread-factory="infinispan-factory"
+            core-threads="1" max-threads="1" queue-length="0" keepalive-time="0"/>
+      <!-- transport.executor -->
+      <blocking-bounded-queue-thread-pool name="infinispan-transport" thread-factory="infinispan-factory"
+            core-threads="5" max-threads="10" queue-length="100" keepalive-time="10000"/>
+      <!-- state-transfer-executor -->
+      <blocking-bounded-queue-thread-pool name="infinispan-state-transfer" thread-factory="infinispan-factory"
+            core-threads="1" max-threads="60" queue-length="0" keepalive-time="0"/>
+      <!-- transport.remote-command-executor, persistence-executor -->
+      <cached-thread-pool name="infinispan-cached" thread-factory="infinispan-factory" />
+      <!-- expiration-executor -->
+      <scheduled-thread-pool name="infinispan-expiration" thread-factory="infinispan-factory" />
+   </threads>
+
+   <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" async-executor="infinispan-async" expiration-executor="infinispan-expiration"
+                    jndi-name="java:global/infinispan/maximal"  state-transfer-executor="infinispan-state-transfer" listener-executor="infinispan-listener"
+                    persistence-executor="infinispan-cached" module="org.infinispan" statistics="true" shutdown-hook="DONT_REGISTER">
+      <transport cluster="maximal-cluster" executor="infinispan-transport" remote-command-executor="infinispan-cached" lock-timeout="120000" stack="tcp" node-name="a-node" machine="a" rack="b" site="c"
+                 initial-cluster-size="4" initial-cluster-timeout="30000" />
+      <serialization marshaller="org.infinispan.marshall.TestObjectStreamMarshaller" version="1.0">
+         <advanced-externalizer class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer" id="9001" />
+         <advanced-externalizer class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj$Externalizer" id="9002" />
+      </serialization>
+      <jmx domain="my-domain" mbean-server-lookup="org.infinispan.jmx.CustomMBeanServerPropertiesTest$TestLookup" duplicate-domains="true">
+         <property name="key">value</property>
+      </jmx>
+      <global-state>
+         <persistent-location path="persistentPath" relative-to="jboss.server.temp.dir" />
+         <shared-persistent-location path="sharedPath" relative-to="jboss.server.temp.dir" />
+         <temporary-location path="tmpPath" relative-to="jboss.server.temp.dir" />
+         <overlay-configuration-storage />
+      </global-state>
+      <local-cache name="local" start="EAGER" module="org.infinispan" statistics="true">
+         <encoding>
+            <key media-type="application/x-java-object"/>
+            <value media-type="application/x-java-object"/>
+         </encoding>
+         <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
+         <transaction mode="FULL_XA" stop-timeout="60000" locking="OPTIMISTIC" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" complete-timeout="34000" reaper-interval="35000" auto-commit="true" />
+         <expiration interval="10000" lifespan="10" max-idle="10"/>
+         <persistence passivation="false" availability-interval="2000" connection-attempts="5" connection-interval="100">
+            <file-store path="path" relative-to="jboss.server.temp.dir" shared="false" singleton="false" fetch-state="false" preload="true" purge="false">
+               <write-behind modification-queue-size="2048" thread-pool-size="1" fail-silently="true"/>
+            </file-store>
+         </persistence>
+         <memory>
+            <object size="20000"/>
+         </memory>
+      </local-cache>
+      <invalidation-cache name="invalid" mode="SYNC" start="EAGER" statistics="true">
+         <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
+         <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
+         <expiration interval="10500" lifespan="11" max-idle="11"/>
+         <memory>
+            <binary size="20500"/>
+         </memory>
+      </invalidation-cache>
+      <replicated-cache name="repl" mode="SYNC" start="EAGER" statistics="true">
+         <encoding>
+            <key media-type="application/x-java-object"/>
+            <value media-type="application/x-java-object"/>
+         </encoding>
+         <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
+         <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
+         <expiration interval="11000" lifespan="12" max-idle="12"/>
+         <persistence>
+            <cluster-loader remote-timeout="35000" preload="false"/>
+         </persistence>
+         <memory>
+            <object size="21000"/>
+         </memory>
+         <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
+      </replicated-cache>
+      <distributed-cache name="dist" mode="SYNC" l1-lifespan="1200000" owners="4"
+                         remote-timeout="35000" start="EAGER" segments="2" statistics="true"
+                         consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
+                         key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
+         <backups>
+            <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500" enabled="false">
+               <state-transfer chunk-size="600" timeout="2400000"/>
+            </backup>
+            <backup site="SFO" failure-policy="IGNORE" strategy="ASYNC" timeout="13000" enabled="true"/>
+            <backup site="LON" failure-policy="FAIL" strategy="SYNC" timeout="13500" enabled="true">
+               <take-offline after-failures="3" min-wait="10000"/>
+            </backup>
+         </backups>
+         <backup-for remote-cache="users" remote-site="LON"/>
+         <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
+         <transaction mode="FULL_XA" stop-timeout="61500" locking="OPTIMISTIC"/>
+         <expiration interval="11500" lifespan="13" max-idle="13"/>
+         <memory>
+            <object size="21500"/>
+         </memory>
+         <partition-handling when-split="ALLOW_READS" merge-policy="PREFERRED_NON_NULL"/>
+         <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
+      </distributed-cache>
+      <replicated-cache name="capedwarf-data" mode="SYNC">
+         <transaction mode="NON_XA"/>
+         <persistence passivation="false">
+            <file-store preload="true" purge="false"/>
+         </persistence>
+         <memory>
+            <object size="-1"/>
+         </memory>
+      </replicated-cache>
+      <replicated-cache name="capedwarf-metadata" mode="SYNC">
+         <transaction mode="NON_XA"/>
+         <persistence passivation="true">
+            <store class="org.infinispan.persistence.dummy.DummyInMemoryStore" />
+         </persistence>
+         <memory>
+            <object size="-1"/>
+         </memory>
+      </replicated-cache>
+      <replicated-cache name="capedwarf-memcache" mode="SYNC">
+         <transaction mode="NON_XA" locking="PESSIMISTIC"/>
+         <memory>
+            <object size="-1"/>
+         </memory>
+      </replicated-cache>
+      <distributed-cache name="capedwarf-default" mode="SYNC">
+         <transaction mode="NON_XA"/>
+         <persistence passivation="true">
+            <file-store preload="true" purge="false"/>
+         </persistence>
+         <memory>
+            <object size="-1"/>
+         </memory>
+      </distributed-cache>
+      <distributed-cache name="capedwarf-dist" mode="SYNC">
+         <transaction mode="NON_XA" locking="PESSIMISTIC"/>
+         <persistence passivation="true">
+            <file-store preload="true" purge="false"/>
+         </persistence>
+         <memory>
+            <object size="-1"/>
+         </memory>
+      </distributed-cache>
+      <distributed-cache name="capedwarf-tasks" mode="SYNC">
+         <transaction mode="NON_XA"/>
+         <persistence passivation="true">
+            <file-store preload="true" purge="false"/>
+         </persistence>
+         <memory>
+            <object size="10000"/>
+         </memory>
+      </distributed-cache>
+      <replicated-cache name="HibernateSearch-LuceneIndexesMetadata" mode="SYNC">
+         <transaction mode="BATCH"/>
+         <persistence passivation="true">
+            <file-store preload="true" purge="false"/>
+         </persistence>
+         <memory>
+            <object size="-1"/>
+         </memory>
+      </replicated-cache>
+      <replicated-cache name="HibernateSearch-LuceneIndexesData" mode="SYNC">
+         <transaction mode="BATCH"/>
+         <persistence passivation="true">
+            <file-store preload="true" purge="false"/>
+         </persistence>
+         <memory>
+            <object size="-1"/>
+         </memory>
+      </replicated-cache>
+      <replicated-cache name="HibernateSearch-LuceneIndexesLocking" mode="SYNC">
+         <transaction mode="BATCH"/>
+         <memory>
+            <object size="-1"/>
+         </memory>
+      </replicated-cache>
+      <local-cache name="custom-interceptors" unreliable-return-values="true">
+         <custom-interceptors>
+            <interceptor class="org.infinispan.configuration.parsing.UnifiedXmlFileParsingTest$CustomInterceptor1" after="org.infinispan.interceptors.impl.InvocationContextInterceptor"/>
+            <interceptor class="org.infinispan.configuration.parsing.UnifiedXmlFileParsingTest$CustomInterceptor2" before="org.infinispan.interceptors.impl.InvocationContextInterceptor"/>
+            <interceptor class="org.infinispan.configuration.parsing.UnifiedXmlFileParsingTest$CustomInterceptor3" index="1"/>
+            <interceptor class="org.infinispan.configuration.parsing.UnifiedXmlFileParsingTest$CustomInterceptor4" position="LAST">
+               <property name="foo">bar</property>
+            </interceptor>
+         </custom-interceptors>
+      </local-cache>
+      <local-cache name="write-skew" deadlock-detection-spin="-1">
+         <locking isolation="REPEATABLE_READ" write-skew="true"/>
+         <transaction locking="OPTIMISTIC"/>
+         <versioning scheme="SIMPLE"/>
+      </local-cache>
+      <local-cache name="compatibility" deadlock-detection-spin="200">
+         <compatibility marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
+      </local-cache>
+      <local-cache name="custom-container">
+         <data-container class="org.infinispan.configuration.QueryableDataContainer"
+                         key-equivalence="org.infinispan.commons.equivalence.ByteArrayEquivalence"
+                         value-equivalence="org.infinispan.commons.equivalence.ByteArrayEquivalence">
+            <property name="foo">bar</property>
+         </data-container>
+      </local-cache>
+      <local-cache name="simple-cache" simple-cache="true">
+         <transaction mode="NONE"/>
+         <persistence>
+         </persistence>
+      </local-cache>
+      <local-cache name="off-heap-memory">
+         <memory>
+            <off-heap size="10000000" eviction="MEMORY" address-count="4"/>
+         </memory>
+      </local-cache>
+      <local-cache name="binary-memory">
+         <memory>
+            <binary size="1"/>
+         </memory>
+      </local-cache>
+      <local-cache name="object-memory">
+         <memory>
+            <object/>
+         </memory>
+      </local-cache>
+
+      <!-- template configurations -->
+      <local-cache-configuration name="local-template" start="EAGER" module="org.infinispan" statistics="true">
+         <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
+         <transaction mode="FULL_XA" stop-timeout="60000" locking="OPTIMISTIC" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" complete-timeout="34000" reaper-interval="35000" auto-commit="true" />
+         <expiration interval="10000" lifespan="10" max-idle="10"/>
+         <persistence passivation="false">
+            <file-store path="path" relative-to="jboss.server.temp.dir" shared="false" singleton="false" fetch-state="false" preload="true" purge="false">
+               <write-behind modification-queue-size="2048" thread-pool-size="1" />
+            </file-store>
+         </persistence>
+         <memory>
+            <object size="20000"/>
+         </memory>
+      </local-cache-configuration>
+      <local-cache name="local-instance" configuration="local-template">
+         <expiration interval="11000"/>
+      </local-cache>
+
+      <invalidation-cache-configuration name="invalidation-template" mode="SYNC" start="LAZY" statistics="true">
+         <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
+         <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
+         <expiration interval="10500" lifespan="11" max-idle="11"/>
+         <memory>
+            <object size="20500"/>
+         </memory>
+      </invalidation-cache-configuration>
+      <invalidation-cache name="invalidation-instance" configuration="invalidation-template" />
+
+      <replicated-cache-configuration name="repl-template" mode="SYNC" start="EAGER" statistics="true"
+            segments="200" consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
+            key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
+         <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
+         <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
+         <expiration interval="11000" lifespan="12" max-idle="12"/>
+         <persistence>
+            <cluster-loader remote-timeout="35000" preload="true"/>
+         </persistence>
+         <memory>
+            <object size="21000"/>
+         </memory>
+         <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
+      </replicated-cache-configuration>
+      <replicated-cache name="repl-instance" configuration="repl-template">
+         <locking acquire-timeout="32000"/>
+      </replicated-cache>
+
+      <distributed-cache-configuration name="dist-template" mode="SYNC" l1-lifespan="1200000" owners="4"
+                         remote-timeout="35000" start="EAGER" segments="2" statistics="true"
+                         consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
+                         key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
+         <backups>
+            <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500" enabled="false">
+               <state-transfer chunk-size="600" timeout="2400000"/>
+            </backup>
+            <backup site="SFO" failure-policy="IGNORE" strategy="ASYNC" timeout="13000" enabled="true"/>
+            <backup site="LON" failure-policy="FAIL" strategy="SYNC" timeout="13500" enabled="true">
+               <take-offline after-failures="3" min-wait="10000"/>
+            </backup>
+         </backups>
+         <backup-for remote-cache="users" remote-site="LON"/>
+         <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
+         <transaction mode="FULL_XA" stop-timeout="61500" locking="OPTIMISTIC"/>
+         <expiration interval="11500" lifespan="13" max-idle="13"/>
+         <memory>
+            <object size="21500" strategy="REMOVE"/>
+         </memory>
+         <partition-handling when-split="DENY_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
+         <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
+      </distributed-cache-configuration>
+      <distributed-cache name="dist-instance" configuration="dist-template" />
+   </cache-container>
+</infinispan>

@@ -4,7 +4,7 @@
 
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-build-configuration-parent</artifactId>
-   <version>9.4.1-SNAPSHOT</version>
+   <version>10.0.0-SNAPSHOT</version>
    <packaging>pom</packaging>
 
    <name>Infinispan Common Parent</name>
@@ -85,9 +85,9 @@
       <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
       <infinispan.brand.short-name>infinispan</infinispan.brand.short-name>
       <infinispan.brand.version>${project.version}</infinispan.brand.version>
-      <infinispan.codename>Infinity Minus ONE +2</infinispan.codename>
+      <infinispan.codename>N/A</infinispan.codename>
       <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
-      <infinispan.base.version>9.4</infinispan.base.version>
+      <infinispan.base.version>10.0</infinispan.base.version>
       <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
 

@@ -13,3 +13,4 @@ infinispan:server:core:9.1
 infinispan:server:core:9.2
 infinispan:server:core:9.3
 infinispan:server:core:9.4
+infinispan:server:core:10.0

@@ -4,3 +4,4 @@ infinispan:server:jgroups:9.0
 infinispan:server:jgroups:9.2
 infinispan:server:jgroups:9.3
 infinispan:server:jgroups:9.4
+infinispan:server:jgroups:10.0
