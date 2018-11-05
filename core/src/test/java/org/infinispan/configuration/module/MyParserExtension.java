@@ -1,7 +1,5 @@
 package org.infinispan.configuration.module;
 
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -45,7 +43,7 @@ public class MyParserExtension implements ConfigurationParser {
          throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
          case SAMPLE_ATTRIBUTE: {

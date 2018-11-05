@@ -1,7 +1,5 @@
 package org.infinispan.tools.config.v6.jdbc;
 
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-
 import java.util.Properties;
 
 import javax.xml.stream.XMLStreamConstants;
@@ -70,7 +68,7 @@ public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
       JdbcStringBasedStoreConfigurationBuilder builder = new JdbcStringBasedStoreConfigurationBuilder(
             persistenceBuilder);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case KEY_TO_STRING_MAPPER:
@@ -129,7 +127,7 @@ public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
                                               PooledConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case CONNECTION_URL: {
@@ -160,7 +158,7 @@ public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
                                                 SimpleConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case CONNECTION_URL: {
@@ -191,7 +189,7 @@ public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
          throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case BATCH_SIZE: {
@@ -294,7 +292,7 @@ public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
    public static void parseCommonStoreAttributes(XMLExtendedStreamReader reader, int i,
                                                  StoreConfigurationBuilder<?, ?> builder) throws XMLStreamException {
       ParseUtils.requireNoNamespaceAttribute(reader, i);
-      String value = replaceProperties(reader.getAttributeValue(i));
+      String value = reader.getAttributeValue(i);
       org.infinispan.tools.config.v6.Attribute attribute = org.infinispan.tools.config.v6.Attribute.forName(reader.getAttributeLocalName(i));
       switch (attribute) {
          case FETCH_PERSISTENT_STATE:
@@ -333,7 +331,7 @@ public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
    public static void parseAsyncStore(final XMLExtendedStreamReader reader, final StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          org.infinispan.configuration.parsing.Attribute attribute = org.infinispan.configuration.parsing.Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case ENABLED:
@@ -366,7 +364,7 @@ public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
    public static void parseSingletonStore(final XMLExtendedStreamReader reader, final StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          org.infinispan.tools.config.v6.Attribute attribute = org.infinispan.tools.config.v6.Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case ENABLED:
@@ -404,7 +402,7 @@ public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
                String key = null;
                String propertyValue = null;
                for (int i = 0; i < attributes; i++) {
-                  String value = replaceProperties(reader.getAttributeValue(i));
+                  String value = reader.getAttributeValue(i);
                   org.infinispan.configuration.parsing.Attribute attribute = org.infinispan.configuration.parsing.Attribute.forName(reader.getAttributeLocalName(i));
                   switch (attribute) {
                      case NAME: {

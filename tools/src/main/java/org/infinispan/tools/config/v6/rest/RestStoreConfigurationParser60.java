@@ -1,7 +1,5 @@
 package org.infinispan.tools.config.v6.rest;
 
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -78,7 +76,7 @@ public class RestStoreConfigurationParser60 implements ConfigurationParser {
    private void parseConnectionPool(XMLExtendedStreamReader reader, ConnectionPoolConfigurationBuilder builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
          case CONNECTION_TIMEOUT: {
@@ -117,7 +115,7 @@ public class RestStoreConfigurationParser60 implements ConfigurationParser {
          throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          String attributeName = reader.getAttributeLocalName(i);
          Attribute attribute = Attribute.forName(attributeName);
          switch (attribute) {

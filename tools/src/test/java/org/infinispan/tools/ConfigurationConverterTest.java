@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.infinispan.Version;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -67,7 +68,9 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
          baos.writeTo(outputStream);
       }
 
-      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true);
+      Properties properties = new Properties();
+
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, properties);
       ConfigurationBuilderHolder holder = parserRegistry.parseFile(SERIALIZED_CONFIG_FILE_NAME);
       assertGlobalPropertiesConverted(holder);
       assertDefaultConfigApplied(holder);
@@ -696,7 +699,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertFalse(singleFileStoreConfiguration.shared());
       assertFalse(singleFileStoreConfiguration.async().enabled());
       assertTrue(singleFileStoreConfiguration.singletonStore().enabled());
-      assertEquals("${java.io.tmpdir}", singleFileStoreConfiguration.location());
+      assertEquals(System.getProperty("java.io.tmpdir"), singleFileStoreConfiguration.location());
 
       //--------------------------------------------------------------------------------------------
       config = holder.getNamedConfigurationBuilders().get("jdbcStringBasedWithConnectionPool").build();

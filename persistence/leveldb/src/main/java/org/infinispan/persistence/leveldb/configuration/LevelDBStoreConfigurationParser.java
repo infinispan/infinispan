@@ -3,7 +3,6 @@ package org.infinispan.persistence.leveldb.configuration;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
-import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
@@ -52,8 +51,7 @@ public class LevelDBStoreConfigurationParser implements ConfigurationParser {
    private void parseLevelDBCacheStore(XMLExtendedStreamReader reader, LevelDBStoreConfigurationBuilder builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String attributeValue = reader.getAttributeValue(i);
-         String value = StringPropertyReplacer.replaceProperties(attributeValue);
+         String value = reader.getAttributeValue(i);
          String attrName = reader.getAttributeLocalName(i);
          Attribute attribute = Attribute.forName(attrName);
 
@@ -108,8 +106,7 @@ public class LevelDBStoreConfigurationParser implements ConfigurationParser {
 
    private void parseLevelDBCacheStoreExpiry(XMLExtendedStreamReader reader, LevelDBStoreConfigurationBuilder builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String attributeValue = reader.getAttributeValue(i);
-         String value = StringPropertyReplacer.replaceProperties(attributeValue);
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case PATH: {

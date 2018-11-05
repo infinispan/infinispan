@@ -112,7 +112,7 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName, boolean defaultParsersOnly, boolean start) throws IOException {
-      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), defaultParsersOnly);
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), defaultParsersOnly, System.getProperties());
       ConfigurationBuilderHolder holder = parserRegistry.parse(is);
 
       // The node name is set in each DefaultThreadFactory individually, override it here
