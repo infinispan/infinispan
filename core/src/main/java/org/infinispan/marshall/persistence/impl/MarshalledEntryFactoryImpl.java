@@ -1,9 +1,11 @@
-package org.infinispan.marshall.core;
+package org.infinispan.marshall.persistence.impl;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 
 /**
  * @author Mircea Markus

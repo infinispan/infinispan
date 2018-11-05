@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.util.PersistenceManagerCloseableSupplier;
 import org.infinispan.util.CloseableSuppliedIterator;
 import org.infinispan.util.KeyValuePair;
@@ -129,7 +128,7 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
    interface CacheLoaderTask<K, V> {
 
       /**
-       * @param marshalledEntry an iterated entry. Note that {@link org.infinispan.marshall.core.MarshalledEntry#getValue()}
+       * @param marshalledEntry an iterated entry. Note that {@link MarshalledEntry#getValue()}
        *                        might be null if the fetchValue parameter passed to {@link AdvancedCacheLoader#process(KeyFilter,
        *                        org.infinispan.persistence.spi.AdvancedCacheLoader.CacheLoaderTask,
        *                        java.util.concurrent.Executor, boolean, boolean)} is false.
