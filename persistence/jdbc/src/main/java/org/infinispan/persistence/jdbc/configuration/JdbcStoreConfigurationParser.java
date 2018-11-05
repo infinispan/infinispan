@@ -1,7 +1,5 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -62,7 +60,7 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
       JdbcStringBasedStoreConfigurationBuilder builder = new JdbcStringBasedStoreConfigurationBuilder(
             persistenceBuilder);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case KEY_TO_STRING_MAPPER:
@@ -121,7 +119,7 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
                                               PooledConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case PROPERTIES_FILE: {
@@ -156,7 +154,7 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
                                                 SimpleConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case CONNECTION_URL: {
@@ -187,7 +185,7 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
          throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case BATCH_SIZE: {

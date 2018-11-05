@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentMap;
 
@@ -58,18 +59,20 @@ public class ParserRegistry implements NamespaceMappingParser {
    private static final Log log = LogFactory.getLog(ParserRegistry.class);
    private final WeakReference<ClassLoader> cl;
    private final ConcurrentMap<QName, NamespaceParserPair> parserMappings;
+   private final Properties properties;
 
    public ParserRegistry() {
       this(Thread.currentThread().getContextClassLoader());
    }
 
    public ParserRegistry(ClassLoader classLoader) {
-      this(classLoader, false);
+      this(classLoader, false, SecurityActions.getSystemProperties());
    }
 
-   public ParserRegistry(ClassLoader classLoader, boolean defaultOnly) {
+   public ParserRegistry(ClassLoader classLoader, boolean defaultOnly, Properties properties) {
       this.parserMappings = CollectionFactory.makeConcurrentMap();
       this.cl = new WeakReference<>(classLoader);
+      this.properties = properties;
       Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, cl.get(), ParserRegistry.class.getClassLoader());
       for (ConfigurationParser parser : parsers) {
 
@@ -130,10 +133,19 @@ public class ParserRegistry implements NamespaceMappingParser {
       }
    }
 
+   private void setIfSupported(final XMLInputFactory inputFactory, final String property, final Object value) {
+      if (inputFactory.isPropertySupported(property)) {
+         inputFactory.setProperty(property, value);
+      }
+   }
+
    public void parse(InputStream is, ConfigurationBuilderHolder holder) throws XMLStreamException {
       BufferedInputStream input = new BufferedInputStream(is);
-      XMLStreamReader subReader = XMLInputFactory.newInstance().createXMLStreamReader(input);
-      XMLExtendedStreamReader reader = new XMLExtendedStreamReaderImpl(this, subReader);
+      XMLInputFactory factory = XMLInputFactory.newInstance();
+      setIfSupported(factory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
+      setIfSupported(factory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+      XMLStreamReader subReader = factory.createXMLStreamReader(input);
+      XMLExtendedStreamReader reader = new XMLExtendedStreamReaderImpl(this, subReader, properties);
       parse(reader, holder);
       subReader.close();
       // Fire all parsingComplete events if any

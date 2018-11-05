@@ -4,7 +4,6 @@ package org.infinispan.tools.config.v6.jpa;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
-import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -44,7 +43,7 @@ public class JpaStoreConfigurationParser60 implements ConfigurationParser {
            throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = StringPropertyReplacer.replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
 
          switch (attribute) {

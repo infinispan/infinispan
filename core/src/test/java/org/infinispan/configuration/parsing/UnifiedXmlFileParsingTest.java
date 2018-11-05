@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.infinispan.Version;
@@ -95,7 +96,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       int major = Integer.parseInt(parts[0]);
       int minor = Integer.parseInt(parts[1]);
 
-      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false);
+      Properties properties = new Properties();
+
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
       try (InputStream is = FileLookupFactory.newInstance().lookupFileStrict(config.toString(), Thread.currentThread().getContextClassLoader())) {
          ConfigurationBuilderHolder holder = parserRegistry.parse(is);
          for(ParserVersionCheck check : ParserVersionCheck.values()) {
