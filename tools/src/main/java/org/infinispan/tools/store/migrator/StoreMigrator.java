@@ -15,7 +15,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 
 /**
  * @author Ryan Emerson

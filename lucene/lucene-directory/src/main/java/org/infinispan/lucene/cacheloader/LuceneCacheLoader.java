@@ -13,7 +13,7 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration;
 import org.infinispan.lucene.logging.Log;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;

@@ -4,7 +4,6 @@ import java.util.function.Predicate;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.reactivestreams.Publisher;
 
 import net.jcip.annotations.ThreadSafe;

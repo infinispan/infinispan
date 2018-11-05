@@ -9,7 +9,7 @@ import java.util.Iterator;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;

@@ -16,7 +16,7 @@ import org.infinispan.cli.io.IOAdapter;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.cli.configuration.CLInterfaceLoaderConfiguration;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;

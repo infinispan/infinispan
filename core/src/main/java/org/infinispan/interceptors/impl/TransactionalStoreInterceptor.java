@@ -14,7 +14,7 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.persistence.manager.PersistenceManager;
 
 /**

@@ -2,7 +2,7 @@ package org.infinispan.persistence.rest.metadata;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
 
 /**

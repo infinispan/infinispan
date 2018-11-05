@@ -29,7 +29,7 @@ import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEnt
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheValue;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.marshall.exts.EnumSetExternalizer;
 import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.metadata.EmbeddedMetadata;

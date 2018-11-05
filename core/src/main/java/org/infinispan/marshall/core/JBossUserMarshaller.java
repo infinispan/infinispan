@@ -37,7 +37,7 @@ public class JBossUserMarshaller extends JBossMarshaller {
 
    /**
     * A {@link org.jboss.marshalling.ObjectTable} implementation that creates {@link org.jboss.marshalling.ObjectTable.Writer}
-    * based upon a users configured {@link org.infinispan.marshall.core.MarshalledEntryImpl.Externalizer} implementation.
+    * based upon a users configured {@link org.infinispan.commons.marshall.Externalizer} implementations.
     */
    class UserExternalizerObjectTable implements ObjectTable {
 

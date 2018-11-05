@@ -8,7 +8,6 @@ import org.infinispan.atomic.impl.AtomicKeySetImpl;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;

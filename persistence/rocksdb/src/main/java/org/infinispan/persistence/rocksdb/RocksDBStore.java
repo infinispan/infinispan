@@ -28,7 +28,7 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration;

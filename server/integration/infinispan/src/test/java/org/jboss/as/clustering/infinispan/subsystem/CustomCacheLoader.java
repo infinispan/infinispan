@@ -1,6 +1,6 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 

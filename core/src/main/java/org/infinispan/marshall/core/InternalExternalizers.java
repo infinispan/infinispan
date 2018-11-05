@@ -81,6 +81,7 @@ import org.infinispan.marshall.exts.OptionalExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.TriangleAckExternalizer;
 import org.infinispan.marshall.exts.UuidExternalizer;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;

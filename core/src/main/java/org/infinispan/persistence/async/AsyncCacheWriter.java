@@ -25,7 +25,7 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.factories.threads.DefaultThreadFactory;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.ModificationsList;
 import org.infinispan.persistence.modifications.Remove;

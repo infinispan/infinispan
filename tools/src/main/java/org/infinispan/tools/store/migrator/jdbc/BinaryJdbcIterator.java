@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
 
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.spi.PersistenceException;

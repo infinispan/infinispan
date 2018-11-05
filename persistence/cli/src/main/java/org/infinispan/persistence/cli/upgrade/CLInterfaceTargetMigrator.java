@@ -13,7 +13,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.cli.CLInterfaceLoader;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.upgrade.TargetMigrator;

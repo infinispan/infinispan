@@ -27,7 +27,7 @@ import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.test.TestingUtil;
