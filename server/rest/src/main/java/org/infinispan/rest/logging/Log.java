@@ -2,6 +2,7 @@ package org.infinispan.rest.logging;
 
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.TRACE;
+import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.EncodingException;
@@ -63,4 +64,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot register invocation '%s': resource already registered for method '%s' at the destination path '/%s'", id = 12015)
    RegistrationException duplicateResource(String invocationName, Method method, String existingPath);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Header '%s' will be ignored, expecting a number but got '%s'", id = 12016)
+   void warnInvalidNumber(String header, String value);
 }

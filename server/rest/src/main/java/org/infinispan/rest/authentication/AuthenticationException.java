@@ -2,8 +2,6 @@ package org.infinispan.rest.authentication;
 
 import java.util.Optional;
 
-import org.infinispan.rest.InfinispanRequest;
-import org.infinispan.rest.InfinispanResponse;
 import org.infinispan.rest.RestResponseException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -25,10 +23,8 @@ public class AuthenticationException extends RestResponseException {
       this.authenticationHeader = authenticationHeader;
    }
 
-   @Override
-   public InfinispanResponse toResponse(InfinispanRequest request) {
-      InfinispanResponse response = super.toResponse(request);
-      authenticationHeader.ifPresent(header -> response.authenticate(header));
-      return response;
+   public String getAuthenticationHeader() {
+      return authenticationHeader.orElse(null);
    }
+
 }

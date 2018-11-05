@@ -31,8 +31,8 @@ import io.netty.util.AsciiString;
  */
 @ChannelHandler.Sharable
 public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandler {
-   protected static final int MAX_INITIAL_LINE_SIZE = 4096;
-   protected static final int MAX_HEADER_SIZE = 8192;
+   private static final int MAX_INITIAL_LINE_SIZE = 4096;
+   private static final int MAX_HEADER_SIZE = 8192;
 
    protected final RestServer restServer;
    private final List<CorsConfig> corsRules;
@@ -44,7 +44,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
    }
 
    @Override
-   public void configurePipeline(ChannelHandlerContext ctx, String protocol) throws Exception {
+   public void configurePipeline(ChannelHandlerContext ctx, String protocol) {
       configurePipeline(ctx.pipeline(), protocol);
    }
 
@@ -97,7 +97,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
     *
     * @return new instance of {@link HttpToHttp2ConnectionHandler}.
     */
-   protected HttpToHttp2ConnectionHandler getHttp11To2ConnectionHandler() {
+   private HttpToHttp2ConnectionHandler getHttp11To2ConnectionHandler() {
       DefaultHttp2Connection connection = new DefaultHttp2Connection(true);
 
       InboundHttp2ToHttpAdapter listener = new InboundHttp2ToHttpAdapterBuilder(connection)
@@ -126,7 +126,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
     *
     * @return HTTP/2 handler.
     */
-   public ChannelHandler getHttp2Handler() {
+   private ChannelHandler getHttp2Handler() {
       return new Http20RequestHandler(restServer);
    }
 

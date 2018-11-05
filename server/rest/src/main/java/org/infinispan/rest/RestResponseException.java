@@ -4,7 +4,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * An exception representing non-critical HTTP processing errors which will be translated
- * into {@link InfinispanResponse} and sent back to the client.
+ * into {@link org.infinispan.rest.framework.RestResponse} and sent back to the client.
  *
  * <p>
  *    {@link Http20RequestHandler} and {@link Http11RequestHandler} are responsible for catching subtypes of this
@@ -40,14 +40,11 @@ public class RestResponseException extends RuntimeException {
       this.text = text;
    }
 
-   /**
-    * Creates Netty response based on error.
-    *
-    * @return Netty response.
-    * @param request
-    */
-   public InfinispanResponse toResponse(InfinispanRequest request) {
-      return InfinispanErrorResponse.asError(request, status, text);
+   public HttpResponseStatus getStatus() {
+      return status;
    }
 
+   public String getText() {
+      return text;
+   }
 }

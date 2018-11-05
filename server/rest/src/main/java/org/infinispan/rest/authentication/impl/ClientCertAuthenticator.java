@@ -5,11 +5,12 @@ import java.util.Optional;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 
-import org.infinispan.rest.InfinispanRequest;
+import org.infinispan.rest.NettyRestRequest;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.authentication.AuthenticationException;
 import org.infinispan.rest.authentication.Authenticator;
 
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslHandler;
 
 /**
@@ -24,9 +25,9 @@ public class ClientCertAuthenticator implements Authenticator {
    }
 
    @Override
-   public void challenge(InfinispanRequest request) throws RestResponseException {
+   public void challenge(NettyRestRequest request, ChannelHandlerContext ctx) throws RestResponseException {
       try {
-         SslHandler sslHandler = request.getRawContext().pipeline().get(SslHandler.class);
+         SslHandler sslHandler = ctx.pipeline().get(SslHandler.class);
          SSLSession session = sslHandler.engine().getSession();
          request.setPrincipal(session.getPeerPrincipal());
          return;

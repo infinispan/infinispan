@@ -6,7 +6,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.TimeUnit;
 
@@ -23,30 +22,28 @@ public class CacheOperationsHelper {
    private CacheOperationsHelper() {
    }
 
-   public static Metadata createMetadata(Configuration cfg, Optional<Long> ttl, Optional<Long> idleTime) {
+   public static Metadata createMetadata(Configuration cfg, Long ttl, Long idleTime) {
       EmbeddedMetadata.Builder metadata = new EmbeddedMetadata.Builder();
 
-      if (ttl.isPresent()) {
-         long ttlValue = ttl.get();
-         if (ttlValue < 0) {
+      if (ttl != null) {
+         if (ttl < 0) {
             metadata.lifespan(-1);
-         } else if (ttlValue == 0) {
+         } else if (ttl == 0) {
             metadata.lifespan(cfg.expiration().lifespan(), TimeUnit.MILLISECONDS);
          } else {
-            metadata.lifespan(ttlValue, TimeUnit.SECONDS);
+            metadata.lifespan(ttl, TimeUnit.SECONDS);
          }
       } else {
          metadata.lifespan(cfg.expiration().lifespan(), TimeUnit.MILLISECONDS);
       }
 
-      if (idleTime.isPresent()) {
-         long idleValue = idleTime.get();
-         if (idleValue < 0) {
+      if (idleTime != null) {
+         if (idleTime < 0) {
             metadata.maxIdle(-1);
-         } else if (idleValue == 0) {
+         } else if (idleTime == 0) {
             metadata.maxIdle(cfg.expiration().maxIdle(), TimeUnit.MILLISECONDS);
          } else {
-            metadata.maxIdle(idleValue, TimeUnit.SECONDS);
+            metadata.maxIdle(idleTime, TimeUnit.SECONDS);
          }
       } else {
          metadata.maxIdle(cfg.expiration().maxIdle(), TimeUnit.MILLISECONDS);
@@ -105,41 +102,27 @@ public class CacheOperationsHelper {
       return new Date(ice.getCreated() / 1000 * 1000);
    }
 
-   public static boolean ifUnmodifiedIsBeforeEntryModificationDate(Optional<String> ifUnmodifiedSince, Date lastMod) throws WrongDateFormatException {
-      if (ifUnmodifiedSince.isPresent()) {
+   public static boolean ifUnmodifiedIsBeforeEntryModificationDate(String ifUnmodifiedSince, Date lastMod) throws WrongDateFormatException {
+      if (ifUnmodifiedSince != null) {
          try {
-            ZonedDateTime clientTime = ZonedDateTime.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(ifUnmodifiedSince.get()));
+            ZonedDateTime clientTime = ZonedDateTime.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(ifUnmodifiedSince));
             ZonedDateTime modificationTime = ZonedDateTime.ofInstant(lastMod.toInstant(), ZoneId.systemDefault());
             return modificationTime.isAfter(clientTime);
          } catch (DateTimeParseException e) {
-            throw new WrongDateFormatException("Could not parse date " + ifUnmodifiedSince.get());
+            throw new WrongDateFormatException("Could not parse date " + ifUnmodifiedSince);
          }
       }
       return false;
    }
 
-   public static boolean ifMatchDoesntMatchEtag(Optional<String> etagIfMatch, String etag) {
-      if (etagIfMatch.isPresent()) {
-         return !etagIfMatch.get().equals(etag);
-      }
-      return false;
-   }
-
-   public static boolean ifNoneMatchMathesEtag(Optional<String> etagIfNoneMatch, String etag) {
-      if (etagIfNoneMatch.isPresent()) {
-         return etagIfNoneMatch.get().equals(etag);
-      }
-      return false;
-   }
-
-   public static boolean ifModifiedIsAfterEntryModificationDate(Optional<String> etagIfModifiedSince, Date lastMod) throws WrongDateFormatException {
-      if (etagIfModifiedSince.isPresent()) {
+   public static boolean ifModifiedIsAfterEntryModificationDate(String etagIfModifiedSince, Date lastMod) throws WrongDateFormatException {
+      if (etagIfModifiedSince != null) {
          try {
-            ZonedDateTime clientTime = ZonedDateTime.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(etagIfModifiedSince.get()));
+            ZonedDateTime clientTime = ZonedDateTime.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(etagIfModifiedSince));
             ZonedDateTime modificationTime = ZonedDateTime.ofInstant(lastMod.toInstant(), ZoneId.systemDefault());
             return clientTime.isAfter(modificationTime) || clientTime.isEqual(modificationTime);
          } catch (DateTimeParseException e) {
-            throw new WrongDateFormatException("Could not parse date " + etagIfModifiedSince.get());
+            throw new WrongDateFormatException("Could not parse date " + etagIfModifiedSince);
          }
       }
       return false;
