@@ -79,7 +79,7 @@ public final class QueryResultsRegionImpl extends BaseRegionImpl implements Quer
       // value could be committed on backup owners, including the failed operation,
       // and the result would not be consistent.
       Sync sync = (Sync) session.getCacheTransactionSynchronization();
-      if (sync != null) {
+      if (sync != null && session.isTransactionInProgress()) {
          sync.registerAfterCommit(new PostTransactionQueryUpdate(session, key, value));
          // no need to synchronize as the transaction will be accessed by only one thread
          transactionContext.computeIfAbsent(session, k -> new HashMap<>()).put(key, value);
