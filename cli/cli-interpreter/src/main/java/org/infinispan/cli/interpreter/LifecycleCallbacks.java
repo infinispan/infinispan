@@ -25,23 +25,25 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    public void cacheManagerStarted(GlobalComponentRegistry gcr) {
       // This works because the interpreter is not yet used internally, otherwise it would have to be in cacheManagerStarting
       GlobalJmxStatisticsConfiguration globalCfg = gcr.getGlobalConfiguration().globalJmxStatistics();
-      MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg.mbeanServerLookup(), globalCfg.properties());
-      String groupName = getGroupName(globalCfg.cacheManagerName());
-      Interpreter interpreter = new Interpreter();
+      if (globalCfg.enabled()) {
+         MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg.mbeanServerLookup(), globalCfg.properties());
+         String groupName = getGroupName(globalCfg.cacheManagerName());
+         Interpreter interpreter = new Interpreter();
 
-      gcr.registerComponent(interpreter, Interpreter.class);
+         gcr.registerComponent(interpreter, Interpreter.class);
 
-      // Pick up metadata from the component metadata repository
-      ManageableComponentMetadata meta = gcr.getComponentMetadataRepo().findComponentMetadata(Interpreter.class)
-            .toManageableComponentMetadata();
-      // And use this metadata when registering the transport as a dynamic MBean
-      try {
-         ResourceDMBean mbean = new ResourceDMBean(interpreter, meta);
-         interpreterObjName = new ObjectName(String.format("%s:%s,component=Interpreter", globalCfg.domain(), groupName));
-         JmxUtil.registerMBean(mbean, interpreterObjName, mbeanServer);
-      } catch (Exception e) {
-         interpreterObjName = null;
-         log.jmxRegistrationFailed();
+         // Pick up metadata from the component metadata repository
+         ManageableComponentMetadata meta = gcr.getComponentMetadataRepo().findComponentMetadata(Interpreter.class)
+               .toManageableComponentMetadata();
+         // And use this metadata when registering the transport as a dynamic MBean
+         try {
+            ResourceDMBean mbean = new ResourceDMBean(interpreter, meta);
+            interpreterObjName = new ObjectName(String.format("%s:%s,component=Interpreter", globalCfg.domain(), groupName));
+            JmxUtil.registerMBean(mbean, interpreterObjName, mbeanServer);
+         } catch (Exception e) {
+            interpreterObjName = null;
+            log.jmxRegistrationFailed();
+         }
       }
    }
 

@@ -140,15 +140,17 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    protected void registerServerMBeans() {
       GlobalConfiguration globalCfg = cacheManager.getCacheManagerConfiguration();
       GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
-      mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
-      String groupName = String.format("type=Server,name=%s", getQualifiedName());
-      String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, groupName);
+      if (jmxConfig.enabled()) {
+         mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
+         String groupName = String.format("type=Server,name=%s", getQualifiedName());
+         String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, groupName);
 
-      try {
-         transportObjName = registerMBean(transport, jmxDomain, groupName, null);
-         executorObjName = registerMBean(new ManageableThreadPoolExecutorService(getExecutor()), jmxDomain, groupName, "WorkerExecutor");
-      } catch (Exception e) {
-         throw new RuntimeException(e);
+         try {
+            transportObjName = registerMBean(transport, jmxDomain, groupName, null);
+            executorObjName = registerMBean(new ManageableThreadPoolExecutorService(getExecutor()), jmxDomain, groupName, "WorkerExecutor");
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
       }
    }
 

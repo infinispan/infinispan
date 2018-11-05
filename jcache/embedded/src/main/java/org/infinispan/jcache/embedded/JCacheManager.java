@@ -65,7 +65,7 @@ public class JCacheManager extends AbstractJCacheManager {
             + "/provider=" + provider.toString();
       // Set cache manager class loader and apply name to cache manager MBean
       globalBuilder.classLoader(classLoader)
-            .globalJmxStatistics().cacheManagerName(cacheManagerName);
+            .globalJmxStatistics().enable().cacheManagerName(cacheManagerName);
 
       cm = new DefaultCacheManager(cbh, true);
       registerPredefinedCaches();

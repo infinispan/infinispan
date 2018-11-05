@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -42,7 +43,9 @@ public class UpgradeTest extends AbstractInfinispanTest {
    public void setup() throws Exception {
       ConfigurationBuilder serverBuilder = hotRodCacheConfiguration(
             TestCacheManagerFactory.getDefaultCacheConfiguration(false));
-      sourceContainer = TestCacheManagerFactory.createCacheManager(serverBuilder);
+      GlobalConfigurationBuilder sourceGlobal = new GlobalConfigurationBuilder().nonClusteredDefault();
+      sourceGlobal.globalJmxStatistics().enable();
+      sourceContainer = TestCacheManagerFactory.createCacheManager(sourceGlobal, serverBuilder);
       sourceServerCache = sourceContainer.getCache();
       sourceServer = HotRodClientTestingUtil.startHotRodServer(sourceContainer);
 
@@ -50,7 +53,9 @@ public class UpgradeTest extends AbstractInfinispanTest {
             TestCacheManagerFactory.getDefaultCacheConfiguration(false));
       targetConfigurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class).hotRodWrapping(true).addServer().host("localhost").port(sourceServer.getPort());
 
-      targetContainer = TestCacheManagerFactory.createCacheManager(targetConfigurationBuilder);
+      GlobalConfigurationBuilder targetGlobal = new GlobalConfigurationBuilder().nonClusteredDefault();
+      targetGlobal.globalJmxStatistics().enable();
+      targetContainer = TestCacheManagerFactory.createCacheManager(targetGlobal, targetConfigurationBuilder);
       targetServerCache = targetContainer.getCache();
       targetServer = HotRodClientTestingUtil.startHotRodServer(targetContainer);
 

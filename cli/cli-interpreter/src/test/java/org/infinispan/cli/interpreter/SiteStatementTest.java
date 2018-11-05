@@ -16,6 +16,7 @@ import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.statetransfer.CommitManager;
@@ -35,6 +36,12 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
 
    public SiteStatementTest() {
       implicitBackupCache = true;
+   }
+
+   protected GlobalConfigurationBuilder globalConfigurationBuilderForSite(String siteName) {
+      GlobalConfigurationBuilder builder = super.globalConfigurationBuilderForSite(siteName);
+      builder.globalJmxStatistics().enable();
+      return builder;
    }
 
    @Override
@@ -91,7 +98,9 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
 
    public void testSiteWithoutBackups() throws Exception {
       final String cacheName = "no-backups";
-      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.globalJmxStatistics().enable();
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(global.build())) {
          @Override
          public void call() {
             ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL);

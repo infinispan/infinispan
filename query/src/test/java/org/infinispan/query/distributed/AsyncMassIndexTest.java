@@ -54,6 +54,8 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
       }
    }
 
+
+
    private void populate(int elements) throws Exception {
       Cache<Integer, Transaction> cache = caches.get(0);
       for (int i = 0; i < elements; i++) {

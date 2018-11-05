@@ -426,6 +426,10 @@ public abstract class AbstractJCache<K, V> implements Cache<K, V> {
       return getConfiguration(CompleteConfiguration.class).isStatisticsEnabled();
    }
 
+   public boolean managementEnabled() {
+      return getConfiguration(CompleteConfiguration.class).isManagementEnabled();
+   }
+
    @Override
    public void close() {
       notifier.close();
@@ -433,5 +437,4 @@ public abstract class AbstractJCache<K, V> implements Cache<K, V> {
       Closeables.close(this.jcacheLoader);
       Closeables.close(this.jcacheWriter);
    }
-
 }

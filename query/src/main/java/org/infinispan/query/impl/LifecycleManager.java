@@ -276,6 +276,8 @@ public class LifecycleManager implements ModuleLifecycle {
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       // Resolve MBean server instance
       GlobalJmxStatisticsConfiguration jmxConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration().globalJmxStatistics();
+      if (!jmxConfig.enabled())
+         return;
       if (mbeanServer == null) {
          mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
       }

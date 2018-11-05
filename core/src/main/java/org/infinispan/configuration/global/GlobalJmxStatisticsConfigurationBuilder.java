@@ -11,6 +11,7 @@ import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 
@@ -106,12 +107,14 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    @Override
    public
    void validate() {
-      // No-op, no validation required
    }
 
    @Override
    public
    GlobalJmxStatisticsConfiguration create() {
+      if (attributes.attribute(ENABLED).get() && attributes.attribute(MBEAN_SERVER_LOOKUP).isNull()) {
+         mBeanServerLookup(new PlatformMBeanServerLookup());
+      }
       return new GlobalJmxStatisticsConfiguration(attributes.protect());
    }
 
