@@ -480,14 +480,16 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    private void setupSasl() {
-      Iterator<SaslServerFactory> saslFactories = SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true);
-      while (saslFactories.hasNext()) {
-         SaslServerFactory saslFactory = saslFactories.next();
-         String[] saslFactoryMechs = saslFactory.getMechanismNames(configuration.authentication().mechProperties());
-         for (String supportedMech : saslFactoryMechs) {
-            for (String mech : configuration.authentication().allowedMechs()) {
-               if (supportedMech.equals(mech)) {
-                  saslMechFactories.putIfAbsent(mech, saslFactory);
+      if (configuration.authentication().enabled()) {
+         Iterator<SaslServerFactory> saslFactories = SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true);
+         while (saslFactories.hasNext()) {
+            SaslServerFactory saslFactory = saslFactories.next();
+            String[] saslFactoryMechs = saslFactory.getMechanismNames(configuration.authentication().mechProperties());
+            for (String supportedMech : saslFactoryMechs) {
+               for (String mech : configuration.authentication().allowedMechs()) {
+                  if (supportedMech.equals(mech)) {
+                     saslMechFactories.putIfAbsent(mech, saslFactory);
+                  }
                }
             }
          }
@@ -660,6 +662,12 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    @Override
    public int getWorkerThreads() {
       return Integer.getInteger("infinispan.server.hotrod.workerThreads", configuration.workerThreads());
+   }
+
+   public String toString() {
+      return "HotRodServer[" +
+            "configuration=" + configuration +
+            ']';
    }
 
    public static class CacheInfo {
