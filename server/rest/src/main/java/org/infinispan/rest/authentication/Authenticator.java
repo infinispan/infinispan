@@ -1,7 +1,9 @@
 package org.infinispan.rest.authentication;
 
-import org.infinispan.rest.InfinispanRequest;
+import org.infinispan.rest.NettyRestRequest;
 import org.infinispan.rest.RestResponseException;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Authentication mechanism.
@@ -11,11 +13,12 @@ import org.infinispan.rest.RestResponseException;
 public interface Authenticator {
 
    /**
-    * Challenges specific {@link InfinispanRequest} for authentication.
+    * Challenges specific {@link NettyRestRequest} for authentication.
     *
     * @param request Request to be challenged.
     * @throws RestResponseException Thrown on error.
     * @throws AuthenticationException Thrown if authentication fails.
     */
-   void challenge(InfinispanRequest request) throws RestResponseException;
+   void challenge(NettyRestRequest request, ChannelHandlerContext ctx) throws RestResponseException;
+
 }

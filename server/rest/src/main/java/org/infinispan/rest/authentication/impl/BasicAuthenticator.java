@@ -3,10 +3,12 @@ package org.infinispan.rest.authentication.impl;
 import java.util.Base64;
 import java.util.Optional;
 
-import org.infinispan.rest.InfinispanRequest;
+import org.infinispan.rest.NettyRestRequest;
 import org.infinispan.rest.authentication.AuthenticationException;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.SecurityDomain;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * BASIC authentication mechanism.
@@ -25,8 +27,9 @@ public class BasicAuthenticator implements Authenticator {
    }
 
    @Override
-   public void challenge(InfinispanRequest request) throws AuthenticationException {
-      String auth = request.getAuthorization().orElseThrow(() -> new AuthenticationException(Optional.of(authenticateHeader)));
+   public void challenge(NettyRestRequest request, ChannelHandlerContext ctx) throws AuthenticationException {
+      String auth = request.getAuthorizationHeader();
+      if (auth == null) throw new AuthenticationException(Optional.of(authenticateHeader));
       if (auth.length() > 5) {
          String type = auth.substring(0, 5);
          type = type.toLowerCase();
