@@ -12,6 +12,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.TimeUnit;
+
 @Test(groups = "functional", testName = "expiration.impl.ExpirationListenerFunctionalTest")
 public class ExpirationListenerFunctionalTest extends ExpirationFunctionalTest {
 
@@ -63,5 +65,12 @@ public class ExpirationListenerFunctionalTest extends ExpirationFunctionalTest {
          assertNotNull(event.getValue());
          assertNotNull(event.getMetadata());
       });
+   }
+
+   public void testExpiredEventBetweenCreateEvent() {
+      cache.put("foo", "bar", 1, TimeUnit.SECONDS);
+      timeService.advance(2000);
+      cache.put("foo", "bar2");
+      assertExpiredEvents(1);
    }
 }
