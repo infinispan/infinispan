@@ -704,7 +704,7 @@ public class StateConsumerImpl implements StateConsumer {
    // Must run after the PersistenceManager
    @Start(priority = 20)
    public void start() {
-      cacheName = cache.getName();
+      cacheName = cache.wired().getName();
       isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
       isTransactional = configuration.transaction().transactionMode().isTransactional();
       isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();

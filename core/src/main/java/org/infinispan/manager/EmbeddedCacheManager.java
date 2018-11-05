@@ -98,22 +98,25 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    String getClusterName();
 
    /**
-    * @return the addresses of all the members in the cluster.
+    * @return the addresses of all the members in the cluster, or {@code null} if not connected
     */
    List<Address> getMembers();
 
    /**
-    * @return the address of the local node
+    * Warning: the address may be {@code null} before the first clustered cache starts
+    * and after all the clustered caches have been stopped.
+    *
+    * @return the address of the local node, or {@code null} if not connected
     */
    Address getAddress();
 
    /**
-    * @return the address of the cluster's coordinator
+    * @return the address of the cluster's coordinator, or {@code null} if not connected
     */
    Address getCoordinator();
 
    /**
-    * @return whether the local node is the cluster's coordinator
+    * @return whether the local node is the cluster's coordinator, or {@code null} if not connected
     */
    boolean isCoordinator();
 
@@ -284,7 +287,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    void removeCache(String cacheName);
 
    /**
-    * @since 5.1
+    * @deprecated Since 10.0, please use {@link #getAddress()}, {@link #getMembers()}, {@link #getCoordinator()}
     */
    Transport getTransport();
 

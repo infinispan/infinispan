@@ -562,6 +562,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     */
    @Override
    public Address getAddress() {
+      // Don't throw an exception if the manager is stopped
       Transport t = getTransport();
       return t == null ? null : t.getAddress();
    }
@@ -823,7 +824,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public ComponentStatus getStatus() {
       authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
-      return globalComponentRegistry.getStatus();
+      return status;
    }
 
    @Override
@@ -1011,8 +1012,16 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public Transport getTransport() {
-      return status == ComponentStatus.INITIALIZING || status == ComponentStatus.RUNNING ?
-             globalComponentRegistry.getComponent(Transport.class) : null;
+      // Do not start the transport if the manager hasn't been started yet
+      if (status == ComponentStatus.INSTANTIATED)
+         return null;
+
+      try {
+         return globalComponentRegistry.getComponent(Transport.class);
+      } catch (IllegalLifecycleStateException e) {
+         // Hack to avoid exceptions in getAddress() and toString() during/after shutdown
+         return null;
+      }
    }
 
    @Override
