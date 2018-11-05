@@ -16,7 +16,7 @@ import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.persistence.internal.PersistenceUtil;

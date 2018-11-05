@@ -19,8 +19,8 @@ import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.KeyVisitor;
 import org.infinispan.lucene.impl.FileListCacheValue;
 import org.infinispan.lucene.logging.Log;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.util.logging.LogFactory;
 
 /**

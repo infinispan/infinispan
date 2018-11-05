@@ -9,7 +9,7 @@ import java.util.Set;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
 
 /**

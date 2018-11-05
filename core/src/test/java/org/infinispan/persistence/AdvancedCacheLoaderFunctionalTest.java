@@ -10,10 +10,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.LongStream;
 
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;

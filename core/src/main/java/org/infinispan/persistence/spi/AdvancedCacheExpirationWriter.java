@@ -3,7 +3,6 @@ package org.infinispan.persistence.spi;
 import java.util.concurrent.Executor;
 
 import org.infinispan.commons.util.Experimental;
-import org.infinispan.marshall.core.MarshalledEntry;
 
 /**
  * Defines functionality for advanced expiration techniques.  Note this interface allows for providing not just the key

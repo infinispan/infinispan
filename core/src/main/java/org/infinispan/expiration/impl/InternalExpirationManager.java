@@ -6,7 +6,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 
 /**
  * Interface describing the internal operations for the the ExpirationManager.

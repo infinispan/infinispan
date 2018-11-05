@@ -8,11 +8,11 @@ import java.util.NoSuchElementException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.persistence.sifs.EntryHeader;
 import org.infinispan.persistence.sifs.EntryRecord;
 import org.infinispan.persistence.sifs.FileProvider;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.tools.store.migrator.Element;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;

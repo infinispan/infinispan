@@ -2,7 +2,7 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntry;
 
 public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBuilder {
 
