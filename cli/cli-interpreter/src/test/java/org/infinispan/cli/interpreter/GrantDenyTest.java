@@ -35,6 +35,7 @@ public class GrantDenyTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.globalJmxStatistics().enable();
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable()
             .principalRoleMapper(new ClusterRoleMapper());
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);

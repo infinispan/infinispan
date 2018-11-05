@@ -148,20 +148,22 @@ public class CLInterfaceLoaderFunctionalTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager createSourceCacheManager() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalJmxStatistics().cacheManagerName("SourceCacheManager");
+      global.globalJmxStatistics().cacheManagerName("SourceCacheManager").enable();
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.jmxStatistics().enable();
       return TestCacheManagerFactory.createCacheManager(global, builder);
    }
 
    private EmbeddedCacheManager createTargetCacheManager() {
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.globalJmxStatistics().cacheManagerName("TargetCacheManager").enable();
       ConfigurationBuilder builder = new ConfigurationBuilder();
       // Configure target cache manager with the CLI cache loader pointing to source
       builder.persistence()
             .addStore(CLInterfaceLoaderConfigurationBuilder.class)
             .connectionString(SOURCE_CONNECTION_STRING);
 
-      return TestCacheManagerFactory.createCacheManager(builder);
+      return TestCacheManagerFactory.createCacheManager(global, builder);
    }
 
 }

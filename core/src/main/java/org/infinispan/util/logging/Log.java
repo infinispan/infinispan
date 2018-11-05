@@ -16,13 +16,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.ObjectName;
-import javax.naming.NamingException;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.xml.namespace.QName;
 
@@ -194,7 +189,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to unregister Cache MBeans with pattern %s", id = 33)
-   void unableToUnregisterMBeanWithPattern(String pattern, @Cause MBeanRegistrationException e);
+   void unableToUnregisterMBeanWithPattern(String pattern, @Cause Throwable e);
 
    @Message(value = "There's already a JMX MBean instance %s already registered under " +
          "'%s' JMX domain. If you want to allow multiple instances configured " +
@@ -420,7 +415,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed creating initial JNDI context", id = 105)
-   void failedToCreateInitialCtx(@Cause NamingException e);
+   void failedToCreateInitialCtx(@Cause Throwable e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Found WebSphere TransactionManager factory class [%s], but " +
@@ -433,7 +428,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Error enlisting resource", id = 108)
-   void errorEnlistingResource(@Cause XAException e);
+   void errorEnlistingResource(@Cause Throwable e);
 
    @LogMessage(level = ERROR)
    @Message(value = "beforeCompletion() failed for %s", id = 109)
@@ -449,7 +444,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "exception while committing", id = 112)
-   void errorCommittingTx(@Cause XAException e);
+   void errorCommittingTx(@Cause Throwable e);
 
 //   @LogMessage(level = ERROR)
 //   @Message(value = "Unbinding of DummyTransactionManager failed", id = 113)
@@ -560,7 +555,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = INFO)
    @Message(value = "Could not register object with name: %s", id = 138)
-   void couldNotRegisterObjectName(ObjectName objectName, @Cause InstanceAlreadyExistsException e);
+   void couldNotRegisterObjectName(Object objectName, @Cause Throwable e);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Infinispan configuration schema could not be resolved locally nor fetched from URL. Local path=%s, schema path=%s, schema URL=%s", id = 139)

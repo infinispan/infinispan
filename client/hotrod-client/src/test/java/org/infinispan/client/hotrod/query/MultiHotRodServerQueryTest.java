@@ -24,6 +24,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -46,6 +47,12 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
    protected boolean useTransactions() {
       return false;
+   }
+
+   @Override
+   protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
+      super.modifyGlobalConfiguration(builder);
+      builder.globalJmxStatistics().enable();
    }
 
    @Override

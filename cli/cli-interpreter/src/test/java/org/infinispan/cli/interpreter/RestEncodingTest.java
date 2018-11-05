@@ -20,6 +20,7 @@ import org.apache.http.util.EntityUtils;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
@@ -45,7 +46,9 @@ public class RestEncodingTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder c = hotRodCacheConfiguration(getDefaultStandaloneCacheConfig(false));
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(c);
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
+      global.globalJmxStatistics().enable();
+      cacheManager = TestCacheManagerFactory.createCacheManager(global, c);
 
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
       cfgBuilder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)

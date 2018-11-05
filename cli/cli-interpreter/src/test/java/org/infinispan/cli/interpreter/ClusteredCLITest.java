@@ -2,6 +2,7 @@ package org.infinispan.cli.interpreter;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -18,8 +19,10 @@ public class ClusteredCLITest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      global.globalJmxStatistics().enable();
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
-      createClusteredCaches(2, cacheName(), builder);
+      createClusteredCaches(2, global, builder, false, cacheName());
    }
 
    protected String cacheName() {

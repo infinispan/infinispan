@@ -581,7 +581,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    protected MBeanServer getMBeanServer() {
       GlobalJmxStatisticsConfiguration jmxConfig = cache.getCacheManager().getCacheManagerConfiguration().globalJmxStatistics();
-      return JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
+      if (jmxConfig.enabled()) {
+         return JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
+      } else {
+         return null;
+      }
    }
 
    protected AbstractJCache<K, V> checkNotClosed() {

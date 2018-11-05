@@ -54,20 +54,22 @@ public final class RIMBeanServerRegistrationUtility {
    public static <K, V> void registerCacheObject(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
       //these can change during runtime, so always look it up
       MBeanServer mBeanServer = cache.getMBeanServer();
-      ObjectName registeredObjectName = calculateObjectName(cache, objectNameType);
-      try {
-         if (objectNameType.equals(ObjectNameType.CONFIGURATION)) {
-            if (!isRegistered(cache, objectNameType)) {
-               SecurityActions.registerMBean(cache.getCacheMXBean(), registeredObjectName, mBeanServer);
+      if (mBeanServer != null) {
+         ObjectName registeredObjectName = calculateObjectName(cache, objectNameType);
+         try {
+            if (objectNameType.equals(ObjectNameType.CONFIGURATION)) {
+               if (!isRegistered(cache, objectNameType)) {
+                  SecurityActions.registerMBean(cache.getCacheMXBean(), registeredObjectName, mBeanServer);
+               }
+            } else if (objectNameType.equals(ObjectNameType.STATISTICS)) {
+               if (!isRegistered(cache, objectNameType)) {
+                  SecurityActions.registerMBean(cache.getCacheStatisticsMXBean(), registeredObjectName, mBeanServer);
+               }
             }
-         } else if (objectNameType.equals(ObjectNameType.STATISTICS)) {
-            if (!isRegistered(cache, objectNameType)) {
-               SecurityActions.registerMBean(cache.getCacheStatisticsMXBean(), registeredObjectName, mBeanServer);
-            }
+         } catch (Exception e) {
+            throw new CacheException("Error registering cache MXBeans for CacheManager "
+                  + registeredObjectName + " . Error was " + e.getMessage(), e);
          }
-      } catch (Exception e) {
-         throw new CacheException("Error registering cache MXBeans for CacheManager "
-               + registeredObjectName + " . Error was " + e.getMessage(), e);
       }
    }
 
@@ -81,10 +83,14 @@ public final class RIMBeanServerRegistrationUtility {
       Set<ObjectName> registeredObjectNames;
       MBeanServer mBeanServer = cache.getMBeanServer();
 
-      ObjectName objectName = calculateObjectName(cache, objectNameType);
-      registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
+      if (mBeanServer != null) {
+         ObjectName objectName = calculateObjectName(cache, objectNameType);
+         registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
 
-      return !registeredObjectNames.isEmpty();
+         return !registeredObjectNames.isEmpty();
+      } else {
+         return false;
+      }
    }
 
    /**
@@ -98,16 +104,18 @@ public final class RIMBeanServerRegistrationUtility {
       Set<ObjectName> registeredObjectNames;
       MBeanServer mBeanServer = cache.getMBeanServer();
 
-      ObjectName objectName = calculateObjectName(cache, objectNameType);
-      registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
+      if (mBeanServer != null) {
+         ObjectName objectName = calculateObjectName(cache, objectNameType);
+         registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
 
-      //should just be one
-      for (ObjectName registeredObjectName : registeredObjectNames) {
-         try {
-            SecurityActions.unregisterMBean(registeredObjectName, mBeanServer);
-         } catch (Exception e) {
-            throw new CacheException("Error unregistering object instance "
-                  + registeredObjectName + " . Error was " + e.getMessage(), e);
+         //should just be one
+         for (ObjectName registeredObjectName : registeredObjectNames) {
+            try {
+               SecurityActions.unregisterMBean(registeredObjectName, mBeanServer);
+            } catch (Exception e) {
+               throw new CacheException("Error unregistering object instance "
+                     + registeredObjectName + " . Error was " + e.getMessage(), e);
+            }
          }
       }
    }

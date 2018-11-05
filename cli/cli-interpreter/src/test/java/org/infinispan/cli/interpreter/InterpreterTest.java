@@ -28,9 +28,9 @@ import org.testng.annotations.Test;
 public class InterpreterTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.defaultCacheName("default");
+      gcb.defaultCacheName("default").globalJmxStatistics().enable();
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
       c.jmxStatistics().enable().dataContainer().invocationBatching().enable().locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gcb, c);

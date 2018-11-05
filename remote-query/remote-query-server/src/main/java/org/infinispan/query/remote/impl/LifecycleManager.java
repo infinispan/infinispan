@@ -91,7 +91,9 @@ public final class LifecycleManager implements ModuleLifecycle {
       BasicComponentRegistry basicComponentRegistry = gcr.getComponent(BasicComponentRegistry.class);
       basicComponentRegistry.registerComponent(ProtobufMetadataManager.class, protobufMetadataManager, true)
                             .running();
-      registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr);
+      if (globalCfg.globalJmxStatistics().enabled()) {
+         registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr);
+      }
 
       SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
       ClassLoader classLoader = globalCfg.classLoader();
@@ -141,7 +143,9 @@ public final class LifecycleManager implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStopping(GlobalComponentRegistry gcr) {
-      unregisterProtobufMetadataManagerMBean(gcr);
+      if (gcr.getGlobalConfiguration().globalJmxStatistics().enabled()) {
+         unregisterProtobufMetadataManagerMBean(gcr);
+      }
    }
 
    private void unregisterProtobufMetadataManagerMBean(GlobalComponentRegistry gcr) {
