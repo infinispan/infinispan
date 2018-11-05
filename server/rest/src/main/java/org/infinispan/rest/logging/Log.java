@@ -6,6 +6,8 @@ import static org.jboss.logging.Logger.Level.TRACE;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.rest.cachemanager.exceptions.CacheUnavailableException;
+import org.infinispan.rest.framework.Method;
+import org.infinispan.rest.framework.RegistrationException;
 import org.infinispan.rest.operations.exceptions.NoCacheFoundException;
 import org.infinispan.rest.operations.exceptions.ServiceUnavailableException;
 import org.infinispan.rest.operations.exceptions.UnacceptableDataFormatException;
@@ -58,4 +60,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Illegal compression level '%d'. The value must be >= 0 and <= 9", id = 12014)
    CacheConfigurationException illegalCompressionLevel(int compressionLevel);
+
+   @Message(value = "Cannot register invocation '%s': resource already registered for method '%s' at the destination path '/%s'", id = 12015)
+   RegistrationException duplicateResource(String invocationName, Method method, String existingPath);
 }
