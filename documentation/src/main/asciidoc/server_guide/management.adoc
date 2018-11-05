@@ -73,19 +73,19 @@ additional parameter `--jmx`, for example: `./standalone.xml -c cloud.xml --jmx`
 `agent.conf` file. It is possible to override this file by specifying it after `--jmx` parameter. For example:
 `./standalone.sh -c cloud.xml --jmx my-config.properties`.
 
+[[server_access_logs]]
 === Access Logs
+Hot Rod and REST endpoints can record all inbound client requests as log entries with the following categories:
 
-The Hot Rod and REST endpoints can generate access logs similar to those output by traditional HTTP servers.
+* `org.infinispan.HOTROD_ACCESS_LOG` logging category for the Hot Rod endpoint.
+* `org.infinispan.REST_ACCESS_LOG` logging category for the REST endpoint.
 
-Access logs are generated using the following logger categories using the `TRACE` level:
+[[server_access_logs_enable]]
+==== Enabling Access Logs
+Access logs for Hot Rod and REST endpoints are disabled by default. To enable
+either logging category, set the level to `TRACE` in the server configuration file, as in the following example:
 
-* `org.infinispan.HOTROD_ACCESS_LOG` for Hot Rod
-* `org.infinispan.REST_ACCESS_LOG` for REST
-
-Both of these are disabled by default. To enable either one of them, modify the server configuration file by setting the
-level from `INFO` to `TRACE` in the corresponding `logger`:
-
-[source,xml]
+[source,xml,options=nowrap]
 ----
 <logger category="org.infinispan.HOTROD_ACCESS_LOG" use-parent-handlers="false">
     <level name="TRACE"/>
@@ -95,25 +95,49 @@ level from `INFO` to `TRACE` in the corresponding `logger`:
 </logger>
 ----
 
-By default, the loggers will output entriess similar to the following:
-
-`127.0.0.1 - [30/Oct/2018:12:41:50 CET] "PUT /rest/default/key HTTP/1.1" 404 5 77 10`
-
-You can change the content of the log by modifying the formatter. The default `ACCESS_LOG` formatter which generated the
-above entry is:
+[[server_access_logs_properties]]
+==== Access Log Properties
+The default format for access logs is as follows:
 
 `%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss z}] &quot;%X{method} %m %X{protocol}&quot; %X{status} %X{requestSize} %X{responseSize} %X{duration}%n`
 
-The following is a list of available properties you can reference using the `%X{name}` notation:
+The preceding format creates log entries such as the following:
 
-* `address` `X-Forwarded-For` header is set, otherwise the client address
-* `user` the principal name, if using authentication
-* `method` the method (e.g. `PUT/GET/...`).
-* `protocol` the protocol (e.g. `HTTP/1.1`, `HTTP/2`, `HOTROD/2.9`)
-* `status` the status of the request (the HTTP status code for REST, `OK` or the exception for Hot Rod)
-* `responseSize` the size in bytes of the response
-* `requestSize` the size in bytes of the request
-* `duration` the number of milliseconds the server took to handle the request
+`127.0.0.1 - [30/Oct/2018:12:41:50 CET] "PUT /rest/default/key HTTP/1.1" 404 5 77 10`
 
-You can also include any header which was part of a request, just by using its name prefixed by `h:`, e.g. `%X{h:User-Agent}`.
+Logging properties use the `%X{name}` notation and let you modify the format of access logs. The following are the default logging properties:
 
+[%header,cols=2*]
+|===
+| Property
+| Description
+
+| `address`
+| Either the `X-Forwarded-For` header or the client IP address.
+
+| `user`
+| Principal name, if using authentication.
+
+| `method`
+| Method used. `PUT`, `GET`, and so on.
+
+| `protocol`
+| Protocol used. `HTTP/1.1`, `HTTP/2`, `HOTROD/2.9`, and so on.
+
+| `status`
+| An HTTP status code for the REST endpoint. `OK` or an exception for the Hot Rod endpoint.
+
+| `requestSize`
+| Size, in bytes, of the request.
+
+| `responseSize`
+| Size, in bytes, of the response.
+
+| `duration`
+| Number of milliseconds that the server took to handle the request.
+|===
+
+[TIP]
+====
+Use the header name prefixed with `h:` to log headers that were included in requests; for example, `%X{h:User-Agent}`.
+====
