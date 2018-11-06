@@ -2,17 +2,22 @@
 === Remote store
 The `RemoteStore` is a cache loader and writer implementation that stores data in a remote {brandname} cluster. In order to communicate with the remote cluster, the `RemoteStore` uses the HotRod client/server architecture. HotRod bering the load balancing and fault tolerance of calls and the possibility to fine-tune the connection between the RemoteCacheStore and the actual cluster. Please refer to Hot Rod for more information on the protocol, client and server configuration. For a list of RemoteStore configuration refer to the link:{javadocroot}/org/infinispan/persistence/remote/configuration/RemoteStoreConfigurationBuilder.html[javadoc] . Example:
 
+//Exclude segmentation support from productized docs.
+ifndef::productized[]
 ==== Segmentation support
-
-This store supports being segmented, as it can publish keys and entries
-by segment. This allows for more efficient bulk operations.
+The `RemoteStore` store supports segmentation because it can publish keys and
+entries by segment, allowing for more efficient bulk operations.
 
 Segmentation is only supported when the remote server supports at
 least protocol version 2.3 or newer.
 
-WARNING: Ensure the number of segments and hash are the same between the
+[WARNING]
+====
+Ensure the number of segments and hash are the same between the
 store configured cache and the remote server otherwise bulk operations
 will not return correct results.
+====
+endif::productized[]
 
 ==== Sample Usage
 
@@ -30,7 +35,6 @@ will not return correct results.
 
 [source,java]
 ----
-
 ConfigurationBuilder b = new ConfigurationBuilder();
 b.persistence().addStore(RemoteStoreConfigurationBuilder.class)
       .fetchPersistentState(false)
@@ -46,7 +50,6 @@ b.persistence().addStore(RemoteStoreConfigurationBuilder.class)
       .maxActive(10)
       .exhaustedAction(ExhaustedAction.CREATE_NEW)
       .async().enable();
-
 ----
 
 In this sample configuration, the remote cache store is configured to use the remote cache named "mycache" on servers "one" and "two". It also configures connection pooling and provides a custom transport executor. Additionally the cache store is asynchronous.
