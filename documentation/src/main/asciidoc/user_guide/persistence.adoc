@@ -31,7 +31,8 @@ Stores (readers and/or writers) can be configured in a chain. Cache read operati
 ====
 Store providers should implement both the `CacheWriter` and the `CacheLoader` interfaces. Stores that do this are considered both for reading and writing (assuming `read-only=false`) data.
 ====
-
+//Exclude the following configuration from productized docs
+ifndef::productized[]
 [source,xml]
 ----
 This is the configuration of a custom(not shipped with infinispan) store:
@@ -48,8 +49,28 @@ This is the configuration of a custom(not shipped with infinispan) store:
          </store>
       </persistence>
    </local-cache>
-
 ----
+endif::productized[]
+//Include the following configuration in productized docs
+ifdef::productized[]
+[source,xml]
+----
+This is the configuration of a custom(not shipped with infinispan) store:
+   <local-cache name="myCustomStore">
+      <persistence passivation="false">
+         <store
+            class="org.acme.CustomStore"
+            fetch-state="false" preload="true" shared="false"
+            purge="true" read-only="false" singleton="false">
+
+            <write-behind modification-queue-size="123" thread-pool-size="23" />
+
+            <property name="myProp">${system.property}</property>
+         </store>
+      </persistence>
+   </local-cache>
+----
+endif::productized[]
 
 Parameters that you can use to configure persistence are as follows:
 
@@ -111,6 +132,8 @@ This property prevents duplicate writes of data to the cache loader by
 different cache instances. An example is where all cache instances in a cluster
 use the same JDBC settings for the same remote, shared database.
 
+//Exclude segmented cache stores from productized docs.
+ifndef::productized[]
 `segmented`::
 Configures a cache store to segment data. The default value is `false`
 (boolean).
@@ -120,6 +143,7 @@ If `true` the cache store stores data in buckets. The `hash.numSegments` propert
 Depending on the cache store implementation, segmenting data can cause slower
 write operations. However, performance improves for other cache operations. See
 link:#segmented_stores[Segmented Stores] for more information.
+endif::productized[]
 
 `read-only`::
 Prevents new data from being persisted to the cache store. The default value is
@@ -213,7 +237,6 @@ The same configuration can be achieved programmatically:
                .enabled(true)
                .pushStateWhenCoordinator(true)
                .pushStateTimeout(20000);
-
 ----
 
 [[cache_passivation]]
@@ -348,6 +371,8 @@ The following is an example configuration for the write-behind strategy:
 </persistence>
 ----
 
+//Exclude segmented cache stores from productized docs.
+ifndef::productized[]
 [[segmented_stores]]
 ==== Segmented Stores
 You can configure stores so that data resides in segments to which keys map.
@@ -385,6 +410,7 @@ store to determine if it supports segmentation.
 If you plan to convert or write a new store to support segmentation, see the
 following SPI section that provides more details.
 ====
+endif::productized[]
 
 === Filesystem based cache stores
 
@@ -431,6 +457,8 @@ Some notes about the classes:
 
 * link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheLoader.html[AdvancedCacheLoader] and link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter] provide operations to manipulate the underlaying storage in bulk: parallel iteration and purging of expired entries, clear and size.
 
+//Exclude segmented cache stores from productized docs.
+ifndef::productized[]
 * link:{javadocroot}/org/infinispan/persistence/spi/SegmentedAdvancedLoadWriteStore.html[SegmentedAdvancedLoadWriteStore] provide all the various operations that deal with segments.
 
 A cache store can be segmented if it does one of the following:
@@ -443,7 +471,7 @@ store instance is used per cache.
 that a new `StoreConfiguration` instance is created per invocation. This
 creates a store instance per segment to which a node can write. Stores might
 start and stop as data is moved between nodes.
-
+endif::productized[]
 
 A provider might choose to only implement a subset of these interfaces:
 

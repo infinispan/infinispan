@@ -11,7 +11,10 @@ The steps required to create your own store are as follows:
 * `org.infinispan.persistence.spi.ExternalStore`
 * `org.infinispan.persistence.spi.AdvancedLoadWriteStore`
 * `org.infinispan.persistence.spi.TransactionalCacheWriter`
+//Exclude segmentation from productized docs.
+ifndef::productized[]
 * `org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore`
+endif::productized[]
 +
 2. Annotate your store class with the `@Store` annotation and specify the properties relevant to your store, e.g. is it
 possible for the store to be shared in Replicated or Distributed mode: `@Store(shared = true)`.
@@ -23,10 +26,13 @@ configuration builder is used to parse your store configuration from xml. If the
 `CustomStoreConfigurationBuilder` will be used to parse the common store attributes defined in `AbstractStoreConfiguration`
 and any additional elements will be ignored. If a store and its configuration do not declare the `@Store` and `@ConfigurationFor`
 annotations respectively, a warning message will be logged upon cache initialisation.
+//Exclude segmentation from productized docs.
+ifndef::productized[]
 +
 If you wish for your store to be segmented, where it will craete a different
 store instance per segment, instead of extending `AbstractStoreConfiguration`
 you should extend `AbstractSegmentedStoreConfiguration`.
+endif::productized[]
 +
 4. Add your custom store to your cache's configuration:
 

@@ -21,10 +21,12 @@ Most of the structures in Soft Index File Store are bounded, therefore you don't
 have to be afraid of OOMEs. For example, you can configure the limits for
 concurrently open files as well.
 
+//Exclude segmentation support from productized docs.
+ifndef::productized[]
 ===== Segmentation support
-This store supports being segmented, as it will create a separate instance per
-segment. This will create multiple directories under the configured directory
-where each one is a number representing the given segment the data maps to.
+The Soft-Index file store supports segmentation and creates a separate
+instance per segment. Segmentation results in multiple directories under the configured directory, where each directory is a number that represents the segment to which the data maps.
+endif::productized[]
 
 ===== Configuration
 
