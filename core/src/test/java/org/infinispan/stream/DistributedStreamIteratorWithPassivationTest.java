@@ -28,7 +28,7 @@ import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -85,7 +85,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
+         store.write(MarshalledEntryUtil.create(loaderKey, loaderValue, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache0, checkPoint);
@@ -146,7 +146,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
+         store.write(MarshalledEntryUtil.create(loaderKey, loaderValue, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache0, checkPoint);
@@ -212,7 +212,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
+         store.write(MarshalledEntryUtil.create(loaderKey, loaderValue, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache0, checkPoint);

@@ -12,10 +12,11 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -78,7 +79,7 @@ public class LevelDBStoreTest extends BaseStoreTest {
                int i1 = 0;
                while (run.get()) {
                   InternalCacheEntry entry = TestInternalCacheEntryFactory.create("k" + i1, "v" + i1);
-                  MarshalledEntry me = TestingUtil.marshalledEntry(entry, getMarshaller());
+                  MarshalledEntry me = MarshalledEntryUtil.create(entry, getMarshaller());
                   try {
                      AtomicInteger record = post.get() ? writtenPost : writtenPre;
                      cl.write(me);

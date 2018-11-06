@@ -14,7 +14,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -86,7 +86,7 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       try {
          String loaderValue = "loader-value";
-         store.write(new MarshalledEntryImpl(loaderKey, loaderValue, null, sm));
+         store.write(MarshalledEntryUtil.create(loaderKey, loaderValue, sm));
          if (includeLoaderEntry) {
             originalValues.put(loaderKey, loaderValue);
          }

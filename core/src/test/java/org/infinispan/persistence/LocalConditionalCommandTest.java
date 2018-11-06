@@ -4,16 +4,15 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -64,11 +63,8 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
    }
 
    private static <K, V> void writeToStore(Cache<K, V> cache, K key, V value) {
-      TestingUtil.getFirstWriter(cache).write(marshalledEntry(key, value, cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller()));
-   }
-
-   private static <K, V> MarshalledEntry<K, V> marshalledEntry(K key, V value, StreamingMarshaller marshaller) {
-      return new MarshalledEntryImpl<>(key, value, null, marshaller);
+      MarshalledEntry entry = MarshalledEntryUtil.create(key, value, cache);
+      TestingUtil.getFirstWriter(cache).write(entry);
    }
 
    private static CacheLoaderInterceptor cacheLoaderInterceptor(Cache<?, ?> cache) {

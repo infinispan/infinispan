@@ -9,8 +9,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.LongStream;
 
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshalledEntry;
@@ -64,7 +65,7 @@ public class AdvancedCacheLoaderFunctionalTest extends AbstractInfinispanTest {
             TaskContext taskContext = new TaskContextImpl();
             LongStream.range(0, amount).forEach(i -> {
                try {
-                  task.processEntry(new MarshalledEntryImpl(i, i, null, null), taskContext);
+                  task.processEntry(MarshalledEntryUtil.create(i, i, (Marshaller) null), taskContext);
                } catch (InterruptedException e) {
                   e.printStackTrace();
                }

@@ -7,11 +7,11 @@ import java.util.Set;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 
 /**
@@ -20,42 +20,29 @@ import org.infinispan.persistence.spi.PersistenceException;
  */
 public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
 
-   private static MarshalledEntry EMPTY = new MarshalledEntryImpl(null, null, (ByteBuffer) null, null);
-
-   /**
-    * Returns the value that should be used as an empty MarshalledEntry. This can be useful when a non null value
-    * is required.
-    * @param <K> key type
-    * @param <V> value type
-    * @return cached empty marshalled entry
-    */
-   public static <K, V> MarshalledEntry<K, V> empty() {
-      return EMPTY;
-   }
-
    private ByteBuffer keyBytes;
    private ByteBuffer valueBytes;
    private ByteBuffer metadataBytes;
    private transient K key;
    private transient V value;
    private transient InternalMetadata metadata;
-   private final transient StreamingMarshaller marshaller;
+   private final transient org.infinispan.commons.marshall.Marshaller marshaller;
 
-   public MarshalledEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, StreamingMarshaller marshaller) {
+   MarshalledEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
       this.keyBytes = key;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
       this.marshaller = marshaller;
    }
 
-   public MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, StreamingMarshaller marshaller) {
+   MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
       this.key = key;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
       this.marshaller = marshaller;
    }
 
-   public MarshalledEntryImpl(K key, V value, InternalMetadata im, StreamingMarshaller sm) {
+   MarshalledEntryImpl(K key, V value, InternalMetadata im, org.infinispan.commons.marshall.Marshaller sm) {
       this.key = key;
       this.value = value;
       this.metadata = im;
@@ -192,9 +179,9 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
 
       private static final long serialVersionUID = -5291318076267612501L;
 
-      private final StreamingMarshaller marshaller;
+      private final Marshaller marshaller;
 
-      public Externalizer(StreamingMarshaller marshaller) {
+      public Externalizer(Marshaller marshaller) {
          this.marshaller = marshaller;
       }
 
@@ -221,7 +208,7 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
       @Override
       @SuppressWarnings("unchecked")
       public Set<Class<? extends MarshalledEntryImpl>> getTypeClasses() {
-         return Util.<Class<? extends MarshalledEntryImpl>>asSet(MarshalledEntryImpl.class);
+         return Util.asSet(MarshalledEntryImpl.class);
       }
    }
 }

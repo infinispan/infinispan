@@ -8,16 +8,12 @@ import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -39,7 +35,6 @@ public abstract class SegmentedStoreTest extends SingleCacheManagerTest {
 
    protected SegmentedAdvancedLoadWriteStore<Object, Object> store;
    protected Cache<Object, Object> cache;
-   protected StreamingMarshaller sm;
    protected Set<Integer>[] keys;
 
    @Override
@@ -48,9 +43,6 @@ public abstract class SegmentedStoreTest extends SingleCacheManagerTest {
       configurePersistence(cb);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(cb);
       cache = manager.getCache();
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-      PersistenceManagerImpl pm = (PersistenceManagerImpl) componentRegistry.getComponent(PersistenceManager.class);
-      sm = pm.getMarshaller();
       store = TestingUtil.getFirstLoader(cache);
       keys = new Set[cache.getCacheConfiguration().clustering().hash().numSegments()];
       return manager;
@@ -114,9 +106,7 @@ public abstract class SegmentedStoreTest extends SingleCacheManagerTest {
             keys[segment] = keysForSegment;
          }
          keysForSegment.add(i);
-
-         MarshalledEntryImpl me = new MarshalledEntryImpl<>(i, i, null, sm);
-         store.write(me);
+         store.write(MarshalledEntryUtil.create(i, i, cache));
       }
    }
 }

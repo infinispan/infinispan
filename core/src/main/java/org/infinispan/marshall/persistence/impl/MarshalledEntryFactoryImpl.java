@@ -1,7 +1,7 @@
 package org.infinispan.marshall.persistence.impl;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.MarshalledEntry;
@@ -13,12 +13,14 @@ import org.infinispan.persistence.spi.MarshalledEntryFactory;
  */
 public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory {
 
-   @Inject private StreamingMarshaller marshaller;
+   private static final MarshalledEntry EMPTY = new MarshalledEntryImpl(null, null, (ByteBuffer) null, null);
+
+   @Inject private Marshaller marshaller;
 
    public MarshalledEntryFactoryImpl() {
    }
 
-   public MarshalledEntryFactoryImpl(StreamingMarshaller marshaller) {
+   public MarshalledEntryFactoryImpl(Marshaller marshaller) {
       this.marshaller = marshaller;
    }
 
@@ -35,5 +37,10 @@ public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory {
    @Override
    public MarshalledEntry newMarshalledEntry(Object key, Object value, InternalMetadata im) {
       return new MarshalledEntryImpl(key, value, im, marshaller);
+   }
+
+   @Override
+   public MarshalledEntry getEmpty() {
+      return EMPTY;
    }
 }

@@ -16,7 +16,6 @@ import javax.persistence.Persistence;
 
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.testng.annotations.Test;
 
@@ -45,14 +44,14 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
    public void testStoreWithJpaGoodKey() {
       TestObject obj = createTestObject("testStoreWithJpaGoodKey");
       assertFalse(cs.contains(obj.getKey()));
-      MarshalledEntryImpl me = createEntry(obj);
+      MarshalledEntry me = createEntry(obj);
       cs.write(me);
    }
 
    public void testLoadAndStoreImmortal() {
       TestObject obj = createTestObject("testLoadAndStoreImmortal");
       assertFalse(cs.contains(obj.getKey()));
-      MarshalledEntryImpl me = createEntry(obj);
+      MarshalledEntry me = createEntry(obj);
       cs.write(me);
 
       assertTrue(cs.contains(obj.getKey()));
