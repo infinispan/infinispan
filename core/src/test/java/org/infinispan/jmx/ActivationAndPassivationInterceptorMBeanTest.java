@@ -14,11 +14,10 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
-import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -88,15 +87,11 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       threadMBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.TRUE));
    }
 
-   private StreamAwareMarshaller marshaller() {
-      return cache.getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
-   }
-
    public void testActivationOnGet(Method m) throws Exception {
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      loader.write(new MarshalledEntryImpl(k(m), v(m), null, marshaller()));
+      loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
       assert loader.contains(k(m));
       assert cache.get(k(m)).equals(v(m));
       assertActivationCount(1);
@@ -107,7 +102,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      loader.write(new MarshalledEntryImpl(k(m), v(m), null, marshaller()));
+      loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
       assert loader.contains(k(m));
       cache.put(k(m), v(m, 2));
       assert cache.get(k(m)).equals(v(m, 2));
@@ -119,7 +114,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      loader.write(new MarshalledEntryImpl(k(m), v(m), null, marshaller()));
+      loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
       assert loader.contains(k(m));
       assert cache.replace(k(m), v(m, 2)).equals(v(m));
       assertActivationCount(1);
@@ -130,7 +125,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      loader.write(new MarshalledEntryImpl(k(m), v(m), null, marshaller()));
+      loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
       assert loader.contains(k(m));
 
       Map<String, String> toAdd = new HashMap<String, String>();

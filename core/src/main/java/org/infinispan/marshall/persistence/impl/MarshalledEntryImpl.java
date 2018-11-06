@@ -10,8 +10,8 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.protostream.MessageMarshaller;
 
@@ -21,19 +21,6 @@ import org.infinispan.protostream.MessageMarshaller;
  */
 public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
 
-   private static MarshalledEntry EMPTY = new MarshalledEntryImpl(null, null, (ByteBuffer) null, null);
-
-   /**
-    * Returns the value that should be used as an empty MarshalledEntry. This can be useful when a non null value
-    * is required.
-    * @param <K> key type
-    * @param <V> value type
-    * @return cached empty marshalled entry
-    */
-   public static <K, V> MarshalledEntry<K, V> empty() {
-      return EMPTY;
-   }
-
    private ByteBuffer keyBytes;
    private ByteBuffer valueBytes;
    private ByteBuffer metadataBytes;
@@ -42,28 +29,21 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
    private transient InternalMetadata metadata;
    private final transient org.infinispan.commons.marshall.Marshaller marshaller;
 
-   public MarshalledEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
+   MarshalledEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
       this.keyBytes = key;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
       this.marshaller = marshaller;
    }
 
-   public MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
+   MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
       this.key = key;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
       this.marshaller = marshaller;
    }
 
-   public MarshalledEntryImpl(ByteBuffer keyBytes, ByteBuffer valueBytes, InternalMetadata im, org.infinispan.commons.marshall.Marshaller marshaller) {
-      this.keyBytes = keyBytes;
-      this.valueBytes = valueBytes;
-      this.metadata = im;
-      this.marshaller = marshaller;
-   }
-
-   public MarshalledEntryImpl(K key, V value, InternalMetadata im, org.infinispan.commons.marshall.Marshaller sm) {
+   MarshalledEntryImpl(K key, V value, InternalMetadata im, org.infinispan.commons.marshall.Marshaller sm) {
       this.key = key;
       this.value = value;
       this.metadata = im;

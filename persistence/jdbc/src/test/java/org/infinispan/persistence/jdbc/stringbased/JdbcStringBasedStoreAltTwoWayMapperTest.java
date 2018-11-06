@@ -1,11 +1,11 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import static org.infinispan.test.TestingUtil.marshalledEntry;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
@@ -29,7 +29,7 @@ public class JdbcStringBasedStoreAltTwoWayMapperTest extends JdbcStringBasedStor
 
    public void testPurgeListenerIsNotified() throws Exception {
       InternalCacheEntry first = TestInternalCacheEntryFactory.create(MIRCEA, "val", 1000);
-      cacheStore.write(marshalledEntry(first, marshaller));
+      cacheStore.write(MarshalledEntryUtil.create(first, marshaller));
       assertRowCount(1);
       Thread.sleep(1100);
       AdvancedCacheWriter.PurgeListener purgeListener = mock(AdvancedCacheWriter.PurgeListener.class);

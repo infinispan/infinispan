@@ -15,6 +15,8 @@ import org.infinispan.persistence.spi.MarshalledEntryFactory;
  */
 public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory {
 
+   private static final MarshalledEntry EMPTY = new MarshalledEntryImpl(null, null, (ByteBuffer) null, null);
+
    @Inject @ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER) private Marshaller marshaller;
 
    public MarshalledEntryFactoryImpl() {
@@ -37,5 +39,10 @@ public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory {
    @Override
    public MarshalledEntry newMarshalledEntry(Object key, Object value, InternalMetadata im) {
       return new MarshalledEntryImpl(key, value, im, marshaller);
+   }
+
+   @Override
+   public MarshalledEntry getEmpty() {
+      return EMPTY;
    }
 }

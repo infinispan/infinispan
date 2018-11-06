@@ -14,9 +14,8 @@ import java.util.NoSuchElementException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.tools.store.migrator.Element;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;
@@ -25,7 +24,7 @@ import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 public class SingleFileStoreReader implements StoreIterator {
 
    private final FileChannel channel;
-   private final Marshaller marshaller;
+   private final MarshalledEntryFactory entryFactory;
 
    public SingleFileStoreReader(StoreProperties props) {
       props.required(Element.LOCATION);
@@ -39,7 +38,7 @@ public class SingleFileStoreReader implements StoreIterator {
       } catch (FileNotFoundException e) {
          throw new CacheException(e);
       }
-      this.marshaller = SerializationConfigUtil.getMarshaller(props);
+      this.entryFactory = SerializationConfigUtil.getEntryFactory(props);
    }
 
    @Override
@@ -100,7 +99,7 @@ public class SingleFileStoreReader implements StoreIterator {
 
                   org.infinispan.commons.io.ByteBuffer keyBb = new ByteBufferImpl(data, 0, keyLen);
                   org.infinispan.commons.io.ByteBuffer valueBb = new ByteBufferImpl(data, keyLen, dataLen);
-                  return new MarshalledEntryImpl<>(keyBb, valueBb, (org.infinispan.commons.io.ByteBuffer) null, marshaller);
+                  return entryFactory.newMarshalledEntry(keyBb, valueBb, (org.infinispan.commons.io.ByteBuffer) null);
                } catch (IOException e) {
                   throw new CacheException(String.format("Unable to read file entry at offset %d", filePos), e);
                }

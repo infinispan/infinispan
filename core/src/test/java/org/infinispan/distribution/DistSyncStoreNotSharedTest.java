@@ -1,6 +1,5 @@
 package org.infinispan.distribution;
 
-import static org.infinispan.test.TestingUtil.extractPersistenceMarshaller;
 import static org.infinispan.test.TestingUtil.k;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -16,10 +15,10 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -326,8 +325,8 @@ public class DistSyncStoreNotSharedTest<D extends DistSyncStoreNotSharedTest> ex
       final String v2 = "stale-data";
 
       // Simulate c3 was by itself and someone wrote a value that is now stale
-      CacheWriter store = (CacheWriter) TestingUtil.getFirstLoader(c3);
-      store.write(new MarshalledEntryImpl(k, v2, null, extractPersistenceMarshaller(c3.getCacheManager())));
+      CacheWriter store = TestingUtil.getFirstLoader(c3);
+      store.write(MarshalledEntryUtil.create(k, v2, c3));
 
       c1.put(k, v1);
 

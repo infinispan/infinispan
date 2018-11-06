@@ -22,6 +22,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.tools.store.migrator.StoreProperties;
 
 public class SerializationConfigUtil {
@@ -30,6 +32,14 @@ public class SerializationConfigUtil {
       Marshaller marshaller = getMarshaller(props);
       builder.marshaller(marshaller);
       configureExternalizers(props, builder);
+   }
+
+   public static MarshalledEntryFactory getEntryFactory(StoreProperties props) {
+      return getEntryFactory(getMarshaller(props));
+   }
+
+   public static MarshalledEntryFactory getEntryFactory(Marshaller marshaller) {
+      return new MarshalledEntryFactoryImpl(marshaller);
    }
 
    public static Marshaller getMarshaller(StoreProperties props) {

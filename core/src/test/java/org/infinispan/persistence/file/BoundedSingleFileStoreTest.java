@@ -6,7 +6,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -74,8 +74,8 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
       assertStoreSize(0, 0);
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       try {
-         store.write(new MarshalledEntryImpl(1, "v1", null, sm));
-         store.write(new MarshalledEntryImpl(2, "v2", null, sm));
+         store.write(MarshalledEntryUtil.create(1, "v1", sm));
+         store.write(MarshalledEntryUtil.create(1, "v2", sm));
          assertStoreSize(1, 1);
       } finally {
          sm.stop();

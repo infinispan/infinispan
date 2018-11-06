@@ -7,12 +7,13 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.persistence.sifs.EntryHeader;
 import org.infinispan.persistence.sifs.EntryRecord;
 import org.infinispan.persistence.sifs.FileProvider;
+import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.tools.store.migrator.Element;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;
@@ -20,7 +21,7 @@ import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 
 public class SoftIndexFileStoreIterator implements StoreIterator {
 
-   private final Marshaller marshaller;
+   private final MarshalledEntryFactory entryFactory;
    private final String location;
 
    public SoftIndexFileStoreIterator(StoreProperties props) {
@@ -31,7 +32,7 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
          throw new CacheException(String.format("Unable to read directory at '%s'", location));
 
       this.location = location;
-      this.marshaller = SerializationConfigUtil.getMarshaller(props);
+      this.entryFactory = SerializationConfigUtil.getEntryFactory(props);
    }
 
    @Override
@@ -81,8 +82,6 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
                   if (header.valueLength() > 0) {
                      byte[] serializedKey = EntryRecord.readKey(handle, header, offset);
                      byte[] serializedValue = EntryRecord.readValue(handle, header, offset);
-                     Object key = marshaller.objectFromByteBuffer(serializedKey);
-                     Object value = marshaller.objectFromByteBuffer(serializedValue);
 
                      offset += header.totalLength();
                      if (EntryRecord.readEntryHeader(handle, offset) == null) {
@@ -90,7 +89,7 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
                         handle.close();
                         file = -1;
                      }
-                     return new MarshalledEntryImpl<>(key, value, null, marshaller);
+                     return entryFactory.newMarshalledEntry(new ByteBufferImpl(serializedKey), new ByteBufferImpl(serializedValue), (ByteBuffer) null);
                   }
                   offset += header.totalLength();
                }

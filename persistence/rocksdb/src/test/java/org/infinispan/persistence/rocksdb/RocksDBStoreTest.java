@@ -19,11 +19,12 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.test.TestingUtil;
@@ -120,7 +121,7 @@ public class RocksDBStoreTest extends BaseStoreTest {
                int i1 = 0;
                while (run.get()) {
                   InternalCacheEntry entry = TestInternalCacheEntryFactory.create("k" + i1, "v" + i1);
-                  MarshalledEntry me = TestingUtil.marshalledEntry(entry, getMarshaller());
+                  MarshalledEntry me = MarshalledEntryUtil.create(entry, getMarshaller());
                   try {
                      AtomicInteger record = post.get() ? writtenPost : writtenPre;
                      cl.write(me);
@@ -183,7 +184,7 @@ public class RocksDBStoreTest extends BaseStoreTest {
       int segment = keyPartitioner.getSegment(key);
 
       InternalCacheEntry entry = TestInternalCacheEntryFactory.create(key, value);
-      MarshalledEntry me = TestingUtil.marshalledEntry(entry, getMarshaller());
+      MarshalledEntry me = MarshalledEntryUtil.create(entry, getMarshaller());
 
       cl.write(me);
 

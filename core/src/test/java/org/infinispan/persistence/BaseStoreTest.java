@@ -29,12 +29,11 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
-import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -130,7 +129,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
    public void testLoadAndStoreImmortal() throws PersistenceException {
       assertIsEmpty();
-      cl.write(marshalledEntry("k", "v", null));
+      cl.write(marshalledEntry("k", "v"));
 
       MarshalledEntry entry = cl.load("k");
       assertEquals("v", unwrap(entry.getValue()));
@@ -363,9 +362,9 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testPreload() throws Exception {
       assertIsEmpty();
 
-      cl.write(marshalledEntry("k1", "v1", null));
-      cl.write(marshalledEntry("k2", "v2", null));
-      cl.write(marshalledEntry("k3", "v3", null));
+      cl.write(marshalledEntry("k1", "v1"));
+      cl.write(marshalledEntry("k2", "v2"));
+      cl.write(marshalledEntry("k3", "v3"));
 
       Set<MarshalledEntry<Object, Object>> set = TestingUtil.allEntries(cl);
 
@@ -381,10 +380,10 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testStoreAndRemove() throws PersistenceException {
       assertIsEmpty();
 
-      cl.write(marshalledEntry("k1", "v1", null));
-      cl.write(marshalledEntry("k2", "v2", null));
-      cl.write(marshalledEntry("k3", "v3", null));
-      cl.write(marshalledEntry("k4", "v4", null));
+      cl.write(marshalledEntry("k1", "v1"));
+      cl.write(marshalledEntry("k2", "v2"));
+      cl.write(marshalledEntry("k3", "v3"));
+      cl.write(marshalledEntry("k4", "v4"));
 
 
       Set<MarshalledEntry<Object, Object>> set = TestingUtil.allEntries(cl);
@@ -463,11 +462,11 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testLoadAll() throws PersistenceException {
       assertIsEmpty();
 
-      cl.write(marshalledEntry("k1", "v1", null));
-      cl.write(marshalledEntry("k2", "v2", null));
-      cl.write(marshalledEntry("k3", "v3", null));
-      cl.write(marshalledEntry("k4", "v4", null));
-      cl.write(marshalledEntry("k5", "v5", null));
+      cl.write(marshalledEntry("k1", "v1"));
+      cl.write(marshalledEntry("k2", "v2"));
+      cl.write(marshalledEntry("k3", "v3"));
+      cl.write(marshalledEntry("k4", "v4"));
+      cl.write(marshalledEntry("k5", "v5"));
 
       Set<MarshalledEntry<Object, Object>> s = TestingUtil.allEntries(cl);
       assertSize(s, 5);
@@ -528,7 +527,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       WrappedBytes value = new WrappedByteArray(getMarshaller().objectToByteBuffer(new Pojo().role("value")));
 
       assertFalse(cl.contains(key));
-      cl.write(new MarshalledEntryImpl<Object, Object>(key, value, null, getMarshaller()));
+      cl.write(MarshalledEntryUtil.create(key, value, getMarshaller()));
 
       assertEquals(value, cl.load(key).getValue());
       MarshalledEntry entry = cl.load(key);
@@ -546,7 +545,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertIsEmpty();
       assertNull("should not be present in the store", cl.load(0));
       List<MarshalledEntry<?, ?>> entries = IntStream.range(0, numberOfEntries).boxed()
-            .map(i -> marshalledEntry(i.toString(), "Val" + i, null))
+            .map(i -> marshalledEntry(i.toString(), "Val" + i))
             .collect(Collectors.toList());
 
       cl.writeBatch(entries);
@@ -575,24 +574,20 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    protected final InternalCacheEntry<Object, Object> internalCacheEntry(String key, String value, long lifespan) {
-      return TestInternalCacheEntryFactory.<Object, Object>create(factory, key, wrap(key, value), lifespan);
+      return TestInternalCacheEntryFactory.create(factory, key, wrap(key, value), lifespan);
    }
 
    private InternalCacheEntry<Object, Object> internalCacheEntry(String key, String value, long lifespan, long idle) {
-      return TestInternalCacheEntryFactory.<Object, Object>create(factory, key, wrap(key, value), lifespan, idle);
+      return TestInternalCacheEntryFactory.create(factory, key, wrap(key, value), lifespan, idle);
    }
 
-   private MarshalledEntry<Object, Object> marshalledEntry(String key, String value, InternalMetadata metadata) {
-      return marshalledEntry(key, wrap(key, value), metadata);
-   }
-
-   protected MarshalledEntry<Object, Object> marshalledEntry(Object key, Object value, InternalMetadata metadata) {
-      return new MarshalledEntryImpl<>(key, value, metadata, getMarshaller());
+   private MarshalledEntry<Object, Object> marshalledEntry(String key, String value) {
+      return MarshalledEntryUtil.create(key, wrap(key, value), getMarshaller());
    }
 
    protected final MarshalledEntry<Object, Object> marshalledEntry(InternalCacheEntry entry) {
       //noinspection unchecked
-      return TestingUtil.marshalledEntry(entry, getMarshaller());
+      return MarshalledEntryUtil.create(entry, getMarshaller());
    }
 
    private void assertSize(Collection<?> collection, int expected) {

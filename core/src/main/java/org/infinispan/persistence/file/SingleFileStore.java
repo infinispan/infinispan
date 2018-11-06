@@ -25,10 +25,10 @@ import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
@@ -89,12 +89,14 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    // Prevent clear() from truncating the file after a write() allocated the entry but before it wrote the data
    private ReadWriteLock resizeLock = new ReentrantReadWriteLock();
    private TimeService timeService;
+   private MarshalledEntryFactory entryFactory;
 
    @Override
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       this.configuration = ctx.getConfiguration();
       this.timeService = ctx.getTimeService();
+      this.entryFactory = ctx.getMarshalledEntryFactory();
    }
 
    @Override
@@ -470,7 +472,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       // If we only require the key, then no need to read disk
       if (!loadValue && !loadMetadata) {
          try {
-            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, valueBb, metadataBb);
+            return entryFactory.newMarshalledEntry(key, valueBb, metadataBb);
          } finally {
             fe.unlock();
          }
@@ -499,7 +501,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       if (loadMetadata && fe.metadataLen > 0) {
          metadataBb = factory.newByteBuffer(data, fe.keyLen + fe.dataLen, fe.metadataLen);
       }
-      return ctx.getMarshalledEntryFactory().newMarshalledEntry(keyBb, valueBb, metadataBb);
+      return entryFactory.newMarshalledEntry(keyBb, valueBb, metadataBb);
    }
 
    @Override
@@ -545,12 +547,12 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             MarshalledEntry<K, V> entry = _load(kvp.getKey(), fetchValue, fetchMetadata);
             if (entry == null) {
                // Rxjava2 doesn't allow nulls
-               entry = MarshalledEntryImpl.empty();
+               entry = entryFactory.getEmpty();
             }
             return entry;
-         }).filter(me -> me != MarshalledEntryImpl.empty());
+         }).filter(me -> me != entryFactory.getEmpty());
       } else {
-         return publishKeys(filter).map(k -> ctx.getMarshalledEntryFactory().newMarshalledEntry(k, (Object) null, null));
+         return publishKeys(filter).map(k -> entryFactory.newMarshalledEntry(k, (Object) null, null));
       }
    }
 

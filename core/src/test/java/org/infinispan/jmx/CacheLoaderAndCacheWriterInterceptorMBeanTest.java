@@ -7,11 +7,10 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
-import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -65,10 +64,6 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       checkMBeanOperationParameterNaming(storeInterceptorObjName);
    }
 
-   private StreamAwareMarshaller marshaller() {
-      return cache.getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
-   }
-
    public void testPutKeyValue() throws Exception {
       assertStoreAccess(0, 0, 0);
       cache.put("key", "value");
@@ -76,7 +71,7 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       cache.put("key", "value2");
       assertStoreAccess(0, 1, 2);
 
-      store.write(new MarshalledEntryImpl("a", "b", null, marshaller()));
+      store.write(MarshalledEntryUtil.create("a", "b", cache));
       cache.put("a", "c");
       assertStoreAccess(1, 1, 3);
       assert store.load("a").getValue().equals("c");
@@ -90,7 +85,7 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       assert cache.get("key").equals("value");
       assertStoreAccess(0, 1, 1);
 
-      store.write(new MarshalledEntryImpl("a", "b", null, marshaller()));
+      store.write(MarshalledEntryUtil.create("a", "b", cache));
       assert cache.get("a").equals("b");
       assertStoreAccess(1, 1, 1);
 
@@ -112,7 +107,7 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       cache.remove("no_such_key");
       assertStoreAccess(0, 2, 1);
 
-      store.write(new MarshalledEntryImpl("a", "b", null, marshaller()));
+      store.write(MarshalledEntryUtil.create("a", "b", cache));
       assert cache.remove("a").equals("b");
       assertStoreAccess(1, 2, 1);
    }
@@ -125,7 +120,7 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       assert cache.replace("key", "value2").equals("value");
       assertStoreAccess(0, 1, 2);
 
-      store.write(new MarshalledEntryImpl("a", "b", null, marshaller()));
+      store.write(MarshalledEntryUtil.create("a", "b", cache));
       assert cache.replace("a", "c").equals("b");
       assertStoreAccess(1, 1, 3);
 

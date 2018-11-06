@@ -13,10 +13,10 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration;
 import org.infinispan.lucene.logging.Log;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -103,7 +103,7 @@ public class LuceneCacheLoader<K, V> implements AdvancedCacheLoader<K, V> {
             .runOn(Schedulers.from(ctx.getExecutor()))
             .flatMap(dir -> {
                final Set<MarshalledEntry<K, V>> allInternalEntries = new HashSet<>();
-               dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getPersistenceMarshaller());
+               dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getMarshalledEntryFactory());
                return Flowable.fromIterable(allInternalEntries);
             })
             .filter(me -> filter == null || filter.test(me.getKey()))

@@ -17,8 +17,6 @@ import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
@@ -29,6 +27,8 @@ import org.infinispan.persistence.rest.logging.Log;
 import org.infinispan.persistence.rest.metadata.MetadataHelper;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
@@ -84,6 +84,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private final URLCodec urlCodec = new URLCodec();
    private InitializationContext ctx;
    private Marshaller marshaller;
+   private MarshalledEntryFactory entryFactory;
 
    private EventLoopGroup workerGroup;
 
@@ -95,6 +96,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       configuration = initializationContext.getConfiguration();
       ctx = initializationContext;
       marshaller = ctx.getPersistenceMarshaller();
+      entryFactory = ctx.getMarshalledEntryFactory();
    }
 
    @Override
@@ -395,10 +397,10 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             MarshalledEntry<K, V> entry = load(k, fetchValue, fetchMetadata);
             if (entry == null) {
                // Rxjava2 doesn't allow nulls
-               entry = MarshalledEntryImpl.empty();
+               entry = entryFactory.getEmpty();
             }
             return entry;
-         }).filter(me -> me != MarshalledEntryImpl.empty());
+         }).filter(me -> me != entryFactory.getEmpty());
       }
    }
 

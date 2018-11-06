@@ -20,12 +20,11 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -67,15 +66,14 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
-      final List<String> keys = populateStore(5, 0, store, marshaller);
+      final List<String> keys = populateStore(5, 0, store, cache);
 
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[writerThreads];
       for (int i = 0; i < writerThreads; i++) {
-         writeFutures[i] = fork(stopOnException(new WriteTask(store, marshaller, keys, stopLatch), stopLatch));
+         writeFutures[i] = fork(stopOnException(new WriteTask(store, cache, keys, stopLatch), stopLatch));
       }
 
       Future[] readFutures = new Future[readerThreads];
@@ -101,7 +99,6 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       final List<String> keys = new ArrayList<>(numberOfKeys);
@@ -113,7 +110,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[writerThreads];
       for (int i = 0; i < writerThreads; i++) {
-         writeFutures[i] = fork(stopOnException(new WriteTask(store, marshaller, keys, stopLatch), stopLatch));
+         writeFutures[i] = fork(stopOnException(new WriteTask(store, cache, keys, stopLatch), stopLatch));
       }
       Future[] readFutures = new Future[readerThreads];
       for (int i = 0; i < readerThreads; i++) {
@@ -139,7 +136,6 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       long [] fileSizesWithoutPurge = new long [times];
@@ -150,7 +146,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       // Also record the file size after each such iteration.
       // Since entry sizes increase during each iteration, new entries won't fit in old free entries
       for (int i = 0; i < times; i++) {
-         populateStore(numberOfKeys, i, store, marshaller);
+         populateStore(numberOfKeys, i, store, cache);
          fileSizesWithoutPurge[i] = file.length();
       }
 
@@ -162,7 +158,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       ExecutorService executor = Executors.newSingleThreadExecutor(getTestThreadFactory("Purge"));
       try {
          for (int i = 0; i < times; i++) {
-            populateStore(numberOfKeys, i, store, marshaller);
+            populateStore(numberOfKeys, i, store, cache);
             // Call purge so that the entries are coalesced
             // Since this will merge and make bigger free entries available, new entries should get some free slots (unlike earlier case)
             // This should prove that the file size increases slowly
@@ -188,17 +184,16 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       // Write a few entries into the cache
-      final List<String> keys = populateStore(5, 0, store, marshaller);
+      final List<String> keys = populateStore(5, 0, store, cache);
 
       // Do some reading/writing entries with random size
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[writerThreads];
       for (int i = 0; i < writerThreads; i++) {
-         writeFutures[i] = fork(stopOnException(new WriteTask(store, marshaller, keys, stopLatch), stopLatch));
+         writeFutures[i] = fork(stopOnException(new WriteTask(store, cache, keys, stopLatch), stopLatch));
       }
 
       Future[] readFutures = new Future[readerThreads];
@@ -226,7 +221,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       String key = "key" + numberOfKeys;
       byte[] bytes = new byte[(int) store.getFileSize()];
       ByteBuffer buf = new ByteBufferImpl(bytes, 0, bytes.length);
-      store.write(new MarshalledEntryImpl<>(key, buf, (ByteBuffer) null, marshaller));
+      store.write(MarshalledEntryUtil.create(key, buf, cache));
       length1 = file.length();
 
       // Delete entry in order to guarantee that there will be space available at the end of the file to truncate
@@ -236,14 +231,13 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       assertTrue(String.format("Length1=%d, Length2=%d", length1, length2), length2 < length1);
    }
 
-   public List<String> populateStore(int numKeys, int numPadding, SingleFileStore store, Marshaller marshaller) {
+   public List<String> populateStore(int numKeys, int numPadding, SingleFileStore store, Cache cache) {
       final List<String> keys = new ArrayList<>(numKeys);
       for (int j = 0; j < numKeys; j++) {
          String key = "key" + j;
          String value = key + "_value_" + j + times(numPadding);
          keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
-         store.write(entry);
+         store.write(MarshalledEntryUtil.create(key, value, cache));
       }
       return keys;
    }
@@ -254,16 +248,15 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       final List<String> keys = new ArrayList<>(numberOfKeys);
-      populateStoreRandomValues(numberOfKeys, store, marshaller, keys);
+      populateStoreRandomValues(numberOfKeys, store, cache, keys);
 
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[writerThreads];
       for (int i = 0; i < writerThreads; i++) {
-         writeFutures[i] = fork(stopOnException(new WriteTask(store, marshaller, keys, stopLatch), stopLatch));
+         writeFutures[i] = fork(stopOnException(new WriteTask(store, cache, keys, stopLatch), stopLatch));
       }
 
       Future processFuture = fork(stopOnException(new ProcessTask(store), stopLatch));
@@ -283,16 +276,15 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       final List<String> keys = new ArrayList<>(numberOfKeys);
-      populateStoreRandomValues(numberOfKeys, store, marshaller, keys);
+      populateStoreRandomValues(numberOfKeys, store, cache, keys);
 
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[writerThreads];
       for (int i = 0; i < writerThreads; i++) {
-         writeFutures[i] = fork(stopOnException(new WriteTask(store, marshaller, keys, stopLatch), stopLatch));
+         writeFutures[i] = fork(stopOnException(new WriteTask(store, cache, keys, stopLatch), stopLatch));
       }
 
       Future processFuture = fork(stopOnException(new ProcessTaskNoDiskRead(store), stopLatch));
@@ -306,14 +298,12 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       }
    }
 
-   private void populateStoreRandomValues(int numberOfKeys, SingleFileStore store,
-                                          Marshaller marshaller, List<String> keys) {
+   private void populateStoreRandomValues(int numberOfKeys, SingleFileStore store, Cache cache, List<String> keys) {
       for (int j = 0; j < numberOfKeys; j++) {
          String key = "key" + j;
          String value = key + "_value_" + j + times(new Random().nextInt(10));
          keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
-         store.write(entry);
+         store.write(MarshalledEntryUtil.create(key, value, cache));
       }
    }
 
@@ -334,13 +324,13 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
    private class WriteTask implements Callable<Object> {
       final SingleFileStore store;
-      final Marshaller marshaller;
+      final Cache cache;
       final List<String> keys;
       final CountDownLatch stopLatch;
 
-      WriteTask(SingleFileStore store, Marshaller marshaller, List<String> keys, CountDownLatch stopLatch) {
+      WriteTask(SingleFileStore store, Cache cache, List<String> keys, CountDownLatch stopLatch) {
          this.store = store;
-         this.marshaller = marshaller;
+         this.cache = cache;
          this.keys = keys;
          this.stopLatch = stopLatch;
       }
@@ -353,7 +343,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          while (stopLatch.getCount() != 0) {
             String key = keys.get(random.nextInt(keys.size()));
             String value = key + "_value_" + i + "_" + times(random.nextInt(1000) / 10);
-            MarshalledEntry entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
+            MarshalledEntry entry = MarshalledEntryUtil.create(key, value, cache);
             store.write(entry);
             i++;
          }

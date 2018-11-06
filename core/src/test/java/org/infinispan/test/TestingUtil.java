@@ -75,7 +75,6 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
@@ -83,7 +82,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -112,11 +110,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -1668,14 +1665,6 @@ public class TestingUtil {
       return allEntries(cl, null);
    }
 
-   public static <K, V> MarshalledEntry<K, V> marshalledEntry(InternalCacheEntry<K, V> ice, Marshaller marshaller) {
-      return new MarshalledEntryImpl<>(ice.getKey(), ice.getValue(), PersistenceUtil.internalMetadata(ice), marshaller);
-   }
-
-   /*public static MarshalledEntry marshalledEntry(InternalCacheValue icv, StreamingMarshaller marshaller) {
-      return marshalledEntry(icv, marshaller);
-   }*/
-
    public static void outputPropertiesToXML(String outputFile, Properties properties) throws IOException {
       Properties sorted = new Properties() {
          @Override
@@ -1702,9 +1691,8 @@ public class TestingUtil {
    public static <K, V> void writeToAllStores(K key, V value, Cache<K, V> cache) {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
-      StreamAwareMarshaller marshaller = extractPersistenceMarshaller(advCache.getCacheManager());
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
-      pm.writeToAllNonTxStores(new MarshalledEntryImpl<>(key, value, null, marshaller), keyPartitioner.getSegment(key), BOTH);
+      pm.writeToAllNonTxStores(MarshalledEntryUtil.create(key, value, cache), keyPartitioner.getSegment(key), BOTH);
    }
 
    public static <K, V> boolean deleteFromAllStores(K key, Cache<K, V> cache) {

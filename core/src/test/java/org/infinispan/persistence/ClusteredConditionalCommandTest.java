@@ -22,13 +22,13 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.test.fwk.InCacheMode;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
 
@@ -77,11 +77,8 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
    }
 
    private static <K, V> void writeToStore(CacheHelper<K, V> cacheHelper, Ownership ownership, K key, V value) {
-      cacheHelper.cacheStore(ownership).write(marshalledEntry(key, value, cacheHelper.marshaller(ownership)));
-   }
-
-   private static <K, V> MarshalledEntry<K, V> marshalledEntry(K key, V value, StreamAwareMarshaller marshaller) {
-      return new MarshalledEntryImpl<>(key, value, null, marshaller);
+      MarshalledEntry entry = MarshalledEntryUtil.create(key, value, cacheHelper.cache(ownership));
+      cacheHelper.cacheStore(ownership).write(entry);
    }
 
    private <K, V> CacheHelper<K, V> create(List<Cache<K, V>> cacheList) {
