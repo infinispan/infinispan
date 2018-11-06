@@ -12,12 +12,11 @@ import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
@@ -28,6 +27,8 @@ import org.infinispan.persistence.rest.logging.Log;
 import org.infinispan.persistence.rest.metadata.MetadataHelper;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
@@ -82,6 +83,8 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private MetadataHelper metadataHelper;
    private final URLCodec urlCodec = new URLCodec();
    private InitializationContext ctx;
+   private StreamingMarshaller marshaller;
+   private MarshalledEntryFactory entryFactory;
 
    private EventLoopGroup workerGroup;
 
@@ -92,6 +95,8 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    public void init(InitializationContext initializationContext) {
       configuration = initializationContext.getConfiguration();
       ctx = initializationContext;
+      marshaller = ctx.getMarshaller();
+      entryFactory = ctx.getMarshalledEntryFactory();
    }
 
    @Override
@@ -118,7 +123,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       maxContentLength = configuration.maxContentLength();
 
       this.key2StringMapper = Util.getInstance(configuration.key2StringMapper(), ctx.getCache().getAdvancedCache().getClassLoader());
-      this.key2StringMapper.setMarshaller(ctx.getMarshaller());
+      this.key2StringMapper.setMarshaller(marshaller);
       this.path = configuration.path();
       try {
          if (configuration.appendCacheNameToPath()) {
@@ -176,7 +181,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          if (isTextContentType(contentType)) {
             return (byte[]) entry.getValue();
          }
-         return ctx.getMarshaller().objectToByteBuffer(entry.getValue());
+         return marshaller.objectToByteBuffer(entry.getValue());
       }
    }
 
@@ -187,7 +192,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          if (isTextContentType(contentType)) {
             return new String(b); // TODO: use response header Content Encoding
          } else {
-            return ctx.getMarshaller().objectFromByteBuffer(b);
+            return marshaller.objectFromByteBuffer(b);
          }
       }
    }
@@ -392,10 +397,10 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             MarshalledEntry<K, V> entry = load(k, fetchValue, fetchMetadata);
             if (entry == null) {
                // Rxjava2 doesn't allow nulls
-               entry = MarshalledEntryImpl.empty();
+               entry = entryFactory.getEmpty();
             }
             return entry;
-         }).filter(me -> me != MarshalledEntryImpl.empty());
+         }).filter(me -> me != entryFactory.getEmpty());
       }
    }
 

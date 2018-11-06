@@ -27,7 +27,7 @@ import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.test.TestingUtil;
@@ -73,7 +73,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
+         store.write(MarshalledEntryUtil.create(loaderKey, loaderValue, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache, checkPoint);
@@ -137,8 +137,8 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
-         store.write(new MarshalledEntryImpl<>(filteredLoaderKey, filteredLoaderValue, null, sm));
+         store.write(MarshalledEntryUtil.create(loaderKey, loaderValue, sm));
+         store.write(MarshalledEntryUtil.create(filteredLoaderKey, filteredLoaderValue, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache, checkPoint);
@@ -202,7 +202,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
+         store.write(MarshalledEntryUtil.create(loaderKey, loaderValue, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache, checkPoint);

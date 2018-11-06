@@ -1,7 +1,6 @@
 package org.infinispan.stress;
 
 import static java.lang.Math.sqrt;
-import static org.infinispan.test.TestingUtil.marshalledEntry;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
@@ -24,8 +23,8 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.PersistenceUtil;
@@ -37,6 +36,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -282,17 +282,13 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             final InternalCacheEntry entry =
                   entryFactory.create(key, value, new EmbeddedMetadata.Builder().build());
             // Store acquiring locks and catching exceptions
-            boolean result = withStore(key, new Callable<Boolean>() {
-               @Override
-               public Boolean call() throws Exception {
-                  store.write(marshalledEntry(entry, marshaller));
-                  expectedState.put(key, entry);
-                  if (trace)
-                     log.tracef("Expected state updated with key=%s, value=%s", key, value);
-                  return true;
-               }
+            return withStore(key, () -> {
+               store.write(MarshalledEntryUtil.create(entry, marshaller));
+               expectedState.put(key, entry);
+               if (trace)
+                  log.tracef("Expected state updated with key=%s, value=%s", key, value);
+               return true;
             });
-            return result;
          }
       };
    }
@@ -302,19 +298,15 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
          @Override
          public boolean call(final String key, long run) {
             // Remove acquiring locks and catching exceptions
-            boolean result = withStore(key, new Callable<Boolean>() {
-               @Override
-               public Boolean call() throws Exception {
-                  boolean removed = store.delete(key);
-                  if (removed) {
-                     expectedState.remove(key);
-                     if (trace)
-                        log.tracef("Expected state removed key=%s", key);
-                  }
-                  return true;
+            return withStore(key, () -> {
+               boolean removed = store.delete(key);
+               if (removed) {
+                  expectedState.remove(key);
+                  if (trace)
+                     log.tracef("Expected state removed key=%s", key);
                }
+               return true;
             });
-            return result;
          }
       };
    }

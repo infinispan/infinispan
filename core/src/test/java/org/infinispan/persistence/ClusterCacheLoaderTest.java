@@ -7,7 +7,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
@@ -60,7 +60,7 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
 
       assertNull(cache1.get("key"));
       assertNull(cache2.get("key"));
-      writer.write(new MarshalledEntryImpl("key", "value", null, cache2.getAdvancedCache().getComponentRegistry().getCacheMarshaller()));
+      writer.write(MarshalledEntryUtil.create("key", "value", cache2));
       assertEquals(((CacheLoader)writer).load("key").getValue(), "value");
       assertEquals(cache1.get("key"), "value");
    }

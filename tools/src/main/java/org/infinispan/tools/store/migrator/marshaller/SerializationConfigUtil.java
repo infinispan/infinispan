@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -18,14 +19,24 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.SerializationConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.tools.store.migrator.StoreProperties;
 
 public class SerializationConfigUtil {
 
    public static void configureSerialization(StoreProperties props, SerializationConfigurationBuilder builder) {
-      StreamingMarshaller marshaller = getMarshaller(props);
+      Marshaller marshaller = getMarshaller(props);
       builder.marshaller(marshaller);
       configureExternalizers(props, builder);
+   }
+
+   public static MarshalledEntryFactory getEntryFactory(StoreProperties props) {
+      return getEntryFactory(getMarshaller(props));
+   }
+
+   public static MarshalledEntryFactory getEntryFactory(Marshaller marshaller) {
+      return new MarshalledEntryFactoryImpl(marshaller);
    }
 
    public static StreamingMarshaller getMarshaller(StoreProperties props) {

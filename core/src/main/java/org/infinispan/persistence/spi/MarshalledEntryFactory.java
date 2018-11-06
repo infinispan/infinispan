@@ -16,4 +16,9 @@ public interface MarshalledEntryFactory<K,V> {
    MarshalledEntry<K,V> newMarshalledEntry(Object key, ByteBuffer valueBytes, ByteBuffer metadataBytes);
 
    MarshalledEntry<K,V> newMarshalledEntry(Object key, Object value, InternalMetadata im);
+
+   /**
+    * @return a cached empty {@link MarshalledEntry} instance.
+    */
+   MarshalledEntry<K,V> getEmpty();
 }

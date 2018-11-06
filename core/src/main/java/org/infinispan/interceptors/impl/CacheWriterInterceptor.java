@@ -36,7 +36,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -55,9 +54,9 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -83,8 +82,8 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Inject protected PersistenceManager persistenceManager;
    @Inject private InternalEntryFactory entryFactory;
    @Inject private TransactionManager transactionManager;
-   @Inject private StreamingMarshaller marshaller;
    @Inject private KeyPartitioner keyPartitioner;
+   @Inject private MarshalledEntryFactory marshalledEntryFactory;
 
    PersistenceConfiguration loaderConfig = null;
    final AtomicLong cacheStores = new AtomicLong(0);
@@ -398,7 +397,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       if (trace) getLog().tracef("Cache loader modification list: %s", modifications);
 
 
-      TxBatchUpdater modsBuilder = TxBatchUpdater.createNonTxStoreUpdater(this, persistenceManager, entryFactory, marshaller);
+      TxBatchUpdater modsBuilder = TxBatchUpdater.createNonTxStoreUpdater(this, persistenceManager, entryFactory, marshalledEntryFactory);
       for (WriteCommand cacheCommand : modifications) {
          if (isStoreEnabled(cacheCommand)) {
             cacheCommand.acceptVisitor(ctx, modsBuilder);
@@ -472,7 +471,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    MarshalledEntry marshalledEntry(InvocationContext ctx, Object key) {
       InternalCacheValue sv = entryFactory.getValueFromCtx(key, ctx);
-      return sv != null ? new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller) : null;
+      return sv != null ? marshalledEntryFactory.newMarshalledEntry(key, sv.getValue(), internalMetadata(sv)) : null;
    }
 
    protected boolean skipSharedStores(InvocationContext ctx, Object key, FlagAffectedCommand command) {

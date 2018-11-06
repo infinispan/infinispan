@@ -10,12 +10,12 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.MarshalledEntryFactory;
 
 /**
  * An interceptor which ensures that writes to an underlying transactional store are prepared->committed/rolledback as part
@@ -27,14 +27,14 @@ import org.infinispan.persistence.manager.PersistenceManager;
 public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    @Inject private PersistenceManager persistenceManager;
    @Inject private InternalEntryFactory entryFactory;
-   @Inject private StreamingMarshaller marshaller;
+   @Inject private MarshalledEntryFactory marshalledEntryFactory;
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          Transaction tx = ctx.getTransaction();
-         TxBatchUpdater modBuilder = TxBatchUpdater.createTxStoreUpdater(
-               persistenceManager, entryFactory, marshaller, ctx.getCacheTransaction().getAffectedKeys());
+         TxBatchUpdater modBuilder = TxBatchUpdater.createTxStoreUpdater(persistenceManager, entryFactory,
+               marshalledEntryFactory, ctx.getCacheTransaction().getAffectedKeys());
 
          List<WriteCommand> modifications = ctx.getCacheTransaction().getAllModifications();
          for (WriteCommand writeCommand : modifications) {

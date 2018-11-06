@@ -18,13 +18,14 @@ import java.util.stream.Stream;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -147,7 +148,7 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
                   lifespan = random.nextInt(3) == 0 ? random.nextInt(10) : -1;
                   ice = TestInternalCacheEntryFactory.<Object, Object>create(factory,
                      key(random), String.valueOf(random.nextInt()), lifespan);
-                  store.write(TestingUtil.marshalledEntry(ice, marshaller));
+                  store.write(MarshalledEntryUtil.create(ice, marshaller));
                   break;
                case 1:
                   store.delete(key);

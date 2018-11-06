@@ -1,6 +1,5 @@
 package org.infinispan.persistence.sifs;
 
-import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -11,11 +10,11 @@ import java.io.File;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -102,7 +101,7 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
       int numEntries = 10000;
       for (int i = 0; i < numEntries; ++i) {
          InternalCacheEntry ice = TestInternalCacheEntryFactory.create(key(i), "value" + i);
-         store.write(new MarshalledEntryImpl(ice.getKey(), ice.getValue(), internalMetadata(ice), getMarshaller()));
+         store.write(MarshalledEntryUtil.create(ice, getMarshaller()));
       }
       for (int i = 0; i < numEntries; ++i) {
          assertNotNull(key(i), store.load(key(i)));
@@ -111,7 +110,7 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
       store.clear();
       for (int i = 0; i < numEntries; ++i) {
          InternalCacheEntry ice = TestInternalCacheEntryFactory.create(key(i), "value" + i);
-         store.write(new MarshalledEntryImpl(ice.getKey(), ice.getValue(), internalMetadata(ice), getMarshaller()));
+         store.write(MarshalledEntryUtil.create(ice, getMarshaller()));
       }
       for (int i = numEntries - 1; i >= 0; --i) {
          assertNotNull(key(i), store.load(key(i)));

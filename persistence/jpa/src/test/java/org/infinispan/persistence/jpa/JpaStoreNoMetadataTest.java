@@ -5,8 +5,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.Test;
 
@@ -62,15 +62,15 @@ public class JpaStoreNoMetadataTest extends JpaStoreTest {
       long lifespan = 6000;
       long idle = 4000;
       InternalCacheEntry ice1 = TestInternalCacheEntryFactory.create("k1", wrap("k1", "v1"), lifespan);
-      cl.write(TestingUtil.marshalledEntry(ice1, getMarshaller()));
+      cl.write(MarshalledEntryUtil.create(ice1, getMarshaller()));
       InternalCacheEntry ice2 = TestInternalCacheEntryFactory.create("k2", wrap("k2", "v2"), -1, idle);
-      cl.write(TestingUtil.marshalledEntry(ice2, getMarshaller()));
+      cl.write(MarshalledEntryUtil.create(ice2, getMarshaller()));
       InternalCacheEntry ice3 = TestInternalCacheEntryFactory.create("k3", wrap("k3", "v3"), lifespan, idle);
-      cl.write(TestingUtil.marshalledEntry(ice3, getMarshaller()));
+      cl.write(MarshalledEntryUtil.create(ice3, getMarshaller()));
       InternalCacheEntry ice4 = TestInternalCacheEntryFactory.create("k4", wrap("k4", "v4"), -1, -1);
-      cl.write(TestingUtil.marshalledEntry(ice4, getMarshaller())); // immortal entry
+      cl.write(MarshalledEntryUtil.create(ice4, getMarshaller()));
       InternalCacheEntry ice5 = TestInternalCacheEntryFactory.create("k5", wrap("k5", "v5"), lifespan * 1000, idle * 1000);
-      cl.write(TestingUtil.marshalledEntry(ice5, getMarshaller())); // long life mortal entry
+      cl.write(MarshalledEntryUtil.create(ice5, getMarshaller()));
       assertTrue(cl.contains("k1"));
       assertTrue(cl.contains("k2"));
       assertTrue(cl.contains("k3"));
@@ -99,10 +99,10 @@ public class JpaStoreNoMetadataTest extends JpaStoreTest {
       InternalCacheEntry se3 = TestInternalCacheEntryFactory.create("k3", wrap("k3", "v3"), -1, idle);
       InternalCacheEntry se4 = TestInternalCacheEntryFactory.create("k4", wrap("k4", "v4"), lifespan, idle);
 
-      cl.write(TestingUtil.marshalledEntry(se1, getMarshaller()));
-      cl.write(TestingUtil.marshalledEntry(se2, getMarshaller()));
-      cl.write(TestingUtil.marshalledEntry(se3, getMarshaller()));
-      cl.write(TestingUtil.marshalledEntry(se4, getMarshaller()));
+      cl.write(MarshalledEntryUtil.create(se1, getMarshaller()));
+      cl.write(MarshalledEntryUtil.create(se2, getMarshaller()));
+      cl.write(MarshalledEntryUtil.create(se3, getMarshaller()));
+      cl.write(MarshalledEntryUtil.create(se4, getMarshaller()));
 
       timeService.advance(lifespan + 1);
 
