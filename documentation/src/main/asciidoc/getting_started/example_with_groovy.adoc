@@ -6,7 +6,6 @@ The tutorial will start by showing the basic usage of the link:{javadocroot}[{br
 
 The scenarios and use cases shown are:
 
-
 * Basic cache configuration
 * Cache with transaction management configuration
 * Cache with a cache store configuration
@@ -61,14 +60,12 @@ For example, on Windows, you need to copy it to:
 
 ----
 C:\Documents and Settings\Alejandro Montenegro\.groovy\lib
-
 ----
 
 or on Linux:
 
 ----
 /home/amontenegro/.groovy/lib
-
 ----
 
 ifndef::productized[]
@@ -93,14 +90,12 @@ For example, on Windows:
 
 ----
 CLASSPATH=%CLASSPATH%;C:\Documents and Settings\Alejandro Montenegro\.groovy\cp
-
 ----
 
 or, on Linux:
 
 ----
 CLASSPATH=$CLASSPATH:/home/amontenegro/.groovy/cp
-
 ----
 
 finally add the sample-configurations.xml and infinispan-config-4.0.xsd files(attached) to the directory.
@@ -111,23 +106,21 @@ The link:{javadocroot}/org/infinispan/manager/CacheManager.html[cache manager] i
 
 Start by open a groovy console by typing groovy.sh in a command shell or terminal. You should now have something similar to:
 
-====
+----
 Groovy Shell (1.6.3, JVM: 1.6.0_14)
 Type 'help' or '\h' for help.
 -------------------------------------------------------
 groovy:000>
-====
+----
 
 It's time to start typing some commands, first start by importing the necessary libraries
 
-
-====
+----
 groovy:000> import org.infinispan.*
 === > [import org.infinispan.*]
 groovy:000> import org.infinispan.manager.*
 === > [import org.infinispan.*, import org.infinispan.manager.*]
-
-====
+----
 
 And now, create a cache manager indicating the file with the cache definitions.
 
@@ -157,7 +150,6 @@ The basic configuration, is the simplest configuration that you can have, its ma
 
 That's all you have to add to the configuration file to have a simple named cache, now its time to interact with the cache by using the {brandname} API. Lets start by getting the named cache and put some objects inside it.
 
-
 ----
 //START BY GETTING A REFERENCE TO THE NAMED CACHE
 groovy:000> localCache = manager.getCache("Local")
@@ -184,7 +176,6 @@ groovy:000> localCache.remove("aKey")
 === > aValue
 groovy:000> localCache.isEmpty()
 === > true
-
 ----
 
 So you have seen the basic of the {brandname} API, adding, getting and removing from the cache, there is more, but don't forget that you are working with a cache that are an extension of java.util.ConcurrentHasMap and the rest of the API is as simple as the one shown above, many of the cool things in {brandname} are totally transparent (that's actually the coolest thing about {brandname}) and depends only on the configuration of your cache.
@@ -210,7 +201,6 @@ groovy:000> localCache.get("timedKey")
 //LETS CHECK THE SIZE AGAIN, AS EXPECTED THE SIZE DECREASED BY 1
 groovy:000> localCache.size()
 === > 1
-
 ----
 
 The {brandname} API also allows you to manage the life cycle of the cache, you can stop and start a cache but by default you will loose the content of the cache except if you configure a cache store, more about that later in the tutorial. lets check what happens when you restart the cache
@@ -223,7 +213,7 @@ groovy:000> localCache.stop()
 === > null
 groovy:000> localCache.start()
 === > null
-//DAMN! LOST THE CONTENT OF THE CACHE
+//OH NO! LOST THE CONTENT OF THE CACHE
 groovy:000> localCache.size()
 === > 0
 ----
@@ -235,13 +225,13 @@ Thats all related to the use of the {brandname} API, now lets check some differe
 You are able to specify the cache to use a transaction manager, and even explicitly control the transactions. Start by configuring the cache to use a specific TransactionManagerLookup class. {brandname} implements a couple TransactionManagerLookup classes.
 
 
-*  link:{javadocroot}/org/infinispan/transaction/lookup/EmbeddedTransactionManager.html[org.infinispan.transaction.lookup.EmbeddedTransactionManager]
+* link:{javadocroot}/org/infinispan/transaction/lookup/EmbeddedTransactionManager.html[org.infinispan.transaction.lookup.EmbeddedTransactionManager]
 
 
-*  link:{javadocroot}/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html[org.infinispan.transaction.lookup.GenericTransactionManagerLookup]
+* link:{javadocroot}/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html[org.infinispan.transaction.lookup.GenericTransactionManagerLookup]
 
 
-*  link:{javadocroot}/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html[org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup]
+* link:{javadocroot}/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html[org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup]
 
 Each use different methods to lookup the transaction manager, depending on the environment you are running {brandname} you should figure out which one to use. Check the JavaDoc for more details.
 
@@ -255,8 +245,7 @@ For the tutorial its enough to use:
 
 ----
 
-Lets check how to interact with the Transaction Manager and to have the control over a transaction
-
+Lets check how to interact with the Transaction Manager and to have the control over a transaction.
 
 ----
 groovy:000> import javax.transaction.TransactionManager
@@ -290,7 +279,6 @@ groovy:000> tm.commit()
 //AND THE SIZE IS AS EXPECTED.. HAPPY!
 groovy:000> localTxCache.size()
 === > 2
-
 ----
 
 As shown in the example, the transaction is controlled explicitly and the changes in the cache wont be reflected until you make the commit.
@@ -301,25 +289,12 @@ As shown in the example, the transaction is controlled explicitly and the change
 
 {brandname} provides several cache store implementations:
 
-
 * FileCacheStore
-
-
 * JdbcBinaryCacheStore
-
-
 * JdbcMixedCacheStore
-
-
 * JdbcStringBasedCacheStore
-
-
 * JdbmCacheStore
-
-
 * S3CacheStore
-
-
 * BdbjeCacheStore
 
  The tutorial uses the FileCacheStore, that saves the objects in files in a configured directory, in this case the /tmp directory. If the directory is not set it defaults to {brandname}-FileCacheStore in the current working directory.
@@ -339,7 +314,6 @@ As shown in the example, the transaction is controlled explicitly and the change
 ----
 
 Now you have a cache with persistent store, lets try it to see how it works
-
 
 ----
 //GETTING THE NEW CACHE
@@ -369,7 +343,6 @@ groovy:000> cacheCS.size()
 //WOW! JUST RESTARTED THE CACHE AND THE OBKECT KEEPS STAYING THERE!
 groovy:000> cacheCS.get("storedKey")
 === > storedValue
-
 ----
 
 === Cache with eviction
@@ -414,7 +387,6 @@ groovy:000> evictionCache.get("key2")
 //COOL! THE OLDEST WAS REMOVED
 groovy:000> evictionCache.get("key1")
 === > null
-
 ----
 
 Now you are sure that your cache wont consume all your memory and hang your system, but its an expensive price you have to pay for it, you are loosing objects in your cache. The good news is that you can mix cache store with the eviction policy and avoid loosing objects.
@@ -442,7 +414,6 @@ The configuration is simple, just combine eviction and cache store configuration
 
 Nothing new in the configuration, lets check how it works
 
-
 ----
 //GETTING THE CACHE
 groovy:000> cacheStoreEvictionCache = manager.getCache("CacheStoreEviction")
@@ -464,5 +435,4 @@ groovy:000> cacheStoreEvictionCache.get("cs2")
 //WOW! EVEN IF THE CACHE SIZE IS 2, I RECOVERED THE THREE OBJECTS.. COOL!!
 groovy:000> cacheStoreEvictionCache.get("cs1")
 === > value1
-
 ----

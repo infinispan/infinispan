@@ -616,10 +616,16 @@ that the marshaller can load them. i.e. if you register the marshaller bundle in
 then you must also register your custom classes here.
 
 ====== Registering Custom Schemas/Serializers
-Custom serializers/schemas for the Kryo/Protostuff marshallers must be registered via their respective service interfaces
-in compatibility mode. To achieve this, it is necessary for a jar containing the service provider to be registered
-in the same directory or module as the marshaller bundle and custom classes.
+Custom serializers/schemas for the Kryo/Protostuff marshallers must be
+registered via their respective service interfaces in compatibility mode. To
+achieve this, it is necessary for a *JAR* that contains the service provider to
+be registered in the same directory or module as the marshaller bundle and
+custom classes.
 
-NOTE: It is not necessary for the service provider implementation to be provided in the same jar as the user's custom
-classes, however the jar containing the provider must be in the same directory/module as the marshaller and custom class
-jars.
+[NOTE]
+====
+It is not necessary for the service provider implementation to be provided in
+the same *JAR* as the user's custom classes. However, the *JAR* that contains
+the provider must be in the same directory/module as the marshaller and custom
+class *JAR* files.
+====

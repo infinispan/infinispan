@@ -1494,5 +1494,8 @@ image::images/server_modules_10.png[align="center", title="Replace if versions m
 ==== Javadocs
 It is highly recommended to read the following Javadocs (this is pretty much all the public API of the client):
 
-*  link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]
-*  link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache]
+* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]
+* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache]
+//////////////////////
+//terminate list
+//////////////////////
