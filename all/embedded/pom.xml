@@ -194,7 +194,6 @@
                            <exclude>org.osgi:org.osgi.core:jar:</exclude>
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                            <exclude>com.google.code.findbugs:jsr305:jar:</exclude>
-                           <exclude>org.infinispan:infinispan-license:jar:</exclude>
                         </excludes>
                      </artifactSet>
                      <filters>
@@ -323,7 +322,8 @@
                         <Include-Resource>
                            @${intermediary_jar_path},
                            /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml,
-                           /features.xml=${project.basedir}/target/classes/features.xml
+                           /features.xml=${project.basedir}/target/classes/features.xml,
+                           /META-INF/licenses.xml=${project.build.outputDirectory}/META-INF/licenses.xml
                         </Include-Resource>
                         <!-- Define packages from dependencies, exported further by current bundle -->
                         <_exportcontents>
@@ -453,37 +453,4 @@
          </plugin>
       </plugins>
    </build>
-
-   <profiles>
-      <profile>
-         <id>distribution</id>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.wildfly.maven.plugins</groupId>
-                  <artifactId>licenses-plugin</artifactId>
-                  <version>1.0.0</version>
-                  <executions>
-                     <execution>
-                        <id>update-licenses-xml</id>
-                        <goals>
-                           <goal>insert-versions</goal>
-                        </goals>
-                        <phase>prepare-package</phase>
-                        <configuration>
-                           <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
-                           <licensesOutputFile>${project.build.directory}/licenses.xml</licensesOutputFile>
-                           <excludedGroups>org.kohsuke|org.apache.karaf.features|org.osgi</excludedGroups>
-                           <excludedArtifacts>jboss-logging-processor|jdeparser|jcip-annotations|jboss-logging-annotations|c3p0</excludedArtifacts>
-                           <excludedScopes>system,test,runtime</excludedScopes>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-
-   </profiles>
-
 </project>

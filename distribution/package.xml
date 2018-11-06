@@ -1,14 +1,16 @@
 <project name="infinispan-packaging" basedir="." default="package" xmlns:if="ant:if">
-   <property name="root.dir" value=".." />
+   <property name="root.dir" value="${project.build.directory}/../.." />
    <property name="dist.dir" value="${project.build.directory}/distribution" />
+   <property name="licenses.xml" value="${project.build.directory}/docs/licenses/licenses.xml" />
    <property name="base.output.dir" value="${dist.dir}/${infinispan.brand.prefix}-${infinispan.brand.version}" />
    <property name="dollar" value="$"/>
    <filterset id="brandfilter" begintoken="${dollar}{" endtoken="}">
       <filter token="infinispan.brand.name" value="${infinispan.brand.name}" />
+      <filter token="wildfly.brand.name" value="${wildfly.brand.name}" />
       <filter token="current.year" value="${current.year}" />
    </filterset>
 
-   <target name="package" depends="clean, minimal, all, remote" />
+   <target name="package" depends="clean, minimal, all, remote, wf-modules, server" />
 
    <target name="clean">
       <delete dir="${dist.dir}" />
@@ -65,10 +67,57 @@
          <base-distribution-lib-remote dir="${output.dir}" />
          <base-distribution-common-files dir="${output.dir}" type="remote" />
          <base-distribution-javadocs dir="${output.dir}" type="remote" />
+         <base-distribution-licenses dir="${output.dir}"/>
          <delete dir="${output.dir}/bin" />
          <delete dir="${output.dir}/configs" />
          <delete file="${output.dir}/README-GUI-Demo.txt" />
       </sequential>
+   </target>
+
+   <target name="wf-modules">
+      <local name="output.dir"/>
+      <property name="output.dir" value="${project.build.directory}/${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}" />
+      <sequential>
+         <copy todir="${output.dir}">
+            <fileset dir="src/main/release/wildfly-modules" />
+            <filterset refid="brandfilter"/>
+         </copy>
+         <base-distribution-licenses dir="${output.dir}" inclusive="true" database="true"/>
+      </sequential>
+   </target>
+
+   <target name="server">
+      <property name="server.dir" value="${root.dir}/server/integration/build/target/server-distribution-fat/${infinispan.brand.prefix}-server-${infinispan.brand.version}"/>
+      <path id="jar.fileset.path">
+         <fileset casesensitive="yes" dir="${server.dir}/modules">
+            <include name="**/*.jar" />
+         </fileset>
+      </path>
+      <copy todir="${project.build.directory}/server/docs/licenses">
+         <fileset dir="${project.build.directory}/docs/licenses" />
+      </copy>
+      <local name="jar.fileset"/>
+      <pathconvert pathsep=" " property="jar.fileset" refid="jar.fileset.path" />
+      <local name="temp.file"/>
+      <tempfile property="temp.file" destdir="${dist.dir}" prefix="list"/>
+      <delete file="${temp.file}"/>
+      <echo file="${temp.file}" message="${jar.fileset}"/>
+      <java classname="org.infinispan.tools.licenses.LicenseMerger">
+         <arg line="-i"/>
+         <arg line="-r"/>
+         <arg line="${temp.file}"/>
+         <arg line="-o"/>
+         <arg line="${project.build.directory}/server/docs/licenses/server-licenses.xml"/>
+         <arg line="${licenses.xml}"/>
+         <arg line="${server.dir}/docs/licenses/full-feature-pack-licenses.xml"/>
+         <classpath>
+            <pathelement path="${plugin_classpath}" />
+         </classpath>
+      </java>
+      <xslt in="${project.build.directory}/server/docs/licenses/server-licenses.xml" style="src/main/resources/template/licenses.xsl" out="${project.build.directory}/server/docs/licenses/server-licenses.html">
+         <param name="product" expression="${infinispan.brand.name}" type="STRING"/>
+         <param name="version" expression="${infinispan.brand.version}" type="STRING"/>
+      </xslt>
    </target>
 
    <macrodef name="base-distribution">
@@ -84,23 +133,47 @@
             <file file="${org.infinispan:infinispan-embedded-query:jar}" />
             <mapper type="flatten" />
          </copy>
-         <base-distribution-licenses dir="@{dir}"/>
          <base-distribution-lib-embedded dir="@{dir}"/>
          <base-distribution-common-files dir="@{dir}" type="@{type}"/>
          <base-distribution-schema dir="@{dir}" />
          <base-distribution-javadocs dir="@{dir}" type="@{javadocs}"/>
          <base-distribution-configdocs dir="@{dir}" />
+         <base-distribution-licenses dir="@{dir}"/>
       </sequential>
    </macrodef>
 
    <macrodef name="base-distribution-licenses">
       <attribute name="dir" />
+      <attribute name="inclusive" default="false" />
+      <attribute name="database" default="false" />
       <sequential>
          <mkdir dir="@{dir}/docs/licenses" />
          <copy todir="@{dir}/docs/licenses">
-           <fileset dir="target/docs/licenses" />
+            <fileset dir="target/docs/licenses" />
          </copy>
-         <xslt in="target/docs/licenses/licenses.xml" style="src/main/resources/template/licenses.xsl" out="@{dir}/docs/licenses/licenses.html">
+         <path id="jar.fileset.path">
+            <fileset casesensitive="yes" dir="@{dir}">
+               <include name="**/*.jar" />
+            </fileset>
+         </path>
+         <local name="jar.fileset"/>
+         <pathconvert pathsep=" " property="jar.fileset" refid="jar.fileset.path" />
+         <local name="temp.file"/>
+         <tempfile property="temp.file" destdir="${dist.dir}" prefix="list"/>
+         <delete file="${temp.file}"/>
+         <echo file="${temp.file}" message="${jar.fileset}"/>
+         <java classname="org.infinispan.tools.licenses.LicenseMerger">
+            <arg line="-i" if:true="@{inclusive}"/>
+            <arg line="-r"/>
+            <arg line="${temp.file}"/>
+            <arg line="-o"/>
+            <arg line="@{dir}/docs/licenses/licenses.xml"/>
+            <arg line="${licenses.xml}" if:true="@{database}"/>
+            <classpath>
+               <pathelement path="${plugin_classpath}" />
+            </classpath>
+         </java>
+         <xslt in="@{dir}/docs/licenses/licenses.xml" style="src/main/resources/template/licenses.xsl" out="@{dir}/docs/licenses/licenses.html">
             <param name="product" expression="${infinispan.brand.name}" type="STRING"/>
             <param name="version" expression="${infinispan.brand.version}" type="STRING"/>
          </xslt>
@@ -196,7 +269,7 @@
          <local name="output.dir" />
          <property name="src.dir" value="${root.dir}/demos/@{demo}" />
          <property name="output.dir" value="@{target}/demos/@{demo}" />
-
+         <echo message="ROOT = ${root.dir}"/>
          <mkdir dir="${output.dir}" />
          <copy todir="${output.dir}">
             <fileset dir="${src.dir}/target">

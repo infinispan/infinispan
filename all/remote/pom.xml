@@ -265,7 +265,8 @@
                         <!-- Inline the jar created by the maven-shade-plugin. -->
                         <Include-Resource>
                            @${intermediary_jar_path},
-                           /features.xml=${project.basedir}/target/classes/features.xml
+                           /features.xml=${project.basedir}/target/classes/features.xml,
+                           /META-INF/licenses.xml=${project.build.outputDirectory}/META-INF/licenses.xml
                         </Include-Resource>
                         <!-- Define packages from dependencies, exported further by current bundle -->
                         <_exportcontents>

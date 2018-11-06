@@ -22,7 +22,6 @@
     </modules>
 
     <properties>
-        <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
         <feature-pack.root>${project.build.directory}/feature-pack</feature-pack.root>
         <feature-pack.modules>${feature-pack.root}/modules</feature-pack.modules>
         <feature-pack.add-on.modules>${feature-pack.modules}/system/add-ons/${infinispan.module.slot.prefix}</feature-pack.add-on.modules>
