@@ -9,10 +9,19 @@ used to retrieve data, and hence, won't be used when persisting data.
 The CLI cache loader is configured with a connection URL pointing to the
 {brandname} node to which connect to. Here is an example:
 
-NOTE: Details on the format of the URL and how to make sure a node can
+[NOTE]
+====
+Details on the format of the URL and how to make sure a node can
 receive invocations via the CLI can be found in the link:#command_line_interface[Command-Line Interface chapter].
+====
 
-NOTE: This store doesn't support being segmented
+//Exclude segmentation from productized docs.
+ifndef::productized[]
+[NOTE]
+====
+The Command-Line Interface (CLI) cache loader does not support segmentation.
+====
+endif::productized[]
 
 [source,xml]
 ----
