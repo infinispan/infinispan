@@ -16,7 +16,6 @@
 
     <properties>
         <forkJvmArgs>-Xmx500m ${testjvm.commonArgs}</forkJvmArgs>
-        <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
         <testjvm.jigsawArgs></testjvm.jigsawArgs>
     </properties>
 
