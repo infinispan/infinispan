@@ -22,7 +22,6 @@
       <server.output.dir.prefix>${infinispan.brand.prefix}-server</server.output.dir.prefix>
       <forkJvmArgs>-Xmx500m ${testjvm.commonArgs}</forkJvmArgs>
       <testjvm.jigsawArgs/>
-      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
 
       <version.org.infinispan.server-build.old>8.2.8.Final</version.org.infinispan.server-build.old>
    </properties>

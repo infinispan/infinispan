@@ -1,13 +1,14 @@
 package org.infinispan.tools.xsd;
 
 import gnu.getopt.Getopt;
+
+import org.infinispan.tools.ToolUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -15,10 +16,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -65,7 +63,7 @@ public class XSDoc {
    XSDoc() throws Exception {
       factory = TransformerFactory.newInstance();
       factory.setURIResolver((href, base) -> {
-         Document doc = xmls.get(getBaseFileName(href));
+         Document doc = xmls.get(ToolUtils.getBaseFileName(href));
          if (doc != null) {
             return new DOMSource(doc);
          } else {
@@ -86,7 +84,7 @@ public class XSDoc {
 
    void load(String fileName) throws Exception {
       Document doc = docBuilder.parse(new File(fileName));
-      String name = getBaseFileName(fileName);
+      String name = ToolUtils.getBaseFileName(fileName);
       xmls.put(name, doc);
       Schema schema = new Schema(doc, name);
       Schema current = latestSchemas.get(schema.namespace);
@@ -121,7 +119,7 @@ public class XSDoc {
    }
 
    private void generateIndex(File outputDir) throws Exception {
-      printDocument(indexDoc, System.out);
+      ToolUtils.printDocument(indexDoc, System.out);
       ClassLoader cl = XSDoc.class.getClassLoader();
       try (InputStream xsl = cl.getResourceAsStream("xsd/index.xslt")) {
          Transformer indexXSLT = factory.newTransformer(new StreamSource(xsl));
@@ -129,24 +127,7 @@ public class XSDoc {
       }
    }
 
-   public static String getBaseFileName(String absoluteFileName) {
-      int slash = absoluteFileName.lastIndexOf('/');
-      int dot = absoluteFileName.lastIndexOf('.');
-      return absoluteFileName.substring(slash + 1, dot);
-   }
 
-   public static void printDocument(Document doc, OutputStream out) throws IOException, TransformerException {
-      TransformerFactory tf = TransformerFactory.newInstance();
-      Transformer transformer = tf.newTransformer();
-      transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-      transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-      transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-      transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-      transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-
-      transformer.transform(new DOMSource(doc),
-           new StreamResult(new OutputStreamWriter(out, "UTF-8")));
-  }
 
    public static void main(String argv[]) throws Exception {
       XSDoc xsDoc = new XSDoc();

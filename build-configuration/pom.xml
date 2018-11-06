@@ -90,6 +90,8 @@
       <infinispan.base.version>9.4</infinispan.base.version>
       <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
+      <wildfly.brand.name>WildFly</wildfly.brand.name>
+      <wildfly.brand.prefix>wildfly</wildfly.brand.prefix>
 
       <!-- jboss repository urls -->
       <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>

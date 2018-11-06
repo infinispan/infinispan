@@ -83,7 +83,6 @@
    <modules>
       <module>build-configuration</module>
       <module>checkstyle</module>
-      <module>license</module>
       <module>commons</module>
       <module>commons-test</module>
       <module>plugins/infinispan-defaults-maven-plugin</module>
@@ -194,7 +193,6 @@
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <module.skipTestComponentMetaDataProcessing>true</module.skipTestComponentMetaDataProcessing>
-      <module.skipMavenRemoteResource>false</module.skipMavenRemoteResource>
       <module.skipCopyDependencies>true</module.skipCopyDependencies>
       <module.skipSupportModuleDeployment>true</module.skipSupportModuleDeployment>
       <packaging>jar</packaging>
@@ -4056,11 +4054,6 @@
          <classifier>runtime</classifier>
          <scope>test</scope>
       </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-license</artifactId>
-         <scope>provided</scope>
-      </dependency>
    </dependencies>
 
    <build>
@@ -4473,25 +4466,6 @@
             <version>${version.maven.invoker}</version>
          </plugin>
          <plugin>
-            <artifactId>maven-remote-resources-plugin</artifactId>
-            <version>${version.maven.remote.resource}</version>
-            <executions>
-               <execution>
-                  <id>attach-license</id>
-                  <goals>
-                     <goal>process</goal>
-                  </goals>
-                  <inherited>true</inherited>
-                  <configuration>
-                     <resourceBundles>
-                        <resourceBundle>org.infinispan:infinispan-license:${project.version}</resourceBundle>
-                     </resourceBundles>
-                     <skip>${module.skipMavenRemoteResource}</skip>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
             <extensions>true</extensions>
@@ -4597,6 +4571,27 @@
                            <value>jdk</value>
                         </systemProperty>
                      </systemProperties>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.wildfly.maven.plugins</groupId>
+            <artifactId>licenses-plugin</artifactId>
+            <version>1.0.0</version>
+            <executions>
+               <execution>
+                  <id>update-licenses-xml</id>
+                  <goals>
+                     <goal>insert-versions</goal>
+                  </goals>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                     <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
+                     <licensesOutputFile>${project.build.outputDirectory}/META-INF/licenses.xml</licensesOutputFile>
+                     <excludedGroups>org.kohsuke</excludedGroups>
+                     <excludedArtifacts>jboss-logging-processor|jdeparser|jcip-annotations|jboss-logging-annotations</excludedArtifacts>
+                     <excludedScopes>system,test,runtime,provided</excludedScopes>
                   </configuration>
                </execution>
             </executions>

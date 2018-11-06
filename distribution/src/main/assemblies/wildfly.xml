@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <assembly>
-    <id>assembly</id>
+    <id>wildfly</id>
+    <baseDirectory>${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}</baseDirectory>
     <formats>
         <format>zip</format>
     </formats>
-    <includeBaseDirectory>false</includeBaseDirectory>
+    <includeBaseDirectory>true</includeBaseDirectory>
     <fileSets>
         <fileSet>
-            <directory>target/wildfly-modules/modules</directory>
+            <directory>target/${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}</directory>
             <outputDirectory/>
         </fileSet>
     </fileSets>

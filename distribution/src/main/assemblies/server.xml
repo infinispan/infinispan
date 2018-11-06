@@ -12,13 +12,6 @@
 
    <fileSets>
       <fileSet>
-         <directory>src/main/resources/licenses</directory>
-         <outputDirectory />
-         <excludes>
-           <exclude>licenses-console.xml</exclude>
-         </excludes>
-      </fileSet>
-      <fileSet>
          <directory>target/classes</directory>
          <outputDirectory />
          <includes>
@@ -31,6 +24,14 @@
          <includes>
             <include>**/**</include>
          </includes>
+      </fileSet>
+      <fileSet>
+         <directory>src/main/release/server</directory>
+         <outputDirectory/>
+      </fileSet>
+      <fileSet>
+         <directory>target/server</directory>
+         <outputDirectory/>
       </fileSet>
    </fileSets>
 </assembly>

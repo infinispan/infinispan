@@ -15,8 +15,6 @@
    <description>JCACHE (JSR-107) TCK runner for Infinispan implementations</description>
 
    <properties>
-      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
-
       <domain-lib-dir>${project.build.directory}/domainlib</domain-lib-dir>
       <domain-jar>domain.jar</domain-jar>
       <tck.mbean.builder>org.infinispan.jcache.tck.TckMbeanServerBuilder</tck.mbean.builder>
