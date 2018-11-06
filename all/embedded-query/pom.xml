@@ -67,7 +67,6 @@
                            <exclude>org.osgi:org.osgi.core:jar:</exclude>
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                            <exclude>javax.persistence:javax.persistence-api:jar:</exclude>
-                           <exclude>org.infinispan:infinispan-license:jar:</exclude>
                            <exclude>com.github.ben-manes.caffeine:caffeine:jar:</exclude>
                         </excludes>
                      </artifactSet>

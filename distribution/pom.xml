@@ -11,10 +11,6 @@
    <name>Infinispan Distribution</name>
    <packaging>pom</packaging>
 
-   <properties>
-      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -47,26 +43,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-core</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-hotrod</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-memcached</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-rest</artifactId>
-      </dependency>
-
-         <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-spring4-embedded</artifactId>
       </dependency>
@@ -104,6 +80,7 @@
          <version>${version.infinispan}</version>
          <classifier>javadoc</classifier>
       </dependency>
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-javadoc-all</artifactId>
@@ -127,6 +104,16 @@
          <groupId>javax.enterprise</groupId>
          <artifactId>cdi-api</artifactId>
          <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jgroups.azure</groupId>
+         <artifactId>jgroups-azure</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jgroups.kubernetes</groupId>
+         <artifactId>jgroups-kubernetes</artifactId>
       </dependency>
 
    </dependencies>
@@ -190,6 +177,23 @@
             </executions>
          </plugin>
          <plugin>
+            <groupId>org.wildfly.build</groupId>
+            <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>provision-modules</id>
+                  <goals>
+                     <goal>build</goal>
+                  </goals>
+                  <phase>compile</phase>
+                  <configuration>
+                     <config-file>wildfly-provisioning.xml</config-file>
+                     <server-name>${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}</server-name>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
@@ -233,9 +237,9 @@
                   </goals>
                   <configuration>
                      <target>
-			<property name="plugin_classpath" refid="maven.plugin.classpath" />
+			               <property name="plugin_classpath" refid="maven.plugin.classpath" />
                         <property name="server.output.dir.prefix" value="${infinispan.brand.prefix}-server" />
-			<property name="server.thin.dir.path" value="${basedir}/../server/integration/build/target/server-distribution-thin/${server.output.dir.prefix}-${infinispan.brand.version}"/>
+			               <property name="server.thin.dir.path" value="${basedir}/../server/integration/build/target/server-distribution-thin/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                         <echo message="Base dir: ${basedir}" />
                         <path id="xsd.fileset.path">
                            <fileset casesensitive="yes" dir="${server.thin.dir.path}/docs/schema">
@@ -264,9 +268,11 @@
                   <configuration>
                      <target>
                         <ant antfile="package.xml" inheritRefs="true">
+                           <property name="plugin_classpath" refid="maven.plugin.classpath" />
                            <property name="infinispan.brand.version" value="${infinispan.brand.version}"/>
                            <property name="infinispan.brand.prefix" value="${infinispan.brand.prefix}"/>
                            <property name="infinispan.brand.name" value="${infinispan.brand.name}"/>
+                           <property name="wildfly.brand.prefix" value="${wildfly.brand.prefix}"/>
                         </ant>
                      </target>
                   </configuration>
@@ -325,23 +331,6 @@
             </dependencies>
          </plugin>
          <plugin>
-            <groupId>org.wildfly.build</groupId>
-            <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>provision-modules</id>
-                  <goals>
-                     <goal>build</goal>
-                  </goals>
-                  <phase>compile</phase>
-                  <configuration>
-                     <config-file>wildfly-provisioning.xml</config-file>
-                     <server-name>wildfly-modules</server-name>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-assembly-plugin</artifactId>
             <executions>
@@ -369,7 +358,7 @@
                   </goals>
                   <configuration>
                      <appendAssemblyId>false</appendAssemblyId>
-                     <finalName>${infinispan.brand.prefix}-wildfly-modules-${infinispan.brand.version}</finalName>
+                     <finalName>${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}</finalName>
                      <descriptors>
                         <descriptor>src/main/assemblies/wildfly.xml</descriptor>
                      </descriptors>

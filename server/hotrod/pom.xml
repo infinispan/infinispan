@@ -98,6 +98,7 @@
                               </java>
                            </sequential>
                         </macrodef>
+                        <mkdir dir="${project.build.testOutputDirectory}"/>
                         <delete quiet="true">
                            <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer,*.p12"/>
                         </delete>
