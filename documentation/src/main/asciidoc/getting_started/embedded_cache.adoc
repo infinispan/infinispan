@@ -12,9 +12,7 @@ If you are using Maven (or another build system like Gradle or Ivy which can use
 
 [source,xml]
 .pom.xml
-
 ----
-
 <dependency>
 	<groupId>org.infinispan</groupId>
 	<artifactId>infinispan-embedded</artifactId>
@@ -40,7 +38,7 @@ If you are using Ant, or another build system which doesn't provide declarative 
 In order to run {brandname}, we're going to create a `main()` method in the `Quickstart` class.
 {brandname} comes configured to run out of the box; once you have set up your dependencies, all you need to do to start using {brandname} is to create a new cache manager and get a handle on the default cache.
 
-[source,java]
+[source,java,options=nowrap]
 .Quickstart.java
 
 ----
@@ -56,7 +54,10 @@ public class Quickstart {
 We now need a way to run the main method! To run the Quickstart main class:
 If you are using Maven:
 
- $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcache.Quickstart"
+[source,bash,options=nowrap]
+----
+$ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcache.Quickstart"
+----
 
 You should see {brandname} start up, and the version in use logged to the console.
 
@@ -66,7 +67,7 @@ Congratulations, you now have {brandname} running as a local cache!
 === Use the default cache
 {brandname} exposes a Map-like, JSR-107-esque interface for accessing and mutating the data stored in the cache. For example:
 
-[source,java]
+[source,java,options=nowrap]
 .DefaultCacheQuickstart.java
 ----
 // Add a entry
@@ -82,7 +83,7 @@ assertEqual("value", v);
 
 {brandname} offers a thread-safe data-structure:
 
-[source,java]
+[source,java,options=nowrap]
 .DefaultCacheQuickstart.java
 ----
 // Add an entry with the key "key"
@@ -94,7 +95,7 @@ cache.putIfAbsent("key", "newValue");
 
 By default entries are immortal but you can override this on a per-key basis and provide lifespans.
 
-[source,java]
+[source,java,options=nowrap]
 .DefaultCacheQuickstart.java
 ----
 //By default entries are immortal but we can override this on a per-key basis and provide lifespans.
@@ -105,12 +106,15 @@ Thread.sleep(10000);
 
 to run using maven:
 
- $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcache.DefaultCacheQuickstart"
+[source,bash,options=nowrap]
+----
+$ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcache.DefaultCacheQuickstart"
+----
 
 === Use a custom cache
 Each cache in {brandname} can offer a different set of features (for example transaction support, different replication modes or support for eviction), and you may want to use different caches for different classes of data in your application. To get a custom cache, you need to register it with the manager first:
 
-[source,java]
+[source,java,options=nowrap]
 .CustomCacheQuickstart.java
 ----
 public static void main(String args[]) throws Exception {
@@ -126,8 +130,10 @@ The example above uses {brandname}'s fluent configuration, which offers the abil
 
 To run using maven:
 
+[source,bash,options=nowrap]
+----
 $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcache.CustomCacheQuickstart"
-
+----
 
 [source,xml,subs=attributes+]
 .infinispan.xml
@@ -148,7 +154,7 @@ $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcach
 
 We then need to load the configuration file, and use the programmatically defined cache:
 
-[source,java]
+[source,java,options=nowrap]
 .XmlConfiguredCacheQuickstart.java
 ----
 public static void main(String args[]) throws Exception {
@@ -158,4 +164,7 @@ public static void main(String args[]) throws Exception {
 
 To run using maven:
 
+[source,bash,options=nowrap]
+----
 $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcache.XmlConfiguredCacheQuickstart"
+----

@@ -582,15 +582,14 @@ owner thus reducing the amount of network traffic required to remove these value
 cache. The cache is not captured by the lambda as we provide a special BiConsumer method
 override that when invoked on each node passes the cache to the BiConsumer
 
-One thing to keep in mind using the forEach command in this manner is that the underlying
+One thing to keep in mind using the `forEach` command in this manner is that the underlying
 stream obtains no locks. The cache remove operation will still obtain locks naturally, but
 the value could have changed from what the stream saw. That means that the entry could
 have been changed after the stream read it but the remove actually removed it.
 
-We have specifically added a new variant which is called LockedStream which will be
-covered in the next section.
+We have specifically added a new variant which is called `LockedStream`.
 
 *Plenty of other examples*
 
-Also remember that `Streams` are a JRE tool now and there are a multitude of examples that can
-be found all over.  Just remember that your operations need to be Serializable in some fashion!
+The `Streams` API is a JRE tool and there are lots of examples for using it.
+Just remember that your operations need to be Serializable in some way.
