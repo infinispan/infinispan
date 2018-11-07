@@ -403,7 +403,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
     * See <a href="https://issues.jboss.org/browse/ISPN-7863">ISPN-7863</a>
     */
    public void testAliasContainingLetterV() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " vvvTestAlias where vvvTestAlias.description = 'Birthday present'");
+      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " vvv where vvv.description = 'Birthday present'");
       assertEquals(1, q.list().size());
    }
 
