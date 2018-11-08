@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
@@ -30,7 +31,6 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -119,11 +119,11 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                new LinkedHashMap<>(16, 0.75f, true) :
                new HashMap<>();
          entries = Collections.synchronizedMap(entryMap);
-         freeList = Collections.synchronizedSortedSet(new TreeSet<FileEntry>());
+         freeList = Collections.synchronizedSortedSet(new TreeSet<>());
 
          // check file format and read persistent state if enabled for the cache
          byte[] header = new byte[MAGIC.length];
-         if (channel.read(ByteBuffer.wrap(header), 0) == MAGIC.length && Arrays.equals(MAGIC, header)) {
+         if (!configuration.purgeOnStartup() && channel.read(ByteBuffer.wrap(header), 0) == MAGIC.length && Arrays.equals(MAGIC, header)) {
             rebuildIndex();
             processFreeEntries();
          }
