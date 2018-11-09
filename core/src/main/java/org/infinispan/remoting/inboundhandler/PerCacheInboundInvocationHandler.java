@@ -1,6 +1,7 @@
 package org.infinispan.remoting.inboundhandler;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.jmx.JmxStatisticsExposer;
 
 /**
  * Interface to invoke when a {@link org.infinispan.commands.remote.CacheRpcCommand} is received from other node in the
@@ -9,7 +10,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
  * @author Pedro Ruivo
  * @since 7.1
  */
-public interface PerCacheInboundInvocationHandler {
+public interface PerCacheInboundInvocationHandler extends JmxStatisticsExposer {
 
    /**
     * Handles the {@link org.infinispan.commands.remote.CacheRpcCommand} from other node.
@@ -33,4 +34,6 @@ public interface PerCacheInboundInvocationHandler {
     * Any command with a lower topology id will be ignored.
     */
    int getFirstTopologyAsMember();
+
+   void registerXSiteCommandReceiver(boolean sync);
 }

@@ -47,8 +47,10 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
       checkTopologyAction = new CheckTopologyAction(this);
    }
 
+   @Override
    @Start
    public void start() {
+      super.start();
       lockTimeout = configuration.locking().lockAcquisitionTimeout();
       isLocking = !configuration.clustering().cacheMode().isScattered();
    }

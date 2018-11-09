@@ -12,6 +12,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.LongConsumer;
 
 import javax.transaction.Transaction;
 
@@ -38,6 +39,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -53,13 +55,13 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.AggregateBackupResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -77,6 +79,7 @@ public class BackupSenderImpl implements BackupSender {
    private static final BackupResponse EMPTY_RESPONSE = new EmptyBackupResponse();
 
    @Inject private ComponentRef<Cache> cache;
+   @Inject private RpcManager rpcManager;
    @Inject private Transport transport;
    @Inject private Configuration config;
    @Inject private TransactionTable txTable;
@@ -217,7 +220,13 @@ public class BackupSenderImpl implements BackupSender {
    }
 
    private BackupResponse backupCommand(VisitableCommand command, List<XSiteBackup> xSiteBackups) throws Exception {
-      return transport.backupRemotely(xSiteBackups, commandsFactory.buildSingleXSiteRpcCommand(command));
+      XSiteReplicateCommand xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
+      //RpcManager is null for local caches.
+      //TODO does it make sense to have xsite replication in a local cache?
+      //TODO probably is better to create a LocalRpcManager implementation with xsite support only...
+      return rpcManager == null ?
+             transport.backupRemotely(xSiteBackups, xsiteCommand):
+             rpcManager.invokeXSite(xSiteBackups, xsiteCommand);
    }
 
    private BackupResponse sendTo1PCBackups(CommitCommand command) throws Exception {
@@ -346,7 +355,7 @@ public class BackupSenderImpl implements BackupSender {
    }
 
    private EventLogger getEventLogger() {
-      return eventLogManager.getEventLogger().context(cacheName).scope(transport.getAddress());
+      return eventLogManager.getEventLogger().context(cacheName).scope(rpcManager.getAddress());
    }
 
    private static final class CustomBackupPolicyInvoker extends AbstractVisitor {
@@ -518,6 +527,11 @@ public class BackupSenderImpl implements BackupSender {
       @Override
       public boolean isEmpty() {
          return true;
+      }
+
+      @Override
+      public void notifyFinish(LongConsumer timeElapsedConsumer) {
+         //nothing
       }
    }
 }

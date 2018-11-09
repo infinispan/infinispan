@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -37,13 +38,13 @@ public class RetryOnFailureXSiteCommand {
    /**
     * Invokes remotely the command using the {@code Transport} passed as parameter.
     *
-    * @param transport              the {@link org.infinispan.remoting.transport.Transport} to use.
+    * @param rpcManager             the {@link RpcManager} to use.
     * @param waitTimeBetweenRetries the waiting time if the command fails before retrying it.
     * @param unit                   the {@link java.util.concurrent.TimeUnit} of the waiting time.
     * @throws Throwable if the maximum retries is reached (defined by the {@link org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.RetryPolicy},
     *                   the last exception occurred is thrown.
     */
-   public void execute(Transport transport, long waitTimeBetweenRetries, TimeUnit unit) throws Throwable {
+   public void execute(RpcManager rpcManager, long waitTimeBetweenRetries, TimeUnit unit) throws Throwable {
       if (backups.isEmpty()) {
          if (debug) {
             log.debugf("Executing '%s' but backup list is empty.", this);
@@ -51,7 +52,7 @@ public class RetryOnFailureXSiteCommand {
          return;
       }
 
-      assertNotNull(transport, "Transport");
+      assertNotNull(rpcManager, "RpcManager");
       assertNotNull(unit, "TimeUnit");
       assertGreaterThanZero(waitTimeBetweenRetries, "WaitTimeBetweenRetries");
 
@@ -59,7 +60,7 @@ public class RetryOnFailureXSiteCommand {
          if (trace) {
             log.tracef("Sending %s to %s", command, backups);
          }
-         BackupResponse response = transport.backupRemotely(backups, command);
+         BackupResponse response = rpcManager.invokeXSite(backups, command);
          response.waitForBackupToFinish();
          Throwable throwable = extractThrowable(response);
          if (throwable == null) {
@@ -67,7 +68,7 @@ public class RetryOnFailureXSiteCommand {
                log.trace("Successfull Response received.");
             }
             return;
-         } else if (!retryPolicy.retry(throwable, transport)) {
+         } else if (!retryPolicy.retry(throwable, rpcManager)) {
             if (trace) {
                log.tracef("Exception Response received. Exception is %s", throwable);
             }
@@ -120,8 +121,8 @@ public class RetryOnFailureXSiteCommand {
       return errorMap.isEmpty() ? null : errorMap.values().iterator().next();
    }
 
-   public static interface RetryPolicy {
-      boolean retry(Throwable throwable, Transport transport);
+   public interface RetryPolicy {
+      boolean retry(Throwable throwable, RpcManager transport);
    }
 
    public static class MaxRetriesPolicy implements RetryPolicy {
@@ -133,7 +134,7 @@ public class RetryOnFailureXSiteCommand {
       }
 
       @Override
-      public boolean retry(Throwable throwable, Transport transport) {
+      public boolean retry(Throwable throwable, RpcManager transport) {
          return maxRetries-- > 0;
       }
    }

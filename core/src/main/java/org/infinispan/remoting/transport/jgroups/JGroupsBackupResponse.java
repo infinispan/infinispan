@@ -9,20 +9,22 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.LongConsumer;
 
-import org.infinispan.util.logging.TraceException;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.BackupResponse;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.TraceException;
 import org.infinispan.xsite.XSiteBackup;
 import org.jgroups.UnreachableException;
 
@@ -38,10 +40,11 @@ public class JGroupsBackupResponse implements BackupResponse {
    private Map<String, Throwable> errors;
    private Set<String> communicationErrors;
    private final TimeService timeService;
-
    //there might be an significant difference in time between when the message is sent and when the actual wait
    // happens. Track that and adjust the timeouts accordingly.
-   private long sendTimeNanos;
+   private final long sendTimeNanos;
+   private volatile LongConsumer timeElapsedConsumer = value -> {
+   };
 
    public JGroupsBackupResponse(Map<XSiteBackup, Future<ValidResponse>> syncBackupCalls, TimeService timeService) {
       this.syncBackupCalls = syncBackupCalls;
@@ -95,6 +98,7 @@ public class JGroupsBackupResponse implements BackupResponse {
             log.tracef("Received response from site %s: %s", siteName, response);
          }
       }
+      timeElapsedConsumer.accept(timeService.timeDuration(sendTimeNanos, MILLISECONDS));
    }
 
    private void addCommunicationError(String siteName) {
@@ -117,6 +121,11 @@ public class JGroupsBackupResponse implements BackupResponse {
    @Override
    public boolean isEmpty() {
       return syncBackupCalls == null || syncBackupCalls.isEmpty();
+   }
+
+   @Override
+   public void notifyFinish(LongConsumer timeElapsedConsumer) {
+      this.timeElapsedConsumer = Objects.requireNonNull(timeElapsedConsumer);
    }
 
    @Override
