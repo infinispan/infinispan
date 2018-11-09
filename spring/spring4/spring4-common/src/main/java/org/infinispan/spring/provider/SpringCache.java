@@ -87,6 +87,9 @@ public class SpringCache implements Cache {
             value = nativeCache.getAsync(key).get(readTimeout, TimeUnit.MILLISECONDS);
          else
             value = nativeCache.get(key);
+
+         value = unwrapNull(value);
+
          if (value != null && type != null && !type.isInstance(value)) {
             throw new IllegalStateException("Cached value is not of required type [" + type.getName() + "]: " + value);
          }
@@ -113,7 +116,7 @@ public class SpringCache implements Cache {
                   T newValue = valueLoader.call();
                   // we can't use computeIfAbsent here since in distributed embedded scenario we would
                   // send a lambda to other nodes. This is the behavior we want to avoid.
-                  value = (T) nativeCache.putIfAbsent(key, newValue);
+                  value = (T) nativeCache.putIfAbsent(key, newValue != null ? newValue : NullValue.NULL);
                   if (value == null) {
                      value = newValue;
                   }
@@ -126,7 +129,7 @@ public class SpringCache implements Cache {
             synchronousGetLocks.remove(key);
          }
       }
-      return value;
+      return unwrapNull(value);
    }
 
    /**
@@ -222,6 +225,13 @@ public class SpringCache implements Cache {
    @Override
    public String toString() {
       return "InfinispanCache [nativeCache = " + this.nativeCache + "]";
+   }
+
+   private <T> T unwrapNull(Object value) {
+      if (value == NullValue.NULL) {
+         return null;
+      }
+      return (T) value;
    }
 
    private ValueWrapper wrap(Object value) {

@@ -210,6 +210,18 @@ public class SpringCacheTest extends SingleCacheManagerTest {
       assertEquals("test", valueFromCache.get());
    }
 
+   @Test
+   public void testValueLoaderNullValuesAreUnwrapped() {
+      cache.put("null", null);
+      assertNull(cache.get("null", () -> "notnull"));
+   }
+
+   @Test
+   public void testNullValuesAreUnwrappedWithType() {
+      cache.put("null", null);
+      assertNull(cache.get("null", String.class));
+   }
+
    /*
     * In this test Thread 1 should exclusively block Cache#get method so that Thread 2 won't be able to
     * insert "thread2" string into the cache.
