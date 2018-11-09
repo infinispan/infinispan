@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -20,15 +22,19 @@ import org.apache.http.util.EntityUtils;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.test.category.Queries;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,6 +49,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Category(Queries.class)
 @RunWith(Arquillian.class)
 public class RemoteQueryIT extends RemoteQueryBaseIT {
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @InfinispanResource("remote-query-1")
     protected RemoteInfinispanServer server;
@@ -67,7 +76,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
 
         // get user back from remote cache and check its attributes
         User fromCache = remoteCache.get(1);
-        assertUser(fromCache);
+        assertUser1(fromCache);
 
         // get user back from remote cache via query and check its attributes
         QueryFactory qf = Search.getQueryFactory(remoteCache);
@@ -78,7 +87,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         assertNotNull(list);
         assertEquals(1, list.size());
         assertEquals(User.class, list.get(0).getClass());
-        assertUser(list.get(0));
+        assertUser1(list.get(0));
     }
 
     @Test
@@ -95,7 +104,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         assertNotNull(list);
         assertEquals(1, list.size());
         assertEquals(User.class, list.get(0).getClass());
-        assertUser(list.get(0));
+        assertUser1(list.get(0));
     }
 
     @Test
@@ -105,7 +114,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
 
         // get user back from remote cache and check its attributes
         User fromCache = remoteCache.get(1);
-        assertUser(fromCache);
+        assertUser1(fromCache);
 
         // get user back from remote cache via query and check its attributes
         QueryFactory qf = Search.getQueryFactory(remoteCache);
@@ -196,6 +205,53 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         }
     }
 
+    @Test
+    public void testManyInClauses() {
+        remoteCache.put(1, createUser1());
+        remoteCache.put(2, createUser2());
+
+        // get user back from remote cache and check its attributes
+        User fromCache = remoteCache.get(1);
+        assertUser1(fromCache);
+
+        QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+        Set<String> values = new HashSet<>();
+        values.add("Tom");
+        for (int i = 0; i < 1024; i++) {
+            values.add("test" + i);
+        }
+        QueryBuilder qb = qf.from(User.class).having("name").in(values);
+
+        // this Ickle query translates to a BooleanQuery with 1025 clauses, 1 more than the max default (1024) so
+        // executing it will fail unless the server jvm arg -Dinfinispan.query.lucene.max-boolean-clauses=1025 takes effect
+
+        List<User> list = qb.build().list();
+        assertNotNull(list);
+        assertEquals(1, list.size());
+        assertEquals(User.class, list.get(0).getClass());
+        assertUser1(list.get(0));
+    }
+
+    @Test
+    public void testWayTooManyInClauses() {
+        expectedException.expect(HotRodClientException.class);
+        expectedException.expectMessage("org.apache.lucene.search.BooleanQuery$TooManyClauses: maxClauseCount is set to 1025");
+
+        Set<String> values = new HashSet<>();
+        for (int i = 0; i < 1026; i++) {
+            values.add("test" + i);
+        }
+
+        QueryFactory qf = Search.getQueryFactory(remoteCache);
+        QueryBuilder qb = qf.from(User.class).having("name").in(values);
+
+        // this Ickle query translates to a BooleanQuery with 1026 clauses, 1 more than the configured
+        // -Dinfinispan.query.lucene.max-boolean-clauses=1025, so executing the query is expected to fail
+
+        qb.build().list();
+    }
+
     private User createUser1() {
         User user = new User();
         user.setId(1);
@@ -223,7 +279,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         return user;
     }
 
-    private void assertUser(User user) {
+    private void assertUser1(User user) {
         assertNotNull(user);
         assertEquals(1, user.getId());
         assertEquals("Tom", user.getName());

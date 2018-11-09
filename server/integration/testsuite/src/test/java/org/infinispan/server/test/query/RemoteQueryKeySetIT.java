@@ -37,7 +37,7 @@ public class RemoteQueryKeySetIT extends RemoteQueryBaseIT {
    }
 
    @Test
-   public void testDistributedKeySet() throws Exception {
+   public void testDistributedKeySet() {
       remoteCache.put(1, createUser(1));
       remoteCache.put(2, createUser(2));
 

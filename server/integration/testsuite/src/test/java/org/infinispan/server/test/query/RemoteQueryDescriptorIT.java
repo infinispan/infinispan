@@ -38,17 +38,16 @@ import org.junit.runner.RunWith;
  *
  * @author gustavonalle
  */
-
 @Category(Queries.class)
 @RunWith(Arquillian.class)
-@WithRunningServer({@RunningServer(name = "remote-query-2")})
+@WithRunningServer(@RunningServer(name = "remote-query-2"))
 public class RemoteQueryDescriptorIT {
 
    @InfinispanResource("remote-query-1")
-   RemoteInfinispanServer server1;
+   protected RemoteInfinispanServer server1;
 
    @InfinispanResource("remote-query-2")
-   RemoteInfinispanServer server2;
+   protected RemoteInfinispanServer server2;
 
    public static final String MBEAN = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=RemoteQuery,name=\"clustered\",component=ProtobufMetadataManager";
 
@@ -111,10 +110,10 @@ public class RemoteQueryDescriptorIT {
 
    private ConfigurationBuilder configurationBuilder(RemoteInfinispanServer server) {
       return new ConfigurationBuilder()
-              .addServer()
-              .host(server.getHotrodEndpoint().getInetAddress().getHostName())
-              .port(server.getHotrodEndpoint().getPort())
-              .marshaller(new ProtoStreamMarshaller());
+            .addServer()
+            .host(server.getHotrodEndpoint().getInetAddress().getHostName())
+            .port(server.getHotrodEndpoint().getPort())
+            .marshaller(new ProtoStreamMarshaller());
    }
 
    private void populateCache() throws IOException {

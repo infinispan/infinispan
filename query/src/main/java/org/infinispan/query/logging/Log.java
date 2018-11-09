@@ -34,6 +34,7 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
+
    @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
    CacheConfigurationException classNotIndexable(String className);
 
@@ -175,4 +176,20 @@ public interface Log extends BasicLogger {
          "you have defined a suitable Transformer in the indexing configuration. Alternatively, see " +
          "org.infinispan.query.spi.SearchManagerImplementor.registerKeyTransformer.", id = 14043)
    CacheException noTransformerForKey(String keyClassName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to parse system property %s", id = 14044)
+   void failedToParseSystemProperty(String propertyName, @Cause Exception e);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Overriding org.apache.lucene.search.BooleanQuery.setMaxClauseCount to value %d to be able to deserialize a larger BooleanQuery", id = 14045)
+   void overridingBooleanQueryMaxClauseCount(int maxClauseCount);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Setting org.apache.lucene.search.BooleanQuery.setMaxClauseCount from system property %s to value %d", id = 14046)
+   void settingBooleanQueryMaxClauseCount(String sysPropName, int maxClauseCount);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Ignoring system property %s because the value %d is smaller than the current value (%d) of org.apache.lucene.search.BooleanQuery.getMaxClauseCount()", id = 14047)
+   void ignoringBooleanQueryMaxClauseCount(String sysPropName, int maxClauseCount, int currentMaxClauseCount);
 }
