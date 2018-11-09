@@ -167,7 +167,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
       XSiteStatePushCommand command = commandsFactory.buildXSiteStatePushCommand(privateBuffer, xSiteBackup.getTimeout());
       RetryOnFailureXSiteCommand remoteSite = RetryOnFailureXSiteCommand.newInstance(xSiteBackup, command, task.retryPolicy);
-      remoteSite.execute(rpcManager.getTransport(), task.waitTime, TimeUnit.MILLISECONDS);
+      remoteSite.execute(rpcManager, task.waitTime, TimeUnit.MILLISECONDS);
    }
 
    private class StatePushTask implements Runnable {

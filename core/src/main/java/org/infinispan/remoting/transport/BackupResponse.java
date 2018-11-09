@@ -2,6 +2,8 @@ package org.infinispan.remoting.transport;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 
 /**
  * Represents a response from a backup replication call.
@@ -27,4 +29,13 @@ public interface BackupResponse {
    long getSendTimeMillis();
 
    boolean isEmpty();
+
+   /**
+    * Registers a listener that is notified when the cross-site request is finished.
+    * <p>
+    * The parameter is the time spent in the network in milliseconds.
+    *
+    * @param timeElapsedConsumer The {@link Consumer} to be invoke.
+    */
+   void notifyFinish(LongConsumer timeElapsedConsumer);
 }

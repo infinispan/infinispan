@@ -320,7 +320,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
             new MaxRetriesPolicy(backupRpcConfiguration.maxRetries);
       long waitTime = backupRpcConfiguration == null ? 1 : backupRpcConfiguration.waitTime;
       RetryOnFailureXSiteCommand remoteSite = RetryOnFailureXSiteCommand.newInstance(xSiteBackup, command, retryPolicy);
-      remoteSite.execute(rpcManager.getTransport(), waitTime, TimeUnit.MILLISECONDS);
+      remoteSite.execute(rpcManager, waitTime, TimeUnit.MILLISECONDS);
    }
 
    private void controlStateTransferOnLocalSite(StateTransferControl control, String siteName) throws Exception {

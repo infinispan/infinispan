@@ -19,10 +19,13 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.XSiteReplicateCommand;
 
 /**
  * Common rpc manager controls
@@ -187,6 +190,11 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
                      realOne.sendToAll(command, deliverOrder);
                      return null;
                   });
+   }
+
+   @Override
+   public BackupResponse invokeXSite(Collection<XSiteBackup> sites, XSiteReplicateCommand command) throws Exception {
+      return realOne.invokeXSite(sites, command);
    }
 
    @Override
