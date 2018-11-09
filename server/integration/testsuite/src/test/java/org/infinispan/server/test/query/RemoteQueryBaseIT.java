@@ -35,6 +35,9 @@ public abstract class RemoteQueryBaseIT {
       this.cacheName = cacheName;
    }
 
+   /**
+    * Return the actual server this test suite will connect to.
+    */
    protected abstract RemoteInfinispanServer getServer();
 
    @Before
@@ -60,7 +63,12 @@ public abstract class RemoteQueryBaseIT {
    @After
    public void tearDown() {
       if (remoteCache != null) {
-         remoteCache.clear();
+         try {
+            remoteCache.clear();
+         } catch (Exception ignored) {
+            // ignored
+         }
+         remoteCache = null;
       }
       if (rcmFactory != null) {
          rcmFactory.stopManagers();

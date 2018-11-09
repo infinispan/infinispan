@@ -29,6 +29,10 @@ final class SecurityActions {
             AccessController.doPrivileged(action) : Security.doPrivileged(action);
    }
 
+   static String getSystemProperty(String propertyName) {
+      return doPrivileged(() -> System.getProperty(propertyName));
+   }
+
    static Configuration getCacheConfiguration(Cache<?, ?> cache) {
       return doPrivileged(cache::getCacheConfiguration);
    }
