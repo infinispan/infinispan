@@ -1528,6 +1528,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djgroups.join_timeout=2000
+                    -Dinfinispan.query.lucene.max-boolean-clauses=1025
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>
@@ -1543,6 +1544,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
+                    -Dinfinispan.query.lucene.max-boolean-clauses=1025
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11322 8180</property>

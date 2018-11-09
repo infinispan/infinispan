@@ -54,7 +54,7 @@ public class RemoteQueryStringIT {
    private static RemoteCacheManager remoteCacheManager;
 
    @InfinispanResource("query-programmatic-search-mapping-provider")
-   RemoteInfinispanServer server1;
+   protected RemoteInfinispanServer server;
 
    @BeforeClass
    public static void before() {
@@ -83,8 +83,8 @@ public class RemoteQueryStringIT {
    public void testFullTextTermRightOperandAnalyzed() throws Exception {
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.addServer()
-            .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
-            .port(server1.getHotrodEndpoint().getPort())
+            .host(server.getHotrodEndpoint().getInetAddress().getHostName())
+            .port(server.getHotrodEndpoint().getPort())
             .marshaller(new ProtoStreamMarshaller());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
@@ -133,5 +133,4 @@ public class RemoteQueryStringIT {
       assertEquals("February rent", tx.getLongDescription());
       assertEquals("card was not present", tx.getNotes());
    }
-
 }

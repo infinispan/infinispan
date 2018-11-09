@@ -13,9 +13,13 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.query.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 
 public class LuceneBooleanQueryExternalizer extends AbstractExternalizer<BooleanQuery> {
+
+   private static final Log log = LogFactory.getLog(LuceneBooleanQueryExternalizer.class, Log.class);
 
    @Override
    public Set<Class<? extends BooleanQuery>> getTypeClasses() {
@@ -80,8 +84,8 @@ public class LuceneBooleanQueryExternalizer extends AbstractExternalizer<Boolean
     * @param numberOfClauses The number of clauses being deserialized
     */
    private static void assureNumberOfClausesLimit(int numberOfClauses) {
-      final int maxClauseLimit = BooleanQuery.getMaxClauseCount();
-      if (numberOfClauses > maxClauseLimit) {
+      if (numberOfClauses > BooleanQuery.getMaxClauseCount()) {
+         log.overridingBooleanQueryMaxClauseCount(numberOfClauses);
          BooleanQuery.setMaxClauseCount(numberOfClauses);
       }
    }
