@@ -12,8 +12,11 @@ import org.infinispan.commons.util.Experimental;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.XSiteReplicateCommand;
 
 /**
  * Provides a mechanism for communicating with other caches in the cluster, by formatting and passing requests down to
@@ -157,6 +160,15 @@ public interface RpcManager {
     */
    @Experimental
    void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder);
+
+   /**
+    * Invokes the {@link XSiteReplicateCommand} to one or more remote sites.
+    *
+    * @param sites   The sites to where the command is sent.
+    * @param command The {@link XSiteReplicateCommand} to send.
+    * @return The {@link BackupResponse} with the responses.
+    */
+   BackupResponse invokeXSite(Collection<XSiteBackup> sites, XSiteReplicateCommand command) throws Exception;
 
    /**
     * @return a reference to the underlying transport.

@@ -70,8 +70,10 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private boolean isLocking;
    private boolean syncCache;
 
+   @Override
    @Start
    public void start() {
+      super.start();
       lockTimeout = configuration.locking().lockAcquisitionTimeout();
       localAddress = rpcManager.getAddress();
       isLocking = !configuration.clustering().cacheMode().isScattered();

@@ -46,6 +46,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.stats.CacheStatisticManager;
@@ -54,6 +55,8 @@ import org.infinispan.stats.logging.Log;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.XSiteReplicateCommand;
 
 /**
  * Takes statistics about the RPC invocations.
@@ -189,6 +192,11 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    @Override
    public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder) {
       actual.sendToAll(command, deliverOrder);
+   }
+
+   @Override
+   public BackupResponse invokeXSite(Collection<XSiteBackup> sites, XSiteReplicateCommand command) throws Exception {
+      return actual.invokeXSite(sites, command);
    }
 
    @Override

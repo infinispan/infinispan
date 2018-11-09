@@ -1,8 +1,10 @@
 package org.infinispan.remoting.inboundhandler;
 
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandler.MBEAN_COMPONENT_NAME;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.CancellationService;
@@ -16,7 +18,16 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.DisplayType;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.Units;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -35,7 +46,10 @@ import org.infinispan.util.logging.Log;
  * @author Pedro Ruivo
  * @since 7.1
  */
+@Scope(Scopes.NAMED_CACHE)
+@MBean(objectName = MBEAN_COMPONENT_NAME, description = "Handles all the remote requests.")
 public abstract class BasePerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
+   public static final String MBEAN_COMPONENT_NAME = "InboundInvocationHandler";
    private static final int NO_TOPOLOGY_COMMAND = Integer.MIN_VALUE;
 
    @Inject @ComponentName(REMOTE_COMMAND_EXECUTOR)
@@ -47,6 +61,10 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
 
    private volatile boolean stopped = false;
    private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
+
+   private final LongAdder syncXsiteReceived = new LongAdder();
+   private final LongAdder asyncXsiteReceived = new LongAdder();
+   private volatile boolean statisticsEnabled = false;
 
    private static int extractCommandTopologyId(SingleRpcCommand command) {
       ReplicableCommand innerCmd = command.getCommand();
@@ -71,6 +89,12 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
             }
       }
       return NO_TOPOLOGY_COMMAND;
+   }
+
+   @Start
+   public void start() {
+      this.stopped = false;
+      setStatisticsEnabled(configuration.jmxStatistics().enabled());
    }
 
    @Stop
@@ -183,8 +207,55 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       }
    }
 
-   final BlockingRunnable createNonNullReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId,
-         boolean sync, ReadyAction readyAction) {
+   @Override
+   public void registerXSiteCommandReceiver(boolean sync) {
+      if (statisticsEnabled) {
+         (sync ? syncXsiteReceived : asyncXsiteReceived).increment();
+      }
+   }
+
+   @Override
+   public boolean getStatisticsEnabled() {
+      return isStatisticsEnabled();
+   }
+
+   @Override
+   @ManagedOperation(description = "Resets statistics gathered by this component", displayName = "Reset statistics")
+   public void resetStatistics() {
+      syncXsiteReceived.reset();
+      asyncXsiteReceived.reset();
+   }
+
+   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component",
+         displayName = "Statistics enabled",
+         dataType = DataType.TRAIT,
+         writable = true)
+   public boolean isStatisticsEnabled() {
+      return statisticsEnabled;
+   }
+
+   @Override
+   public void setStatisticsEnabled(boolean enabled) {
+      this.statisticsEnabled = enabled;
+   }
+
+   @ManagedAttribute(description = "Returns the number of sync cross-site requests received by this node",
+         displayName = "Sync Cross-Site Requests Received",
+         units = Units.NONE,
+         displayType = DisplayType.SUMMARY)
+   public long getSyncXSiteRequestsReceived() {
+      return statisticsEnabled ? syncXsiteReceived.sum() : 0;
+   }
+
+   @ManagedAttribute(description = "Returns the number of async cross-site requests received by this node",
+         displayName = "Async Cross-Site Requests Received",
+         units = Units.NONE,
+         displayType = DisplayType.SUMMARY)
+   public long getAsyncXSiteRequestsReceived() {
+      return statisticsEnabled ? asyncXsiteReceived.sum() : 0;
+   }
+
+   private BlockingRunnable createNonNullReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId, boolean sync, ReadyAction readyAction) {
       readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
       return new DefaultTopologyRunnable(this, command, reply, TopologyMode.READY_TX_DATA, commandTopologyId, sync) {
          @Override
