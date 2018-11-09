@@ -53,7 +53,7 @@ import org.junit.runner.RunWith;
  */
 @Category(Queries.class)
 @RunWith(Arquillian.class)
-@WithRunningServer({@RunningServer(name = "remote-query-security")})
+@WithRunningServer(@RunningServer(name = "remote-query-security"))
 public class RemoteQuerySecurityIT {
 
    @InfinispanResource("remote-query-security")

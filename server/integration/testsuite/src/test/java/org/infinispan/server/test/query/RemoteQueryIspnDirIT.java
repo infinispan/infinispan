@@ -17,11 +17,14 @@ import org.junit.runner.RunWith;
  */
 @Category(Queries.class)
 @RunWith(Arquillian.class)
-@WithRunningServer({@RunningServer(name = "remote-query-2")})
+@WithRunningServer(@RunningServer(name = "remote-query-2"))
 public class RemoteQueryIspnDirIT extends RemoteQueryIT {
 
    @InfinispanResource("remote-query-1")
-   protected RemoteInfinispanServer server;
+   protected RemoteInfinispanServer server1;
+
+   @InfinispanResource("remote-query-2")
+   protected RemoteInfinispanServer server2;
 
    public RemoteQueryIspnDirIT() {
       super("clustered", "repltestcache");
@@ -29,11 +32,11 @@ public class RemoteQueryIspnDirIT extends RemoteQueryIT {
 
    @Override
    protected RemoteInfinispanServer getServer() {
-      return server;
+      return server2;
    }
 
    @Test
-   public void testReindexing()  {
+   public void testReindexing() {
       remoteCacheManager.administration().reindexCache(remoteCache.getName());
    }
 }

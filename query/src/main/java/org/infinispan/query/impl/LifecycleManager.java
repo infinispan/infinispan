@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.apache.lucene.search.BooleanQuery;
 import org.hibernate.search.analyzer.definition.LuceneAnalysisDefinitionProvider;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
@@ -107,6 +108,13 @@ public class LifecycleManager implements ModuleLifecycle {
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
 
    /**
+    * Optional integer system property that sets value of {@link BooleanQuery#setMaxClauseCount}.
+    */
+   public static final String MAX_BOOLEAN_CLAUSES_SYS_PROP = "infinispan.query.lucene.max-boolean-clauses";
+
+   private static boolean maxBooleanClausesWasSet = false;
+
+   /**
     * Caching the looked-up MBeanServer for the lifetime of the cache manager is safe.
     */
    private MBeanServer mbeanServer;
@@ -123,6 +131,8 @@ public class LifecycleManager implements ModuleLifecycle {
          SearchIntegrator searchFactory = null;
          boolean isIndexed = cfg.indexing().index().isEnabled();
          if (isIndexed) {
+            setBooleanQueryMaxClauseCount();
+
             cr.registerComponent(new ShardAllocationManagerImpl(), ShardAllocatorManager.class);
             searchFactory = createSearchIntegrator(cfg.indexing(), cr, aggregatedClassLoader);
 
@@ -474,5 +484,32 @@ public class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheManagerStopped(GlobalComponentRegistry gcr) {
       mbeanServer = null;
+   }
+
+   /**
+    * Sets {@link BooleanQuery#setMaxClauseCount} according to the value of {@link #MAX_BOOLEAN_CLAUSES_SYS_PROP} system
+    * property. This is executed only once, when first indexed cache is started.
+    */
+   private void setBooleanQueryMaxClauseCount() {
+      if (!maxBooleanClausesWasSet) {
+         maxBooleanClausesWasSet = true;
+         String maxClauseCountProp = SecurityActions.getSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP);
+         if (maxClauseCountProp != null) {
+            int maxClauseCount;
+            try {
+               maxClauseCount = Integer.parseInt(maxClauseCountProp);
+            } catch (NumberFormatException e) {
+               log.failedToParseSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP, e);
+               throw e;
+            }
+            int currentMaxClauseCount = BooleanQuery.getMaxClauseCount();
+            if (maxClauseCount > currentMaxClauseCount) {
+               log.settingBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount);
+               BooleanQuery.setMaxClauseCount(maxClauseCount);
+            } else {
+               log.ignoringBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount, currentMaxClauseCount);
+            }
+         }
+      }
    }
 }

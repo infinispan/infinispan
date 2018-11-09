@@ -45,7 +45,7 @@ public class RemoteContinuousQueryIT extends RemoteQueryBaseIT {
    }
 
    @Test
-   public void testContinuousQuery() throws Exception {
+   public void testContinuousQuery() {
       remoteCache.put(1, createUser(1, 25));
       remoteCache.put(2, createUser(2, 25));
       remoteCache.put(3, createUser(3, 20));
