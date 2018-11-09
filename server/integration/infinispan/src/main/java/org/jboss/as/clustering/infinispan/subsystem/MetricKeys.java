@@ -93,11 +93,19 @@ public class MetricKeys {
     public static final String REPLICATION_COUNT = "replication-count";
     public static final String REPLICATION_FAILURES = "replication-failures";
     public static final String SUCCESS_RATIO = "success-ratio";
+    public static final String AVG_XSITE_REPLICATION_TIME = "average-xsite-replication-time";
+    public static final String MIN_XSITE_REPLICATION_TIME = "minimum-xsite-replication-time";
+    public static final String MAX_XSITE_REPLICATION_TIME = "maximum-xsite-replication-time";
+    public static final String SYNC_XSITE_COUNT = "sync-xsite-replication-count";
+    public static final String ASYNC_XSITE_COUNT = "async-xsite-replication-count";
     // Backup Metrics
     public static final String SITES_ONLINE = "sites-online";
     public static final String SITES_OFFLINE = "sites-offline";
     public static final String SITES_MIXED = "sites-mixed";
     public static final String SITES_VIEW = "sites-view";
+    //Inbound Handler metrics
+    public static final String SYNC_XSITE_COUNT_RECEIVED = "sync-xsite-replication-received-count";
+    public static final String ASYNC_XSITE_COUNT_RECEIVED = "async-xsite-replication-received-count";
 
     public static final String NUMBER_OF_CPUS = "number-of-cpus";
     public static final String TOTAL_MEMORY_KB = "total-memory";

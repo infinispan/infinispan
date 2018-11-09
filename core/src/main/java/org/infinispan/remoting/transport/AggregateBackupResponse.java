@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.LongConsumer;
 
 /**
  * @author Mircea Markus
@@ -16,7 +17,7 @@ public class AggregateBackupResponse implements BackupResponse {
    final Collection<BackupResponse> responses;
 
    public AggregateBackupResponse(BackupResponse onePcResponse, BackupResponse twoPcResponse) {
-      responses = new ArrayList<BackupResponse>(2);
+      responses = new ArrayList<>(2);
       if (onePcResponse != null) responses.add(onePcResponse);
       if (twoPcResponse != null) responses.add(twoPcResponse);
    }
@@ -30,7 +31,7 @@ public class AggregateBackupResponse implements BackupResponse {
 
    @Override
    public Map<String, Throwable> getFailedBackups() {
-      Map<String, Throwable> result = new HashMap<String, Throwable>();
+      Map<String, Throwable> result = new HashMap<>();
       for (BackupResponse br : responses) {
          result.putAll(br.getFailedBackups());
       }
@@ -39,7 +40,7 @@ public class AggregateBackupResponse implements BackupResponse {
 
    @Override
    public Set<String> getCommunicationErrors() {
-      Set<String> result = new HashSet<String>();
+      Set<String> result = new HashSet<>();
       for (BackupResponse br : responses) {
          result.addAll(br.getCommunicationErrors());
       }
@@ -69,9 +70,7 @@ public class AggregateBackupResponse implements BackupResponse {
 
       AggregateBackupResponse that = (AggregateBackupResponse) o;
 
-      if (responses != null ? !responses.equals(that.responses) : that.responses != null) return false;
-
-      return true;
+      return responses != null ? responses.equals(that.responses) : that.responses == null;
    }
 
    @Override
@@ -85,5 +84,12 @@ public class AggregateBackupResponse implements BackupResponse {
          if (!br.isEmpty()) return false;
       }
       return true;
+   }
+
+   @Override
+   public void notifyFinish(LongConsumer timeElapsedConsumer) {
+      for (BackupResponse br : responses) {
+         br.notifyFinish(timeElapsedConsumer);
+      }
    }
 }

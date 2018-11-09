@@ -48,8 +48,10 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
       checkTopologyAction = new CheckTopologyAction(this);
    }
 
+   @Override
    @Start
    public void start() {
+      super.start();
       this.pessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       this.lockAcquisitionTimeout = configuration.locking().lockAcquisitionTimeout();
    }

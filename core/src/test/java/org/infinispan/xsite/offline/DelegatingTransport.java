@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.function.LongConsumer;
 
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.BackupResponse;
@@ -67,6 +68,11 @@ public class DelegatingTransport extends AbstractDelegatingTransport {
          @Override
          public boolean isEmpty() {
             return false;
+         }
+
+         @Override
+         public void notifyFinish(LongConsumer timeElapsedConsumer) {
+            //no-op
          }
       };
    }

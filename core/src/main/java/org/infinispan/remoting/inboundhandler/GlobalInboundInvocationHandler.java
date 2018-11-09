@@ -86,8 +86,14 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       if (trace) {
          log.tracef("Handling command %s from remote site %s", command, origin);
       }
-
+      // TODO BackupReceiver can be merge in PerCacheInboundInvocationHandler
+      // It doesn't make sense to have a separate class for it
       BackupReceiver receiver = backupReceiverRepository.getBackupReceiver(origin, command.getCacheName().toString());
+      ComponentRegistry cr = receiver.getCache().getAdvancedCache().getComponentRegistry();
+      PerCacheInboundInvocationHandler handler = cr.getPerCacheInboundInvocationHandler();
+      if (handler != null) { //not a local cache.
+         handler.registerXSiteCommandReceiver(reply != Reply.NO_OP);
+      }
       if (order.preserveOrder()) {
          runXSiteReplicableCommand(command, receiver, reply);
       } else {

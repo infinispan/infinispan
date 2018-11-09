@@ -45,6 +45,7 @@ import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandler;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
@@ -117,10 +118,18 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         REPLICATION_COUNT(MetricKeys.REPLICATION_COUNT, ModelType.LONG, true, true),
         REPLICATION_FAILURES(MetricKeys.REPLICATION_FAILURES, ModelType.LONG, true, true),
         SUCCESS_RATIO(MetricKeys.SUCCESS_RATIO, ModelType.DOUBLE, true, true),
+        AVG_XSITE_TIME(MetricKeys.AVG_XSITE_REPLICATION_TIME, ModelType.LONG, true, true),
+        MIN_XSITE_TIME(MetricKeys.MIN_XSITE_REPLICATION_TIME, ModelType.LONG, true, true),
+        MAX_XSITE_TIME(MetricKeys.MAX_XSITE_REPLICATION_TIME, ModelType.LONG, true, true),
+        SYNC_XSITE_COUNT(MetricKeys.SYNC_XSITE_COUNT, ModelType.LONG, true, true),
+        ASYNC_XSITE_COUNT(MetricKeys.ASYNC_XSITE_COUNT, ModelType.LONG, true, true),
         //backup site
         ONLINE_SITES(MetricKeys.SITES_ONLINE, ModelType.LIST, ModelType.STRING, false),
         OFFLINE_SITES(MetricKeys.SITES_OFFLINE, ModelType.LIST, ModelType.STRING, false),
-        MIXED_SITES(MetricKeys.SITES_MIXED, ModelType.LIST, ModelType.STRING, false);
+        MIXED_SITES(MetricKeys.SITES_MIXED, ModelType.LIST, ModelType.STRING, false),
+        //Inbound Handler
+        SYNC_XSITE_COUNT_RECEIVED(MetricKeys.SYNC_XSITE_COUNT_RECEIVED, ModelType.LONG, true, true),
+        ASYNC_XSITE_COUNT_RECEIVED(MetricKeys.ASYNC_XSITE_COUNT_RECEIVED, ModelType.LONG, true, true);
 
         private static final Map<String, CacheMetrics> MAP = new HashMap<>();
 
@@ -198,6 +207,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             List<AsyncInterceptor> interceptors = SecurityActions.getInterceptorChain(aCache);
             ComponentRegistry registry = SecurityActions.getComponentRegistry(aCache);
             ComponentStatus status = SecurityActions.getCacheStatus(aCache);
+            BasePerCacheInboundInvocationHandler handler = (BasePerCacheInboundInvocationHandler) registry.getPerCacheInboundInvocationHandler();
             switch (metric) {
                 case CACHE_STATUS:
                     result.set(status.toString());
@@ -313,6 +323,27 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                     break;
                 case SUCCESS_RATIO:
                     result.set(rpcManager.getSuccessRatioFloatingPoint());
+                    break;
+                case AVG_XSITE_TIME:
+                    result.set(rpcManager.getAverageXSiteReplicationTime());
+                    break;
+                case MAX_XSITE_TIME:
+                    result.set(rpcManager.getMaximumXSiteReplicationTime());
+                    break;
+                case MIN_XSITE_TIME:
+                    result.set(rpcManager.getMinimumXSiteReplicationTime());
+                    break;
+                case SYNC_XSITE_COUNT:
+                    result.set(rpcManager.getSyncXSiteCount());
+                    break;
+                case ASYNC_XSITE_COUNT:
+                    result.set(rpcManager.getAsyncXSiteCount());
+                    break;
+                case SYNC_XSITE_COUNT_RECEIVED:
+                    result.set(handler.getSyncXSiteRequestsReceived());
+                    break;
+                case ASYNC_XSITE_COUNT_RECEIVED:
+                    result.set(handler.getAsyncXSiteRequestsReceived());
                     break;
                 case COMMITS: {
                     TxInterceptor txInterceptor = getFirstInterceptorWhichExtends(interceptors, TxInterceptor.class);
