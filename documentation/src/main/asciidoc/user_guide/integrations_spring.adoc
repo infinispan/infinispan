@@ -1,18 +1,28 @@
-[[spring_boot_integration]]
-===  Using {brandname} with Spring Boot
+[[spring_integration]]
+=== Using {brandname} with Spring
+{brandname} integrates with the Spring Framework to make it easy to add caching capabilities to your applications.
 
-{brandname} Spring Boot Starters allow to easily turn on {brandname} and Spring integration.
-More information might be found at link:https://github.com/infinispan/infinispan-spring-boot[{brandname} Spring Boot Starters Gihub page].
+[[spring_boot_starter]]
+==== Spring Boot Starter
+Check out the {brandname} link:https://github.com/infinispan/infinispan-spring-boot[Spring Boot Starter on GitHub] to quickly get up and running.
 
-===  Using {brandname} as a Spring Cache provider
-Starting with version 3.1, the link:http://spring.io/[Spring Framework] offers a link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[cache abstraction], enabling users to declaratively add caching support to applications via two simple annotations, `@Cacheable` and `@CacheEvict`.
-While out of the box Spring's caching support is backed by link:http://ehcache.org[EHCache] it has been designed to easily support different cache providers.
-To that end Spring defines a simple and straightforward SPI other caching solutions may implement.
-{brandname}'s very own spring modules do - amongst other things - exactly this and therefore users invested in Spring's programming model may easily have all their caching needs fulfilled through {brandname}.
+[[spring_cache_provider]]
+==== Setting Up {brandname} as a Spring Cache Provider
+{brandname} implements the Spring SPI to offer high-performance, in-memory caching capabilities.
 
-==== Activating Spring Cache support
-You activate Spring's cache support using xml:
+[[spring_add_support]]
+===== Adding Spring Cache Support
+The link:http://spring.io/[Spring Framework] offers a link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[cache abstraction] with two simple annotations:
 
+* `@Cacheable` adds entries to the cache.
+* `@CacheEvict` removes entries from the cache.
+
+To add caching support to your application, do the following:
+
+. Enable cache annotations in your application context either declaratively or programmatically.
++
+* *Declaratively:* Add `<cache:annotation-driven/>` to your application context.
++
 [source,xml]
 ----
 <beans xmlns="http://www.springframework.org/schema/beans"
@@ -26,35 +36,33 @@ You activate Spring's cache support using xml:
         <cache:annotation-driven />
 
 </beans>
-
 ----
-
-somewhere in your application context. This enable the cache annotations in Spring. Alternatively, it can be done programmatically:
-
-[source,java]
++
+* *Programmatically:* Enable cache support as follows:
++
+[source,java,options=nowrap]
 ----
 @EnableCaching @Configuration
 public class Config {
 }
-
 ----
-
-Now, you will need to add {brandname} and Spring integration module to your classpath. For Maven users this might be achieved by adding these dependencies:
-
++
+. Add {brandname} and the Spring integration module to your `pom.xml`.
++
+* Embedded mode: `infinispan-spring4-embedded`
+* Remote client-server mode: `infinispan-spring4-remote`
++
 .pom.xml for Spring 4 (embedded mode)
 [source,xml]
 ----
     <dependencies>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-embedded</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring4-embedded</artifactId>
-            <version>${version.spring}</version>
+            <version>${version.infinispan}</version>
         </dependency>
-        <!-- depending on a use case, one should use Spring Context or Spring Boot jars -->
+        <!-- Use the Spring Boot Starter
+        instead of spring-boot. -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
@@ -63,23 +71,27 @@ Now, you will need to add {brandname} and Spring integration module to your clas
     </dependencies>
 ----
 
-==== Telling Spring to use {brandname} as its caching provider
-Spring cache provider SPI comprises two interfaces, `org.springframework.cache.CacheManager` and `org.springframework.cache.Cache` where a `CacheManager` serves as a factory for named `Cache` instances.
-By default Spring will look at runtime for a `CacheManager` implementation having the bean name "cacheManager" in an application's application context. So by putting
+[[spring_configure_cache_provider]]
+===== Configuring {brandname} as the Spring Cache Provider
+The Spring cache provider SPI has two interfaces through which it interacts with {brandname}: `org.springframework.cache.CacheManager` and `org.springframework.cache.Cache`. The `CacheManager` interface acts as a factory for named `Cache` instances.
 
-[source,xml]
+At runtime Spring looks for a `CacheManager` implementation that has a bean named `cacheManager` in the application context.
+
+You can configure your application context either declaratively or programmatically.
+
+* *Declaratively:*
++
+[source,xml,options=nowrap]
 ----
 
-<!-- {brandname} cache manager -->
+<!-- Infinispan cache manager -->
 <bean id="cacheManager"
           class="org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean"
           p:configurationFileLocation="classpath:/org/infinispan/spring/provider/sample/books-infinispan-config.xml" />
-
 ----
-
-or using java config:
-
-[source, java]
+* *Programmatically:*
++
+[source,xml,options=nowrap]
 ----
 @EnableCaching
 @Configuration
@@ -97,49 +109,76 @@ public class Config {
 }
 ----
 
-somewhere in your application context you tell Spring to henceforth use {brandname} as its caching provider.
+[[spring_add_caching]]
+==== Adding Caching to Your Application
+Add the `@Cacheable` and `@CacheEvict` annotations to your application code.
 
-==== Adding caching to your application code
-As outlined above enabling caching in your application code is as simple as adding `@Cacheable` and `@CacheEvict` to select methods. Suppose you've got a DAO for, say, books and you want book instances to be cached once they've been loaded from the underlying database using `BookDao#findBook(Integer bookId)`. To that end you annotate `findBook(Integer bookId)` with `@Cacheable`, as in
+[[spring_add_entries]]
+===== Adding Cache Entries
+The `@Cacheable` annotation adds returned values to a defined cache.
 
-[source,java]
+For instance, you have a data access object (DAO) for books. You want book instances to be cached after they have been loaded from the underlying database using `BookDao#findBook(Integer bookId)`.
+
+Annotate the `findBook(Integer bookId)` method with `@Cacheable` as follows:
+
+[source,java,options=nowrap]
 ----
-
 @Transactional
 @Cacheable(value = "books", key = "#bookId")
-Book findBook(Integer bookId) {...}
-
+public Book findBook(Integer bookId) {...}
 ----
 
-This will tell Spring to cache Book instances returned from calls to `findBook(Integer bookId)` in a named cache "books", using the parameter's "bookId" value as a cache key. Here, "#bookId" is an expression in the link:http://static.springsource.org/spring/docs/current/spring-framework-reference/html/expressions.html[Spring Expression Language] that evaluates to the `bookId` argument. If you don't specify the `key` attribute Spring will generate a hash from the supplied method arguments - in this case only `bookId` - and use that as a cache key. Essentially, you relinquish control over what cache key to use to Spring. Which may or may not be fine depending on your application's needs.Though the notion of actually deleting a book will undoubtedly seem alien and outright abhorrent to any sane reader there might come the time when your application needs to do just that. For whatever reason. In this case you will want for such a book to be removed not only from the underlying database but from the cache, too. So you annotate `deleteBook(Integer bookId)` with `@CacheEvict` as in
+Any `Book` instances returned from `findBook(Integer bookId)` are stored in a cache named `books`, using `bookId` as the key.
 
-[source,java]
+Note that "#bookId" is an expression in the link:http://static.springsource.org/spring/docs/current/spring-framework-reference/html/expressions.html[Spring Expression Language] that evaluates the `bookId` argument.
+
+[IMPORTANT]
+====
+If your application needs to reference entries in the cache directly, you should include the `key` attribute. Without this attribute, Spring generates a hash from the supplied method arguments to use as the cache key.
+====
+
+[[spring_remove_entries]]
+===== Deleting Cache Entries
+The `@CacheEvict` annotation deletes entries from a defined cache.
+
+Annotate the `deleteBook(Integer bookId)` method with `@CacheEvict` as follows:
+
+[source,java,options=nowrap]
 ----
-
+// Evict all entries in the "books" cache
 @Transactional
-@CacheEvict(value = "books", key = "#bookId")
-void deleteBook(Integer bookId) {...}
+@CacheEvict (value="books", key = "#bookId", allEntries = true)
+public void deleteBookAllEntries() {...}
 
+// Evict entries in the "books" cache that match #bookId
+@Transactional
+@CacheEvict (value="books", key = "#bookId")
+public void deleteBook(Integer bookId) {...]}
 ----
 
-and you may rest assured that no stray books be left in your application once you decide to remove them.
+[[spring_configure_timeouts]]
+==== Configuring Timeouts for Cache Operations
 
-==== Read/write timeouts for cache operations
-The {brandname} Spring Cache provider defaults to blocking behaviour when performing read and write operations.
-In some situations it may desirable to set a maximum time to wait for these operations before giving up. This is
-particularly useful when you need to ensure that an operation completes within an allotted time and you can ignore
-the cached value.
+The {brandname} Spring cache provider defaults to blocking behaviour when performing read and write operations. By default operations are synchronous and do not time out. However, you might want to set a maximum time to wait for operations before timing out in some situations. For example, timeouts are useful if you need to ensure that an operation completes within a certain time and you can ignore the cached value.
 
-You can set separate timeouts for reads and writes by using the following properties of the
+`infinispan.spring.operation.read.timeout`::
+Specifies the time, in milliseconds, to wait for read operations to complete. The default is `0` which means unlimited wait time.
+`infinispan.spring.operation.write.timeout`::
+Specifies the time, in milliseconds, to wait for write operations to complete. The default is `0` which means unlimited wait time.
 
-* `infinispan.spring.operation.read.timeout` the time in milliseconds to wait for a read operation to complete
-* `infinispan.spring.operation.write.timeout` the time in milliseconds to wait for a write operation to complete
+To configure timeouts for cache operations, set the properties in the context XML for your application on either of the following:
 
-These properties can be set using either the context XML on
-link:{javadocroot}/org/infinispan/spring/provider/SpringEmbeddedCacheManagerFactoryBean.html[SpringEmbeddedCacheManagerFactoryBean]/link:{javadocroot}/org/infinispan/spring/provider/SpringRemoteCacheManagerFactoryBean.html[SpringRemoteCacheManagerFactoryBean]
-or by adding them to your `hotrod-client.properties` (for client/server uses only).
+* link:{javadocroot}/org/infinispan/spring/provider/SpringEmbeddedCacheManagerFactoryBean.html[SpringEmbeddedCacheManagerFactoryBean]
+* link:{javadocroot}/org/infinispan/spring/provider/SpringRemoteCacheManagerFactoryBean.html[SpringRemoteCacheManagerFactoryBean]
 
-[source,xml]
+[TIP]
+====
+In remote client-server mode, you can also add these properties to `hotrod-client.properties`.
+====
+
+The following example shows the timeout properties in the context XML for `SpringRemoteCacheManagerFactoryBean`:
+
+[source,xml,options=nowrap]
 ----
 <bean id="springRemoteCacheManagerConfiguredUsingConfigurationProperties"
       class="org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean">
@@ -152,24 +191,29 @@ or by adding them to your `hotrod-client.properties` (for client/server uses onl
 </bean>
 ----
 
-==== Externalizing session using Spring Session
+[[spring_externalize_sessions]]
+==== Externalizing Sessions Using Spring Session
 
-link:http://docs.spring.io/spring-session/docs/current/reference/html5[Spring Session] is a very convenient way to externalize user session into {brandname} cluster.
+link:http://docs.spring.io/spring-session/docs/current/reference/html5[Spring Session] lets you externalize user session information into {brandname}.
 
-Spring Session integration allows to use both - embedded and client/server mode. Each mode requires using proper artifacts (`infinispan-spring4-embedded` or `infinispan-spring4-remote`).
-An example is shown below:
+To configure Spring Session integration in your application, do the following:
 
-[source,xml]
+. Add dependencies to your `pom.xml`.
++
+* Embedded mode: `infinispan-spring4-embedded`
+* Remote client-server mode: `infinispan-spring4-remote`
++
+.pom.xml (embedded mode)
 ----
     <dependencies>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-embedded</artifactId>
+            <artifactId>infinispan-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring4-embedded</artifactId>
-            <version>${version.spring}</version>
+            <version>${version.infinispan}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -188,18 +232,25 @@ An example is shown below:
        </dependency>
     </dependencies>
 ----
++
+. Specify the appropriate FactoryBean to expose a `CacheManager` instance.
++
+* Embedded mode: `SpringEmbeddedCacheManagerFactoryBean`
+* Remote client-server mode: `SpringRemoteCacheManagerFactoryBean`
++
+. Enable Spring Session with the appropriate annotation.
++
+* Embedded mode: `@EnableInfinispanEmbeddedHttpSession`
+* Remote client-server mode: `@EnableInfinispanRemoteHttpSession`
++
+There annotations have optional parameters:
++
+- `maxInactiveIntervalInSeconds` sets session expiration time in seconds. The default is `1800`.
+- `cacheName` specifies the name of the cache that stores sessions. The default is `sessions`.
 
-Spring Session integration has been based on {brandname} Spring Cache support so it requires creating a `SpringEmbeddedCacheManagerFactoryBean` or `SpringRemoteCacheManagerFactoryBean`.
-The next step it to use `@EnableInfinispanEmbeddedHttpSession` or `@EnableInfinispanRemoteHttpSession` configuration annotation which turns on Spring Session.
+The following example shows a complete, annotation-based configuration:
 
-`@EnableInfinispanEmbeddedHttpSession` or `@EnableInfinispanRemoteHttpSession` annotations have 2 optional parameters:
-
-* maxInactiveIntervalInSeconds - which sets session expiration time in seconds. The default is set to `1800`.
-* cacheName - cache name which is used for storing sessions. The default is set to `sessions`.
-
-A complete, annotation based configuration example is shown below:
-
-[source, java]
+[source,java,options=nowrap]
 ----
 @EnableInfinispanEmbeddedHttpSession
 @Configuration
@@ -210,9 +261,9 @@ public class Config {
       return new SpringEmbeddedCacheManagerFactoryBean();
    }
 
-   //An optional configuration bean which is responsible for replacing the default cookie
-   //for obtaining configuration.
-   //For more information refer to Spring Session documentation.
+   //An optional configuration bean responsible for replacing the default
+   //cookie that obtains configuration.
+   //For more information refer to the Spring Session documentation.
    @Bean
    public HttpSessionStrategy httpSessionStrategy() {
       return new HeaderHttpSessionStrategy();
