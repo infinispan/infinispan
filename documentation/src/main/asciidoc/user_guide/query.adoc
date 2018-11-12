@@ -1780,7 +1780,6 @@ the beginning of your schema file.
 option indexed_by_default = false;  // This disables indexing of types that are not annotated for indexing
 ----
 
-
 ==== A remote query example
 You've managed to configure both client and server to talk protobuf and you've enabled indexing. Let's put some data in
 the cache and try to search for it then!
@@ -1814,6 +1813,115 @@ The key part of creating a query is obtaining the _QueryFactory_ for the remote 
 _org.infinispan.client.hotrod.Search.getQueryFactory()_ method. Once you have this creating the query is similar to
 embedded mode which is covered in link:#query_dsl[this] section.
 
+[[analysis]]
+==== Analysis
+Analysis is a process that converts input data into one or more terms that you can index and query.
+
+===== Default Analyzers
+{brandname} provides a set of default analyzers as follows:
+
+[%header,cols=2*]
+|===
+
+| Definition
+| Description
+
+| `standard`
+| Splits text fields into tokens, treating whitespace and punctuation as delimiters.
+
+| `simple`
+| Tokenizes input streams by delimiting at non-letters and then converting all letters to lowercase characters. Whitespace and non-letters are discarded.
+
+| `whitespace`
+| Splits text streams on whitespace and returns sequences of non-whitespace characters as tokens.
+
+| `keyword`
+| Treats entire text fields as single tokens.
+
+| `stemmer`
+| Stems English words using the Snowball Porter filter.
+
+| `ngram`
+| Generates n-gram tokens that are 3 grams in size by default.
+
+|===
+
+These analyzer definitions are based on Apache Lucene and are provided "as-is".
+For more information about tokenizers, filters, and CharFilters, see the
+appropriate Lucene documentation.
+
+===== Using Analyzer Definitions
+To use analyzer definitions, reference them by name in the _.proto_ schema file.
+
+. Include the `Analyze.YES` attribute to indicate that the property is analyzed.
+. Specify the analyzer definition with the `@Analyzer` annotation.
+
+The following example shows referenced analyzer definitions:
+
+[source,protobuf,options="nowrap"]
+----
+/* @Indexed */
+message TestEntity {
+
+    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "keyword")) */
+    optional string id = 1;
+
+    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "simple")) */
+    optional string name = 2;
+}
+----
+
+===== Creating Custom Analyzer Definitions
+If you require custom analyzer definitions, do the following:
+
+. Create an implementation of the
+`ProgrammaticSearchMappingProvider` interface packaged in a `JAR` file.
+. Provide a file named `org.infinispan.query.spi.ProgrammaticSearchMappingProvider` in the
+`META-INF/services/` directory of your `JAR`. This file should contain the fully qualified class name of your implementation.
+. Copy the `JAR` to the `standalone/deployments` directory of your {brandname} installation.
++
+[IMPORTANT]
+====
+Your deployment must be available to the {brandname} server during startup. You cannot add the deployment if the server is already running.
+====
++
+The following is an example implementation of the
+`ProgrammaticSearchMappingProvider` interface:
++
+[source,java,options="nowrap"]
+----
+import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
+import org.apache.lucene.analysis.core.StopFilterFactory;
+import org.apache.lucene.analysis.standard.StandardFilterFactory;
+import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
+import org.hibernate.search.cfg.SearchMapping;
+import org.infinispan.Cache;
+import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
+
+public final class MyAnalyzerProvider implements ProgrammaticSearchMappingProvider {
+
+   @Override
+   public void defineMappings(Cache cache, SearchMapping searchMapping) {
+      searchMapping
+            .analyzerDef("standard-with-stop", StandardTokenizerFactory.class)
+               .filter(StandardFilterFactory.class)
+               .filter(LowerCaseFilterFactory.class)
+               .filter(StopFilterFactory.class);
+   }
+}
+----
++
+. Specify the `JAR` in the cache container configuration, for
+example:
++
+[source,xml,options="nowrap"]
+----
+<cache-container name="mycache" default-cache="default">
+   <modules>
+     <module name="deployment.analyzers.jar"/>
+   </modules>
+...
+----
 
 === Statistics
 
