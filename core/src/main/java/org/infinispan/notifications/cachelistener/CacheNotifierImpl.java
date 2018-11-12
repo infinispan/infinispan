@@ -1853,21 +1853,17 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                Object newValue = converter.convert(eventImpl.getKey(), (V) eventImpl.getOldValue(),
                      eventImpl.getOldMetadata(), (V) eventImpl.getValue(),
                      eventImpl.getMetadata(), evType);
-               if (newValue != eventImpl.getValue()) {
-                  // Convert from the filter output to the request output
-                  MediaType keyFilterFormat = converterFormat == null || useStorageFormat() ? keyDataConversion.getStorageMediaType() : converterFormat;
-                  MediaType valueFilterFormat = converterFormat == null || useStorageFormat() ? valueDataConversion.getStorageMediaType() : converterFormat;
-                  Object newKey2 = keyDataConversion.convertToRequestFormat(eventImpl.getKey(), keyFilterFormat);
-                  Object newValue2 = valueDataConversion.convertToRequestFormat(newValue, valueFilterFormat);
-                  Object newOldValue2 = valueDataConversion.convertToRequestFormat(eventImpl.getOldValue(), valueFilterFormat);
-                  EventImpl<K, V> clone = eventImpl.clone();
-                  clone.setKey((K) newKey2);
-                  clone.setValue((V) newValue2);
-                  clone.setOldValue((V) newOldValue2);
-                  return clone;
-               } else {
-                  returnedEvent = eventImpl;
-               }
+               // Convert from the filter output to the request output
+               MediaType keyFilterFormat = converterFormat == null || useStorageFormat() ? keyDataConversion.getStorageMediaType() : converterFormat;
+               MediaType valueFilterFormat = converterFormat == null || useStorageFormat() ? valueDataConversion.getStorageMediaType() : converterFormat;
+               Object newKey2 = keyDataConversion.convertToRequestFormat(eventImpl.getKey(), keyFilterFormat);
+               Object newValue2 = valueDataConversion.convertToRequestFormat(newValue, valueFilterFormat);
+               Object newOldValue2 = valueDataConversion.convertToRequestFormat(eventImpl.getOldValue(), valueFilterFormat);
+               EventImpl<K, V> clone = eventImpl.clone();
+               clone.setKey((K) newKey2);
+               clone.setValue((V) newValue2);
+               clone.setOldValue((V) newOldValue2);
+               return clone;
             } else {
                throw new IllegalArgumentException("Provided event should be org.infinispan.notifications.cachelistener.event.impl.EventImpl " +
                      "when a converter is being used!");
