@@ -76,6 +76,8 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
 
    @Override
    public int getWorkerThreads() {
-      return Integer.getInteger("infinispan.server.memcached.workerThreads", configuration.workerThreads());
+      // Unused for now, so just return the smallest possible valid value
+      return 1;
    }
+
 }

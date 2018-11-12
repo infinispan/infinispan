@@ -54,7 +54,7 @@ public abstract class AbstractJmxRegistration {
       for (ComponentRef<?> component : components) {
          Object instance = component.wired();
 
-         ResourceDMBean resourceDMBean = getResourceDMBean(instance);
+         ResourceDMBean resourceDMBean = getResourceDMBean(instance, component.getName());
          if (resourceDMBean != null) {
             resourceDMBeans.add(resourceDMBean);
          }
@@ -63,6 +63,10 @@ public abstract class AbstractJmxRegistration {
    }
 
    protected ResourceDMBean getResourceDMBean(Object instance) {
+      return getResourceDMBean(instance, null);
+   }
+
+   protected ResourceDMBean getResourceDMBean(Object instance, String componentName) {
       ComponentMetadata md = instance != null ?
                              componentMetadataRepo.getComponentMetadata(instance.getClass()) : null;
       if (md == null || !md.isManageable())
@@ -70,7 +74,7 @@ public abstract class AbstractJmxRegistration {
 
       ResourceDMBean resourceDMBean;
       try {
-         resourceDMBean = new ResourceDMBean(instance, md.toManageableComponentMetadata());
+         resourceDMBean = new ResourceDMBean(instance, md.toManageableComponentMetadata(), componentName);
       } catch (NoSuchFieldException | ClassNotFoundException e) {
          throw new CacheConfigurationException(e);
       }

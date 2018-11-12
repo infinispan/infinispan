@@ -92,6 +92,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    @Override
    public int getWorkerThreads() {
-      return Integer.getInteger("infinispan.server.rest.workerThreads", configuration.workerThreads());
+      // Unused for now, so just return the smallest possible valid value
+      return 1;
    }
 }
