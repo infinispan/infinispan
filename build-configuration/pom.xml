@@ -245,7 +245,7 @@
       <version.maven.remote.resource>1.5</version.maven.remote.resource>
       <version.maven.shade>3.1.1</version.maven.shade>
       <version.maven.source>3.0.1</version.maven.source>
-      <version.maven.surefire>2.21.0</version.maven.surefire>
+      <version.maven.surefire>3.0.0-M1</version.maven.surefire>
       <version.org.wildfly.build-tools>1.2.10.Final</version.org.wildfly.build-tools>
       <version.org.wildfly.maven-plugin>1.2.1.Final</version.org.wildfly.maven-plugin>
       <version.owasp-dependency-check-plugin>3.1.1</version.owasp-dependency-check-plugin>
