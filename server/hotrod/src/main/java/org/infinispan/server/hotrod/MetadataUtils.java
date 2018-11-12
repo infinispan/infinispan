@@ -64,12 +64,12 @@ public final class MetadataUtils {
    public static int extractLifespan(CacheEntry ce) {
       if (ce == null) return -1;
 
-      return ce.getLifespan() < 0 ? -1 : (int) ce.getLifespan() / 1000;
+      return ce.getLifespan() < 0 ? -1 : (int) (ce.getLifespan() / 1000);
    }
 
    public static int extractMaxIdle(CacheEntry ce) {
       if (ce == null) return -1;
 
-      return ce.getMaxIdle() < 0 ? -1 : (int) ce.getMaxIdle() / 1000;
+      return ce.getMaxIdle() < 0 ? -1 : (int) (ce.getMaxIdle() / 1000);
    }
 }
