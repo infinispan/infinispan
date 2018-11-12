@@ -64,20 +64,20 @@ public interface Transport {
    int getNumberIOThreads();
 
    @ManagedAttribute(
-         description = "Returns the number of slave threads.",
-         displayName = "Number of slave threads",
-         dataType = DataType.TRAIT,
-         displayType = DisplayType.SUMMARY
-   )
-   int getNumberWorkerThreads();
-
-   @ManagedAttribute(
          description = "Returns the idle timeout.",
          displayName = "Idle timeout",
          dataType = DataType.TRAIT,
          displayType = DisplayType.SUMMARY
    )
    int getIdleTimeout();
+
+   @ManagedAttribute(
+         description = "Returns the number of pending tasks.",
+         displayName = "Pending tasks",
+         dataType = DataType.MEASUREMENT,
+         displayType = DisplayType.SUMMARY
+   )
+   int getPendingTasks();
 
    @ManagedAttribute(
          description = "Returns whether TCP no delay was configured or not.",

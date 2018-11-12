@@ -200,7 +200,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private void unregisterMBean() {
       try {
          StatisticsConfiguration configuration = this.configuration.statistics();
-         if (configuration.jmxEnabled()) {
+         if (configuration.jmxEnabled() && mbeanObjectName != null) {
             MBeanServer mbeanServer = configuration.mbeanServerLookup().getMBeanServer();
             JmxUtil.unregisterMBean(mbeanObjectName, mbeanServer);
          }

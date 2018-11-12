@@ -38,7 +38,7 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
 
    @Override
    public void initializeChannel(Channel ch) throws Exception {
-   ChannelPipeline pipeline = ch.pipeline();
+      ChannelPipeline pipeline = ch.pipeline();
       if(transport != null) {
          pipeline.addLast("stats", new StatsChannelHandler(transport));
       }

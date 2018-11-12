@@ -132,4 +132,14 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       assertFalse(existsObject(cacheMBean));
    }
 
+   public void testExecutorMBeans() throws Exception {
+      ObjectName executor = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", "org.infinispan.executors.timeout");
+      assertTrue(existsObject(executor));
+      assertEquals(-1, server.getAttribute(executor, "PoolSize"));
+      executor = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", "org.infinispan.executors.notification");
+      assertTrue(existsObject(executor));
+      assertEquals(-1, server.getAttribute(executor, "PoolSize"));
+
+   }
+
 }

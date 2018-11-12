@@ -4,6 +4,7 @@ import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
 import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
 import static org.infinispan.server.test.util.ITestUtils.getAttribute;
 import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
+import static org.infinispan.server.test.util.ITestUtils.setAttribute;
 import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -13,6 +14,7 @@ import java.util.List;
 
 import javax.management.ObjectName;
 
+import org.apache.http.HttpResponse;
 import org.infinispan.Version;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
@@ -26,6 +28,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.category.Unstable;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
+import org.infinispan.server.test.client.rest.RESTHelper;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,8 +65,12 @@ public class JmxManagementIT {
     final String managerPrefix = JMX_DOMAIN + ":type=CacheManager,name=\"clustered\",component=";
     final String cacheManagerMBean = managerPrefix + "CacheManager";
     /* server module MBeans */
-    final String hotRodServerMBean = JMX_DOMAIN + ":type=Server,name=HotRod,component=Transport";
-    final String memCachedServerMBean = JMX_DOMAIN + ":type=Server,name=Memcached,component=Transport";
+    final String hotRodTransportMBean = JMX_DOMAIN + ":type=Server,name=HotRod,component=Transport";
+    final String hotRodExecutorMBean = JMX_DOMAIN + ":type=Server,name=HotRod,component=WorkerExecutor";
+    final String memCachedTransportMBean = JMX_DOMAIN + ":type=Server,name=Memcached,component=Transport";
+    final String memCachedExecutorMBean = JMX_DOMAIN + ":type=Server,name=Memcached,component=WorkerExecutor";
+    final String restTransportMBean = JMX_DOMAIN + ":type=Server,name=REST,component=Transport";
+    final String restExecutorMBean = JMX_DOMAIN + ":type=Server,name=REST,component=WorkerExecutor";
     final String protocolMBeanPrefix = "jgroups:type=protocol,cluster=\"default\",protocol=";
 
     @InfinispanResource("jmx-management-1")
@@ -77,6 +84,7 @@ public class JmxManagementIT {
     RemoteCacheManager manager;
     RemoteCache distCache;
     MemcachedClient mc;
+    RESTHelper rest;
 
     @Before
     public void setUp() throws Exception {
@@ -89,6 +97,8 @@ public class JmxManagementIT {
             distCache = manager.getCache();
             mc = new MemcachedClient("UTF-8", server1.getMemcachedEndpoint().getInetAddress()
                     .getHostName(), server1.getMemcachedEndpoint().getPort(), 10000);
+            rest = new RESTHelper();
+            rest.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), server1.getRESTEndpoint().getContextPath());
         }
         resetCacheStatistics();
         distCache.clear();
@@ -111,10 +121,10 @@ public class JmxManagementIT {
     public void testHotRodConnectionCount() throws Exception {
 
         // get number of current local/global connections
-        int initialLocal = getNumberOfLocalConnections(provider, hotRodServerMBean);
-        int initialGlobal = getNumberOfGlobalConnections(provider, hotRodServerMBean);
+        int initialLocal = getNumberOfLocalConnections(provider, hotRodTransportMBean);
+        int initialGlobal = getNumberOfGlobalConnections(provider, hotRodTransportMBean);
         assertEquals("Number of global connections obtained from node1 and node2 is not the same", initialGlobal,
-              getNumberOfGlobalConnections(provider2, hotRodServerMBean));
+              getNumberOfGlobalConnections(provider2, hotRodTransportMBean));
         // create another RCM and use it
         Configuration conf = new ConfigurationBuilder()
               .addServer()
@@ -125,55 +135,87 @@ public class JmxManagementIT {
         manager2.getCache().put("key", "value");
 
         // local connections increase by 1, global (in both nodes) by 2 (because we have distributed cache with 2 nodes, both nodes are accessed)
-        assertEquals(initialLocal + 1, getNumberOfLocalConnections(provider, hotRodServerMBean));
-        assertEquals(initialGlobal + 2, getNumberOfGlobalConnections(provider, hotRodServerMBean));
-        assertEquals(initialGlobal + 2, getNumberOfGlobalConnections(provider2, hotRodServerMBean));
+        assertEquals(initialLocal + 1, getNumberOfLocalConnections(provider, hotRodTransportMBean));
+        assertEquals(initialGlobal + 2, getNumberOfGlobalConnections(provider, hotRodTransportMBean));
+        assertEquals(initialGlobal + 2, getNumberOfGlobalConnections(provider2, hotRodTransportMBean));
     }
 
     @Test
     @Category(Unstable.class) // ISPN-8291
     public void testMemCachedConnectionCount() throws Exception {
-        int initialLocal = getNumberOfLocalConnections(provider, memCachedServerMBean);
-        int initialGlobal = getNumberOfGlobalConnections(provider, memCachedServerMBean);
+        int initialLocal = getNumberOfLocalConnections(provider, memCachedTransportMBean);
+        int initialGlobal = getNumberOfGlobalConnections(provider, memCachedTransportMBean);
         assertEquals("Number of global connections obtained from node1 and node2 is not the same", initialGlobal,
-              getNumberOfGlobalConnections(provider2, memCachedServerMBean));
+              getNumberOfGlobalConnections(provider2, memCachedTransportMBean));
 
         MemcachedClient mc2 = new MemcachedClient("UTF-8", server1.getMemcachedEndpoint().getInetAddress()
                 .getHostName(), server1.getMemcachedEndpoint().getPort(), 10000);
         mc2.set("key", "value");
 
         // with the memcached endpoint, the connection is counted only once
-        assertEquals(initialLocal + 1, getNumberOfLocalConnections(provider, memCachedServerMBean));
-        assertEquals(initialGlobal + 1, getNumberOfGlobalConnections(provider, memCachedServerMBean));
-        assertEquals(initialGlobal + 1, getNumberOfGlobalConnections(provider2, memCachedServerMBean));
+        assertEquals(initialLocal + 1, getNumberOfLocalConnections(provider, memCachedTransportMBean));
+        assertEquals(initialGlobal + 1, getNumberOfGlobalConnections(provider, memCachedTransportMBean));
+        assertEquals(initialGlobal + 1, getNumberOfGlobalConnections(provider2, memCachedTransportMBean));
     }
 
     @Test
     public void testHotRodServerAttributes() throws Exception {
         distCache.put("key1", new byte[]{1, 2, 3, 4, 5});
-        assertNotEquals(0, Integer.parseInt(getAttribute(provider, hotRodServerMBean, "TotalBytesRead")));
-        assertNotEquals(0, Integer.parseInt(getAttribute(provider, hotRodServerMBean, "TotalBytesWritten")));
-        assertEquals(11222, Integer.parseInt(getAttribute(provider, hotRodServerMBean, "Port")));
-        assertEquals(Boolean.TRUE, Boolean.parseBoolean(getAttribute(provider, hotRodServerMBean, "tcpNoDelay")));
-        assertEquals(0, Integer.parseInt(getAttribute(provider, hotRodServerMBean, "ReceiveBufferSize")));
-        assertEquals(-1, Integer.parseInt(getAttribute(provider, hotRodServerMBean, "IdleTimeout")));
-        assertEquals(0, Integer.parseInt(getAttribute(provider, hotRodServerMBean, "SendBufferSize")));
-        assertNotEquals(0, Integer.parseInt(getAttribute(provider, hotRodServerMBean, "NumberWorkerThreads")));
-        assertNotEquals(0, getAttribute(provider, hotRodServerMBean, "HostName").length());
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, hotRodTransportMBean, "TotalBytesRead")));
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, hotRodTransportMBean, "TotalBytesWritten")));
+        assertEquals(11222, Integer.parseInt(getAttribute(provider, hotRodTransportMBean, "Port")));
+        assertEquals(Boolean.TRUE, Boolean.parseBoolean(getAttribute(provider, hotRodTransportMBean, "tcpNoDelay")));
+        assertEquals(0, Integer.parseInt(getAttribute(provider, hotRodTransportMBean, "ReceiveBufferSize")));
+        assertEquals(-1, Integer.parseInt(getAttribute(provider, hotRodTransportMBean, "IdleTimeout")));
+        assertEquals(0, Integer.parseInt(getAttribute(provider, hotRodTransportMBean, "SendBufferSize")));
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, hotRodTransportMBean, "NumberIOThreads")));
+        assertEquals(0, Integer.parseInt(getAttribute(provider, hotRodTransportMBean, "PendingTasks")));
+        assertNotEquals(0, getAttribute(provider, hotRodTransportMBean, "HostName").length());
+
+        assertEquals(0, Integer.parseInt(getAttribute(provider, hotRodExecutorMBean, "PoolSize")));
+        int maxPoolSize = Integer.parseInt(getAttribute(provider, hotRodExecutorMBean, "MaximumPoolSize"));
+        assertNotEquals(0, maxPoolSize);
+        setAttribute(provider, hotRodExecutorMBean, "MaximumPoolSize", maxPoolSize + 1);
+        assertEquals(maxPoolSize + 1, Integer.parseInt(getAttribute(provider, hotRodExecutorMBean, "MaximumPoolSize")));
+
     }
 
     @Test
     public void testMemcachedServerAttributes() throws Exception {
         mc.set("key1", "value1");
-        assertNotEquals(0, Integer.parseInt(getAttribute(provider, memCachedServerMBean, "TotalBytesRead")));
-        assertNotEquals(0, Integer.parseInt(getAttribute(provider, memCachedServerMBean, "TotalBytesWritten")));
-        assertEquals(11211, Integer.parseInt(getAttribute(provider, memCachedServerMBean, "Port")));
-        assertEquals(Boolean.TRUE, Boolean.parseBoolean(getAttribute(provider, memCachedServerMBean, "tcpNoDelay")));
-        assertEquals(0, Integer.parseInt(getAttribute(provider, memCachedServerMBean, "ReceiveBufferSize")));
-        assertEquals(-1, Integer.parseInt(getAttribute(provider, memCachedServerMBean, "IdleTimeout")));
-        assertEquals(0, Integer.parseInt(getAttribute(provider, memCachedServerMBean, "SendBufferSize")));
-        assertNotEquals(0, Integer.parseInt(getAttribute(provider, memCachedServerMBean, "NumberWorkerThreads")));
-        assertNotEquals(0, getAttribute(provider, memCachedServerMBean, "HostName").length());
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, memCachedTransportMBean, "TotalBytesRead")));
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, memCachedTransportMBean, "TotalBytesWritten")));
+        assertEquals(11211, Integer.parseInt(getAttribute(provider, memCachedTransportMBean, "Port")));
+        assertEquals(Boolean.TRUE, Boolean.parseBoolean(getAttribute(provider, memCachedTransportMBean, "tcpNoDelay")));
+        assertEquals(0, Integer.parseInt(getAttribute(provider, memCachedTransportMBean, "ReceiveBufferSize")));
+        assertEquals(-1, Integer.parseInt(getAttribute(provider, memCachedTransportMBean, "IdleTimeout")));
+        assertEquals(0, Integer.parseInt(getAttribute(provider, memCachedTransportMBean, "SendBufferSize")));
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, memCachedTransportMBean, "NumberIOThreads")));
+        assertEquals(0, Integer.parseInt(getAttribute(provider, memCachedTransportMBean, "PendingTasks")));
+        assertNotEquals(0, getAttribute(provider, memCachedTransportMBean, "HostName").length());
+
+        assertEquals(0, Integer.parseInt(getAttribute(provider, memCachedExecutorMBean, "PoolSize")));
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, memCachedExecutorMBean, "MaximumPoolSize")));
+    }
+
+    @Test
+    public void testRestServerAttributes() throws Exception {
+        HttpResponse insert = rest.put(rest.fullPathKey("restKey"), "restValue", "text/plain");
+        assertEquals(0, insert.getEntity().getContentLength());
+
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, restTransportMBean, "TotalBytesRead")));
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, restTransportMBean, "TotalBytesWritten")));
+        assertEquals(8080, Integer.parseInt(getAttribute(provider, restTransportMBean, "Port")));
+        assertEquals(Boolean.TRUE, Boolean.parseBoolean(getAttribute(provider, restTransportMBean, "tcpNoDelay")));
+        assertEquals(0, Integer.parseInt(getAttribute(provider, restTransportMBean, "ReceiveBufferSize")));
+        assertEquals(-1, Integer.parseInt(getAttribute(provider, restTransportMBean, "IdleTimeout")));
+        assertEquals(0, Integer.parseInt(getAttribute(provider, restTransportMBean, "SendBufferSize")));
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, restTransportMBean, "NumberIOThreads")));
+        assertEquals(0, Integer.parseInt(getAttribute(provider, restTransportMBean, "PendingTasks")));
+        assertNotEquals(0, getAttribute(provider, restTransportMBean, "HostName").length());
+
+        assertEquals(0, Integer.parseInt(getAttribute(provider, restExecutorMBean, "PoolSize")));
+        assertNotEquals(0, Integer.parseInt(getAttribute(provider, restExecutorMBean, "MaximumPoolSize")));
     }
 
     @Test

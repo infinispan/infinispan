@@ -3,6 +3,7 @@ package org.infinispan.server.core.transport;
 import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
@@ -29,6 +30,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
 
@@ -195,8 +197,10 @@ public class NettyTransport implements Transport {
    }
 
    @Override
-   public int getNumberWorkerThreads() {
-      return configuration.workerThreads();
+   public int getPendingTasks() {
+      AtomicInteger count = new AtomicInteger(0);
+      ioGroup.forEach(ee -> count.addAndGet(((SingleThreadEventExecutor)ee).pendingTasks()));
+      return count.get();
    }
 
    @Override
