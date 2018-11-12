@@ -1818,7 +1818,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                         eventImpl.getOldMetadata(), (V) eventImpl.getValue(),
                         eventImpl.getMetadata(), evType);
                }
-               if (newValue != eventImpl.getValue() && !converter.useRequestFormat()) {
+               if (!converter.useRequestFormat()) {
                   // Convert from the filter output to the request output
                   return convertEventToRequestFormat(eventImpl, null, converter, newValue);
                } else {
