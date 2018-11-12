@@ -238,6 +238,30 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       public DynamicCustomEventWithStateLogListener(RemoteCache<K, ?> r) { super(r); }
    }
 
+   @ClientListener(converterFactoryName = "simple-converter-factory")
+   public static class SimpleListener<K> extends CustomEventLogListener<K, String> {
+      public SimpleListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
+   }
+
+   @NamedFactory(name = "simple-converter-factory")
+   static class SimpleConverterFactory<K> implements CacheEventConverterFactory {
+      @Override
+      @SuppressWarnings("unchecked")
+      public CacheEventConverter<String, String, CustomEvent> getConverter(Object[] params) {
+         return new SimpleConverter();
+      }
+
+      static class SimpleConverter<K> implements CacheEventConverter<K, String, String>, Serializable, ExternalPojo {
+         @Override
+         public String convert(K key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
+            if (newValue != null) return newValue;
+            return oldValue;
+         }
+      }
+   }
+
    @NamedFactory(name = "static-converter-factory")
    public static class StaticConverterFactory<K> implements CacheEventConverterFactory {
       @Override
