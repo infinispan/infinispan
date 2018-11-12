@@ -21,10 +21,6 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -34,7 +30,6 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
@@ -106,7 +101,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
-import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information on
@@ -148,7 +142,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private DefaultExecutorService distributedExecutorService;
    private CrashedMemberDetectorListener viewChangeListener;
    private ReAddMyAddressListener topologyChangeListener;
-   private ExecutorService executor;
    private IterationManager iterationManager;
    private RemoveCacheListener removeCacheListener;
    private ClientCounterManagerNotificationManager clientCounterNotificationManager;
@@ -182,7 +175,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    public HotRodDecoder getDecoder() {
-      return new HotRodDecoder(cacheManager, getExecutor(getQualifiedName()), this);
+      return new HotRodDecoder(cacheManager, getExecutor(), this);
    }
 
    /**
@@ -276,31 +269,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
          addSelfToTopologyView(cacheManager);
       }
-   }
-
-   private AbortPolicy abortPolicy = new AbortPolicy() {
-      @Override
-      public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-         if (executor.isShutdown())
-            throw new IllegalLifecycleStateException("Server has been stopped");
-         else
-            super.rejectedExecution(r, e);
-      }
-   };
-
-   protected ExecutorService getExecutor(String threadPrefix) {
-      if (this.executor == null || this.executor.isShutdown()) {
-         DefaultThreadFactory factory = new DefaultThreadFactory(threadPrefix + "-ServerHandler");
-         int workerThreads = getWorkerThreads();
-         this.executor = new ThreadPoolExecutor(
-               workerThreads,
-               workerThreads,
-               0L, TimeUnit.MILLISECONDS,
-               new LinkedBlockingQueue<>(),
-               factory,
-               abortPolicy);
-      }
-      return executor;
    }
 
    @Override
@@ -622,7 +590,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
       if (clientListenerRegistry != null) clientListenerRegistry.stop();
       if (clientCounterNotificationManager != null) clientCounterNotificationManager.stop();
-      if (executor != null) executor.shutdownNow();
       super.stop();
    }
 

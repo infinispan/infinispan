@@ -41,6 +41,10 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
       this.server = server;
    }
 
+   public Executor getExecutor() {
+      return executor;
+   }
+
    @Override
    public void handlerAdded(ChannelHandlerContext ctx) {
       auth = new Authentication(ctx.channel(), server);

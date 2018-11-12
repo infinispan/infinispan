@@ -55,18 +55,23 @@ public class ResourceDMBean implements DynamicMBean {
    private final MBeanAttributeInfo[] attInfos;
    private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<String, InvokableMBeanAttributeInfo>(2);
    private final ManageableComponentMetadata mBeanMetadata;
+   private final String name;
 
    private static final Map<String, Field> FIELD_CACHE = CollectionFactory.makeConcurrentMap(64);
    private static final Map<String, Method> METHOD_CACHE = CollectionFactory.makeConcurrentMap(64);
 
    public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata) throws NoSuchFieldException, ClassNotFoundException {
+      this(instance, mBeanMetadata, null);
+   }
 
+   public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata, String name) throws NoSuchFieldException, ClassNotFoundException {
       if (instance == null)
          throw new NullPointerException("Cannot make an MBean wrapper for null instance");
 
       this.obj = instance;
       this.objectClass = instance.getClass();
       this.mBeanMetadata = mBeanMetadata;
+      this.name = name;
 
       // Load up all fields.
       int i = 0;
@@ -402,6 +407,12 @@ public class ResourceDMBean implements DynamicMBean {
 
    public String getObjectName() {
       String s = mBeanMetadata.getJmxObjectName();
-      return (s != null && s.trim().length() > 0) ? s : objectClass.getSimpleName();
+      if (s != null && s.trim().length() > 0) {
+         return s;
+      } else if (name != null) {
+         return name;
+      } else {
+          return objectClass.getSimpleName();
+      }
    }
 }

@@ -1,11 +1,15 @@
 package org.infinispan.server.core;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.DynamicMBean;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.logging.LogFactory;
@@ -17,7 +21,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
+import org.infinispan.server.core.utils.ManageableThreadPoolExecutorService;
 import org.infinispan.tasks.TaskManager;
+
+import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -38,6 +45,8 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    protected A configuration;
    private ObjectName transportObjName;
    private MBeanServer mbeanServer;
+   private ThreadPoolExecutor executor;
+   private ObjectName executorObjName;
 
 
    protected AbstractProtocolServer(String protocolName) {
@@ -88,14 +97,14 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager);
       transport.initializeHandler(getInitializer());
 
-      // Register transport MBean regardless
-      registerTransportMBean();
+      // Register transport and worker MBeans regardless
+      registerServerMBeans();
 
       try {
          transport.start();
       } catch (Throwable re) {
          try {
-            unregisterTransportMBean();
+            unregisterServerMBeans();
          } catch (Exception e) {
             throw new CacheException(e);
          }
@@ -103,33 +112,62 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       }
    }
 
-   protected void registerTransportMBean() {
+   protected ThreadPoolExecutor getExecutor() {
+      if (this.executor == null || this.executor.isShutdown()) {
+         DefaultThreadFactory factory = new DefaultThreadFactory(getQualifiedName() + "-ServerHandler");
+         int workerThreads = getWorkerThreads();
+         this.executor = new ThreadPoolExecutor(
+               workerThreads,
+               workerThreads,
+               0L, TimeUnit.MILLISECONDS,
+               new LinkedBlockingQueue<>(),
+               factory,
+               abortPolicy);
+      }
+      return executor;
+   }
+
+   private ThreadPoolExecutor.AbortPolicy abortPolicy = new ThreadPoolExecutor.AbortPolicy() {
+      @Override
+      public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+         if (executor.isShutdown())
+            throw new IllegalLifecycleStateException("Server has been stopped");
+         else
+            super.rejectedExecution(r, e);
+      }
+   };
+
+   protected void registerServerMBeans() {
       GlobalConfiguration globalCfg = cacheManager.getCacheManagerConfiguration();
       GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
       mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
       String groupName = String.format("type=Server,name=%s", getQualifiedName());
       String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, groupName);
 
-      // Pick up metadata from the component metadata repository
-      ManageableComponentMetadata meta = LifecycleCallbacks.componentMetadataRepo
-            .findComponentMetadata(transport.getClass()).toManageableComponentMetadata();
       try {
-         // And use this metadata when registering the transport as a dynamic MBean
-         DynamicMBean dynamicMBean = new ResourceDMBean(transport, meta);
-
-         transportObjName = new ObjectName(String.format("%s:%s,component=%s", jmxDomain, groupName,
-               meta.getJmxObjectName()));
-         JmxUtil.registerMBean(dynamicMBean, transportObjName, mbeanServer);
+         transportObjName = registerMBean(transport, jmxDomain, groupName, null);
+         executorObjName = registerMBean(new ManageableThreadPoolExecutorService(getExecutor()), jmxDomain, groupName, "WorkerExecutor");
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
 
-   protected void unregisterTransportMBean() throws Exception {
-      if (mbeanServer != null && transportObjName != null) {
-         // Unregister mbean(s)
+   private ObjectName registerMBean(Object instance, String jmxDomain, String groupName, String name) throws Exception {
+      // Pick up metadata from the component metadata repository
+      ManageableComponentMetadata meta = LifecycleCallbacks.componentMetadataRepo
+            .findComponentMetadata(instance.getClass()).toManageableComponentMetadata();
+      DynamicMBean dynamicMBean = new ResourceDMBean(instance, meta);
+      ObjectName objectName = new ObjectName(String.format("%s:%s,component=%s", jmxDomain, groupName, name != null ? name : meta.getJmxObjectName()));
+      JmxUtil.registerMBean(dynamicMBean, objectName, mbeanServer);
+      return objectName;
+   }
+
+   protected void unregisterServerMBeans() throws Exception {
+      // Unregister mbean(s)
+      if (transportObjName != null)
          JmxUtil.unregisterMBean(transportObjName, mbeanServer);
-      }
+      if (executorObjName != null)
+         JmxUtil.unregisterMBean(executorObjName, mbeanServer);
    }
 
    public String getQualifiedName() {
@@ -142,11 +180,13 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       if (isDebug && configuration != null)
          log.debugf("Stopping server listening in %s:%d", configuration.host(), configuration.port());
 
+      if (executor != null) executor.shutdownNow();
+
       if (transport != null)
          transport.stop();
 
       try {
-         unregisterTransportMBean();
+         unregisterServerMBeans();
       } catch (Exception e) {
          throw new CacheException(e);
       }
@@ -187,5 +227,9 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       return transport;
    }
 
+   /**
+    * @deprecated Use the {@link #getExecutor()} to obtain information about the worker executor instead
+    */
+   @Deprecated
    public abstract int getWorkerThreads();
 }

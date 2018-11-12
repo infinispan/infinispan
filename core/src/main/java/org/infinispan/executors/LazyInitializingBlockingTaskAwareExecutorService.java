@@ -23,13 +23,12 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
  * @author Pedro Ruivo
  * @since 5.3
  */
-public final class LazyInitializingBlockingTaskAwareExecutorService implements BlockingTaskAwareExecutorService {
+public final class LazyInitializingBlockingTaskAwareExecutorService extends ManageableExecutorService<BlockingTaskAwareExecutorService> implements BlockingTaskAwareExecutorService {
 
    private final ThreadPoolExecutorFactory<ExecutorService> executorFactory;
    private final ThreadFactory threadFactory;
    private final TimeService timeService;
    private final String controllerThreadName;
-   private volatile BlockingTaskAwareExecutorService delegate;
 
    public LazyInitializingBlockingTaskAwareExecutorService(ThreadPoolExecutorFactory<ExecutorService> executorFactory,
                                                            ThreadFactory threadFactory,
@@ -43,104 +42,104 @@ public final class LazyInitializingBlockingTaskAwareExecutorService implements B
    @Override
    public void execute(BlockingRunnable runnable) {
       initIfNeeded();
-      delegate.execute(runnable);
+      executor.execute(runnable);
    }
 
    @Override
    public void checkForReadyTasks() {
-      if (delegate != null) {
-         delegate.checkForReadyTasks();
+      if (executor != null) {
+         executor.checkForReadyTasks();
       }
    }
 
    @Override
    public void shutdown() {
-      if (delegate != null) delegate.shutdown();
+      if (executor != null) executor.shutdown();
    }
 
    @Override
    public List<Runnable> shutdownNow() {
-      if (delegate == null)
+      if (executor == null)
          return Collections.emptyList();
       else
-         return delegate.shutdownNow();
+         return executor.shutdownNow();
    }
 
    @Override
    public boolean isShutdown() {
-      return delegate == null || delegate.isShutdown();
+      return executor == null || executor.isShutdown();
    }
 
    @Override
    public boolean isTerminated() {
-      return delegate == null || delegate.isTerminated();
+      return executor == null || executor.isTerminated();
    }
 
    @Override
    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-      if (delegate == null)
+      if (executor == null)
          return true;
       else
-         return delegate.awaitTermination(timeout, unit);
+         return executor.awaitTermination(timeout, unit);
    }
 
    @Override
    public <T> Future<T> submit(Callable<T> task) {
       initIfNeeded();
-      return delegate.submit(task);
+      return executor.submit(task);
    }
 
    @Override
    public <T> Future<T> submit(Runnable task, T result) {
       initIfNeeded();
-      return delegate.submit(task, result);
+      return executor.submit(task, result);
    }
 
    @Override
    public Future<?> submit(Runnable task) {
       initIfNeeded();
-      return delegate.submit(task);
+      return executor.submit(task);
    }
 
    @Override
    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
       initIfNeeded();
-      return delegate.invokeAll(tasks);
+      return executor.invokeAll(tasks);
    }
 
    @Override
    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
       initIfNeeded();
-      return delegate.invokeAll(tasks, timeout, unit);
+      return executor.invokeAll(tasks, timeout, unit);
    }
 
    @Override
    public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
       initIfNeeded();
-      return delegate.invokeAny(tasks);
+      return executor.invokeAny(tasks);
    }
 
    @Override
    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       initIfNeeded();
-      return delegate.invokeAny(tasks, timeout, unit);
+      return executor.invokeAny(tasks, timeout, unit);
    }
 
    @Override
    public void execute(Runnable command) {
       initIfNeeded();
-      delegate.execute(command);
+      executor.execute(command);
    }
 
    public BlockingTaskAwareExecutorService getExecutorService() {
-      return delegate;
+      return executor;
    }
 
    private void initIfNeeded() {
-      if (delegate == null) {
+      if (executor == null) {
          synchronized (this) {
-            if (delegate == null) {
-               delegate = new BlockingTaskAwareExecutorServiceImpl(controllerThreadName ,
+            if (executor == null) {
+               executor = new BlockingTaskAwareExecutorServiceImpl(controllerThreadName ,
                                                                    executorFactory.createExecutor(threadFactory),
                                                                    timeService);
             }
