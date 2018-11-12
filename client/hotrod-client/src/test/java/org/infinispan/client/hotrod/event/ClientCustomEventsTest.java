@@ -10,6 +10,8 @@ import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEv
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventWithStateLogListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.RawStaticConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.RawStaticCustomEventLogListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.SimpleConverterFactory;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.SimpleListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogWithStateListener;
@@ -30,6 +32,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory());
       server.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory());
       server.addCacheEventConverterFactory("raw-static-converter-factory", new RawStaticConverterFactory());
+      server.addCacheEventConverterFactory("simple-converter-factory", new SimpleConverterFactory<>());
       return server;
    }
 
@@ -44,6 +47,15 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
          l.expectModifiedEvent(new CustomEvent(1, "newone", 0));
          remote.remove(1);
          l.expectRemovedEvent(new CustomEvent(1, null, 0));
+      });
+   }
+
+   public void testCustomEvents2() {
+      final SimpleListener<String> l = new SimpleListener<>(remoteCacheManager.getCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.put("1", "one");
+         l.expectCreatedEvent("one");
       });
    }
 
