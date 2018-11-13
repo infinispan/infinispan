@@ -55,8 +55,10 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
    }
 
    @BeforeMethod
-   protected void beforeMethod() {
+   protected void beforeMethod() throws Exception {
       factory.setOwnerIndexes(1, 2);
+      factory.triggerRebalance(cache(0, CACHE_NAME));
+      TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
    }
 
    @Override
@@ -137,7 +139,11 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK).containsKey(KEY);
+            if (cacheMode.isDistributed()) {
+               return cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK).containsKey(KEY);
+            }
+            // Scattered always writes to next owner and 1 is always the primary
+            return cache2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK).containsKey(KEY);
          }
       });
 
