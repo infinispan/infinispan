@@ -37,28 +37,26 @@ loss, and hence it's not recommended for this use case. The default value is
 ifndef::productized[]
 ===== Segmentation support
 The single file cache store supports segmentation and creates a separate
-instance per segment. Segmentation results in multiple directories under the configured directory, where each directory is a number that represents the segment to which the data maps.
-====
+instance per segment. Segmentation results in multiple directories under the
+configured directory, where each directory is a number that represents the
+segment to which the data maps.
 endif::productized[]
 
 ===== Configuration
+The following examples show single file cache store configuration:
 
-[source,xml]
+[source,xml,options=nowrap]
 ----
-
 <persistence>
    <file-store path="/tmp/myDataStore" max-entries="5000"/>
 </persistence>
-
 ----
 
-[source,java]
+[source,java,options=nowrap]
 ----
-
 ConfigurationBuilder b = new ConfigurationBuilder();
 b.persistence()
     .addSingleFileStore()
     .location("/tmp/myDataStore")
     .maxEntries(5000);
-
 ----
