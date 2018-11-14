@@ -14,6 +14,7 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.marshall.IdentityMarshaller;
@@ -39,7 +41,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
@@ -93,7 +97,9 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       restServer.start(builder.build(), cacheManager);
       restClient = new HttpClient();
 
-      hotRodServer = startHotRodServer(cacheManager);
+      HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
+      serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
+      hotRodServer = startHotRodServer(cacheManager, serverBuilder);
 
       defaultRemoteCache = createRemoteCacheManager(IdentityMarshaller.INSTANCE).getCache(DEFAULT_CACHE_NAME);
       defaultMarshalledRemoteCache = createRemoteCacheManager(null).getCache(MARSHALLED_CACHE_NAME);
@@ -354,11 +360,52 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       assertArrayEquals((byte[]) bytesFromRest, value);
    }
 
+   @Test
+   public void testCacheLifecycle() throws Exception {
+      // Write from Hot Rod
+      stringRemoteCache.put("key", "Hello World");
+      assertEquals(stringRemoteCache.get("key"), "Hello World");
+
+      // Read from REST
+      RestRequest restRequest = new RestRequest().cache(STRING_CACHE_NAME).key("key").accept(TEXT_PLAIN);
+      assertEquals(restRequest.executeGet().getResponseBodyAsString(), "Hello World");
+
+      // Delete the cache
+      RemoteCacheManagerAdmin admin = stringRemoteCache.getRemoteCacheManager().administration();
+      admin.removeCache(stringRemoteCache.getName());
+
+      // Check cache not available
+      assertClientError(() -> stringRemoteCache.get("key"), "CacheNotFoundException");
+      assertEquals(restRequest.executeGet().getStatusCode(), HttpStatus.SC_NOT_FOUND);
+
+      // Recreate the cache
+      RemoteCache<String, String> recreated = admin.getOrCreateCache(stringRemoteCache.getName(), new ConfigurationBuilder()
+            .encoding().key().mediaType(TEXT_PLAIN_TYPE)
+            .encoding().value().mediaType(TEXT_PLAIN_TYPE)
+            .build());
+
+      // Write from Hot Rod
+      recreated.put("key", "Hello World");
+      assertEquals(recreated.get("key"), "Hello World");
+
+      // Read from REST
+      assertEquals(restRequest.executeGet().getResponseBodyAsString(), "Hello World");
+   }
+
+   private void assertClientError(Runnable runnable, String messagePart) {
+      try {
+         runnable.run();
+      } catch (Throwable t) {
+         String message = t.getMessage();
+         assertTrue(message != null && message.contains(messagePart));
+      }
+   }
+
    private String getEndpoint(String cache) {
       return String.format("http://localhost:%s/rest/%s", restServer.getPort(), cache);
    }
 
-   private String asString(Object content) throws Exception {
+   private String asString(Object content) {
       if (content instanceof byte[]) {
          return new String((byte[]) content, UTF_8);
       }
@@ -428,7 +475,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
          assertEquals(post.getStatusCode(), HttpStatus.SC_OK);
       }
 
-      Object read() throws IOException {
+      HttpMethod executeGet() throws IOException {
          HttpMethod get = new GetMethod(getEndpoint(this.cacheName) + "/" + this.key);
          if (this.accept != null) {
             get.setRequestHeader(ACCEPT, this.accept.toString());
@@ -437,6 +484,11 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
             get.setRequestHeader("Key-Content-Type", this.keyContentType);
          }
          restClient.executeMethod(get);
+         return get;
+      }
+
+      Object read() throws IOException {
+         HttpMethod get = executeGet();
          assertEquals(get.getStatusCode(), HttpStatus.SC_OK);
          return get.getResponseBody();
       }
