@@ -168,6 +168,11 @@ public final class LifecycleManager implements ModuleLifecycle {
          ProtobufMetadataManagerImpl protobufMetadataManager =
             (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class).running();
          protobufMetadataManager.addCacheDependency(cacheName);
+
+         SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
+         RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
+         cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
+
       }
    }
 
@@ -203,10 +208,6 @@ public final class LifecycleManager implements ModuleLifecycle {
          Configuration cfg = cr.getComponent(Configuration.class);
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
-
-         RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
-
-         cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
 
          if (cfg.indexing().index().isEnabled()) {
             log.debugf("Wrapping the SearchWorkCreator for indexed cache %s", cacheName);
