@@ -9,7 +9,7 @@ public class RestOperationsOffHeapTest extends BaseRestOperationsTest {
 
    @Override
    public ConfigurationBuilder getDefaultCacheBuilder() {
-      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+      ConfigurationBuilder configurationBuilder = super.getDefaultCacheBuilder();
       configurationBuilder.memory().storageType(StorageType.OFF_HEAP);
       return configurationBuilder;
    }

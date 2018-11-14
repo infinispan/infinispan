@@ -2,7 +2,9 @@ package org.infinispan.rest;
 
 import java.io.Serializable;
 
-public class TestClass implements Serializable {
+import org.infinispan.marshall.core.ExternalPojo;
+
+public class TestClass implements Serializable, ExternalPojo {
 
    private String name;
 
@@ -20,4 +22,6 @@ public class TestClass implements Serializable {
             "name='" + name + '\'' +
             '}';
    }
+
+
 }
