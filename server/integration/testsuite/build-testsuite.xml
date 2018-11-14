@@ -193,6 +193,7 @@
         <transform in="clustered.xml" out="testsuite/clustered-default-repl.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-indexing-secured.xml" modifyInfinispan="${infinispan.parts}/indexing-secured.xml" hotrodAuth="${infinispan.parts}/hotrod-auth-clustered.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-indexing-minimal.xml" modifyInfinispan="${infinispan.parts}/indexing-minimal.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-rocksdb-local.xml" modifyInfinispan="${infinispan.parts}/rocksdb-local.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-rocksdb-dist.xml" modifyInfinispan="${infinispan.parts}/rocksdb-dist.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-rocksdb-repl.xml" modifyInfinispan="${infinispan.parts}/rocksdb-repl.xml" filtering="true"/>
