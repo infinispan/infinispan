@@ -121,4 +121,10 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
          resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
       }
    }
+
+   @Override
+   public void registerCapabilities(ManagementResourceRegistration resourceRegistration) {
+      super.registerCapabilities(resourceRegistration);
+      resourceRegistration.registerCapability(CONNECTOR_CAPABILITY);
+   }
 }
