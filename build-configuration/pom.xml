@@ -199,8 +199,8 @@
       <version.ops4j.pax.swissbox>1.8.3</version.ops4j.pax.swissbox>
       <version.ops4j.pax.url>2.5.2</version.ops4j.pax.url>
       <version.org.wildfly>${appserver.version}</version.org.wildfly>
-      <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
-      <version.org.wildfly.core>5.0.0.Final</version.org.wildfly.core>
+      <version.org.wildfly.arquillian>2.1.1.Final</version.org.wildfly.arquillian>
+      <version.org.wildfly.core>6.0.2.Final</version.org.wildfly.core>
       <version.osgi>4.3.1</version.osgi>
       <version.pax.exam>4.11.0</version.pax.exam>
       <version.picketbox>5.0.3.Final</version.picketbox>
