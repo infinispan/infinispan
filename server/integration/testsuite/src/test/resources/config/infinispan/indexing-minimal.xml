@@ -1,0 +1,13 @@
+<subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
+    <cache-container name="clustered" default-cache="default" statistics="true">
+        <transport lock-timeout="60000"/>
+        <distributed-cache name="default"/>
+
+        <distributed-cache name="indexed">
+            <indexing index="LOCAL">
+                <property name="default.directory_provider">local-heap</property>
+            </indexing>
+        </distributed-cache>
+
+    </cache-container>
+</subsystem>
