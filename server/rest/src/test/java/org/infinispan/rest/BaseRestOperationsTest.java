@@ -56,7 +56,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public abstract class BaseRestOperationsTest extends MultipleCacheManagersTest {
    protected HttpClient client;
-   private static final int NUM_SERVERS = 1;
+   private static final int NUM_SERVERS = 2;
    private List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
 
    public ConfigurationBuilder getDefaultCacheBuilder() {
