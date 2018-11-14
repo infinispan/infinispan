@@ -29,6 +29,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.search.entity.Person;
 import org.infinispan.server.core.dataconversion.JsonTranscoder;
 import org.infinispan.server.core.dataconversion.XMLTranscoder;
@@ -37,13 +38,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "rest.RestOperationsTest")
 public class RestOperationsTest extends BaseRestOperationsTest {
 
-   public ConfigurationBuilder getDefaultCacheBuilder() {
-      return new ConfigurationBuilder();
-   }
-
    @Override
-   protected void defineCaches() {
-      super.defineCaches();
+   void defineCaches(EmbeddedCacheManager cm) {
+      super.defineCaches(cm);
       ConfigurationBuilder object = getDefaultCacheBuilder();
       object.encoding().key().mediaType(TEXT_PLAIN_TYPE);
       object.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
@@ -51,9 +48,8 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       ConfigurationBuilder legacyStorageCache = getDefaultCacheBuilder();
       legacyStorageCache.encoding().key().mediaType("application/x-java-object;type=java.lang.String");
 
-      restServer.defineCache("objectCache", object);
-      restServer.defineCache("legacy", legacyStorageCache);
-
+      cm.defineConfiguration("objectCache", object.build());
+      cm.defineConfiguration("legacy", legacyStorageCache.build());
    }
 
    @Test
@@ -63,7 +59,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "legacy", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "legacy", "test"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -82,7 +78,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "objectCache", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "test"))
             .header(HttpHeader.ACCEPT, "application/json")
             .send();
 
@@ -101,7 +97,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "objectCache", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "test"))
             .header(HttpHeader.ACCEPT, "application/xml")
             .send();
 
@@ -153,13 +149,13 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    @Test
    public void shouldReadByteArrayWithPojoCache() throws Exception {
       //given
-      Cache cache = restServer.getCacheManager().getCache("pojoCache").getAdvancedCache()
+      Cache cache = restServer().getCacheManager().getCache("pojoCache").getAdvancedCache()
             .withEncoding(IdentityEncoder.class);
       cache.put("k1", "v1".getBytes());
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "pojoCache", "k1"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "pojoCache", "k1"))
             .header(HttpHeader.ACCEPT, APPLICATION_OCTET_STREAM_TYPE)
             .send();
 
@@ -178,7 +174,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "pojoCache", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "pojoCache", "test"))
             .header(HttpHeader.ACCEPT, APPLICATION_JSON_TYPE)
             .send();
 
@@ -214,7 +210,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "pojoCache", "key1"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "pojoCache", "key1"))
             .header(HttpHeader.ACCEPT, TEXT_PLAIN_TYPE)
             .send();
 
@@ -230,7 +226,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       putBinaryValueInCache("default", "keyA", "<hey>ho</hey>".getBytes(), MediaType.APPLICATION_OCTET_STREAM);
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "keyA"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "keyA"))
             .send();
 
       //then
@@ -242,16 +238,16 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    @Test
    public void shouldIgnoreDisabledCaches() throws Exception {
       putStringValueInCache("default", "K", "V");
-      String url = String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "K");
+      String url = String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "K");
 
       ContentResponse response = client.newRequest(url).send();
       assertThat(response).isOk();
 
-      restServer.ignoreCache("default");
+      restServer().ignoreCache("default");
       response = client.newRequest(url).send();
       assertThat(response).isServiceUnavailable();
 
-      restServer.unignoreCache("default");
+      restServer().unignoreCache("default");
       response = client.newRequest(url).send();
       assertThat(response).isOk();
    }
@@ -262,13 +258,13 @@ public class RestOperationsTest extends BaseRestOperationsTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .method(HttpMethod.DELETE)
             .send();
 
       //then
       assertThat(response).isOk();
-      Assertions.assertThat(restServer.getCacheManager().getCache("default")).isEmpty();
+      Assertions.assertThat(restServer().getCacheManager().getCache("default")).isEmpty();
    }
 
    @Test
@@ -276,7 +272,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       putValueInCache("default", "key", "value");
 
       ContentResponse preFlight = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "key"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "key"))
             .method(HttpMethod.OPTIONS)
             .header(HttpHeader.HOST, "localhost")
             .header(HttpHeader.ORIGIN, "http://localhost:80")
@@ -295,7 +291,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ORIGIN, "http://127.0.0.1:80")
             .send();
 
@@ -313,7 +309,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       uncompressingClient.getContentDecoderFactories().clear();
 
       ContentResponse response = uncompressingClient
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "k"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "k"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -322,7 +318,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       client.getContentDecoderFactories().clear();
 
       response = uncompressingClient
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "k"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "k"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .header(ACCEPT_ENCODING, "gzip")
             .send();
@@ -343,7 +339,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       String expectError = "Class '" + value.getClass().getName() + "' blocked by deserialization white list";
 
       ContentResponse response1 = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "objectCache", "addr1"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "addr1"))
             .content(new BytesContentProvider(jbossMarshalled))
             .header(HttpHeader.CONTENT_TYPE, APPLICATION_JBOSS_MARSHALLING_TYPE)
             .method(HttpMethod.PUT)
@@ -353,7 +349,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       assertThat(response1).containsReturnedText(expectError);
 
       ContentResponse response2 = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "objectCache", "addr2"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "addr2"))
             .content(new BytesContentProvider(jsonMarshalled))
             .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON_TYPE)
             .method(HttpMethod.PUT)
@@ -363,7 +359,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       assertThat(response2).containsReturnedText(expectError);
 
       ContentResponse response3 = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "objectCache", "addr3"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "addr3"))
             .content(new BytesContentProvider(xmlMarshalled))
             .header(HttpHeader.CONTENT_TYPE, APPLICATION_XML_TYPE)
             .method(HttpMethod.PUT)
@@ -373,7 +369,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       assertThat(response3).containsReturnedText(expectError);
 
       ContentResponse response4 = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "objectCache", "addr4"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "addr4"))
             .content(new BytesContentProvider(javaMarshalled))
             .header(HttpHeader.CONTENT_TYPE, APPLICATION_SERIALIZED_OBJECT_TYPE)
             .method(HttpMethod.PUT)

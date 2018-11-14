@@ -19,6 +19,8 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -35,39 +37,61 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
-import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
-public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
+public abstract class BaseRestOperationsTest extends MultipleCacheManagersTest {
    protected HttpClient client;
-   protected RestServerHelper restServer;
+   private static final int NUM_SERVERS = 1;
+   private List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
 
-   protected abstract ConfigurationBuilder getDefaultCacheBuilder();
+   public ConfigurationBuilder getDefaultCacheBuilder() {
+      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+   }
 
-   @BeforeClass
-   public void beforeSuite() throws Exception {
-      restServer = RestServerHelper.defaultRestServer(getDefaultCacheBuilder(), "default");
-      defineCaches();
-      restServer.start(TestResourceTracker.getCurrentTestShortName());
+   @Override
+   protected void createCacheManagers() throws Exception {
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
+      globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+      GlobalConfigurationBuilder globalConfiguration = globalBuilder.clusteredDefault();
+
+      createCluster(globalConfiguration, getDefaultCacheBuilder(), NUM_SERVERS);
+
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         this.defineCaches(cm);
+         String[] cacheNames = cm.getCacheNames().toArray(new String[0]);
+         cm.startCaches(cacheNames);
+         waitForClusterToForm(cacheNames);
+         RestServerHelper restServerHelper = new RestServerHelper(cm);
+         restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
+         restServers.add(restServerHelper);
+      }
       client = new HttpClient();
       client.start();
+   }
+
+   protected RestServerHelper restServer() {
+      return restServers.get(0);
    }
 
    private static final long DEFAULT_LIFESPAN = 45190;
    private static final long DEFAULT_MAX_IDLE = 1859446;
 
-   protected void defineCaches() {
+   void defineCaches(EmbeddedCacheManager cm) {
       ConfigurationBuilder expirationConfiguration = getDefaultCacheBuilder();
       expirationConfiguration.expiration().lifespan(DEFAULT_LIFESPAN).maxIdle(DEFAULT_MAX_IDLE);
 
@@ -94,25 +118,26 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       pojoCache.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       pojoCache.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
 
-      restServer.defineCache("expiration", expirationConfiguration);
-      restServer.defineCache("xml", xmlCacheConfiguration);
-      restServer.defineCache("json", jsonCacheConfiguration);
-      restServer.defineCache("binary", octetStreamCacheConfiguration);
-      restServer.defineCache("unknown", unknownContentCacheConfiguration);
-      restServer.defineCache("serialized", javaSerialized);
-      restServer.defineCache("textCache", text);
-      restServer.defineCache("pojoCache", pojoCache);
+      cm.defineConfiguration("default", getDefaultCacheBuilder().build());
+      cm.defineConfiguration("expiration", expirationConfiguration.build());
+      cm.defineConfiguration("xml", xmlCacheConfiguration.build());
+      cm.defineConfiguration("json", jsonCacheConfiguration.build());
+      cm.defineConfiguration("binary", octetStreamCacheConfiguration.build());
+      cm.defineConfiguration("unknown", unknownContentCacheConfiguration.build());
+      cm.defineConfiguration("serialized", javaSerialized.build());
+      cm.defineConfiguration("textCache", text.build());
+      cm.defineConfiguration("pojoCache", pojoCache.build());
    }
 
    @AfterClass
    public void afterSuite() throws Exception {
       client.stop();
-      restServer.stop();
+      restServers.forEach(RestServerHelper::stop);
    }
 
    @AfterMethod
    public void afterMethod() {
-      restServer.clear();
+      restServers.forEach(RestServerHelper::clear);
    }
 
    @SuppressWarnings("unchecked")
@@ -122,13 +147,13 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    }
 
    public AdvancedCache getCache(String cacheName) {
-      return restServer.getCacheManager().getCache(cacheName, false).getAdvancedCache().withKeyEncoding(IdentityEncoder.class);
+      return restServer().getCacheManager().getCache(cacheName, false).getAdvancedCache().withKeyEncoding(IdentityEncoder.class);
    }
 
    @Test
    public void shouldGetNonExistingValue() throws Exception {
       //when
-      ContentResponse response = client.GET("http://localhost:" + restServer.getPort() + "/rest/default/nonExisting");
+      ContentResponse response = client.GET("http://localhost:" + restServer().getPort() + "/rest/default/nonExisting");
 
       //then
       ResponseAssertion.assertThat(response).doesntExist();
@@ -141,7 +166,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/wrongContext/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/wrongContext/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -156,7 +181,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -173,7 +198,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -189,7 +214,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s?extended=true", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s?extended=true", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -204,7 +229,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain;charset=UTF-8")
             .send();
 
@@ -221,7 +246,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "json", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "json", "test"))
             .header(HttpHeader.ACCEPT, "application/json")
             .send();
 
@@ -238,7 +263,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "xml", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "xml", "test"))
             .header(HttpHeader.ACCEPT, "application/xml")
             .send();
 
@@ -255,7 +280,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .send();
 
       //then
@@ -273,7 +298,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "serialized", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "serialized", "test"))
             .send();
 
       TestClass convertedObject = convertFromBytes(response.getContent(), TestClass.class);
@@ -292,7 +317,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -309,7 +334,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain;charset=utf-8")
             .send();
 
@@ -319,8 +344,8 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       ResponseAssertion.assertThat(response).hasReturnedText("test");
    }
 
-   protected void putValueInCache(String cacheName, Object key, Object testValue) {
-      restServer.getCacheManager().getCache(cacheName).getAdvancedCache().put(key, testValue);
+   void putValueInCache(String cacheName, Object key, Object testValue) {
+      restServer().getCacheManager().getCache(cacheName).getAdvancedCache().put(key, testValue);
    }
 
    @Test
@@ -330,7 +355,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .method(HttpMethod.HEAD)
             .send();
 
@@ -339,9 +364,9 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       ResponseAssertion.assertThat(response).hasNoContent();
    }
 
-   protected void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
+   private void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
       Request request = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), cacheName, key))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
             .content(new StringContentProvider(value))
             .header("Content-type", contentType)
             .method(HttpMethod.PUT);
@@ -351,21 +376,21 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       ResponseAssertion.assertThat(response).isOk();
    }
 
-   protected void putInCache(String cacheName, Object key, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
+   private void putInCache(String cacheName, Object key, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
       putInCache(cacheName, key, null, value, contentType);
    }
 
-   protected void putStringValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
+   void putStringValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
       putInCache(cacheName, key, value, "text/plain; charset=utf-8");
    }
 
-   protected void putJsonValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
+   private void putJsonValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
       putInCache(cacheName, key, value, "application/json; charset=utf-8");
    }
 
-   protected void putBinaryValueInCache(String cacheName, String key, byte[] value, MediaType mediaType) throws InterruptedException, ExecutionException, TimeoutException {
+   void putBinaryValueInCache(String cacheName, String key, byte[] value, MediaType mediaType) throws InterruptedException, ExecutionException, TimeoutException {
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), cacheName, key))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
             .content(new BytesContentProvider(value))
             .header(HttpHeader.CONTENT_TYPE, mediaType.toString())
             .method(HttpMethod.PUT)
@@ -394,13 +419,13 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .method(HttpMethod.DELETE)
             .send();
 
       //then
       ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(restServer.getCacheManager().getCache("default")).isEmpty();
+      Assertions.assertThat(restServer().getCacheManager().getCache("default")).isEmpty();
    }
 
    @Test
@@ -408,7 +433,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       putBinaryValueInCache("serialized", "test", convertToBytes(42), APPLICATION_SERIALIZED_OBJECT);
 
       ContentResponse headResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "serialized", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "serialized", "test"))
             .method(HttpMethod.HEAD)
             .header(HttpHeader.ACCEPT, "application/x-java-serialized-object")
             .send();
@@ -419,14 +444,14 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "serialized", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "serialized", "test"))
             .method(HttpMethod.DELETE)
             .header(HttpHeader.CONTENT_TYPE, "text/plain;charset=UTF-8")
             .send();
 
       //then
       ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(restServer.getCacheManager().getCache("binary")).isEmpty();
+      Assertions.assertThat(restServer().getCacheManager().getCache("binary")).isEmpty();
    }
 
    @Test
@@ -435,7 +460,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "doesnt_exist"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "doesnt_exist"))
             .method(HttpMethod.DELETE)
             .send();
 
@@ -449,20 +474,20 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "default"))
+            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "default"))
             .method(HttpMethod.DELETE)
             .send();
 
       //then
       ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(restServer.getCacheManager().getCache("default")).isEmpty();
+      Assertions.assertThat(restServer().getCacheManager().getCache("default")).isEmpty();
    }
 
    @Test
    public void shouldGetAllEntriesFromEmptyCache() throws Exception {
       //when
       ContentResponse response = client
-            .newRequest("http://localhost:" + restServer.getPort() + "/rest/default")
+            .newRequest("http://localhost:" + restServer().getPort() + "/rest/default")
             .method(HttpMethod.GET)
             .header("Content-Type", "text/plain; charset=utf-8")
             .send();
@@ -480,7 +505,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "textCache"))
+            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "textCache"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -498,7 +523,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "textCache"))
+            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "textCache"))
             .header(HttpHeader.ACCEPT, "text/plain;charset=UTF-8")
             .send();
 
@@ -516,7 +541,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "textCache"))
+            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "textCache"))
             .header(HttpHeader.ACCEPT, "text/plain; charset=ISO-8859-1")
             .send();
 
@@ -534,7 +559,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "textCache"))
+            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "textCache"))
             .header(HttpHeader.ACCEPT, "application/json")
             .send();
 
@@ -553,7 +578,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "textCache"))
+            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "textCache"))
             .header(HttpHeader.ACCEPT, "application/xml")
             .send();
 
@@ -573,7 +598,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "default"))
+            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "default"))
             .header(HttpHeader.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_TYPE)
             .send();
 
@@ -593,7 +618,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "textCache", "key1"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "textCache", "key1"))
             .header(HttpHeader.ACCEPT, "ignored/wrong , text/plain")
             .send();
 
@@ -610,7 +635,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "key1"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "key1"))
             .header(HttpHeader.ACCEPT, "application/wrong-content-type")
             .send();
 
@@ -625,7 +650,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "key1"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "key1"))
             .method(HttpMethod.HEAD)
             .header(HttpHeader.ACCEPT, "garbage")
             .send();
@@ -640,14 +665,14 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse firstResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .method(HttpMethod.GET)
             .send();
 
       String etagFromFirstCall = firstResponse.getHeaders().get("ETag");
 
       ContentResponse secondResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .header("If-None-Match", etagFromFirstCall)
             .method(HttpMethod.GET)
             .send();
@@ -664,7 +689,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .header("If-None-Match", "Invalid-etag")
             .method(HttpMethod.GET)
             .send();
@@ -678,7 +703,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    public void shouldPutTextValueInCache() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .content(new StringContentProvider("Hey!"))
             .header("Content-type", "text/plain;charset=UTF-8")
             .send();
@@ -696,7 +721,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       putStringValueInCache("textCache", "test", "Hey!");
 
       ContentResponse getResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "textCache", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "textCache", "test"))
             .method(HttpMethod.GET)
             .header("Accept", "application/json")
             .send();
@@ -710,7 +735,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    public void shouldPutUnknownFormatValueInCache() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "unknown", "test"))
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "unknown", "test"))
             .content(new StringContentProvider("Hey!"))
             .header("Content-type", "application/unknown")
             .send();
@@ -730,7 +755,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       testClass.setName("test");
 
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "serialized", "test"))
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "serialized", "test"))
             .content(new BytesContentProvider(convertToBytes(testClass)))
             .header("Content-type", "application/x-java-serialized-object")
             .send();
@@ -752,7 +777,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .content(new StringContentProvider("Hey!"))
             .header("Content-type", "text/plain;charset=UTF-8")
             .send();
@@ -768,7 +793,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .content(new StringContentProvider("Hey!"))
             .header("Content-type", "text/plain;charset=UTF-8")
             .method(HttpMethod.PUT)
@@ -785,7 +810,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    public void shouldServeHtmlFile() throws Exception {
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest", restServer.getPort()))
+            .newRequest(String.format("http://localhost:%d/rest", restServer().getPort()))
             .method(HttpMethod.GET)
             .send();
 
@@ -799,7 +824,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    public void shouldServeBannerFile() throws Exception {
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/banner.png", restServer.getPort()))
+            .newRequest(String.format("http://localhost:%d/rest/banner.png", restServer().getPort()))
             .method(HttpMethod.GET)
             .send();
 
@@ -813,7 +838,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    public void shouldPutEntryWithDefaultTllAndIdleTime() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "expiration", "test"))
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "expiration", "test"))
             .content(new StringContentProvider("test"))
             .send();
 
@@ -831,7 +856,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    public void shouldPutImmortalEntryWithMinusOneTtlAndIdleTime() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "expiration", "test"))
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "expiration", "test"))
             .content(new StringContentProvider("test"))
             .header("timeToLiveSeconds", "-1")
             .header("maxIdleTimeSeconds", "-1")
@@ -850,7 +875,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    public void shouldPutImmortalEntryWithZeroTtlAndIdleTime() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "expiration", "test"))
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "expiration", "test"))
             .content(new StringContentProvider("test"))
             .header("timeToLiveSeconds", "0")
             .header("maxIdleTimeSeconds", "0")
@@ -870,7 +895,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       putStringValueInCache("xml", "key", "<value/>");
 
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "xml", "key"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "xml", "key"))
             .header(HttpHeader.ACCEPT, "application/json")
             .method(HttpMethod.GET)
             .send();
@@ -883,7 +908,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    public void shouldPutEntryWithTtlAndIdleTime() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "expiration", "test"))
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "expiration", "test"))
             .content(new StringContentProvider("test"))
             .header("timeToLiveSeconds", "50")
             .header("maxIdleTimeSeconds", "50")
@@ -903,7 +928,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       //when
       ByteBuffer payload = ByteBuffer.allocate(1_000_000);
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "binary", "test"))
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "binary", "test"))
             .content(new ByteBufferContentProvider(payload))
             .send();
 
@@ -921,7 +946,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       //when
       ByteBuffer payload = ByteBuffer.allocate(1_100_000);
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .content(new ByteBufferContentProvider(payload))
             .send();
 
@@ -934,7 +959,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       putStringValueInCache("default", "test", "test");
 
       ContentResponse getResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
             .accept("*/*")
             .method(HttpMethod.GET)
             .send();
@@ -945,7 +970,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    }
 
    protected ContentResponse get(String cacheName, Object key, String keyContentType, String acceptHeader) throws Exception {
-      Request request = client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), cacheName, key))
+      Request request = client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
             .method(HttpMethod.GET);
       if (acceptHeader != null) {
          request.accept(acceptHeader);
@@ -959,7 +984,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    }
 
    protected ContentResponse get(String cacheName, Object key, String acceptHeader) throws Exception {
-      Request request = client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), cacheName, key))
+      Request request = client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
             .method(HttpMethod.GET);
       if (acceptHeader != null) {
          request.accept(acceptHeader);
@@ -1134,7 +1159,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
    @Test
    public void shouldHandleInvalidPath() throws Exception {
-      Request browserRequest = client.newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "asdjsad"))
+      Request browserRequest = client.newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "asdjsad"))
             .header(HttpHeader.ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
             .method(HttpMethod.GET);
 
@@ -1144,7 +1169,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
    @Test
    public void shouldHandleIncompletePath() throws Exception {
-      Request req = client.newRequest(String.format("http://localhost:%d/rest/%s?action", restServer.getPort(), "default"))
+      Request req = client.newRequest(String.format("http://localhost:%d/rest/%s?action", restServer().getPort(), "default"))
             .method(HttpMethod.GET);
 
       ContentResponse response = req.send();
@@ -1196,7 +1221,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       putInCache("default", key, invalidXML, TEXT_PLAIN_TYPE);
 
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", key))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", key))
             .header(HttpHeader.ACCEPT, APPLICATION_XML_TYPE)
             .method(HttpMethod.GET).send();
 
