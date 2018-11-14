@@ -15,6 +15,9 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -36,12 +39,15 @@ public class RestCacheManager<V> {
    private final boolean allowInternalCacheAccess;
    private final Map<String, AdvancedCache<Object, V>> knownCaches =
          CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
+   private final RemoveCacheListener removeCacheListener;
 
    public RestCacheManager(EmbeddedCacheManager instance, Predicate<? super String> isCacheIgnored) {
       this.instance = instance;
       this.isCacheIgnored = isCacheIgnored;
       this.icr = instance.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       this.allowInternalCacheAccess = instance.getCacheManagerConfiguration().security().authorization().enabled();
+      removeCacheListener = new RemoveCacheListener();
+      SecurityActions.addListener(instance, removeCacheListener);
    }
 
    @SuppressWarnings("unchecked")
@@ -53,7 +59,7 @@ public class RestCacheManager<V> {
          throw logger.missingRequiredMediaType(name);
       }
       checkCacheAvailable(name);
-      String cacheKey = name + keyContentType.toString() + valueContentType.getTypeSubtype();
+      String cacheKey = name + "-" + keyContentType.toString() + valueContentType.getTypeSubtype();
       AdvancedCache<Object, V> registered = knownCaches.get(cacheKey);
       if (registered != null) return registered;
 
@@ -140,6 +146,20 @@ public class RestCacheManager<V> {
       ComponentRegistry cr = cache.getComponentRegistry();
       RollingUpgradeManager migrationManager = cr.getComponent(RollingUpgradeManager.class);
       if (migrationManager != null) migrationManager.addSourceMigrator(new RestSourceMigrator(cache));
+   }
+
+   public void stop() {
+      if (removeCacheListener != null) {
+         SecurityActions.removeListener(instance, removeCacheListener);
+      }
+   }
+
+   @Listener
+   class RemoveCacheListener {
+      @CacheStopped
+      public void cacheStopped(CacheStoppedEvent event) {
+         knownCaches.keySet().stream().filter(k -> k.startsWith(event.getCacheName() + "-")).forEach(knownCaches::remove);
+      }
    }
 
 }
