@@ -1,5 +1,6 @@
 package org.infinispan.marshall.exts;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -32,13 +33,35 @@ final class SecurityActions {
       if (System.getSecurityManager() != null) {
          field = AccessController.doPrivileged((PrivilegedAction<Field>) () -> {
             Field f = getDeclaredField(c, fieldName);
-            f.setAccessible(true);
+            if (f != null) {
+               f.setAccessible(true);
+            }
             return f;
          });
       } else {
          field = getDeclaredField(c, fieldName);
-         field.setAccessible(true);
+         if (field != null) {
+            field.setAccessible(true);
+         }
       }
       return field;
+   }
+
+   private static <T> Constructor<T> doGetConstructor(Class<T> c, Class<?>... parameterTypes) {
+      try {
+         return c.getConstructor(parameterTypes);
+      } catch (NoSuchMethodException e) {
+         return null;
+      }
+   }
+
+   static <T> Constructor<T> getConstructor(Class<T> c, Class<?>... parameterTypes) {
+      if (System.getSecurityManager() != null) {
+         return AccessController.doPrivileged((PrivilegedAction<Constructor<T>>) () -> {
+            return doGetConstructor(c, parameterTypes);
+         });
+      } else {
+         return doGetConstructor(c, parameterTypes);
+      }
    }
 }
