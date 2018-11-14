@@ -1,5 +1,6 @@
 package org.infinispan.rest.operations.mediatypes.impl;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import org.infinispan.CacheSet;
@@ -19,11 +20,11 @@ public class XMLOutputPrinter implements OutputPrinter {
 
    @Override
    public byte[] print(String cacheName, CacheSet<?> keys, Charset charset) {
-      return keys.stream()
+      return Arrays.stream(keys.toArray())
             .map(this::asString)
             .map(Escaper::escapeXml)
             .map(s -> "<key>" + s + "</key>")
-            .collect(() -> Collectors.joining("", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys>", "</keys>"))
+            .collect(Collectors.joining("", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys>", "</keys>"))
             .getBytes(charset.getJavaCharset());
    }
 

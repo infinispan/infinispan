@@ -1,5 +1,6 @@
 package org.infinispan.rest.operations.mediatypes.impl;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import org.infinispan.CacheSet;
@@ -15,8 +16,7 @@ public class TextOutputPrinter implements OutputPrinter {
 
    @Override
    public byte[] print(String cacheName, CacheSet<?> keys, Charset charset) {
-      return keys.stream()
-            .map(this::asString)
+      return Arrays.stream(keys.toArray()).map(this::asString)
             .collect(Collectors.joining("\n", "", ""))
             .getBytes(charset.getJavaCharset());
    }
