@@ -25,6 +25,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    private Authenticator authenticator = new VoidAuthenticator();
    private CacheOperations cacheOperations;
    private SearchOperations searchOperations;
+   private RestCacheManager<Object> restCacheManager;
 
    public RestServer() {
       super("REST");
@@ -81,9 +82,14 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    }
 
    @Override
+   public void stop() {
+      restCacheManager.stop();
+   }
+
+   @Override
    protected void startInternal(RestServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
       super.startInternal(configuration, cacheManager);
-      RestCacheManager<Object> restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
+      restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
       this.cacheOperations = new CacheOperations(configuration, restCacheManager);
       this.searchOperations = new SearchOperations(configuration, restCacheManager);
    }
