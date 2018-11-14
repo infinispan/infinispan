@@ -28,6 +28,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    private Authenticator authenticator = new VoidAuthenticator();
    private RestDispatcher restDispatcher;
+   private RestCacheManager<Object> restCacheManager;
 
    public RestServer() {
       super("REST");
@@ -80,9 +81,14 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    }
 
    @Override
+   public void stop() {
+      restCacheManager.stop();
+   }
+
+   @Override
    protected void startInternal(RestServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
       super.startInternal(configuration, cacheManager);
-      RestCacheManager<Object> restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
+      restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
       String rootContext = configuration.startTransport() ? configuration.contextPath() : "*";
       ResourceManager resourceManager = new ResourceManagerImpl(rootContext);
       resourceManager.registerResource(new CacheResource(restCacheManager, configuration));
