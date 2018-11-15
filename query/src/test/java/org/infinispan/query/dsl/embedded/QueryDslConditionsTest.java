@@ -3068,4 +3068,20 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       List<User> list = qb.build().list();
       assertEquals(0, list.size());
    }
+
+   public void testSingleIN() {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("surname").in("Man")
+            .and()
+            .having("gender").eq(User.Gender.MALE)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0).getId());
+      assertEquals("Man", list.get(0).getSurname());
+      assertEquals(User.Gender.MALE, list.get(0).getGender());
+   }
 }
