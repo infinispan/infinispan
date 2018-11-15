@@ -56,6 +56,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -154,6 +155,7 @@ public class ExampleConfigsIT {
     }
 
     @Test
+    @Ignore
     @WithRunningServer({@RunningServer(name = "rest-rolling-upgrade-2"),@RunningServer(name = "rest-rolling-upgrade-1")})
     public void testRestRollingUpgrades() throws Exception {
         final int PORT_OFFSET = 100;
