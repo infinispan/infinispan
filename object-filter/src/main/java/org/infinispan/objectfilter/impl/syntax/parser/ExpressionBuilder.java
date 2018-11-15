@@ -90,7 +90,12 @@ final class ExpressionBuilder<TypeMetadata> {
          ComparisonExpr booleanExpr = new ComparisonExpr(valueExpr, new ConstantValueExpr(typedValue), ComparisonExpr.Type.EQUAL);
          children.add(booleanExpr);
       }
-      push(new OrExpr(children));
+      if (children.size() == 1) {
+         // simplify INs with just one clause by removing the wrapper boolean expression
+         push(children.get(0));
+      } else {
+         push(new OrExpr(children));
+      }
    }
 
    public void addLike(PropertyPath<?> propertyPath, Object patternValue, Character escapeCharacter) {
