@@ -23,7 +23,6 @@ public class LocalCacheAsyncCacheStoreTest extends LocalCacheTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.fromXml("async-file-store-config.xml");
       cache = cacheManager.getCache("queryCache_lucenestore_async_filestore");
-
       return cacheManager;
    }
 
