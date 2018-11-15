@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.io.File;
 
 import org.infinispan.commons.util.Util;
@@ -24,10 +26,10 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.ClusteredCacheFSDirectoryTest")
 public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
 
-   private final String TMP_DIR = TestingUtil.tmpDirectory(this.getClass());
+   private final String TMP_DIR = TestingUtil.tmpDirectory(getClass());
 
    @Override
-   protected void createCacheManagers() throws Exception {
+   protected void createCacheManagers() {
       addClusterEnabledCacheManager(buildCacheConfig("index1"));
       addClusterEnabledCacheManager(buildCacheConfig("index2"));
       waitForClusterToForm();
@@ -49,7 +51,9 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
 
    @BeforeMethod
    protected void setUpTempDir() {
-      new File(TMP_DIR).mkdirs();
+      Util.recursiveFileRemove(TMP_DIR);
+      boolean created = new File(TMP_DIR).mkdirs();
+      assertTrue(created);
    }
 
    @Override

@@ -16,7 +16,6 @@ public class LocalCachePerfIspnDirConfTest extends LocalCacheTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.fromXml("nrt-performance-writer-infinispandirectory.xml");
       cache = cacheManager.getCache("Indexed");
-
       return cacheManager;
    }
 }
