@@ -997,7 +997,7 @@ public class StateConsumerImpl implements StateConsumer {
          return;
 
       // If there are no stores that couldn't remove segments, we don't have to worry about invaliding entries
-      if (!persistenceManager.removeSegments(removedSegments)) {
+      if (!CompletionStages.join(persistenceManager.removeSegments(removedSegments))) {
          return;
       }
 

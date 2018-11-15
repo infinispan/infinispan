@@ -15,14 +15,14 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.DefaultDataContainer;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
-import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.eviction.PassivationManager;
+import org.infinispan.eviction.impl.ActivationManagerStub;
 import org.infinispan.expiration.impl.InternalExpirationManager;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.EmbeddedTimeService;
@@ -84,6 +84,10 @@ public class DataContainerStressTest {
                        }
 
                        @Override
+                       public void passivate(InternalCacheEntry entry) {
+                       }
+
+                       @Override
                        public CompletionStage<Void> passivateAsync(InternalCacheEntry entry) {
                           return CompletableFutures.completedNull();
                        }
@@ -118,22 +122,7 @@ public class DataContainerStressTest {
 
                        }
                     }, entryFactory,
-              new ActivationManager() {
-                 @Override
-                 public void onUpdate(Object key, boolean newEntry) {
-
-                 }
-
-                 @Override
-                 public void onRemove(Object key, boolean newEntry) {
-
-                 }
-
-                 @Override
-                 public long getActivationCount() {
-                    return 0;
-                 }
-              }, null, timeService, null, new InternalExpirationManager() {
+              new ActivationManagerStub(), null, timeService, null, new InternalExpirationManager() {
                  @Override
                  public void processExpiration() {
 

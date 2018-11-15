@@ -3,6 +3,8 @@ package org.infinispan.persistence.manager;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
 import javax.transaction.Transaction;
@@ -18,7 +20,10 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
+
+import io.reactivex.Scheduler;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -47,7 +52,8 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public void preload() {
+   public CompletionStage<Void> preload() {
+      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -69,12 +75,18 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public void clearAllStores(Predicate<? super StoreConfiguration> predicate) {
+   public CompletionStage<Void> clearAllStores(Predicate<? super StoreConfiguration> predicate) {
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public boolean deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
+   public boolean deleteFromAllStoresSync(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
       return false;
+   }
+
+   @Override
+   public CompletionStage<Boolean> deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
+      return CompletableFutures.completedFalse();
    }
 
    @Override
@@ -99,21 +111,18 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public MarshallableEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
-      return null;
+   public CompletionStage<MarshallableEntry> loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public MarshallableEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
-      return null;
+   public CompletionStage<MarshallableEntry> loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicates) {
-   }
-
-   @Override
-   public void writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicates, long flags) {
+   public CompletionStage<Void> writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate, long flags) {
+      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -122,13 +131,13 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public int size(Predicate<? super StoreConfiguration> predicate) {
-      return 0;
+   public CompletionStage<Integer> size(Predicate<? super StoreConfiguration> predicate) {
+      return CompletableFuture.completedFuture(0);
    }
 
    @Override
-   public int size(IntSet segments) {
-      return 0;
+   public CompletionStage<Integer> size(IntSet segments) {
+      return CompletableFuture.completedFuture(0);
    }
 
    @Override
@@ -136,23 +145,32 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public void prepareAllTxStores(Transaction transaction, BatchModification batchModification, Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
+   public CompletionStage<Void> prepareAllTxStores(Transaction transaction, BatchModification batchModification, Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
+   public CompletionStage<Void> commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
+   public CompletionStage<Void> rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags) {
+   public void writeToAllNonTxStoresSync(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate) {
    }
 
    @Override
-   public void deleteBatchFromAllNonTxStores(Iterable<Object> keys, Predicate<? super StoreConfiguration> predicate, long flags) {
+   public CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags) {
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Void> deleteBatchFromAllNonTxStores(Iterable<Object> keys, Predicate<? super StoreConfiguration> predicate, long flags) {
+      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -163,5 +181,10 @@ public class PersistenceManagerStub implements PersistenceManager {
    @Override
    public boolean isReadOnly() {
       return false;
+   }
+
+   @Override
+   public Scheduler continuationScheduler() {
+      return null;
    }
 }

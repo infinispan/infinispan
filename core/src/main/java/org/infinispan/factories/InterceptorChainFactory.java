@@ -40,6 +40,8 @@ import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.interceptors.impl.IsMarshallableInterceptor;
 import org.infinispan.interceptors.impl.NotificationInterceptor;
+import org.infinispan.interceptors.impl.PassivationCacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.PassivationClusteredCacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.PassivationWriterInterceptor;
 import org.infinispan.interceptors.impl.PrefetchInterceptor;
 import org.infinispan.interceptors.impl.RetryingEntryWrappingInterceptor;
@@ -245,15 +247,19 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
 
       if (configuration.persistence().usingStores()) {
-         if (cacheMode.isClustered()) {
-            interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), ClusteredCacheLoaderInterceptor.class), false);
-         } else {
-            interceptorChain.appendInterceptor(createInterceptor(new CacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
-         }
-
          if (configuration.persistence().passivation()) {
+            if (cacheMode.isClustered()) {
+               interceptorChain.appendInterceptor(createInterceptor(new PassivationClusteredCacheLoaderInterceptor(), PassivationClusteredCacheLoaderInterceptor.class), false);
+            } else {
+               interceptorChain.appendInterceptor(createInterceptor(new PassivationCacheLoaderInterceptor(), PassivationCacheLoaderInterceptor.class), false);
+            }
             interceptorChain.appendInterceptor(createInterceptor(new PassivationWriterInterceptor(), PassivationWriterInterceptor.class), false);
          } else {
+            if (cacheMode.isClustered()) {
+               interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), ClusteredCacheLoaderInterceptor.class), false);
+            } else {
+               interceptorChain.appendInterceptor(createInterceptor(new CacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
+            }
             boolean transactionalStore = configuration.persistence().stores().stream().anyMatch(StoreConfiguration::transactional);
             if (transactionalStore && transactionMode.isTransactional())
                interceptorChain.appendInterceptor(createInterceptor(new TransactionalStoreInterceptor(), TransactionalStoreInterceptor.class), false);

@@ -3,8 +3,8 @@ package org.infinispan.persistence.manager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.infinispan.commons.util.ByRef;
@@ -43,7 +43,7 @@ public class OrderedUpdatesManagerImpl implements OrderedUpdatesManager {
    }
 
    @Override
-   public CompletableFuture<Void> checkLockAndStore(Object key, EntryVersion version, Function<CompletableFuture<?>, CompletableFuture<?>> enableTimeout, Consumer<Object> store) {
+   public CompletionStage<Void> checkLockAndStore(Object key, EntryVersion version, Function<CompletableFuture<?>, CompletableFuture<?>> enableTimeout, Function<Object, CompletionStage<Void>> store) {
       ByRef<CompletableFuture<?>> lockedFuture = new ByRef<>(null);
       ByRef<CompletableFuture<?>> waitFuture = new ByRef<>(null);
       dataContainer.compute(key, (k, oldEntry, factory) -> {
@@ -81,7 +81,7 @@ public class OrderedUpdatesManagerImpl implements OrderedUpdatesManager {
       CompletableFuture<?> lf = lockedFuture.get();
       if (lf != null) {
          try {
-            store.accept(key);
+            return store.apply(key);
          } finally {
             if (!locks.remove(key, lf)) {
                throw new IllegalStateException("No one but me should be able to replace the future");

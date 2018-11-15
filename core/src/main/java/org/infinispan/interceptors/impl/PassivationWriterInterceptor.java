@@ -32,7 +32,7 @@ public class PassivationWriterInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (isStoreEnabled(command) && !ctx.isInTxScope())
-         persistenceManager.clearAllStores(ctx.isOriginLocal() ? BOTH : PRIVATE);
+         return asyncInvokeNext(ctx, command, persistenceManager.clearAllStores(ctx.isOriginLocal() ? BOTH : PRIVATE));
 
       return invokeNext(ctx, command);
    }

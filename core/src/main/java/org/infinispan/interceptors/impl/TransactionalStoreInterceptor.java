@@ -40,7 +40,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
          for (WriteCommand writeCommand : modifications) {
             writeCommand.acceptVisitor(ctx, modBuilder);
          }
-         persistenceManager.prepareAllTxStores(tx, modBuilder.getModifications(), SHARED);
+         return asyncInvokeNext(ctx, command, persistenceManager.prepareAllTxStores(tx, modBuilder.getModifications(), SHARED));
       }
       return invokeNext(ctx, command);
    }
@@ -48,7 +48,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
-         persistenceManager.commitAllTxStores(ctx.getTransaction(), SHARED);
+         return asyncInvokeNext(ctx, command, persistenceManager.commitAllTxStores(ctx.getTransaction(), SHARED));
       }
       return invokeNext(ctx, command);
    }
@@ -56,7 +56,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
-         persistenceManager.rollbackAllTxStores(ctx.getTransaction(), SHARED);
+         return asyncInvokeNext(ctx, command, persistenceManager.rollbackAllTxStores(ctx.getTransaction(), SHARED));
       }
       return invokeNext(ctx, command);
    }

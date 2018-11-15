@@ -129,6 +129,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       toAdd.put("key2", "value2");
       cache.putAll(toAdd);
       assertStores(4);
+      TestingUtil.cleanUpDataContainerForCache(cache);
       assertCurrentNumberOfEntriesInMemory(1);
       assertCurrentNumberOfEntries(2);
 
@@ -139,6 +140,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       toAdd.put("key4", "value4");
       cache.putAll(toAdd);
       assertStores(2);
+      TestingUtil.cleanUpDataContainerForCache(cache);
       assertCurrentNumberOfEntriesInMemory(1);
       assertCurrentNumberOfEntries(4);
    }

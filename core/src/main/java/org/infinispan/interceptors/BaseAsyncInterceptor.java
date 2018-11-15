@@ -299,7 +299,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * @param syncValue sync value to return if stage is complete or as stage value
     * @return invocation stage or sync value
     */
-   public static Object delayedValue(CompletionStage<Void> stage, Object syncValue) {
+   public static Object delayedValue(CompletionStage<?> stage, Object syncValue) {
       if (stage != null) {
          CompletableFuture<?> future = stage.toCompletableFuture();
          if (!future.isDone()) {
@@ -320,7 +320,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     * @param throwable
     * @return
     */
-   public static Object delayedValue(CompletionStage<Void> stage, Object syncValue, Throwable throwable) {
+   public static Object delayedValue(CompletionStage<?> stage, Object syncValue, Throwable throwable) {
       if (throwable == null) {
          return delayedValue(stage, syncValue);
       }

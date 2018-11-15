@@ -138,7 +138,6 @@ public class StateConsumerTest extends AbstractInfinispanTest {
                                                      getTestThreadFactory("Worker"),
                                                      new ThreadPoolExecutor.CallerRunsPolicy());
 
-      StateTransferManager stateTransferManager = mock(StateTransferManager.class);
       LocalTopologyManager localTopologyManager = mock(LocalTopologyManager.class);
       CacheNotifier cacheNotifier = mock(CacheNotifier.class);
       RpcManager rpcManager = mock(RpcManager.class);
@@ -156,6 +155,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       DistributionManager distributionManager = mock(DistributionManager.class);
       LocalPublisherManager localPublisherManager = mock(LocalPublisherManager.class);
 
+      when(persistenceManager.removeSegments(any())).thenReturn(CompletableFuture.completedFuture(false));
       when(persistenceManager.publishKeys(any(), any())).thenReturn(Flowable.empty());
 
       when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(SmallIntSet.class)))

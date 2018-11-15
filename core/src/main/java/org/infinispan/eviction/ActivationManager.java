@@ -1,5 +1,7 @@
 package org.infinispan.eviction;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -13,12 +15,29 @@ import org.infinispan.factories.scopes.Scopes;
 public interface ActivationManager {
 
    /**
+    * Almost the same as {@link #onUpdateAsync(Object, boolean)} except that it is performed
+    * synchronously on the same thread that invoked it. This method will eventually be removed when
+    * the data container can handle asynchronous passivation/activation.
+    * @deprecated since 10.0 - please use {@link #onUpdateAsync(Object, boolean)} instead.
+    */
+   void onUpdate(Object key, boolean newEntry);
+
+   /**
+    * Almost the same as {@link #onRemoveAsync(Object, boolean)} except that it is performed
+    * synchronously on the same thread that invoked it. This method will eventually be removed when
+    * the data container can handle asynchronous passivation/activation.
+    * @deprecated since 10.0 - please use {@link #onRemoveAsync(Object, boolean)} instead.
+    */
+   void onRemove(Object key, boolean newEntry);
+
+   /**
     * Remove key and associated value from cache store and update the activation counter.
     *
     * @param key      Key to remove
     * @param newEntry {@code true} if the entry does not exists in-memory
+    * @return stage then when complete has updated appropriate stores
     */
-   void onUpdate(Object key, boolean newEntry);
+   CompletionStage<Void> onUpdateAsync(Object key, boolean newEntry);
 
    /**
     * Remove key and associated value from cache store and update the activation counter.
@@ -27,8 +46,9 @@ public interface ActivationManager {
     *
     * @param key      Key to activate
     * @param newEntry {@code true} if the entry does not exists in-memory
+    * @return stage then when complete has updated appropriate stores
     */
-   void onRemove(Object key, boolean newEntry);
+   CompletionStage<Void> onRemoveAsync(Object key, boolean newEntry);
 
    /**
     * Get number of activations executed.

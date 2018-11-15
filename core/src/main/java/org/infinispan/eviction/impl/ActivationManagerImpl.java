@@ -1,9 +1,9 @@
 package org.infinispan.eviction.impl;
 
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.CacheException;
@@ -20,6 +20,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -51,7 +52,7 @@ public class ActivationManagerImpl implements ActivationManager {
    @Start(priority = 11) // After the cache loader manager, before the passivation manager
    public void start() {
       statisticsEnabled = cfg.jmxStatistics().enabled();
-      passivation = cfg.persistence().passivation();
+      passivation = cfg.persistence().usingStores() && cfg.persistence().passivation();
    }
 
    @Override
@@ -61,12 +62,30 @@ public class ActivationManagerImpl implements ActivationManager {
          return;
       }
       try {
-         if (persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PRIVATE) && statisticsEnabled) {
+         if (persistenceManager.deleteFromAllStoresSync(key, keyPartitioner.getSegment(key), PRIVATE)
+               && statisticsEnabled) {
             activations.incrementAndGet();
          }
       } catch (CacheException e) {
          log.unableToRemoveEntryAfterActivation(key, e);
       }
+   }
+
+   @Override
+   public CompletionStage<Void> onUpdateAsync(Object key, boolean newEntry) {
+      if (!passivation || !newEntry) {
+         //we don't have passivation or the entry already exists in container.
+         return CompletableFutures.completedNull();
+      }
+      CompletionStage<Boolean> stage = persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PRIVATE);
+      return stage.handle((removed, throwable) -> {
+         if (throwable != null) {
+            log.unableToRemoveEntryAfterActivation(key, throwable);
+         } else if (statisticsEnabled && removed != null && removed) {
+            activations.incrementAndGet();
+         }
+         return null;
+      });
    }
 
    @Override
@@ -80,14 +99,14 @@ public class ActivationManagerImpl implements ActivationManager {
          if (newEntry) {
             //the entry does not exists in data container. We need to remove from private and shared stores.
             //if we are the primary owner
-            AccessMode mode = primaryOwner ? BOTH : PRIVATE;
-            if (persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), mode) && statisticsEnabled) {
+            PersistenceManager.AccessMode mode = primaryOwner ? BOTH : PRIVATE;
+            if (persistenceManager.deleteFromAllStoresSync(key, keyPartitioner.getSegment(key), mode) && statisticsEnabled) {
                activations.incrementAndGet();
             }
          } else {
             //the entry already exists in data container. It may be put during the load by the CacheLoaderInterceptor
             //so it was already activate in the private stores.
-            if (primaryOwner && persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), BOTH) &&
+            if (primaryOwner && persistenceManager.deleteFromAllStoresSync(key, keyPartitioner.getSegment(key), BOTH) &&
                   statisticsEnabled) {
                activations.incrementAndGet();
             }
@@ -96,6 +115,40 @@ public class ActivationManagerImpl implements ActivationManager {
       } catch (CacheException e) {
          log.unableToRemoveEntryAfterActivation(key, e);
       }
+   }
+
+   @Override
+   public CompletionStage<Void> onRemoveAsync(Object key, boolean newEntry) {
+      if (!passivation) {
+         return CompletableFutures.completedNull();
+      }
+      //if we are the primary owner, we need to remove from the shared store,
+      final boolean primaryOwner = distributionManager != null && distributionManager.getCacheTopology().getDistribution(key).isPrimary();
+      CompletionStage<Boolean> stage = null;
+      if (newEntry) {
+         //the entry does not exists in data container. We need to remove from private and shared stores.
+         //if we are the primary owner
+         stage = persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key),
+               primaryOwner ? BOTH : PRIVATE);
+      } else {
+         //the entry already exists in data container. It may be put during the load by the CacheLoaderInterceptor
+         //so it was already activate in the private stores.
+         if (primaryOwner) {
+            stage = persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), BOTH);
+         }
+      }
+
+      if (stage != null) {
+         return stage.handle((removed, throwable) -> {
+            if (throwable != null) {
+               log.unableToRemoveEntryAfterActivation(key, throwable);
+            } else if (statisticsEnabled && removed != null && removed) {
+               activations.incrementAndGet();
+            }
+            return null;
+         });
+      }
+      return CompletableFutures.completedNull();
    }
 
    @Override

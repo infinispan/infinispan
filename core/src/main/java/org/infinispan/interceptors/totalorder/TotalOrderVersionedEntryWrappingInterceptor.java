@@ -16,6 +16,7 @@ import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -45,10 +46,11 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
          ((VersionedPrepareCommand) command).setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
          //for local mode keys
          ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
-         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
             if (shouldCommitDuringPrepare((PrepareCommand) rCommand, ctx)) {
-               commitContextEntries(ctx, null);
+               return delayedValue(commitContextEntries(ctx, null), rv);
             }
+            return rv;
          });
       }
 
@@ -63,24 +65,28 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    private Object afterPrepareHandler(InvocationContext ctx, VisitableCommand command, Object rv) {
       TxInvocationContext txInvocationContext = (TxInvocationContext) ctx;
       VersionedPrepareCommand prepareCommand = (VersionedPrepareCommand) command;
-      EntryVersionsMap versionsMap =
+      CompletionStage<EntryVersionsMap> versionsMap =
             cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txInvocationContext,
                   prepareCommand);
 
-      if (prepareCommand.isOnePhaseCommit()) {
-         commitContextEntries(txInvocationContext, null);
-      } else {
-         if (trace)
-            log.tracef("Transaction %s will be committed in the 2nd phase",
-                  txInvocationContext.getGlobalTransaction().globalId());
-      }
+      InvocationStage versionStage = asyncValue(versionsMap);
 
-      return versionsMap == null ? rv : new ArrayList<>(versionsMap.keySet());
+      return versionStage.thenApply(ctx, command, (rCtx, rCmd, rv2) -> {
+         Object result = rv2 == null ? rv : new ArrayList<>(((EntryVersionsMap) rv2).keySet());
+         if (prepareCommand.isOnePhaseCommit()) {
+            return delayedValue(commitContextEntries(txInvocationContext, null), result);
+         } else {
+            if (trace)
+               log.tracef("Transaction %s will be committed in the 2nd phase",
+                     txInvocationContext.getGlobalTransaction().globalId());
+         }
+         return result;
+      });
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null));
+      return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, t) -> delayedValue(commitContextEntries(rCtx, null), rv, t));
    }
 
    @Override

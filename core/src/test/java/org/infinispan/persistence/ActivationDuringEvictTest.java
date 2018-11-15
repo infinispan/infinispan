@@ -15,7 +15,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.PassivationCacheLoaderInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -48,7 +48,7 @@ public class ActivationDuringEvictTest extends SingleCacheManagerTest {
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
          .customInterceptors()
             .addInterceptor()
-               .interceptor(sdi).after(CacheLoaderInterceptor.class)
+               .interceptor(sdi).after(PassivationCacheLoaderInterceptor.class)
          .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
 
       return TestCacheManagerFactory.createCacheManager(config);

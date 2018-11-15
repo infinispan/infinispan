@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -41,6 +40,7 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.rocksdb.BuiltinComparator;
@@ -59,7 +59,6 @@ import org.rocksdb.WriteOptions;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
-import io.reactivex.internal.functions.Functions;
 import io.reactivex.schedulers.Schedulers;
 
 @Store
@@ -666,9 +665,8 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             }
         }
 
-        CompletableFuture<Void> writeBatch(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
-            CompletableFuture<Void> future = new CompletableFuture<>();
-            Flowable.fromPublisher(publisher)
+        CompletionStage<Void> writeBatch(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
+            return Flowable.fromPublisher(publisher)
                   .buffer(configuration.maxBatchSize())
                   .doOnNext(entries -> {
                       WriteBatch batch = new WriteBatch();
@@ -688,8 +686,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                   .doOnError(e -> {
                       throw new PersistenceException(e);
                   })
-                  .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
-            return future;
+                  .to(RxJavaInterop.flowableToCompletionStage());
         }
 
         void deleteBatch(Iterable<Object> keys) {

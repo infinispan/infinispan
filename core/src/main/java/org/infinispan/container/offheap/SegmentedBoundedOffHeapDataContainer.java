@@ -2,7 +2,6 @@ package org.infinispan.container.offheap;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -232,9 +231,10 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             try {
                InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(addressToRemove);
                map.remove(ice.getKey(), addressToRemove);
-               CompletionStage<Void> passivationStage = passivator.running().passivateAsync(ice);
-               CompletionStage<Void> evictionStage = evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice));
-               CompletionStages.join(CompletionStages.allOf(passivationStage, evictionStage));
+               // Note this calls the blocking method as any passivation operations are already invoked
+               // in a blocking thread for safety, thus we don't use the async method
+               passivator.running().passivate(ice);
+               CompletionStages.join(evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice)));
             } finally {
                entryWriteLock.unlock();
             }

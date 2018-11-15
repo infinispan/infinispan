@@ -13,9 +13,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.ConcatIterator;
 import org.infinispan.commons.util.EntrySizeCalculator;
+import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -251,5 +251,10 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
    public long evictionSize() {
       Policy.Eviction<K, InternalCacheEntry<K, V>> evict = eviction();
       return evict.weightedSize().orElse(entries.size());
+   }
+
+   @Override
+   public void cleanUp() {
+      evictionCache.cleanUp();
    }
 }

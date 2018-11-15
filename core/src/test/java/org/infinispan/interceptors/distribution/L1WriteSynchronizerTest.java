@@ -54,7 +54,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       cdl = mock(ClusteringDependentLogic.class);
       when(cdl.getCacheTopology()).thenReturn(mock(LocalizedCacheTopology.class));
 
-      sync = new L1WriteSynchronizer(dc, l1Timeout, stl, cdl);
+      sync = new L1WriteSynchronizer(dc, l1Timeout, stl, cdl, null);
    }
 
    @Test

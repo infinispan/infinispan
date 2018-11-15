@@ -71,7 +71,7 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
                   persistenceExecutor = createExecutorService(
                         globalConfiguration.persistenceThreadPool(),
                         PERSISTENCE_EXECUTOR,
-                        ExecutorServiceType.SCHEDULED);
+                        ExecutorServiceType.DEFAULT);
                }
             }
             return persistenceExecutor;

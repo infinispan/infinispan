@@ -5,8 +5,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.BiConsumer;
+
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Utility methods for handling {@link CompletionStage} instances.
@@ -15,6 +19,9 @@ import java.util.function.BiConsumer;
  */
 public class CompletionStages {
    private CompletionStages() { }
+
+   private static final Log log = LogFactory.getLog(CompletionStages.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    /**
     * Returns a CompletionStage that also can be composed of many other CompletionStages. A stage can compose another
@@ -109,6 +116,40 @@ public class CompletionStages {
       }
 
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
+   }
+
+   /**
+    * When the provided stage is complete, continue the completion chain of the returned CompletionStage on the
+    * supplied executor. If tracing is enabled a trace message is printed using the object as an identifier to more
+    * easily track the transition between threads.
+    * <p>
+    * This method is useful when an asynchronous computation completes and you do not want to run further processing
+    * on the thread that returned it. An example may be that some blocking operation is performed on a special blocking
+    * thread pool. However when the blocking operation completes we will want to continue the processing of that result
+    * in a thread pool that is for computational tasks.
+    * @param <V> return value type of the supplied stage
+    * @param delay the stage to delay the continuation until complete
+    * @param continuationExecutor the executor to run any further completion chain methods on
+    * @param traceId the id to print when tracing is enabled
+    * @return a CompletionStage that when depended upon will run any callback in the supplied executor
+    */
+   public static <V> CompletionStage<V> continueOnExecutor(CompletionStage<V> delay,
+                                                           Executor continuationExecutor, Object traceId) {
+      CompletableFuture<V> returnedFuture = new CompletableFuture<>();
+      delay.whenCompleteAsync((v, t) -> {
+         if (t != null) {
+            if (trace) {
+               log.tracef("Continuing execution of id %s with exception %s", traceId, t.getMessage());
+            }
+            returnedFuture.completeExceptionally(t);
+         } else {
+            if (trace) {
+               log.tracef("Continuing execution of id %s", traceId);
+            }
+            returnedFuture.complete(v);
+         }
+      }, continuationExecutor);
+      return returnedFuture;
    }
 
    private static class VoidAggregateCompletionStage extends AbstractAggregateCompletionStage<Void> {

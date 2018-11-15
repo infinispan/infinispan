@@ -602,36 +602,50 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
    }
 
+   private void checkTopology(InvocationContext ctx, WriteCommand command) {
+      // Can't perform the check during preload or if the cache isn't clustered
+      boolean syncRpc = isSync && !command.hasAnyFlag(FlagBitSets.FORCE_ASYNCHRONOUS) ||
+            command.hasAnyFlag(FlagBitSets.FORCE_SYNCHRONOUS);
+      if (command.isSuccessful() && distributionManager != null) {
+         int commandTopologyId = command.getTopologyId();
+         int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
+         // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
+         if (syncRpc && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+            // If we were the originator of a data command which we didn't own the key at the time means it
+            // was already committed, so there is no need to throw the OutdatedTopologyException
+            // This will happen if we submit a command to the primary owner and it responds and then a topology
+            // change happens before we get here
+            if (!ctx.isOriginLocal() || !(command instanceof DataCommand) ||
+                  ctx.hasLockedKey(((DataCommand)command).getKey())) {
+               if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+                     commandTopologyId, currentTopologyId);
+               // This shouldn't be necessary, as we'll have a fresh command instance when retrying
+               command.setValueMatcher(command.getValueMatcher().matcherForRetry());
+               throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
+            }
+         }
+      }
+   }
+
    private CompletionStage<Void> applyChanges(InvocationContext ctx, WriteCommand command) {
       stateTransferLock.acquireSharedTopologyLock();
       try {
          // We only retry non-tx write commands
          if (!isInvalidation) {
-            // Can't perform the check during preload or if the cache isn't clustered
-            boolean syncRpc = isSync && !command.hasAnyFlag(FlagBitSets.FORCE_ASYNCHRONOUS) ||
-                  command.hasAnyFlag(FlagBitSets.FORCE_SYNCHRONOUS);
-            if (command.isSuccessful() && distributionManager != null) {
-               int commandTopologyId = command.getTopologyId();
-               int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
-               // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
-               if (syncRpc && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
-                  // If we were the originator of a data command which we didn't own the key at the time means it
-                  // was already committed, so there is no need to throw the OutdatedTopologyException
-                  // This will happen if we submit a command to the primary owner and it responds and then a topology
-                  // change happens before we get here
-                  if (!ctx.isOriginLocal() || !(command instanceof DataCommand) ||
-                            ctx.hasLockedKey(((DataCommand)command).getKey())) {
-                     if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
-                           commandTopologyId, currentTopologyId);
-                     // This shouldn't be necessary, as we'll have a fresh command instance when retrying
-                     command.setValueMatcher(command.getValueMatcher().matcherForRetry());
-                     throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
-                  }
-               }
-            }
+            checkTopology(ctx, command);
          }
 
-         return commitContextEntries(ctx, command);
+         CompletionStage<Void> cs = commitContextEntries(ctx, command);
+         if (!isInvalidation) {
+            // If it was completed successfully, we don't need to check topology as we held the lock during the
+            // entire invocation. If however this is not yet complete we have to double check the topology
+            // after it is complete as we would have no longer held the lock
+            // NOTE: we do not reacquire the lock in the extra check as it only reads the topology id
+            if (!CompletionStages.isCompletedSuccessfully(cs)) {
+               return cs.thenRun(() -> checkTopology(ctx, command));
+            }
+         }
+         return cs;
       } finally {
          stateTransferLock.releaseSharedTopologyLock();
       }

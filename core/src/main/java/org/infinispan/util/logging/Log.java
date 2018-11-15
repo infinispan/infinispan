@@ -167,7 +167,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to passivate entry under %s", id = 28)
-   void unableToPassivateEntry(Object key, @Cause Exception e);
+   void unableToPassivateEntry(Object key, @Cause Throwable e);
 
    @LogMessage(level = INFO)
    @Message(value = "Passivating all entries to disk", id = 29)
@@ -794,7 +794,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to remove entry under %s from cache store after activation", id = 214)
-   void unableToRemoveEntryAfterActivation(Object key, @Cause Exception e);
+   void unableToRemoveEntryAfterActivation(Object key, @Cause Throwable e);
 
    @Message(value = "Unknown migrator %s", id = 215)
    Exception unknownMigrator(String migratorName);

@@ -32,6 +32,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
@@ -292,7 +293,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
             checkPoint.awaitStrict("pre_process_on_all_stores_invoked", 10, TimeUnit.SECONDS);
 
             // Now force the entry to be moved to loader
-            TestingUtil.extractComponent(cache, PassivationManager.class).passivate(new ImmortalCacheEntry(loaderKey, loaderValue));
+            CompletionStages.join(TestingUtil.extractComponent(cache, PassivationManager.class).passivateAsync(new ImmortalCacheEntry(loaderKey, loaderValue)));
 
             checkPoint.triggerForever("pre_process_on_all_stores_released");
             return null;

@@ -1,5 +1,10 @@
 package org.infinispan.commands.write;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.container.DataContainer;
@@ -13,11 +18,6 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Must be {@link VisitableCommand} as we want to catch it in persistence handling etc.
@@ -117,7 +117,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
             stateTransferLock.releaseSharedTopologyLock();
          }
       }
-      return orderedUpdatesManager.invalidate(keys).thenApply(nil -> null);
+      return orderedUpdatesManager.invalidate(keys).thenApply(nil -> null).toCompletableFuture();
    }
 
    @Override

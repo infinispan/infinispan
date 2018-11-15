@@ -1,9 +1,12 @@
 package org.infinispan.persistence.jdbc.stores;
 
 import static javax.transaction.Status.STATUS_ROLLEDBACK;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 
 import javax.transaction.RollbackException;
@@ -27,6 +30,7 @@ import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -112,6 +116,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
    public void testTxRollbackOnStoreException() throws Exception {
       PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
       PersistenceManager mockPM = mock(PersistenceManager.class);
+      when(mockPM.loadFromAllStores(any(), anyInt(), anyBoolean(), anyBoolean())).thenReturn(CompletableFutures.completedNull());
       doThrow(new PersistenceException()).when(mockPM).prepareAllTxStores(any(), any(), any());
       TestingUtil.replaceComponent(cache, PersistenceManager.class, mockPM, true);
 
