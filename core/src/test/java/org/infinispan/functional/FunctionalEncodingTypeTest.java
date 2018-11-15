@@ -18,6 +18,7 @@ import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "functional.FunctionalEncodingTypeTest")
@@ -59,18 +60,18 @@ public class FunctionalEncodingTypeTest extends FunctionalMapTest {
       TransactionManager tm = tm(0);
       tm.begin();
       try {
-         rw1.eval(new UserType<>(1, "key"), view -> {
+         CompletionStages.join(rw1.eval(new UserType<>(1, "key"), view -> {
             assertFalse(view.find().isPresent());
             view.set(new UserType<>(1, "value"));
             return null;
-         });
-         rw2.eval(new UserType<>(2, "key"), view -> {
+         }));
+         CompletionStages.join(rw2.eval(new UserType<>(2, "key"), view -> {
             UserType<String> value = view.find().orElseThrow(() -> new AssertionError());
             assertEquals(2, value.type);
             assertEquals("value", value.instance);
             view.set(new UserType<>(2, "value2"));
             return null;
-         });
+         }));
          UserType<String> value2 = ac1.get(new UserType<>(1, "key"));
          assertEquals(1, value2.type);
          assertEquals("value2", value2.instance);

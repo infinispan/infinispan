@@ -30,6 +30,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 /**
@@ -115,7 +116,7 @@ public class CacheNotifierPersistenceFilterTest extends MultipleCacheManagersTes
       PassivationManager passivationManager = cache0.getAdvancedCache().getComponentRegistry().getComponent(
             PassivationManager.class);
 
-      passivationManager.passivate(new ImmortalCacheEntry(key, value));
+      CompletionStages.join(passivationManager.passivateAsync(new ImmortalCacheEntry(key, value)));
 
       assertEquals(2, listener.events.size());
       assertEquals(Event.Type.CACHE_ENTRY_PASSIVATED, listener.events.get(0).getType());
@@ -125,7 +126,7 @@ public class CacheNotifierPersistenceFilterTest extends MultipleCacheManagersTes
       assertEquals(key, listener.events.get(1).getKey());
       assertNull(listener.events.get(1).getValue());
 
-      passivationManager.passivate(new ImmortalCacheEntry("not" + key, value));
+      CompletionStages.join(passivationManager.passivateAsync(new ImmortalCacheEntry("not" + key, value)));
 
       // We shouldn't have received any additional events
       assertEquals(2, listener.events.size());
@@ -141,8 +142,8 @@ public class CacheNotifierPersistenceFilterTest extends MultipleCacheManagersTes
             PassivationManager.class);
 
       // Passivate 2 entries to resurrect
-      passivationManager.passivate(new ImmortalCacheEntry(key, value));
-      passivationManager.passivate(new ImmortalCacheEntry("not" + key, value));
+      CompletionStages.join(passivationManager.passivateAsync(new ImmortalCacheEntry(key, value)));
+      CompletionStages.join(passivationManager.passivateAsync(new ImmortalCacheEntry("not" + key, value)));
 
       AllCacheEntryListener listener = new AllCacheEntryListener();
       cache0.addListener(listener, new EventKeyFilter(Event.Type.CACHE_ENTRY_ACTIVATED, key), null);

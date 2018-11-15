@@ -10,6 +10,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -38,6 +39,8 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 /**
@@ -234,7 +237,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
          local.administration().removeCache(cacheName);
          assertFalse(local.isRunning(cacheName));
          assertFalse(passivate.get());
-         assertEquals(-1, actual.size());
+         assertEquals(-1, CompletionStages.join(actual.size()).intValue());
       } finally {
          TestingUtil.killCacheManagers(local);
       }
@@ -335,9 +338,10 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public void writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries,
-                                             Predicate<? super StoreConfiguration> predicate, long flags) {
-         passivate.set(true);
+      public CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries,
+                                                              Predicate<? super StoreConfiguration> predicate, long flags) {
+          passivate.set(true);
+          return CompletableFutures.completedNull();
       }
    }
 }

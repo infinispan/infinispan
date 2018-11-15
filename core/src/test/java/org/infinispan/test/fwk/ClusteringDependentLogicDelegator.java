@@ -44,7 +44,7 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    }
 
    @Override
-   public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+   public CompletionStage<EntryVersionsMap> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
       return clusteringDependentLogic.createNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
    }
 

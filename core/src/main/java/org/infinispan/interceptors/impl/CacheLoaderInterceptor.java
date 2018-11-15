@@ -10,9 +10,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
@@ -63,6 +66,8 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupFilter;
 import org.infinispan.distribution.group.impl.GroupManager;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
@@ -72,10 +77,11 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.stream.impl.local.AbstractLocalCacheStream;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
@@ -101,8 +107,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final AtomicLong cacheLoads = new AtomicLong(0);
-   private final AtomicLong cacheMisses = new AtomicLong(0);
+   protected final AtomicLong cacheLoads = new AtomicLong(0);
+   protected final AtomicLong cacheMisses = new AtomicLong(0);
 
    @Inject protected PersistenceManager persistenceManager;
    @Inject protected CacheNotifier notifier;
@@ -113,8 +119,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Inject GroupManager groupManager;
    @Inject ComponentRef<Cache<K, V>> cache;
    @Inject KeyPartitioner partitioner;
+   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
+   protected ExecutorService cpuExecutor;
 
-   private boolean activation;
+   protected boolean activation;
+
+   private final ConcurrentMap<Object, CompletionStage<InternalCacheEntry<K, V>>> pendingLoads = new ConcurrentHashMap<>();
 
    @Start
    public void start() {
@@ -122,45 +132,29 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
-         throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
-         throws Throwable {
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
       return visitDataCommand(ctx, command);
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx,
-                                           GetCacheEntryCommand command) throws Throwable {
+                                           GetCacheEntryCommand command) {
       return visitDataCommand(ctx, command);
    }
 
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command)
-         throws Throwable {
-      CompletionStage<Void> aggregatedStage = null;
-      Collection<?> keys = command.getKeys();
-      if (keys != null && !keys.isEmpty()) {
-         AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-         for (Object key : command.getKeys()) {
-            CompletionStage<Void> stage = loadIfNeeded(ctx, key, command);
-            if (stage != null) {
-               aggregateCompletionStage.dependsOn(stage);
-            }
-         }
-         aggregatedStage = aggregateCompletionStage.freeze();
-      }
-      return asyncInvokeNext(ctx, command, aggregatedStage);
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) {
+      return visitManyDataCommand(ctx, command, command.getKeys());
    }
 
    @Override
-   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
-         throws Throwable {
+   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
       Object[] keys;
       CompletionStage<Void> aggregatedStage = null;
       if ((keys = command.getKeys()) != null && keys.length > 0) {
@@ -177,38 +171,43 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command)
-         throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
-         throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) {
       return visitDataCommand(ctx, command);
    }
 
-   private Object visitManyDataCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys)
-         throws Throwable {
-      CompletionStage<Void> stage = null;
+   private Object visitManyDataCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) {
+      AggregateCompletionStage<Void> stage = null;
       for (Object key : keys) {
-         stage = loadIfNeeded(ctx, key, command);
+         CompletionStage<Void> innerStage = loadIfNeeded(ctx, key, command);
+         if (innerStage != null && !CompletionStages.isCompletedSuccessfully(innerStage)) {
+            if (stage == null) {
+               stage = CompletionStages.aggregateCompletionStage();
+            }
+            stage.dependsOn(innerStage);
+         }
       }
-      return asyncInvokeNext(ctx, command, stage);
+      if (stage != null) {
+         return asyncInvokeNext(ctx, command, stage.freeze());
+      }
+      return invokeNext(ctx, command);
    }
 
-   private Object visitDataCommand(InvocationContext ctx, AbstractDataCommand command)
-         throws Throwable {
+   private Object visitDataCommand(InvocationContext ctx, AbstractDataCommand command) {
       Object key;
       CompletionStage<Void> stage = null;
       if ((key = command.getKey()) != null) {
@@ -218,8 +217,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitGetKeysInGroupCommand(final InvocationContext ctx,
-                                            GetKeysInGroupCommand command) throws Throwable {
+   public Object visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command) {
       if (!command.isGroupOwner() || hasSkipLoadFlag(command)) {
          return invokeNext(ctx, command);
       }
@@ -229,10 +227,14 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       Publisher<MarshallableEntry<K, V>> publisher = persistenceManager.publishEntries(keyFilter, true, false,
             PersistenceManager.AccessMode.BOTH);
-      Flowable.fromPublisher(publisher)
+      CompletionStage<InternalCacheEntry<K, V>> publisherStage = Flowable.fromPublisher(publisher)
             .map(me -> PersistenceUtil.convert(me, iceFactory))
-            .blockingForEach(ice -> entryFactory.wrapExternalEntry(ctx, ice.getKey(), ice, true, false));
-      return invokeNext(ctx, command);
+            .doOnNext(ice -> entryFactory.wrapExternalEntry(ctx, ice.getKey(), ice, true, false))
+            .lastElement()
+            // The installation of the ctx is done on the persistence thread, but we are continued on the cpu thread
+            .observeOn(persistenceManager.continuationScheduler())
+            .to(RxJavaInterop.maybeToCompletionStage());
+      return asyncInvokeNext(ctx, command, publisherStage);
    }
 
    @Override
@@ -269,13 +271,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+   public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command)
-         throws Throwable {
+   public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) {
       return visitManyDataCommand(ctx, command, command.getKeys());
    }
 
@@ -286,13 +287,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
-         throws Throwable {
+   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+   public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) {
       return visitManyDataCommand(ctx, command, command.getAffectedKeys());
    }
 
@@ -303,16 +303,19 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
-      int size = trySizeOptimization(command.getFlagsBitSet());
-      if (size >= 0) {
-         return size;
-      }
-      return super.visitSizeCommand(ctx, command);
+      CompletionStage<Integer> sizeStage = trySizeOptimization(command.getFlagsBitSet());
+      return asyncValue(sizeStage).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         if ((Integer) rv == -1) {
+            return super.visitSizeCommand(ctx, command);
+         }
+         return rv;
+      });
+
    }
 
-   private int trySizeOptimization(long flagBitSet) {
+   private CompletionStage<Integer> trySizeOptimization(long flagBitSet) {
       if (EnumUtil.containsAny(flagBitSet, FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_SIZE_OPTIMIZATION)) {
-         return -1;
+         return CompletableFuture.completedFuture(-1);
       }
       // Get the size from any shared store that isn't async
       return persistenceManager.size(SHARED.and(NOT_ASYNC));
@@ -347,45 +350,81 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return loadInContext(ctx, key, cmd);
    }
 
-   private CompletionStage<Void> loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
-      final AtomicReference<Boolean> isLoaded = new AtomicReference<>();
-      InternalCacheEntry<K, V> entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer,
-            SegmentSpecificCommand.extractSegment(cmd, key, partitioner), persistenceManager, (K) key, ctx, timeService,
-            isLoaded);
-      Boolean isLoadedValue = isLoaded.get();
-      if (trace) {
-         log.tracef("Entry was loaded? %s", isLoadedValue);
-      }
-      if (getStatisticsEnabled()) {
-         if (isLoadedValue == null) {
-            // the entry was in data container, we haven't touched cache store
-         } else if (isLoadedValue) {
-            cacheLoads.incrementAndGet();
-         } else {
-            cacheMisses.incrementAndGet();
-         }
-      }
+   /**
+    * Attemps to load the given entry for a key from the persistence store. This method optimizes concurrent loads
+    * of the same key so only the first is actually loaded. The additional loads will in turn complete when the
+    * first completes, which provides minimal hits to the backing store(s).
+    * @param ctx context for this invocation
+    * @param key key to find the entry for
+    * @param cmd the command that initiated this load
+    * @return a stage that when complete will have the entry loaded into the provided context
+    */
+   protected CompletionStage<Void> loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
 
-      CompletionStage<Void> stage = null;
-      if (entry != null) {
-         entryFactory.wrapExternalEntry(ctx, key, entry, true, cmd instanceof WriteCommand);
+      CompletableFuture<InternalCacheEntry<K, V>> cf = new CompletableFuture<>();
 
-         if (isLoadedValue != null && isLoadedValue) {
-            Object value = entry.getValue();
-            // FIXME: There's no point to trigger the entryLoaded/Activated event twice.
-            stage = sendNotification(key, value, true, ctx, cmd);
-            if (CompletionStages.isCompletedSuccessfully(stage)) {
-               stage = sendNotification(key, value, false, ctx, cmd);
-            } else {
-               stage = stage.thenCompose(v -> sendNotification(key, value, false, ctx, cmd));
+      CompletionStage<InternalCacheEntry<K, V>> otherCF = pendingLoads.putIfAbsent(key, cf);
+
+      // Another thread is currently retrieving the key from the store
+      if (otherCF == null) {
+         // Make sure we clean up our pendingLoads properly - note this is done before notifying any waiters
+         cf.whenComplete((ignore, t) -> pendingLoads.remove(key));
+         otherCF = cf;
+         int segment = SegmentSpecificCommand.extractSegment(cmd, key, partitioner);
+         CompletionStage<MarshallableEntry<K, V>> stage = PersistenceUtil.loadEntryAsync(persistenceManager, key,
+               segment, ctx, true);
+         stage.whenComplete((me, t) -> {
+            if (t != null) {
+               cf.completeExceptionally(t);
+               return;
             }
+            try {
+               if (me != null) {
+                  InternalCacheEntry<K, V> ice = PersistenceUtil.convert(me, iceFactory);
+                  if (getStatisticsEnabled()) {
+                     cacheLoads.incrementAndGet();
+                  }
+                  if (trace) {
+                     log.tracef("Loaded entry: %s for key %s from store and attempting to insert into data container",
+                           ice, key);
+                  }
+                  PersistenceUtil.putIfAbsentDataContainer(ice, dataContainer, timeService, segment);
+                  V value = ice.getValue();
+                  CompletionStage<Void> notificationStage = sendNotification(key, value, true, ctx, cmd);
+                  notificationStage = notificationStage.thenCompose(v -> sendNotification(key, value, false, ctx, cmd));
+                  notificationStage.whenComplete((v, innerT) -> {
+                     if (innerT != null) {
+                        cf.completeExceptionally(innerT);
+                     } else {
+                        cf.complete(ice);
+                     }
+                  });
+               } else {
+                  if (trace) {
+                     log.tracef("Missed entry load for key %s from store", key);
+                  }
+                  if (getStatisticsEnabled()) {
+                     cacheMisses.incrementAndGet();
+                  }
+                  cf.complete(null);
+               }
+            } catch (Throwable outerT) {
+               cf.completeExceptionally(outerT);
+            }
+         });
+      }
+
+      // If another thread is completing the request, then resume on a different CPU thread so we don't have to
+      // wait until the other command completes
+      return otherCF.thenAcceptAsync(entry -> {
+         if (entry != null) {
+            entryFactory.wrapExternalEntry(ctx, key, entry, true, cmd instanceof WriteCommand);
          }
-      }
-      CacheEntry contextEntry = ctx.lookupEntry(key);
-      if (contextEntry instanceof MVCCEntry) {
-         ((MVCCEntry) contextEntry).setLoaded(true);
-      }
-      return stage;
+         CacheEntry contextEntry = ctx.lookupEntry(key);
+         if (contextEntry instanceof MVCCEntry) {
+            ((MVCCEntry) contextEntry).setLoaded(true);
+         }
+      }, cpuExecutor);
    }
 
    private boolean skipLoad(FlagAffectedCommand cmd, Object key, InvocationContext ctx) {
@@ -548,7 +587,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       @Override
       public int size() {
-         int size = trySizeOptimization(commandFlagBitSet);
+         int size = CompletionStages.join(trySizeOptimization(commandFlagBitSet));
          if (size >= 0) {
             return size;
          }
@@ -650,7 +689,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             if (!contains) {
                Map.Entry<K, V> entry = toEntry(o);
                if (entry != null) {
-                  MarshallableEntry<K, V> me = persistenceManager.loadFromAllStores(entry.getKey(), true, true);
+                  MarshallableEntry<K, V> me = CompletionStages.join(persistenceManager.loadFromAllStores(entry.getKey(), true, true));
                   if (me != null) {
                      contains = entry.getValue().equals(me.getValue());
                   }
@@ -719,7 +758,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          if (o != null) {
             contains = cacheSet.contains(o);
             if (!contains) {
-               MarshallableEntry<K, V> me = persistenceManager.loadFromAllStores(o, true, true);
+               MarshallableEntry<K, V> me = CompletionStages.join(persistenceManager.loadFromAllStores(o, true, true));
                contains = me != null;
             }
          }

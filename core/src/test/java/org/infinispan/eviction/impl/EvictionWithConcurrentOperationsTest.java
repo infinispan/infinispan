@@ -32,12 +32,12 @@ import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -502,6 +502,20 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       @Override
       public boolean isEnabled() {
          return delegate.isEnabled();
+      }
+
+      @Override
+      public void passivate(InternalCacheEntry entry) {
+         final Runnable before = beforePassivate;
+         if (before != null) {
+            before.run();
+         }
+
+         delegate.passivate(entry);
+         final Runnable after = afterPassivate;
+         if (after != null) {
+            after.run();
+         }
       }
 
       @Override

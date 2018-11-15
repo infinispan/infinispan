@@ -8,6 +8,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
+import io.reactivex.internal.functions.Functions;
 import io.reactivex.processors.AsyncProcessor;
 
 /**
@@ -42,6 +43,17 @@ public class RxJavaInterop {
    }
 
    /**
+    * Provides an interop function that can be used to convert a Flowable into a CompletionStage. Note that this function
+    * is not from the standard java.util.function package, but rather {@link Function} to interop better with the
+    * {@link Maybe#to(Function)} method. Any published values are ignored and the returned CompletionStage is
+    * completed when the Flowable completes or completed exceptionally if the Flowable has an error.
+    * @return rxjava function to convert Flowable to CompletionStage
+    */
+   public static <E> Function<Flowable<E>, CompletionStage<Void>> flowableToCompletionStage() {
+      return (Function) flowableToCompletionStage;
+   }
+
+   /**
     * Provides an interop function that can be used to convert a CompletionStage into a Flowable. Note that this function
     * is from the standard java.util.function package since we don't want the method to throw an exception
     * <p>
@@ -67,6 +79,12 @@ public class RxJavaInterop {
    private static final Function<Single<Object>, CompletionStage<Object>> singleToCompletionStage = single -> {
       CompletableFuture<Object> cf = new CompletableFuture<>();
       single.subscribe(cf::complete, cf::completeExceptionally);
+      return cf;
+   };
+
+   private static final Function<Flowable<Object>, CompletionStage<Void>> flowableToCompletionStage = flowable -> {
+      CompletableFuture<Void> cf = new CompletableFuture<>();
+      flowable.subscribe(Functions.emptyConsumer(), cf::completeExceptionally, () -> cf.complete(null));
       return cf;
    };
 

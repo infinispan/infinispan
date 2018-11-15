@@ -242,4 +242,11 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     * @param listener the listener to remove
     */
    void removeRemovalListener(Object listener);
+
+   /**
+    * Method used to cleanup any pending data, such as evictions
+    */
+   default void cleanUp() {
+      // Default is to do nothing
+   }
 }

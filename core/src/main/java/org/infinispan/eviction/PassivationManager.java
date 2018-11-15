@@ -12,7 +12,6 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.concurrent.CompletionStages;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -29,9 +28,13 @@ public interface PassivationManager extends JmxStatisticsExposer {
 
    boolean isEnabled();
 
-   default void passivate(InternalCacheEntry entry) {
-      CompletionStages.join(passivateAsync(entry));
-   }
+   /**
+    * Almost the same as {@link #passivateAsync(InternalCacheEntry)} except that it is performed
+    * synchronously on the same thread that invoked it. This method will eventually be removed when
+    * the data container can handle asynchronous passivation/activation.
+    * @deprecated since 10.0 - please use {@link #passivateAsync(InternalCacheEntry)} instead.
+    */
+   void passivate(InternalCacheEntry entry);
 
    /**
     * This method will block the current thread while passivating the entry. This should be fixed when non blocking

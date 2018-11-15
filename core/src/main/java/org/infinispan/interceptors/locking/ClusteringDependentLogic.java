@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.locking;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.transaction.impl.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
 import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
@@ -8,6 +10,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
@@ -34,6 +37,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -52,9 +56,11 @@ import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a
@@ -167,7 +173,7 @@ public interface ClusteringDependentLogic {
    }
 
 
-   EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
+   CompletionStage<EntryVersionsMap> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
 
    Address getAddress();
 
@@ -183,17 +189,37 @@ public interface ClusteringDependentLogic {
       @Inject protected Configuration configuration;
       @Inject protected KeyPartitioner keyPartitioner;
 
+      @Inject @ComponentName(ASYNC_OPERATIONS_EXECUTOR)
+      private ExecutorService cpuExecutor;
+      @Inject @ComponentName(PERSISTENCE_EXECUTOR)
+      private ExecutorService persistenceExecutor;
+
       protected boolean totalOrder;
       private WriteSkewHelper.KeySpecificLogic keySpecificLogic;
+      private boolean passivationEnabled;
+
+      private static final Log log = LogFactory.getLog(ClusteringDependentLogic.class);
+      private static final boolean trace = log.isTraceEnabled();
 
       @Start
       public void start() {
          this.totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
          this.keySpecificLogic = initKeySpecificLogic(totalOrder);
+         this.passivationEnabled = configuration.persistence().usingStores() && configuration.persistence().passivation();
       }
 
       @Override
-      public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+      public CompletionStage<EntryVersionsMap> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+         // Write skew is blocking when any store is available
+         if (configuration.persistence().usingStores()) {
+            CompletableFuture<EntryVersionsMap> cf = CompletableFuture.supplyAsync(() ->
+                  createNewVersionsMap(versionGenerator, context, prepareCommand), persistenceExecutor);
+            return CompletionStages.continueOnExecutor(cf, cpuExecutor, prepareCommand);
+         }
+         return CompletableFuture.completedFuture(createNewVersionsMap(versionGenerator, context, prepareCommand));
+      }
+
+      private EntryVersionsMap createNewVersionsMap(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          return totalOrder ?
                totalOrderCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand) :
                clusteredCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
@@ -205,6 +231,25 @@ public interface ClusteringDependentLogic {
             //noinspection unchecked
             return commitClearCommand(dataContainer, ctx, command);
          } else {
+            // If passivation or we have a MergeOnStore entry we will need to hit the store, so do this
+            // on the persistence thread
+            if (passivationEnabled) {
+               CompletableFuture<Void> passivationFuture = new CompletableFuture<>();
+               persistenceExecutor.execute(() -> commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation)
+                     .whenCompleteAsync((v, t) -> {
+                        if (t != null) {
+                           if (trace) {
+                              log.tracef("Continuing with exception after commit operation commit of %s", entry);
+                           }
+                           passivationFuture.completeExceptionally(t);
+                        } else {
+                           if (trace) {
+                              log.tracef("Continuing after commit operation of %s", entry);
+                           }
+                           passivationFuture.complete(v);
+                        }}, cpuExecutor));
+               return passivationFuture;
+            }
             return commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation);
          }
       }

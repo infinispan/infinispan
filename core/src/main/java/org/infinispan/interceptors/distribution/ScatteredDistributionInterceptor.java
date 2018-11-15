@@ -1,6 +1,8 @@
 package org.infinispan.interceptors.distribution;
 
 import static org.infinispan.commands.VisitableCommand.LoadType.DONT_LOAD;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +12,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -70,7 +74,9 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
@@ -129,9 +135,19 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    @Inject protected CacheNotifier cacheNotifier;
    @Inject protected FunctionalNotifier functionalNotifier;
    @Inject protected KeyPartitioner keyPartitioner;
+   @Inject @ComponentName(ASYNC_OPERATIONS_EXECUTOR)
+   protected ExecutorService cpuExecutor;
+   @Inject @ComponentName(PERSISTENCE_EXECUTOR)
+   protected ExecutorService persistenceExecutor;
 
    private volatile Address cachedNextMember;
    private volatile int cachedNextMemberTopology = -1;
+   private boolean passivation;
+
+   @Start
+   private void start() {
+      passivation = cacheConfiguration.persistence().usingStores() && cacheConfiguration.persistence().passivation();
+   }
 
    private final InvocationSuccessFunction putMapCommandHandler = (rCtx, rCommand, rv) -> {
       PutMapCommand putMapCommand = (PutMapCommand) rCommand;
@@ -379,6 +395,25 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          }
       }
 
+      if (passivation) {
+         CompletionStage<Boolean> stage = CompletableFuture.supplyAsync(() -> updateEntryIfNewer(entry), persistenceExecutor);
+         return stage.thenComposeAsync(committed -> {
+            if (committed) {
+               return NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier, entry.isCreated(), entry.isRemoved(), entry.isExpired(),
+                     entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata());
+            }
+            return CompletableFutures.completedNull();
+         }, cpuExecutor);
+      } else {
+         if (updateEntryIfNewer(entry)) {
+            return NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier, entry.isCreated(), entry.isRemoved(), entry.isExpired(),
+                  entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata());
+         }
+         return CompletableFutures.completedNull();
+      }
+   }
+
+   private boolean updateEntryIfNewer(RepeatableReadEntry entry) {
       // We cannot delegate the dataContainer.compute() to entry.commit() as we need to reliably
       // retrieve previous value and metadata, but the entry API does not provide these.
       dataContainer.compute(entry.getKey(), (key, oldEntry, factory) -> {
@@ -401,8 +436,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          Metadata oldMetadata = oldEntry.getMetadata();
          InequalVersionComparisonResult comparisonResult;
          if (oldMetadata == null || oldMetadata.version() == null || newMetadata == null || newMetadata.version() == null
-            || (comparisonResult = oldMetadata.version().compareTo(newMetadata.version())) == InequalVersionComparisonResult.BEFORE
-            || (oldMetadata instanceof RemoteMetadata && comparisonResult == InequalVersionComparisonResult.EQUAL)) {
+               || (comparisonResult = oldMetadata.version().compareTo(newMetadata.version())) == InequalVersionComparisonResult.BEFORE
+               || (oldMetadata instanceof RemoteMetadata && comparisonResult == InequalVersionComparisonResult.EQUAL)) {
             if (trace) {
                log.tracef("Committing entry %s, replaced %s", entry, oldEntry);
             }
@@ -419,12 +454,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             return oldEntry;
          }
       });
-
-      if (entry.isCommitted()) {
-         return NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier, entry.isCreated(), entry.isRemoved(), entry.isExpired(),
-               entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata());
-      } // else we skip the notification, and the already executed notification skipped this (intermediate) update
-      return CompletableFutures.completedNull();
+      return entry.isCommitted();
    }
 
    private CompletionStage<Void> commitSingleEntryIfNoChange(RepeatableReadEntry entry, InvocationContext ctx, VisitableCommand command) {
@@ -438,6 +468,24 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          entry.setValue(null);
       }
 
+      if (passivation) {
+         CompletionStage<Boolean> stage = CompletableFuture.supplyAsync(() -> updateEntryIfNoChange(entry), persistenceExecutor);
+         return stage.thenComposeAsync(committed -> {
+            if (committed) {
+               NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier, entry.isCreated(), entry.isRemoved(), entry.isExpired(),
+                     entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata());
+            }
+            return CompletableFutures.completedNull();
+         }, cpuExecutor);
+      }
+      if (updateEntryIfNoChange(entry)) {
+         return NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier, entry.isCreated(), entry.isRemoved(), entry.isExpired(),
+               entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata());
+      }
+      return CompletableFutures.completedNull();
+   }
+
+   private boolean updateEntryIfNoChange(RepeatableReadEntry entry) {
       // We cannot delegate the dataContainer.compute() to entry.commit() as we need to reliably
       // retrieve previous value and metadata, but the entry API does not provide these.
       dataContainer.compute(entry.getKey(), (key, oldEntry, factory) -> {
@@ -493,8 +541,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          }
          InequalVersionComparisonResult comparisonResult;
          if (oldVersion == null || newMetadata == null || newMetadata.version() == null
-            || (comparisonResult = oldMetadata.version().compareTo(newMetadata.version())) == InequalVersionComparisonResult.BEFORE
-            || (oldMetadata instanceof RemoteMetadata && comparisonResult == InequalVersionComparisonResult.EQUAL)) {
+               || (comparisonResult = oldMetadata.version().compareTo(newMetadata.version())) == InequalVersionComparisonResult.BEFORE
+               || (oldMetadata instanceof RemoteMetadata && comparisonResult == InequalVersionComparisonResult.EQUAL)) {
             if (trace) {
                log.tracef("Committing entry %s, replaced %s", entry, oldEntry);
             }
@@ -511,12 +559,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             return oldEntry;
          }
       });
-
-      if (entry.isCommitted()) {
-         return NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier, entry.isCreated(), entry.isRemoved(), entry.isExpired(),
-               entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata());
-      } // else we skip the notification, and the already executed notification skipped this (intermediate) update
-      return CompletableFutures.completedNull();
+      return entry.isCommitted();
    }
 
    private EntryVersion getVersionOrNull(CacheEntry cacheEntry) {

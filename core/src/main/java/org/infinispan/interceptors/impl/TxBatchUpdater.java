@@ -32,6 +32,7 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.support.BatchModification;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * @author Ryan Emerson
@@ -138,7 +139,9 @@ public class TxBatchUpdater extends AbstractVisitor {
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      persistenceManager.clearAllStores(ctx.isOriginLocal() ? PRIVATE : BOTH);
+      // This is technically blocking - The calling code is not conducive to non-blocking currently and
+      // due to the low priority nature of the clear operation this method has been left as is.
+      CompletionStages.join(persistenceManager.clearAllStores(ctx.isOriginLocal() ? PRIVATE : BOTH));
       return null;
    }
 

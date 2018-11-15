@@ -2,6 +2,7 @@ package org.infinispan.persistence.manager;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
 import javax.transaction.Transaction;
@@ -9,11 +10,15 @@ import javax.transaction.Transaction;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
+
+import io.reactivex.Scheduler;
 
 /**
  * Defines the logic for interacting with the chain of external storage.
@@ -34,7 +39,7 @@ public interface PersistenceManager extends Lifecycle {
    /**
     * Loads the data from the external store into memory during cache startup.
     */
-   void preload();
+   CompletionStage<Void> preload();
 
    /**
     * Marks the given storage as disabled.
@@ -53,9 +58,17 @@ public interface PersistenceManager extends Lifecycle {
    /**
     * Invokes {@link org.infinispan.persistence.spi.AdvancedCacheWriter#clear()} on all the stores that aloes it.
     */
-   void clearAllStores(Predicate<? super StoreConfiguration> predicate);
+   CompletionStage<Void> clearAllStores(Predicate<? super StoreConfiguration> predicate);
 
-   boolean deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate);
+   /**
+    * Same as {@link #deleteFromAllStores(Object, int, Predicate)} except synchronous - Should only be invoked
+    * from persistence thread and from passivation or activation code
+    * @deprecated should be using async version when available - only here for passivation
+    */
+   @Deprecated
+   boolean deleteFromAllStoresSync(Object key, int segment, Predicate<? super StoreConfiguration> predicate);
+
+   CompletionStage<Boolean> deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * See {@link #publishEntries(Predicate, boolean, boolean, Predicate)}
@@ -139,7 +152,17 @@ public interface PersistenceManager extends Lifecycle {
     * @param includeStores if a loader that is also a store can be loaded from
     * @return entry that maps to the key
     */
-   MarshallableEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores);
+   <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, boolean localInvocation, boolean includeStores);
+
+   /**
+    * Same as {@link #loadFromAllStores(Object, boolean, boolean)} except synchronous - Should only be invoked
+    * from persistence thread and from passivation or activation code
+    * @deprecated should be using async version when available - only here for passivation
+    */
+   @Deprecated
+   default <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, boolean localInvocation, boolean includeStores) {
+      return CompletionStages.join(loadFromAllStores(key, localInvocation, includeStores));
+   }
 
    /**
     * Same as {@link #loadFromAllStores(Object, boolean, boolean)} except that the segment of the key is also
@@ -151,8 +174,18 @@ public interface PersistenceManager extends Lifecycle {
     * @return entry that maps to the key
     * @implSpec default implementation invokes {@link #loadFromAllStores(Object, boolean, boolean)} ignoring the segment
     */
-   default MarshallableEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+   default <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
       return loadFromAllStores(key, localInvocation, includeStores);
+   }
+
+   /**
+    * Same as {@link #loadFromAllStores(Object, int, boolean, boolean)} except synchronous - Should only be invoked
+    * from persistence thread and from passivation or activation code
+    * @deprecated should be using async version when available - only here for passivation
+    */
+   @Deprecated
+   default <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, int segment, boolean localInvocation, boolean includeStores) {
+      return CompletionStages.join(loadFromAllStores(key, segment, localInvocation, includeStores));
    }
 
    /**
@@ -160,8 +193,8 @@ public interface PersistenceManager extends Lifecycle {
     */
    AdvancedCacheLoader getStateTransferProvider();
 
-   default int size() {
-      return size(AccessMode.BOTH);
+   default CompletionStage<Integer> size() {
+       return size(AccessMode.BOTH);
    }
 
    /**
@@ -170,7 +203,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param predicate whether a loader can be used
     * @return size or -1 if size couldn't be computed
     */
-   int size(Predicate<? super StoreConfiguration> predicate);
+   CompletionStage<Integer> size(Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Returns the count of how many entries are persisted within the given segments. The returned value will always
@@ -178,7 +211,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param segments which segments to count entries from
     * @return how many entries are in the store which map to the given segments
     */
-   int size(IntSet segments);
+   CompletionStage<Integer> size(IntSet segments);
 
    enum AccessMode implements Predicate<StoreConfiguration> {
       /**
@@ -236,6 +269,13 @@ public interface PersistenceManager extends Lifecycle {
    void setClearOnStop(boolean clearOnStop);
 
    /**
+    * Same as {@link #writeToAllNonTxStores(MarshallableEntry, int, Predicate)} except synchronous - Should only be invoked
+    * from persistence thread and from passivation or activation code
+    * @deprecated should be using async version when available - only here for passivation
+    */
+   void writeToAllNonTxStoresSync(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate);
+
+   /**
     * Write to all stores that are not transactional. A store is considered transactional if all of the following are true:
     *
     * <p><ul>
@@ -248,14 +288,16 @@ public interface PersistenceManager extends Lifecycle {
     * @param segment         the segment the entry maps to
     * @param predicate       should we write to a given store
     */
-   void writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate);
+   default CompletionStage<Void> writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate) {
+      return writeToAllNonTxStores(marshalledEntry, segment, predicate, 0);
+   }
 
    /**
     * @see #writeToAllNonTxStores(MarshallableEntry, int, Predicate)
     *
     * @param flags Flags used during command invocation
     */
-   void writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate, long flags);
+   CompletionStage<Void> writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate, long flags);
 
    /**
     * Perform the prepare phase of 2PC on all Tx stores.
@@ -265,8 +307,8 @@ public interface PersistenceManager extends Lifecycle {
     * @param predicate should we prepare on a given store
     * @throws PersistenceException if an error is encountered at any of the underlying stores.
     */
-   void prepareAllTxStores(Transaction transaction, BatchModification batchModification,
-         Predicate<? super StoreConfiguration> predicate) throws PersistenceException;
+   CompletionStage<Void> prepareAllTxStores(Transaction transaction, BatchModification batchModification,
+                           Predicate<? super StoreConfiguration> predicate) throws PersistenceException;
 
    /**
     * Perform the commit operation for the provided transaction on all Tx stores.
@@ -274,7 +316,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param transaction the transactional context to be committed.
     * @param predicate should we commit each store
     */
-   void commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate);
+   CompletionStage<Void> commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Perform the rollback operation for the provided transaction on all Tx stores.
@@ -282,7 +324,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param transaction the transactional context to be rolledback.
     * @param predicate should we rollback each store
     */
-   void rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate);
+   CompletionStage<Void> rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Write all entries to the underlying non-transactional stores as a single batch.
@@ -291,7 +333,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param predicate whether a given store should write the entry
     * @param flags Flags used during command invocation
     */
-   void writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags);
+   CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags);
 
    /**
     * Remove all entries from the underlying non-transactional stores as a single batch.
@@ -300,7 +342,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param predicate whether a given store should delete the entries
     * @param flags Flags used during command invocation
     */
-   void deleteBatchFromAllNonTxStores(Iterable<Object> keys, Predicate<? super StoreConfiguration> predicate, long flags);
+   CompletionStage<Void> deleteBatchFromAllNonTxStores(Iterable<Object> keys, Predicate<? super StoreConfiguration> predicate, long flags);
 
 
    /**
@@ -320,8 +362,8 @@ public interface PersistenceManager extends Lifecycle {
     * @param segments segments this cache owns
     * @return false if a configured store couldn't configure newly added segments
     */
-   default boolean addSegments(IntSet segments) {
-      return true;
+   default CompletionStage<Boolean> addSegments(IntSet segments) {
+      return CompletableFutures.completedTrue();
    }
 
    /**
@@ -336,12 +378,20 @@ public interface PersistenceManager extends Lifecycle {
     * @param segments segments this cache no longer owns
     * @return false if a configured store couldn't remove configured segments
     */
-   default boolean removeSegments(IntSet segments) {
-      return true;
+   default CompletionStage<Boolean> removeSegments(IntSet segments) {
+      return CompletableFutures.completedTrue();
    }
 
    /**
     * @return true if no {@link org.infinispan.persistence.spi.CacheWriter} instances have been configured.
     */
    boolean isReadOnly();
+
+   /**
+    * The scheduler that should be used when a Publisher is subscribed but before completing. This should be used
+    * by caller's as it is their duty to manage when a Publisher running thread reverts back to the CPU based continuation
+    * thread.
+    * @return RxJava2 scheduler that can be used with {@link io.reactivex.Flowable#observeOn(Scheduler)} or equivalent
+    */
+   Scheduler continuationScheduler();
 }

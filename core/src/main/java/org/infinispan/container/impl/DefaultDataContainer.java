@@ -279,4 +279,12 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
          throw new InterruptedException();
       }
    }
+
+   @Override
+   public void cleanUp() {
+      // Caffeine may not evict an entry right away if concurrent threads are writing, so this forces a cleanUp
+      if (evictionCache != null) {
+         evictionCache.cleanUp();
+      }
+   }
 }

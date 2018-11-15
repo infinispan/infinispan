@@ -22,10 +22,10 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -206,13 +206,9 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     * @param metadata
     */
    private void deleteFromStoresAndNotify(K key, V value, Metadata metadata) {
-      deleteFromStores(key);
-      CompletionStages.join(cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null));
-   }
-
-   private void deleteFromStores(K key) {
-      // We have to delete from shared stores as well to make sure there are not multiple expiration events
-      persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH);
+      CompletionStages.join(CompletionStages.allOf(
+            persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH),
+            cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null)));
    }
 
    protected Long localLastAccess(Object key, Object value, int segment) {

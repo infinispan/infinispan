@@ -1,7 +1,6 @@
 package org.infinispan.persistence.remote;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +46,7 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
@@ -303,13 +303,13 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
 
    @Override
    public CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
-      CompletableFuture<Void> future = new CompletableFuture<>();
-      Flowable.fromPublisher(publisher)
+      return Flowable.fromPublisher(publisher)
             .buffer(configuration.maxBatchSize())
+            // TODO: this is blocking - when the full non blocking SPI is introduced this needs to chain returns
+            // of the putAll to ensure that only a single batch is sent at a time
             .doOnNext(entries -> remoteCache.putAll(entries.stream().collect(Collectors.toMap(this::getKey, this::getValue))))
             .doOnError(PersistenceException::new)
-            .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
-      return future;
+            .to(RxJavaInterop.flowableToCompletionStage());
    }
 
    @Override

@@ -22,6 +22,10 @@ public class PassivationManagerStub implements PassivationManager {
    }
 
    @Override
+   public void passivate(InternalCacheEntry entry) {
+   }
+
+   @Override
    public CompletionStage<Void> passivateAsync(InternalCacheEntry entry) {
       return CompletableFutures.completedNull();
    }

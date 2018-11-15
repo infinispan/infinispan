@@ -2,6 +2,7 @@ package org.infinispan.container.versioning;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import javax.transaction.HeuristicRollbackException;
@@ -311,10 +312,10 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
             executeOnCache.putIfAbsent(key, "v1");
             break;
          case CONDITIONAL_REMOVE:
-            executeOnCache.remove(key, "init");
+            assertTrue(executeOnCache.remove(key, "init"));
             break;
          case CONDITIONAL_REPLACE:
-            executeOnCache.replace(key, "init", "v1");
+            assertTrue(executeOnCache.replace(key, "init", "v1"));
             break;
          default:
             tm.rollback();

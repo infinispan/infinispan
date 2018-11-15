@@ -41,6 +41,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -71,6 +73,7 @@ import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -125,6 +128,7 @@ import org.infinispan.statetransfer.StateTransferManagerImpl;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.DependencyGraph;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -904,7 +908,7 @@ public class TestingUtil {
 
    public static void clearCacheLoader(Cache cache) {
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
-      persistenceManager.clearAllStores(BOTH);
+      CompletionStages.join(persistenceManager.clearAllStores(BOTH));
    }
 
    public static <K, V> List<CacheLoader<K, V>> cachestores(List<Cache<K, V>> caches) {
@@ -1669,14 +1673,14 @@ public class TestingUtil {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
-      pm.writeToAllNonTxStores(MarshalledEntryUtil.create(key, value, cache), keyPartitioner.getSegment(key), BOTH);
+      CompletionStages.join(pm.writeToAllNonTxStores(MarshalledEntryUtil.create(key, value, cache), keyPartitioner.getSegment(key), BOTH));
    }
 
    public static <K, V> boolean deleteFromAllStores(K key, Cache<K, V> cache) {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
-      return pm.deleteFromAllStores(key, keyPartitioner.getSegment(key), BOTH);
+      return CompletionStages.join(pm.deleteFromAllStores(key, keyPartitioner.getSegment(key), BOTH));
    }
 
    public static Subject makeSubject(String... principals) {
@@ -1940,6 +1944,18 @@ public class TestingUtil {
                 "name='" + name + '\'' +
                 ", component=" + component +
                 '}';
+      }
+   }
+
+   public static void cleanUpDataContainerForCache(Cache<?, ?> cache) {
+      InternalDataContainer dataContainer = extractComponent(cache, InternalDataContainer.class);
+      // Anything with passivation has to be done on the persistence thread in the test suite
+      ExecutorService persistenceExecutor = extractComponentRegistry(cache).getComponent(ExecutorService.class,
+            KnownComponentNames.PERSISTENCE_EXECUTOR);
+      try {
+         persistenceExecutor.submit(dataContainer::cleanUp).get(10, TimeUnit.SECONDS);
+      } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
+         throw new CacheException(e);
       }
    }
 }

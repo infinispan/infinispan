@@ -1,10 +1,10 @@
 package org.infinispan.persistence.spi;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.reactive.RxJavaInterop;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
@@ -73,20 +73,10 @@ public interface CacheWriter<K, V> extends Lifecycle {
     * @param publisher a {@link Publisher} of {@link MarshallableEntry} instances
     * @throws NullPointerException if the publisher is null.
     */
-   @SuppressWarnings("unchecked")
    default CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
-      CompletableFuture<Void> future = new CompletableFuture<>();
-      try {
-         writeBatch(
-               Flowable.fromPublisher((Publisher) publisher)
-                     .map(e -> ((MarshallableEntry) e).asMarshalledEntry())
-                     .blockingIterable()
-         );
-         future.complete(null);
-      } catch (Throwable t) {
-         future.completeExceptionally(t);
-      }
-      return future;
+      return Flowable.fromPublisher(publisher)
+            .doOnNext(this::write)
+            .to(RxJavaInterop.flowableToCompletionStage());
    }
 
    /**

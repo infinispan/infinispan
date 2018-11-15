@@ -29,6 +29,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -70,18 +71,42 @@ public class PassivationManagerImpl implements PassivationManager {
       return distributionManager != null && !distributionManager.getCacheTopology().isWriteOwner(key);
    }
 
-   private boolean doPassivate(Object key, InternalCacheEntry entry) {
+   private CompletionStage<Boolean> doPassivate(Object key, InternalCacheEntry entry) {
       if (trace) log.tracef("Passivating entry %s", toStr(key));
-      try {
          MarshallableEntry marshalledEntry = marshalledEntryFactory.create(key, entry.getValue(), entry.getMetadata(),
                entry.getExpiryTime(), entry.getLastUsed());
-         persistenceManager.writeToAllNonTxStores(marshalledEntry, keyPartitioner.getSegment(key), BOTH);
-         if (statsEnabled) passivations.getAndIncrement();
-      } catch (CacheException e) {
-         log.unableToPassivateEntry(key, e);
-         return false;
+         CompletionStage<Void> stage = persistenceManager.writeToAllNonTxStores(marshalledEntry, keyPartitioner.getSegment(key), BOTH);
+         return stage.handle((v, t) -> {
+            if (t != null) {
+               log.unableToPassivateEntry(key, t);
+               return false;
+            }
+            if (statsEnabled) {
+               passivations.getAndIncrement();
+            }
+            return true;
+         });
+   }
+
+   @Override
+   public void passivate(InternalCacheEntry entry) {
+      Object key;
+      if (enabled && entry != null && !isL1Key(key = entry.getKey())) {
+         // notify listeners that this entry is about to be passivated
+         CompletionStages.join(notifier.notifyCacheEntryPassivated(key, entry.getValue(), true,
+               ImmutableContext.INSTANCE, null));
+         if (trace) log.tracef("Passivating entry %s", toStr(key));
+         try {
+            MarshallableEntry marshalledEntry = marshalledEntryFactory.create(key, entry.getValue(), entry.getMetadata(),
+                  entry.getExpiryTime(), entry.getLastUsed());
+            persistenceManager.writeToAllNonTxStoresSync(marshalledEntry, keyPartitioner.getSegment(key), BOTH);
+            if (statsEnabled) passivations.getAndIncrement();
+         } catch (CacheException e) {
+            log.unableToPassivateEntry(key, e);
+         }
+         CompletionStages.join(notifier.notifyCacheEntryPassivated(key, null, false,
+               ImmutableContext.INSTANCE, null));
       }
-      return true;
    }
 
    @Override
@@ -90,15 +115,11 @@ public class PassivationManagerImpl implements PassivationManager {
       if (enabled && entry != null && !isL1Key(key = entry.getKey())) {
          if (notifier.hasListener(CacheEntryPassivated.class)) {
             return notifier.notifyCacheEntryPassivated(key, entry.getValue(), true, ImmutableContext.INSTANCE, null)
-                  .thenCompose(v -> {
-                     if (doPassivate(key, entry)) {
-                        return notifier.notifyCacheEntryPassivated(key, null, false, ImmutableContext.INSTANCE, null);
-                     }
-                     return CompletableFutures.completedNull();
-                  });
+                  .thenCompose(v -> doPassivate(key, entry))
+                  .thenCompose(v -> notifier.notifyCacheEntryPassivated(key, null, false, ImmutableContext.INSTANCE, null));
          } else {
-            // Ignore result
-            doPassivate(key, entry);
+            return doPassivate(key, entry)
+                  .thenCompose(CompletableFutures.composeNull());
          }
       }
       return CompletableFutures.completedNull();
@@ -113,7 +134,7 @@ public class PassivationManagerImpl implements PassivationManager {
          int count = container.sizeIncludingExpired();
          Iterable<MarshallableEntry> iterable = () -> new IteratorMapper<>(container.iterator(), e ->
             marshalledEntryFactory.create(e.getKey(), e.getValue(), e.getMetadata(), e.getExpiryTime(), e.getLastUsed()));
-         persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0);
+         CompletionStages.join(persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0));
          log.passivatedEntries(count, Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
       }
    }
