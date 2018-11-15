@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.io.File;
 
 import org.infinispan.commons.util.Util;
@@ -22,25 +24,26 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.LocalCacheFSDirectoryTest")
 public class LocalCacheFSDirectoryTest extends LocalCacheTest {
 
-   private final String indexDirectory = TestingUtil.tmpDirectory(this.getClass());
+   private final String indexDirectory = TestingUtil.tmpDirectory(getClass());
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing().index(Index.ALL)
-         .addIndexedEntity(Person.class)
-         .addIndexedEntity(AnotherGrassEater.class)
-         .addProperty("default.directory_provider", "filesystem")
-         .addProperty("default.indexBase", indexDirectory)
-         .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
-         .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addIndexedEntity(Person.class)
+            .addIndexedEntity(AnotherGrassEater.class)
+            .addProperty("default.directory_provider", "filesystem")
+            .addProperty("default.indexBase", indexDirectory)
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    @Override
    protected void setup() throws Exception {
       Util.recursiveFileRemove(indexDirectory);
-      new File(indexDirectory).mkdirs();
+      boolean created = new File(indexDirectory).mkdirs();
+      assertTrue(created);
       super.setup();
    }
 

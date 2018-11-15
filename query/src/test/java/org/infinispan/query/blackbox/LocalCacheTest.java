@@ -668,6 +668,16 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
+   @Override
+   protected void teardown() {
+      if (cache != null) {
+         // a proper cache.clear() should ensure indexes and stores are cleared too if present
+         // this is better and more complete than the cleanup performed by the superclass
+         cache.clear();
+      }
+      super.teardown();
+   }
+
    protected void loadTestingData() {
       prepareTestingData();
 

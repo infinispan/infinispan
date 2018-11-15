@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.io.File;
 
 import org.infinispan.commons.util.Util;
@@ -20,7 +22,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.LocalCachePerfProgrammaticConfTest")
 public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
 
-   private final String indexDirectory = TestingUtil.tmpDirectory(this.getClass());
+   private final String indexDirectory = TestingUtil.tmpDirectory(getClass());
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -48,7 +50,8 @@ public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
    @Override
    protected void setup() throws Exception {
       Util.recursiveFileRemove(indexDirectory);
-      new File(indexDirectory).mkdirs();
+      boolean created = new File(indexDirectory).mkdirs();
+      assertTrue(created);
       super.setup();
    }
 

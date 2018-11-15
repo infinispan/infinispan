@@ -17,14 +17,15 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.LocalCachePerformantConfTest")
 public class LocalCachePerformantConfTest extends LocalCacheTest {
 
-   /** the file constant needs to match what's defined in the configuration file **/
+   /**
+    * The file constant needs to match what's defined in the configuration file.
+    */
    private final String indexDirectory = System.getProperty("java.io.tmpdir") + File.separator + "LocalCachePerformantConfTest";
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.fromXml("testconfig-LocalCachePerformantConfTest.xml");
       cache = cacheManager.getCache("Indexed");
-
       return cacheManager;
    }
 
