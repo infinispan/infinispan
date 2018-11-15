@@ -49,7 +49,8 @@ public class Version {
       versionId = readVersionBytes(parts[0], parts[1], parts[2], parts[3]);
       versionShort = getVersionShort(version);
       String modulePrefix = properties.getProperty("infinispan.module.slot.prefix", "ispn");
-      moduleSlot = String.format("%s-%s.%s", modulePrefix, parts[0], parts[1]);
+      String moduleVersion = properties.getProperty("infinispan.module.slot.version", parts[0] + "." + parts[1]);
+      moduleSlot = String.format("%s-%s", modulePrefix, moduleVersion);
       marshallVersion = Short.valueOf(parts[0] + parts[1]);
       majorMinor = String.format("%s.%s", parts[0], parts[1]);
       major = parts[0];
