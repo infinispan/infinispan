@@ -57,6 +57,8 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.PersistenceConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -94,7 +96,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   private final boolean writeBehind;
+   private final boolean writeBehindShared;
 
    // This is a hack to allow for cast to work properly, since Java doesn't work as well with nested generics
    protected static <R> Supplier<CacheStream<R>> supplierStreamCast(Supplier supplier) {
@@ -123,7 +125,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
               executor, registry, toKeyFunction);
 
       Configuration configuration = registry.getComponent(Configuration.class);
-      writeBehind = configuration.persistence().usingAsyncStore();
+      writeBehindShared = hasWriteBehindSharedStore(configuration.persistence());
    }
 
    /**
@@ -135,7 +137,16 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       super(other);
 
       Configuration configuration = registry.getComponent(Configuration.class);
-      writeBehind = configuration.persistence().usingAsyncStore();
+      writeBehindShared = hasWriteBehindSharedStore(configuration.persistence());
+   }
+
+   boolean hasWriteBehindSharedStore(PersistenceConfiguration persistenceConfiguration) {
+      for (StoreConfiguration storeConfiguration : persistenceConfiguration.stores()) {
+         if (storeConfiguration.shared() && storeConfiguration.async().enabled()) {
+            return true;
+         }
+      }
+      return false;
    }
 
    @Override
@@ -638,8 +649,8 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
       if (ch.getMembers().contains(localAddress)) {
          IntSet ownedSegments = IntSets.from(ch.getSegmentsForOwner(localAddress));
-         if (writeBehind) {
-            // When write behind is enabled - we can't do stay local optimization
+         if (writeBehindShared) {
+            // When we have a write behind shared store - we can't do stay local optimization
             stayLocal = false;
          } else {
             if (segmentsToFilter == null) {
