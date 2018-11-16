@@ -274,6 +274,20 @@ public class SpringCacheTest extends SingleCacheManagerTest {
       assertNull(cache.get("key", String.class));
    }
 
+   @Test
+   public void testGetWithNullValue() {
+      assertNull(cache.get("null", () -> null));
+   }
+
+   @Test
+   public void testGetNullValueAfterPutNull() {
+      cache.put("key", null);
+
+      String result = cache.get("key", () -> "notnull");
+
+      assertNull(result);
+   }
+
    private org.infinispan.Cache<Object, Object> createNativeCache() throws Exception {
       this.fb.setInfinispanEmbeddedCacheManager(cacheManager);
       this.fb.setBeanName(CACHE_NAME);
