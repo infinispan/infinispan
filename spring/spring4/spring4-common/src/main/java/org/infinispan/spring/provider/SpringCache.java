@@ -15,15 +15,11 @@ import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
 
 /**
- * <p>
- * A {@link org.springframework.cache.Cache <code>Cache</code>} implementation that delegates to a
- * {@link org.infinispan.Cache <code>org.infinispan.Cache</code>} instance supplied at construction
- * time.
- * </p>
+ * <p> A {@link org.springframework.cache.Cache <code>Cache</code>} implementation that delegates to a {@link
+ * org.infinispan.Cache <code>org.infinispan.Cache</code>} instance supplied at construction time. </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author <a href="mailto:marius.bogoevici@gmail.com">Marius Bogoevici</a>
- *
  */
 public class SpringCache implements Cache {
    private final BasicCache nativeCache;
@@ -115,7 +111,7 @@ public class SpringCache implements Cache {
                   T newValue = valueLoader.call();
                   // we can't use computeIfAbsent here since in distributed embedded scenario we would
                   // send a lambda to other nodes. This is the behavior we want to avoid.
-                  value = (T) nativeCache.putIfAbsent(key, newValue);
+                  value = (T) nativeCache.putIfAbsent(key, newValue == null ? NullValue.NULL : newValue);
                   if (value == null) {
                      value = newValue;
                   }
@@ -128,7 +124,7 @@ public class SpringCache implements Cache {
             synchronousGetLocks.remove(key);
          }
       }
-      return value;
+      return unwrapNull(value);
    }
 
    /**
