@@ -69,6 +69,7 @@ public class SpringRemoteCacheManagerFactoryBeanContextTest extends
                   + "\". However, it doesn't.",
             springRemoteCacheManagerConfiguredUsingConfigurationProperties);
       assertEquals(500, springRemoteCacheManagerConfiguredUsingConfigurationProperties.getReadTimeout());
+      assertEquals(700, springRemoteCacheManagerConfiguredUsingConfigurationProperties.getWriteTimeout());
    }
 
    @Test
