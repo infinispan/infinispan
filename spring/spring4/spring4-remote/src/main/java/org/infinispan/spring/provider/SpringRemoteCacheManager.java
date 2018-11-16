@@ -73,7 +73,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
    }
 
    public long getWriteTimeout() {
-      return this.readTimeout;
+      return this.writeTimeout;
    }
 
    public void setReadTimeout(final long readTimeout) {
