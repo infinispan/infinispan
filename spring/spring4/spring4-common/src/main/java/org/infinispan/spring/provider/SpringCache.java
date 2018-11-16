@@ -87,6 +87,8 @@ public class SpringCache implements Cache {
             value = nativeCache.getAsync(key).get(readTimeout, TimeUnit.MILLISECONDS);
          else
             value = nativeCache.get(key);
+
+         value = unwrapNull(value);
          if (value != null && type != null && !type.isInstance(value)) {
             throw new IllegalStateException("Cached value is not of required type [" + type.getName() + "]: " + value);
          }
@@ -232,6 +234,13 @@ public class SpringCache implements Cache {
          return NullValue.NULL;
       }
       return new SimpleValueWrapper(value);
+   }
+
+   private <T> T unwrapNull(Object value) {
+      if (value == NullValue.NULL) {
+         return null;
+      }
+      return (T) value;
    }
 
    //Implemented as a static holder class for backwards compatibility.

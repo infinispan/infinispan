@@ -266,6 +266,14 @@ public class SpringCacheTest extends SingleCacheManagerTest {
       cache.get("test", () -> {throw new IllegalStateException();});
    }
 
+   @Test
+   public void testPutNullAndGetWithClass() {
+      //when//then
+      cache.put("key", null);
+
+      assertNull(cache.get("key", String.class));
+   }
+
    private org.infinispan.Cache<Object, Object> createNativeCache() throws Exception {
       this.fb.setInfinispanEmbeddedCacheManager(cacheManager);
       this.fb.setBeanName(CACHE_NAME);
