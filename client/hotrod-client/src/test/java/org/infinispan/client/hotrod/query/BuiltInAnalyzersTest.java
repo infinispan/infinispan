@@ -60,6 +60,23 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
    }
 
    @Test
+   public void testKeywordAnalyzer() {
+      RemoteCache<Integer, TestEntity> remoteCache = remoteCacheManager.getCache();
+      TestEntity child = new TestEntity("name", "name", "name",
+            "name-with-dashes", "name", "name", null);
+
+      TestEntity parent = new TestEntity("name", "name", "name",
+            "name-with-dashes", "name", "name", child);
+
+      remoteCache.put(1, parent);
+
+      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
+
+      assertEquals(1, queryFactory.create("From TestEntity where name4:'name-with-dashes'").getResultSize());
+      assertEquals(1, queryFactory.create("From TestEntity p where p.child.name4:'name-with-dashes'").getResultSize());
+   }
+
+   @Test
    public void testShippedAnalyzers() {
       RemoteCache<Integer, TestEntity> remoteCache = remoteCacheManager.getCache();
       TestEntity testEntity = new TestEntity("Sarah-Jane Lee", "John McDougall", "James Connor",
