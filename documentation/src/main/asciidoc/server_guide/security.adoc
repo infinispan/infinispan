@@ -70,6 +70,8 @@ ifndef::productized[]
 Refer to the link:../user_guide/user_guide.html#Security_chapter[Security] chapter in the user guide for details.
 endif::productized[]
 
+//-
+
 [[security_hotrod_auth]]
 === Hot Rod authentication
 
