@@ -41,7 +41,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Galder Zamarreño
  */
 public class TestCacheManagerFactory {
-   private static final int NAMED_EXECUTORS_THREADS_NO_QUEUE = 6;
+   public static final int NAMED_EXECUTORS_THREADS_NO_QUEUE = 6;
    // Check *TxPartitionAndMerge*Test with taskset -c 1 before reducing the following 2
    private static final int NAMED_EXECUTORS_THREADS_WITH_QUEUE = 6;
    private static final int NAMED_EXECUTORS_QUEUE_SIZE = 20;
