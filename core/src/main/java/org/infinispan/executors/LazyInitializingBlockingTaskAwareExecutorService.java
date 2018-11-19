@@ -23,12 +23,13 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
  * @author Pedro Ruivo
  * @since 5.3
  */
-public final class LazyInitializingBlockingTaskAwareExecutorService extends ManageableExecutorService<BlockingTaskAwareExecutorService> implements BlockingTaskAwareExecutorService {
+public final class LazyInitializingBlockingTaskAwareExecutorService extends ManageableExecutorService<ExecutorService> implements BlockingTaskAwareExecutorService {
 
    private final ThreadPoolExecutorFactory<ExecutorService> executorFactory;
    private final ThreadFactory threadFactory;
    private final TimeService timeService;
    private final String controllerThreadName;
+   private volatile BlockingTaskAwareExecutorServiceImpl blockingExecutor;
 
    public LazyInitializingBlockingTaskAwareExecutorService(ThreadPoolExecutorFactory<ExecutorService> executorFactory,
                                                            ThreadFactory threadFactory,
@@ -42,13 +43,13 @@ public final class LazyInitializingBlockingTaskAwareExecutorService extends Mana
    @Override
    public void execute(BlockingRunnable runnable) {
       initIfNeeded();
-      executor.execute(runnable);
+      blockingExecutor.execute(runnable);
    }
 
    @Override
    public void checkForReadyTasks() {
-      if (executor != null) {
-         executor.checkForReadyTasks();
+      if (blockingExecutor != null) {
+         blockingExecutor.checkForReadyTasks();
       }
    }
 
@@ -132,16 +133,17 @@ public final class LazyInitializingBlockingTaskAwareExecutorService extends Mana
    }
 
    public BlockingTaskAwareExecutorService getExecutorService() {
-      return executor;
+      return blockingExecutor;
    }
 
    private void initIfNeeded() {
       if (executor == null) {
          synchronized (this) {
             if (executor == null) {
-               executor = new BlockingTaskAwareExecutorServiceImpl(controllerThreadName ,
-                                                                   executorFactory.createExecutor(threadFactory),
-                                                                   timeService);
+               // The superclass methods only work if the executor is a ThreadPoolExecutor
+               this.executor = executorFactory.createExecutor(threadFactory);
+               this.blockingExecutor =
+                  new BlockingTaskAwareExecutorServiceImpl(controllerThreadName , executor, timeService);
             }
          }
       }

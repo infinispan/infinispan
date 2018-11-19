@@ -1199,6 +1199,11 @@ public class TestingUtil {
       return gcr.getComponent(componentType);
    }
 
+   public static <T> T extractGlobalComponent(CacheContainer cacheContainer, Class<T> componentType, String componentName) {
+      GlobalComponentRegistry gcr = extractGlobalComponentRegistry(cacheContainer);
+      return gcr.getComponent(componentType, componentName);
+   }
+
    public static TransactionManager getTransactionManager(Cache cache) {
       return cache == null ? null : cache.getAdvancedCache().getTransactionManager();
    }

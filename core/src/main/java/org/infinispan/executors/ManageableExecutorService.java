@@ -20,7 +20,8 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 @Scope(Scopes.GLOBAL)
 public abstract class ManageableExecutorService<T extends ExecutorService> {
 
-   protected T executor;
+   // volatile so reads don't have to be in a synchronized block
+   protected volatile T executor;
 
    @ManagedAttribute(
          description = "Returns the number of threads in this executor.",
@@ -28,7 +29,7 @@ public abstract class ManageableExecutorService<T extends ExecutorService> {
          dataType = DataType.TRAIT,
          displayType = DisplayType.SUMMARY
    )
-   int getPoolSize() {
+   public int getPoolSize() {
       if (executor instanceof ThreadPoolExecutor) {
          return ((ThreadPoolExecutor) executor).getPoolSize();
       } else {
@@ -42,7 +43,7 @@ public abstract class ManageableExecutorService<T extends ExecutorService> {
          dataType = DataType.TRAIT,
          displayType = DisplayType.SUMMARY
    )
-   int getActiveCount() {
+   public int getActiveCount() {
       if (executor instanceof ThreadPoolExecutor) {
          return ((ThreadPoolExecutor) executor).getActiveCount();
       } else {
@@ -57,7 +58,7 @@ public abstract class ManageableExecutorService<T extends ExecutorService> {
          displayType = DisplayType.SUMMARY,
          writable = true
    )
-   int getMaximumPoolSize() {
+   public int getMaximumPoolSize() {
       if (executor instanceof ThreadPoolExecutor) {
          return ((ThreadPoolExecutor) executor).getMaximumPoolSize();
       } else {
@@ -65,7 +66,7 @@ public abstract class ManageableExecutorService<T extends ExecutorService> {
       }
    }
 
-   void setMaximumPoolSize(int maximumPoolSize) {
+   public void setMaximumPoolSize(int maximumPoolSize) {
       if (executor instanceof ThreadPoolExecutor) {
          ((ThreadPoolExecutor) executor).setMaximumPoolSize(maximumPoolSize);
          if (!(((ThreadPoolExecutor)executor).getQueue() instanceof SynchronousQueue)) {
