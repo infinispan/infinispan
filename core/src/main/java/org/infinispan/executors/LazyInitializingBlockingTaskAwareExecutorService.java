@@ -55,81 +55,81 @@ public final class LazyInitializingBlockingTaskAwareExecutorService extends Mana
 
    @Override
    public void shutdown() {
-      if (executor != null) executor.shutdown();
+      if (blockingExecutor != null) blockingExecutor.shutdown();
    }
 
    @Override
    public List<Runnable> shutdownNow() {
-      if (executor == null)
+      if (blockingExecutor == null)
          return Collections.emptyList();
       else
-         return executor.shutdownNow();
+         return blockingExecutor.shutdownNow();
    }
 
    @Override
    public boolean isShutdown() {
-      return executor == null || executor.isShutdown();
+      return blockingExecutor == null || blockingExecutor.isShutdown();
    }
 
    @Override
    public boolean isTerminated() {
-      return executor == null || executor.isTerminated();
+      return blockingExecutor == null || blockingExecutor.isTerminated();
    }
 
    @Override
    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-      if (executor == null)
+      if (blockingExecutor == null)
          return true;
       else
-         return executor.awaitTermination(timeout, unit);
+         return blockingExecutor.awaitTermination(timeout, unit);
    }
 
    @Override
    public <T> Future<T> submit(Callable<T> task) {
       initIfNeeded();
-      return executor.submit(task);
+      return blockingExecutor.submit(task);
    }
 
    @Override
    public <T> Future<T> submit(Runnable task, T result) {
       initIfNeeded();
-      return executor.submit(task, result);
+      return blockingExecutor.submit(task, result);
    }
 
    @Override
    public Future<?> submit(Runnable task) {
       initIfNeeded();
-      return executor.submit(task);
+      return blockingExecutor.submit(task);
    }
 
    @Override
    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
       initIfNeeded();
-      return executor.invokeAll(tasks);
+      return blockingExecutor.invokeAll(tasks);
    }
 
    @Override
    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
       initIfNeeded();
-      return executor.invokeAll(tasks, timeout, unit);
+      return blockingExecutor.invokeAll(tasks, timeout, unit);
    }
 
    @Override
    public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
       initIfNeeded();
-      return executor.invokeAny(tasks);
+      return blockingExecutor.invokeAny(tasks);
    }
 
    @Override
    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       initIfNeeded();
-      return executor.invokeAny(tasks, timeout, unit);
+      return blockingExecutor.invokeAny(tasks, timeout, unit);
    }
 
    @Override
    public void execute(Runnable command) {
       initIfNeeded();
-      executor.execute(command);
+      blockingExecutor.execute(command);
    }
 
    public BlockingTaskAwareExecutorService getExecutorService() {
@@ -137,10 +137,10 @@ public final class LazyInitializingBlockingTaskAwareExecutorService extends Mana
    }
 
    private void initIfNeeded() {
-      if (executor == null) {
+      if (blockingExecutor == null) {
          synchronized (this) {
-            if (executor == null) {
-               // The superclass methods only work if the executor is a ThreadPoolExecutor
+            if (blockingExecutor == null) {
+               // The superclass methods only work if the blockingExecutor is a ThreadPoolExecutor
                this.executor = executorFactory.createExecutor(threadFactory);
                this.blockingExecutor =
                   new BlockingTaskAwareExecutorServiceImpl(controllerThreadName , executor, timeService);
