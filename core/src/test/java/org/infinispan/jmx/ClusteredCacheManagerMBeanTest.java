@@ -1,8 +1,13 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+import static org.infinispan.test.TestingUtil.existsObject;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getJGroupsChannelObjectName;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -10,6 +15,8 @@ import javax.management.ObjectName;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
+import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -68,5 +75,29 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
       assertEquals(server.getAttribute(name2, "NodeAddress"), server.getAttribute(jchannelName2, "address"));
       assert (Boolean) server.getAttribute(jchannelName1, "connected");
       assert (Boolean) server.getAttribute(jchannelName2, "connected");
+   }
+
+   public void testExecutorMBeans() throws Exception {
+      LazyInitializingScheduledExecutorService timeoutExecutor =
+         extractGlobalComponent(manager(0), LazyInitializingScheduledExecutorService.class,
+                                TIMEOUT_SCHEDULE_EXECUTOR);
+      timeoutExecutor.submit(() -> {});
+
+      ObjectName objectName =
+         getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", TIMEOUT_SCHEDULE_EXECUTOR);
+      assertTrue(existsObject(objectName));
+      assertEquals(0, server.getAttribute(objectName, "QueueSize"));
+      assertEquals(Integer.MAX_VALUE, server.getAttribute(objectName, "MaximumPoolSize"));
+
+      LazyInitializingBlockingTaskAwareExecutorService remoteExecutor =
+         extractGlobalComponent(manager(0), LazyInitializingBlockingTaskAwareExecutorService.class,
+                                REMOTE_COMMAND_EXECUTOR);
+      remoteExecutor.submit(() -> {});
+
+      objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", REMOTE_COMMAND_EXECUTOR);
+      assertTrue(existsObject(objectName));
+      assertEquals(0, server.getAttribute(objectName, "QueueSize"));
+      assertEquals(TestCacheManagerFactory.NAMED_EXECUTORS_THREADS_NO_QUEUE,
+                   server.getAttribute(objectName, "MaximumPoolSize"));
    }
 }
