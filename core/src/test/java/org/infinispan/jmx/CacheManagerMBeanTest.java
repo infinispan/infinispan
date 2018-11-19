@@ -1,7 +1,9 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.existsObject;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.TestingUtil.getMethodSpecificJmxDomain;
@@ -21,6 +23,7 @@ import javax.management.ServiceNotFoundException;
 
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.Exceptions;
@@ -133,13 +136,16 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testExecutorMBeans() throws Exception {
-      ObjectName executor = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", "org.infinispan.executors.timeout");
-      assertTrue(existsObject(executor));
-      assertEquals(-1, server.getAttribute(executor, "PoolSize"));
-      executor = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", "org.infinispan.executors.notification");
-      assertTrue(existsObject(executor));
-      assertEquals(-1, server.getAttribute(executor, "PoolSize"));
+      LazyInitializingScheduledExecutorService timeoutExecutor =
+         extractGlobalComponent(cacheManager, LazyInitializingScheduledExecutorService.class,
+                                TIMEOUT_SCHEDULE_EXECUTOR);
+      timeoutExecutor.submit(() -> {});
 
+      ObjectName objectName =
+         getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", TIMEOUT_SCHEDULE_EXECUTOR);
+      assertTrue(existsObject(objectName));
+      assertEquals(1, server.getAttribute(objectName, "PoolSize"));
+      assertEquals(Integer.MAX_VALUE, server.getAttribute(objectName, "MaximumPoolSize"));
    }
 
 }
