@@ -629,3 +629,5 @@ the same *JAR* as the user's custom classes. However, the *JAR* that contains
 the provider must be in the same directory/module as the marshaller and custom
 class *JAR* files.
 ====
+
+//-
