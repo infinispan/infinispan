@@ -7,6 +7,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.RestServer;
+import org.infinispan.rest.TestClass;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.impl.VoidAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
@@ -38,6 +39,7 @@ public class RestServerHelper {
       globalConfigurationBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       GlobalConfigurationBuilder globalConfiguration = globalConfigurationBuilder.nonClusteredDefault();
       DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfiguration.build(), configuration.build());
+      cacheManager.getClassWhiteList().addClasses(TestClass.class);
       for (String cacheConfiguration : cachesDefined) {
          cacheManager.defineConfiguration(cacheConfiguration, configuration.build());
       }
