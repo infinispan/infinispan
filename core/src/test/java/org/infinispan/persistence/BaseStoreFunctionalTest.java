@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -25,6 +26,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionType;
@@ -267,7 +269,8 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
             }
 
             @Override
-            public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, AccessMode accessMode, long flags) {
+            public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries,
+                  Predicate<? super StoreConfiguration> predicate, long flags) {
                passivate.set(true);
             }
          };

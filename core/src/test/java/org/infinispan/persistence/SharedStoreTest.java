@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 
 @Test (testName = "persistence.SharedStoreTest", groups = "functional")
 @CleanupAfterMethod
-@InCacheMode({CacheMode.REPL_SYNC, CacheMode.SCATTERED_SYNC})
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC, CacheMode.SCATTERED_SYNC})
 public class SharedStoreTest extends MultipleCacheManagersTest {
 
    @Override
@@ -43,10 +43,14 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
    @AfterMethod
    @Override
    protected void clearContent() throws Throwable {
+      List<CacheLoader<String, String>> cachestores = TestingUtil.cachestores(caches());
+      super.clearContent();
       // Because the store is shared, the stats are not cleared between methods
       // In particular, the clear between methods is added to the statistics
-      List<CacheLoader<Object, Object>> cachestores = TestingUtil.cachestores(caches());
-      super.clearContent();
+      clearStoreStats(cachestores);
+   }
+
+   private void clearStoreStats(List<CacheLoader<String, String>> cachestores) {
       cachestores.forEach(store -> ((DummyInMemoryStore) store).clearStats());
    }
 
@@ -99,4 +103,28 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       }
    }
 
+   public void testSize() {
+      // Force all the caches up
+      List<Cache<String, String>> caches = caches();
+      Cache<String, String> cache0 = caches.get(0);
+      cache0.put("key", "value");
+      clearStoreStats(TestingUtil.cachestores(caches()));
+
+      assertEquals(1, cache0.size());
+
+      // Stats are shared between nodes - so it shouldn't matter which, but there should only be 1 size invocation
+      // and no other invocations
+      assertStoreDistinctInvocationAmount(cache0, 1);
+      assertStoreStatInvocationEquals(cache0, "size", 1);
+   }
+
+   private void assertStoreStatInvocationEquals(Cache<?, ?> cache, String invocationName, int invocationCount) {
+      DummyInMemoryStore dims = TestingUtil.getFirstLoader(cache);
+      assertEquals(invocationCount, dims.stats().get(invocationName).intValue());
+   }
+
+   private void assertStoreDistinctInvocationAmount(Cache<?, ?> cache, int distinctInvocations) {
+      DummyInMemoryStore dims = TestingUtil.getFirstLoader(cache);
+      assertEquals(distinctInvocations, dims.stats().values().stream().filter(i -> i > 0).count());
+   }
 }

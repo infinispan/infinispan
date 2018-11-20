@@ -475,14 +475,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void clearAllStores(AccessMode mode) {
+   public void clearAllStores(Predicate<? super StoreConfiguration> predicate) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          // Apply to txWriters as well as clear does not happen in a Tx context
          Consumer<CacheWriter> clearWriter = writer -> {
             if (writer instanceof AdvancedCacheWriter) {
-               if (mode.canPerform(getStoreConfig(writer))) {
+               if (predicate.test(getStoreConfig(writer))) {
                   ((AdvancedCacheWriter) writer).clear();
                }
             }
@@ -495,13 +495,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public boolean deleteFromAllStores(Object key, int segment, AccessMode mode) {
+   public boolean deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          boolean removed = false;
          for (CacheWriter w : nonTxWriters) {
-            if (mode.canPerform(getStoreConfig(w))) {
+            if (predicate.test(getStoreConfig(w))) {
                if (w instanceof SegmentedAdvancedLoadWriteStore) {
                   removed |= ((SegmentedAdvancedLoadWriteStore) w).delete(segment, key);
                } else {
@@ -515,11 +515,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
    }
 
-   <K, V> AdvancedCacheLoader<K, V> getFirstAdvancedCacheLoader(AccessMode mode) {
+   <K, V> AdvancedCacheLoader<K, V> getFirstAdvancedCacheLoader(Predicate<? super StoreConfiguration> predicate) {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader loader : loaders) {
-            if (mode.canPerform(getStoreConfig(loader)) && loader instanceof AdvancedCacheLoader) {
+            if (predicate.test(getStoreConfig(loader)) && loader instanceof AdvancedCacheLoader) {
                return ((AdvancedCacheLoader<K, V>) loader);
             }
          }
@@ -529,14 +529,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return null;
    }
 
-   <K, V> SegmentedAdvancedLoadWriteStore<K, V> getFirstSegmentedStore(AccessMode mode) {
+   <K, V> SegmentedAdvancedLoadWriteStore<K, V> getFirstSegmentedStore(Predicate<? super StoreConfiguration> predicate) {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader l : loaders) {
             StoreConfiguration storeConfiguration;
             if (l instanceof SegmentedAdvancedLoadWriteStore &&
                   (storeConfiguration = getStoreConfig(l)) != null && storeConfiguration.segmented() &&
-                  mode.canPerform(storeConfiguration)) {
+                  predicate.test(storeConfiguration)) {
                return ((SegmentedAdvancedLoadWriteStore<K, V>) l);
             }
          }
@@ -548,8 +548,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
-         boolean fetchMetadata, AccessMode mode) {
-      AdvancedCacheLoader<K, V> advancedCacheLoader = getFirstAdvancedCacheLoader(mode);
+         boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
+      AdvancedCacheLoader<K, V> advancedCacheLoader = getFirstAdvancedCacheLoader(predicate);
 
       if (advancedCacheLoader != null) {
          // We have to acquire the read lock on the stores mutex to be sure that no concurrent stop or store removal
@@ -564,20 +564,20 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter,
-         boolean fetchValue, boolean fetchMetadata, AccessMode mode) {
-      SegmentedAdvancedLoadWriteStore<K, V> segmentedStore = getFirstSegmentedStore(mode);
+         boolean fetchValue, boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
+      SegmentedAdvancedLoadWriteStore<K, V> segmentedStore = getFirstSegmentedStore(predicate);
       if (segmentedStore != null) {
          return Flowable.using(publisherSemaphoreCallable, semaphore -> {
             semaphore.acquire();
             return segmentedStore.publishEntries(segments, filter, fetchValue, fetchMetadata);
          }, Semaphore::release);
       }
-      return publishEntries(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), fetchValue, fetchMetadata, mode);
+      return publishEntries(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), fetchValue, fetchMetadata, predicate);
    }
 
    @Override
-   public <K> Publisher<K> publishKeys(Predicate<? super K> filter, AccessMode mode) {
-      AdvancedCacheLoader<K, ?> advancedCacheLoader = getFirstAdvancedCacheLoader(mode);
+   public <K> Publisher<K> publishKeys(Predicate<? super K> filter, Predicate<? super StoreConfiguration> predicate) {
+      AdvancedCacheLoader<K, ?> advancedCacheLoader = getFirstAdvancedCacheLoader(predicate);
 
       if (advancedCacheLoader != null) {
          // We have to acquire the read lock on the stores mutex to be sure that no concurrent stop or store removal
@@ -591,8 +591,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public <K> Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter, AccessMode mode) {
-      SegmentedAdvancedLoadWriteStore<K, ?> segmentedStore = getFirstSegmentedStore(mode);
+   public <K> Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter,
+         Predicate<? super StoreConfiguration> predicate) {
+      SegmentedAdvancedLoadWriteStore<K, ?> segmentedStore = getFirstSegmentedStore(predicate);
 
       if (segmentedStore != null) {
          // We have to acquire the read lock on the stores mutex to be sure that no concurrent stop or store removal
@@ -603,7 +604,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }, Semaphore::release);
       }
 
-      return publishKeys(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), mode);
+      return publishKeys(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), predicate);
    }
 
    @Override
@@ -663,19 +664,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, AccessMode accessMode) {
-      writeToAllNonTxStores(marshalledEntry, segment, accessMode, 0L);
+   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment,
+         Predicate<? super StoreConfiguration> predicate) {
+      writeToAllNonTxStores(marshalledEntry, segment, predicate, 0L);
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, AccessMode accessMode, long flags) {
+   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment,
+         Predicate<? super StoreConfiguration> predicate, long flags) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          //noinspection unchecked
          nonTxWriters.stream()
                .filter(writer -> !(writer instanceof FlagAffectedStore) || FlagAffectedStore.class.cast(writer).shouldWrite(flags))
-               .filter(writer -> accessMode.canPerform(getStoreConfig(writer)))
+               .filter(writer -> predicate.test(getStoreConfig(writer)))
                .forEach(writer -> {
                   if (writer instanceof SegmentedAdvancedLoadWriteStore) {
                      ((SegmentedAdvancedLoadWriteStore) writer).write(segment, marshalledEntry);
@@ -689,7 +692,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, AccessMode accessMode, long flags) {
+   public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries,
+         Predicate<? super StoreConfiguration> predicate, long flags) {
       if (!entries.iterator().hasNext())
          return;
 
@@ -699,7 +703,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          //noinspection unchecked
          nonTxWriters.stream()
                .filter(writer -> !(writer instanceof FlagAffectedStore) || FlagAffectedStore.class.cast(writer).shouldWrite(flags))
-               .filter(writer -> accessMode.canPerform(getStoreConfig(writer)))
+               .filter(writer -> predicate.test(getStoreConfig(writer)))
                .forEach(writer -> writer.writeBatch(entries));
       } finally {
          storesMutex.readLock().unlock();
@@ -707,7 +711,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void deleteBatchFromAllNonTxStores(Iterable<Object> keys, AccessMode accessMode, long flags) {
+   public void deleteBatchFromAllNonTxStores(Iterable<Object> keys, Predicate<? super StoreConfiguration> predicate,
+         long flags) {
       if (!keys.iterator().hasNext())
          return;
 
@@ -715,7 +720,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       try {
          checkStoreAvailability();
          nonTxWriters.stream()
-               .filter(writer -> accessMode.canPerform(getStoreConfig(writer)))
+               .filter(writer -> predicate.test(getStoreConfig(writer)))
                .forEach(writer -> writer.deleteBatch(keys));
       } finally {
          storesMutex.readLock().unlock();
@@ -724,12 +729,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public void prepareAllTxStores(Transaction transaction, BatchModification batchModification,
-                                  AccessMode accessMode) throws PersistenceException {
+         Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          for (CacheWriter writer : txWriters) {
-            if (accessMode.canPerform(getStoreConfig(writer)) || configuration.clustering().cacheMode().equals(CacheMode.LOCAL)) {
+            if (predicate.test(getStoreConfig(writer)) || configuration.clustering().cacheMode().equals(CacheMode.LOCAL)) {
                TransactionalCacheWriter txWriter = (TransactionalCacheWriter) undelegate(writer);
                txWriter.prepareWithModifications(transaction, batchModification);
             }
@@ -740,13 +745,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void commitAllTxStores(Transaction transaction, AccessMode accessMode) {
-      performOnAllTxStores(accessMode, writer -> writer.commit(transaction));
+   public void commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
+      performOnAllTxStores(predicate, writer -> writer.commit(transaction));
    }
 
    @Override
-   public void rollbackAllTxStores(Transaction transaction, AccessMode accessMode) {
-      performOnAllTxStores(accessMode, writer -> writer.rollback(transaction));
+   public void rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
+      performOnAllTxStores(predicate, writer -> writer.rollback(transaction));
    }
 
    @Override
@@ -766,18 +771,19 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public int size() {
+   public int size(Predicate<? super StoreConfiguration> predicate) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          for (CacheLoader l : loaders) {
-            if (l instanceof AdvancedCacheLoader)
+            StoreConfiguration storeConfiguration = getStoreConfig(l);
+            if (predicate.test(storeConfiguration) && l instanceof AdvancedCacheLoader)
                return ((AdvancedCacheLoader) l).size();
          }
       } finally {
          storesMutex.readLock().unlock();
       }
-      return 0;
+      return -1;
    }
 
    @Override
@@ -814,7 +820,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader loader : loaders) {
-            if (AccessMode.PRIVATE.canPerform(getStoreConfig(loader))) {
+            if (AccessMode.PRIVATE.test(getStoreConfig(loader))) {
                if (loader instanceof SegmentedAdvancedLoadWriteStore) {
                   ((SegmentedAdvancedLoadWriteStore) loader).addSegments(segments);
                } else if (loader instanceof CacheWriter) {
@@ -834,7 +840,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader loader : loaders) {
-            if (AccessMode.PRIVATE.canPerform(getStoreConfig(loader))) {
+            if (AccessMode.PRIVATE.test(getStoreConfig(loader))) {
                if (loader instanceof SegmentedAdvancedLoadWriteStore) {
                   ((SegmentedAdvancedLoadWriteStore) loader).removeSegments(segments);
                } else if (loader instanceof CacheWriter) {
@@ -1204,12 +1210,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
    }
 
-   private void performOnAllTxStores(AccessMode accessMode, Consumer<TransactionalCacheWriter> action) {
+   private void performOnAllTxStores(Predicate<? super StoreConfiguration> predicate, Consumer<TransactionalCacheWriter> action) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          txWriters.stream()
-               .filter(writer -> accessMode.canPerform(getStoreConfig(writer)))
+               .filter(writer -> predicate.test(getStoreConfig(writer)))
                .forEach(action);
       } finally {
          storesMutex.readLock().unlock();
