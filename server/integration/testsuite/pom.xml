@@ -301,8 +301,7 @@
 
         <serverMemoryJvmArgs>-Xmx300m ${testjvm.commonArgs}</serverMemoryJvmArgs>
         <jvm.x64.args />
-        <default.transport.stack>udp</default.transport.stack>
-        <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
+        <transport.stack>-Djboss.default.jgroups.stack=${infinispan.test.jgroups.protocol}</transport.stack>
 
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
         <node0.ip>127.0.0.1</node0.ip>
@@ -913,7 +912,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>localmode-${default.transport.stack}</reportNameSuffix>
+                            <reportNameSuffix>localmode-${infinispan.test.jgroups.protocol}</reportNameSuffix>
                             <groups>${groups.client.local}</groups>
                             <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
@@ -930,7 +929,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>localmode-${default.transport.stack}</reportNameSuffix>
+                            <reportNameSuffix>localmode-${infinispan.test.jgroups.protocol}</reportNameSuffix>
                             <groups>org.infinispan.server.test.category.MemcachedSingleNode</groups>
                             <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
@@ -947,7 +946,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>localmode-${default.transport.stack}</reportNameSuffix>
+                            <reportNameSuffix>localmode-${infinispan.test.jgroups.protocol}</reportNameSuffix>
                             <groups>${groups.client.local.domain}</groups>
                             <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
@@ -964,7 +963,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>distmode-${default.transport.stack}</reportNameSuffix>
+                            <reportNameSuffix>distmode-${infinispan.test.jgroups.protocol}</reportNameSuffix>
                             <groups>${groups.client.clustered}</groups>
                             <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
@@ -981,7 +980,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>distmode-${default.transport.stack}</reportNameSuffix>
+                            <reportNameSuffix>distmode-${infinispan.test.jgroups.protocol}</reportNameSuffix>
                             <groups>org.infinispan.server.test.category.MemcachedClustered</groups>
                             <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
@@ -998,7 +997,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>distmode-${default.transport.stack}</reportNameSuffix>
+                            <reportNameSuffix>distmode-${infinispan.test.jgroups.protocol}</reportNameSuffix>
                             <groups>${groups.client.clustered.domain}</groups>
                             <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
@@ -1015,7 +1014,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>replmode-${default.transport.stack}</reportNameSuffix>
+                            <reportNameSuffix>replmode-${infinispan.test.jgroups.protocol}</reportNameSuffix>
                             <groups>${groups.client.clustered}</groups>
                             <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
@@ -1032,7 +1031,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>replmode-${default.transport.stack}</reportNameSuffix>
+                            <reportNameSuffix>replmode-${infinispan.test.jgroups.protocol}</reportNameSuffix>
                             <groups>${groups.client.clustered.domain}</groups>
                             <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>

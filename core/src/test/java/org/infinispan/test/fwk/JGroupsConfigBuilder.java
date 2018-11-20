@@ -74,7 +74,7 @@ public class JGroupsConfigBuilder {
    };
 
    static {
-      JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jgroups.protocol", "protocol.stack", "tcp");
+      JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jgroups.protocol", "protocol.stack", "udp");
       System.out.println("Transport protocol stack used = " + JGROUPS_STACK);
    }
 
