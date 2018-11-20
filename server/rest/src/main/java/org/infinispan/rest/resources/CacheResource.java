@@ -159,7 +159,6 @@ public class CacheResource implements ResourceHandler {
             CacheEntry<Object, Object> entry = restCacheManager.getInternalEntry(cacheName, key, true, keyContentType, contentType);
             if (entry instanceof InternalCacheEntry) {
                InternalCacheEntry ice = (InternalCacheEntry) entry;
-               oldData = entry.getValue();
                String etagNoneMatch = request.getEtagIfNoneMatchHeader();
                if (etagNoneMatch != null) {
                   String etag = calcETAG(ice.getValue());
@@ -174,7 +173,7 @@ public class CacheResource implements ResourceHandler {
             boolean useAsync = request.getPerformAsyncHeader();
             Long ttl = request.getTimeToLiveSecondsHeader();
             Long idle = request.getMaxIdleTimeSecondsHeader();
-            return putInCache(responseBuilder, useAsync, cache, key, data, ttl, idle, oldData);
+            return putInCache(responseBuilder, useAsync, cache, key, data, ttl, idle);
          }
       } catch (CacheException | IllegalStateException e) {
          throw createResponseException(e);
@@ -293,20 +292,12 @@ public class CacheResource implements ResourceHandler {
 
    private RestResponse putInCache(NettyRestResponse.Builder responseBuilder, boolean useAsync,
                                    AdvancedCache<Object, Object> cache, Object key, byte[] data, Long ttl,
-                                   Long idleTime, Object prevCond) {
+                                   Long idleTime) {
       final Metadata metadata = CacheOperationsHelper.createMetadata(cache.getCacheConfiguration(), ttl, idleTime);
-      if (prevCond != null) {
-         boolean replaced = cache.replace(key, prevCond, data, metadata);
-         // If not replaced, simply send back that the precondition failed
-         if (!replaced) {
-            responseBuilder.status(HttpResponseStatus.PRECONDITION_FAILED.code());
-         }
+      if (useAsync) {
+         cache.putAsync(key, data, metadata);
       } else {
-         if (useAsync) {
-            cache.putAsync(key, data, metadata);
-         } else {
-            cache.put(key, data, metadata);
-         }
+         cache.put(key, data, metadata);
       }
       responseBuilder.header("etag", calcETAG(data));
       return responseBuilder.build();
