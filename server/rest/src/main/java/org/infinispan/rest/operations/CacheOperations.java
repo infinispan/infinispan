@@ -255,12 +255,10 @@ public class CacheOperations extends AbstractOperations {
             return InfinispanErrorResponse.asError(request, HttpResponseStatus.CONFLICT, "An entry already exists");
          } else {
             InfinispanCacheResponse response = InfinispanCacheResponse.inReplyTo(request);
-            Optional<Object> oldData = Optional.empty();
             byte[] data = request.data().orElseThrow(NoDataFoundException::new);
             CacheEntry<Object, Object> entry = restCacheManager.getInternalEntry(cacheName, key, true, keyContentType, contentType);
             if (entry instanceof InternalCacheEntry) {
                InternalCacheEntry ice = (InternalCacheEntry) entry;
-               oldData = Optional.of(entry.getValue());
                Optional<String> clientEtag = request.getEtagIfNoneMatch();
                if (clientEtag.isPresent()) {
                   String etag = calcETAG(ice.getValue());
@@ -275,7 +273,7 @@ public class CacheOperations extends AbstractOperations {
             boolean useAsync = request.getUseAsync().orElse(false);
             Optional<Long> ttl = request.getTimeToLiveSeconds();
             Optional<Long> idle = request.getMaxIdleTimeSeconds();
-            return putInCache(response, useAsync, cache, key, data, ttl, idle, oldData);
+            return putInCache(response, useAsync, cache, key, data, ttl, idle);
          }
       } catch (CacheException | IllegalStateException e) {
          throw createResponseException(e);
@@ -287,20 +285,12 @@ public class CacheOperations extends AbstractOperations {
    }
 
    private InfinispanResponse putInCache(InfinispanCacheResponse response, boolean useAsync, AdvancedCache<Object, Object> cache, Object key,
-                                         byte[] data, Optional<Long> ttl, Optional<Long> idleTime, Optional<Object> prevCond) {
+                                         byte[] data, Optional<Long> ttl, Optional<Long> idleTime) {
       final Metadata metadata = CacheOperationsHelper.createMetadata(cache.getCacheConfiguration(), ttl, idleTime);
-      if (prevCond.isPresent()) {
-         boolean replaced = cache.replace(key, prevCond.get(), data, metadata);
-         // If not replaced, simply send back that the precondition failed
-         if (!replaced) {
-            response.status(HttpResponseStatus.PRECONDITION_FAILED);
-         }
+      if (useAsync) {
+         cache.putAsync(key, data, metadata);
       } else {
-         if (useAsync) {
-            cache.putAsync(key, data, metadata);
-         } else {
-            cache.put(key, data, metadata);
-         }
+         cache.put(key, data, metadata);
       }
       response.etag(calcETAG(data));
       return response;
