@@ -20,8 +20,7 @@
       <resources.dir>${basedir}/src/test/resources</resources.dir>
       <serverMemoryJvmArgs>-Xmx300m ${testjvm.commonArgs}</serverMemoryJvmArgs>
       <jvm.x64.args />
-      <default.transport.stack>udp</default.transport.stack>
-      <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
+      <transport.stack>-Djboss.default.jgroups.stack=${infinispan.test.jgroups.protocol}</transport.stack>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
       <mcast.ip>234.99.54.14</mcast.ip>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
