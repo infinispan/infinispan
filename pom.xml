@@ -4313,24 +4313,7 @@
                   <linkXRef>false</linkXRef>
                </configuration>
             </plugin>
-            <plugin>
-               <groupId>org.wildfly.plugins</groupId>
-               <artifactId>wildfly-maven-plugin</artifactId>
-               <version>${version.org.wildfly.maven-plugin}</version>
-               <dependencies>
-                  <dependency>
-                     <groupId>org.wildfly.core</groupId>
-                     <artifactId>wildfly-cli</artifactId>
-                     <version>${version.org.wildfly.core}</version>
-                     <exclusions>
-                        <exclusion>
-                           <groupId>sun.jdk</groupId>
-                           <artifactId>jconsole</artifactId>
-                        </exclusion>
-                     </exclusions>
-                  </dependency>
-               </dependencies>
-            </plugin>
+
             <plugin>
                <groupId>com.github.alexcojocaru</groupId>
                <artifactId>elasticsearch-maven-plugin</artifactId>
