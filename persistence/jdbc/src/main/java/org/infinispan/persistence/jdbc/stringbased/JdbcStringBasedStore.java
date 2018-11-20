@@ -507,6 +507,8 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    private <P> Flowable<P> publish(IntSet segments, Function<ResultSet, Flowable<P>> function) {
       return Flowable.using(() -> {
          Connection connection = connectionFactory.getConnection();
+         // Some JDBC drivers require auto commit disabled to do paging
+         connection.setAutoCommit(false);
          String sql;
          if (segments != null) {
             sql = tableManager.getLoadNonExpiredRowsSqlForSegments(segments.size());
