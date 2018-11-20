@@ -138,4 +138,17 @@ public class TxStoreTest extends AbstractInfinispanTest {
       int value = UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
       assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
    }
+
+   public void testSizeWithEntryInContext() throws Exception {
+      cache.put(KEY1, VAL1);
+
+      assertEquals(1, cache.size());
+
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      TestingUtil.withTx(tm, () -> {
+         cache.put(KEY2, VAL2);
+         assertEquals(2, cache.size());
+         return null;
+      });
+   }
 }
