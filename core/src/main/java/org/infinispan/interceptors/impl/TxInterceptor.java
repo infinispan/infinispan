@@ -268,6 +268,10 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    @Override
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
       enlistIfNeeded(ctx);
+      // If we have any entries looked up - even read, we can't allow size optimizations
+      if (ctx.isInTxScope() && ctx.lookedUpEntriesCount() > 0) {
+         command.addFlags(FlagBitSets.SKIP_SIZE_OPTIMIZATION);
+      }
       return invokeNext(ctx, command);
    }
 
@@ -277,7 +281,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       if (ctx.isInTxScope()) {
          // Acquire the remote iteration flag and set it for all below - so they won't wrap unnecessarily
          boolean isRemoteIteration = command.hasAnyFlag(FlagBitSets.REMOTE_ITERATION);
-         command.setFlagsBitSet(FlagBitSets.REMOTE_ITERATION);
+         command.addFlags(FlagBitSets.REMOTE_ITERATION);
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
             CacheSet<K> set = (CacheSet<K>) rv;
             return new TxKeyCacheSet(rCommand, set, rCtx, isRemoteIteration);
@@ -292,7 +296,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       if (ctx.isInTxScope()) {
          // Acquire the remote iteration flag and set it for all below - so they won't wrap unnecessarily
          boolean isRemoteIteration = command.hasAnyFlag(FlagBitSets.REMOTE_ITERATION);
-         command.setFlagsBitSet(FlagBitSets.REMOTE_ITERATION);
+         command.addFlags(FlagBitSets.REMOTE_ITERATION);
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
             CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
             return new TxEntryCacheSet(rCommand, set, rCtx, isRemoteIteration);

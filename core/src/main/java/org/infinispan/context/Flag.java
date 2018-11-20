@@ -280,6 +280,12 @@ public enum Flag {
     */
    REMOTE_ITERATION,
 
+   /**
+    * Flag that can be used to skip any size optimizations - forcing iteration of entries to count. User shouldn't
+    * normally need to use this flag. This is helpful if there are concerns that can cause just a simple size invocation
+    * from being consistent (eg. on-going transaction with modifications).
+    */
+   SKIP_SIZE_OPTIMIZATION
    ;
 
    /**

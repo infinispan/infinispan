@@ -53,12 +53,12 @@ public interface PersistenceManager extends Lifecycle {
    /**
     * Invokes {@link org.infinispan.persistence.spi.AdvancedCacheWriter#clear()} on all the stores that aloes it.
     */
-   void clearAllStores(AccessMode mode);
+   void clearAllStores(Predicate<? super StoreConfiguration> predicate);
 
-   boolean deleteFromAllStores(Object key, int segment, AccessMode mode);
+   boolean deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate);
 
    /**
-    * See {@link #publishEntries(Predicate, boolean, boolean, AccessMode)}
+    * See {@link #publishEntries(Predicate, boolean, boolean, Predicate)}
     */
    default <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(boolean fetchValue, boolean fetchMetadata) {
       return publishEntries(null, fetchValue, fetchMetadata, AccessMode.BOTH);
@@ -74,13 +74,13 @@ public interface PersistenceManager extends Lifecycle {
     * @param filter filter so that only entries whose key matches are returned
     * @param fetchValue whether to fetch value or not
     * @param fetchMetadata whether to fetch metadata or not
-    * @param mode access mode to choose what type of loader to use
+    * @param predicate whether a store can be used by publish entries
     * @param <K> key type
     * @param <V> value type
     * @return publisher that will publish entries
     */
    <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
-         boolean fetchMetadata, AccessMode mode);
+         boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Returns a publisher that will publish entries that map to the provided segments. It will attempt to find the
@@ -90,46 +90,46 @@ public interface PersistenceManager extends Lifecycle {
     * @param filter filter so that only entries whose key matches are returned
     * @param fetchValue whether to fetch value or not
     * @param fetchMetadata whether to fetch metadata or not
-    * @param mode access mode to choose what type of loader to use
+    * @param predicate whether a store can be used by publish entries
     * @param <K> key type
     * @param <V> value type
     * @return publisher that will publish entries belonging to the given segments
     */
    <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue,
-         boolean fetchMetadata, AccessMode mode);
+         boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Returns a publisher that will publish all keys stored by the underlying cache store. Only the first cache store
     * that implements {@link AdvancedCacheLoader} will be used. Predicate is applied by the underlying
     * loader in a best attempt to improve performance.
     * <p>
-    * This method should be preferred over {@link #publishEntries(Predicate, boolean, boolean, AccessMode)} when only
+    * This method should be preferred over {@link #publishEntries(Predicate, boolean, boolean, Predicate)} when only
     * keys are desired as many stores can do this in a significantly more performant way.
     * <p>
     * This publisher will never return a key which belongs to an expired entry
     * @param filter filter so that only keys which match are returned
-    * @param mode access mode to choose what type of loader to use
+    * @param predicate access mode to choose what type of loader to use
     * @param <K> key type
     * @return publisher that will publish keys
     */
-   <K> Publisher<K> publishKeys(Predicate<? super K> filter, AccessMode mode);
+   <K> Publisher<K> publishKeys(Predicate<? super K> filter, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Returns a publisher that will publish keys that map to the provided segments. It will attempt to find the
     * first segmented store if one is available. If not it will fall back to the first non segmented store and
     * filter out entries that don't map to the provided segment.
     * <p>
-    * This method should be preferred over {@link #publishEntries(IntSet, Predicate, boolean, boolean, AccessMode)}
+    * This method should be preferred over {@link #publishEntries(IntSet, Predicate, boolean, boolean, Predicate)}
     * when only keys are desired as many stores can do this in a significantly more performant way.
     * <p>
     * This publisher will never return a key which belongs to an expired entry
     * @param segments only keys that map to these segments are processed
     * @param filter filter so that only keys which match are returned
-    * @param mode access mode to choose what type of loader to use
+    * @param predicate access mode to choose what type of loader to use
     * @param <K> key type
     * @return publisher that will publish keys belonging to the given segments
     */
-   <K> Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter, AccessMode mode);
+   <K> Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Loads an entry from the persistence store for the given key. The returned value may be null. This value
@@ -160,22 +160,34 @@ public interface PersistenceManager extends Lifecycle {
     */
    AdvancedCacheLoader getStateTransferProvider();
 
-   int size();
+   default int size() {
+      return size(AccessMode.BOTH);
+   }
 
    /**
+    * Returns the count of how many entries are persisted. If no store can handle the request for the given mode a
+    * value of <b>-1</b> is returned instead.
+    * @param predicate whether a loader can be used
+    * @return size or -1 if size couldn't be computed
+    */
+   int size(Predicate<? super StoreConfiguration> predicate);
+
+   /**
+    * Returns the count of how many entries are persisted within the given segments. The returned value will always
+    * be 0 or greater.
     * @param segments which segments to count entries from
     * @return how many entries are in the store which map to the given segments
     */
    int size(IntSet segments);
 
-   enum AccessMode {
+   enum AccessMode implements Predicate<StoreConfiguration> {
       /**
        * The operation is performed in all {@link org.infinispan.persistence.spi.CacheWriter} or {@link
        * org.infinispan.persistence.spi.CacheLoader}
        */
       BOTH {
          @Override
-         protected boolean canPerform(StoreConfiguration configuration) {
+         public boolean test(StoreConfiguration configuration) {
             return true;
          }
       },
@@ -185,7 +197,7 @@ public interface PersistenceManager extends Lifecycle {
        */
       SHARED {
          @Override
-         protected boolean canPerform(StoreConfiguration configuration) {
+         public boolean test(StoreConfiguration configuration) {
             return configuration.shared();
          }
       },
@@ -195,19 +207,30 @@ public interface PersistenceManager extends Lifecycle {
        */
       PRIVATE {
          @Override
-         protected boolean canPerform(StoreConfiguration configuration) {
+         public boolean test(StoreConfiguration configuration) {
             return !configuration.shared();
          }
-      };
-
+      },
       /**
-       * Checks if the operation can be performed in the {@link org.infinispan.persistence.spi.CacheWriter} or {@link
-       * org.infinispan.persistence.spi.CacheLoader} configured with the configuration provided.
-       *
-       * @param configuration the configuration to test.
-       * @return {@code true} if the operation can be performed, {@code false} otherwise.
+       * The operation is performed only in a {@link org.infinispan.persistence.spi.CacheWriter} or {@link
+       * org.infinispan.persistence.spi.CacheLoader} that has async write behind.
        */
-      protected abstract boolean canPerform(StoreConfiguration configuration);
+      ASYNC {
+         @Override
+         public boolean test(StoreConfiguration configuration) {
+            return configuration.async().enabled();
+         }
+      },
+      /**
+       * The operation is performed only in a {@link org.infinispan.persistence.spi.CacheWriter} or {@link
+       * org.infinispan.persistence.spi.CacheLoader} that doesn't have async write behind.
+       */
+      NOT_ASYNC {
+         @Override
+         public boolean test(StoreConfiguration configuration) {
+            return !configuration.async().enabled();
+         }
+      },
    }
 
    void setClearOnStop(boolean clearOnStop);
@@ -223,61 +246,61 @@ public interface PersistenceManager extends Lifecycle {
     *
     * @param marshalledEntry the entry to be written to all non-tx stores.
     * @param segment         the segment the entry maps to
-    * @param modes           the type of access to the underlying store.
+    * @param predicate       should we write to a given store
     */
-   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, AccessMode modes);
+   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate);
 
    /**
-    * @see #writeToAllNonTxStores(MarshalledEntry, int, AccessMode)
+    * @see #writeToAllNonTxStores(MarshalledEntry, int, Predicate)
     *
     * @param flags Flags used during command invocation
     */
-   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, AccessMode modes, long flags);
+   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate, long flags);
 
    /**
     * Perform the prepare phase of 2PC on all Tx stores.
     *
     * @param transaction the current transactional context.
     * @param batchModification an object containing the write/remove operations required for this transaction.
-    * @param accessMode the type of access to the underlying store.
+    * @param predicate should we prepare on a given store
     * @throws PersistenceException if an error is encountered at any of the underlying stores.
     */
    void prepareAllTxStores(Transaction transaction, BatchModification batchModification,
-                           AccessMode accessMode) throws PersistenceException;
+         Predicate<? super StoreConfiguration> predicate) throws PersistenceException;
 
    /**
     * Perform the commit operation for the provided transaction on all Tx stores.
     *
     * @param transaction the transactional context to be committed.
-    * @param accessMode the type of access to the underlying store.
+    * @param predicate should we commit each store
     */
-   void commitAllTxStores(Transaction transaction, AccessMode accessMode);
+   void commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Perform the rollback operation for the provided transaction on all Tx stores.
     *
     * @param transaction the transactional context to be rolledback.
-    * @param accessMode the type of access to the underlying store.
+    * @param predicate should we rollback each store
     */
-   void rollbackAllTxStores(Transaction transaction, AccessMode accessMode);
+   void rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Write all entries to the underlying non-transactional stores as a single batch.
     *
     * @param entries a List of MarshalledEntry to be written to the store.
-    * @param accessMode the type of access to the underlying store.
+    * @param predicate whether a given store should write the entry
     * @param flags Flags used during command invocation
     */
-   void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, AccessMode accessMode, long flags);
+   void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags);
 
    /**
     * Remove all entries from the underlying non-transactional stores as a single batch.
     *
     * @param keys a List of Keys to be removed from the store.
-    * @param accessMode the type of access to the underlying store.
+    * @param predicate whether a given store should delete the entries
     * @param flags Flags used during command invocation
     */
-   void deleteBatchFromAllNonTxStores(Iterable<Object> keys, AccessMode accessMode, long flags);
+   void deleteBatchFromAllNonTxStores(Iterable<Object> keys, Predicate<? super StoreConfiguration> predicate, long flags);
 
 
    /**
