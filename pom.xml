@@ -185,7 +185,8 @@
       <server.jvm.args>${testjvm.commonArgs} ${testjvm.jigsawArgs}</server.jvm.args>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <ansi.strip/>
-      <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+      <default.transport.stack>udp</default.transport.stack>
+      <infinispan.test.jgroups.protocol>${default.transport.stack}</infinispan.test.jgroups.protocol>
       <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
       <skipArtifactUpload>false</skipArtifactUpload>
       <upload.username>infinispan</upload.username>

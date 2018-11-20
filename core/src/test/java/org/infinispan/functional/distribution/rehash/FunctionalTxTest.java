@@ -29,7 +29,6 @@ import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
@@ -107,9 +106,10 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       Transaction tx = tm(2).suspend();
 
       chf.setOwnerIndexes(0, 2);
+
+      addClusterEnabledCacheManager(cb);
       Future<?> future = fork(() -> {
-         TestResourceTracker.testThreadStarted(this);
-         addClusterEnabledCacheManager(cb).getCache();
+         cache(3);
       });
 
       bsc2.await();
@@ -139,9 +139,9 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       BlockingStateConsumer bsc2 = TestingUtil.wrapComponent(cache(2), StateConsumer.class, BlockingStateConsumer::new);
 
       chf.setOwnerIndexes(0, 2);
+      addClusterEnabledCacheManager(cb);
       Future<?> future = fork(() -> {
-         TestResourceTracker.testThreadStarted(this);
-         addClusterEnabledCacheManager(cb).getCache();
+         cache(3);
       });
 
       bsc2.await();
