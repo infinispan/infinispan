@@ -282,7 +282,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    public void clearStats() {
-      for (String k: stats.keySet()) stats.get(k).set(0);
+      for (AtomicInteger atomicInteger: stats.values()) atomicInteger.set(0);
    }
 
    public void blockUntilCacheStoreContains(Object key, Object expectedValue, long timeout) {
@@ -326,6 +326,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
    @Override
    public int size() {
+      record("size");
       return store.size();
    }
 
