@@ -21,6 +21,7 @@ import org.assertj.core.api.Assertions;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.util.BytesContentProvider;
+import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.Cache;
@@ -33,6 +34,9 @@ import org.infinispan.rest.search.entity.Person;
 import org.infinispan.server.core.dataconversion.JsonTranscoder;
 import org.infinispan.server.core.dataconversion.XMLTranscoder;
 import org.testng.annotations.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Test(groups = "functional", testName = "rest.RestOperationsTest")
 public class RestOperationsTest extends BaseRestOperationsTest {
@@ -329,6 +333,33 @@ public class RestOperationsTest extends BaseRestOperationsTest {
 
       assertThat(response).hasGzipContentEncoding();
       assertEquals(decompress(response.getContent()), payload);
+   }
+
+   @Test
+   public void testReplaceExistingObject() throws Exception {
+      String initialJson = "{\"" + TYPE + "\":\"org.infinispan.rest.TestClass\",\"name\":\"test\"}";
+      String changedJson = "{\"" + TYPE + "\":\"org.infinispan.rest.TestClass\",\"name\":\"test2\"}";
+
+      ContentResponse response = writeJsonToCache("key", initialJson, "objectCache");
+      assertThat(response).isOk();
+
+      response = writeJsonToCache("key", changedJson, "objectCache");
+      assertThat(response).isOk();
+
+      response = client
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "objectCache", "key"))
+            .header(HttpHeader.ACCEPT, APPLICATION_JSON_TYPE)
+            .send();
+
+      JsonNode jsonNode = new ObjectMapper().readTree(response.getContentAsString());
+      assertEquals(jsonNode.get("name").asText(), "test2");
+   }
+
+   private ContentResponse writeJsonToCache(String key, String json, String cacheName) throws Exception {
+      return client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), cacheName, key))
+            .content(new StringContentProvider(json))
+            .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON_TYPE)
+            .method(HttpMethod.PUT).send();
    }
 
    @Test
