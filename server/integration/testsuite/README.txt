@@ -64,8 +64,8 @@ This is controlled by following profile
 
 Running client tests with TCP stack (UDP by default)
 ----------------------------------------------------
-Controlled by property default.transport.stack:
-  mvn clean verify -Psuite.client -Ddefault.transport.stack=tcp
+Controlled by property infinispan.test.jgroups.protocol:
+  mvn clean verify -Psuite.client -Dinfinispan.test.jgroups.protocol=tcp
 
 Client side logging
 -------------------
