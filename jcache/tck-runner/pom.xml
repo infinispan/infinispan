@@ -31,9 +31,16 @@
       <remote.CacheEntryImpl>org.infinispan.jcache.JCacheEntry</remote.CacheEntryImpl>
       <remote.CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</remote.CacheInvocationContextImpl>
 
+      <ispnserver.project.dir>${basedir}/../../server/integration</ispnserver.project.dir>
+      <server.build.dist>${ispnserver.project.dir}/build/target/server-distribution-thin/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
+      <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
       <server.dir.parent>${project.build.directory}</server.dir.parent>
       <server.dir.name>infinispan-server-${project.version}</server.dir.name>
       <server.dir>${server.dir.parent}/${server.dir.name}</server.dir>
+      <mcast.ip>234.99.54.14</mcast.ip>
+      <server.jvm>${env.JAVA_HOME}</server.jvm>
+      <server.jvm.args>${jvm.ip.stack} ${serverMemoryJvmArgs} ${testjvm.jigsawArgs}</server.jvm.args>
+      <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
       <serverMemoryJvmArgs>-Xmx500m ${testjvm.commonArgs}</serverMemoryJvmArgs>
 
       <failsafe.reportdir.embedded>${project.build.directory}/failsafe-reports-embedded</failsafe.reportdir.embedded>
@@ -153,33 +160,60 @@
          </plugin>
 
          <plugin>
-            <groupId>org.wildfly.plugins</groupId>
-            <artifactId>wildfly-maven-plugin</artifactId>
+            <artifactId>maven-antrun-plugin</artifactId>
             <executions>
                <execution>
-                  <id>start-server</id>
-                  <phase>pre-integration-test</phase>
+                  <id>generate-distros-and-configs</id>
                   <goals>
-                     <goal>start</goal>
+                     <goal>run</goal>
                   </goals>
+                  <phase>generate-resources</phase>
                   <configuration>
                      <skip>${skipTests}</skip>
-                     <jbossHome>${server.dir}</jbossHome>
-                     <jvm-args>${serverMemoryJvmArgs} ${testjvm.jigsawArgs}</jvm-args>
-                     <!--java-opts>
-                        <java-opt>-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y</java-opt>
-                     </java-opts-->
+                     <target>
+                        <ant antfile="${basedir}/../../server/integration/src/main/ant/infinispan-server.xml" target="create-distro">
+                           <property name="server.build.dist" value="${server.build.dist}" />
+                           <property name="server.dist" value="${ispnserver.dist}" />
+                        </ant>
+                     </target>
                   </configuration>
                </execution>
                <execution>
-                  <id>stop-server</id>
-                  <phase>post-integration-test</phase>
+                  <id>infinispan-server-startup</id>
+                  <phase>pre-integration-test</phase>
                   <goals>
-                     <goal>shutdown</goal>
+                     <goal>run</goal>
                   </goals>
                   <configuration>
                      <skip>${skipTests}</skip>
-                     <jbossHome>${server.dir}</jbossHome>
+                     <target>
+                        <ant antfile="${basedir}/../../server/integration/src/main/ant/infinispan-server.xml" target="kill-server">
+                           <property name="hotrod.port" value="11222" />
+                        </ant>
+                        <ant antfile="${basedir}/../../server/integration/src/main/ant/infinispan-server.xml" target="start-server">
+                           <property name="server.dist" value="${ispnserver.dist}" />
+                           <property name="port.offset" value="0" />
+                           <property name="management.port" value="9990" />
+                           <property name="hotrod.port" value="11222" />
+                           <property name="jboss.node.name" value="ispn-server" />
+                           <property name="jboss.config.file" value="standalone.xml" />
+                        </ant>
+                     </target>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>infinispan-server-shutdown</id>
+                  <phase>post-integration-test</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <target>
+                        <ant antfile="${basedir}/../../server/integration/src/main/ant/infinispan-server.xml" target="kill-server">
+                           <property name="hotrod.port" value="11222" />
+                        </ant>
+                     </target>
                   </configuration>
                </execution>
             </executions>
@@ -361,39 +395,5 @@
          </build>
       </profile>
 
-      <profile>
-         <id>jigsaw</id>
-         <activation>
-            <jdk>[9,)</jdk>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.wildfly.plugins</groupId>
-                  <artifactId>wildfly-maven-plugin</artifactId>
-                  <!-- we only configure the jigsaw-specific VM options here -->
-                  <configuration>
-                     <javaOpts>
-                        <javaOpt>-Dsun.reflect.debugModuleAccessChecks=true</javaOpt>
-                        <javaOpt>--add-opens=java.base/java.lang=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-opens=java.base/java.security=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-exports=java.base/sun.nio.ch=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-opens=java.management/javax.management.openmbean=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-exports=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-exports=java.security.sasl/com.sun.security.sasl.digest=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-exports=java.security.sasl/com.sun.security.sasl.ntlm=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-exports=jdk.security.jgss/com.sun.security.sasl.gsskerb=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-opens=java.base/java.io=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-opens=java.base/java.nio=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-opens=java.base/java.util=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-opens=java.base/sun.nio.ch=ALL-UNNAMED</javaOpt>
-                        <javaOpt>--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</javaOpt>
-                     </javaOpts>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
    </profiles>
 </project>
