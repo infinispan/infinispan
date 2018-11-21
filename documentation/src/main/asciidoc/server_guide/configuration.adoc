@@ -554,7 +554,7 @@ libraries are presented below:
 
 Add the protostuff marshaller dependency to your pom:
 
-[source,xml]
+[source,xml,subs="attributes"]
 ----
 <dependency>
   <groupId>org.infinispan</groupId>
@@ -580,7 +580,7 @@ file within your deployment jar.
 
 Add the kryo marshaller dependency to your pom:
 
-[source,xml]
+[source,xml,subs="attributes"]
 ----
 <dependency>
   <groupId>org.infinispan</groupId>
