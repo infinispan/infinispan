@@ -880,14 +880,13 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    protected final void releaseLocksForCompletedTransaction(LocalTransaction localTransaction,
          boolean committedInOnePhase) {
       final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
+      if ((!committedInOnePhase || !isOptimisticCache()) && isClustered()) {
+         removeTransactionInfoRemotely(localTransaction, gtx);
+      }
+      // Perform local transaction removal last to prevent exceptions during shutDownGracefully()
       removeLocalTransaction(localTransaction);
       if (trace)
          log.tracef("Committed in onePhase? %s isOptimistic? %s", committedInOnePhase, isOptimisticCache());
-      if (committedInOnePhase && isOptimisticCache())
-         return;
-      if (isClustered()) {
-         removeTransactionInfoRemotely(localTransaction, gtx);
-      }
    }
 
    private void removeTransactionInfoRemotely(LocalTransaction localTransaction, GlobalTransaction gtx) {
