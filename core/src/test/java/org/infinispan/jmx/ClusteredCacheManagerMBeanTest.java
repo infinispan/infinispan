@@ -16,7 +16,6 @@ import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
-import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -33,6 +32,7 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
 
    public static final String JMX_DOMAIN = ClusteredCacheManagerMBeanTest.class.getSimpleName();
    public static final String JMX_DOMAIN2 = JMX_DOMAIN + "2";
+   public static final String CACHE_NAME = "mycache";
 
    private ObjectName name1;
    private ObjectName name2;
@@ -50,9 +50,9 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
       config.jmxStatistics().enable();
-      defineConfigurationOnAllManagers("mycache", config);
-      manager(0).getCache("mycache");
-      manager(1).getCache("mycache");
+      defineConfigurationOnAllManagers(CACHE_NAME, config);
+      manager(0).getCache(CACHE_NAME);
+      manager(1).getCache(CACHE_NAME);
    }
 
    public void testAddressInformation() throws Exception {
@@ -78,16 +78,11 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
    }
 
    public void testExecutorMBeans() throws Exception {
-      LazyInitializingScheduledExecutorService timeoutExecutor =
-         extractGlobalComponent(manager(0), LazyInitializingScheduledExecutorService.class,
-                                TIMEOUT_SCHEDULE_EXECUTOR);
-      timeoutExecutor.submit(() -> {});
-
       ObjectName objectName =
          getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", TIMEOUT_SCHEDULE_EXECUTOR);
       assertTrue(existsObject(objectName));
-      assertEquals(0, server.getAttribute(objectName, "QueueSize"));
       assertEquals(Integer.MAX_VALUE, server.getAttribute(objectName, "MaximumPoolSize"));
+      assertEquals(0L, server.getAttribute(objectName, "KeepAliveTime"));
 
       LazyInitializingBlockingTaskAwareExecutorService remoteExecutor =
          extractGlobalComponent(manager(0), LazyInitializingBlockingTaskAwareExecutorService.class,
@@ -96,7 +91,7 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
 
       objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", REMOTE_COMMAND_EXECUTOR);
       assertTrue(existsObject(objectName));
-      assertEquals(0, server.getAttribute(objectName, "QueueSize"));
+      assertEquals(30000L, server.getAttribute(objectName, "KeepAliveTime"));
       assertEquals(TestCacheManagerFactory.NAMED_EXECUTORS_THREADS_NO_QUEUE,
                    server.getAttribute(objectName, "MaximumPoolSize"));
    }
