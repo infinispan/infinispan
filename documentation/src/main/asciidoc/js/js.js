@@ -1,5 +1,8 @@
+function addVersionsMenu()
 $(document).ready(function() {
-    var version = "{infinispanversion}.x";
+    var prefix = "/docs/"
+    var path = document.location.pathname;
+    var version = path.substring(prefix.length, path.indexOf("/", prefix.length));
     $.ajax({type: 'GET', dataType: 'xml', url: '../../versions.xml',
             success: function(xml) {
                 $('#toctitle').before('<select id="vchooser"></select>');
@@ -11,7 +14,7 @@ $(document).ready(function() {
                 });
                 $('#vchooser').change(function(e) {
                     if (this.value !== '')
-                        window.location.href = '../../' + this.value + '/user_guide/user_guide.html';
+                        window.location.href = path.replace(version, this.value);
                 });
             }
     });
