@@ -1,5 +1,9 @@
 package org.infinispan.transaction.impl;
 
+import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
+
+import java.util.Collection;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.configuration.cache.Configuration;
@@ -14,10 +18,6 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-
-import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
 
 /**
  * Base class for both Sync and XAResource enlistment adapters.
@@ -75,13 +75,11 @@ public abstract class AbstractEnlistmentAdapter {
 
    protected final void releaseLocksForCompletedTransaction(LocalTransaction localTransaction, boolean committedInOnePhase) {
       final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
-      txTable.removeLocalTransaction(localTransaction);
-      log.tracef("Committed in onePhase? %s isOptimistic? %s", committedInOnePhase, isOptimisticCache());
-      if (committedInOnePhase && isOptimisticCache())
-         return;
-      if (isClustered()) {
+      if ((!committedInOnePhase || !isOptimisticCache()) && isClustered()) {
          removeTransactionInfoRemotely(localTransaction, gtx);
       }
+      txTable.removeLocalTransaction(localTransaction);
+      log.tracef("Committed in onePhase? %s isOptimistic? %s", committedInOnePhase, isOptimisticCache());
    }
 
    private void removeTransactionInfoRemotely(LocalTransaction localTransaction, GlobalTransaction gtx) {

@@ -1,11 +1,11 @@
 package org.infinispan.lock.singlelock;
 
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Mircea Markus
@@ -28,6 +28,7 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       releaseLocksLatch.await();
 
       assert checkTxCount(0, 0, 1);
+      eventuallyEquals(0, () -> getLocalTxCount(1));
       assert checkTxCount(1, 0, 0);
       assert checkTxCount(2, 0, 1);
 
