@@ -209,7 +209,8 @@ chunkLength: vInt;
 // therefore action in chunk needs to read from position before these
 chunkBytes returns ByteBuf
    : { chunkLength > 0 }? readable[chunkLength]
-   | { cacheProcessor.channel().alloc().buffer(0); }
+// .buffer(0, 0) does not do any allocation and returns static empty buffer
+   | { cacheProcessor.channel().alloc().buffer(0, 0); }
    ;
 chunk
    : chunkLength chunkBytes { chunkedValue.writeBytes(chunkBytes, chunkBytes.readerIndex() - chunkLength, chunkLength) }
