@@ -822,10 +822,18 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected boolean checkTxCount(int cacheIndex, int localTx, int remoteTx) {
-      final int localTxCount = TestingUtil.getTransactionTable(cache(cacheIndex)).getLocalTxCount();
-      final int remoteTxCount = TestingUtil.getTransactionTable(cache(cacheIndex)).getRemoteTxCount();
+      final int localTxCount = getLocalTxCount(cacheIndex);
+      final int remoteTxCount = getRemoteTxCount(cacheIndex);
       log.tracef("Cache index %s, local tx %4s, remote tx %4s \n", cacheIndex, localTxCount, remoteTxCount);
       return localTxCount == localTx && remoteTxCount == remoteTx;
+   }
+
+   protected int getRemoteTxCount(int cacheIndex) {
+      return TestingUtil.getTransactionTable(cache(cacheIndex)).getRemoteTxCount();
+   }
+
+   protected int getLocalTxCount(int cacheIndex) {
+      return TestingUtil.getTransactionTable(cache(cacheIndex)).getLocalTxCount();
    }
 
    protected void assertNotLocked(int cacheIndex, Object key) {
