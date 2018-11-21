@@ -30,6 +30,7 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       releaseLocksLatch.await(30, TimeUnit.SECONDS);
 
       assert checkTxCount(0, 0, 1);
+      eventuallyEquals(0, () -> getLocalTxCount(1));
       assert checkTxCount(1, 0, 0);
       assert checkTxCount(2, 0, 1);
 
