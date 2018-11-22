@@ -1,9 +1,15 @@
 package org.infinispan.persistence;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -13,6 +19,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(testName = "persistence.PassivatePersistentTest", groups = "functional")
@@ -23,6 +30,26 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
    TransactionManager tm;
    ConfigurationBuilder cfg;
    CacheContainer cm;
+   StorageType storage;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new PassivatePersistentTest().withStorage(StorageType.BINARY),
+            new PassivatePersistentTest().withStorage(StorageType.OBJECT),
+            new PassivatePersistentTest().withStorage(StorageType.OFF_HEAP)
+      };
+   }
+
+   public PassivatePersistentTest withStorage(StorageType storage) {
+      this.storage = storage;
+      return this;
+   }
+
+   @Override
+   protected String parameters() {
+      return "[storage=" + storage + "]";
+   }
 
    @BeforeMethod
    public void setUp() {
@@ -32,7 +59,8 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
             .passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
                .storeName(this.getClass().getName())
-               .purgeOnStartup(false);
+               .purgeOnStartup(false)
+               .memory().storageType(storage);
       cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache);
@@ -47,20 +75,28 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
 
    public void testPersistence() throws PersistenceException {
       cache.put("k", "v");
-      assert "v".equals(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       cache.evict("k");
-      assert store.contains("k");
+      assertTrue(store.contains(getInternalKey("k")));
 
-      assert "v".equals(cache.get("k"));
-      assert !store.contains("k");
+      assertEquals("v", cache.get("k"));
+      assertFalse(store.contains(getInternalKey("k")));
 
       cache.stop();
       cache.start();
       // The old store's marshaller is not working any more
       store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache);
 
-      assert store.contains("k");
-      assert "v".equals(cache.get("k"));
-      assert !store.contains("k");
+      assertTrue(store.contains(getInternalKey("k")));
+      assertEquals("v", cache.get("k"));
+      assertFalse(store.contains(getInternalKey("k")));
+   }
+
+   public Object getInternalKey(String key) {
+      if (cache instanceof EncoderCache) {
+         return ((EncoderCache) cache).keyToStorage(key);
+      } else {
+         return key;
+      }
    }
 }

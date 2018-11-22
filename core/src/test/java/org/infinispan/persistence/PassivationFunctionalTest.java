@@ -1,6 +1,7 @@
 package org.infinispan.persistence;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +11,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -22,9 +24,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests the interceptor chain and surrounding logic
@@ -39,6 +40,26 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    ConfigurationBuilder cfg;
    CacheContainer cm;
    long lifespan = 6000000; // very large lifespan so nothing actually expires
+   StorageType storage;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new PassivationFunctionalTest().withStorage(StorageType.BINARY),
+            new PassivationFunctionalTest().withStorage(StorageType.OBJECT),
+            new PassivationFunctionalTest().withStorage(StorageType.OFF_HEAP)
+      };
+   }
+
+   public PassivationFunctionalTest withStorage(StorageType storage) {
+      this.storage = storage;
+      return this;
+   }
+
+   @Override
+   protected String parameters() {
+      return "[storage=" + storage + "]";
+   }
 
    @BeforeClass
    public void setUp() {
