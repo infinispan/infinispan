@@ -27,6 +27,7 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.registry.AttributeAccess;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -53,7 +54,7 @@ public class ClusterLoaderConfigurationResource extends BaseLoaderConfigurationR
                    .setDefaultValue(new ModelNode().set(ModelKeys.CLUSTER_LOADER_NAME))
                    .build();
 
-    public ClusterLoaderConfigurationResource(CacheConfigurationResource parent) {
-        super(PATH, ModelKeys.CLUSTER_LOADER, parent, ATTRIBUTES);
+    public ClusterLoaderConfigurationResource(CacheConfigurationResource parent, ManagementResourceRegistration containerReg) {
+        super(PATH, ModelKeys.CLUSTER_LOADER, parent, containerReg, ATTRIBUTES);
     }
 }

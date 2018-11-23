@@ -21,14 +21,20 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.commons.util.Util;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationDefinition;
+import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleListAttributeDefinition;
 import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
+import org.jboss.as.controller.registry.AliasEntry;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
@@ -88,14 +94,21 @@ public class BaseLoaderConfigurationResource extends CacheConfigurationChildReso
                new InfinispanResourceDescriptionResolver(ModelKeys.LOADER)
          ).setRuntimeOnly().build();
 
-    public BaseLoaderConfigurationResource(PathElement path, String resourceKey, CacheConfigurationResource cacheResource, AttributeDefinition[] attributes) {
+    protected ManagementResourceRegistration containerReg;
+
+    BaseLoaderConfigurationResource(PathElement path, String resourceKey, CacheConfigurationResource cacheResource,
+                                           ManagementResourceRegistration containerReg, AttributeDefinition[] attributes) {
         super(path, resourceKey, cacheResource, Util.arrayConcat(BASE_LOADER_ATTRIBUTES, attributes));
+        this.containerReg = containerReg;
     }
 
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
         resourceRegistration.registerSubModel(new LoaderPropertyResource(resource));
+
+        // Register alias for store address prior to persistence=PERSISTENCE
+        containerReg.registerAlias(getPathElement(), new BaseStoreConfigurationResource.PersistenceAlias(resourceRegistration));
     }
 
     @Override
@@ -104,4 +117,28 @@ public class BaseLoaderConfigurationResource extends CacheConfigurationChildReso
         resourceRegistration.registerOperationHandler(BaseLoaderConfigurationResource.RESET_LOADER_STATISTICS,
                                                       CacheCommands.ResetCacheLoaderStatisticsCommand.INSTANCE);
     }
+
+   static class PersistenceAlias extends AliasEntry {
+
+      PersistenceAlias(ManagementResourceRegistration target) {
+         super(target);
+      }
+
+      @Override
+      public PathAddress convertToTargetAddress(PathAddress address, AliasEntry.AliasContext aliasContext) {
+         PathAddress target = this.getTargetAddress();
+         List<PathElement> result = new ArrayList<>(address.size());
+         for (int i = 0; i < address.size(); ++i) {
+            PathElement element = address.getElement(i);
+            if (i < target.size()) {
+               PathElement targetElement = target.getElement(i);
+               result.add(targetElement.isWildcard() ? PathElement.pathElement(targetElement.getKey(), element.getValue()) : targetElement);
+            } else {
+               result.add(element);
+            }
+         }
+         PathElement store = PathAddress.pathAddress(aliasContext.getOperation().get(ModelDescriptionConstants.ADDRESS)).getLastElement();
+         return PathAddress.pathAddress(result).append(store);
+      }
+   }
 }

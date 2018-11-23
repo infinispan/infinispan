@@ -6,21 +6,22 @@
                     name="memcachedCache"
                     batching="false"
                     remote-timeout="60000">
-                    <string-keyed-jdbc-store
-                        datasource="${jndi.name}"
-                        dialect="${database.type}"
-                        fetch-state="false"
-                        passivation="false"
-                        preload="false"
-                        purge="false"
-                        shared="true"
-                        singleton="false" name="${table.prefix}">
-                        <string-keyed-table prefix="${table.prefix}">
-                            <id-column name="id" type="${id.column.type}"/>
-                            <data-column name="datum" type="${data.column.type}"/>
-                            <timestamp-column name="version" type="${timestamp.column.type}"/>
-                        </string-keyed-table>
-                    </string-keyed-jdbc-store>
+                    <persistence>
+                        <string-keyed-jdbc-store
+                                datasource="${jndi.name}"
+                                dialect="${database.type}"
+                                fetch-state="false"
+                                preload="false"
+                                purge="false"
+                                shared="true"
+                                singleton="false" name="${table.prefix}">
+                            <string-keyed-table prefix="${table.prefix}">
+                                <id-column name="id" type="${id.column.type}"/>
+                                <data-column name="datum" type="${data.column.type}"/>
+                                <timestamp-column name="version" type="${timestamp.column.type}"/>
+                            </string-keyed-table>
+                        </string-keyed-jdbc-store>
+                    </persistence>
                 </invalidation-cache>
             </cache-container>
            <cache-container name="security"/>
