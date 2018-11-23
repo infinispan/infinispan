@@ -1,9 +1,11 @@
         <subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
             <cache-container name="local" default-cache="default">
                 <local-cache name="default" >
-                    <store name="customStore" class="org.infinispan.persistence.cluster.MyCustomCacheStore">
-                        <property name="customProperty">10</property>
-                    </store>
+                    <persistence>
+                        <store name="customStore" class="org.infinispan.persistence.cluster.MyCustomCacheStore">
+                            <property name="customProperty">10</property>
+                        </store>
+                    </persistence>
                 </local-cache>
                 <local-cache name="memcachedCache"/>
             </cache-container>

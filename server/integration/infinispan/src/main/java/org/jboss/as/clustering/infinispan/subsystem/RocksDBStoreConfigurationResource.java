@@ -88,8 +88,8 @@ public class RocksDBStoreConfigurationResource extends BaseStoreConfigurationRes
                     .setDefaultValue(new ModelNode().set(ModelKeys.ROCKSDB_STORE_NAME))
                     .build();
 
-    public RocksDBStoreConfigurationResource(CacheConfigurationResource parent) {
-        super(ROCKSDBSTORE_PATH, ModelKeys.ROCKSDB_STORE, parent, ROCKSDB_STORE_ATTRIBUTES);
+    public RocksDBStoreConfigurationResource(CacheConfigurationResource parent, ManagementResourceRegistration containerReg) {
+        super(ROCKSDBSTORE_PATH, ModelKeys.ROCKSDB_STORE, parent, containerReg, ROCKSDB_STORE_ATTRIBUTES);
     }
 
     @Override

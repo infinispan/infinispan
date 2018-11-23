@@ -31,7 +31,9 @@
             <replicated-cache-configuration name="replicated" />
 
             <distributed-cache-configuration name="persistent-file-store">
-               <file-store shared="false" fetch-state="true" passivation="false"/>
+               <persistence>
+                  <file-store shared="false" fetch-state="true"/>
+               </persistence>
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="indexed">
@@ -48,30 +50,38 @@
                <memory>
                   <object size="10000"/>
                </memory>
-               <file-store shared="false" fetch-state="true" passivation="true">
-                  <write-behind modification-queue-size="1024" thread-pool-size="1" />
-               </file-store>
+               <persistence passivation="true">
+                  <file-store shared="false" fetch-state="true">
+                     <write-behind modification-queue-size="1024" thread-pool-size="1" />
+                  </file-store>
+               </persistence>
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="persistent-file-store-write-behind">
-               <file-store shared="false" fetch-state="true" passivation="false">
-                  <write-behind modification-queue-size="1024" thread-pool-size="1" />
-               </file-store>
+               <persistence>
+                  <file-store shared="false" fetch-state="true">
+                     <write-behind modification-queue-size="1024" thread-pool-size="1" />
+                  </file-store>
+               </persistence>
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="persistent-rocksdb-store">
-               <rocksdb-store shared="false" fetch-state="true" passivation="false"/>
+               <persistence>
+                  <rocksdb-store shared="false" fetch-state="true"/>
+               </persistence>
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="persistent-jdbc-string-keyed">
-               <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" fetch-state="true" preload="false" purge="false" shared="false" passivation="false">
-                  <string-keyed-table prefix="ISPN">
-                     <id-column name="id" type="VARCHAR" />
-                     <data-column name="datum" type="BINARY" />
-                     <timestamp-column name="version" type="BIGINT" />
-                  </string-keyed-table>
-                  <write-behind modification-queue-size="1024" thread-pool-size="1" />
-               </string-keyed-jdbc-store>
+               <persistence>
+                  <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" fetch-state="true" preload="false" purge="false" shared="false">
+                     <string-keyed-table prefix="ISPN">
+                        <id-column name="id" type="VARCHAR" />
+                        <data-column name="datum" type="BINARY" />
+                        <timestamp-column name="version" type="BIGINT" />
+                     </string-keyed-table>
+                     <write-behind modification-queue-size="1024" thread-pool-size="1" />
+                  </string-keyed-jdbc-store>
+               </persistence>
             </distributed-cache-configuration>
 
             <distributed-cache name="default" />
@@ -111,13 +121,17 @@
                <memory>
                   <object size="1000"/>
                </memory>
-               <file-store passivation="true" path="dc" purge="true" shared="false" />
+               <persistence passivation="true">
+                  <file-store path="dc" purge="true" shared="false" />
+               </persistence>
             </local-cache>
             <local-cache name="namedCache">
                <expiration lifespan="2000"/>
-               <file-store passivation="false" path="nc" purge="true" shared="false">
-                  <write-behind modification-queue-size="1024" thread-pool-size="1" />
-               </file-store>
+               <persistence>
+                  <file-store path="nc" purge="true" shared="false">
+                     <write-behind modification-queue-size="1024" thread-pool-size="1" />
+                  </file-store>
+               </persistence>
             </local-cache>
          </cache-container>
       </replacement>
@@ -132,7 +146,9 @@
                <memory>
                   <object size="1000"/>
                </memory>
-               <file-store passivation="true" path="dc" purge="true" shared="false" />
+               <persistence passivation="true">
+                  <file-store path="dc" purge="true" shared="false" />
+               </persistence>
             </local-cache>
             <local-cache name="namedCache">
                <expiration lifespan="2000"/>
@@ -157,14 +173,18 @@
                <memory>
                   <object size="1000"/>
                </memory>
-               <rocksdb-store passivation="true" path="rocksdb-dc" purge="true" shared="false" />
+               <persistence passivation="true">
+                  <rocksdb-store path="rocksdb-dc" purge="true" shared="false" />
+               </persistence>
             </local-cache>
             <local-cache name="namedCache">
                <expiration lifespan="2000" />
-               <rocksdb-store path="rocksdb-nc" block-size="1024" cache-size="50000" clear-threshold="100000">
-                  <expiration path="rocksdb-nc-expired" queue-size="2000"/>
-                  <compression type="SNAPPY"/>
-               </rocksdb-store>
+               <persistence>
+                  <rocksdb-store path="rocksdb-nc" block-size="1024" cache-size="50000" clear-threshold="100000">
+                     <expiration path="rocksdb-nc-expired" queue-size="2000"/>
+                     <compression type="SNAPPY"/>
+                  </rocksdb-store>
+               </persistence>
             </local-cache>
          </cache-container>
       </replacement>
@@ -175,9 +195,11 @@
          <cache-container name="local" default-cache="default">
             <global-state />
             <local-cache name="default">
-               <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
-                  <remote-server outbound-socket-binding="remote-store-hotrod-server" />
-               </remote-store>
+               <persistence>
+                  <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false">
+                     <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+                  </remote-store>
+               </persistence>
             </local-cache>
          </cache-container>
       </replacement>
@@ -188,10 +210,12 @@
          <cache-container name="local" default-cache="default">
             <global-state />
             <local-cache name="default">
-               <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
-                  <remote-server outbound-socket-binding="remote-store-hotrod-server" />
-                  <encryption security-realm="ApplicationRealm"/>
-               </remote-store>
+               <persistence>
+                  <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false">
+                     <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+                     <encryption security-realm="ApplicationRealm"/>
+                  </remote-store>
+               </persistence>
             </local-cache>
          </cache-container>
       </replacement>
@@ -207,24 +231,28 @@
                 <memory>
                     <object size="1000"/>
                 </memory>
-               <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="true" fetch-state="true" preload="true" purge="false">
-                  <string-keyed-table prefix="ISPN_STR" create-on-start="true" drop-on-exit="false">
-                     <id-column name="id" type="VARCHAR" />
-                     <data-column name="datum" type="BINARY" />
-                     <timestamp-column name="version" type="BIGINT" />
-                  </string-keyed-table>
-               </string-keyed-jdbc-store>
+               <persistence passivation="true">
+                  <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" fetch-state="true" preload="true" purge="false">
+                     <string-keyed-table prefix="ISPN_STR" create-on-start="true" drop-on-exit="false">
+                        <id-column name="id" type="VARCHAR" />
+                        <data-column name="datum" type="BINARY" />
+                        <timestamp-column name="version" type="BIGINT" />
+                     </string-keyed-table>
+                  </string-keyed-jdbc-store>
+               </persistence>
             </distributed-cache>
 
             <distributed-cache name="namedCache">
                <expiration lifespan="2000" max-idle="1000" />
-               <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="false" fetch-state="true" preload="true" purge="false" shared="false">
-                  <string-keyed-table prefix="ISPN_NC_SK">
-                     <id-column name="id" type="VARCHAR" />
-                     <data-column name="datum" type="BINARY" />
-                     <timestamp-column name="version" type="BIGINT" />
-                  </string-keyed-table>
-               </string-keyed-jdbc-store>
+               <persistence>
+                  <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" fetch-state="true" preload="true" purge="false" shared="false">
+                     <string-keyed-table prefix="ISPN_NC_SK">
+                        <id-column name="id" type="VARCHAR" />
+                        <data-column name="datum" type="BINARY" />
+                        <timestamp-column name="version" type="BIGINT" />
+                     </string-keyed-table>
+                  </string-keyed-jdbc-store>
+               </persistence>
             </distributed-cache>
          </cache-container>
       </replacement>
@@ -238,15 +266,19 @@
                <memory>
                   <object size="1000"/>
                </memory>
-               <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" passivation="true">
-                  <remote-server outbound-socket-binding="remote-store-hotrod-server" />
-               </remote-store>
+               <persistence passivation="true">
+                  <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true">
+                     <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+                  </remote-store>
+               </persistence>
             </local-cache>
             <local-cache name="namedCache">
                <expiration lifespan="3000"/>
-               <remote-store cache="namedCache" socket-timeout="60000" tcp-no-delay="true" passivation="false">
-                  <remote-server outbound-socket-binding="remote-store-hotrod-server" />
-               </remote-store>
+               <persistence>
+                  <remote-store cache="namedCache" socket-timeout="60000" tcp-no-delay="true">
+                     <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+                  </remote-store>
+               </persistence>
             </local-cache>
          </cache-container>
       </replacement>
@@ -276,10 +308,12 @@
                <encoding>
                     <key media-type="application/x-java-object;type=java.lang.String"/>
                </encoding>
-               <rest-store path="/rest/default" shared="true" purge="false" passivation="false">
-                  <connection-pool connection-timeout="60000" socket-timeout="60000" tcp-no-delay="true" max-connections-per-host="4" max-total-connections="20" />
-                  <remote-server outbound-socket-binding="remote-store-rest-server" />
-               </rest-store>
+               <persistence>
+                  <rest-store path="/rest/default" shared="true" purge="false">
+                     <connection-pool connection-timeout="60000" socket-timeout="60000" tcp-no-delay="true" max-connections-per-host="4" max-total-connections="20" />
+                     <remote-server outbound-socket-binding="remote-store-rest-server" />
+                  </rest-store>
+               </persistence>
             </local-cache>
          </cache-container>
       </replacement>

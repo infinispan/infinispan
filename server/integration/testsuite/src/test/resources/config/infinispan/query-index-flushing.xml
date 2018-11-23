@@ -14,10 +14,12 @@
         <!-- Uses NRT index manager with explicitly configured indexing caches -->
         <replicated-cache name="nrt_custom_index_caches" start="EAGER">
             <transaction mode="NONE"/>
-            <file-store preload="true" purge="false" shared="false" fetch-state="false" passivation="false"
-                        path="mycache_persistence">
-                <write-behind/>
-            </file-store>
+            <persistence>
+                <file-store preload="true" purge="false" shared="false" fetch-state="false"
+                            path="mycache_persistence">
+                    <write-behind/>
+                </file-store>
+            </persistence>
             <indexing index="ALL">
                 <property name="default.directory_provider">infinispan</property>
                 <property name="default.indexmanager">near-real-time</property>
@@ -30,18 +32,24 @@
         </replicated-cache>
         <!-- Indexing caches for 'nrt_custom_index_caches' -->
         <local-cache name="myindex_metadata" start="EAGER">
-            <file-store preload="true" purge="false" shared="false" fetch-state="false" passivation="false"
-                        path="myindex_persistence"/>
+            <persistence>
+                <file-store preload="true" purge="false" shared="false" fetch-state="false"
+                            path="myindex_persistence"/>
+            </persistence>
             <indexing index="NONE"/>
         </local-cache>
         <local-cache name="myindex_data" start="EAGER">
-            <file-store preload="true" purge="false" shared="false" fetch-state="false" passivation="false"
-                        path="myindex_persistence"/>
+            <persistence>
+                <file-store preload="true" purge="false" shared="false" fetch-state="false"
+                            path="myindex_persistence"/>
+            </persistence>
             <indexing index="NONE"/>
         </local-cache>
         <local-cache name="myindex_lock" start="EAGER">
-            <file-store preload="true" purge="false" shared="false" fetch-state="false" passivation="false"
-                        path="myindex_persistence"/>
+            <persistence>
+                <file-store preload="true" purge="false" shared="false" fetch-state="false"
+                            path="myindex_persistence"/>
+            </persistence>
             <indexing index="NONE"/>
         </local-cache>
 

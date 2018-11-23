@@ -23,7 +23,6 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ObjectTypeAttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
@@ -66,14 +65,8 @@ public class StoreWriteBehindResource extends SimpleResourceDefinition {
 
     static final AttributeDefinition[] ATTRIBUTES = {MODIFICATION_QUEUE_SIZE, THREAD_POOL_SIZE};
 
-    static final ObjectTypeAttributeDefinition WRITE_BEHIND_OBJECT = ObjectTypeAttributeDefinition.
-            Builder.of(ModelKeys.WRITE_BEHIND, ATTRIBUTES).
-            setRequired(false).
-            setSuffix("write-behind").
-            build();
 
-
-    public StoreWriteBehindResource() {
+    StoreWriteBehindResource() {
         super(STORE_WRITE_BEHIND_PATH,
                 new InfinispanResourceDescriptionResolver(ModelKeys.WRITE_BEHIND),
                 CacheConfigOperationHandlers.STORE_WRITE_BEHIND_ADD,
