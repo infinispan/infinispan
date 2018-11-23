@@ -11,12 +11,14 @@
                     <state-transfer
                         enabled="true"
                         timeout="60000" />
-                    <rocksdb-store path="rocksdb" block-size="1024"
-                        cache-size="50000" clear-threshold="100000" passivation="false"
-                        purge="false" >
-                        <expiration path="rocksdb-expired" queue-size="2000" />
-                        <compression type="${rocksdb.compression}" />
-                    </rocksdb-store>
+                    <persistence>
+                        <rocksdb-store path="rocksdb" block-size="1024"
+                                       cache-size="50000" clear-threshold="100000"
+                                       purge="false" >
+                            <expiration path="rocksdb-expired" queue-size="2000" />
+                            <compression type="${rocksdb.compression}" />
+                        </rocksdb-store>
+                    </persistence>
                 </replicated-cache>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
                 <replicated-cache
@@ -26,12 +28,14 @@
                     <state-transfer
                         enabled="true"
                         timeout="60000" />
-                    <rocksdb-store path="rocksdb-mc" block-size="1024"
-                        cache-size="50000" clear-threshold="100000" passivation="false"
-                        purge="false" >
-                        <expiration path="rocksdb-expired-mc" queue-size="2000" />
-                        <compression type="${rocksdb.compression}" />
-                    </rocksdb-store>
+                    <persistence>
+                        <rocksdb-store path="rocksdb-mc" block-size="1024"
+                                       cache-size="50000" clear-threshold="100000"
+                                       purge="false" >
+                            <expiration path="rocksdb-expired-mc" queue-size="2000" />
+                            <compression type="${rocksdb.compression}" />
+                        </rocksdb-store>
+                    </persistence>
                 </replicated-cache>
                 <replicated-cache name="namedCache" />
             </cache-container>

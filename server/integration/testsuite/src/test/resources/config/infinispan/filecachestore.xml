@@ -1,7 +1,9 @@
         <subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
             <cache-container name="local" default-cache="default">
                 <local-cache name="default" >
-                    <file-store name="myFileStore" passivation="false" purge="false" max-entries="2" />
+                    <persistence passivation="false">
+                        <file-store name="myFileStore" purge="false" max-entries="2" />
+                    </persistence>
                 </local-cache>
                 <local-cache name="memcachedCache"/>
             </cache-container>

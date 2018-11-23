@@ -34,6 +34,7 @@ import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -152,8 +153,9 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
             setSuffix("table").
             build();
 
-    public BaseJDBCStoreConfigurationResource(PathElement path, String resourceKey, CacheConfigurationResource parent, AttributeDefinition[] attributes) {
-        super(path, resourceKey, parent, Util.arrayConcat(COMMON_JDBC_STORE_ATTRIBUTES, attributes));
+    public BaseJDBCStoreConfigurationResource(PathElement path, String resourceKey, CacheConfigurationResource parent,
+                                              ManagementResourceRegistration containerReg, AttributeDefinition[] attributes) {
+        super(path, resourceKey, parent, containerReg, Util.arrayConcat(COMMON_JDBC_STORE_ATTRIBUTES, attributes));
     }
 
 }

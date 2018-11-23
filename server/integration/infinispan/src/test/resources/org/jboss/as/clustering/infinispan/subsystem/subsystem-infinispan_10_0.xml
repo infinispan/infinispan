@@ -54,19 +54,25 @@
             </memory>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
-            <file-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" relative-to="jboss.server.temp.dir" shared="false" singleton="false" max-entries="1000000" name="file-store">
-                <write-behind modification-queue-size="2048" thread-pool-size="1" />
-            </file-store>
+            <persistence>
+                <file-store fetch-state="false" path="path" preload="true" purge="false"
+                            relative-to="jboss.server.temp.dir" shared="false" singleton="false" max-entries="1000000"
+                            name="file-store">
+                    <write-behind modification-queue-size="2048" thread-pool-size="1"/>
+                </file-store>
+            </persistence>
             <indexing index="LOCAL" auto-config="true"/>
         </local-cache>
         <local-cache name="rocksdb-stored" batching="false" start="EAGER" module="org.infinispan" statistics="true">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
-            <rocksdb-store path="rocksdb-store" block-size="4096" cache-size="50000" clear-threshold="100000">
-                <write-behind modification-queue-size="2048" thread-pool-size="1" />
-                <expiration path="rocksdb-store-expired" queue-size="2000"/>
-                <compression type="SNAPPY"/>
-            </rocksdb-store>
+            <persistence>
+                <rocksdb-store path="rocksdb-store" block-size="4096" cache-size="50000" clear-threshold="100000">
+                    <write-behind modification-queue-size="2048" thread-pool-size="1" />
+                    <expiration path="rocksdb-store-expired" queue-size="2000"/>
+                    <compression type="SNAPPY"/>
+                </rocksdb-store>
+            </persistence>
         </local-cache>
         <local-cache name="reststore-local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
@@ -76,11 +82,13 @@
             </memory>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
-            <rest-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" shared="true" singleton="false" append-cache-name-to-path="false" name="rest-store">
-                <write-behind modification-queue-size="2048" thread-pool-size="1" />
-                <remote-server outbound-socket-binding="rest-server-1" />
-                <connection-pool connection-timeout="10000" max-connections-per-host="6" max-total-connections="10" buffer-size="30000" socket-timeout="10000" tcp-no-delay="true" />
-            </rest-store>
+            <persistence>
+                <rest-store fetch-state="false" path="path" preload="true" purge="false" shared="true" singleton="false" append-cache-name-to-path="false" name="rest-store">
+                    <write-behind modification-queue-size="2048" thread-pool-size="1" />
+                    <remote-server outbound-socket-binding="rest-server-1" />
+                    <connection-pool connection-timeout="10000" max-connections-per-host="6" max-total-connections="10" buffer-size="30000" socket-timeout="10000" tcp-no-delay="true" />
+                </rest-store>
+            </persistence>
             <indexing index="LOCAL" />
         </local-cache>
         <local-cache name="short-stack-tx" statistics-available="false">
@@ -99,15 +107,17 @@
                 <binary size="20000" eviction="MEMORY"/>
             </memory>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
-            <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" fetch-state="false" passivation="false" preload="true" purge="false" shared="true" singleton="false" hotrod-wrapping="true" raw-values="true" protocol-version="2.4" name="remote-store">
-                <write-behind modification-queue-size="2048" thread-pool-size="1" />
-                <remote-server outbound-socket-binding="hotrod-server-1" />
-                <remote-server outbound-socket-binding="hotrod-server-2" />
-                <authentication>
-                    <digest username="username" password="password" realm="realm" />
-                </authentication>
-                <encryption security-realm="myrealm" sni-hostname="snihostname" />
-            </remote-store>
+            <persistence>
+                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" fetch-state="false" preload="true" purge="false" shared="true" singleton="false" hotrod-wrapping="true" raw-values="true" protocol-version="2.4" name="remote-store">
+                    <write-behind modification-queue-size="2048" thread-pool-size="1" />
+                    <remote-server outbound-socket-binding="hotrod-server-1" />
+                    <remote-server outbound-socket-binding="hotrod-server-2" />
+                    <authentication>
+                        <digest username="username" password="password" realm="realm" />
+                    </authentication>
+                    <encryption security-realm="myrealm" sni-hostname="snihostname" />
+                </remote-store>
+            </persistence>
             <indexing index="NONE" />
         </invalidation-cache>
         <replicated-cache-configuration name="replicated-template" mode="ASYNC">
@@ -124,10 +134,12 @@
             </memory>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <compatibility enabled="false"/>
-            <store class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheWriter" fetch-state="true" passivation="true" preload="false" purge="true" shared="false" singleton="false" name="custom-cache-writer">
-                <write-behind modification-queue-size="2048" thread-pool-size="1" />
-                <property name="location">${java.io.tmpdir}</property>
-            </store>
+            <persistence passivation="true" availability-interval="111000" connection-attempts="5" connection-interval="10">
+                <store class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheWriter" fetch-state="true" preload="false" purge="true" shared="false" singleton="false" name="custom-cache-writer">
+                    <write-behind modification-queue-size="2048" thread-pool-size="1" />
+                    <property name="location">${java.io.tmpdir}</property>
+                </store>
+            </persistence>
             <indexing index="LOCAL" auto-config="true"/>
             <state-transfer enabled="true" timeout="60000" chunk-size="10000" await-initial-transfer="true"/>
             <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
@@ -139,8 +151,10 @@
                 <off-heap size="20000" eviction="COUNT" address-count="1234"/>
             </memory>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
-            <store class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false" name="custom-cache-loader"/>
-            <store name="duplicate-loader" class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false"/>
+            <persistence>
+                <store class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false" name="custom-cache-loader"/>
+                <store name="duplicate-loader" class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false"/>
+            </persistence>
             <indexing index="LOCAL" auto-config="true"/>
             <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
         </replicated-cache>
@@ -155,17 +169,20 @@
                 <object size="20000"/>
             </memory>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
-            <!-- note all jdbc stores have the same name -->
-            <string-keyed-jdbc-store name="jdbc-store" fetch-state="false" datasource="java:jboss/datasources/JdbcDS"
-                                     dialect="MYSQL" db-major-version="5" db-minor-version="7"
-                                     passivation="true" preload="false" purge="false" shared="false">
-                <write-behind modification-queue-size="1024" thread-pool-size="1"/>
-                <string-keyed-table prefix="ISPN_MC_SK" create-on-start="true" drop-on-exit="true">
-                    <id-column name="id" type="VARCHAR"/>
-                    <data-column name="datum" type="BINARY"/>
-                    <timestamp-column name="version" type="BIGINT"/>
-                </string-keyed-table>
-            </string-keyed-jdbc-store>
+            <persistence passivation="true">
+                <!-- note all jdbc stores have the same name -->
+                <string-keyed-jdbc-store name="jdbc-store" fetch-state="false"
+                                         datasource="java:jboss/datasources/JdbcDS"
+                                         dialect="MYSQL" db-major-version="5" db-minor-version="7"
+                                         preload="false" purge="false" shared="false">
+                    <write-behind modification-queue-size="1024" thread-pool-size="1"/>
+                    <string-keyed-table prefix="ISPN_MC_SK" create-on-start="true" drop-on-exit="true">
+                        <id-column name="id" type="VARCHAR"/>
+                        <data-column name="datum" type="BINARY"/>
+                        <timestamp-column name="version" type="BIGINT"/>
+                    </string-keyed-table>
+                </string-keyed-jdbc-store>
+            </persistence>
             <indexing index="LOCAL" />
             <state-transfer enabled="true" timeout="60000" chunk-size="10000"  await-initial-transfer="false"/>
             <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
@@ -187,7 +204,9 @@
                 <object size="20000"/>
             </memory>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
-            <cluster-loader remote-timeout="60000" name="cluster-loader"/>
+            <persistence>
+                <cluster-loader remote-timeout="60000" name="cluster-loader"/>
+            </persistence>
             <indexing index="PRIMARY_OWNER" auto-config="true"/>
             <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
         </distributed-cache>

@@ -5,37 +5,43 @@
                     <memory>
                         <object size="2"/>
                     </memory>
-                    <string-keyed-jdbc-store datasource="${jndi.name}" passivation="true" preload="false" purge="false" name="STRING_WITH_PASSIVATION_STORE">
-                        <property name="databaseType">${database.type}</property>
-                        <string-keyed-table prefix="STRING_WITH_PASSIVATION">
-                            <id-column name="id" type="${id.column.type}"/>
-                            <data-column name="datum" type="${data.column.type}"/>
-                            <timestamp-column name="version" type="${timestamp.column.type}"/>
-                        </string-keyed-table>
-                    </string-keyed-jdbc-store>
+                    <persistence passivation="true">
+                        <string-keyed-jdbc-store datasource="${jndi.name}" preload="false" purge="false" name="STRING_WITH_PASSIVATION_STORE">
+                            <property name="databaseType">${database.type}</property>
+                            <string-keyed-table prefix="STRING_WITH_PASSIVATION">
+                                <id-column name="id" type="${id.column.type}"/>
+                                <data-column name="datum" type="${data.column.type}"/>
+                                <timestamp-column name="version" type="${timestamp.column.type}"/>
+                            </string-keyed-table>
+                        </string-keyed-jdbc-store>
+                    </persistence>
                 </local-cache>
 
                 <!-- TODO mising databaseType -->
                 <local-cache name="stringNoPassivation" >
-                    <string-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="true" purge="false" name="STRING_NO_PASSIVATION_STORE">
-                        <string-keyed-table prefix="STRING_NO_PASSIVATION">
-                            <id-column name="id" type="${id.column.type}"/>
-                            <data-column name="datum" type="${data.column.type}"/>
-                            <timestamp-column name="version" type="${timestamp.column.type}"/>
-                        </string-keyed-table>
-                    </string-keyed-jdbc-store>
+                    <persistence>
+                        <string-keyed-jdbc-store datasource="${jndi.name}" preload="true" purge="false" name="STRING_NO_PASSIVATION_STORE">
+                            <string-keyed-table prefix="STRING_NO_PASSIVATION">
+                                <id-column name="id" type="${id.column.type}"/>
+                                <data-column name="datum" type="${data.column.type}"/>
+                                <timestamp-column name="version" type="${timestamp.column.type}"/>
+                            </string-keyed-table>
+                        </string-keyed-jdbc-store>
+                    </persistence>
                 </local-cache>
 
                 <local-cache name="memcachedCache">
-                    <string-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="false" purge="false" name="STRING_ASYNC">
-                        <property name="databaseType">${database.type}</property>
-                        <!--<write-behind modification-queue-size="2048" thread-pool-size="15" />-->
-                        <string-keyed-table prefix="STRING_ASYNC">
-                            <id-column name="id" type="${id.column.type}"/>
-                            <data-column name="datum" type="${data.column.type}"/>
-                            <timestamp-column name="version" type="${timestamp.column.type}"/>
-                        </string-keyed-table>
-                    </string-keyed-jdbc-store>
+                    <persistence>
+                        <string-keyed-jdbc-store datasource="${jndi.name}" preload="false" purge="false" name="STRING_ASYNC">
+                            <property name="databaseType">${database.type}</property>
+                            <!--<write-behind modification-queue-size="2048" thread-pool-size="15" />-->
+                            <string-keyed-table prefix="STRING_ASYNC">
+                                <id-column name="id" type="${id.column.type}"/>
+                                <data-column name="datum" type="${data.column.type}"/>
+                                <timestamp-column name="version" type="${timestamp.column.type}"/>
+                            </string-keyed-table>
+                        </string-keyed-jdbc-store>
+                    </persistence>
                 </local-cache>
             </cache-container>
         </subsystem>

@@ -32,6 +32,7 @@ import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.client.helpers.MeasurementUnit;
 import org.jboss.as.controller.registry.AttributeAccess;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -137,7 +138,7 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
 
     static final AttributeDefinition[] REST_STORE_ATTRIBUTES = {PATH, APPEND_CACHE_NAME_TO_PATH, MAX_CONTENT_LENGTH, CONNECTION_POOL, REMOTE_SERVERS};
 
-    public RestStoreConfigurationResource(CacheConfigurationResource parent) {
-        super(REST_STORE_PATH, ModelKeys.REST_STORE, parent, REST_STORE_ATTRIBUTES);
+    public RestStoreConfigurationResource(CacheConfigurationResource parent, ManagementResourceRegistration containerReg) {
+        super(REST_STORE_PATH, ModelKeys.REST_STORE, parent, containerReg, REST_STORE_ATTRIBUTES);
     }
 }

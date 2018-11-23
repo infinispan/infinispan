@@ -10,9 +10,11 @@
                                      l1-lifespan="0"
                                      remote-timeout="30000">
                     <transaction mode="NONE"/>
-                    <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
-                        <remote-server outbound-socket-binding="remote-store-hotrod-server"/>
-                    </remote-store>
+                    <persistence>
+                        <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false"        >
+                            <remote-server outbound-socket-binding="remote-store-hotrod-server"/>
+                        </remote-store>
+                    </persistence>
                 </distributed-cache>
             </cache-container>
             <cache-container name="security"/>
