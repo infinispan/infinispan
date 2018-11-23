@@ -27,6 +27,7 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.registry.AttributeAccess;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.server.ServerEnvironment;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -71,7 +72,7 @@ public class FileStoreResource extends BaseStoreConfigurationResource {
                     .setDefaultValue(new ModelNode().set(ModelKeys.FILE_STORE_NAME))
                     .build();
 
-    public FileStoreResource(CacheConfigurationResource parent) {
-        super(FILE_STORE_PATH, ModelKeys.FILE_STORE, parent, ATTRIBUTES);
+    public FileStoreResource(CacheConfigurationResource parent, ManagementResourceRegistration containerReg) {
+        super(FILE_STORE_PATH, ModelKeys.FILE_STORE, parent, containerReg, ATTRIBUTES);
     }
 }

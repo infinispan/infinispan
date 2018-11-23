@@ -57,12 +57,14 @@ public class BaseStoreConfigurationResource extends BaseLoaderConfigurationResou
                 .setDefaultValue(new ModelNode().set(AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue()))
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .build();
+    @Deprecated
     static final SimpleAttributeDefinition PASSIVATION =
             new SimpleAttributeDefinitionBuilder(ModelKeys.PASSIVATION, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.PASSIVATION.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(PersistenceConfiguration.PASSIVATION.getDefaultValue()))
+                    .setDeprecated(ModelVersion.create(10))
                     .build();
     static final SimpleAttributeDefinition PURGE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.PURGE, ModelType.BOOLEAN, true)
@@ -91,8 +93,10 @@ public class BaseStoreConfigurationResource extends BaseLoaderConfigurationResou
     /* Note this has loader attributes as well */
     static final AttributeDefinition[] BASE_STORE_PARAMETERS = {SHARED, SEGMENTED, PRELOAD, PASSIVATION, FETCH_STATE, PURGE, READ_ONLY, SINGLETON, MAX_BATCH_SIZE, PROPERTIES};
 
-    public BaseStoreConfigurationResource(PathElement path, String resourceKey, CacheConfigurationResource parent, AttributeDefinition[] attributes) {
-        super(path, resourceKey, parent, Util.arrayConcat(BASE_STORE_ATTRIBUTES, attributes));
+
+    public BaseStoreConfigurationResource(PathElement path, String resourceKey, CacheConfigurationResource parent,
+                                          ManagementResourceRegistration containerReg, AttributeDefinition[] attributes) {
+        super(path, resourceKey, parent, containerReg, Util.arrayConcat(BASE_STORE_ATTRIBUTES, attributes));
     }
 
     @Override

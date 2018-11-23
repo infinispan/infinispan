@@ -43,6 +43,7 @@ public class ModelKeys {
     static final String AUTHORIZATION = "authorization";
     static final String AUTHORIZATION_NAME = "AUTHORIZATION";
     static final String AUTO_CONFIG = "auto-config";
+    static final String AVAILABILITY_INTERVAL = "availability-interval";
     static final String AWAIT_INITIAL_TRANSFER = "await-initial-transfer";
     static final String BACKUP = "backup";
     static final String BACKUP_FAILURE_POLICY = "failure-policy";
@@ -81,6 +82,8 @@ public class ModelKeys {
     static final String CONFIGURATION_STORAGE_CLASS = "configuration-storage-class";
     static final String CONFIGURATIONS = "configurations";
     static final String CONFIGURATIONS_NAME = "CONFIGURATIONS";
+    static final String CONNECTION_ATTEMPTS = "connection-attempts";
+    static final String CONNECTION_INTERVAL = "connection-interval";
     static final String CONNECTION_POOL = "connection-pool";
     static final String CONNECTION_TIMEOUT = "connection-timeout";
     static final String COUNTERS = "counters";
@@ -199,6 +202,7 @@ public class ModelKeys {
     static final String PERMISSIONS = "permissions";
     static final String PERSISTENCE = "persistence";
     static final String PERSISTENT_LOCATION = "persistent-location";
+    static final String PERSISTENCE_NAME = "PERSISTENCE";
     static final String RELIABILITY = "reliability";
     static final String PLAIN = "plain";
     static final String PREFIX = "prefix";
@@ -271,6 +275,7 @@ public class ModelKeys {
     static final String TCP_NO_DELAY = "tcp-no-delay";
     static final String TEMPLATE = "template";
     static final String TEMPORARY_LOCATION = "temporary-location";
+    static final String THREAD_POOL = "thread-pool";
     static final String THREAD_POOL_SIZE = "thread-pool-size";
     static final String TIMEOUT = "timeout";
     static final String TIMESTAMP_COLUMN = "timestamp-column";

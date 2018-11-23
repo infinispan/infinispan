@@ -9,21 +9,23 @@
                     <state-transfer
                         enabled="true"
                         timeout="60000" />
-                    <string-keyed-jdbc-store
-                        datasource="${jndi.name}"
-                        dialect="${database.type}"
-                        fetch-state="true"
-                        passivation="false"
-                        preload="false"
-                        purge="false"
-                        shared="false"
-                        singleton="true" name="SINGLETON">
-                        <string-keyed-table prefix="${table.prefix}">
-                            <id-column name="id" type="${id.column.type}"/>
-                            <data-column name="datum" type="${data.column.type}"/>
-                            <timestamp-column name="version" type="${timestamp.column.type}"/>
-                        </string-keyed-table>
-                    </string-keyed-jdbc-store>
+                    <persistence>
+                        <string-keyed-jdbc-store
+                                datasource="${jndi.name}"
+                                dialect="${database.type}"
+                                fetch-state="true"
+
+                                preload="false"
+                                purge="false"
+                                shared="false"
+                                singleton="true" name="SINGLETON">
+                            <string-keyed-table prefix="${table.prefix}">
+                                <id-column name="id" type="${id.column.type}"/>
+                                <data-column name="datum" type="${data.column.type}"/>
+                                <timestamp-column name="version" type="${timestamp.column.type}"/>
+                            </string-keyed-table>
+                        </string-keyed-jdbc-store>
+                    </persistence>
                 </replicated-cache>
             </cache-container>
            <cache-container name="security"/>

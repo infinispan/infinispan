@@ -108,8 +108,8 @@ public class RemoteStoreConfigurationResource extends BaseStoreConfigurationReso
 
     static final AttributeDefinition[] REMOTE_STORE_ATTRIBUTES = {CACHE, HOTROD_WRAPPING, TCP_NO_DELAY, RAW_VALUES, SOCKET_TIMEOUT, REMOTE_SERVERS, PROTOCOL_VERSION};
 
-    public RemoteStoreConfigurationResource(CacheConfigurationResource parent) {
-        super(REMOTE_STORE_PATH, ModelKeys.REMOTE_STORE, parent, REMOTE_STORE_ATTRIBUTES);
+    public RemoteStoreConfigurationResource(CacheConfigurationResource parent, ManagementResourceRegistration containerReg) {
+        super(REMOTE_STORE_PATH, ModelKeys.REMOTE_STORE, parent, containerReg, REMOTE_STORE_ATTRIBUTES);
     }
 
    @Override

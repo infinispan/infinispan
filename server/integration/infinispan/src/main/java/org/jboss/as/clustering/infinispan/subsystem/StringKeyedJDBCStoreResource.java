@@ -26,6 +26,7 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -48,7 +49,7 @@ public class StringKeyedJDBCStoreResource extends BaseJDBCStoreConfigurationReso
                .setDefaultValue(new ModelNode().set(ModelKeys.STRING_KEYED_TABLE_NAME))
                .build();
 
-    public StringKeyedJDBCStoreResource(CacheConfigurationResource parent) {
-        super(PATH, ModelKeys.STRING_KEYED_JDBC_STORE, parent, ATTRIBUTES);
+    public StringKeyedJDBCStoreResource(CacheConfigurationResource parent, ManagementResourceRegistration containerReg) {
+        super(PATH, ModelKeys.STRING_KEYED_JDBC_STORE, parent, containerReg, ATTRIBUTES);
     }
 }

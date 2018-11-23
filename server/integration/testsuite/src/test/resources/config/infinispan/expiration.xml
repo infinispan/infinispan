@@ -2,11 +2,15 @@
             <cache-container name="clustered" default-cache="default">
                 <transport lock-timeout="240000"/>
                 <replicated-cache name="hotrodExpiration" batching="false" remote-timeout="30000">
-                    <file-store name="expirationCacheStore" passivation="false" path="hotrod-expiration-cache-store" purge="true" />
+                    <persistence>
+                        <file-store name="expirationCacheStore"         path="hotrod-expiration-cache-store" purge="true" />
+                    </persistence>
                     <expiration lifespan="2000" max-idle="2000" />
                 </replicated-cache>
                 <replicated-cache name="default" batching="false" remote-timeout="30000">
-                    <file-store name="expirationCacheStore" passivation="false" path="rest-expiration-cache-store" purge="true" />
+                    <persistence>
+                        <file-store name="expirationCacheStore"         path="rest-expiration-cache-store" purge="true" />
+                    </persistence>
                     <expiration lifespan="2000" max-idle="2000" />
                 </replicated-cache>
                 <replicated-cache name="memcachedCache"/>

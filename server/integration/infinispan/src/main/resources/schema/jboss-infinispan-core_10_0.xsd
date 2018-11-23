@@ -596,52 +596,57 @@
                     <xs:documentation>The cache compatibility mode configuration.</xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="persistence" type="tns:persistence" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>The cache persistence configuration where cache stores/loaders should be configured.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:element name="cluster-loader" type="tns:cluster-loader">
                     <xs:annotation>
-                        <xs:documentation>Defines a cluster cache loader.</xs:documentation>
+                        <xs:documentation>Defines a cluster cache loader. Deprecated: Please define loaders under the persistence element.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="store" type="tns:custom-store">
                     <xs:annotation>
-                        <xs:documentation>Defines a custom cache store.</xs:documentation>
+                        <xs:documentation>Defines a custom cache store. Deprecated: Please define stores under the persistence element.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="loader" type="tns:custom-loader">
                     <xs:annotation>
-                        <xs:documentation>Defines a custom cache loader.</xs:documentation>
+                        <xs:documentation>Defines a custom cache loader. Deprecated: Please define loaders under the persistence element.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="file-store" type="tns:file-store">
                     <xs:annotation>
-                        <xs:documentation>Defines a file-based cache store.</xs:documentation>
+                        <xs:documentation>Defines a file-based cache store. Deprecated: Please define stores under the persistence element.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:choice minOccurs="0" maxOccurs="unbounded">
                     <xs:element name="string-keyed-jdbc-store" type="tns:string-keyed-jdbc-store">
                         <xs:annotation>
-                            <xs:documentation>Defines a database cache store accessed via JDBC using string-based keys.</xs:documentation>
+                            <xs:documentation>Defines a database cache store accessed via JDBC using string-based keys. Deprecated: Please define stores under the persistence element.</xs:documentation>
                         </xs:annotation>
                     </xs:element>
                 </xs:choice>
                 <xs:element name="rocksdb-store" type="tns:rocksdb-store">
                     <xs:annotation>
                         <xs:documentation>
-                            Defines a RocksDB cache store.
+                            Defines a RocksDB cache store. Deprecated: Please define stores under the persistence element.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="remote-store" type="tns:remote-store">
                     <xs:annotation>
                         <xs:documentation>
-                            Defines a remote cache store accessed via HotRod.
+                            Defines a remote cache store accessed via HotRod. Deprecated: Please define stores under the persistence element.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="rest-store" type="tns:rest-store">
                     <xs:annotation>
                         <xs:documentation>
-                            Defines a remote cache store accessed via REST.
+                            Defines a remote cache store accessed via REST. Deprecated: Please define stores under the persistence element.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:element>
@@ -1082,6 +1087,100 @@
         </xs:complexContent>
     </xs:complexType>
 
+    <xs:complexType name="persistence">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="cluster-loader" type="tns:cluster-loader">
+                <xs:annotation>
+                    <xs:documentation>Defines a cluster cache loader.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="store" type="tns:custom-store">
+                <xs:annotation>
+                    <xs:documentation>Defines a custom cache store.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="loader" type="tns:custom-loader">
+                <xs:annotation>
+                    <xs:documentation>Defines a custom cache loader.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="file-store" type="tns:file-store">
+                <xs:annotation>
+                    <xs:documentation>Defines a file-based cache store.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+                <xs:element name="string-keyed-jdbc-store" type="tns:string-keyed-jdbc-store">
+                    <xs:annotation>
+                        <xs:documentation>Defines a database cache store accessed via JDBC using string-based keys.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            <xs:element name="rocksdb-store" type="tns:rocksdb-store">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines a RocksDB cache store.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="remote-store" type="tns:remote-store">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines a remote cache store accessed via HotRod.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="rest-store" type="tns:rest-store">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines a remote cache store accessed via REST.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:choice>
+        <xs:attribute name="passivation" type="xs:boolean" default="${Server.Persistence.passivation}">
+            <xs:annotation>
+                <xs:documentation>
+                    If true, data is only written to the cache store when it is evicted from memory, a phenomenon known
+                    as 'passivation'. Next time the data is requested, it will be 'activated' which means that data will
+                    be brought back to memory and removed from the persistent store. This gives you the ability to
+                    'overflow' to disk, similar to swapping in an operating system. If false, the cache store contains a
+                    copy of the contents in memory, so writes to cache result in cache store writes. This essentially
+                    gives you a 'write-through' configuration. Defaults to false.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="connection-attempts" type="xs:int" default="${Server.Persistence.connection-attempts}">
+            <xs:annotation>
+                <xs:documentation>
+                    The maximum number of unsuccessful attempts to start each of the
+                    configured CacheWriter/CacheLoader before an exception is thrown and
+                    the cache fails to start.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="connection-interval" type="xs:int" default="${Server.Persistence.connection-interval}">
+            <xs:annotation>
+                <xs:documentation>
+                    The time, in milliseconds, to wait between subsequent connection
+                    attempts on startup. A negative or zero value means no wait between
+                    connection attempts.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="availability-interval" type="xs:int" default="${Server.Persistence.availability-interval}">
+            <xs:annotation>
+                <xs:documentation>
+                    The time, in milliseconds, between availability checks to determine
+                    if the PersistenceManager is available. In other words, this interval
+                    sets how often stores/loaders are polled via their
+                    `org.infinispan.persistence.spi.CacheWriter#isAvailable`
+                    or `org.infinispan.persistence.spi.CacheLoader#isAvailable`
+                    implementation. If a single store/loader is not available,
+                    an exception is thrown during cache operations.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
     <xs:complexType name="store" abstract="true">
         <xs:sequence>
             <xs:element name="write-behind" type="tns:write-behind" minOccurs="0" maxOccurs="1">
@@ -1117,7 +1216,7 @@
         </xs:attribute>
         <xs:attribute name="passivation" type="xs:boolean" default="${Server.BaseStore.passivation}">
             <xs:annotation>
-                <xs:documentation>If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back to memory and removed from the persistent store. If false, the cache store contains a copy of the contents in memory, so writes to cache result in cache store writes. This essentially gives you a 'write-through' configuration.</xs:documentation>
+                <xs:documentation>If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back to memory and removed from the persistent store. If false, the cache store contains a copy of the contents in memory, so writes to cache result in cache store writes. This essentially gives you a 'write-through' configuration. Deprecated: Use the persistence element passivation attribute instead</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="fetch-state" type="xs:boolean" default="${Server.BaseStore.fetch-state}">

@@ -13,16 +13,17 @@
                     <memory>
                         <object size="2"/>
                     </memory>
-                    <remote-store
-                        cache="default"
-                        socket-timeout="60000"
-                        tcp-no-delay="true"
-                        fetch-state="false"
-                        passivation="true"
-                        preload="true"
-                        purge="false" name="MEMCACHED">
-                        <remote-server outbound-socket-binding="remote-store-hotrod-server" />
-                    </remote-store>
+                    <persistence passivation="true">
+                        <remote-store
+                                cache="default"
+                                socket-timeout="60000"
+                                tcp-no-delay="true"
+                                fetch-state="false"
+                                preload="true"
+                                purge="false" name="MEMCACHED">
+                            <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+                        </remote-store>
+                    </persistence>
                 </local-cache>
 
                 <local-cache
@@ -36,17 +37,18 @@
                     <memory>
                         <object size="2"/>
                     </memory>
-                    <remote-store
-                            cache="default"
-                            read-only="true"
-                            socket-timeout="60000"
-                            tcp-no-delay="true"
-                            fetch-state="false"
-                            passivation="true"
-                            preload="true"
-                            purge="false" name="READ_ONLY">
-                        <remote-server outbound-socket-binding="remote-store-hotrod-server" />
-                    </remote-store>
+                    <persistence passivation="true">
+                        <remote-store
+                                cache="default"
+                                read-only="true"
+                                socket-timeout="60000"
+                                tcp-no-delay="true"
+                                fetch-state="false"
+                                preload="true"
+                                purge="false" name="READ_ONLY">
+                            <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+                        </remote-store>
+                    </persistence>
                 </local-cache>
 
             </cache-container>

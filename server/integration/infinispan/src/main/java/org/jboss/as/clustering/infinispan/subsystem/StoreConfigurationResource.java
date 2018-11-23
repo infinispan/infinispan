@@ -27,6 +27,7 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.registry.AttributeAccess;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -55,7 +56,7 @@ public class StoreConfigurationResource extends BaseStoreConfigurationResource {
                    .setDefaultValue(new ModelNode().set(ModelKeys.STORE_NAME))
                    .build();
 
-    public StoreConfigurationResource(CacheConfigurationResource parent) {
-        super(STORE_PATH, ModelKeys.STORE, parent, STORE_ATTRIBUTES);
+    public StoreConfigurationResource(CacheConfigurationResource parent, ManagementResourceRegistration containerReg) {
+        super(STORE_PATH, ModelKeys.STORE, parent, containerReg, STORE_ATTRIBUTES);
     }
 }

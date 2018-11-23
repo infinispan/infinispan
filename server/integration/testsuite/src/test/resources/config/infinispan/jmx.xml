@@ -1,4 +1,4 @@
-<subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}" >
+<subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
     <cache-container name="clustered" default-cache="default">
         <transport lock-timeout="240000"/>
         <distributed-cache
@@ -18,10 +18,12 @@
                     timeout="600000"/>
         </distributed-cache>
         <distributed-cache name="memcachedCache">
-          <memory>
-            <object size="1"/>
-          </memory>
-          <file-store passivation="true" path="dc" purge="true" shared="false"/>
+            <memory>
+                <object size="1"/>
+            </memory>
+            <persistence passivation="true">
+                <file-store path="dc" purge="true" shared="false"/>
+            </persistence>
         </distributed-cache>
     </cache-container>
     <cache-container name="security"/>

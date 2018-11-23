@@ -27,6 +27,7 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.registry.AttributeAccess;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -54,8 +55,8 @@ public class LoaderConfigurationResource extends BaseLoaderConfigurationResource
                    .setDefaultValue(new ModelNode().set(ModelKeys.LOADER_NAME))
                    .build();
 
-    public LoaderConfigurationResource(CacheConfigurationResource parent) {
-        super(LOADER_PATH, ModelKeys.LOADER, parent, LOADER_ATTRIBUTES);
+    public LoaderConfigurationResource(CacheConfigurationResource parent, ManagementResourceRegistration containerReg) {
+        super(LOADER_PATH, ModelKeys.LOADER, parent, containerReg, LOADER_ATTRIBUTES);
     }
 
 }

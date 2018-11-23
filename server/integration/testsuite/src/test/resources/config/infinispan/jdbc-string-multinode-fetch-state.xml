@@ -12,21 +12,22 @@
                     <memory>
                         <object size="2"/>
                     </memory>
-                    <string-keyed-jdbc-store
-                        datasource="${jndi.name}"
-                        dialect="${database.type}"
-                        fetch-state="true"
-                        passivation="true"
-                        preload="false"
-                        purge="false"
-                        shared="false"
-                        singleton="false" name="FETCH_STATE">
-                        <string-keyed-table prefix="${table.prefix}">
-                            <id-column name="id" type="${id.column.type}"/>
-                            <data-column name="datum" type="${data.column.type}"/>
-                            <timestamp-column name="version" type="${timestamp.column.type}"/>
-                        </string-keyed-table>
-                    </string-keyed-jdbc-store>
+                    <persistence passivation="true">
+                        <string-keyed-jdbc-store
+                                datasource="${jndi.name}"
+                                dialect="${database.type}"
+                                fetch-state="true"
+                                preload="false"
+                                purge="false"
+                                shared="false"
+                                singleton="false" name="FETCH_STATE">
+                            <string-keyed-table prefix="${table.prefix}">
+                                <id-column name="id" type="${id.column.type}"/>
+                                <data-column name="datum" type="${data.column.type}"/>
+                                <timestamp-column name="version" type="${timestamp.column.type}"/>
+                            </string-keyed-table>
+                        </string-keyed-jdbc-store>
+                    </persistence>
                 </replicated-cache>
             </cache-container>
            <cache-container name="security"/>
