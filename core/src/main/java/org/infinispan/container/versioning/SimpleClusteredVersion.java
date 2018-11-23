@@ -18,7 +18,7 @@ import net.jcip.annotations.Immutable;
  * @since 5.1
  */
 @Immutable
-public class SimpleClusteredVersion implements IncrementableEntryVersion {
+public class SimpleClusteredVersion implements LongEntryVersion {
    /**
     * The cache topology id in which it was first created.
     */

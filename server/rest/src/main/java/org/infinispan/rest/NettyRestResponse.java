@@ -104,7 +104,7 @@ public class NettyRestResponse implements RestResponse {
 
       @Override
       public Builder eTag(String tag) {
-         response.headers().set(HttpHeaderNames.ETAG, tag);
+         if (tag != null) response.headers().set(HttpHeaderNames.ETAG, tag);
          return this;
       }
 

@@ -22,6 +22,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.LongEntryVersion;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.CacheControl;
@@ -121,7 +122,7 @@ public class CacheResource implements ResourceHandler {
 
          if (entry instanceof InternalCacheEntry) {
             InternalCacheEntry<Object, Object> ice = (InternalCacheEntry<Object, Object>) entry;
-            String etag = calcETAG(ice.getValue());
+            String etag = getETag(ice.getMetadata());
             String clientEtag = request.getEtagIfNoneMatchHeader();
             if (clientEtag == null || clientEtag.equals(etag)) {
                responseBuilder.status(HttpResponseStatus.OK.code());
@@ -162,7 +163,7 @@ public class CacheResource implements ResourceHandler {
                oldData = entry.getValue();
                String etagNoneMatch = request.getEtagIfNoneMatchHeader();
                if (etagNoneMatch != null) {
-                  String etag = calcETAG(ice.getValue());
+                  String etag = getETag(ice.getMetadata());
                   if (etagNoneMatch.equals(etag)) {
                      //client's and our ETAG match. Nothing to do, an entry is cached on the client side...
                      responseBuilder.status(HttpResponseStatus.NOT_MODIFIED.code());
@@ -226,7 +227,7 @@ public class CacheResource implements ResourceHandler {
             OptionalInt minFreshSeconds = CacheOperationsHelper.minFresh(cacheControl);
             if (CacheOperationsHelper.entryFreshEnough(expires, minFreshSeconds)) {
                Metadata meta = ice.getMetadata();
-               String etag = calcETAG(ice.getValue());
+               String etag = getETag(ice.getMetadata());
                String ifNoneMatch = request.getEtagIfNoneMatchHeader();
                String ifMatch = request.getEtagIfMatchHeader();
                String ifUnmodifiedSince = request.getEtagIfUnmodifiedSinceHeader();
@@ -287,14 +288,19 @@ public class CacheResource implements ResourceHandler {
       if (returnBody) responseBuilder.entity(value);
    }
 
-   private <V> String calcETAG(V value) {
-      return String.valueOf(hashFunc.hash(value));
+   private String getETag(Metadata metadata) {
+      LongEntryVersion entryVersion = (LongEntryVersion) metadata.version();
+      if (entryVersion != null) {
+         return String.valueOf(entryVersion.getVersion());
+      }
+      return null;
    }
 
    private RestResponse putInCache(NettyRestResponse.Builder responseBuilder, boolean useAsync,
                                    AdvancedCache<Object, Object> cache, Object key, byte[] data, Long ttl,
                                    Long idleTime, Object prevCond) {
-      final Metadata metadata = CacheOperationsHelper.createMetadata(cache.getCacheConfiguration(), ttl, idleTime);
+      long dataHash = hashFunc.hash(data);
+      final Metadata metadata = CacheOperationsHelper.createMetadata(dataHash, cache.getCacheConfiguration(), ttl, idleTime);
       if (prevCond != null) {
          boolean replaced = cache.replace(key, prevCond, data, metadata);
          // If not replaced, simply send back that the precondition failed
@@ -308,7 +314,7 @@ public class CacheResource implements ResourceHandler {
             cache.put(key, data, metadata);
          }
       }
-      responseBuilder.header("etag", calcETAG(data));
+      responseBuilder.eTag(String.valueOf(dataHash));
       return responseBuilder.build();
    }
 

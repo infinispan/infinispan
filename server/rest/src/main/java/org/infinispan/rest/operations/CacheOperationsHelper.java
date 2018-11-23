@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.CacheControl;
@@ -22,7 +23,7 @@ public class CacheOperationsHelper {
    private CacheOperationsHelper() {
    }
 
-   public static Metadata createMetadata(Configuration cfg, Long ttl, Long idleTime) {
+   public static Metadata createMetadata(long version, Configuration cfg, Long ttl, Long idleTime) {
       EmbeddedMetadata.Builder metadata = new EmbeddedMetadata.Builder();
 
       if (ttl != null) {
@@ -36,7 +37,7 @@ public class CacheOperationsHelper {
       } else {
          metadata.lifespan(cfg.expiration().lifespan(), TimeUnit.MILLISECONDS);
       }
-
+      metadata.version(new NumericVersion(version));
       if (idleTime != null) {
          if (idleTime < 0) {
             metadata.maxIdle(-1);

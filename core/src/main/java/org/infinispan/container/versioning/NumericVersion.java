@@ -15,7 +15,7 @@ import org.infinispan.marshall.core.Ids;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public class NumericVersion implements IncrementableEntryVersion {
+public class NumericVersion implements LongEntryVersion {
 
    private final long version;
 
