@@ -105,7 +105,7 @@ public class ClientStatistics implements RemoteCacheClientStatisticsMXBean {
    }
 
    public void dataRead(boolean foundValue, long startTimeNanoSeconds, int count) {
-      long duration = timeService.timeDuration(startTimeNanoSeconds, TimeUnit.MILLISECONDS);
+      long duration = timeService.timeDuration(startTimeNanoSeconds, TimeUnit.NANOSECONDS);
       StripeB stripe = counters.stripeForCurrentThread();
       if (foundValue) {
          counters.add(StripeB.remoteCacheHitsTimeFieldUpdater, stripe, duration);
@@ -117,14 +117,14 @@ public class ClientStatistics implements RemoteCacheClientStatisticsMXBean {
    }
 
    public void dataStore(long startTimeNanoSeconds, int count) {
-      long duration = timeService.timeDuration(startTimeNanoSeconds, TimeUnit.MILLISECONDS);
+      long duration = timeService.timeDuration(startTimeNanoSeconds, TimeUnit.NANOSECONDS);
       StripeB stripe = counters.stripeForCurrentThread();
       counters.add(StripeB.remoteCacheStoresTimeFieldUpdater, stripe, duration);
       counters.add(StripeB.remoteCacheStoresFieldUpdater, stripe, count);
    }
 
    public void dataRemove(long startTimeNanoSeconds, int count) {
-      long duration = timeService.timeDuration(startTimeNanoSeconds, TimeUnit.MILLISECONDS);
+      long duration = timeService.timeDuration(startTimeNanoSeconds, TimeUnit.NANOSECONDS);
       StripeB stripe = counters.stripeForCurrentThread();
       counters.add(StripeB.remoteCacheRemovesTimeFieldUpdater, stripe, duration);
       counters.add(StripeB.remoteCacheRemovesFieldUpdater, stripe, count);
