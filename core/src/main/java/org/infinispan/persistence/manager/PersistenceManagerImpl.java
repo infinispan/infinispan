@@ -1182,27 +1182,31 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private void removeCacheLoader(String storeType, Collection<CacheLoader> collection) {
       for (Iterator<CacheLoader> it = collection.iterator(); it.hasNext(); ) {
          CacheLoader loader = it.next();
-         doRemove(it, storeType, loader, undelegate(loader));
-         storeStatuses.remove(loader);
+         if (doRemove(it, storeType, loader, undelegate(loader))) {
+            storeStatuses.remove(loader);
+         }
       }
    }
 
    private void removeCacheWriter(String storeType, Collection<? extends CacheWriter> collection) {
       for (Iterator<? extends CacheWriter> it = collection.iterator(); it.hasNext(); ) {
          CacheWriter writer = it.next();
-         doRemove(it, storeType, writer, undelegate(writer));
-         storeStatuses.remove(writer);
+         if (doRemove(it, storeType, writer, undelegate(writer))) {
+            storeStatuses.remove(writer);
+         }
       }
    }
 
-   private void doRemove(Iterator<? extends Lifecycle> it, String storeType, Lifecycle wrapper, Lifecycle actual) {
+   private boolean doRemove(Iterator<? extends Lifecycle> it, String storeType, Lifecycle wrapper, Lifecycle actual) {
       if (actual.getClass().getName().equals(storeType)) {
          wrapper.stop();
          if (actual != wrapper) {
             actual.stop();
          }
          it.remove();
+         return true;
       }
+      return false;
    }
 
    private void performOnAllTxStores(AccessMode accessMode, Consumer<TransactionalCacheWriter> action) {
