@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.AdvancedCache;
@@ -335,6 +336,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Override
    public void reset() {
       super.reset();
+      des.submitEverywhere(new ResetStatsDistributedCacheStatsCallable());
       readWriteRatio = 0;
       hitRatio = 0;
    }
@@ -447,6 +449,24 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    private static CacheMode getCacheMode(Cache cache) {
       return cache.getCacheConfiguration().clustering().cacheMode();
+   }
+
+   private static class ResetStatsDistributedCacheStatsCallable implements
+           DistributedCallable<Object, Object, Map<String, Number>>, Serializable {
+
+      private transient AdvancedCache<Object, Object> remoteCache;
+
+      @Override
+      public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
+         remoteCache = cache.getAdvancedCache();
+      }
+
+      @Override
+      public Map<String, Number> call() throws Exception {
+         Stats stats = remoteCache.getStats();
+         stats.reset();
+         return Collections.emptyMap();
+      }
    }
 
    private static class DistributedCacheStatsCallable implements

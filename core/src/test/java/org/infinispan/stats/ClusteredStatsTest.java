@@ -42,6 +42,11 @@ public class ClusteredStatsTest extends SingleStatsTest {
       assertEquals(CLUSTER_SIZE * (TOTAL_ENTRIES - EVICTION_MAX_ENTRIES), stats.getPassivations());
    }
 
+   public void testResetClusterStats() {
+      ClusterCacheStats clusterCacheStats = cache.getAdvancedCache().getComponentRegistry().getComponent(ClusterCacheStats.class);
+      clusterCacheStats.reset();
+   }
+
    protected void refreshClusterStats() {
       stats = cache.getAdvancedCache().getComponentRegistry().getComponent(ClusterCacheStats.class);
    }
