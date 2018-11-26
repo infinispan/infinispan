@@ -2,6 +2,7 @@ package org.infinispan.persistence;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -10,6 +11,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
@@ -17,6 +19,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -78,6 +82,34 @@ public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
       //test: ClusteredCacheLoaderInterceptor/DistCacheWriterInterceptor
       ConfigurationBuilder builder = createClusterConfiguration(CacheMode.DIST_SYNC);
       disableWithClusteredConfiguration(builder);
+   }
+
+   public void testDisableWithMultipleStores() {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      PersistenceConfigurationBuilder p = builder.persistence();
+      p.addStore(DummyInMemoryStoreConfigurationBuilder.class).fetchPersistentState(true);
+      // Just add this one as it is simple and we need different types
+      p.addStore(UnnecessaryLoadingTest.CountingStoreConfigurationBuilder.class);
+
+      EmbeddedCacheManager cacheManager = null;
+      try {
+         cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+         Cache<Object, Object> cache = cacheManager.getCache();
+         PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
+         Set<CacheLoader> stores = pm.getStores(CacheLoader.class);
+         // Should have 2 before we disable
+         assertEquals(2, stores.size());
+
+         pm.disableStore(UnnecessaryLoadingTest.CountingStore.class.getName());
+
+         stores = pm.getStores(CacheLoader.class);
+         assertEquals(1, stores.size());
+
+         AdvancedCacheLoader loader = pm.getStateTransferProvider();
+         assertNotNull(loader);
+      } finally {
+         TestingUtil.killCacheManagers(cacheManager);
+      }
    }
 
    private void checkAndDisableStore(EmbeddedCacheManager cm) {
