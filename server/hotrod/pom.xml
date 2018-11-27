@@ -153,6 +153,10 @@
                               <arg value="${project.build.testOutputDirectory}/password_client_truststore.p12"/>
                               <arg value="-deststorepass"/>
                               <arg value="secret"/>
+                              <arg value="-srcstoretype"/>
+                              <arg value="pkcs12"/>
+                              <arg value="-deststoretype"/>
+                              <arg value="pkcs12"/>
                            </args>
                         </keytool>
                         <keytool command="-importkeystore">
@@ -165,6 +169,10 @@
                               <arg value="${project.build.testOutputDirectory}/default_client_truststore.p12"/>
                               <arg value="-deststorepass"/>
                               <arg value="secret"/>
+                              <arg value="-srcstoretype"/>
+                              <arg value="pkcs12"/>
+                              <arg value="-deststoretype"/>
+                              <arg value="pkcs12"/>
                            </args>
                         </keytool>
                         <keytool command="-importkeystore">
@@ -177,6 +185,10 @@
                               <arg value="${project.build.testOutputDirectory}/sni_client_truststore.p12"/>
                               <arg value="-deststorepass"/>
                               <arg value="secret"/>
+                              <arg value="-srcstoretype"/>
+                              <arg value="pkcs12"/>
+                              <arg value="-deststoretype"/>
+                              <arg value="pkcs12"/>
                            </args>
                         </keytool>
                      </target>
