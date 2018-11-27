@@ -42,6 +42,7 @@ public final class ExternallyMarshallable {
       whiteListClasses.add("org.infinispan.scripting.impl.DataType"); // prod
       whiteListClasses.add("org.infinispan.scripting.impl.DistributedScript");
       whiteListClasses.add("org.infinispan.stats.impl.ClusterCacheStatsImpl$DistributedCacheStatsCallable"); // prod
+      whiteListClasses.add("org.infinispan.stats.impl.ClusterCacheStatsImpl$ResetStatsDistributedCacheStatsCallable"); // prod
       whiteListClasses.add("org.infinispan.xsite.BackupSender$TakeSiteOfflineResponse"); // prod
       whiteListClasses.add("org.infinispan.xsite.BackupSender$BringSiteOnlineResponse"); // prod
       whiteListClasses.add("org.infinispan.xsite.XSiteAdminCommand$Status"); // prod
