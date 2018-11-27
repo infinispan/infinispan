@@ -455,6 +455,8 @@
                               <arg value="${default.password}"/>
                               <arg value="-destkeypass"/>
                               <arg value="${alt.password}"/>
+                              <arg value="-srcstoretype"/>
+                              <arg value="pkcs12"/>
                               <arg value="-deststoretype"/>
                               <arg value="JCEKS"/>
                            </args>
@@ -491,6 +493,8 @@
                               <arg value="${default.password}"/>
                               <arg value="-destkeypass"/>
                               <arg value="${alt.password}"/>
+                              <arg value="-srcstoretype"/>
+                              <arg value="pkcs12"/>
                               <arg value="-deststoretype"/>
                               <arg value="JCEKS"/>
                            </args>
