@@ -488,7 +488,7 @@ public class WordCountExample {
       c1.put("213", "JBoss division of RedHat ");
       c2.put("214", "RedHat community");
 
-      Map<String, Integer> wordCountMap = c1.entrySet().parallelStream()
+      Map<String, Long> wordCountMap = c1.entrySet().parallelStream()
          .map(e -> e.getValue().split("\\s"))
          .flatMap(Arrays::stream)
          .collect(() -> Collectors.groupingBy(Function.identity(), Collectors.counting()));
