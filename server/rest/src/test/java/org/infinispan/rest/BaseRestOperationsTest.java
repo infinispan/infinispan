@@ -75,6 +75,7 @@ public abstract class BaseRestOperationsTest extends MultipleCacheManagersTest {
          this.defineCaches(cm);
          String[] cacheNames = cm.getCacheNames().toArray(new String[0]);
          cm.startCaches(cacheNames);
+         cm.getClassWhiteList().addClasses(TestClass.class);
          waitForClusterToForm(cacheNames);
          RestServerHelper restServerHelper = new RestServerHelper(cm);
          restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
