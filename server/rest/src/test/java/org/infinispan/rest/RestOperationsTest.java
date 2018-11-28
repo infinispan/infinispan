@@ -343,7 +343,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       assertThat(response).isOk();
 
       response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "objectCache", "key"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "key"))
             .header(HttpHeader.ACCEPT, APPLICATION_JSON_TYPE)
             .send();
 
@@ -352,7 +352,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    private ContentResponse writeJsonToCache(String key, String json, String cacheName) throws Exception {
-      return client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), cacheName, key))
+      return client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
             .content(new StringContentProvider(json))
             .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON_TYPE)
             .method(HttpMethod.PUT).send();
