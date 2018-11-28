@@ -44,8 +44,7 @@ public class RecoveryTestResponse extends TestResponse {
       for (int i = 0; i < size; ++i) {
          int formatId = SignedNumeric.decode(VInt.read(buffer));
          byte[] globalId = readRangedBytes(buffer);
-         byte[] branchId = readRangedBytes(buffer);
-         xids.add(XidImpl.create(formatId, globalId, branchId));
+         xids.add(XidImpl.create(formatId, globalId));
       }
       return xids;
    }

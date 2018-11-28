@@ -24,18 +24,16 @@ public final class RemoteXid extends XidImpl {
    //HRTX in hex
    private static final int FORMAT_ID = 0x48525458;
    private static final AtomicLong GLOBAL_ID_GENERATOR = new AtomicLong(1);
-   private static final AtomicLong BRANCH_QUALIFIER_GENERATOR = new AtomicLong(1);
 
-   private RemoteXid(int formatId, byte[] globalTransactionId, byte[] branchQualifier) {
-      super(formatId, globalTransactionId, branchQualifier);
+   private RemoteXid(int formatId, byte[] globalTransactionId) {
+      super(formatId, globalTransactionId);
    }
 
 
    public static RemoteXid create(UUID tmId) {
       long creationTime = System.currentTimeMillis();
       byte[] gid = create(tmId, creationTime, GLOBAL_ID_GENERATOR);
-      byte[] bid = create(tmId, creationTime, BRANCH_QUALIFIER_GENERATOR);
-      return new RemoteXid(FORMAT_ID, gid, bid);
+      return new RemoteXid(FORMAT_ID, gid);
    }
 
    private static void longToBytes(long val, byte[] array, int offset) {
@@ -57,12 +55,10 @@ public final class RemoteXid extends XidImpl {
 
    public void writeTo(ByteBuf byteBuf) {
       writeSignedVInt(byteBuf, FORMAT_ID);
-      byte[] rawData = rawData();
-      writeArray(byteBuf, rawData, globalIdOffset(), globalIdLength());
-      writeArray(byteBuf, rawData, branchQualifierOffset(), branchQualifierLength());
+      writeArray(byteBuf, rawData());
    }
 
    public int estimateSize() {
-      return estimateVIntSize(FORMAT_ID) + globalIdLength() + branchQualifierLength();
+      return estimateVIntSize(FORMAT_ID) + rawData().length;
    }
 }

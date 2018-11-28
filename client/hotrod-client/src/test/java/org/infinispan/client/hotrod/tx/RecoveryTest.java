@@ -237,7 +237,7 @@ public class RecoveryTest extends MultiHotRodServersTest {
    private static class DummyXid extends XidImpl {
 
       DummyXid(byte id) {
-         super(-1234, new byte[]{id}, new byte[]{id});
+         super(-1234, new byte[]{id});
       }
    }
 

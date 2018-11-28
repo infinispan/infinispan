@@ -176,8 +176,8 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
    private String invokeForceWithXid(String methodName, int cacheIndex, Xid xid) {
       try {
          ObjectName recoveryAdmin = getRecoveryAdminObjectName(cacheIndex);
-         Object[] params = {xid.getFormatId(), xid.getGlobalTransactionId(), xid.getBranchQualifier()};
-         String[] signature = {int.class.getName(), byte[].class.getName(), byte[].class.getName()};
+         Object[] params = {xid.getFormatId(), xid.getGlobalTransactionId()};
+         String[] signature = {int.class.getName(), byte[].class.getName()};
          return threadMBeanServer.invoke(recoveryAdmin, methodName, params, signature).toString();
       } catch (Exception e) {
          throw new RuntimeException(e);

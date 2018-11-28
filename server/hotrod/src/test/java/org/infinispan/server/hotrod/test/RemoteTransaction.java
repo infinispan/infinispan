@@ -36,7 +36,7 @@ public class RemoteTransaction {
    private RemoteTransaction(HotRodClient client) {
       this.client = client;
       byte[] gtxAndBrandId = intToBytes(ID_GENERATOR.incrementAndGet());
-      xid = XidImpl.create(FORMAT, gtxAndBrandId, gtxAndBrandId);
+      xid = XidImpl.create(FORMAT, gtxAndBrandId);
       txContext = new ConcurrentHashMap<>();
    }
 

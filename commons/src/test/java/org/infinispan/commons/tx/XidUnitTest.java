@@ -30,7 +30,7 @@ public class XidUnitTest {
       long seed = System.currentTimeMillis();
       log.infof("[testInvalidGlobalTransaction] seed: %s", seed);
       Random random = new Random(seed);
-      Xid xid = XidImpl.create(random.nextInt(), Util.EMPTY_BYTE_ARRAY, new byte[]{0});
+      Xid xid = XidImpl.create(random.nextInt(), Util.EMPTY_BYTE_ARRAY);
       log.debugf("Invalid XID: %s", xid);
    }
 
@@ -41,27 +41,7 @@ public class XidUnitTest {
       Random random = new Random(seed);
       byte[] globalTx = new byte[65]; //max is 64
       random.nextBytes(globalTx);
-      Xid xid = XidImpl.create(random.nextInt(), globalTx, new byte[]{0});
-      log.debugf("Invalid XID: %s", xid);
-   }
-
-   @Test(expected = IllegalArgumentException.class)
-   public void testInvalidBranch() {
-      long seed = System.currentTimeMillis();
-      log.infof("[testInvalidBranch] seed: %s", seed);
-      Random random = new Random(seed);
-      Xid xid = XidImpl.create(random.nextInt(), new byte[]{0}, Util.EMPTY_BYTE_ARRAY);
-      log.debugf("Invalid XID: %s", xid);
-   }
-
-   @Test(expected = IllegalArgumentException.class)
-   public void testInvalidBranch2() {
-      long seed = System.currentTimeMillis();
-      log.infof("[testInvalidBranch2] seed: %s", seed);
-      Random random = new Random(seed);
-      byte[] branch = new byte[65]; //max is 64
-      random.nextBytes(branch);
-      Xid xid = XidImpl.create(random.nextInt(), new byte[]{0}, branch);
+      Xid xid = XidImpl.create(random.nextInt(), globalTx);
       log.debugf("Invalid XID: %s", xid);
    }
 
@@ -73,17 +53,14 @@ public class XidUnitTest {
 
       int formatId = random.nextInt();
       byte[] tx = new byte[random.nextInt(64) + 1];
-      byte[] branch = new byte[random.nextInt(64) + 1];
       random.nextBytes(tx);
-      random.nextBytes(branch);
-      Xid xid = XidImpl.create(formatId, tx, branch);
+      Xid xid = XidImpl.create(formatId, tx);
       log.debugf("XID: %s", xid);
 
       Assert.assertEquals(formatId, xid.getFormatId());
       Assert.assertArrayEquals(tx, xid.getGlobalTransactionId());
-      Assert.assertArrayEquals(branch, xid.getBranchQualifier());
 
-      Xid sameXid = XidImpl.create(formatId, tx, branch);
+      Xid sameXid = XidImpl.create(formatId, tx);
       log.debugf("same XID: %s", sameXid);
       Assert.assertEquals(xid, sameXid);
    }
@@ -96,17 +73,14 @@ public class XidUnitTest {
       int formatId = random.nextInt();
 
       byte[] tx = new byte[Xid.MAXGTRIDSIZE];
-      byte[] branch = new byte[Xid.MAXBQUALSIZE];
       random.nextBytes(tx);
-      random.nextBytes(branch);
-      Xid xid = XidImpl.create(formatId, tx, branch);
+      Xid xid = XidImpl.create(formatId, tx);
 
       log.debugf("XID: %s", xid);
       Assert.assertEquals(formatId, xid.getFormatId());
       Assert.assertArrayEquals(tx, xid.getGlobalTransactionId());
-      Assert.assertArrayEquals(branch, xid.getBranchQualifier());
 
-      Xid sameXid = XidImpl.create(formatId, tx, branch);
+      Xid sameXid = XidImpl.create(formatId, tx);
       log.debugf("same XID: %s", sameXid);
       Assert.assertEquals(xid, sameXid);
    }
@@ -119,10 +93,8 @@ public class XidUnitTest {
 
       int formatId = random.nextInt();
       byte[] tx = new byte[random.nextInt(64) + 1];
-      byte[] branch = new byte[random.nextInt(64) + 1];
       random.nextBytes(tx);
-      random.nextBytes(branch);
-      XidImpl xid = XidImpl.create(formatId, tx, branch);
+      XidImpl xid = XidImpl.create(formatId, tx);
 
       log.debugf("XID: %s", xid);
 
@@ -155,10 +127,8 @@ public class XidUnitTest {
 
       int formatId = random.nextInt();
       byte[] tx = new byte[Xid.MAXGTRIDSIZE];
-      byte[] branch = new byte[Xid.MAXBQUALSIZE];
       random.nextBytes(tx);
-      random.nextBytes(branch);
-      XidImpl xid = XidImpl.create(formatId, tx, branch);
+      XidImpl xid = XidImpl.create(formatId, tx);
 
       log.debugf("XID: %s", xid);
 

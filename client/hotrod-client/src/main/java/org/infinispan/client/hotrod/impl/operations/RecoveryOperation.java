@@ -51,9 +51,8 @@ public class RecoveryOperation extends RetryOnFailureOperation<Collection<Xid>> 
       for (int i = 0; i < size; ++i) {
          int formatId = SignedNumeric.decode(ByteBufUtil.readVInt(buf));
          byte[] globalId = ByteBufUtil.readArray(buf);
-         byte[] branchId = ByteBufUtil.readArray(buf);
          //the Xid class does't matter since it only compares the format-id, global-id and branch-id
-         xids.add(RemoteXid.create(formatId, globalId, branchId));
+         xids.add(RemoteXid.create(formatId, globalId));
       }
       complete(xids);
    }

@@ -221,17 +221,12 @@ chunkedValue returns ByteBuf
    : { chunkedValue = cacheProcessor.channel().alloc().buffer(); chunkLength = 1; } #chunkLength chunk
    ;
 
-xid returns XidImpl: xidFormat xidLength transactionId branchLength branchId { XidImpl.create(xidFormat, transactionId, branchId) };
+xid returns XidImpl: xidFormat xidLength transactionId { XidImpl.create(xidFormat, transactionId) };
 xidFormat: signedVInt;
 xidLength: byte;
 // in case xidLength == 0 we would get into loop as we couldn't progress reading 0 bytes from buffer
 transactionId returns byte[]
    :  { xidLength > 0 }? fixedArray[xidLength]
-   |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
-   ;
-branchLength: byte;
-branchId returns byte[]
-   :  { branchLength > 0 }? fixedArray[branchLength]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 

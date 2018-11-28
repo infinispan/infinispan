@@ -22,11 +22,9 @@ public final class EmbeddedXid extends XidImpl {
    //I would like ot use 0x4953504E (ISPN in hex) for the format, but keep it to 1 to be consistent with DummyXid.
    private static final int FORMAT = 1;
    private static final AtomicLong GLOBAL_ID_GENERATOR = new AtomicLong(1);
-   private static final AtomicLong BRANCH_QUALIFIER_GENERATOR = new AtomicLong(1);
 
    public EmbeddedXid(UUID transactionManagerId) {
-      super(FORMAT, create(transactionManagerId, GLOBAL_ID_GENERATOR),
-            create(transactionManagerId, BRANCH_QUALIFIER_GENERATOR));
+      super(FORMAT, create(transactionManagerId, GLOBAL_ID_GENERATOR));
 
    }
 

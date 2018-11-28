@@ -446,7 +446,7 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
    private static class DummyXid extends XidImpl {
 
       DummyXid(int id) {
-         super(-123456, new byte[]{(byte) id}, new byte[]{(byte) id});
+         super(-123456, new byte[]{(byte) id});
       }
    }
 

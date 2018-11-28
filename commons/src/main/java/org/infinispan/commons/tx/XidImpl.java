@@ -28,20 +28,10 @@ public class XidImpl implements Xid {
    public static final AdvancedExternalizer<XidImpl> EXTERNALIZER = new Externalizer();
 
    private final int formatId;
-   //first byte is the first byte of branch id.
-   //The rest of the array is the GlobalId + BranchId
    private final byte[] rawId;
    private transient int cachedHashCode;
 
-   protected XidImpl(int formatId, byte[] globalTransactionId, byte[] branchQualifier) {
-      this.formatId = formatId;
-      rawId = new byte[globalTransactionId.length + branchQualifier.length + 1];
-      rawId[0] = (byte) ((globalTransactionId.length + 1) & 0xFF); //first byte of branch id.
-      System.arraycopy(globalTransactionId, 0, rawId, 1, globalTransactionId.length);
-      System.arraycopy(branchQualifier, 0, rawId, globalTransactionId.length + 1, branchQualifier.length);
-   }
-
-   private XidImpl(int formatId, byte[] rawId) {
+   protected XidImpl(int formatId, byte[] rawId) {
       this.formatId = formatId;
       this.rawId = rawId;
    }
@@ -52,10 +42,9 @@ public class XidImpl implements Xid {
       }
    }
 
-   public static XidImpl create(int formatId, byte[] globalTransactionId, byte[] branchQualifier) {
+   public static XidImpl create(int formatId, byte[] globalTransactionId) {
       validateArray("GlobalTransactionId", globalTransactionId, MAXGTRIDSIZE);
-      validateArray("BranchQualifier", branchQualifier, MAXBQUALSIZE);
-      return new XidImpl(formatId, globalTransactionId, branchQualifier);
+      return new XidImpl(formatId, globalTransactionId);
    }
 
    public static void writeTo(ObjectOutput output, XidImpl xid) throws IOException {
@@ -73,15 +62,13 @@ public class XidImpl implements Xid {
       } else if (externalXid instanceof XidImpl) {
          return new XidImpl(((XidImpl) externalXid).formatId, ((XidImpl) externalXid).rawId);
       } else {
-         return new XidImpl(externalXid.getFormatId(), externalXid.getGlobalTransactionId(),
-               externalXid.getBranchQualifier());
+         return new XidImpl(externalXid.getFormatId(), externalXid.getGlobalTransactionId());
       }
    }
 
-   public static String printXid(int formatId, byte[] globalTransaction, byte[] branchQualifier) {
+   public static String printXid(int formatId, byte[] globalTransaction) {
       return "Xid{formatId=" + formatId +
             ", globalTransactionId=" + Util.toHexString(globalTransaction) +
-            ",branchQualifier=" + Util.toHexString(branchQualifier) +
             "}";
    }
 
@@ -92,12 +79,12 @@ public class XidImpl implements Xid {
 
    @Override
    public byte[] getGlobalTransactionId() {
-      return Arrays.copyOfRange(rawId, globalIdOffset(), branchQualifierOffset());
+      return rawId.clone();
    }
 
    @Override
    public byte[] getBranchQualifier() {
-      return Arrays.copyOfRange(rawId, branchQualifierOffset(), rawId.length);
+      return Util.EMPTY_BYTE_ARRAY;
    }
 
    @Override
@@ -113,16 +100,9 @@ public class XidImpl implements Xid {
          return formatId == ((XidImpl) o).formatId && Arrays.equals(rawId, ((XidImpl) o).rawId);
       }
 
-      if (o instanceof Xid) {
-         if (formatId != ((Xid) o).getFormatId()) {
-            return false;
-         }
-         int firstByteOfBranch = rawId[0] & 0xFF;
-         return arraysEquals(((Xid) o).getGlobalTransactionId(), 1, firstByteOfBranch, firstByteOfBranch - 1) &&
-               arraysEquals(((Xid) o).getBranchQualifier(), firstByteOfBranch, rawId.length,
-                     rawId.length - firstByteOfBranch);
-      }
-      return false;
+      return o instanceof Xid &&
+         formatId == ((Xid) o).getFormatId() && ((Xid) o).getBranchQualifier().length == 0 &&
+               Arrays.equals(((Xid) o).getGlobalTransactionId(), rawId);
    }
 
    @Override
@@ -140,43 +120,13 @@ public class XidImpl implements Xid {
 
    @Override
    public String toString() {
-      int firstByteOfBranch = rawId[0] & 0xFF;
       return "Xid{formatId=" + formatId +
-            ", globalTransactionId=" + Util.toHexString(rawId, 1, firstByteOfBranch) +
-            ",branchQualifier=" + Util.toHexString(rawId, firstByteOfBranch, rawId.length) +
+            ", globalTransactionId=" + Util.toHexString(rawId) +
             "}";
-   }
-
-   protected int globalIdOffset() {
-      return 1;
-   }
-
-   protected int globalIdLength() {
-      return branchQualifierOffset() - 1; //we need to remove the control byte
-   }
-
-   protected int branchQualifierOffset() {
-      return (rawId[0] & 0xFF);
-   }
-
-   protected int branchQualifierLength() {
-      return rawId.length - branchQualifierOffset();
    }
 
    protected byte[] rawData() {
       return rawId;
-   }
-
-   private boolean arraysEquals(byte[] other, int start, int end, int length) {
-      if (other.length != length) {
-         return false;
-      }
-      for (int i = start, j = 0; i < end; ++i, ++j) {
-         if (rawId[i] != other[j]) {
-            return false;
-         }
-      }
-      return true;
    }
 
    private static class Externalizer implements AdvancedExternalizer<XidImpl> {

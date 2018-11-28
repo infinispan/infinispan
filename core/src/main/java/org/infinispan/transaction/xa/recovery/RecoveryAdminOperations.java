@@ -69,9 +69,8 @@ public class RecoveryAdminOperations {
    @ManagedOperation(description = "Forces the commit of an in-doubt transaction", displayName="Force commit by Xid", name="forceCommit")
    public String forceCommit(
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
-         @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
-         @Parameter(name = "branchQualifier", description = "The branchQualifier of the transaction") byte[] branchQualifier) {
-      return completeBasedOnXid(formatId, globalTxId, branchQualifier, true);
+         @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId) {
+      return completeBasedOnXid(formatId, globalTxId, true);
    }
 
    @ManagedOperation(description = "Forces the rollback of an in-doubt transaction", displayName="Force rollback by internal id")
@@ -82,17 +81,15 @@ public class RecoveryAdminOperations {
    @ManagedOperation(description = "Forces the rollback of an in-doubt transaction", displayName="Force rollback by Xid", name="forceRollback")
    public String forceRollback(
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
-         @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
-         @Parameter(name = "branchQualifier", description = "The branchQualifier of the transaction") byte[] branchQualifier) {
-      return completeBasedOnXid(formatId, globalTxId, branchQualifier, false);
+         @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId) {
+      return completeBasedOnXid(formatId, globalTxId, false);
    }
 
    @ManagedOperation(description = "Removes recovery info for the given transaction.", displayName="Remove recovery info by Xid", name="forget")
    public String forget(
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
-         @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
-         @Parameter(name = "branchQualifier", description = "The branchQualifier of the transaction") byte[] branchQualifier) {
-      recoveryManager.removeRecoveryInformation(null, XidImpl.create(formatId, globalTxId, branchQualifier), true, null, false);
+         @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId) {
+      recoveryManager.removeRecoveryInformation(null, XidImpl.create(formatId, globalTxId), true, null, false);
       return "Recovery info removed.";
    }
 
@@ -103,12 +100,12 @@ public class RecoveryAdminOperations {
    }
 
 
-   private String completeBasedOnXid(int formatId, byte[] globalTxId, byte[] branchQualifier, boolean commit) {
-      RecoveryManager.InDoubtTxInfo inDoubtTxInfo = lookupRecoveryInfo(formatId, globalTxId, branchQualifier);
+   private String completeBasedOnXid(int formatId, byte[] globalTxId, boolean commit) {
+      RecoveryManager.InDoubtTxInfo inDoubtTxInfo = lookupRecoveryInfo(formatId, globalTxId);
       if (inDoubtTxInfo != null) {
          return completeTransaction(inDoubtTxInfo.getXid(), inDoubtTxInfo, commit);
       } else {
-         return transactionNotFound(formatId, globalTxId, branchQualifier);
+         return transactionNotFound(formatId, globalTxId);
       }
    }
 
@@ -134,9 +131,9 @@ public class RecoveryAdminOperations {
       }
    }
 
-   private  RecoveryManager.InDoubtTxInfo lookupRecoveryInfo(int formatId, byte[] globalTxId, byte[] branchQualifier) {
+   private  RecoveryManager.InDoubtTxInfo lookupRecoveryInfo(int formatId, byte[] globalTxId) {
       Set<RecoveryManager.InDoubtTxInfo> info = getRecoveryInfoFromCluster();
-      Xid xid = XidImpl.create(formatId, globalTxId, branchQualifier);
+      Xid xid = XidImpl.create(formatId, globalTxId);
       for (RecoveryManager.InDoubtTxInfo i : info) {
          if (i.getXid().equals(xid)) {
             log.tracef("Found matching recovery info: %s", i);
@@ -163,8 +160,8 @@ public class RecoveryAdminOperations {
       return null;
    }
 
-   private String transactionNotFound(int formatId, byte[] globalTxId, byte[] branchQualifier) {
-      return "Transaction not found: " + XidImpl.printXid(formatId, globalTxId, branchQualifier);
+   private String transactionNotFound(int formatId, byte[] globalTxId) {
+      return "Transaction not found: " + XidImpl.printXid(formatId, globalTxId);
    }
 
    private String transactionNotFound(Long internalId) {

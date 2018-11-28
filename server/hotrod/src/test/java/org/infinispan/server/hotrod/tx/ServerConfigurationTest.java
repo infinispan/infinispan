@@ -125,7 +125,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
       cacheManagers.forEach(cm -> cm.defineConfiguration(cacheName, builder.build()));
       waitForClusterToForm(cacheName);
       HotRodClient client = createClient(cacheName);
-      XidImpl xid = XidImpl.create(-1, new byte[]{2}, new byte[]{3});
+      XidImpl xid = XidImpl.create(-1, new byte[]{2});
       try {
          TestErrorResponse response = (TestErrorResponse) client.prepareTx(xid, false, Collections.emptyList());
          assertEquals(errorMsg, response.msg);
@@ -143,7 +143,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
       cacheManagers.forEach(cm -> cm.defineConfiguration(cacheName, builder.build()));
       waitForClusterToForm(cacheName);
       HotRodClient client = createClient(cacheName);
-      XidImpl xid = XidImpl.create(-1, new byte[]{2}, new byte[]{3});
+      XidImpl xid = XidImpl.create(-1, new byte[]{2});
       try {
          TxResponse response = (TxResponse) client.prepareTx(xid, false, Collections.emptyList());
          assertEquals(XAResource.XA_RDONLY, response.xaCode);
