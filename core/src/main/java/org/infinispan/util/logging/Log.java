@@ -1233,6 +1233,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Using a L1 lifespan of 0 or a negative value is meaningless", id = 351)
    CacheConfigurationException l1InvalidLifespan();
 
+   @Message(value = "Enabling the L1 cache is not supported when using EXCEPTION based eviction.", id = 352)
+   CacheConfigurationException l1NotValidWithExpirationEviction();
+
    @Message(value = "Cannot define both interceptor class (%s) and interceptor instance (%s)", id = 354)
    CacheConfigurationException interceptorClassAndInstanceDefined(String customInterceptorClassName, String customInterceptor);
 
