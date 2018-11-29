@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 /**
@@ -102,6 +103,10 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
          if (attributes.attribute(LIFESPAN).get() < 1)
             throw log.l1InvalidLifespan();
 
+         MemoryConfigurationBuilder memoryConfigurationBuilder = getClusteringBuilder().memory();
+         if (memoryConfigurationBuilder.evictionStrategy() == EvictionStrategy.EXCEPTION) {
+            throw log.l1NotValidWithExpirationEviction();
+         }
       }
    }
 

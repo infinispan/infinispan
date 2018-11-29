@@ -1,10 +1,14 @@
 package org.infinispan.configuration.cache;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.transaction.*;
 import org.testng.annotations.Test;
 
 /**
@@ -24,5 +28,20 @@ public class L1ConfigurationBuilderTest {
       assertEquals(l1Config.cleanupTaskFrequency(), TimeUnit.MINUTES.toMillis(1));
       assertEquals(l1Config.invalidationThreshold(), 0);
       assertEquals(l1Config.lifespan(), TimeUnit.MINUTES.toMillis(10));
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testL1WithExceptionEviction() {
+      Configuration config = new ConfigurationBuilder()
+            .clustering()
+               .cacheMode(CacheMode.DIST_SYNC)
+               .l1().enable()
+            .memory()
+               .evictionStrategy(EvictionStrategy.EXCEPTION)
+               .size(10)
+            .transaction()
+               .transactionMode(org.infinispan.transaction.TransactionMode.TRANSACTIONAL)
+            .build();
+      assertNotNull(config);
    }
 }
