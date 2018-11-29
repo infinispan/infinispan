@@ -17,7 +17,6 @@ import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOpera
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutContainsKey;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGet;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGetAsync;
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGetBulk;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGetVersioned;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGetWithMetadata;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutIfAbsent;
@@ -107,7 +106,6 @@ public class HotRodOperationsAuthzIT extends HotRodSaslAuthTestBase {
       testPutContainsKey(remoteCache);
       testPutGet(remoteCache);
       testPutGetAsync(remoteCache);
-      testPutGetBulk(remoteCache);
       testPutGetVersioned(remoteCache);
       testPutGetWithMetadata(remoteCache);
       //testKeySet(remoteCache); //ISPN-4977
@@ -138,7 +136,6 @@ public class HotRodOperationsAuthzIT extends HotRodSaslAuthTestBase {
       testPutContainsKey(remoteCache);
       testPutGet(remoteCache);
       testPutGetAsync(remoteCache);
-      testPutGetBulk(remoteCache);
       testPutGetVersioned(remoteCache);
       testPutGetWithMetadata(remoteCache);
       //testKeySet(remoteCache); //ISPN-4977
@@ -188,13 +185,6 @@ public class HotRodOperationsAuthzIT extends HotRodSaslAuthTestBase {
       initAsSupervisor();
       testAddGetClientListener(remoteCache);
    }
-
-   //ISPN-4977
-   /*@Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
-   public void testReaderBuldRead() throws PrivilegedActionException, LoginException {
-      initAsReader();
-      remoteCache.getBulk();
-   }*/
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
    public void testWriterClear() throws PrivilegedActionException, LoginException {

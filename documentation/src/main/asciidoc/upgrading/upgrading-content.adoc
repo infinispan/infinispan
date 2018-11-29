@@ -4,7 +4,14 @@
 Previously the JDBC PooledConnectionFactory provided c3p0 and HikariCP based connection pools.
 From 10.0 we only provide a PooledConnectionFactory based upon the link:https://agroal.github.io/[Agroal project].
 This means that it is no longer possible to utilise `c3p0.properties` and `hikari.properties` files to configure the pool,
-instead an agroal compatible properties file can be provided. See link:../user_guide/user_guide.html#jdbc_cache_store[Connection Management] for more details.
+instead an agroal compatiblet properties file can be provided. See link:../user_guide/user_guide.html#jdbc_cache_store[Connection Management] for more details.
+
+=== RemoteCache Changes
+
+==== The getBulk methods have been removed
+The getBulk method is an expensive method as it requires holding all keys in memory at once and requires a possibly very single result
+to populate it. The new retrieveEntries, entrySet, keySet and values methods handle this in a much more efficient way. Therefore the
+getBulk methods have been removed in favor of them.
 
 == Upgrading from 9.3 to 9.4
 

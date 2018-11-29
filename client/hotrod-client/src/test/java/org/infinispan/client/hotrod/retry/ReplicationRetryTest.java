@@ -4,7 +4,6 @@ import static org.testng.Assert.assertEquals;
 
 import java.net.SocketAddress;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
@@ -94,13 +93,6 @@ public class ReplicationRetryTest extends AbstractRetryTest {
       resetStats();
       remoteCache.clear();
       assertEquals(false, remoteCache.containsKey("k"));
-   }
-
-   public void testBulkGet() {
-      validateSequenceAndStopServer();
-      resetStats();
-      Map map = remoteCache.getBulk();
-      assertEquals(3, map.size());
    }
 
    private void validateSequenceAndStopServer() {

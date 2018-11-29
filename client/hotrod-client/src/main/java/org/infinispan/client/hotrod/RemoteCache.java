@@ -444,31 +444,6 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    RemoteCacheManager getRemoteCacheManager();
 
    /**
-    * Bulk get operations, returns all the entries within the remote cache.
-    *
-    * @return the returned values depend on the configuration of the back-end infinispan servers. Read <a
-    *         href="http://community.jboss.org/wiki/HotRodBulkGet-Design#Server_side">this</a> for more details. The
-    *         returned Map is unmodifiable.
-    *
-    * @deprecated Bulk retrievals can be quite expensive if for large data sets.
-    * Alternatively, the different <code>retrieveEntries*</code> methods offer
-    * lazy, pull-style, methods that retrieve bulk data more efficiently.
-    */
-   @Deprecated
-   Map<K, V> getBulk();
-
-   /**
-    * Same as {@link #getBulk()}, but limits the returned set of values to the specified size. No ordering is guaranteed, and there is no
-    * guarantee that "size" elements are returned( e.g. if the number of elements in the back-end server is smaller that "size")
-    *
-    * @deprecated Bulk retrievals can be quite expensive if for large data sets.
-    * Alternatively, the different <code>retrieveEntries*</code> methods offer
-    * lazy, pull-style, methods that retrieve bulk data more efficiently.
-    */
-   @Deprecated
-   Map<K, V> getBulk(int size);
-
-   /**
     * Retrieves all of the entries for the provided keys.  A key will not be present in
     * the resulting map if the entry was not found in the cache.
     * @param keys The keys to find values for
