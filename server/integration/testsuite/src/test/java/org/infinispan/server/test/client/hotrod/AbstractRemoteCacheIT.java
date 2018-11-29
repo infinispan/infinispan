@@ -341,56 +341,6 @@ public abstract class AbstractRemoteCacheIT {
     }
 
     @Test
-    public void testBulkOperations() {
-
-        Map<String, String> mapIn;
-        Map<String, String> mapOut = new HashMap<String, String>();
-        mapOut.put("aKey", "aValue");
-        mapOut.put("bKey", "bValue");
-        mapOut.put("cKey", "cValue");
-
-        remoteCache.putAll(mapOut);
-        mapIn = remoteCache.getBulk();
-
-        // check that the maps are equal
-        assertEquals(mapIn, mapOut);
-    }
-
-    @Test
-    public void testBulkOperationsWithLifespan() {
-
-        long lifespanInSecs = 1;
-
-        Map<String, String> mapIn = new HashMap<String, String>();
-        Map<String, String> mapOut = new HashMap<String, String>();
-        mapOut.put("aKey", "aValue");
-        mapOut.put("bKey", "bValue");
-        mapOut.put("cKey", "cValue");
-
-        remoteCache.putAll(mapOut, lifespanInSecs, TimeUnit.SECONDS);
-
-        // give the elements time to be evicted
-        sleepForSecs(lifespanInSecs + 1);
-
-        mapIn = remoteCache.getBulk();
-        assertEquals(mapIn.size(), 0);
-    }
-
-    @Test
-    public void testGetBulkWithLimit() {
-        Map<String, String> mapIn;
-        Map<String, String> mapOut = new HashMap<String, String>();
-        mapOut.put("aKey", "aValue");
-        mapOut.put("bKey", "bValue");
-        mapOut.put("cKey", "cValue");
-
-        remoteCache.putAll(mapOut);
-        mapIn = remoteCache.getBulk(2);
-        // we don't know which 2 entries will be retrieved
-        assertEquals(mapIn.size(), 2);
-    }
-
-    @Test
     public void testGetName() {
         // in hotrod protocol specification, the default cache is identified by an empty string
         assertEquals(testCache, remoteCache.getName());
@@ -774,32 +724,6 @@ public abstract class AbstractRemoteCacheIT {
         for (Future<?> f : futures) {
             assertNotNull(f.get());
         }
-    }
-
-    @Test
-    public void testBulkOperationsAsync() throws Exception {
-        Map<String, String> mapIn = new HashMap<String, String>();
-        Map<String, String> mapOut = new HashMap<String, String>();
-        fill(mapOut, ASYNC_OPS_ENTRY_LOAD);
-        CompletableFuture<Void> future = remoteCache.putAllAsync(mapOut);
-        future.get();
-
-        mapIn = remoteCache.getBulk();
-        assertEquals(mapOut, mapIn);
-    }
-
-    @Test
-    public void testBulkOperationsWithLifespanAsync() throws Exception {
-        long lifespanInSecs = 3;
-        Map<String, String> mapIn = new HashMap<String, String>();
-        Map<String, String> mapOut = new HashMap<String, String>();
-        fill(mapOut, ASYNC_OPS_ENTRY_LOAD);
-        CompletableFuture<Void> future = remoteCache.putAllAsync(mapOut, lifespanInSecs, TimeUnit.SECONDS);
-        future.get();
-
-        sleepForSecs(lifespanInSecs + 2);
-        mapIn = remoteCache.getBulk();
-        assertEquals(0, mapIn.size());
     }
 
     @Test

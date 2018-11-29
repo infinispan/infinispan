@@ -36,7 +36,6 @@ import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedExcep
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.impl.iteration.RemoteCloseableIterator;
 import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
-import org.infinispan.client.hotrod.impl.operations.BulkGetOperation;
 import org.infinispan.client.hotrod.impl.operations.ClearOperation;
 import org.infinispan.client.hotrod.impl.operations.ContainsKeyOperation;
 import org.infinispan.client.hotrod.impl.operations.ExecuteOperation;
@@ -429,18 +428,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          byteKeys.add(keyToBytes(key));
       }
       GetAllParallelOperation<K, V> op = operationsFactory.newGetAllOperation(byteKeys, dataFormat);
-      return await(op.execute().thenApply(Collections::unmodifiableMap));
-   }
-
-   @Override
-   public Map<K, V> getBulk() {
-      return getBulk(0);
-   }
-
-   @Override
-   public Map<K, V> getBulk(int size) {
-      assertRemoteCacheManagerIsStarted();
-      BulkGetOperation<K, V> op = operationsFactory.newBulkGetOperation(size, dataFormat);
       return await(op.execute().thenApply(Collections::unmodifiableMap));
    }
 

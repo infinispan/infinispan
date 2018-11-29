@@ -94,16 +94,6 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public Map<K, V> getBulk() {
-      return delegate.getBulk();
-   }
-
-   @Override
-   public Map<K, V> getBulk(int size) {
-      return delegate.getBulk(size);
-   }
-
-   @Override
    public Set<Object> getListeners() {
       return delegate.getListeners();
    }

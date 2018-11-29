@@ -205,13 +205,6 @@ public class HotRodAuthzOperationTests {
                   .get(ASYNC_TIMEOUT, TimeUnit.SECONDS));
    }
 
-   public static void testPutGetBulk(RemoteCache<String, String> remoteCache) {
-      remoteCache.clear();
-      remoteCache.put(KEY1, VALUE1);
-      remoteCache.put(KEY2, VALUE2);
-      assertEquals(2, remoteCache.getBulk().size());
-   }
-
    public static void testGetWithMetadata(RemoteCache<String, String> remoteCache) {
       assertNull(remoteCache.getWithMetadata(NON_EXISTENT_KEY));
    }

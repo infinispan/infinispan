@@ -3,7 +3,6 @@ package org.infinispan.it.endpoints;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.Cache;
@@ -17,7 +16,7 @@ import org.testng.annotations.Test;
 
 /**
  * Test embedded caches and Hot Rod endpoints for operations that retrieve data in bulk,
- * i.e. keySet, entrySet, getBulk...etc.
+ * i.e. keySet, entrySet...etc.
  *
  * @author Jiří Holuša
  * @since 6.0
@@ -41,31 +40,6 @@ public class EmbeddedHotRodBulkTest extends AbstractInfinispanTest {
       for (int i = 0; i < 100; i++) {
          cache.put(i, i);
       }
-   }
-
-   public void testEmbeddedPutHotRodGetBulk() {
-      Cache<Integer, Integer> embedded = cacheFactory.getEmbeddedCache();
-      RemoteCache<Integer, Integer> remote = cacheFactory.getHotRodCache();
-
-      populateCacheManager(embedded);
-
-      Map<Integer, Integer> get = remote.getBulk();
-      assertEquals(100, get.size());
-
-      for (int i = 0; i < 100; i++) {
-         assertTrue(get.containsValue(i));
-         assertTrue(get.containsKey(i));
-      }
-   }
-
-   public void testEmbeddedPutHotRodGetBulkWithSize() {
-      Cache<Integer, Integer> embedded = cacheFactory.getEmbeddedCache();
-      RemoteCache<Integer, Integer> remote = cacheFactory.getHotRodCache();
-
-      populateCacheManager(embedded);
-
-      Map<Integer, Integer> get = remote.getBulk(50);
-      assertEquals(50, get.size());
    }
 
    public void testEmbeddedPutHotRodKeySet() {
