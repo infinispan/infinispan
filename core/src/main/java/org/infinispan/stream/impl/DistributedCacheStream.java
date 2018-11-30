@@ -133,14 +133,14 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
     * Stream from an IntStream, DoubleStream etc.
     * @param other other instance of {@link AbstractCacheStream} to copy details from
     */
-   protected DistributedCacheStream(AbstractCacheStream other) {
+   public DistributedCacheStream(AbstractCacheStream other) {
       super(other);
 
       Configuration configuration = registry.getComponent(Configuration.class);
       writeBehindShared = hasWriteBehindSharedStore(configuration.persistence());
    }
 
-   boolean hasWriteBehindSharedStore(PersistenceConfiguration persistenceConfiguration) {
+   public boolean hasWriteBehindSharedStore(PersistenceConfiguration persistenceConfiguration) {
       for (StoreConfiguration storeConfiguration : persistenceConfiguration.stores()) {
          if (storeConfiguration.shared() && storeConfiguration.async().enabled()) {
             return true;
