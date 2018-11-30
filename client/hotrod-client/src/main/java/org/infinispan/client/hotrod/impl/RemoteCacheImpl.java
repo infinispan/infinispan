@@ -5,6 +5,7 @@ import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 import static org.infinispan.client.hotrod.impl.Util.await;
 
 import java.util.AbstractCollection;
+import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -597,7 +598,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return new ValuesCollection(segments);
    }
 
-   private class KeySet extends AbstractCollection<K> implements CloseableIteratorSet<K> {
+   private class KeySet extends AbstractSet<K> implements CloseableIteratorSet<K> {
       private final IntSet segments;
 
       private KeySet(IntSet segments) {
@@ -667,7 +668,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
             RemoteCacheImpl.this.removeWithVersion(key, versionedValue.getVersion());
    }
 
-   private class EntrySet extends AbstractCollection<Map.Entry<K, V>> implements CloseableIteratorSet<Entry<K, V>> {
+   private class EntrySet extends AbstractSet<Entry<K, V>> implements CloseableIteratorSet<Entry<K, V>> {
       private final IntSet segments;
 
       public EntrySet(IntSet segments) {

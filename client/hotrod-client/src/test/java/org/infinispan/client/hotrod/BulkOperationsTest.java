@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.configuration.cache.CacheMode;
@@ -34,7 +35,6 @@ import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
@@ -67,11 +67,19 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
          ProtocolVersion minimumVersionForIteration() {
             return ProtocolVersion.PROTOCOL_VERSION_23;
          }
+
+         @Override
+         boolean isSet() {
+            return false;
+         }
       };
 
       private Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>> function;
 
       abstract ProtocolVersion minimumVersionForIteration();
+      boolean isSet() {
+         return true;
+      }
 
       CollectionOp(Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>> function) {
          this.function = function;
@@ -285,6 +293,22 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
             {CollectionOp.KEYSET},
             {CollectionOp.VALUES },
       };
+   }
+
+   @Test(dataProvider = "collections")
+   public void testEqualsContract(CollectionOp op) {
+      // Non set types don't define contract, so we don't test them
+      if (op.isSet()) {
+         Map<String, String> dataIn = new HashMap<>();
+         dataIn.put("aKey", "aValue");
+         dataIn.put("bKey", "bValue");
+         remoteCache.putAll(dataIn);
+
+         CloseableIteratorCollection collection1 = op.function.apply(remoteCache);
+         CloseableIteratorCollection collection2 = op.function.apply(remoteCache);
+
+         assertEquals(collection1, collection2);
+      }
    }
 
    @Test(dataProvider = "collections")
