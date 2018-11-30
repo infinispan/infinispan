@@ -1,18 +1,26 @@
 package org.infinispan.stream;
 
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.HashConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
 import org.infinispan.filter.Converter;
@@ -20,7 +28,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
@@ -142,5 +152,25 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
                return new int[][]{{0}, {1}, {2}};
          }
       }
+   }
+
+   protected ClusterStreamManager replaceWithSpy(Cache<?,?> cache) {
+      ClusterStreamManager component = TestingUtil.extractComponent(cache, ClusterStreamManager.class);
+      ClusterStreamManager clusterStreamManager = spy(component);
+      TestingUtil.replaceComponent(cache, ClusterStreamManager.class, clusterStreamManager, false);
+      reset(clusterStreamManager);
+      return clusterStreamManager;
+   }
+
+   protected Map<Integer, Set<Map.Entry<Object, String>>> generateEntriesPerSegment(KeyPartitioner keyPartitioner,
+                                                                                  Iterable<Map.Entry<Object, String>> entries) {
+      Map<Integer, Set<Map.Entry<Object, String>>> returnMap = new HashMap<>();
+
+      for (Map.Entry<Object, String> value : entries) {
+         int segment = keyPartitioner.getSegment(value.getKey());
+         Set<Map.Entry<Object, String>> set = returnMap.computeIfAbsent(segment, k -> new HashSet<>());
+         set.add(new ImmortalCacheEntry(value.getKey(), value.getValue()));
+      }
+      return returnMap;
    }
 }
