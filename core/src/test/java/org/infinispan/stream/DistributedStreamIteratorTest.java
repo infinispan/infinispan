@@ -5,9 +5,7 @@ import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -15,11 +13,9 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -28,17 +24,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.IteratorHandler;
 import org.infinispan.stream.impl.LocalStreamManager;
@@ -410,26 +408,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       // We should not see keys from other segments, but there may be segments without any keys
       assertTrue(segmentsCache0.containsAll(entriesPerSegment.keySet()));
-      verify(clusterStreamManager, never()).awaitCompletion(any(UUID.class), anyLong(), any(TimeUnit.class));
-   }
-
-   private ClusterStreamManager replaceWithSpy(Cache<?,?> cache) {
-      ClusterStreamManager component = TestingUtil.extractComponent(cache, ClusterStreamManager.class);
-      ClusterStreamManager clusterStreamManager = spy(component);
-      TestingUtil.replaceComponent(cache, ClusterStreamManager.class, clusterStreamManager, false);
-      return clusterStreamManager;
-   }
-
-   private Map<Integer, Set<Map.Entry<Object, String>>> generateEntriesPerSegment(KeyPartitioner keyPartitioner,
-                                                                                  Iterable<Map.Entry<Object, String>> entries) {
-      Map<Integer, Set<Map.Entry<Object, String>>> returnMap = new HashMap<>();
-
-      for (Map.Entry<Object, String> value : entries) {
-         int segment = keyPartitioner.getSegment(value.getKey());
-         Set<Map.Entry<Object, String>> set = returnMap.computeIfAbsent(segment, k -> new HashSet<>());
-         set.add(new ImmortalCacheEntry(value.getKey(), value.getValue()));
-      }
-      return returnMap;
+      verifyZeroInteractions(clusterStreamManager);
    }
 
    protected <K> void waitUntilSendingResponse(final Cache<?, ?> cache, final CheckPoint checkPoint) {
