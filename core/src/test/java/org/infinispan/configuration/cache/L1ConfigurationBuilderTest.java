@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.transaction.*;
 import org.testng.annotations.Test;
 
 /**
