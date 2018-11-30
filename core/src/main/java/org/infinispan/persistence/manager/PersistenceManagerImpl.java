@@ -27,6 +27,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
@@ -172,7 +173,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
             // Now schedule the availability check
             long interval = configuration.persistence().availabilityInterval();
-            availabilityFuture = persistenceExecutor.scheduleAtFixedRate(this::pollStoreAvailability, interval, interval, TimeUnit.MILLISECONDS);
+            if (interval > 0) {
+               availabilityFuture = persistenceExecutor.scheduleAtFixedRate(this::pollStoreAvailability, interval, interval, TimeUnit.MILLISECONDS);
+            }
          } finally {
             if (xaTx != null) {
                transactionManager.resume(xaTx);
@@ -185,25 +188,30 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    protected void pollStoreAvailability() {
-      storesMutex.writeLock().lock();
-      try {
-         boolean availabilityChanged = false;
-         boolean failureDetected = false;
-         for (StoreStatus status : storeStatuses.values()) {
-            if (status.availabilityChanged())
-               availabilityChanged = true;
-            if (availabilityChanged && !status.availability && !failureDetected) {
-               failureDetected = true;
-               unavailableException = new StoreUnavailableException(String.format("Store %s is unavailable", status.store));
-               cacheNotifier.notifyPersistenceAvailabilityChanged(false);
+      final Lock writeLock = storesMutex.writeLock();
+      if (writeLock.tryLock()) {
+         try {
+            boolean availabilityChanged = false;
+            boolean failureDetected = false;
+            for (StoreStatus status : storeStatuses.values()) {
+               if (status.availabilityChanged())
+                  availabilityChanged = true;
+               if (availabilityChanged && !status.availability && !failureDetected) {
+                  failureDetected = true;
+                  unavailableException =
+                      new StoreUnavailableException(String.format("Store %s is unavailable", status.store));
+                  cacheNotifier.notifyPersistenceAvailabilityChanged(false);
+               }
             }
+            if (!failureDetected && availabilityChanged) {
+               unavailableException = null;
+               cacheNotifier.notifyPersistenceAvailabilityChanged(true);
+            }
+         } finally {
+            writeLock.unlock();
          }
-         if (!failureDetected && availabilityChanged) {
-            unavailableException = null;
-            cacheNotifier.notifyPersistenceAvailabilityChanged(true);
-         }
-      } finally {
-         storesMutex.writeLock().unlock();
+      } else {
+         log.debug("failed to grab write lock to poll store availability, skip.");
       }
    }
 
