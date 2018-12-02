@@ -2,28 +2,41 @@
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
 whitelistObjectNames: 
- # Whitelist objects to be collected, for performance reason
- # see https://github.com/prometheus/jmx_exporter/issues/246#issuecomment-367573931
- # Each object in the rules below has to be added to whitelistObjectNames too !
- # note that rules use regex (like "foo.*", whereas the whitelist use globbing expressions (like "foo*")
- - "java.lang:*"
- - "jboss.datagrid-infinispan:*"
-
+  - "jboss.datagrid-infinispan:type=Cache,name=*,manager=*,component=Statistics"
+  - "jboss.datagrid-infinispan:type=Cache,name=*,manager=*,component=Cache"
+  - "jboss.datagrid-infinispan:type=Cache,name=*,manager=*,component=ClusterCacheStats"
+  - "jboss.datagrid-infinispan:type=Cache,name=*,manager=*,component=StateTransferManager"
 rules:
- 
-  - pattern: "jboss.datagrid-infinispan<type=Server, name=(.*), component=Transport><>([A-Za-z]+)"
-    attrNameSnakeCase: false
-    name: datagrid_$1_$2
-
-  - pattern: "jboss.datagrid-infinispan<type=Cache, name=(.*), manager=(.*), component=ClusterCacheStats><>([A-Za-z]+)"
-    attrNameSnakeCase: false
-    name: datagrid_cache_$1_$3
-
-  - pattern: "jboss.datagrid-infinispan<type=CacheManager, name=(.*), component=CacheContainerStats><>([A-Za-z]+)"
-    attrNameSnakeCase: false
-    name: datagrid_cache_manager_$1_$2
-
-  - pattern: "jboss.datagrid-infinispan<type=CacheManager, name=(.*), component=ClusterContainerStats><>([A-Za-z]+)"
-    attrNameSnakeCase: false
-    name: datagrid_cache_manager_$1_$2
-
+  - pattern: "^jboss.datagrid-infinispan<type=Cache, name=\"(.+)\\(.+\\)\", manager=\"(.+)\", component=Statistics><>(.+):"
+    attrNameSnakeCase: true
+    name: datagrid_cache_stats
+    labels:
+      name: $1
+      container: $2
+      attribute: $3
+    help: JMX MBean Statistics
+  - pattern: "^jboss.datagrid-infinispan<type=Cache, name=\"(.+)\\(.+\\)\", manager=\"(.+)\", component=Cache><>(.+):"
+    attrNameSnakeCase: true
+    name: datagrid_cache
+    labels:
+      name: $1
+      container: $2
+      attribute: $3
+    help: JMX MBean Cache
+  - pattern: "^jboss.datagrid-infinispan<type=Cache, name=\"(.+)\\(.+\\)\", manager=\"(.+)\", component=ClusterCacheStats><>(.+):"
+    attrNameSnakeCase: true
+    name: datagrid_cluster_cache_stats
+    labels:
+      name: $1
+      container: $2
+      attribute: $3
+    help: JMX MBean ClusterCacheStats
+  - pattern: "^jboss.datagrid-infinispan<type=Cache, name=\"(.+)\\(.+\\)\", manager=\"(.+)\", component=StateTransferManager><>(.+):"
+    attrNameSnakeCase: true
+    name: datagrid_state_transfer_manager
+    labels:
+      name: $1
+      container: $2
+      attribute: $3
+    help: JMX MBean StateTransferManager
+      
