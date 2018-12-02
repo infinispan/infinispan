@@ -15,6 +15,7 @@ pipeline {
                 // Workaround for JENKINS-47230
                 script {
                     env.MAVEN_HOME = tool('Maven')
+                    env.JAVA_HOME = tool('JDK 8')
                 }
 
                 sh returnStdout: true, script: 'cleanup.sh'
