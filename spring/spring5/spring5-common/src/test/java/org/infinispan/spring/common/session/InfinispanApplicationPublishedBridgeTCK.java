@@ -3,6 +3,7 @@ package org.infinispan.spring.common.session;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -17,6 +18,7 @@ import org.springframework.context.PayloadApplicationEvent;
 import org.springframework.session.MapSession;
 import org.springframework.session.events.SessionCreatedEvent;
 import org.springframework.session.events.SessionDeletedEvent;
+import org.springframework.session.events.SessionDestroyedEvent;
 import org.springframework.session.events.SessionExpiredEvent;
 import org.testng.annotations.Test;
 
@@ -32,11 +34,6 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
 
    protected abstract AbstractInfinispanSessionRepository createRepository(SpringCache springCache) throws Exception;
 
-   protected void init() throws Exception {
-      springCache = createSpringCache();
-      sessionRepository = createRepository(springCache);
-   }
-
    @Test
    public void testEventBridge() throws Exception {
       //given
@@ -47,11 +44,11 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       //when
       MapSession sessionToBeDeleted = sessionRepository.createSession();
       MapSession sessionToBeExpired = sessionRepository.createSession();
-      sessionToBeExpired.setMaxInactiveIntervalInSeconds(1);
+      sessionToBeExpired.setMaxInactiveInterval(Duration.ofSeconds(1));
 
       sessionRepository.save(sessionToBeExpired);
       sessionRepository.save(sessionToBeDeleted);
-      sessionRepository.delete(sessionToBeDeleted.getId());
+      sessionRepository.deleteById(sessionToBeDeleted.getId());
 
       sleepOneSecond();
       callEviction();
@@ -61,9 +58,13 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       assertNull(springCache.get(sessionToBeDeleted.getId()));
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionCreatedEvent.class, 2, 2, TimeUnit.SECONDS);
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDeletedEvent.class, 1, 2, TimeUnit.SECONDS);
+      EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDestroyedEvent.class, 1, 10, TimeUnit.SECONDS);
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionExpiredEvent.class, 1, 2, TimeUnit.SECONDS);
-      //FIXME: This doesn't work for remote... why? https://issues.jboss.org/browse/ISPN-7040
-//      EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDestroyedEvent.class, 2, 10, TimeUnit.SECONDS);
+   }
+
+   protected void init() throws Exception {
+      springCache = createSpringCache();
+      sessionRepository = createRepository(springCache);
    }
 
    private void sleepOneSecond() {

@@ -92,7 +92,7 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
     * @see FactoryBean#getObject()
     */
    @Override
-   public RemoteCache<K, V> getObject() throws Exception {
+   public RemoteCache<K, V> getObject() {
       return this.infinispanCache;
    }
 

@@ -5,6 +5,8 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.spring.common.provider.SpringCache;
@@ -40,9 +42,9 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
       MapSession session = sessionRepository.createSession();
 
       //then
-      assertTrue(session.getId() != null);
-      assertTrue(session.getCreationTime() != 0);
-      assertNull(sessionRepository.getSession(session.getId()));
+      assertNotNull(session.getId() != null);
+      assertNotNull(session.getCreationTime());
+      assertNull(sessionRepository.findById(session.getId()));
    }
 
    @Test
@@ -52,27 +54,28 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
       sessionRepository.save(session);
 
       //then
-      assertNotNull(sessionRepository.getSession(session.getId()));
+      assertNotNull(sessionRepository.findById(session.getId()));
    }
 
    @Test
    public void testUpdatingTTLOnAccessingData() throws Exception {
       //when
       MapSession session = sessionRepository.createSession();
-      long accessTimeBeforeSaving = session.getLastAccessedTime();
+      Instant accessTimeBeforeSaving = session.getLastAccessedTime();
 
       sessionRepository.save(session);
-      long accessTimeAfterSaving = session.getLastAccessedTime();
+      Instant accessTimeAfterSaving = session.getLastAccessedTime();
 
-      long accessTimeAfterAccessing = sessionRepository.getSession(session.getId()).getLastAccessedTime();
+      Instant accessTimeAfterAccessing = sessionRepository.findById(session.getId()).getLastAccessedTime();
 
       //then
-      assertTrue(accessTimeBeforeSaving > 0);
-      assertTrue(accessTimeBeforeSaving <= System.currentTimeMillis());
-      assertTrue(accessTimeAfterSaving > 0);
-      assertTrue(accessTimeAfterSaving <= System.currentTimeMillis());
-      assertTrue(accessTimeAfterAccessing > 0);
-      assertTrue(accessTimeAfterAccessing >= accessTimeAfterSaving);
+      assertNotNull(accessTimeBeforeSaving);
+      assertTrue(accessTimeBeforeSaving.isBefore(Instant.now()));
+      assertNotNull(accessTimeAfterSaving);
+      assertTrue(accessTimeAfterSaving.isBefore(Instant.now()));
+      assertNotNull(accessTimeAfterAccessing);
+      assertTrue(accessTimeAfterAccessing.isAfter(accessTimeAfterSaving));
+
    }
 
    @Test
@@ -80,17 +83,17 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
       //when
       MapSession session = sessionRepository.createSession();
       sessionRepository.save(session);
-      sessionRepository.delete(session.getId());
+      sessionRepository.deleteById(session.getId());
 
       //then
-      assertNull(sessionRepository.getSession(session.getId()));
+      assertNull(sessionRepository.findById(session.getId()));
    }
 
    @Test(timeOut = 5000)
    public void testEvictingSession() throws Exception {
       //when
       MapSession session = sessionRepository.createSession();
-      session.setMaxInactiveIntervalInSeconds(1);
+      session.setMaxInactiveInterval(Duration.ofSeconds(1));
       sessionRepository.save(session);
 
       //then

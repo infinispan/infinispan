@@ -21,7 +21,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
-import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -57,6 +56,7 @@ import org.infinispan.client.hotrod.impl.operations.ReplaceIfUnmodifiedOperation
 import org.infinispan.client.hotrod.impl.operations.ReplaceOperation;
 import org.infinispan.client.hotrod.impl.operations.SizeOperation;
 import org.infinispan.client.hotrod.impl.operations.StatsOperation;
+import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.jmx.JmxUtil;

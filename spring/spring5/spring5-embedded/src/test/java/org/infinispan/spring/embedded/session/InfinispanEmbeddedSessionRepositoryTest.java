@@ -42,7 +42,7 @@ public class InfinispanEmbeddedSessionRepositoryTest extends InfinispanSessionRe
    }
 
    @Override
-   protected AbstractInfinispanSessionRepository createRepository(SpringCache springCache) throws Exception {
+   protected AbstractInfinispanSessionRepository createRepository(SpringCache springCache) {
       InfinispanEmbeddedSessionRepository sessionRepository = new InfinispanEmbeddedSessionRepository(springCache);
       sessionRepository.afterPropertiesSet();
       return sessionRepository;
