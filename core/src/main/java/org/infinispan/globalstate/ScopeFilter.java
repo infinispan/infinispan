@@ -11,6 +11,9 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.filter.KeyFilter;
 
+/**
+ * A filter for {@link ScopedState} that allows listeners of the global state cache to choose events by scope.
+ */
 public class ScopeFilter implements KeyFilter<ScopedState>, Predicate<ScopedState> {
    private final String scope;
 
