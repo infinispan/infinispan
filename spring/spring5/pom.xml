@@ -86,7 +86,7 @@
             </dependency>
             <dependency>
                 <groupId>org.springframework.session</groupId>
-                <artifactId>spring-session</artifactId>
+                <artifactId>spring-session-core</artifactId>
                 <version>${version.spring.session}</version>
             </dependency>
             <dependency>

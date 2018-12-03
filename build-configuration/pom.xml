@@ -214,8 +214,8 @@
       <version.sonatype.plexus>1.4</version.sonatype.plexus>
       <version.spring.boot>2.1.0.RELEASE</version.spring.boot>
       <version.spring.security>5.1.1.RELEASE</version.spring.security>
-      <version.spring5>5.1.2.RELEASE</version.spring5>
-      <version.spring.session>1.3.4.RELEASE</version.spring.session>
+      <version.spring5>5.1.3.RELEASE</version.spring5>
+      <version.spring.session>2.1.2.RELEASE</version.spring.session>
       <version.tomcat85>8.5.31</version.tomcat85>
       <version.xalan>2.7.1.jbossorg-2</version.xalan>
       <version.xerces>2.11.0.SP5</version.xerces>

@@ -9,6 +9,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.spring.remote.session.configuration.EnableInfinispanRemoteHttpSession;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
@@ -24,18 +25,18 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
    private static HotRodServer server;
 
    @BeforeClass
-   public static void beforeclass() {
+   public static void beforeClass() {
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalConfigurationBuilder.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
 
       ConfigurationBuilder cacheConfiguration = new ConfigurationBuilder();
 
       serverCache = new DefaultCacheManager(globalConfigurationBuilder.build());
-      serverCache.defineConfiguration("sessions", cacheConfiguration.build());
+      serverCache.defineConfiguration(EnableInfinispanRemoteHttpSession.DEFAULT_CACHE_NAME, cacheConfiguration.build());
 
       HotRodServerConfigurationBuilder hotRodServerConfigurationBuilder = new HotRodServerConfigurationBuilder();
       hotRodServerConfigurationBuilder.name(RemoteSpringSessionTest.class.getSimpleName());
-      hotRodServerConfigurationBuilder.port(RemoteConfiguration.SERVER_PORT).defaultCacheName("sessions");
+      hotRodServerConfigurationBuilder.port(RemoteConfiguration.SERVER_PORT).defaultCacheName(EnableInfinispanRemoteHttpSession.DEFAULT_CACHE_NAME);
 
       server = new HotRodServer();
       server.start(hotRodServerConfigurationBuilder.build(), serverCache);

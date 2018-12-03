@@ -1,5 +1,6 @@
 package org.infinispan.spring.embedded.session.configuration;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 
@@ -34,7 +35,7 @@ public class InfinispanEmbeddedHttpSessionConfiguration extends SpringHttpSessio
          @Override
          public MapSession createSession() {
             MapSession session = super.createSession();
-            session.setMaxInactiveIntervalInSeconds(maxInactiveIntervalInSeconds);
+            session.setMaxInactiveInterval(Duration.ofSeconds(maxInactiveIntervalInSeconds));
             return session;
          }
       };

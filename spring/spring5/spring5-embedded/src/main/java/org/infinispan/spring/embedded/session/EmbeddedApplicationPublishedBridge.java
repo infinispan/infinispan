@@ -10,6 +10,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractApplicationPublisherBridge;
+import org.springframework.session.Session;
 
 /**
  * A bridge between Infinispan Embedded events and Spring.
@@ -36,17 +37,16 @@ public class EmbeddedApplicationPublishedBridge extends AbstractApplicationPubli
 
    @CacheEntryCreated
    public void processCacheEntryCreated(CacheEntryCreatedEvent event) {
-      emitSessionCreatedEvent((String) event.getKey());
+      emitSessionCreatedEvent((Session) event.getValue());
    }
 
    @CacheEntryExpired
    public void processCacheEntryExpired(CacheEntryExpiredEvent event) {
-      emitSessionExpiredEvent((String) event.getKey());
-      emitSessionDestroyedEvent((String) event.getKey());
+      emitSessionExpiredEvent((Session) event.getValue());
    }
 
    @CacheEntryRemoved
    public void processCacheEntryDestroyed(CacheEntryRemovedEvent event) {
-      emitSessionDestroyedEvent((String) event.getKey());
+      emitSessionDestroyedEvent((Session) event.getOldValue());
    }
 }

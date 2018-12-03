@@ -26,7 +26,7 @@ public class AbstractSpringSessionTCK {
       HttpHeaders httpHeaders = restTemplate.headForHeaders(getTestURL());
 
       //then
-      Assert.assertNotNull(sessionRepository.getSession(getSessionId(httpHeaders)));
+      Assert.assertNotNull(sessionRepository.findById(getSessionId(httpHeaders)));
    }
 
    private String getTestURL() {

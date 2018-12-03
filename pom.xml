@@ -666,7 +666,7 @@
       <versionx.org.springframework.security.spring-security-config>${version.spring.security}</versionx.org.springframework.security.spring-security-config>
       <versionx.org.springframework.security.spring-security-core>${version.spring.security}</versionx.org.springframework.security.spring-security-core>
       <versionx.org.springframework.security.spring-security-web>${version.spring.security}</versionx.org.springframework.security.spring-security-web>
-      <versionx.org.springframework.session.spring-session>1.3.4.RELEASE</versionx.org.springframework.session.spring-session>
+      <versionx.org.springframework.session.spring-session>${version.spring.session}</versionx.org.springframework.session.spring-session>
       <versionx.org.springframework.spring-aop>${version.spring5}</versionx.org.springframework.spring-aop>
       <versionx.org.springframework.spring-beans>${version.spring5}</versionx.org.springframework.spring-beans>
       <versionx.org.springframework.spring-context>${version.spring5}</versionx.org.springframework.spring-context>
@@ -3606,7 +3606,7 @@
          </dependency>
          <dependency>
             <groupId>org.springframework.session</groupId>
-            <artifactId>spring-session</artifactId>
+            <artifactId>spring-session-core</artifactId>
             <version>${versionx.org.springframework.session.spring-session}</version>
             <scope>provided</scope>
          </dependency>

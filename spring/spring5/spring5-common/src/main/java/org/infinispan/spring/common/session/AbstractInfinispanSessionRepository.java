@@ -1,5 +1,6 @@
 package org.infinispan.spring.common.session;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -27,7 +28,7 @@ import org.springframework.session.SessionRepository;
  * @see FindByIndexNameSessionRepository
  * @since 9.0
  */
-public abstract class AbstractInfinispanSessionRepository implements SessionRepository<MapSession>, FindByIndexNameSessionRepository<MapSession>, ApplicationEventPublisherAware, InitializingBean, DisposableBean {
+public abstract class AbstractInfinispanSessionRepository implements FindByIndexNameSessionRepository<MapSession>, ApplicationEventPublisherAware, InitializingBean, DisposableBean {
 
    protected final AbstractApplicationPublisherBridge applicationEventPublisher;
    protected final SpringCache cache;
@@ -41,12 +42,12 @@ public abstract class AbstractInfinispanSessionRepository implements SessionRepo
    }
 
    @Override
-   public void afterPropertiesSet() throws Exception {
+   public void afterPropertiesSet() {
       applicationEventPublisher.registerListener();
    }
 
    @Override
-   public void destroy() throws Exception {
+   public void destroy() {
       applicationEventPublisher.unregisterListener();
    }
 
@@ -58,18 +59,27 @@ public abstract class AbstractInfinispanSessionRepository implements SessionRepo
    @Override
    public MapSession createSession() {
       MapSession result = new MapSession();
-      result.setCreationTime(System.currentTimeMillis());
+      result.setCreationTime(Instant.now());
       return result;
    }
 
    @Override
    public void save(MapSession session) {
-      cache.put(session.getId(), session, session.getMaxInactiveIntervalInSeconds(), TimeUnit.SECONDS);
+      cache.put(session.getId(), session, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
    }
 
    @Override
-   public MapSession getSession(String id) {
-      return getSession(id, true);
+   public MapSession findById(String sessionId) {
+      return getSession(sessionId, true);
+   }
+
+   @Override
+   public void deleteById(String sessionId) {
+      MapSession mapSession = (MapSession) cache.get(sessionId).get();
+      if (mapSession != null) {
+         applicationEventPublisher.emitSessionDeletedEvent(mapSession);
+         cache.evict(sessionId);
+      }
    }
 
    /**
@@ -88,16 +98,10 @@ public abstract class AbstractInfinispanSessionRepository implements SessionRepo
 
    protected MapSession updateTTL(MapSession session, boolean updateTTL) {
       if (updateTTL) {
-         session.setLastAccessedTime(System.currentTimeMillis());
-         cache.put(session.getId(), session, session.getMaxInactiveIntervalInSeconds(), TimeUnit.SECONDS);
+         session.setLastAccessedTime(Instant.now());
+         cache.put(session.getId(), session, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
       }
       return session;
-   }
-
-   @Override
-   public void delete(String id) {
-      applicationEventPublisher.emitSessionDeletedEvent(id);
-      cache.evict(id);
    }
 
    @Override

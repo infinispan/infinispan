@@ -8,7 +8,9 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository;
 import org.infinispan.spring.common.session.InfinispanApplicationPublishedBridgeTCK;
+import org.infinispan.spring.remote.session.configuration.EnableInfinispanRemoteHttpSession;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -21,6 +23,7 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
    private EmbeddedCacheManager embeddedCacheManager;
    private HotRodServer hotrodServer;
    private RemoteCacheManager remoteCacheManager;
+   private ThreadPoolTaskExecutor executor;
 
    @BeforeClass
    public void beforeClass() {
@@ -29,6 +32,11 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("localhost").port(hotrodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(builder.build());
+      executor = new ThreadPoolTaskExecutor();
+      executor.setCorePoolSize(EnableInfinispanRemoteHttpSession.DEFAULT_EXECUTOR_POOL_SIZE);
+      executor.setMaxPoolSize(EnableInfinispanRemoteHttpSession.DEFAULT_EXECUTOR_MAX_POOL_SIZE);
+      executor.setThreadNamePrefix(EnableInfinispanRemoteHttpSession.DEFAULT_EXECUTOR_THREAD_NAME_PREFIX);
+      executor.initialize();
    }
 
    @AfterMethod
@@ -59,8 +67,8 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
    }
 
    @Override
-   protected AbstractInfinispanSessionRepository createRepository(SpringCache springCache) throws Exception {
-      InfinispanRemoteSessionRepository sessionRepository = new InfinispanRemoteSessionRepository(springCache);
+   protected AbstractInfinispanSessionRepository createRepository(SpringCache springCache) {
+      InfinispanRemoteSessionRepository sessionRepository = new InfinispanRemoteSessionRepository(springCache, executor);
       sessionRepository.afterPropertiesSet();
       return sessionRepository;
    }
