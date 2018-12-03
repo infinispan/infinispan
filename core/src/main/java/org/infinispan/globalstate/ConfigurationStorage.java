@@ -11,24 +11,23 @@ import org.infinispan.configuration.global.GlobalStateConfiguration;
 
 public enum ConfigurationStorage {
    /**
-    * An immutable configuration storage provider. This forbids creating/removing caches.
+    * Prevents the creation or removal of caches.
     */
    IMMUTABLE,
    /**
-    * A volatile configuration storage provider which doesn't support {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}.
+    * Stores cache configurations in volatile storage. Does not support {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}
     */
    VOLATILE,
    /**
-    * A configuration storage provider which stores configurations on the filesystem.
-    * Cache configurations are persisted to the {@link GlobalStateConfiguration#persistentLocation()} in a <pre>caches.xml</pre> file which is read on startup.
+    * Persists cache configurations to the {@link GlobalStateConfiguration#persistentLocation()} in a <pre>caches.xml</pre> file that is read on startup.
     */
    OVERLAY,
    /**
-    * A configuration storage provider which stores configurations in a managed environment, for example the server model.
+    * Stores {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT} caches in a managed environment such as the server model. Supported in server deployments only.
     */
    MANAGED,
    /**
-    * A custom configuration storage provider. Providers must implement the {@link LocalConfigurationStorage} interface.
+    * Lets you provide a configuration storage provider. Providers must implement the {@link LocalConfigurationStorage} interface.
     */
    CUSTOM,
 }
