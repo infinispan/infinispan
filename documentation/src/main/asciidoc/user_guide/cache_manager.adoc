@@ -48,55 +48,40 @@ clustered it will also leave the cluster gracefully.
 include::configuration.adoc[]
 
 === Obtaining caches
+After you configure the `CacheManager`, you can obtain and control caches.
 
-Once you have configured the CacheManager, the main thing you will want to do is to use it to control and obtain caches.
-The main way to get to a cache is to just invoke
-link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getCache--[getCache()]:
+Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getCache--[`getCache()`] method to obtain caches, as follows:
 
-[source,java]
+[source,java,options="nowrap"]
 ----
-
 Cache<String, String> myCache = manager.getCache("myCache");
-
 ----
 
-The above code will create the cache `myCache` (if it doesn't already exist) and return it. One important thing to
-remember is that using this method, cache creation is only performed on the local node. This means that, in order for
-the cache to exist on all nodes, this operation must be invoked locally everywhere. In a typical application deployed
-across multiple nodes, where you obtain caches during initialization, this ensures that the caches are _symmetric_, i.e.
-they exist on every node.
+The preceding operation creates a cache named `myCache`, if it does not already exist, and returns it.
 
-If you need to create caches dynamically across the whole cluster, you should invoke the following operation:
+Using the `getCache()` method creates the cache only on the node where you invoke the method. In other words, it performs a local operation that must be invoked on each node across the cluster. Typically, applications deployed across multiple nodes obtain caches during initialization to ensure that caches are _symmetric_ and exist on each node.
+
+Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManagerAdmin.html#createCache--[`createCache()`] method to create caches dynamically across the entire cluster, as follows:
 
 [source,java]
 ----
-
 Cache<String, String> myCache = manager.administration().createCache("myCache", "myTemplate");
-
 ----
 
-Caches created using the above API will also be automatically created on any new nodes which subsequently join the cluster.
-The configuration of such caches, however, will be ephemeral: shutting down the entire cluster and restarting it will not
-automatically recreate them. To make these caches permanent, i.e. ensure that they are recreated after a cluster is
-shutdown and restarted, use the +PERMANENT+ flag as follows:
+The preceding operation also automatically creates caches on any nodes that subsequently join the cluster.
 
-[source,java]
+Caches that you create with the `createCache()` method are ephemeral by default. If the entire cluster shuts down, the cache is not automatically created again when it restarts.
+
+Use the +PERMANENT+ flag to ensure that caches can survive restarts, as follows:
+
+[source,java,options="nowrap"]
 ----
-
 Cache<String, String> myCache = manager.administration().withFlags(AdminFlag.PERMANENT).createCache("myCache", "myTemplate");
-
 ----
 
-In order for the above to work, global state must be enabled and a suitable configuration storage selected.
-The available configuration stores are:
+For the +PERMANENT+ flag to take effect, you must enable global state and set a configuration storage provider.
 
-- `VOLATILE`: as the name implies, this configuration storage does not support +PERMANENT+ caches.
-- `OVERLAY`: this stores configurations in the global shared state persistent path in a file named _caches.xml_.
-- `MANAGED`: this is only supported in server deployments, and will store +PERMANENT+ caches in the server model.
-- `CUSTOM`: a custom configuration store.
-
-See link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#configurationStorage-org.infinispan.globalstate.ConfigurationStorage-[GlobalStateConfigurationBuilder#configurationStorage()]
-for details.
+For more information about configuration storage providers, see link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#configurationStorage-org.infinispan.globalstate.ConfigurationStorage-[GlobalStateConfigurationBuilder#configurationStorage()].
 
 === Clustering Information
 The `EmbeddedCacheManager` has quite a few methods to provide information
