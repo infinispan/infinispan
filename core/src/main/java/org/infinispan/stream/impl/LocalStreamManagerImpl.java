@@ -137,7 +137,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
       localAddress = rpc.getAddress();
       isReplicated = clusteringConfiguration.cacheMode().isReplicated();
       // Replicated never removes segments so we don't have to worry about rehash event
-      if (isReplicated) {
+      if (!isReplicated) {
          cache.addListener(this);
       }
    }
