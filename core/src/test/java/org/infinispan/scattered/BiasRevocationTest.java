@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.Exceptions;
@@ -144,7 +145,8 @@ public class BiasRevocationTest extends MultipleCacheManagersTest {
       @Override
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                       ResponseCollector<T> collector,
-                                                      Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+                                                      Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                      RpcOptions rpcOptions) {
          if (command instanceof RevokeBiasCommand) {
             if (throwBefore)
                throw new RemoteException("Induced", null);
@@ -152,7 +154,7 @@ public class BiasRevocationTest extends MultipleCacheManagersTest {
                return CompletableFutures.completedExceptionFuture(new RemoteException("Induced", null));
             }
          }
-         return super.performRequest(targets, command, collector, invoker);
+         return super.performRequest(targets, command, collector, invoker, rpcOptions);
       }
    }
 }

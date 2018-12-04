@@ -30,6 +30,7 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -141,7 +142,8 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
          @Override
          protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                          ResponseCollector<T> collector,
-                                                         Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+                                                         Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                         RpcOptions rpcOptions) {
             if (command instanceof StateResponseCommand) {
                try {
                   assertTrue(allowStateResponse.await(10, TimeUnit.SECONDS));
@@ -149,7 +151,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
                   exception.set(e);
                }
             }
-            return super.performRequest(targets, command, collector, invoker);
+            return super.performRequest(targets, command, collector, invoker, rpcOptions);
          }
       }));
 

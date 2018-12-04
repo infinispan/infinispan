@@ -22,7 +22,6 @@ import java.util.function.Supplier;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -33,7 +32,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
@@ -415,7 +413,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       CacheEntry entry = context.lookupEntry(command.getKey());
       if (entry == null) {
          if (command.loadType() == OWNER) {
-            return asyncInvokeNext(context, command, remoteGet(context, command, command.getKey(), true));
+            return asyncInvokeNext(context, command, remoteGetSingleKey(context, command, command.getKey(), true));
          }
          entryFactory.wrapExternalEntry(context, command.getKey(), null, false, true);
       }
@@ -538,44 +536,25 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       });
    }
 
-   private <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<?> checkRemoteGetIfNeeded(
+   private <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<?> checkRemoteGetIfNeeded(
          InvocationContext ctx, C command, Set<Object> keys, LocalizedCacheTopology cacheTopology,
          boolean needsPreviousValue) {
-      if (!needsPreviousValue) {
-         for (Object key : keys) {
-            CacheEntry cacheEntry = ctx.lookupEntry(key);
-            if (cacheEntry == null && cacheTopology.isWriteOwner(key)) {
-               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
-            }
-         }
-         return CompletableFutures.completedNull();
-      }
-      final List<CompletableFuture<?>> futureList = new ArrayList<>(keys.size());
+      List<Object> remoteKeys = new ArrayList<>();
       for (Object key : keys) {
          CacheEntry cacheEntry = ctx.lookupEntry(key);
          if (cacheEntry == null && cacheTopology.isWriteOwner(key)) {
-            wrapKeyExternally(ctx, command, key, futureList);
+            if (!needsPreviousValue || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+            } else {
+               remoteKeys.add(key);
+            }
          }
       }
-      final int size = futureList.size();
+      final int size = remoteKeys.size();
       if (size == 0) {
          return CompletableFutures.completedNull();
       }
-      CompletableFuture[] array = new CompletableFuture[size];
-      futureList.toArray(array);
-      return CompletableFuture.allOf(array);
-   }
-
-   private <C extends FlagAffectedCommand & TopologyAffectedCommand> void wrapKeyExternally(InvocationContext ctx,
-         C command, Object key, List<CompletableFuture<?>> futureList) {
-      if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
-         entryFactory.wrapExternalEntry(ctx, key, null, false, true);
-      } else {
-         GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key,
-               SegmentSpecificCommand.extractSegment(command, key, keyPartitioner), command.getFlagsBitSet());
-         fakeGetCommand.setTopologyId(command.getTopologyId());
-         futureList.add(remoteGet(ctx, fakeGetCommand, key, true).toCompletableFuture());
-      }
+      return remoteGetMany(ctx, command, remoteKeys);
    }
 
    private void checkTopologyId(int topologyId, Collector<?> collector) {

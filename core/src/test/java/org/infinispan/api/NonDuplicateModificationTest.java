@@ -86,7 +86,7 @@ public class NonDuplicateModificationTest extends MultipleCacheManagersTest {
       });
 
       ControlledRpcManager.BlockedResponseMap blockedResponses = operation.expectCommand(controlledRpcManager)
-                                                                          .send().awaitAll();
+                                                                          .send().expectAllResponses();
 
       cache(0).put(key, "v3");
 

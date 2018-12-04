@@ -104,7 +104,7 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
          ControlledRpcManager.BlockedRequest blockedPrepare = rpcManager.expectCommand(prepareCommandClass);
          ControlledRpcManager.BlockedResponseMap blockedPrepareResponses = null;
          if (!pessimistic) {
-            blockedPrepareResponses = blockedPrepare.send().awaitAll();
+            blockedPrepareResponses = blockedPrepare.send().expectAllResponses();
          }
 
          assertKeysLocked(0, ahmKey);
@@ -118,7 +118,7 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
             rpcManager.expectCommand(VersionedCommitCommand.class).send().receiveAll();
          }
 
-         rpcManager.expectCommand(TxCompletionNotificationCommand.class).sendWithoutResponses();
+         rpcManager.expectCommand(TxCompletionNotificationCommand.class).send();
          Assert.assertTrue(txOutcome.get());
       } finally {
          rpcManager.revertRpcManager();
@@ -154,7 +154,7 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
          ControlledRpcManager.BlockedRequest blockedPrepare = rpcManager.expectCommand(prepareCommandClass);
          ControlledRpcManager.BlockedResponseMap blockedPrepareResponses = null;
          if (!pessimistic) {
-            blockedPrepareResponses = blockedPrepare.send().awaitAll();
+            blockedPrepareResponses = blockedPrepare.send().expectAllResponses();
          }
 
          assertKeysLocked(0, collectors[txExecutor].getKeys().toArray());
@@ -168,7 +168,7 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
             rpcManager.expectCommand(VersionedCommitCommand.class).send().receiveAll();
          }
 
-         rpcManager.expectCommand(TxCompletionNotificationCommand.class).sendWithoutResponses();
+         rpcManager.expectCommand(TxCompletionNotificationCommand.class).send();
          Assert.assertTrue(txOutcome.get());
       } finally {
          rpcManager.revertRpcManager();

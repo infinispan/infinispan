@@ -1,6 +1,12 @@
 package org.infinispan.partitionhandling;
 
+import static org.infinispan.test.Exceptions.expectExecutionException;
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.DistributionManager;
@@ -8,7 +14,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
-import org.infinispan.test.Exceptions;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.testng.annotations.Test;
 
@@ -67,32 +72,45 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
       splitCluster(p0.getNodes(), p1.getNodes());
 
       ss.enter("main:check_availability");
-      // Keys stay available in between the availability mode update and the topology update
+      // Receive the topology update on p0.node1, block it on p1.node0
       DistributionManager dmP0N1 = advancedCache(p0.node(1)).getDistributionManager();
       eventuallyEquals(2, () -> dmP0N1.getCacheTopology().getActualMembers().size());
       assertEquals(AvailabilityMode.AVAILABLE, partitionHandlingManager(p0.node(0)).getAvailabilityMode());
 
-      // The availability didn't change on p0.node0, check that keys owned by p1 are not accessible
-      partition(0).assertKeyAvailableForRead(k0Existing, "v0");
-      partition(0).assertKeysNotAvailableForRead(k1Existing, k2Existing);
-      // k3 is an exception, since p0.node0 is a backup owner it returns the local value
-      assertPartiallyAvailable(p0, k3Existing, "v3");
-
+      // Reads for k0* and k3* succeed because they're local and p0.node0 cache is available
+      assertKeyAvailableForRead(cacheP0N0, k0Existing, "v0");
+      assertKeyAvailableForRead(cacheP0N0, k3Existing, "v3");
       partition(0).assertKeyAvailableForRead(k0Missing, null);
-      partition(0).assertKeysNotAvailableForRead(k1Missing, k2Missing);
-      // k3 is an exception, since p0.node0 is a backup owner it returns the local value
-      assertPartiallyAvailable(p0, k3Missing, null);
+      assertKeyAvailableForRead(cacheP0N0, k3Missing, null);
+
+      // Reads for k1* fail immediately because they are sent to p0.node1, which is already degraded
+      assertKeyNotAvailableForRead(cacheP0N0, k1Existing);
+      assertKeyNotAvailableForRead(cacheP0N0, k1Missing);
+
+      // Reads for k2 wait for the topology update before failing
+      // because all read owners are suspected, but the new topology could add read owners
+      Future<Object> getK2Existing = fork(() -> cacheP0N0.get(k2Existing));
+      Future<Map<Object, Object>> getAllK2Existing =
+         fork(() -> cacheP0N0.getAdvancedCache().getAll(Collections.singleton(k2Existing)));
+      Future<Object> getK2Missing = fork(() -> cacheP0N0.get(k2Missing));
+      Future<Map<Object, Object>> getAllK2Missing =
+         fork(() -> cacheP0N0.getAdvancedCache().getAll(Collections.singleton(k2Missing)));
+      Thread.sleep(50);
+      assertFalse(getK2Existing.isDone());
+      assertFalse(getAllK2Existing.isDone());
+      assertFalse(getK2Missing.isDone());
+      assertFalse(getAllK2Missing.isDone());
 
       // Allow the partition handling manager on p0.node0 to update the availability mode
       ss.exit("main:check_availability");
 
       partition(0).assertDegradedMode();
       partition(1).assertDegradedMode();
-   }
 
-   private void assertPartiallyAvailable(PartitionDescriptor p0, Object k3Existing, Object value) {
-      assertEquals(value, cache(p0.node(0)).get(k3Existing));
-      Exceptions.expectException(AvailabilityException.class, () -> cache(p0.node(1)).get(k3Existing));
+      expectExecutionException(AvailabilityException.class, getK2Existing);
+      expectExecutionException(AvailabilityException.class, getAllK2Existing);
+      expectExecutionException(AvailabilityException.class, getK2Missing);
+      expectExecutionException(AvailabilityException.class, getAllK2Missing);
    }
 
    @Listener

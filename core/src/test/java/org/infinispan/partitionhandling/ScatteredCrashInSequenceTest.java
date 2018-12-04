@@ -1,5 +1,18 @@
 package org.infinispan.partitionhandling;
 
+import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+
+import java.lang.reflect.Proxy;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.infinispan.Cache;
@@ -10,30 +23,14 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.BlockingClusterTopologyManager;
-import org.jgroups.JChannel;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Proxy;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static org.infinispan.test.Exceptions.expectException;
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
 @Test(groups = "functional", testName = "partitionhandling.ScatteredCrashInSequenceTest")
 public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
@@ -132,48 +129,38 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
 
       bctm = BlockingClusterTopologyManager.replace(coordinator.getCacheManager());
       BlockingClusterTopologyManager.Handle<Integer> blockingSTE = bctm.startBlockingTopologyConfirmations(topologyId -> true);
+      try {
+         discard1.setDiscardAll(true);
+         Stream<Address> newMembers1 = manager(c2).getTransport().getMembers().stream().filter(
+            n -> !n.equals(manager(c1).getAddress()));
+         TestingUtil.installNewView(newMembers1, manager(c2), manager(a1), manager(a2));
+         TestingUtil.installNewView(manager(c1));
 
-      Function<EmbeddedCacheManager, JChannel> channelRetriever = ecm -> {
-         if (ecm == manager(0) && c1 != 0) {
-            return ((JGroupsTransport) oldTransportCoord).getChannel();
-         } else if (ecm == manager(1) && c1 == 0) {
-            return ((JGroupsTransport) oldTransportCoord).getChannel();
-         } else if (ecm == manager(a1)) {
-            return ((JGroupsTransport) oldTransportA1).getChannel();
-         } else {
-            return ((JGroupsTransport) ecm.getTransport()).getChannel();
-         }
-      };
+         ss.enter("check");
+         assertKeysAvailableForRead(cache(c2), keys);
+         assertKeysAvailableForRead(cache(a1), keys);
+         assertKeysAvailableForRead(cache(a2), keys);
 
-      discard1.setDiscardAll(true);
-      Stream<Address> newMembers1 = manager(c2).getTransport().getMembers().stream().filter(n -> !n.equals(manager(c1).getAddress()));
-      TestingUtil.installNewView(newMembers1, channelRetriever, manager(c2), manager(a1), manager(a2));
-      TestingUtil.installNewView(channelRetriever, manager(c1));
+         // The cache does not become degraded immediatelly, therefore if it was primary owner in previous
+         // topology and it did not install new one/became degraded, it's still serving the old value
+         eventuallyDegraded(cache(c1));
+         assertKeysNotAvailableForRead(cache(c1), keys);
+         ss.exit("check");
 
-      ss.enter("check");
-      assertKeysAvailableForRead(cache(c2), keys);
-      assertKeysAvailableForRead(cache(a1), keys);
-      assertKeysAvailableForRead(cache(a2), keys);
+         discard2.setDiscardAll(true);
+         Stream<Address> newMembers2 = manager(a1).getTransport().getMembers().stream().filter(
+            n -> !n.equals(manager(c2).getAddress()));
+         TestingUtil.installNewView(newMembers2, manager(a1), manager(a2));
+         TestingUtil.installNewView(manager(c2));
 
-      // The cache does not become degraded immediatelly, therefore if it was primary owner in previous
-      // topology and it did not install new one/became degraded, it's still serving the old value
-      eventuallyDegraded(cache(c1));
-      assertKeysNotAvailableForRead(cache(c1), keys);
-      ss.exit("check");
+         ss.advance("degraded");
 
-      discard2.setDiscardAll(true);
-      Stream<Address> newMembers2 = manager(a1).getTransport().getMembers().stream().filter(n -> !n.equals(manager(c2).getAddress()));
-      TestingUtil.installNewView(newMembers2, channelRetriever, manager(a1), manager(a2));
-      TestingUtil.installNewView(channelRetriever, manager(c2));
-
-      ss.advance("degraded");
-
-      eventuallyDegraded(cache(a1));
-      eventuallyDegraded(cache(a2));
-      eventuallyDegraded(cache(c2));
-
-      blockingSTE.stopBlocking();
-
+         eventuallyDegraded(cache(a1));
+         eventuallyDegraded(cache(a2));
+         eventuallyDegraded(cache(c2));
+      } finally {
+         blockingSTE.stopBlocking();
+      }
       assertKeysNotAvailableForRead(cache(a1), keys);
       assertKeysNotAvailableForRead(cache(a2), keys);
       assertKeysNotAvailableForRead(cache(c1), keys);
@@ -182,7 +169,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       int m1 = mergeInSplitOrder ? c1 : c2;
       int m2 = mergeInSplitOrder ? c2 : c1;
       (mergeInSplitOrder ? discard1 : discard2).setDiscardAll(false);
-      TestingUtil.installNewView(channelRetriever, manager(a1), manager(a2), manager(m1));
+      TestingUtil.installNewView(manager(a1), manager(a2), manager(m1));
 
       eventuallyAvailable(cache(a1));
       eventuallyAvailable(cache(a2));
@@ -195,7 +182,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       assertKeysNotAvailableForRead(cache(m2), keys);
 
       (mergeInSplitOrder ? discard2 : discard1).setDiscardAll(false);
-      TestingUtil.installNewView(channelRetriever, manager(a1), manager(a2), manager(m1), manager(m2));
+      TestingUtil.installNewView(manager(a1), manager(a2), manager(m1), manager(m2));
 
       eventuallyAvailable(cache(m2));
 

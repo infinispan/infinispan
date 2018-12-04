@@ -114,7 +114,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
 
       // Wait until all nodes have replied. then, we change the topology ID and let it collect the responses.
       ControlledRpcManager.BlockedResponseMap blockedPrepare =
-         nodeARpcManager.expectCommand(VersionedPrepareCommand.class).send().awaitAll();
+         nodeARpcManager.expectCommand(VersionedPrepareCommand.class).send().expectAllResponses();
       assertEquals(0, nodeC.commandLatch.getCount());
 
       nodeAController.topologyManager.confirmTopologyUpdate(CacheTopology.Phase.READ_ALL_WRITE_ALL);
@@ -130,7 +130,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       // Retry the prepare and then commit
       nodeARpcManager.expectCommand(PrepareCommand.class).send().receiveAll();
       nodeARpcManager.expectCommand(CommitCommand.class).send().receiveAll();
-      nodeARpcManager.expectCommand(TxCompletionNotificationCommand.class).sendWithoutResponses();
+      nodeARpcManager.expectCommand(TxCompletionNotificationCommand.class).send();
       assertNull("Wrong put() return value.", tx.get());
 
       nodeAController.topologyManager.stopBlocking();
