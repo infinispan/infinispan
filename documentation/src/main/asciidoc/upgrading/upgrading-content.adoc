@@ -13,6 +13,10 @@ The getBulk method is an expensive method as it requires holding all keys in mem
 to populate it. The new retrieveEntries, entrySet, keySet and values methods handle this in a much more efficient way. Therefore the
 getBulk methods have been removed in favor of them.
 
+=== Persistence changes
+
+* The CLI loader (`infinispan-persistence-cli`) has been removed.
+
 == Upgrading from 9.3 to 9.4
 
 === Client/Server changes
