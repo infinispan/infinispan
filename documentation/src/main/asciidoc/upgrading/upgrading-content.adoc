@@ -6,6 +6,10 @@ From 10.0 we only provide a PooledConnectionFactory based upon the link:https://
 This means that it is no longer possible to utilise `c3p0.properties` and `hikari.properties` files to configure the pool,
 instead an agroal compatible properties file can be provided. See link:../user_guide/user_guide.html#jdbc_cache_store[Connection Management] for more details.
 
+=== Persistence changes
+
+* The CLI loader (`infinispan-persistence-cli`) has been removed.
+
 == Upgrading from 9.3 to 9.4
 
 === Client/Server changes
