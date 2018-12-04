@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PrimitiveIterator;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
-import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -18,7 +18,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -313,16 +312,26 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          InvocationContext ctx, C command, WriteManyCommandHelper<C, Container, Item> helper, ConsistentHash ch,
          MergingCompletableFuture<Object> allFuture, MutableInt offset, IntSet segments) throws Exception {
       Container myItems = helper.newContainer();
-      List<CompletableFuture<?>> retrievals = null;
+      List<Object> remoteKeys = new ArrayList<>();
       // Filter command keys/entries into the collection, and record remote retrieval for those that are not
       // in the context yet
       for (Item item : helper.getItems(command)) {
          Object key = helper.item2key(item);
          if (segments.contains(keyPartitioner.getSegment(key))) {
             helper.accumulate(myItems, item);
-            retrievals = addRemoteGet(ctx, command, retrievals, key);
+            CacheEntry cacheEntry = ctx.lookupEntry(key);
+            if (cacheEntry == null) {
+               // this should be a rare situation, so we don't mind being a bit ineffective with the remote gets
+               if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
+                  entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+               } else {
+                  remoteKeys.add(key);
+               }
+            }
          }
       }
+
+      CompletionStage<Void> retrievals = remoteGetMany(ctx, command, remoteKeys);
       int size = helper.containerSize(myItems);
       if (size == 0) {
          allFuture.countDown();
@@ -335,12 +344,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       localCommand.setTopologyId(command.getTopologyId());
       InvocationFinallyAction handler =
             createLocalInvocationHandler(ch, allFuture, segments, helper, MergingCompletableFuture.moveListItemsToFuture(myOffset));
-      if (retrievals == null) {
+      if (remoteKeys.isEmpty()) {
          invokeNextAndFinally(ctx, localCommand, handler);
       } else {
          // We must wait until all retrievals finish before proceeding with the local command
-         CompletableFuture[] ra = retrievals.toArray(new CompletableFuture[retrievals.size()]);
-         Object result = asyncInvokeNext(ctx, command, CompletableFuture.allOf(ra));
+         Object result = asyncInvokeNext(ctx, command, retrievals);
          makeStage(result).andFinally(ctx, command, handler);
       }
       // Local keys are backed up in the handler, and counters on allFuture are decremented when the backup
@@ -384,16 +392,25 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private <C extends WriteCommand, Item> Object handleRemoteReadWriteManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, ?, Item> helper) throws Exception {
-      List<CompletableFuture<?>> retrievals = null;
+      List<Object> remoteKeys = new ArrayList<>();
       // check that we have all the data we need
       for (Item item : helper.getItems(command)) {
-         retrievals = addRemoteGet(ctx, command, retrievals, helper.item2key(item));
+         Object key = helper.item2key(item);
+         CacheEntry cacheEntry = ctx.lookupEntry(key);
+         if (cacheEntry == null) {
+            // this should be a rare situation, so we don't mind being a bit ineffective with the remote gets
+            if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP) || command.hasAnyFlag(
+               FlagBitSets.CACHE_MODE_LOCAL)) {
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+            } else {
+               remoteKeys.add(key);
+            }
+         }
       }
 
-      CompletableFuture<Void> delay;
-      if (retrievals != null) {
-         CompletableFuture[] ra = retrievals.toArray(new CompletableFuture[retrievals.size()]);
-         delay = CompletableFuture.allOf(ra);
+      CompletionStage<Void> delay;
+      if (!remoteKeys.isEmpty()) {
+         delay = remoteGetMany(ctx, command, remoteKeys);
       } else {
          delay = CompletableFutures.completedNull();
       }
@@ -403,27 +420,6 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       } else {
          return result;
       }
-   }
-
-   private List<CompletableFuture<?>> addRemoteGet(InvocationContext ctx, WriteCommand command,
-                                                   List<CompletableFuture<?>> retrievals, Object key) throws Exception {
-      CacheEntry cacheEntry = ctx.lookupEntry(key);
-      if (cacheEntry == null) {
-         // this should be a rare situation, so we don't mind being a bit ineffective with the remote gets
-         if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP) || command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-            entryFactory.wrapExternalEntry(ctx, key, null, false, true);
-         } else {
-            if (retrievals == null) {
-               retrievals = new ArrayList<>();
-            }
-            GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key,
-                  SegmentSpecificCommand.extractSegment(command, key, keyPartitioner), command.getFlagsBitSet());
-            CompletableFuture<?> getFuture =
-                  remoteGet(ctx, fakeGetCommand, fakeGetCommand.getKey(), true).toCompletableFuture();
-            retrievals.add(getFuture);
-         }
-      }
-      return retrievals;
    }
 
    private <C extends WriteCommand, F extends CountDownCompletableFuture, Item>

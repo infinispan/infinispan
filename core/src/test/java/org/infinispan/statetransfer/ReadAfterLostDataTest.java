@@ -151,10 +151,10 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
             BlockingClusterTopologyManager.Handle<CacheTopology> handle = bctm.startBlockingTopologyUpdate(topology -> true);
             int currentTopology = cr.getDistributionManager().getCacheTopology().getTopologyId();
             cleanup.add(handle::stopBlocking);
-            if (write) {
-               TestingUtil.wrapComponent(cache(0), StateTransferLock.class,
-                     stl -> new UnblockingStateTransferLock(stl, currentTopology + 1, handle::stopBlocking));
-            }
+            // Because all responses are CacheNotFoundResponses, retries will block to wait for a new topology
+            // Even reads block, because in general the values might have been copied to the write-only owners
+            TestingUtil.wrapComponent(cache(0), StateTransferLock.class,
+                  stl -> new UnblockingStateTransferLock(stl, currentTopology + 1, handle::stopBlocking));
          }
       }
       crashCacheManagers(manager(2), manager(3));

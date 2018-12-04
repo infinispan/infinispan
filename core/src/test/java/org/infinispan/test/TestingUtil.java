@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.security.Principal;
 import java.util.AbstractMap;
@@ -211,7 +212,14 @@ public class TestingUtil {
    }
 
    public static void installNewView(Stream<Address> members, EmbeddedCacheManager... where) {
-      installNewView(members, ecm -> ((JGroupsTransport) ecm.getTransport()).getChannel(), where);
+      installNewView(members, ecm -> {
+         Transport transport = ecm.getTransport();
+         while (Proxy.isProxyClass(transport.getClass())) {
+            // Unwrap proxies created by the StateSequencer
+            transport = extractField(extractField(transport, "h"), "wrappedInstance");
+         }
+         return ((JGroupsTransport) transport).getChannel();
+      }, where);
    }
 
    public static void installNewView(Stream<Address> members, Function<EmbeddedCacheManager, JChannel> channelRetriever, EmbeddedCacheManager... where) {

@@ -15,6 +15,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.util.concurrent.locks.LockManager;
 
@@ -31,18 +32,6 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    @Inject protected LockManager lockManager;
    @Inject protected InternalDataContainer dataContainer;
    @Inject protected DistributionManager distributionManager;
-
-   protected static Response getSingleResponse(Map<Address, Response> responseMap) {
-      Iterator<Response> it = responseMap.values().iterator();
-      if (!it.hasNext()) {
-         throw AllOwnersLostException.INSTANCE;
-      }
-      Response response = it.next();
-      if (it.hasNext()) {
-         throw new IllegalStateException("Too many responses " + responseMap);
-      }
-      return response;
-   }
 
    protected static SuccessfulResponse getSuccessfulResponseOrFail(Map<Address, Response> responseMap, CompletableFuture<?> future, Consumer<Response> cacheNotFound) {
       Iterator<Response> it = responseMap.values().iterator();
@@ -71,8 +60,8 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       return null;
    }
 
-   protected static IllegalArgumentException unexpected(Response response) {
-      return new IllegalArgumentException("Unexpected response " + response);
+   protected static RuntimeException unexpected(Response response) {
+      return ResponseCollectors.unexpectedResponse(response);
    }
 
    /**

@@ -71,9 +71,13 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
       } else {
          partition(0).assertKeyAvailableForRead(k1, 1);
          partition(0).assertKeyAvailableForRead(k3, 3);
-         partition(0).assertKeysNotAvailableForRead(k2);
+         partition(0).assertKeyNotAvailableForRead(k2);
          partition(1).assertKeyAvailableForRead(k1, 1);
+         partition(1).assertKeyAvailableForRead(k2, 2);
+         partition(1).assertKeyNotAvailableForRead(k3);
          partition(2).assertKeyAvailableForRead(k2, 2);
+         partition(2).assertKeyAvailableForRead(k3, 3);
+         partition(2).assertKeyNotAvailableForRead(k1);
       }
 
       //4. check key ownership
@@ -100,12 +104,13 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
 
       //5. check writes on partition 0
       partition(0).assertKeyAvailableForWrite(k0, -1);
+      partition(1).assertKeysNotAvailableForWrite(k1, k2, k3);
 
       //5. check writes on partition 1
-      partition(1).assertKeysNotAvailableForWrite(k0, k1, k2);
+      partition(1).assertKeysNotAvailableForWrite(k0, k1, k2, k3);
 
       //6. check writes on partition 2
-      partition(2).assertKeysNotAvailableForWrite(k0, k1, k2);
+      partition(2).assertKeysNotAvailableForWrite(k0, k1, k2, k3);
 
 
       log.tracef("Before the 1st merge P0 = %s, P1 = %s, P2 = %s", partition(0), partition(1), partition(2));

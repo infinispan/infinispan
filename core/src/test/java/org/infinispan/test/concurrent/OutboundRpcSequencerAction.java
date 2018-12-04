@@ -9,6 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.TestingUtil;
@@ -80,7 +81,7 @@ public class OutboundRpcSequencerAction {
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                       ResponseCollector<T> collector,
                                                       Function<ResponseCollector<T>, CompletionStage<T>>
-                                                            invoker) {
+                                                         invoker, RpcOptions rpcOptions) {
          boolean accept;
          try {
             accept = matcher.accept(command);
@@ -88,7 +89,7 @@ public class OutboundRpcSequencerAction {
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
-         CompletionStage<T> stage = super.performRequest(targets, command, collector, invoker);
+         CompletionStage<T> stage = super.performRequest(targets, command, collector, invoker, rpcOptions);
          if (stage != null) {
             return stage.whenComplete((result, throwable) -> advanceNoThrow(accept));
          } else {

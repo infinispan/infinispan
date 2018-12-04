@@ -81,6 +81,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.NotifyHelper;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
@@ -89,7 +90,9 @@ import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
+import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
@@ -587,12 +590,11 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          ClusteredGetCommand clusteredGetCommand = cf.buildClusteredGetCommand(command.getKey(), info.segmentId(),
                command.getFlagsBitSet());
          clusteredGetCommand.setTopologyId(command.getTopologyId());
-         SingletonMapResponseCollector collector = SingletonMapResponseCollector.ignoreLeavers();
-         CompletionStage<Map<Address, Response>> rpcFuture =
+         ResponseCollector<Response> collector = PassthroughSingleResponseCollector.INSTANCE;
+         CompletionStage<Response> rpcFuture =
                rpcManager.invokeCommand(info.primary(), clusteredGetCommand, collector, rpcManager.getSyncRpcOptions());
          Object key = clusteredGetCommand.getKey();
-         return asyncInvokeNext(ctx, command, rpcFuture.thenAccept(responseMap -> {
-            Response response = getSingleResponse(responseMap);
+         return asyncInvokeNext(ctx, command, rpcFuture.thenAccept(response -> {
             if (response.isSuccessful()) {
                InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) response).getResponseValue();
                if (value != null) {
@@ -605,6 +607,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
                throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
             } else if (response instanceof CacheNotFoundResponse) {
                throw AllOwnersLostException.INSTANCE;
+            } else if (response instanceof ExceptionResponse) {
+               throw ResponseCollectors.wrapRemoteException(info.primary(), ((ExceptionResponse) response).getException());
             } else {
                throw new IllegalArgumentException("Unexpected response " + response);
             }
@@ -872,16 +876,17 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       if (info.primary() == null) {
          throw AllOwnersLostException.INSTANCE;
       }
-      SingletonMapResponseCollector collector = SingletonMapResponseCollector.ignoreLeavers();
-      CompletionStage<Map<Address, Response>> rpc = rpcManager.invokeCommand(info.primary(), command, collector, rpcManager.getSyncRpcOptions());
-      return asyncValue(rpc.thenApply(responses -> {
-         Response response = getSingleResponse(responses);
+      ResponseCollector<Response> collector = PassthroughSingleResponseCollector.INSTANCE;
+      CompletionStage<Response> rpc = rpcManager.invokeCommand(info.primary(), command, collector, rpcManager.getSyncRpcOptions());
+      return asyncValue(rpc.thenApply(response -> {
          if (response.isSuccessful()) {
             return ((SuccessfulResponse) response).getResponseValue();
          } else if (response instanceof UnsureResponse) {
             throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
          } else if (response instanceof CacheNotFoundResponse) {
             throw AllOwnersLostException.INSTANCE;
+         } else if (response instanceof ExceptionResponse) {
+            throw ResponseCollectors.wrapRemoteException(info.primary(), ((ExceptionResponse) response).getException());
          } else {
             throw new IllegalArgumentException("Unexpected response " + response);
          }

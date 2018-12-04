@@ -19,6 +19,7 @@ import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.ReplListener;
@@ -65,7 +66,8 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
             protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                             ResponseCollector<T> collector,
                                                             Function<ResponseCollector<T>,
-                                                               CompletionStage<T>> invoker) {
+                                                                       CompletionStage<T>> invoker,
+                                                            RpcOptions rpcOptions) {
                if (command instanceof SingleRpcCommand) {
                   command = ((SingleRpcCommand) command).getCommand();
                }
@@ -78,7 +80,7 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
                         target, ignored -> Collections.synchronizedList(new ArrayList<>())).add(invalidateL1Command);
                   }
                }
-               return super.performRequest(targets, command, collector, invoker);
+               return super.performRequest(targets, command, collector, invoker, rpcOptions);
             }
          });
       }
