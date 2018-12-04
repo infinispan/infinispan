@@ -371,7 +371,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
             crm.expectCommand(PrepareCommand.class).send().receiveAll();
          } else {
             crm.expectCommand(CommitCommand.class).send().receiveAll();
-            crm.expectCommand(TxCompletionNotificationCommand.class).sendWithoutResponses();
+            crm.expectCommand(TxCompletionNotificationCommand.class).send();
          }
 
          assertEquals(firstValue, future.get(10, TimeUnit.SECONDS));

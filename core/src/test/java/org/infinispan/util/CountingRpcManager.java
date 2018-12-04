@@ -11,6 +11,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 
@@ -49,7 +50,8 @@ public class CountingRpcManager extends AbstractDelegatingRpcManager {
    @Override
    protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                    ResponseCollector<T> collector,
-                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                   RpcOptions rpcOptions) {
       if (command instanceof LockControlCommand) {
          lockCount++;
       } else if (command instanceof ClusteredGetCommand) {
@@ -57,6 +59,6 @@ public class CountingRpcManager extends AbstractDelegatingRpcManager {
       } else {
          otherCount++;
       }
-      return super.performRequest(targets, command, collector, invoker);
+      return super.performRequest(targets, command, collector, invoker, rpcOptions);
    }
 }

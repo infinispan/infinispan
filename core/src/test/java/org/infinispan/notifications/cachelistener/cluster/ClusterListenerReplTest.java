@@ -3,7 +3,6 @@ package org.infinispan.notifications.cachelistener.cluster;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Collections;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
@@ -17,6 +16,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledRpcManager;
 import org.testng.annotations.Test;
@@ -53,7 +53,8 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
 
       // Kill the cache now
       TestingUtil.killCacheManagers(cache1.getCacheManager());
-      blockedPut.skipSend().receive(Collections.emptyMap());
+      blockedPut.skipSend().receive(address(0), SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE,
+                                    address(2), SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
 
       // This should return null normally, but since it was retried it returns it's own value :(
       // Maybe some day this can work properly

@@ -208,7 +208,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
          // Now wait for the get to return and block it for now
          ControlledRpcManager.BlockedResponseMap blockedPutResponses =
-            crm.expectCommand(PutKeyValueCommand.class).send().awaitAll();
+            crm.expectCommand(PutKeyValueCommand.class).send().expectAllResponses();
 
          // Owner should have the new value
          assertEquals(firstValue, ownerCache.remove(key));
