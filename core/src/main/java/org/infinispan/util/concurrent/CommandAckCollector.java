@@ -620,7 +620,7 @@ public class CommandAckCollector {
          pendingAcks.retainAll(members);
          for (Map.Entry<Address, SingleTargetCollectorImpl> pair : primaryCollectors.entrySet()) {
             if (!members.contains(pair.getKey())) {
-               pair.getValue().primaryException(OutdatedTopologyException.INSTANCE);
+               pair.getValue().primaryException(OutdatedTopologyException.RETRY_NEXT_TOPOLOGY);
             }
          }
       }

@@ -378,12 +378,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                   return;
                } else {
                   if (trace) log.tracef("Cache not running on node %s, or the node is missing", recipient);
-                  throw OutdatedTopologyException.INSTANCE;
+                  throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
                }
             }
          } else if (response == UnsureResponse.INSTANCE) {
             if (trace) log.tracef("Node %s has a newer topology id", recipient);
-            throw OutdatedTopologyException.INSTANCE;
+            throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
          }
       }
    }

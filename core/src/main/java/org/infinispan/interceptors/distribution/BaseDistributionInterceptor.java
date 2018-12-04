@@ -180,7 +180,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          if (command.getTopologyId() == topologyId) {
             throw new IllegalStateException();
          }
-         throw new OutdatedTopologyException(topologyId);
+         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
       }
       if (trace) {
          log.tracef("Perform remote get for key %s. currentTopologyId=%s, owners=%s",

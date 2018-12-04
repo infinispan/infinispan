@@ -64,7 +64,7 @@ public class TriangleOrderManager {
 
    private void checkTopologyId(int topologyId) {
       if (topologyId != distributionManager.getCacheTopology().getTopologyId()) {
-         throw OutdatedTopologyException.INSTANCE;
+         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
       }
    }
 
@@ -101,7 +101,7 @@ public class TriangleOrderManager {
             }
             //this topology is higher than the command topology id.
             //another topology was installed. this command will fail with OutdatedTopologyException.
-            throw OutdatedTopologyException.INSTANCE;
+            throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
          }
       }
 

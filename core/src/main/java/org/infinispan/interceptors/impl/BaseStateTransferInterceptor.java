@@ -79,11 +79,11 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
             GetKeysInGroupCommand cmd = (GetKeysInGroupCommand) rCommand;
             final int commandTopologyId = cmd.getTopologyId();
+            // TODO Dan: We used to throw an exception if the node was still a write owner
+            //  The new check should be better, but maybe we should retry if it's not a primary owner any more?
             if (currentTopologyId() != commandTopologyId &&
-                  distributionManager.getCacheTopology().isWriteOwner(cmd.getGroupName())) {
-               throw new OutdatedTopologyException(
-                     "Cache topology changed while the command was executing: expected " +
-                           commandTopologyId + ", got " + currentTopologyId());
+                !distributionManager.getCacheTopology().isReadOwner(cmd.getGroupName())) {
+               throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
             }
          });
       }
