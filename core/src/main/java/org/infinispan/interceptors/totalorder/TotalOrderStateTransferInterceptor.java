@@ -45,7 +45,7 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
             log.debugf("Transaction %s delivered in new topology Id. Discard it because it should be retransmitted",
                        ctx.getGlobalTransaction().globalId());
          }
-         throw OutdatedTopologyException.INSTANCE;
+         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
       } else if (command.getTopologyId() > topologyId) {
          throw new IllegalStateException("This should never happen");
       }

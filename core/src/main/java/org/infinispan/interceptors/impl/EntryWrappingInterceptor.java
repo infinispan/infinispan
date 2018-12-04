@@ -607,8 +607,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                            commandTopologyId, currentTopologyId);
                      // This shouldn't be necessary, as we'll have a fresh command instance when retrying
                      command.setValueMatcher(command.getValueMatcher().matcherForRetry());
-                     throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-                           commandTopologyId + ", got " + currentTopologyId);
+                     throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
                   }
                }
             }

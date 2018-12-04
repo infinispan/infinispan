@@ -231,7 +231,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                } else {
                   // FIXME Dan: The response cannot be a CacheNotFoundResponse at this point
                   if (getSuccessfulResponseOrFail(responseMap, allFuture,
-                        rsp -> allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE)) == null) {
+                        rsp -> allFuture.completeExceptionally(OutdatedTopologyException.RETRY_NEXT_TOPOLOGY)) == null) {
                      return;
                   }
                   allFuture.countDown();
@@ -371,7 +371,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                } else {
                   // FIXME Dan: The response cannot be a CacheNotFoundResponse at this point
                   SuccessfulResponse response = getSuccessfulResponseOrFail(responses, allFuture,
-                        rsp -> allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE));
+                        rsp -> allFuture.completeExceptionally(OutdatedTopologyException.RETRY_NEXT_TOPOLOGY));
                   if (response == null) {
                      return;
                   }

@@ -154,7 +154,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
       DistributionInfo info = cacheTopology.getSegmentDistribution(command.getSegment());
       if (info.primary() == null) {
-         throw new OutdatedTopologyException(cacheTopology.getTopologyId() + 1);
+         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
       }
 
       if (isLocalModeForced(command)) {
@@ -333,7 +333,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          // we would wait for topology with id that will never come (due to +1).
          // Note that this does not happen to write commands as these are not processed until we receive the topology
          // these request.
-         throw new OutdatedTopologyException(command.getTopologyId());
+         throw OutdatedTopologyException.RETRY_SAME_TOPOLOGY;
       } else if (trace) {
          log.tracef("%s has topology %d (current is %d)", command, command.getTopologyId(), cacheTopology.getTopologyId());
       }
@@ -577,7 +577,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          }
          return invokeNext(ctx, command);
       } else if (info.primary() == null) {
-         throw new OutdatedTopologyException(cacheTopology.getTopologyId() + 1);
+         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
       } else if (ctx.isOriginLocal()) {
          if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)) {
             entryFactory.wrapExternalEntry(ctx, command.getKey(), NullCacheEntry.getInstance(), false, false);
@@ -602,7 +602,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
                   entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), false, false);
                }
             } else if (response instanceof UnsureResponse) {
-               throw OutdatedTopologyException.INSTANCE;
+               throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
             } else if (response instanceof CacheNotFoundResponse) {
                throw AllOwnersLostException.INSTANCE;
             } else {
@@ -636,7 +636,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       Object key = command.getKey();
       DistributionInfo info = cacheTopology.getDistribution(key);
       if (info.primary() == null) {
-         throw new OutdatedTopologyException(cacheTopology.getTopologyId() + 1);
+         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
       }
 
       if (ctx.isOriginLocal()) {
@@ -752,7 +752,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             }
             DistributionInfo info = cacheTopology.getDistribution(key);
             if (info.primary() == null) {
-               throw new OutdatedTopologyException(cacheTopology.getTopologyId() + 1);
+               throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
             } else if (!info.isPrimary()) {
                remoteKeys.computeIfAbsent(info.primary(), k -> new ArrayList<>()).add(key);
             }
@@ -792,8 +792,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       // While upon lost owners in dist/repl mode we only return a map with less entries, in scattered mode
       // we need to retry the operation in next topology which should have the new primary owners assigned
       SuccessfulResponse response = getSuccessfulResponseOrFail(responseMap, allFuture,
-            rsp -> allFuture.completeExceptionally(rsp instanceof UnsureResponse?
-                  OutdatedTopologyException.INSTANCE : AllOwnersLostException.INSTANCE));
+            rsp -> allFuture.completeExceptionally(rsp instanceof UnsureResponse ?
+                                                   OutdatedTopologyException.RETRY_NEXT_TOPOLOGY : AllOwnersLostException.INSTANCE));
       if (response == null) {
          return;
       }
@@ -879,7 +879,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          if (response.isSuccessful()) {
             return ((SuccessfulResponse) response).getResponseValue();
          } else if (response instanceof UnsureResponse) {
-            throw OutdatedTopologyException.INSTANCE;
+            throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
          } else if (response instanceof CacheNotFoundResponse) {
             throw AllOwnersLostException.INSTANCE;
          } else {
@@ -959,8 +959,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
                      return;
                   }
                   SuccessfulResponse response = getSuccessfulResponseOrFail(responseMap, allFuture,
-                        rsp -> allFuture.completeExceptionally(rsp instanceof UnsureResponse?
-                        OutdatedTopologyException.INSTANCE : AllOwnersLostException.INSTANCE));
+                        rsp -> allFuture.completeExceptionally(rsp instanceof UnsureResponse ?
+                                                               OutdatedTopologyException.RETRY_NEXT_TOPOLOGY : AllOwnersLostException.INSTANCE));
                   if (response == null) {
                      return;
                   }

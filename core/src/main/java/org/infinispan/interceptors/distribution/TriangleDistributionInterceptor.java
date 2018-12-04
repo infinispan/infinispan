@@ -581,8 +581,8 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    private void checkTopologyId(int topologyId, Collector<?> collector) {
       int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
       if (currentTopologyId != topologyId && topologyId != -1) {
-         collector.primaryException(OutdatedTopologyException.INSTANCE);
-         throw OutdatedTopologyException.INSTANCE;
+         collector.primaryException(OutdatedTopologyException.RETRY_NEXT_TOPOLOGY);
+         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
       }
    }
 

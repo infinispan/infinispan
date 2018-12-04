@@ -54,7 +54,7 @@ class MergingCompletableFuture<T> extends CountDownCompletableFuture {
       // response delivering the results.
       // Only if those two combine we'll rather throw OTE and retry.
       if (hasUnsureResponse && lostData) {
-         throw OutdatedTopologyException.INSTANCE;
+         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
       }
       return transform == null || results == null ? null : transform.apply(results);
    }
