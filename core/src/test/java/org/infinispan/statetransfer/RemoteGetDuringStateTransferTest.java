@@ -58,18 +58,18 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest {
    private final List<BlockingLocalTopologyManager> topologyManagerList =
-         Collections.synchronizedList(new ArrayList<BlockingLocalTopologyManager>(4));
+         Collections.synchronizedList(new ArrayList<>(4));
    private final List<ControlledRpcManager> rpcManagerList =
-         Collections.synchronizedList(new ArrayList<ControlledRpcManager>(4));
+         Collections.synchronizedList(new ArrayList<>(4));
 
    /*
    Summary
 
-   T0   initial topology (NO_REBALANCE)
-   T1   state transfer started (READ_OLD_WRITE_ALL)
-   T2   state transfer finished but rebalance not complete (READ_ALL_WRITE_ALL)
-   T3   read new, write all topology (READ_NEW_WRITE_ALL)
-   T4   rebalance completed (NO_REBALANCE)
+   T0   initial topology (NO_REBALANCE, ro = wo = [1])
+   T1   state transfer started (READ_OLD_WRITE_ALL, ro = [1], wo = [1, 2])
+   T2   state transfer finished but rebalance not complete (READ_ALL_WRITE_ALL, ro = wo = [1, 2])
+   T3   read new, write all topology (READ_NEW_WRITE_ALL, ro = [2], wo = [1, 2])
+   T4   rebalance completed (NO_REBALANCE, ro = wo = [2])
 
    | sc     | first request | process request 1 | receive response 1 | retry | process request 2 | receive response 2 |
    | 010    | T0            | 1:T1              | T0                 | N1    |                   |                    |
@@ -541,7 +541,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       eventuallyEquals(currentTopologyId + topologyOnNode2,
                        () -> wfti.distributionManager.getCacheTopology().getTopologyId());
 
-      ControlledRpcManager.BlockedResponseMap blockedGet = sentGet.awaitAll();
+      ControlledRpcManager.BlockedResponseMap blockedGet = sentGet.expectAllResponses();
       int succesful = 0;
       for (Map.Entry<Address, Response> rsp : blockedGet.getResponses().entrySet()) {
          if (rsp.getValue().isSuccessful()) {

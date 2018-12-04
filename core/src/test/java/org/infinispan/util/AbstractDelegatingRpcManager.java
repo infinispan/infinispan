@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
@@ -23,6 +24,7 @@ import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
+import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
@@ -44,67 +46,45 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    public final <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
                                                      ResponseCollector<T> collector, RpcOptions rpcOptions) {
       return performRequest(Collections.singleton(target), command, collector,
-                            c -> realOne.invokeCommand(target, command, c, rpcOptions));
+                            c -> realOne.invokeCommand(target, command, c, rpcOptions), rpcOptions);
    }
 
    @Override
    public final <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
                                                      ResponseCollector<T> collector, RpcOptions rpcOptions) {
       return performRequest(targets, command, collector,
-                            c -> realOne.invokeCommand(targets, command, c, rpcOptions));
+                            c -> realOne.invokeCommand(targets, command, c, rpcOptions), rpcOptions);
    }
 
    @Override
    public final <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
                                                           RpcOptions rpcOptions) {
       return performRequest(getTransport().getMembers(), command, collector,
-                            c -> realOne.invokeCommandOnAll(command, c, rpcOptions));
+                            c -> realOne.invokeCommandOnAll(command, c, rpcOptions), rpcOptions);
    }
 
    @Override
    public final <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
                                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
       return performRequest(targets, command, collector,
-                            c -> realOne.invokeCommand(targets, command, c, rpcOptions));
+                            c -> realOne.invokeCommand(targets, command, c, rpcOptions), rpcOptions);
    }
 
    @Override
    public final <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                                       Function<Address, ReplicableCommand> commandGenerator,
                                                       ResponseCollector<T> collector, RpcOptions rpcOptions) {
-      // Split the invocation into multiple unicast requests and merge the responses in a proxy collector
-      CompletableFuture<T> resultFuture = new CompletableFuture<>();
-      ResponseCollector<T> proxyCollector = new ResponseCollector<T>() {
-         int missingResponses = targets.size();
+      // Split the invocation into multiple unicast requests
+      CommandsRequest<T> action = new CommandsRequest<>(targets, collector);
+      for (Address target : targets) {
+         if (rpcOptions.deliverOrder() != DeliverOrder.TOTAL && target.equals(realOne.getAddress()))
+            continue;
 
-         @Override
-         public T addResponse(Address sender, Response response) {
-            T result;
-            boolean finish;
-            synchronized (this) {
-               missingResponses--;
-               if (resultFuture.isDone()) {
-                  return null;
-               }
-               result = collector.addResponse(sender, response);
-               finish = missingResponses == 0;
-            }
-            if (result != null) {
-               resultFuture.complete(result);
-            } else if (finish) {
-               resultFuture.complete(collector.finish());
-            }
-            return null;
-         }
-
-         @Override
-         public T finish() {
-            return null;
-         }
-      };
-
-      targets.forEach(target -> invokeCommand(target, commandGenerator.apply(target), proxyCollector, rpcOptions));
-      return resultFuture;
+         invokeCommand(target, commandGenerator.apply(target), SingletonMapResponseCollector.ignoreLeavers(),
+                       rpcOptions)
+            .whenComplete(action);
+      }
+      return action.resultFuture;
    }
 
    @Override
@@ -256,7 +236,8 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
     */
    protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                    ResponseCollector<T> collector,
-                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                   RpcOptions rpcOptions) {
       return invoker.apply(collector);
    }
 
@@ -267,5 +248,53 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    protected <T> void performSend(Collection<Address> targets, ReplicableCommand command,
                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
       invoker.apply(null);
+   }
+
+   private static class CommandsRequest<T> implements BiConsumer<Map<Address, Response>, Throwable> {
+      private final Collection<Address> targets;
+      private final ResponseCollector<T> collector;
+      CompletableFuture<T> resultFuture;
+      int missingResponses;
+
+      public CommandsRequest(Collection<Address> targets, ResponseCollector<T> collector) {
+         this.targets = targets;
+         this.collector = collector;
+         resultFuture = new CompletableFuture<>();
+         missingResponses = targets.size();
+      }
+
+      @Override
+      public void accept(Map<Address, Response> responseMap, Throwable throwable) {
+         T result;
+         boolean finish;
+         synchronized (this) {
+            missingResponses--;
+            if (resultFuture.isDone()) {
+               return;
+            }
+            try {
+               if (responseMap == null) {
+                  // A request to the local node don't get any response in non-total order caches
+                  return;
+               }
+               Map.Entry<Address, Response> singleResponse = responseMap.entrySet().iterator().next();
+               result = collector.addResponse(singleResponse.getKey(), singleResponse.getValue());
+            } catch (Throwable t) {
+               resultFuture.completeExceptionally(t);
+               throw t;
+            }
+            finish = missingResponses == 0;
+         }
+         if (result != null) {
+            resultFuture.complete(result);
+         } else if (finish) {
+            try {
+               resultFuture.complete(collector.finish());
+            } catch (Throwable t) {
+               resultFuture.completeExceptionally(t);
+               throw t;
+            }
+         }
+      }
    }
 }

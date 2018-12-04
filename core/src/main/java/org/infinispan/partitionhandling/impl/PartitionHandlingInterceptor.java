@@ -46,10 +46,6 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private InvocationSuccessAction postTxCommandCheck = this::postTxCommandCheck;
 
    private boolean performPartitionCheck(InvocationContext ctx, FlagAffectedCommand command) {
-      // We always perform partition check if this is a remote command
-      if (!ctx.isOriginLocal()) {
-         return !command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.PUT_FOR_STATE_TRANSFER);
-      }
       return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.PUT_FOR_STATE_TRANSFER);
    }
 
@@ -142,25 +138,25 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
    private void handleDataReadReturn(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
       DataCommand dataCommand = (DataCommand) rCommand;
+      if (!performPartitionCheck(rCtx, dataCommand))
+         return;
+
       if (t != null) {
-         if (t instanceof RpcException && performPartitionCheck(rCtx, dataCommand)) {
+         if (t instanceof RpcException) {
             // We must have received an AvailabilityException from one of the owners.
             // There is no way to verify the cause here, but there isn't any other way to get an invalid
             // get response.
             throw log.degradedModeKeyUnavailable(dataCommand.getKey());
-         } else if (t instanceof AllOwnersLostException && performPartitionCheck(rCtx, dataCommand)) {
-            // Scattered cache throws AllOwnersException even if there's no need to fail with AvailabilityException
-            if (!cacheConfiguration.clustering().cacheMode().isScattered()) {
-               throw log.degradedModeKeyUnavailable(dataCommand.getKey());
-            }
+         } else if (t instanceof AllOwnersLostException) {
+            // Scattered cache throws AllOwnersLostException even if there's no need to fail with AvailabilityException\
+            // Dist caches should never throw AllOwnersLostException
+            assert cacheConfiguration.clustering().cacheMode().isScattered();
          }
       }
 
-      if (performPartitionCheck(rCtx, dataCommand)) {
-         // We do the availability check after the read, because the cache may have entered degraded mode
-         // while we were reading from a remote node.
-         partitionHandlingManager.checkRead(dataCommand.getKey(), dataCommand.getFlagsBitSet());
-      }
+      // We do the availability check after the read, because the cache may have entered degraded mode
+      // while we were reading from a remote node.
+      partitionHandlingManager.checkRead(dataCommand.getKey(), dataCommand.getFlagsBitSet());
    }
 
    @Override
@@ -214,23 +210,25 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
          }
       }
 
-      if (performPartitionCheck(rCtx, getAllCommand)) {
-         // We do the availability check after the read, because the cache may have entered degraded mode
-         // while we were reading from a remote node.
-         for (Object key : getAllCommand.getKeys()) {
-            partitionHandlingManager.checkRead(key, getAllCommand.getFlagsBitSet());
-         }
+      if (!performPartitionCheck(rCtx, getAllCommand))
+         return;
 
-         // Scattered cache throws AllOwnersLostException instead of returning map with only a subset of keys
-         // because the owners might be unknown even if there's no data loss and then the command has to be retried.
-         if (t == null && rv instanceof Map) {
-            // rv could be UnsureResponse
-            Map<Object, Object> result = ((Map<Object, Object>) rv);
-            if (result.size() != getAllCommand.getKeys().size()) {
-               Set<Object> missingKeys = new HashSet<>(getAllCommand.getKeys());
-               missingKeys.removeAll(result.keySet());
-               throw log.degradedModeKeysUnavailable(missingKeys);
-            }
+      // We do the availability check after the read, because the cache may have entered degraded mode
+      // while we were reading from a remote node.
+      for (Object key : getAllCommand.getKeys()) {
+         partitionHandlingManager.checkRead(key, getAllCommand.getFlagsBitSet());
+      }
+
+      // TODO Dan: If we retry on CacheNotFoundResponse, we never have to deal with a smaller map here
+      // Scattered cache throws AllOwnersLostException instead of returning map with only a subset of keys
+      // because the owners might be unknown even if there's no data loss and then the command has to be retried.
+      if (t == null && rv instanceof Map) {
+         // rv could be UnsureResponse
+         Map<Object, Object> result = ((Map<Object, Object>) rv);
+         if (result.size() != getAllCommand.getKeys().size()) {
+            Set<Object> missingKeys = new HashSet<>(getAllCommand.getKeys());
+            missingKeys.removeAll(result.keySet());
+            throw log.degradedModeKeysUnavailable(missingKeys);
          }
       }
    }

@@ -329,9 +329,6 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       public void assertKeyAvailableForRead(Object k, Object expectedValue) {
          for (Cache c : cachesInThisPartition()) {
             BasePartitionHandlingTest.this.assertKeyAvailableForRead(c, k, expectedValue);
-            // While we keep the null values in the map inside interceptor stack, these are removed in CacheImpl.getAll
-            Map<Object, Object> expectedMap = expectedValue == null ? Collections.emptyMap() : Collections.singletonMap(k, expectedValue);
-            assertEquals(c.getAdvancedCache().getAll(Collections.singleton(k)), expectedMap, "Cache " + c.getAdvancedCache().getRpcManager().getAddress() + " doesn't see the right value: ");
          }
       }
 
@@ -406,13 +403,16 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected void assertKeyAvailableForRead(Cache c, Object k, Object expectedValue) {
-      log.tracef("Checking key is available on %s", c);
+   protected void assertKeyAvailableForRead(Cache<?, ?> c, Object k, Object expectedValue) {
+      log.tracef("Checking key %s is available on %s", k, c);
       assertEquals(c.get(k), expectedValue, "Cache " + c.getAdvancedCache().getRpcManager().getAddress() + " doesn't see the right value: ");
+      // While we keep the null values in the map inside interceptor stack, these are removed in CacheImpl.getAll
+      Map<Object, Object> expectedMap = expectedValue == null ? Collections.emptyMap() : Collections.singletonMap(k, expectedValue);
+      assertEquals(c.getAdvancedCache().getAll(Collections.singleton(k)), expectedMap, "Cache " + c.getAdvancedCache().getRpcManager().getAddress() + " doesn't see the right value: ");
    }
 
    protected void assertKeyNotAvailableForRead(Cache<Object, ?> c, Object key) {
-      log.tracef("Checking key is not available on %s", c);
+      log.tracef("Checking key %s is not available on %s", key, c);
       expectException(AvailabilityException.class, () -> c.get(key));
       expectException(AvailabilityException.class, () -> c.getAdvancedCache().getAll(Collections.singleton(key)));
    }

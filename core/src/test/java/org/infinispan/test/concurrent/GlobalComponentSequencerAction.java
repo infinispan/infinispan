@@ -105,5 +105,8 @@ public class GlobalComponentSequencerAction<T> {
          }
       }
 
+      public Object getWrappedInstance() {
+         return wrappedInstance;
+      }
    }
 }

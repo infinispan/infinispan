@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -102,11 +103,12 @@ public class PessimistTxFailureAfterLockingTest extends MultipleCacheManagersTes
       @Override
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                       ResponseCollector<T> collector,
-                                                      Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+                                                      Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                      RpcOptions rpcOptions) {
          if (command instanceof LockControlCommand) {
             throw new TimeoutException("Exception expected!");
          }
-         return super.performRequest(targets, command, collector, invoker);
+         return super.performRequest(targets, command, collector, invoker, rpcOptions);
       }
    }
 }

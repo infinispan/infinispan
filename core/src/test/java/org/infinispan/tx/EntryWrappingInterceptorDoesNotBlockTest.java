@@ -9,17 +9,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
 import javax.transaction.Transaction;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.remote.BaseClusteredReadCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -60,7 +58,6 @@ import org.testng.annotations.Test;
 public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManagersTest {
    private ConfigurationBuilder cb;
    private ControlledConsistentHashFactory.Default chFactory;
-   private ExecutorService executor = Executors.newCachedThreadPool(getTestThreadFactory("Transport"));
 
    private static class Operation {
       final String name;
@@ -148,7 +145,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       // The PrepareCommand attempts to load moving keys, and we allow the request to be sent
       // but block receiving the responses. Here we'll intercept only the first remote get because the second one
       // is not fired until the first is received (implementation inefficiency).
-      ControlledRpcManager.SentRequest firstRemoteGet = crm2.expectCommand(ClusteredGetCommand.class).send();
+      ControlledRpcManager.SentRequest firstRemoteGet = crm2.expectCommand(BaseClusteredReadCommand.class).send();
 
       // The topmost interceptor gets the InvocationStage from the PrepareCommand and verifies
       // that it is not completed yet (as we are waiting for the remote gets). Receiving the invocation stage
@@ -156,15 +153,15 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       // If the remote get responses hadn't been blocked this verification would fail with assertion.
       prepareExpectingInterceptor.await();
 
-      // Allow the remote gets to be completed
-      firstRemoteGet.receiveAll();
+      // Receiving the responses for one remote get triggers the next remote get, so complete them in parallel
+      firstRemoteGet.expectAllResponses().receiveAsync();
       for (int i = 1; i < expectRemoteGets; ++i) {
-         crm2.expectCommand(ClusteredGetCommand.class).send().receiveAll();
+         crm2.expectCommand(BaseClusteredReadCommand.class).send().receiveAll();
       }
 
-      sentPrepare.receiveAll();
+      sentPrepare.expectAllResponses().receiveAsync();
       crm0.expectCommand(CommitCommand.class).send().receiveAll();
-      crm0.expectCommand(TxCompletionNotificationCommand.class).sendWithoutResponses();
+      crm0.expectCommand(TxCompletionNotificationCommand.class).send();
 
       commitFuture.get(10, TimeUnit.SECONDS);
 

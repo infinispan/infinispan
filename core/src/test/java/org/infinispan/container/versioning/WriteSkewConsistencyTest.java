@@ -35,6 +35,7 @@ import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -240,9 +241,9 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       @Override
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                       ResponseCollector<T> collector,
-                                                      Function<ResponseCollector<T>, CompletionStage<T>>
-                                                            invoker) {
-         return super.performRequest(targets, command, collector, invoker)
+                                                      Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                      RpcOptions rpcOptions) {
+         return super.performRequest(targets, command, collector, invoker, rpcOptions)
                      .thenApply(responseObject -> {
                         if (!(responseObject instanceof Map)) {
                            log.debugf("Single response for command %s: %s", command, responseObject);

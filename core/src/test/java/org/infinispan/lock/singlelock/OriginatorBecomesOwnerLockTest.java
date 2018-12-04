@@ -224,7 +224,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
       // Process the retry and the completion notification normally
       controlledRpcManager.expectCommand(CommitCommand.class).send().receiveAll();
-      controlledRpcManager.expectCommand(TxCompletionNotificationCommand.class).sendWithoutResponses();
+      controlledRpcManager.expectCommand(TxCompletionNotificationCommand.class).send();
 
       // Ensure the commit finished on the other node
       f.get(30, TimeUnit.SECONDS);
