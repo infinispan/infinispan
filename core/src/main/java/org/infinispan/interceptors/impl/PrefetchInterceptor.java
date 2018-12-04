@@ -248,7 +248,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       InternalCacheValue maxValue = null;
       for (Response response : responseMap.values()) {
          if (!response.isSuccessful()) {
-            throw OutdatedTopologyException.INSTANCE;
+            throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
          }
          SuccessfulResponse successfulResponse = (SuccessfulResponse) response;
          InternalCacheValue icv = (InternalCacheValue) successfulResponse.getResponseValue();
@@ -260,7 +260,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
             // Clustered get is sent with SKIP_OWNERSHIP_CHECK and that means that the topology won't be checked.
             // PrefetchInterceptor on the remote node won't try to fetch the value either, so retrieving remote value
             // from another node is possible.
-            throw OutdatedTopologyException.INSTANCE;
+            throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
          }
          if (metadata != null && metadata.version() != null) {
             if (maxVersion == null || maxVersion.compareTo(metadata.version()) == InequalVersionComparisonResult.BEFORE) {
@@ -301,7 +301,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
          InternalCacheValue[] maxValues = new InternalCacheValue[keys.size()];
          for (Response response : responseMap.values()) {
             if (!response.isSuccessful()) {
-               throw OutdatedTopologyException.INSTANCE;
+               throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
             }
             InternalCacheValue[] values = (InternalCacheValue[]) ((SuccessfulResponse) response).getResponseValue();
             int i = 0;
@@ -310,7 +310,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
                   Metadata metadata = icv.getMetadata();
                   if (metadata instanceof RemoteMetadata) {
                      // not sure if this can happen, but let's be on the safe side
-                     throw OutdatedTopologyException.INSTANCE;
+                     throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
                   }
                   if (maxValues[i] == null) {
                      maxValues[i] = icv;

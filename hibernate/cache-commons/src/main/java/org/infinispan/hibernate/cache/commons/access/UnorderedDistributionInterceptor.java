@@ -62,8 +62,7 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
 		int currentTopologyId = cacheTopology.getTopologyId();
 		if (commandTopologyId != -1 && currentTopologyId != commandTopologyId) {
-			throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-				commandTopologyId + ", got " + currentTopologyId);
+			throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
 		}
 
 		if (isReplicated) {
