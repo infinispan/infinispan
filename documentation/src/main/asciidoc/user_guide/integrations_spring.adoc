@@ -12,7 +12,7 @@ Check out the {brandname} link:https://github.com/infinispan/infinispan-spring-b
 
 [[spring_add_support]]
 ===== Adding Spring Cache Support
-The link:http://spring.io/[Spring Framework] offers a link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[cache abstraction] with two simple annotations:
+The link:http://spring.io/[Spring Framework] offers a link:https://docs.spring.io/spring/docs/5.1.3.RELEASE/spring-framework-reference/integration.html#cache[cache abstraction] with two simple annotations:
 
 * `@Cacheable` adds entries to the cache.
 * `@CacheEvict` removes entries from the cache.
@@ -86,8 +86,8 @@ You can configure your application context either declaratively or programmatica
 
 <!-- Infinispan cache manager -->
 <bean id="cacheManager"
-          class="org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean"
-          p:configurationFileLocation="classpath:/org/infinispan/spring/provider/sample/books-infinispan-config.xml" />
+          class="org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBean"
+          p:configurationFileLocation="classpath:/org/infinispan/spring/embedded/provider/sample/books-infinispan-config.xml" />
 ----
 * *Programmatically:*
 +
@@ -181,7 +181,7 @@ The following example shows the timeout properties in the context XML for `Sprin
 [source,xml,options=nowrap]
 ----
 <bean id="springRemoteCacheManagerConfiguredUsingConfigurationProperties"
-      class="org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean">
+      class="org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean">
     <property name="configurationProperties">
         <props>
            <prop key="infinispan.spring.operation.read.timeout">500</prop>
@@ -222,7 +222,7 @@ To configure Spring Session integration in your application, do the following:
         </dependency>
         <dependency>
            <groupId>org.springframework</groupId>
-           <artifactId>spring-session</artifactId>
+           <artifactId>spring-session-core</artifactId>
            <version>${version.spring}</version>
        </dependency>
        <dependency>
@@ -247,6 +247,10 @@ There annotations have optional parameters:
 +
 - `maxInactiveIntervalInSeconds` sets session expiration time in seconds. The default is `1800`.
 - `cacheName` specifies the name of the cache that stores sessions. The default is `sessions`.
+- `executorPoolSize` specifies the size of the thread pool that will be used to make
+calls to the cache from the remote listeners. The default is `4`.
+- `executorMaxPoolSize` specifies the max pool size. The default is `4`.
+- `executorThreadNamePrefix` specifies the prefix of the thread's names. The default is `infinispan_remote_task_executor_thread`.
 
 The following example shows a complete, annotation-based configuration:
 
