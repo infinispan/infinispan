@@ -10,6 +10,7 @@
 
     <dependencies>
         <module name="javax.api"/>
+        <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
         <module name="org.jboss.as.controller"/>
         <module name="org.jboss.as.core-security"/>
         <module name="org.jboss.as.domain-management"/>

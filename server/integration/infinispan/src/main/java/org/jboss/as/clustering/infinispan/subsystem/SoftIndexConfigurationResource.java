@@ -13,6 +13,7 @@ import org.jboss.dmr.ModelType;
 
 public class SoftIndexConfigurationResource extends BaseStoreConfigurationResource {
 
+   static final String FEATURE = ModelKeys.SOFT_INDEX_FILE_STORE;
    static final PathElement STORE_PATH = PathElement.pathElement(ModelKeys.SOFT_INDEX_FILE_STORE);
    static final PathElement DATA_PATH = PathElement.pathElement(ModelKeys.DATA, ModelKeys.DATA_NAME);
    static final PathElement INDEX_PATH = PathElement.pathElement(ModelKeys.INDEX, ModelKeys.INDEX_NAME);

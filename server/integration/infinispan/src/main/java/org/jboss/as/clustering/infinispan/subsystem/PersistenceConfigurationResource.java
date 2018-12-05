@@ -1,6 +1,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.configuration.cache.PersistenceConfiguration;
+import org.infinispan.server.commons.features.Feature;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -77,9 +78,11 @@ public class PersistenceConfigurationResource extends CacheConfigurationChildRes
       registration.registerSubModel(new RocksDBStoreConfigurationResource(cacheConfigResource, containerReg));
       registration.registerSubModel(new RemoteStoreConfigurationResource(cacheConfigResource, containerReg));
       registration.registerSubModel(new RestStoreConfigurationResource(cacheConfigResource, containerReg));
-      // TODO only register if feature enabled
-      registration.registerSubModel(new SoftIndexConfigurationResource(cacheConfigResource, containerReg));
       registration.registerSubModel(new StoreConfigurationResource(cacheConfigResource, containerReg));
       registration.registerSubModel(new StringKeyedJDBCStoreResource(cacheConfigResource, containerReg));
+
+      if (Feature.isAvailable(SoftIndexConfigurationResource.FEATURE, getClass().getClassLoader())) {
+         registration.registerSubModel(new SoftIndexConfigurationResource(cacheConfigResource, containerReg));
+      }
    }
 }
