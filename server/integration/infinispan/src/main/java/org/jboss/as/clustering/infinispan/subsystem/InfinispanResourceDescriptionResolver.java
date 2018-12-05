@@ -268,6 +268,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(ModelKeys.ROCKSDB_STORE, null);
         sharedAttributeResolver.put(ModelKeys.THREAD_POOL, null);
         sharedAttributeResolver.put(ModelKeys.PERSISTENCE, null);
+        sharedAttributeResolver.put(ModelKeys.SOFT_INDEX_FILE_STORE, null);
 
         for (ClusteredCacheMetrics key : ClusteredCacheMetricsHandler.ClusteredCacheMetrics.values()) {
            sharedAttributeResolver.put(key.definition.getName(), "clustered-cache");

@@ -79,6 +79,7 @@ import org.infinispan.persistence.remote.configuration.SslConfigurationBuilder;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
 import org.infinispan.persistence.rocksdb.configuration.CompressionType;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
+import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
@@ -758,8 +759,8 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             if (store.hasDefined(ModelKeys.MAX_ENTRIES)) {
                 builder.maxEntries(store.get(ModelKeys.MAX_ENTRIES).asInt());
             }
-            final String path = ((resolvedValue = FileStoreResource.PATH.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName;
-            final String relativeTo = ((resolvedValue = FileStoreResource.RELATIVE_TO.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : ServerEnvironment.SERVER_DATA_DIR;
+            final String path = path(FileStoreResource.PATH.resolveModelAttribute(context, store), subsystemPath(containerName, ""));
+            final String relativeTo = path(FileStoreResource.RELATIVE_TO.resolveModelAttribute(context, store));
             Injector<PathManager> injector = new SimpleInjector<PathManager>() {
                 volatile PathManager.Callback.Handle callbackHandle;
                 @Override
@@ -849,8 +850,8 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             return builder;
         } else if (storeKey.equals(ModelKeys.ROCKSDB_STORE)) {
             final RocksDBStoreConfigurationBuilder builder = persistenceBuilder.addStore(RocksDBStoreConfigurationBuilder.class);
-            final String path = ((resolvedValue = RocksDBStoreConfigurationResource.PATH.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName + File.separatorChar + "data";
-            final String relativeTo = ((resolvedValue = RocksDBStoreConfigurationResource.RELATIVE_TO.resolveModelAttribute(context, store)).isDefined()) ? resolvedValue.asString() : ServerEnvironment.SERVER_DATA_DIR;
+            final String path = path(RocksDBStoreConfigurationResource.PATH.resolveModelAttribute(context, store), subsystemPath(containerName, ""));
+            final String relativeTo = path(RocksDBStoreConfigurationResource.RELATIVE_TO.resolveModelAttribute(context, store));
             Injector<PathManager> injector = new SimpleInjector<PathManager>() {
                 volatile PathManager.Callback.Handle callbackHandle;
                 @Override
@@ -876,7 +877,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 expirationPath = RocksDBExpirationConfigurationResource.PATH.resolveModelAttribute(context, expiration).asString();
                 builder.expiryQueueSize(RocksDBExpirationConfigurationResource.QUEUE_SIZE.resolveModelAttribute(context, expiration).asInt());
             } else {
-                expirationPath = InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName + File.separatorChar + "expiration";
+                expirationPath = subsystemPath(containerName, "expiration");
             }
 
             injector = new SimpleInjector<PathManager>() {
@@ -950,9 +951,44 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
            } catch (Exception e) {
               throw InfinispanMessages.MESSAGES.invalidCacheStore(e, className);
            }
+        } else if (storeKey.equals(ModelKeys.SOFT_INDEX_FILE_STORE)) {
+            SoftIndexFileStoreConfigurationBuilder builder = persistenceBuilder.addStore(SoftIndexFileStoreConfigurationBuilder.class);
+            builder.compactionThreshold(SoftIndexConfigurationResource.COMPACTION_THRESHOLD.resolveModelAttribute(context, store).asDouble())
+                  .openFilesLimit(SoftIndexConfigurationResource.OPEN_FILES_LIMIT.resolveModelAttribute(context, store).asInt());
+
+            if (store.hasDefined(ModelKeys.DATA)) {
+                ModelNode data = store.get(ModelKeys.DATA);
+                String dataLocation = path(SoftIndexConfigurationResource.PATH.resolveModelAttribute(context, data), subsystemPath(containerName, "Data"));
+                builder.dataLocation(dataLocation)
+                      .maxFileSize(SoftIndexConfigurationResource.MAX_FILE_SIZE.resolveModelAttribute(context, data).asInt())
+                      .syncWrites(SoftIndexConfigurationResource.SYNC_WRITES.resolveModelAttribute(context, data).asBoolean());
+            }
+
+            if (store.hasDefined(ModelKeys.INDEX)) {
+                ModelNode index = store.get(ModelKeys.INDEX);
+                String indexLocation = path(SoftIndexConfigurationResource.PATH.resolveModelAttribute(context, index), subsystemPath(containerName, "Index"));
+                builder.indexLocation(indexLocation)
+                      .indexQueueLength(SoftIndexConfigurationResource.MAX_QUEUE_LENGTH.resolveModelAttribute(context, store).asInt())
+                      .indexSegments(SoftIndexConfigurationResource.SEGMENTS.resolveModelAttribute(context, store).asInt())
+                      .maxNodeSize(SoftIndexConfigurationResource.MAX_NODE_SIZE.resolveModelAttribute(context, store).asInt())
+                      .minNodeSize(SoftIndexConfigurationResource.MIN_NODE_SIZE.resolveModelAttribute(context, store).asInt());
+            }
+            return builder;
         } else {
            throw new IllegalStateException();
         }
+    }
+
+    private String path(ModelNode resolvedModelAttr) {
+        return path(resolvedModelAttr, ServerEnvironment.SERVER_DATA_DIR);
+    }
+
+    private String path(ModelNode resolvedModelAttr, String alternative) {
+        return resolvedModelAttr.isDefined() ? resolvedModelAttr.asString() : alternative;
+    }
+
+    private String subsystemPath(String containerName, String suffix) {
+        return InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName + File.separatorChar + suffix;
     }
 
    private void buildDbVersions(AbstractJdbcStoreConfigurationBuilder builder, OperationContext context, ModelNode store) throws OperationFailedException {

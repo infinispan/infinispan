@@ -18,16 +18,16 @@ import org.infinispan.persistence.sifs.SoftIndexFileStore;
 @ConfigurationFor(SoftIndexFileStore.class)
 @SerializedWith(SoftIndexFileStoreSerializer.class)
 public class SoftIndexFileStoreConfiguration extends AbstractSegmentedStoreConfiguration<SoftIndexFileStoreConfiguration> {
-   static final AttributeDefinition<String> DATA_LOCATION = AttributeDefinition.builder("dataLocation", "Infinispan-SoftIndexFileStore-Data").immutable().autoPersist(false).xmlName("path").build();
-   static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder("indexLocation", "Infinispan-SoftIndexFileStore-Index").immutable().autoPersist(false).xmlName("path").build();
-   static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder("indexSegments", 3).immutable().autoPersist(false).xmlName("segments").build();
-   static final AttributeDefinition<Integer> MAX_FILE_SIZE = AttributeDefinition.builder("maxFileSize", 16 * 1024 * 1024).immutable().autoPersist(false).build();
-   static final AttributeDefinition<Integer> MIN_NODE_SIZE = AttributeDefinition.builder("minNodeSize", 0).immutable().autoPersist(false).build();
-   static final AttributeDefinition<Integer> MAX_NODE_SIZE = AttributeDefinition.builder("maxNodeSize", 4096).immutable().autoPersist(false).build();
-   static final AttributeDefinition<Integer> INDEX_QUEUE_LENGTH = AttributeDefinition.builder("indexQueueLength", 1000).immutable().autoPersist(false).xmlName("max-queue-length").build();
-   static final AttributeDefinition<Boolean> SYNC_WRITES = AttributeDefinition.builder("syncWrites", false).immutable().autoPersist(false).build();
-   static final AttributeDefinition<Integer> OPEN_FILES_LIMIT = AttributeDefinition.builder("openFilesLimit", 1000).immutable().build();
-   static final AttributeDefinition<Double> COMPACTION_THRESHOLD = AttributeDefinition.builder("compactionThreshold", 0.5d).immutable().build();
+   public static final AttributeDefinition<String> DATA_LOCATION = AttributeDefinition.builder("dataLocation", "Infinispan-SoftIndexFileStore-Data").immutable().autoPersist(false).xmlName("path").build();
+   public static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder("indexLocation", "Infinispan-SoftIndexFileStore-Index").immutable().autoPersist(false).xmlName("path").build();
+   public static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder("indexSegments", 3).immutable().autoPersist(false).xmlName("segments").build();
+   public static final AttributeDefinition<Integer> MAX_FILE_SIZE = AttributeDefinition.builder("maxFileSize", 16 * 1024 * 1024).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> MIN_NODE_SIZE = AttributeDefinition.builder("minNodeSize", 0).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> MAX_NODE_SIZE = AttributeDefinition.builder("maxNodeSize", 4096).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> INDEX_QUEUE_LENGTH = AttributeDefinition.builder("indexQueueLength", 1000).immutable().autoPersist(false).xmlName("max-queue-length").build();
+   public static final AttributeDefinition<Boolean> SYNC_WRITES = AttributeDefinition.builder("syncWrites", false).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> OPEN_FILES_LIMIT = AttributeDefinition.builder("openFilesLimit", 1000).immutable().build();
+   public static final AttributeDefinition<Double> COMPACTION_THRESHOLD = AttributeDefinition.builder("compactionThreshold", 0.5d).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SoftIndexFileStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), DATA_LOCATION, INDEX_LOCATION, INDEX_SEGMENTS, MAX_FILE_SIZE,

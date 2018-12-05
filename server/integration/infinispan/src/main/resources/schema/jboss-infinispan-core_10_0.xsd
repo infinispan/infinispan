@@ -1135,6 +1135,13 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="soft-index-file-store" type="tns:soft-index">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines a soft-index file store.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
         </xs:choice>
         <xs:attribute name="passivation" type="xs:boolean" default="${Server.Persistence.passivation}">
             <xs:annotation>
@@ -1370,6 +1377,104 @@
                 </xs:attribute>
             </xs:extension>
         </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="soft-index">
+        <xs:complexContent>
+            <xs:extension base="tns:store">
+                <xs:sequence>
+                    <xs:element name="data" type="tns:sifs-data" minOccurs="0"/>
+                    <xs:element name="index" type="tns:sifs-index" minOccurs="0"/>
+                </xs:sequence>
+
+                <xs:attribute name="open-files-limit" type="xs:int" default="${Server.SoftIndex.open-files-limit}">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Max number of data files opened for reading (current log file, compaction output and index segments are not included here).
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="compaction-threshold" type="xs:double" default="${Server.SoftIndex.compaction-threshold}">
+                    <xs:annotation>
+                        <xs:documentation>
+                            If amount of unused space in some data file gets above this threshold, the file is compacted - entries from that file are copied to a new file and the old file is deleted.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="sifs-data">
+        <xs:annotation>
+            <xs:documentation>
+                Configure where and how should be the entries stored - this is the persistent location.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="path" type="xs:string" default="${Server.SoftIndex.path}">
+            <xs:annotation>
+                <xs:documentation>
+                    A location on disk where the store writes entries. Files are written sequentially, reads are random.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="max-file-size" type="xs:int" default="${Server.SoftIndex.max-file-size}">
+            <xs:annotation>
+                <xs:documentation>
+                    Max size of single file with entries, in bytes.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="sync-writes" type="xs:boolean" default="${Server.SoftIndex.sync-writes}">
+            <xs:annotation>
+                <xs:documentation>
+                    If true, the write is confirmed only after the entry is fsynced on disk.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="sifs-index">
+        <xs:annotation>
+            <xs:documentation>
+                Configure where and how should be the index stored.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="path" type="xs:string" default="${Server.SoftIndex.path}">
+            <xs:annotation>
+                <xs:documentation>
+                    A location where the store keeps index - this does not have to be persistent across restarts, and SSD storage is recommended (the index is accessed randomly).
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="segments" type="xs:int" default="${Server.SoftIndex.segments}">
+            <xs:annotation>
+                <xs:documentation>
+                    Number of index segment files. Increasing this value improves throughput but requires more threads to be spawned.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="max-queue-length" type="xs:int" default="${Server.SoftIndex.max-queue-length}">
+            <xs:annotation>
+                <xs:documentation>
+                    Max number of entry writes that are waiting to be written to the index, per index segment.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="max-node-size" type="xs:int" default="${Server.SoftIndex.max-node-size}">
+            <xs:annotation>
+                <xs:documentation>
+                    Max size of node (continuous block on filesystem used in index implementation), in bytes.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="min-node-size" type="xs:int" default="${Server.SoftIndex.min-node-size}">
+            <xs:annotation>
+                <xs:documentation>
+                    If the size of node (continuous block on filesystem used in index implementation) drops below this threshold, the node will try to balance its size with some neighbour node, possibly causing join of multiple nodes.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="remote-server">
