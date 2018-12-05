@@ -10,7 +10,7 @@
         <module name="javax.transaction.api" />
         <module name="org.apache.lucene" slot="@lucene.module.slot@"/>
         <module name="org.hibernate.search.engine" slot="@hibernate.search.module.slot@" export="true"/>
-        <module name="org.hibernate.search.elasticsearch" slot="@hibernate.search.module.slot@"/>
+        <module name="org.hibernate.search.elasticsearch" slot="@hibernate.search.module.slot@" optional="true"/>
         <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.query.dsl" slot="@infinispan.module.slot@"/>
