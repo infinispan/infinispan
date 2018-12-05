@@ -22,6 +22,12 @@
 
         <dependency>
             <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-jbossmodules-engine</artifactId>
+            <type>zip</type>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-jbossmodules-elasticsearch</artifactId>
             <type>zip</type>
         </dependency>
