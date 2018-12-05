@@ -243,8 +243,8 @@ into proper Stream operations that are able to be marshalled.
 Map reduce has been removed in favor of the new Streams feature which should provide more features and performance.
 There are no bridge classes to convert to the new streams and all references must be rewritten.
 
-=== Spring 3 support is now removed
-Spring 3 is no longer supported.
+=== Spring 4 support is now removed
+Spring 4 is no longer supported.
 
 === Function classes have moved packages
 The class `SerializableSupplier` has moved from the `org.infinispan.stream`
