@@ -1,0 +1,5 @@
+<subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
+    <cache-container name="local" default-cache="default">
+        <local-cache name="default"/>
+    </cache-container>
+</subsystem>

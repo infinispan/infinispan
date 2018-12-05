@@ -38,6 +38,7 @@ import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.commons.util.Features;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.globalstate.ConfigurationStorage;
@@ -45,6 +46,7 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.server.commons.features.Feature;
 import org.infinispan.server.jgroups.subsystem.ChannelResourceDefinition;
 import org.infinispan.server.jgroups.subsystem.JGroupsSubsystemResourceDefinition;
 import org.jboss.as.controller.AttributeDefinition;
@@ -73,9 +75,11 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
 public final class InfinispanSubsystemXMLReader implements XMLElementReader<List<ModelNode>> {
    private static final Logger log = Logger.getLogger(InfinispanSubsystemXMLReader.class);
    private final InfinispanSchema namespace;
+   private final Features features;
 
    public InfinispanSubsystemXMLReader(InfinispanSchema namespace) {
        this.namespace = namespace;
+       this.features = new Features(getClass().getClassLoader());
    }
 
     /**
@@ -1297,8 +1301,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case SOFT_INDEX_FILE_STORE: {
-                // TODO also check feature flag
                 if (namespace.since(10, 0)) {
+                    Feature.isAvailableOrThrowException(features, SoftIndexConfigurationResource.FEATURE);
                     this.parseSoftIndexFileStore(reader, cache, persistence, operations);
                 } else {
                     throw ParseUtils.unexpectedElement(reader);
