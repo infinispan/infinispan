@@ -97,6 +97,14 @@
         <local-cache name="simple-cache" simple-cache="true">
             <transaction mode="NONE"/>
         </local-cache>
+        <local-cache name="soft-index">
+            <persistence>
+                <soft-index-file-store compaction-threshold="0.6" open-files-limit="500">
+                    <data path="data-path" max-file-size="1024" sync-writes="true"/>
+                    <index path="index-path" max-node-size="2048" min-node-size="2" max-queue-length="500" segments="4"/>
+                </soft-index-file-store>
+            </persistence>
+        </local-cache>
         <invalidation-cache-configuration name="invalidation-template" mode="ASYNC">
         </invalidation-cache-configuration>
         <invalidation-cache name="invalidation-instance" configuration="invalidation-template"/>

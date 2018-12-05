@@ -773,6 +773,45 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 writer.writeEndElement();
             }
         }
+
+       if (cache.get(ModelKeys.SOFT_INDEX_FILE_STORE).isDefined()) {
+          for (Property softIndexEntry : cache.get(ModelKeys.SOFT_INDEX_FILE_STORE).asPropertyList()) {
+             ModelNode store = softIndexEntry.getValue();
+             writer.writeStartElement(Element.SOFT_INDEX_FILE_STORE.getLocalName());
+
+             ModelNode name = new ModelNode();
+             name.get(ModelKeys.NAME).set(softIndexEntry.getName());
+             SoftIndexConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
+
+             this.writeOptional(writer, Attribute.COMPACTION_THRESHOLD, store, ModelKeys.COMPACTION_THRESHOLD);
+             this.writeOptional(writer, Attribute.OPEN_FILES_LIMIT, store, ModelKeys.OPEN_FILES_LIMIT);
+             this.writeStoreAttributes(writer, store);
+
+             if (store.hasDefined(ModelKeys.DATA)) {
+                ModelNode data = store.get(SoftIndexConfigurationResource.DATA_PATH.getKeyValuePair());
+                writer.writeStartElement(Element.DATA.getLocalName());
+                this.writeOptional(writer, Attribute.PATH, data, ModelKeys.PATH);
+                this.writeOptional(writer, Attribute.MAX_FILE_SIZE, data, ModelKeys.MAX_FILE_SIZE);
+                this.writeOptional(writer, Attribute.SYNC_WRITES, data, ModelKeys.SYNC_WRITES);
+                writer.writeEndElement();
+             }
+
+             if (store.hasDefined(ModelKeys.INDEX)) {
+                ModelNode index = store.get(SoftIndexConfigurationResource.INDEX_PATH.getKeyValuePair());
+                writer.writeStartElement(Element.INDEX.getLocalName());
+                this.writeOptional(writer, Attribute.PATH, index, ModelKeys.PATH);
+                this.writeOptional(writer, Attribute.MAX_NODE_SIZE, index, ModelKeys.MAX_NODE_SIZE);
+                this.writeOptional(writer, Attribute.MIN_NODE_SIZE, index, ModelKeys.MIN_NODE_SIZE);
+                this.writeOptional(writer, Attribute.MAX_QUEUE_LENGTH, index, ModelKeys.MAX_QUEUE_LENGTH);
+                this.writeOptional(writer, Attribute.SEGMENTS, index, ModelKeys.SEGMENTS);
+                writer.writeEndElement();
+             }
+
+             this.writeStoreWriteBehind(writer, store);
+             this.writeStoreProperties(writer, store);
+             writer.writeEndElement();
+          }
+       }
     }
 
     private void writeListAsAttribute(XMLExtendedStreamWriter writer, Attribute attribute, ModelNode node, String key) throws XMLStreamException {

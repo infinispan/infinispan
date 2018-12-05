@@ -56,7 +56,7 @@ public class PersistenceConfigurationResource extends CacheConfigurationChildRes
 
    static final String[] LOADER_KEYS = new String[] { ModelKeys.LOADER, ModelKeys.CLUSTER_LOADER };
    static final String[] STORE_KEYS = new String[] { ModelKeys.STORE, ModelKeys.FILE_STORE, ModelKeys.STRING_KEYED_JDBC_STORE,
-         ModelKeys.REMOTE_STORE, ModelKeys.REST_STORE, ModelKeys.ROCKSDB_STORE };
+         ModelKeys.REMOTE_STORE, ModelKeys.REST_STORE, ModelKeys.ROCKSDB_STORE, ModelKeys.SOFT_INDEX_FILE_STORE};
 
    private CacheConfigurationResource cacheConfigResource;
    private ManagementResourceRegistration containerReg;
@@ -77,6 +77,8 @@ public class PersistenceConfigurationResource extends CacheConfigurationChildRes
       registration.registerSubModel(new RocksDBStoreConfigurationResource(cacheConfigResource, containerReg));
       registration.registerSubModel(new RemoteStoreConfigurationResource(cacheConfigResource, containerReg));
       registration.registerSubModel(new RestStoreConfigurationResource(cacheConfigResource, containerReg));
+      // TODO only register if feature enabled
+      registration.registerSubModel(new SoftIndexConfigurationResource(cacheConfigResource, containerReg));
       registration.registerSubModel(new StoreConfigurationResource(cacheConfigResource, containerReg));
       registration.registerSubModel(new StringKeyedJDBCStoreResource(cacheConfigResource, containerReg));
    }

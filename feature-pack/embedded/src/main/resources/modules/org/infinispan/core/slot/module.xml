@@ -26,5 +26,6 @@
         <module name="org.infinispan.persistence.remote" slot="@infinispan.module.slot@" services="import" optional="true"/>
         <module name="org.infinispan.persistence.rest" slot="@infinispan.module.slot@" services="import" optional="true"/>
         <module name="org.infinispan.persistence.rocksdb" slot="@infinispan.module.slot@" services="import" optional="true"/>
+        <module name="org.infinispan.persistence.soft-index" slot="@infinispan.module.slot@" services="import" optional="true"/>
     </dependencies>
 </module>

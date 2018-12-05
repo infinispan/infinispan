@@ -1296,6 +1296,15 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
                 break;
             }
+            case SOFT_INDEX_FILE_STORE: {
+                // TODO also check feature flag
+                if (namespace.since(10, 0)) {
+                    this.parseSoftIndexFileStore(reader, cache, persistence, operations);
+                } else {
+                    throw ParseUtils.unexpectedElement(reader);
+                }
+                break;
+            }
             case STORE: {
                 this.parseCustomStore(reader, cache, persistence, operations);
                 break;
@@ -2297,6 +2306,121 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             }
         }
         ParseUtils.requireNoContent(reader);
+    }
+
+    private void parseSoftIndexFileStore(XMLExtendedStreamReader reader, ModelNode cache, ModelNode persistence,
+                                         Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+
+        Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
+        ModelNode store = Util.getEmptyOperation(ModelDescriptionConstants.ADD, null);
+        String name = ModelKeys.SOFT_INDEX_FILE_STORE_NAME;
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case COMPACTION_THRESHOLD: {
+                    SoftIndexConfigurationResource.COMPACTION_THRESHOLD.parseAndSetParameter(value, store, reader);
+                    break;
+                }
+                case OPEN_FILES_LIMIT: {
+                    SoftIndexConfigurationResource.OPEN_FILES_LIMIT.parseAndSetParameter(value, store, reader);
+                    break;
+                }
+                default: {
+                    name = this.parseStoreAttribute(name, reader, i, attribute, value, store, persistence);
+                }
+            }
+        }
+
+        PathAddress storeAddress = setStoreOperationAddress(store, PathAddress.pathAddress(cache.get(OP_ADDR)), SoftIndexConfigurationResource.STORE_PATH, name);
+        while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+            Element element = Element.forName(reader.getLocalName());
+            switch (element) {
+                case DATA: {
+                    parseSifsData(reader, store, additionalConfigurationOperations);
+                    break;
+                }
+                case INDEX: {
+                    parseSifsIndex(reader, store, additionalConfigurationOperations);
+                    break;
+                }
+                case WRITE_BEHIND: {
+                    parseStoreWriteBehind(reader, store, additionalConfigurationOperations);
+                    break;
+                }
+                default: {
+                    this.parseStoreProperty(reader, store, additionalConfigurationOperations);
+                }
+
+            }
+        }
+        operations.put(storeAddress, store);
+        operations.putAll(additionalConfigurationOperations);
+    }
+
+    private void parseSifsData(XMLExtendedStreamReader reader, ModelNode store, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        PathAddress address = PathAddress.pathAddress(store.get(OP_ADDR)).append(SoftIndexConfigurationResource.DATA_PATH);
+        ModelNode data = Util.createAddOperation(address);
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case MAX_FILE_SIZE: {
+                    SoftIndexConfigurationResource.MAX_FILE_SIZE.parseAndSetParameter(value, data, reader);
+                    break;
+                }
+                case PATH: {
+                    SoftIndexConfigurationResource.PATH.parseAndSetParameter(value, data, reader);
+                    break;
+                }
+                case SYNC_WRITES: {
+                    SoftIndexConfigurationResource.SYNC_WRITES.parseAndSetParameter(value, data, reader);
+                    break;
+                }
+                default: {
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+                }
+            }
+        }
+        ParseUtils.requireNoContent(reader);
+        operations.put(address, data);
+    }
+
+    private void parseSifsIndex(XMLExtendedStreamReader reader, ModelNode store, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        PathAddress address = PathAddress.pathAddress(store.get(OP_ADDR)).append(SoftIndexConfigurationResource.INDEX_PATH);
+        ModelNode index = Util.createAddOperation(address);
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case PATH: {
+                    SoftIndexConfigurationResource.PATH.parseAndSetParameter(value, index, reader);
+                    break;
+                }
+                case MAX_QUEUE_LENGTH: {
+                    SoftIndexConfigurationResource.MAX_QUEUE_LENGTH.parseAndSetParameter(value, index, reader);
+                    break;
+                }
+                case MAX_NODE_SIZE: {
+                    SoftIndexConfigurationResource.MAX_NODE_SIZE.parseAndSetParameter(value, index, reader);
+                    break;
+                }
+                case MIN_NODE_SIZE: {
+                    SoftIndexConfigurationResource.MIN_NODE_SIZE.parseAndSetParameter(value, index, reader);
+                    break;
+                }
+                case SEGMENTS: {
+                    SoftIndexConfigurationResource.SEGMENTS.parseAndSetParameter(value, index, reader);
+                    break;
+                }
+                default: {
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+                }
+            }
+        }
+        ParseUtils.requireNoContent(reader);
+        operations.put(address, index);
     }
 
     private void parseStringKeyedJDBCStore(XMLExtendedStreamReader reader, ModelNode cache, ModelNode persistence,
