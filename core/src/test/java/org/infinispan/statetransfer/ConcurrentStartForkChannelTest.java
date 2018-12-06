@@ -96,12 +96,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
    }
 
    private EmbeddedCacheManager createCacheManager(ConfigurationBuilder cacheCfg, String name,
-                                                   JChannel channel) throws
-         Exception {
-      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.transport().nodeName(channel.getName());
-      gcb.transport().distributedSyncTimeout(30, TimeUnit.SECONDS);
-
+                                                   JChannel channel) throws Exception {
       FORK fork = new FORK();
       fork.setUnknownForkHandler(new UnknownForkHandler() {
          @Override
@@ -134,7 +129,11 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
       });
       channel.getProtocolStack().addProtocol(fork);
       ForkChannel fch = new ForkChannel(channel, "stack1", "channel1");
-      CustomChannelLookup.registerChannel(gcb, fch, name, true);
+
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.transport().transport(new JGroupsTransport(fch));
+      gcb.transport().nodeName(channel.getName());
+      gcb.transport().distributedSyncTimeout(30, TimeUnit.SECONDS);
 
       EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), cacheCfg.build(), false);
       registerCacheManager(cm);

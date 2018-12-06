@@ -184,6 +184,9 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
          () -> transport.expectTopologyCommand(CacheTopologyControlCommand.Type.POLICY_GET_STATUS)
                         .singleResponse(A, SuccessfulResponse.create(true)));
 
+      // Wait for the initial view update in CTMI to finish
+      eventuallyEquals(ClusterTopologyManager.ClusterManagerStatus.REGULAR_MEMBER, () -> ctm.getStatus());
+
       // The coordinator (node A) leaves the cluster
       transport.updateView(3, singletonList(B));
       managerNotifier.notifyViewChange(singletonList(B), asList(A, B), B, 3);
@@ -221,6 +224,10 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
 
       // CTMI confirms members are available in case it needs to starts a rebalance
       transport.expectHeartBeatCommand().finish();
+
+      // Shouldn't send any more commands here
+      Thread.sleep(1);
+      transport.verifyNoErrors();
 
       // Node A restarts
       transport.updateView(4, asList(B, A));
