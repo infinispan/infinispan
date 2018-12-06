@@ -1,0 +1,6 @@
+[source,xml,options="nowrap"]
+----
+<hotrod-connector socket-binding="hotrod" cache-container="local">
+   <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+</hotrod-connector>
+----

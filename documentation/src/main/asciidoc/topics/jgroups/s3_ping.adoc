@@ -1,0 +1,11 @@
+[source,xml,options="nowrap"]
+----
+<protocol type="S3_PING">
+  <property name="location">${jgroups.s3.bucket:}</property>
+  <property name="access_key">${jgroups.s3.access_key:}</property>
+  <property name="secret_access_key">${jgroups.s3.secret_access_key:}</property>
+  <property name="pre_signed_delete_url">${jgroups.s3.pre_signed_delete_url:}</property>
+  <property name="pre_signed_put_url">${jgroups.s3.pre_signed_put_url:}</property>
+  <property name="prefix">${jgroups.s3.prefix:}</property>
+</protocol>
+----

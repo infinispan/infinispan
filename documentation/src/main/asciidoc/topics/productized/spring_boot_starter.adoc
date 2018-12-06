@@ -25,7 +25,7 @@ include::../dependencies/sb_remote.adoc[]
 
 This starter uses a high-level API to ensure compatibility between major versions of {brandname}. However you can enforce a specific version of {brandname} with the `infinispan-bom` module.
 
-Add `infinispan-bom` to your `pom.xml` file before the starter dependenices, as follows:
+Add `infinispan-bom` to your `pom.xml` file before the starter dependencies, as follows:
 
 include::../dependencies/sb_bom.adoc[]
 

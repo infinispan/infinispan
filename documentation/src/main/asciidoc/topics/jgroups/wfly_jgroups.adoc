@@ -1,0 +1,25 @@
+[source,xml,options="nowrap",subs=attributes+]
+----
+<subsystem xmlns="urn:infinispan:server:jgroups:9.4">
+ <channels default="cluster">
+   <channel name="cluster" stack="udp"/>
+ </channels>
+ <stacks>
+   <stack name="udp">
+     <transport type="UDP" socket-binding="jgroups-udp" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="PING" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="MERGE3" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="FD_ALL" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="VERIFY_SUSPECT" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="pbcast.NAKACK2" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="UNICAST3" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="pbcast.STABLE" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="pbcast.GMS" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="UFC" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="MFC" module="org.jgroups:{infinispanslot}"/>
+     <protocol type="FRAG2" module="org.jgroups:{infinispanslot}"/>
+   </stack>
+ </stacks>
+</subsystem>
+----

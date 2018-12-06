@@ -13,14 +13,7 @@ Details are provided below in this document to help you choose which one fits be
 In order to start using the counters, you needs to add the dependency in your Maven `pom.xml` file:
 
 .pom.xml
-[source,xml]
-----
-<dependency>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-clustered-counter</artifactId>
-   <version>...</version>
-</dependency>
-----
+include::topics/dependencies/clustered_counters.adoc[]
 
 The counters can be configured {brandname} configuration file or on-demand via the `CounterManager` interface detailed
 later in this document.
@@ -28,33 +21,7 @@ A counters configured in {brandname} configuration file is created at boot time 
 Theses counters are started eagerly and they are available in all the cluster's nodes.
 
 .configuration.xml
-[source,xml]
-----
-<?xml version="1.0" encoding="UTF-8"?>
-<infinispan>
-    <cache-container ...>
-        <!-- if needed to persist counter, global state needs to be configured -->
-        <global-state>
-            ...
-        </global-state>
-        <!-- your caches configuration goes here -->
-         <counters xmlns="urn:infinispan:config:counters:9.2" num-owners="3" reliability="CONSISTENT">
-             <strong-counter name="c1" initial-value="1" storage="PERSISTENT"/>
-             <strong-counter name="c2" initial-value="2" storage="VOLATILE">
-                 <lower-bound value="0"/>
-             </strong-counter>
-             <strong-counter name="c3" initial-value="3" storage="PERSISTENT">
-                 <upper-bound value="5"/>
-             </strong-counter>
-             <strong-counter name="c4" initial-value="4" storage="VOLATILE">
-                 <lower-bound value="0"/>
-                 <upper-bound value="10"/>
-             </strong-counter>
-             <weak-counter name="c5" initial-value="5" storage="PERSISTENT" concurrency-level="1"/>
-         </counters>
-    </cache-container>
-</infinispan>
-----
+include::topics/configuration/clustered_counters_config.adoc[]
 
 or programmatically, in the `GlobalConfigurationBuilder`:
 

@@ -32,20 +32,7 @@ To add caching support to your application, do the following:
 +
 * *Declaratively:* Add `<cache:annotation-driven/>` to your application context.
 +
-[source,xml]
-----
-<beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:cache="http://www.springframework.org/schema/cache"
-    xmlns:p="http://www.springframework.org/schema/p"
-    xsi:schemaLocation="
-        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
-
-        <cache:annotation-driven />
-
-</beans>
-----
+include::topics/configuration/spring_annotation_driven.adoc[]
 +
 * *Programmatically:* Enable cache support as follows:
 +
@@ -63,23 +50,7 @@ public class Config {
 +
 The following is an example with embedded mode:
 +
-[source,xml]
-----
-<dependencies>
-  <dependency>
-    <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-spring5-embedded</artifactId>
-    <version>${version.infinispan}</version>
-  </dependency>
-  <!-- Tip: Use the Spring Boot starter
-  instead of the spring-boot artifact. -->
-  <dependency>
-    <groupId>org.springframework</groupId>
-    <artifactId>spring-context</artifactId>
-    <version>${version.spring}</version>
-  </dependency>
-</dependencies>
-----
+include::topics/dependencies/spring_integration.adoc[]
 
 [[spring_configure_cache_provider]]
 ===== Configuring {brandname} as the Spring Cache Provider
@@ -93,7 +64,6 @@ You can configure your application context either declaratively or programmatica
 +
 [source,xml,options=nowrap]
 ----
-
 <!-- Infinispan cache manager -->
 <bean id="cacheManager"
           class="org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBean"
@@ -215,36 +185,7 @@ To configure Spring Session integration in your application, do the following:
 +
 The following is an example with remote client-server mode:
 +
-[source,xml,options="nowrap"]
-----
-    <dependencies>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring5-remote</artifactId>
-            <version>${version.infinispan}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${version.spring}</version>
-        </dependency>
-        <dependency>
-           <groupId>org.springframework</groupId>
-           <artifactId>spring-session</artifactId>
-           <artifactId>spring-session-core</artifactId>
-           <version>${version.spring}</version>
-       </dependency>
-       <dependency>
-           <groupId>org.springframework</groupId>
-           <artifactId>spring-web</artifactId>
-           <version>${version.spring}</version>
-       </dependency>
-    </dependencies>
-----
+include::topics/dependencies/spring5_session_dependencies.adoc[]
 +
 . Specify the appropriate FactoryBean to expose a `CacheManager` instance.
 +
@@ -260,9 +201,6 @@ These annotations have optional parameters:
 +
 - `maxInactiveIntervalInSeconds` sets session expiration time in seconds. The default is `1800`.
 - `cacheName` specifies the name of the cache that stores sessions. The default is `sessions`.
-//- `executorPoolSize` specifies the size of the thread pool that will be used to make calls to the cache from the remote listeners. The default is `4`.
-//- `executorMaxPoolSize` specifies the max pool size. The default is `4`.
-//- `executorThreadNamePrefix` specifies the prefix of the thread's names. The default is `infinispan_remote_task_executor_thread`.
 
 The following example shows a complete, annotation-based configuration:
 

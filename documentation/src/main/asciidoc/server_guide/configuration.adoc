@@ -6,19 +6,7 @@ The JGroups subsystem configures the network transport and is only required when
 
 The subsystem declaration is enclosed in the following XML element:
 
-[source,xml]
-----
-
-<subsystem xmlns="urn:infinispan:server:jgroups:9.2">
-    <channels default="cluster">
-        <channel name="cluster"/>
-    </channels>
-    <stacks default="${jboss.default.jgroups.stack:udp}">
-        ...
-    </stacks>
-</subsystem>
-
-----
+include::topics/jgroups/jgroups_subsystem.adoc[]
 
 Within the subsystem, you need to declare the stacks that you wish to use and name them.
 The default-stack attribute in the subsystem declaration must point to one of the declared stacks.
@@ -32,289 +20,98 @@ Since the amount of protocols and their configuration options in JGroups is huge
 link:http://www.jgroups.org/manual/html/protlist.html[JGroups Protocol documentation] .
 The following are the default stacks:
 
-[source,xml]
-----
-
-<stack name="udp">
-    <transport type="UDP" socket-binding="jgroups-udp"/>
-    <protocol type="PING"/>
-    <protocol type="MERGE3"/>
-    <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd"/>
-    <protocol type="FD_ALL"/>
-    <protocol type="VERIFY_SUSPECT"/>
-    <protocol type="pbcast.NAKACK2"/>
-    <protocol type="UNICAST3"/>
-    <protocol type="pbcast.STABLE"/>
-    <protocol type="pbcast.GMS"/>
-    <protocol type="UFC"/>
-    <protocol type="MFC"/>
-    <protocol type="FRAG3"/>
-</stack>
-<stack name="tcp">
-    <transport type="TCP" socket-binding="jgroups-tcp"/>
-    <protocol type="MPING" socket-binding="jgroups-mping"/>
-    <protocol type="MERGE3"/>
-    <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
-    <protocol type="FD_ALL"/>
-    <protocol type="VERIFY_SUSPECT"/>
-    <protocol type="pbcast.NAKACK2">
-        <property name="use_mcast_xmit">false</property>
-    </protocol>
-    <protocol type="UNICAST3"/>
-    <protocol type="pbcast.STABLE"/>
-    <protocol type="pbcast.GMS"/>
-    <protocol type="MFC"/>
-    <protocol type="FRAG3"/>
-</stack>
-
-----
+include::topics/jgroups/jgroups_default_stack.adoc[]
 
 The default TCP stack uses the MPING protocol for discovery, which uses UDP multicast.
 If you need to use a different protocol, look at the
 link:http://www.jgroups.org/manual/html/protlist.html#DiscoveryProtocols[JGroups Discovery Protocols] .
 The following example stack configures the TCPPING discovery protocol with two initial hosts:
 
-[source,xml]
-----
-
-<stack name="tcp">
-    <transport type="TCP" socket-binding="jgroups-tcp"/>
-    <protocol type="TCPPING">
-        <property name="initial_hosts">HostA[7800],HostB[7800]</property>
-    </protocol>
-    <protocol type="MERGE3"/>
-    <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
-    <protocol type="FD_ALL"/>
-    <protocol type="VERIFY_SUSPECT"/>
-    <protocol type="pbcast.NAKACK2">
-        <property name="use_mcast_xmit">false</property>
-    </protocol>
-    <protocol type="UNICAST3"/>
-    <protocol type="pbcast.STABLE"/>
-    <protocol type="pbcast.GMS"/>
-    <protocol type="MFC"/>
-    <protocol type="FRAG3"/>
-</stack>
-
-----
+include::topics/jgroups/tcp_ping.adoc[]
 
 The default configurations come with a variety of pre-configured stacks for different enviroments.
-For example, the +tcpgossip+ stack uses Gossip discover:y
-[source,xml]
-----
+For example, the +tcpgossip+ stack uses Gossip discovery:
 
-<protocol type="TCPGOSSIP">
-    <property name="initial_hosts">${jgroups.gossip.initial_hosts:}</property>
-</protocol>
-
-----
+include::topics/jgroups/tcp_gossip.adoc[]
 
 Use the +s3+ stack when running in Amazon AWS:
 
-[source,xml]
-----
-
-<protocol type="S3_PING">
-    <property name="location">${jgroups.s3.bucket:}</property>
-    <property name="access_key">${jgroups.s3.access_key:}</property>
-    <property name="secret_access_key">${jgroups.s3.secret_access_key:}</property>
-    <property name="pre_signed_delete_url">${jgroups.s3.pre_signed_delete_url:}</property>
-    <property name="pre_signed_put_url">${jgroups.s3.pre_signed_put_url:}</property>
-    <property name="prefix">${jgroups.s3.prefix:}</property>
-</protocol>
-
-----
+include::topics/jgroups/s3_ping.adoc[]
 
 Similarly, when using Google's Cloud Platform, use the +google+ stack:
 
-[source,xml]
-----
-
-<protocol type="GOOGLE_PING">
-    <property name="location">${jgroups.google.bucket:}</property>
-    <property name="access_key">${jgroups.google.access_key:}</property>
-    <property name="secret_access_key">${jgroups.google.secret_access_key:}</property>
-</protocol>
-
-----
+include::topics/jgroups/google_ping.adoc[]
 
 ==== Cluster authentication and authorization
 
 The JGroups subsystem can be configured so that nodes need to authenticate each other when joining / merging. The authentication uses SASL and integrates with the security realms.
 
-[source,xml]
-----
-<management>
-    <security-realms>
-        ...
-        <security-realm name="ClusterRealm">
-            <authentication>
-                <properties path="cluster-users.properties" relative-to="jboss.server.config.dir"/>
-                </authentication>
-                <authorization>
-                    <properties path="cluster-roles.properties" relative-to="jboss.server.config.dir"/>
-                </authorization>
-            </security-realm>
-        </security-realms>
-        ...
-    </security-realms>
-</management>
-
-<stack name="udp">
-    ...
-    <sasl mech="DIGEST-MD5" security-realm="ClusterRealm" cluster-role="cluster">
-        <property name="client_name">node1</property>
-        <property name="client_password">password</property>
-    </sasl>
-    ...
-</stack>
-----
+include::topics/jgroups/jgroups_sasl_auth.adoc[]
 
 In the above example the nodes will use the +DIGEST-MD5+ mech to authenticate against the +ClusterRealm+. In order to join, nodes need to have the +cluster+ role. If the +cluster-role+ attribute is not specified it defaults to the name of the {brandname} +cache-container+, as described below.
 Each node identifies itself using the +client_name+ property. If none is explicitly specified, the hostname on which the server is running will be used. This name can also be overridden by specifying the +jboss.node.name+ system property.
 The +client_password+ property contains the password of the node. It is recommended that this password be stored in the Vault. Refer to link:https://community.jboss.org/wiki/AS7UtilisingMaskedPasswordsViaTheVault[AS7: Utilising masked passwords via the vault] for instructions on how to do so.
 When using the GSSAPI mech, +client_name+ will be used as the name of a Kerberos-enabled login module defined within the security domain subsystem:
 
-[source,xml]
-----
-<security-domain name="krb-node0" cache-type="default">
-    <authentication>
-        <login-module code="Kerberos" flag="required">
-            <module-option name="storeKey" value="true"/>
-            <module-option name="useKeyTab" value="true"/>
-            <module-option name="refreshKrb5Config" value="true"/>
-            <module-option name="principal" value="jgroups/node0/clustered@INFINISPAN.ORG"/>
-            <module-option name="keyTab" value="${jboss.server.config.dir}/keytabs/jgroups_node0_clustered.keytab"/>
-            <module-option name="doNotPrompt" value="true"/>
-        </login-module>
-    </authentication>
-</security-domain>
-----
+include::topics/jgroups/jgroups_kerberos_login.adoc[]
 
 === {brandname} subsystem configuration
 The {brandname} subsystem configures the cache containers and caches.
 
 The subsystem declaration is enclosed in the following XML element:
 
-[source,xml]
-----
-
-<subsystem xmlns="urn:infinispan:server:core:9.4" default-cache-container="clustered">
-  ...
-</subsystem>
-
-----
+include::topics/configuration/ispn_subsystem.adoc[]
 
 ==== Containers
 The {brandname} subsystem can declare multiple containers. A container is declared as follows:
 
-[source,xml]
-----
-
-<cache-container name="clustered" default-cache="default">
-  ...
-</cache-container>
-
-----
+include::topics/configuration/ispn_subsystem_containers.adoc[]
 
 Note that in server mode is the lack of an implicit default cache, but the ability to specify a named cache as the default.
 
 If you need to declare clustered caches (distributed, replicated, invalidation), you also need to specify the `<transport/>` element which references an existing JGroups transport. This is not needed if you only intend to have local caches only.
 
-[source,xml]
-----
-
-<transport executor="infinispan-transport" lock-timeout="60000" stack="udp" cluster="my-cluster-name"/>
-
-----
+include::topics/configuration/ispn_jgroups_transport.adoc[]
 
 ==== Caches
 Now you can declare your caches. Please be aware that only the caches declared in the configuration will be available to the endpoints and that attempting to access an undefined cache is an illegal operation. Contrast this with the default {brandname} library behaviour where obtaining an undefined cache will implicitly create one using the default settings. The following are example declarations for all four available types of caches:
 
-[source,xml]
-----
-
-<local-cache name="default" start="EAGER">
-  ...
-</local-cache>
-
-<replicated-cache name="replcache" mode="SYNC" remote-timeout="30000" start="EAGER">
-  ...
-</replicated-cache>
-
-<invalidation-cache name="invcache" mode="SYNC" remote-timeout="30000" start="EAGER">
-  ...
-</invalidation-cache>
-<distributed-cache name="distcache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-  ...
-</distributed-cache>
-
-----
+include::topics/configuration/ispn_cache_declarations.adoc[]
 
 ==== Expiration
 To define a default expiration for entries in a cache, add the `<expiration/>` element as follows:
 
-[source,xml]
-----
-
-<expiration lifespan="2000" max-idle="1000"/>
-
-----
+include::topics/configuration/expiration.adoc[]
 
 The possible attributes for the expiration element are:
 
 
 *  _lifespan_ maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in milliseconds. -1 means the entries never expire.
-
-
 *  _max-idle_ maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.
-
-
 *  _interval_ interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1.
 
 ==== Eviction
 To define an eviction strategy for a cache, add the `<eviction/>` element as follows:
 
-[source,xml]
-----
-
-<eviction strategy="LIRS" max-entries="1000"/>
-
-----
+include::topics/configuration/eviction.adoc[]
 
 The possible attributes for the eviction element are:
 
 
 *  _strategy_ sets the cache eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable eviction).
-
-
 *  _max-entries_ maximum number of entries in a cache instance. If selected value is not a power of two the actual value will default to the least power of two larger than selected value. -1 means no limit.
 
 ==== Locking
 To define the locking configuration for a cache, add the `<locking/>` element as follows:
 
-[source,xml]
-----
-
-<locking isolation="REPEATABLE_READ" acquire-timeout="30000" concurrency-level="1000" striping="false"/>
-
-----
+include::topics/configuration/locking.adoc[]
 
 The possible attributes for the locking element are:
 
-
 *  _isolation_ sets the cache locking isolation level. Can be NONE, READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE. Defaults to REPEATABLE_READ
-
-
 *  _striping_ if true, a pool of shared locks is maintained for all entries that need to be locked. Otherwise, a lock is created per entry in the cache. Lock striping helps control memory footprint but may reduce concurrency in the system.
-
-
 *  _acquire-timeout_ maximum time to attempt a particular lock acquisition.
-
-
 *  _concurrency-level_ concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with {brandname}.
-
-
 *  _concurrent-updates_ for non-transactional caches only: if set to true(default value) the cache keeps data consistent in the case of concurrent updates. For clustered caches this comes at the cost of an additional RPC, so if you don't expect your application to write data concurrently, disabling this flag increases performance.
 
 ==== Transactions
@@ -331,44 +128,12 @@ However, in server mode it is no longer necessary to define the `<persistence>..
 now defined on the store type element. For example, to configure the H2 database with a distributed cache in domain mode
 we define the "default" cache as follows in our domain.xml configuration:
 
-[source,xml,options="nowrap"]
-----
-  <subsystem xmlns="urn:infinispan:server:core:9.4">
-      <cache-container name="clustered" default-cache="default" statistics="true">
-          <transport lock-timeout="60000"/>
-          <global-state/>
-          <distributed-cache name="default">
-              <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" fetch-state="true" shared="true">
-                  <string-keyed-table prefix="ISPN">
-                      <id-column name="id" type="VARCHAR"/>
-                      <data-column name="datum" type="BINARY"/>
-                      <timestamp-column name="version" type="BIGINT"/>
-                  </string-keyed-table>
-                  <write-behind modification-queue-size="20"/>
-              </string-keyed-jdbc-store>
-          </distributed-cache>
-      </cache-container>
-  </subsystem>
-----
+include::topics/configuration/ispn_datasource.adoc[]
 
 Another important thing to note in this example, is that we use the "ExampleDS" datasource which is defined in the datasources
 subsystem in our domain.xml configuration as follows:
 
-[source,xml,options="nowrap"]
-----
-  <subsystem xmlns="urn:jboss:domain:datasources:4.0">
-      <datasources>
-          <datasource jndi-name="java:jboss/datasources/ExampleDS" pool-name="ExampleDS" enabled="true" use-java-context="true">
-              <connection-url>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE</connection-url>
-              <driver>h2</driver>
-              <security>
-                  <user-name>sa</user-name>
-                  <password>sa</password>
-              </security>
-          </datasource>
-      </datasources>
-  </subsystem>
-----
+include::topics/configuration/ispn_h2_ds.adoc[]
 
 NOTE: For additional examples of store configurations, please view the configuration templates in the default "domain.xml" file
 provided with in the server distribution at `./domain/configuration/domain.xml`.
@@ -376,24 +141,13 @@ provided with in the server distribution at `./domain/configuration/domain.xml`.
 ==== State Transfer
 To define the state transfer configuration for a distributed or replicated cache, add the `<state-transfer/>` element as follows:
 
-[source,xml]
-----
-
-<state-transfer enabled="true" timeout="240000" chunk-size="512" await-initial-transfer="true" />
-
-----
+include::topics/configuration/state_transfer.adoc[]
 
 The possible attributes for the state-transfer element are:
 
 *  _enabled_ if true, this will cause the cache to ask neighboring caches for state when it starts up, so the cache starts 'warm', although it will impact startup time. Defaults to true.
-
-
 *  _timeout_ the maximum amount of time (ms) to wait for state from neighboring caches, before throwing an exception and aborting startup. Defaults to 240000 (4 minutes).
-
-
 *  _chunk-size_ the number of cache entries to batch in each transfer. Defaults to 512.
-
-
 *  _await-initial-transfer_ if true, this will cause the cache to wait for initial state transfer to complete before responding to requests. Defaults to true.
 
 === Endpoint subsystem configuration
@@ -402,146 +156,59 @@ The endpoint subsystem exposes a whole container (or in the case of Memcached, a
 
 The subsystem declaration is enclosed in the following XML element:
 
-[source,xml]
-----
-
- <subsystem xmlns="urn:infinispan:server:endpoint:9.2">
-  ...
- </subsystem>
-
-----
+include::topics/configuration/ispn_subsystem_endpoint.adoc[]
 
 ==== Hot Rod
 The following connector declaration enables a HotRod server using the _hotrod_ socket binding (declared within a `<socket-binding-group />` element) and exposing the caches declared in the _local_ container, using defaults for all other settings.
 
-[source,xml]
-----
-
-<hotrod-connector socket-binding="hotrod" cache-container="local" />
-
-----
+include::topics/configuration/hotrod_connector.adoc[]
 
 The connector will create a supporting topology cache with default settings. If you wish to tune these settings add the `<topology-state-transfer />` child element to the connector as follows:
 
-[source,xml]
-----
-
-<hotrod-connector socket-binding="hotrod" cache-container="local">
-   <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
-</hotrod-connector>
-
-----
+include::topics/configuration/hotrod_topology_state_transfer.adoc[]
 
 The Hot Rod connector can be further tuned with additional settings such as concurrency and buffering. See the protocol connector settings paragraph for additional details
 
 Furthermore the HotRod connector can be secured using SSL. First you need to declare an SSL server identity within a security realm in the management section of the configuration file. The SSL server identity should specify the path to a keystore and its secret. Refer to the AS link:{wildflydocroot}/Security%20Realms[documentation] on this. Next add the `<security />` element to the HotRod connector as follows:
 
-[source,xml]
-----
-
-<hotrod-connector socket-binding="hotrod" cache-container="local">
-    <security ssl="true" security-realm="ApplicationRealm" require-ssl-client-auth="false" />
-</hotrod-connector>
-
-----
+include::topics/configuration/hotrod_security.adoc[]
 
 ==== Memcached
 The following connector declaration enables a Memcached server using the _memcached_ socket binding (declared within a `<socket-binding-group />` element) and exposing the _memcachedCache_ cache declared in the _local_ container, using defaults for all other settings. Because of limitations in the Memcached protocol, only one cache can be exposed by a connector. If you wish to expose more than one cache, declare additional memcached-connectors on different socket-bindings.
 
-[source,xml]
-----
-
-<memcached-connector socket-binding="memcached" cache-container="local"/>
-
-----
+include::topics/configuration/memcached_connector.adoc[]
 
 ==== WebSocket
 
-[source,xml]
-----
-
-<websocket-connector socket-binding="websocket" cache-container="local"/>
-
-----
+include::topics/configuration/websocket_connector.adoc[]
 
 ==== REST
 
-[source,xml]
-----
-
-<rest-connector socket-binding="rest" cache-container="local" security-domain="other" auth-method="BASIC"/>
-
-----
+include::topics/configuration/rest_connector.adoc[]
 
 ==== Common Protocol Connector Settings
 
 The HotRod, Memcached and WebSocket protocol connectors support a number of tuning attributes in their declaration:
 
 *  _worker-threads_ Sets the number of worker threads. Defaults to 160.
-
 *  _idle-timeout_ Specifies the maximum time in seconds that connections from client will be kept open without activity. Defaults to -1 (connections will never timeout)
-
 *  _tcp-nodelay_ Affects TCP NODELAY on the TCP stack. Defaults to enabled.
-
 *  _send-buffer-size_ Sets the size of the send buffer.
-
 *  _receive-buffer-size_ Sets the size of the receive buffer.
 
 [[protocol_interoperability]]
 ==== Protocol Interoperability
+Clients exchange data with {brandname} through endpoints such as REST or Hot Rod.
 
-By default each protocol stores data in the cache in the most efficient format for that protocol, so that no transformations are required when retrieving entries. If instead you need to access the same data from multiple protocols, you should enable compatibility mode on the caches that you want to share. This is done by adding the `<compatibility />` element to a cache definition, as follows:
+Each endpoint uses a different protocol so that clients can read and write data in a suitable format. Because {brandname} can interoperate with multiple clients at the same time, it must convert data between client formats and the storage formats.
 
-[source,xml]
-----
+ifndef::productized[]
+For more information, see link:../user_guide/user_guide.html#endpoint_interop[Protocol Interoperability] in the User Guide.
+endif::productized[]
 
-<cache-container name="local" default-cache="default">
-    <local-cache name="default" start="EAGER">
-        <transaction mode="NONE"/>
-        <compatibility />
-    </local-cache>
-</cache-container>
-
-----
-
-To specify a custom server-side compatibility marshaller use the "marshaller" attribute which can hold either an
-ordinary fully qualified class name or an 'extended' class name which is composed of a JBoss Modules module identifier,
-a slot name, and a fully qualified class name separated by the ':' character, (eg. "com.acme.my-module-name:my-slot:com.acme.CustomMarshaller").
-
-By using a plain fully qualified class name you will be able to reference only 'stock' marshallers provided by {brandname},
-like "org.infinispan.query.remote.CompatibilityProtoStreamMarshaller". This option is provided for conciseness and backwards
-compatibility. The second option of using 'extended' class names is more generic and is preferred as it allows you to
-really add new marshallers from an external module of your choice.
-
-The module identifier and slot follow the rules imposed by JBoss Modules, and the designated module must be available to
-the server either in the 'modules' folder or be deployed through the deployer service in the 'deployments' folder. In
-the second case its module identifier will be of the form 'deployment.my-jar-name.jar' and the slot will be 'main'.
-
-NOTE: The referenced module will become an automatic dependency for the Cache referencing it, so in case the jar
-defining the module is redeployed, the Cache will be restarted.
-
-[source,xml]
-----
-<!-- using an alternative, 'stock', marshaller -->
-<compatibility marshaller="org.infinispan.query.remote.CompatibilityProtoStreamMarshaller"/>
-
-or
-
-<!-- using a marshaller deployed as a module -->
-<compatibility marshaller="com.acme.my-gadgets-module:main:com.acme.CustomCompatMarshaller"/>
-
-or
-
-<!-- using a marshaller deployed as a regular jar deployed by dropping it in the 'deployments' folder -->
-<compatibility marshaller="deployment.my-jar-with-gadgets.jar:main:com.acme.CustomCompatMarshaller"/>
-
-----
-
-NOTE: Past versions of {brandname} (prior to 9.1.x) did not support the 'extended' class name format and were unable to
-refer to classes outside the {brandname} implementation and instead relied on the user to manually modify the
-'dependencies' or 'resources' element of the module.xml file of the "org.infinispan" module in order to 'inject' the
-user supplied jar containing the custom marshaller. This practice is suboptimal from the maintainability point of view
-and is now discouraged (but it still works) and you are urged to migrate to the new approach.
+ifdef::productized[]
+For more information, see the _Protocol Interoperability_ topic in the User Guide.
+endif::productized[]
 
 ==== Custom Marshaller Bridges
 {brandname} provides two marshalling bridges for marshalling client/server requests using the Kryo and Protostuff libraries.
@@ -554,14 +221,7 @@ libraries are presented below:
 
 Add the protostuff marshaller dependency to your pom:
 
-[source,xml,subs="attributes"]
-----
-<dependency>
-  <groupId>org.infinispan</groupId>
-  <artifactId>infinispan-marshaller-protostuff</artifactId>
-  <version>{infinispanversion}</version>
-</dependency>
-----
+include::topics/dependencies/protostuff_marshaller.adoc[]
 
 To register custom Protostuff schemas in your own code, you must register the custom schema with Protostuff before any
 marshalling begins. This can be achieved by simply calling:
@@ -580,14 +240,7 @@ file within your deployment jar.
 
 Add the kryo marshaller dependency to your pom:
 
-[source,xml,subs="attributes"]
-----
-<dependency>
-  <groupId>org.infinispan</groupId>
-  <artifactId>infinispan-marshaller-kryo</artifactId>
-  <version>{infinispanversion}</version>
-</dependency>
-----
+include::topics/dependencies/kyro_marshaller.adoc[]
 
 To register custom Kryo serializer in your own code, you must register the custom serializer with Kryo before any
 marshalling begins. This can be achieved by implementing a service provider for the `SerializerRegistryService.java` interface, placing all serializer registrations

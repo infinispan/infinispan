@@ -8,21 +8,10 @@ TIP: All the code discussed in this tutorial is available in the link:https://gi
 The only thing you need to set up {brandname} is add it's dependencies to your project.
 
 ==== Maven users
-If you are using Maven (or another build system like Gradle or Ivy which can use Maven dependencies), then this is easy. Just add:
+If you are using Maven (or another build system like Gradle or Ivy which can use Maven dependencies), then this is easy. Just add the following to the `<dependencies>` section of your `pom.xml`:
 
-[source,xml]
 .pom.xml
-----
-<dependency>
-	<groupId>org.infinispan</groupId>
-	<artifactId>infinispan-embedded</artifactId>
-	<version>${infinispan.version}</version>
-</dependency>
-
-----
-
-to the `<dependencies>` section of the POM.
-You'll need to substitute `${infinispan.version}` for the version of {brandname} you wish to use.
+include::topics/dependencies/ispn_embedded.adoc[]
 
 ifndef::productized[]
 .Which version of {brandname} should I use?

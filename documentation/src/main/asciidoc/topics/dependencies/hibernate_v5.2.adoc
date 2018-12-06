@@ -1,0 +1,10 @@
+[source,xml,options="nowrap"]
+----
+<dependency>
+  <groupId>org.infinispan</groupId>
+  <artifactId>infinispan-hibernate-cache</artifactId>
+  <version>${version.infinispan}</version> <!-- 9.2.x.Final -->
+</dependency>
+----
+
+Replace `${version.infinispan}` with the appropriate version of {brandname} 9.2.x.

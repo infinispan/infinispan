@@ -10,38 +10,38 @@ contains a lot of information about second-level cache, types of caches...etc.
 This chapter focuses on what you need to know to use {brandname} as second-level cache provider with Hibernate.
 
 Applications running in environments where {brandname} is not default cache provider for Hibernate will need to depend on the correct cache provider version.
+
 The {brandname} cache provider version suitable for your application depends on the Hibernate version in use:
 
-If using Hibernate 5.3, the Maven coordinates are the following:
+Hibernate 5.3::
+Use the following Maven coordinates:
++
+include::topics/dependencies/hibernate_v5.3.adoc[]
 
-[source, XML, indent=0]
-<dependency>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-hibernate-cache-v53</artifactId>
-   <version>${version.infinispan}</version> <!-- 9.2.2.Final or higher -->
-</dependency>
+ifndef::productized[]
+Hibernate 5.2::
++
+[NOTE]
+====
+Hibernate 5.2 is supported in {brandname} 9.2.x only.
+====
++
+Use the following Maven coordinates:
++
+include::topics/dependencies/hibernate_v5.2.adoc[]
+endif::productized[]
 
-Hibernate 5.2 has been supported in Infinispan 9.2 but it won't be supported in further versions. Use these Maven coordinates:
+Hibernate 5.1::
+Use the following Maven coordinates:
++
+include::topics/dependencies/hibernate_v5.1.adoc[]
 
-[source, XML, indent=0]
-<dependency>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-hibernate-cache</artifactId>
-   <version>${version.infinispan}</version> <!-- 9.2.x.Final -->
-</dependency>
-
-If using Hibernate 5.1, the Maven coordinates are the following:
-
-[source, XML, indent=0]
-<dependency>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-hibernate-cache-v51</artifactId>
-   <version>${version.infinispan}</version> <!-- 9.2.0.Final or higher -->
-</dependency>
-
-NOTE: For earlier Hibernate versions (e.g. Hibernate 5.0 or before), the {brandname} cache provider was shipped by Hibernate.
-This means that the documentation on how to use it and it's Maven coordinates are located in the
+[NOTE]
+====
+Hibernate version 5.0 and earlier: the {brandname} cache provider is shipped by Hibernate.
+Documentation and Maven coordinates are located in the
 link:https://docs.jboss.org/hibernate/orm/5.0/userguide/html_single/Hibernate_User_Guide.html#caching-provider-infinispan[Hibernate documentation].
+====
 
 Apart from {brandname} specific configuration, it's worth noting that enabling second cache requires some changes to the descriptor file
 (`persistence.xml` for JPA or `application.properties` for Spring).
