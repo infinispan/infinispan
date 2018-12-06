@@ -1,0 +1,4 @@
+[source,xml,options="nowrap"]
+----
+<transport executor="infinispan-transport" lock-timeout="60000" stack="udp" cluster="my-cluster-name"/>
+----

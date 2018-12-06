@@ -1,0 +1,4 @@
+[source,xml,options="nowrap"]
+----
+<eviction strategy="LIRS" max-entries="1000"/>
+----

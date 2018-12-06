@@ -16,15 +16,7 @@ In order to start using {brandname} JCache implementation, a single dependency
 needs to be added to the Maven pom.xml file:
 
 .pom.xml
-[source,xml]
-----
-<dependency>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-jcache</artifactId>
-   <version>...</version> <!-- i.e. 7.0.0.Final -->
-   <scope>test</scope>
-</dependency>
-----
+include::topics/dependencies/jcache.adoc[]
 
 === Create a local cache
 Creating a local cache, using default configuration options as defined by the

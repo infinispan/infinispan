@@ -1,0 +1,34 @@
+[source,xml,options="nowrap"]
+----
+<dependencies>
+    <dependency>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-core</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-spring5-remote</artifactId>
+        <version>${version.infinispan}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context</artifactId>
+        <version>${version.spring}</version>
+    </dependency>
+    <dependency>
+       <groupId>org.springframework</groupId>
+       <artifactId>spring-session-core</artifactId>
+       <version>${version.spring}</version>
+   </dependency>
+   <dependency>
+       <groupId>org.springframework</groupId>
+       <artifactId>spring-web</artifactId>
+       <version>${version.spring}</version>
+   </dependency>
+</dependencies>
+----
+
+Replace:
+
+* `${version.infinispan}` with the appropriate version of {brandname}.
+* `${version.spring}` with the appropriate version of Spring.

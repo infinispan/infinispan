@@ -1,0 +1,4 @@
+[source,xml,options="nowrap"]
+----
+<memcached-connector socket-binding="memcached" cache-container="local"/>
+----

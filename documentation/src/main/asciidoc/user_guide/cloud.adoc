@@ -4,14 +4,7 @@
 In order to turn on Cloud support for {brandname} library mode, one needs to add a new dependency to the classpath:
 
 .Cloud support in library mode
-[source,xml]
-----
-<dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-cloud</artifactId>
-      <version>${infinispan.version}</version>
-</dependency>
-----
+include::topics/dependencies/ispn_cloud.adoc[]
 
 The above dependency adds `infinispan-core` to the classpath as well as some default configurations.
 
@@ -53,14 +46,12 @@ and reference this property in the JGroups configuration that {brandname} is usi
 .Sample TCPGOSSIP configuration
 [source,xml]
 ----
-
 <config>
     <TCP bind_port="7800" />
     <TCPGOSSIP timeout="3000" initial_hosts="${GossipRouterAddress}" num_initial_members="3" />
 ...
 ...
 </config>
-
 ----
 
 More on Gossip Router @ link:http://community.jboss.org/docs/DOC-10890[http://www.jboss.org/community/wiki/JGroupsGossipRouter]
@@ -166,7 +157,6 @@ An example Deployment Configuration (Kubernetes uses very similar concept called
 .DeploymentConfiguration for Rolling Updates
 [source,yaml]
 ----
-
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:

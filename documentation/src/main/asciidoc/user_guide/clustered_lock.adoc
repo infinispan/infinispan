@@ -9,14 +9,7 @@ code that will be synchronized between the nodes in a given cluster.
 In order to start using the clustered locks, you needs to add the dependency in your Maven `pom.xml` file:
 
 .pom.xml
-[source,xml]
-----
-<dependency>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-clustered-lock</artifactId>
-   <version>...</version>
-</dependency>
-----
+include::topics/dependencies/clustered_locks.adoc[]
 
 Currently no extra configuration needs to be provided.
 

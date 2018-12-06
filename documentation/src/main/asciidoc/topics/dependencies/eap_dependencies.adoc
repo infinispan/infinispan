@@ -1,0 +1,37 @@
+[source,xml,options="nowrap"]
+----
+<dependencies>
+  <dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-core</artifactId>
+    <version>${version.infinispan}</version>
+    <scope>provided</scope>
+  </dependency>
+  <dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-cachestore-jdbc</artifactId>
+    <version>${version.infinispan}</version>
+    <scope>provided</scope>
+  </dependency>
+</dependencies>
+<build>
+  <plugins>
+     <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-war-plugin</artifactId>
+       <configuration>
+         <archive>
+           <manifestEntries>
+             <Dependencies>org.infinispan.core:${version.slot} services, org.infinispan.cachestore.jdbc:${version.slot} services</Dependencies>
+           </manifestEntries>
+         </archive>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+----
+
+Replace:
+
+* `${version.infinispan}` with the appropriate version of {brandname}.
+* `${version.slot}` with the slot version, {infinispanslot}.

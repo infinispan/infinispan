@@ -1,0 +1,6 @@
+[source,xml,options="nowrap"]
+----
+<hotrod-connector socket-binding="hotrod" cache-container="local">
+    <security ssl="true" security-realm="ApplicationRealm" require-ssl-client-auth="false" />
+</hotrod-connector>
+----

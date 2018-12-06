@@ -344,21 +344,8 @@ Please remember that users should not use root as a place to store data. Instead
 ===== Dependencies
 For your application to use the tree API, you need to import infinispan-tree.jar which can be located in the {brandname} binary distributions, or you can simply add a dependency to this module in your pom.xml:
 
-[source,xml]
 .pom.xml
-----
-
-<dependencies>
-  ...
-  <dependency>
-    <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-tree</artifactId>
-    <version>$put-infinispan-version-here</version>
-  </dependency>
-  ...
-</dependencies>
-
-----
+include::topics/dependencies/ispn_tree.adoc[]
 
 ==== Creating a Tree Cache
 The first step to use the tree API is to actually create a tree cache. To do so, you need to create an {brandname} Cache as you'd normally do, and using the link:{javadocroot}/org/infinispan/tree/TreeCacheFactory.html[TreeCacheFactory] , create an instance of link:{javadocroot}/org/infinispan/tree/TreeCache.html[TreeCache] . A very important note to remember here is that the Cache instance passed to the factory must be configured with invocation batching. For example:
@@ -373,7 +360,6 @@ Configuration config = new Configuration();
 config.setInvocationBatchingEnabled(true);
 Cache cache = new DefaultCacheManager(config).getCache();
 TreeCache treeCache = TreeCacheFactory.createTreeCache(cache);
-
 ----
 
 ==== Manipulating data in a Tree Cache

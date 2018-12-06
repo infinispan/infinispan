@@ -1,0 +1,4 @@
+[source,xml,options="nowrap"]
+----
+<state-transfer enabled="true" timeout="240000" chunk-size="512" await-initial-transfer="true" />
+----
