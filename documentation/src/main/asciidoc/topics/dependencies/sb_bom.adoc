@@ -1,0 +1,26 @@
+[source,xml,options="nowrap"]
+----
+<dependencyManagement>
+    <dependencies>
+       <dependency>
+           <groupId>org.infinispan</groupId>
+           <artifactId>infinispan-bom</artifactId>
+           <version>${version.infinispan}</version>
+           <type>pom</type>
+           <scope>import</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.springframework.boot</groupId>
+           <artifactId>spring-boot-starter-parent</artifactId>
+           <version>${version.spring.boot}</version>
+           <type>pom</type>
+           <scope>import</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.infinispan</groupId>
+           <artifactId>infinispan-spring-boot-starter-1.0.4.redhat-00002</artifactId>
+           <version>${version.infinispan.starter}</version>
+       </dependency>
+    </dependencies>
+ </dependencyManagement>
+----
