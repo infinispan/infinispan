@@ -1,0 +1,6 @@
+[source,xml,options="nowrap"]
+----
+<protocol type="TCPGOSSIP">
+  <property name="initial_hosts">${jgroups.gossip.initial_hosts:}</property>
+</protocol>
+----

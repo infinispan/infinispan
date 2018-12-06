@@ -1,0 +1,21 @@
+[source,xml,options="nowrap"]
+----
+<settings>
+  ...
+  <servers>
+    ...
+    <server>
+      <id>jboss-snapshots-repository</id>
+      <username>your_JBoss.org_username</username>
+      <password>your_JBoss.org_password</password>
+    </server>
+    <server>
+      <id>jboss-releases-repository</id>
+      <username>your_JBoss.org_username</username>
+      <password>your_JBoss.org_password</password>
+    </server>
+    ...
+  </servers>
+  ...
+</settings>
+----

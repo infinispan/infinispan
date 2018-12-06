@@ -1,0 +1,6 @@
+[source,xml,options="nowrap"]
+----
+<cache-container name="clustered" default-cache="default">
+  ...
+</cache-container>
+----

@@ -1,0 +1,21 @@
+[source,xml,options="nowrap"]
+----
+<stack name="tcp">
+  <transport type="TCP" socket-binding="jgroups-tcp"/>
+  <protocol type="TCPPING">
+    <property name="initial_hosts">HostA[7800],HostB[7800]</property>
+  </protocol>
+  <protocol type="MERGE3"/>
+  <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
+  <protocol type="FD_ALL"/>
+  <protocol type="VERIFY_SUSPECT"/>
+  <protocol type="pbcast.NAKACK2">
+    <property name="use_mcast_xmit">false</property>
+  </protocol>
+  <protocol type="UNICAST3"/>
+  <protocol type="pbcast.STABLE"/>
+  <protocol type="pbcast.GMS"/>
+  <protocol type="MFC"/>
+  <protocol type="FRAG3"/>
+</stack>
+----

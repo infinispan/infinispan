@@ -9,24 +9,10 @@ The integration allows to inject Cache interface and bridge Cache and CacheManag
 To include CDI support for {brandname} in your project, use one of the following dependencies:
 
 .pom.xml for Embedded mode
-[source,xml]
-----
-<dependency>
-    <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-cdi-embedded</artifactId>
-    <version>${infinispan.version}</version>
-</dependency>
-----
+include::topics/dependencies/cdi_embedded.adoc[]
 
 .pom.xml for Remote mode
-[source,xml]
-----
-<dependency>
-    <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-cdi-remote</artifactId>
-    <version>${infinispan.version}</version>
-</dependency>
-----
+include::topics/dependencies/cdi_remote.adoc[]
 
 .Which version of {brandname} should I use?
 TIP: We recommend using the latest final version {brandname}.

@@ -1,0 +1,6 @@
+[source,xml,options="nowrap"]
+----
+<subsystem xmlns="urn:infinispan:server:core:9.4" default-cache-container="clustered">
+  ...
+</subsystem>
+----

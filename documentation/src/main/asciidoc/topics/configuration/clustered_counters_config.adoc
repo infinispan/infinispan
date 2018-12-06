@@ -1,0 +1,27 @@
+[source,xml,options="nowrap"]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan>
+    <cache-container ...>
+        <!-- if needed to persist counter, global state needs to be configured -->
+        <global-state>
+            ...
+        </global-state>
+        <!-- your caches configuration goes here -->
+         <counters xmlns="urn:infinispan:config:counters:9.2" num-owners="3" reliability="CONSISTENT">
+             <strong-counter name="c1" initial-value="1" storage="PERSISTENT"/>
+             <strong-counter name="c2" initial-value="2" storage="VOLATILE">
+                 <lower-bound value="0"/>
+             </strong-counter>
+             <strong-counter name="c3" initial-value="3" storage="PERSISTENT">
+                 <upper-bound value="5"/>
+             </strong-counter>
+             <strong-counter name="c4" initial-value="4" storage="VOLATILE">
+                 <lower-bound value="0"/>
+                 <upper-bound value="10"/>
+             </strong-counter>
+             <weak-counter name="c5" initial-value="5" storage="PERSISTENT" concurrency-level="1"/>
+         </counters>
+    </cache-container>
+</infinispan>
+----

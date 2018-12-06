@@ -37,20 +37,7 @@ To add caching support to your application, do the following:
 +
 * *Declaratively:* Add `<cache:annotation-driven/>` to your application context.
 +
-[source,xml]
-----
-<beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:cache="http://www.springframework.org/schema/cache"
-    xmlns:p="http://www.springframework.org/schema/p"
-    xsi:schemaLocation="
-        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
-
-        <cache:annotation-driven />
-
-</beans>
-----
+include::topics/configuration/spring_annotation_driven.adoc[]
 +
 * *Programmatically:* Enable cache support as follows:
 +
@@ -70,25 +57,9 @@ Spring 5::
 * Embedded mode: `infinispan-spring5-embedded`
 * Remote client-server mode: `infinispan-spring5-remote`
 +
-The following is an example with Spring 4 in embedded mode:
+The following is an example with Spring 5 in embedded mode:
 +
-[source,xml]
-----
-<dependencies>
-  <dependency>
-    <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-spring4-embedded</artifactId>
-    <version>${version.infinispan}</version>
-  </dependency>
-  <!-- Tip: Use the Spring Boot starter
-  instead of the spring-boot artifact. -->
-  <dependency>
-    <groupId>org.springframework</groupId>
-    <artifactId>spring-context</artifactId>
-    <version>${version.spring}</version>
-  </dependency>
-</dependencies>
-----
+include::topics/dependencies/spring_integration.adoc[]
 
 [[spring_configure_cache_provider]]
 ===== Configuring {brandname} as the Spring Cache Provider
@@ -102,7 +73,6 @@ You can configure your application context either declaratively or programmatica
 +
 [source,xml,options=nowrap]
 ----
-
 <!-- Infinispan cache manager -->
 <bean id="cacheManager"
           class="org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBean"
@@ -217,8 +187,8 @@ link:http://docs.spring.io/spring-session/docs/current/reference/html5[Spring Se
 
 To configure Spring Session integration in your application, do the following:
 
-. Add dependencies to your `pom.xml`.
-+
+Add dependencies to your `pom.xml` as follows:
+
 Spring 4::
 * Embedded mode: `infinispan-spring4-embedded`
 * Remote client-server mode: `infinispan-spring4-remote`
@@ -226,36 +196,8 @@ Spring 4::
 +
 The following is an example with Spring 4 in embedded mode:
 +
-[source,xml,options="nowrap"]
-----
-    <dependencies>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring4-embedded</artifactId>
-            <version>${version.infinispan}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${version.spring}</version>
-        </dependency>
-        <dependency>
-           <groupId>org.springframework</groupId>
-           <artifactId>spring-session</artifactId>
-           <artifactId>spring-session</artifactId>
-           <version>${version.spring}</version>
-       </dependency>
-       <dependency>
-           <groupId>org.springframework</groupId>
-           <artifactId>spring-web</artifactId>
-           <version>${version.spring}</version>
-       </dependency>
-    </dependencies>
-----
+include::topics/dependencies/spring4_session_dependencies.adoc[]
++
 Spring 5::
 * Embedded mode: `infinispan-spring5-embedded`
 * Remote client-server mode: `infinispan-spring5-remote`
@@ -263,37 +205,10 @@ Spring 5::
 +
 The following is an example with Spring 5 in remote client-server mode:
 +
-[source,xml,options="nowrap"]
-----
-    <dependencies>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring5-remote</artifactId>
-            <version>${version.infinispan}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${version.spring}</version>
-        </dependency>
-        <dependency>
-           <groupId>org.springframework</groupId>
-           <artifactId>spring-session</artifactId>
-           <artifactId>spring-session-core</artifactId>
-           <version>${version.spring}</version>
-       </dependency>
-       <dependency>
-           <groupId>org.springframework</groupId>
-           <artifactId>spring-web</artifactId>
-           <version>${version.spring}</version>
-       </dependency>
-    </dependencies>
-----
-+
+include::topics/dependencies/spring5_session_dependencies.adoc[]
+
+After you add dependencies, do the following:
+
 . Specify the appropriate FactoryBean to expose a `CacheManager` instance.
 +
 * Embedded mode: `SpringEmbeddedCacheManagerFactoryBean`

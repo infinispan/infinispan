@@ -26,18 +26,10 @@ Two different _LockFactory_ implementations are provided to guarantee only one _
 Apache Lucene versions 5.5.x
 
 ==== Maven dependencies
-All you need is _org.infinispan:infinispan-lucene-directory_ :
+All you need is the following:
 
 .pom.xml
-[source,xml,subs=attributes+]
-----
-<dependency>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-lucene-directory</artifactId>
-   <version>{infinispanversion}</version>
-</dependency>
-
-----
+include::topics/dependencies/lucene_directory.adoc[]
 
 ==== How to use it
 
@@ -117,8 +109,8 @@ The lock cache is used to store a single entry per index that will function as t
        <object size="-1"/>
     </memory>
 </replicated-cache>
-
 ----
+
 ===== Metadata Cache
 
 The metadata cache is used to store information about the files of the directory, such as buffer sizes and number of chunks. It uses more space than the Lock Cache, but not as much as the Data Cache, so using a REPL_SYNC cache should be fine for most cases.
@@ -228,21 +220,12 @@ Start several instances, then try adding text in one instance and searching for 
 
 [[integrations_directory_provider]]
 === Directory Provider for Hibernate Search
-
 Hibernate Search applications can use {brandname} as a directory provider, taking advantage of {brandname}'s distribution and low latency capabilities to store the Lucene indexes.
 
 ==== Maven dependencies
 
 .pom.xml
-[source,xml,subs=attributes+]
-----
-<dependency>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-directory-provider</artifactId>
-   <version>{infinispanversion}</version>
-</dependency>
-
-----
+include::topics/dependencies/hibernate_directory_provider.adoc[]
 
 ==== How to use it
 
@@ -348,58 +331,41 @@ section of the documentation.
 
 include::integrations_spring.adoc[]
 
+ifndef::productized[]
 ===  {brandname} modules for WildFly / EAP
 
 As the {brandname} modules shipped with link:http://wildfly.org/[WildFly] / link:https://www.redhat.com/en/technologies/jboss-middleware/application-platform[EAP] are tailored to its internal usage, it is recommend to install separate modules
 if you want to use {brandname} in your application that is deployed to WildFly / EAP. By installing these modules, it is possible to deploy user applications without packaging the {brandname} JARs within the deployments (WARs, EARs, etc), thus minimizing their size.
 Also, there will be no conflict with WildFly / EAP's internal modules since the slot will be different.
+endif::productized[]
+
+ifdef::productized[]
+===  {brandname} modules for EAP
+
+As the {brandname} modules shipped with link:https://www.redhat.com/en/technologies/jboss-middleware/application-platform[EAP] are tailored to its internal usage, it is recommend to install separate modules if you want to use {brandname} in your application that is deployed to EAP. By installing these modules, it is possible to deploy user applications without packaging the {brandname} JARs within the deployments (WARs, EARs, etc), thus minimizing their size.
+Also, there will be no conflict with EAP's internal modules since the slot will be different.
+endif::productized[]
 
 [[modules_installation_section]]
 ==== Installation
-
+ifndef::productized[]
 The modules for WildFly / EAP are available in the link:http://infinispan.org/download/[downloads] section of our site.
 After extracting the zip, copy the contents of the `modules` directory to the `WILDFLY_HOME/modules` directory, so that
 for example the {brandname} core module would be under `WILDFLY_HOME/modules/system/add-ons/{moduleprefix}/org/infinispan/core`.
+endif::productized[]
+
+ifdef::productized[]
+The modules for EAP are available from the link:https://access.redhat.com/downloads/[Red Hat Customer Portal].
+
+After extracting the zip, copy the contents of the `modules` directory to the `${EAP_HOME}/modules` directory. For example, the {brandname} core module should be under `${EAP_HOME}/modules/system/add-ons/{moduleprefix}/org/infinispan/core`.
+endif::productized[]
 
 ==== Application Dependencies
 
 If you are using Maven to build your application, mark the {brandname} dependencies as _provided_ and configure your artifact archiver to generate the appropriate MANIFEST.MF file:
 
 .pom.xml
-[source,xml,subs=attributes+]
-----
-
-<dependencies>
-  <dependency>
-    <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-core</artifactId>
-    <version>{infinispanversion}</version>
-    <scope>provided</scope>
-  </dependency>
-  <dependency>
-    <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-cachestore-jdbc</artifactId>
-    <version>{infinispanversion}</version>
-    <scope>provided</scope>
-  </dependency>
-</dependencies>
-<build>
-  <plugins>
-     <plugin>
-       <groupId>org.apache.maven.plugins</groupId>
-       <artifactId>maven-war-plugin</artifactId>
-       <configuration>
-         <archive>
-           <manifestEntries>
-             <Dependencies>org.infinispan.core:{infinispanslot} services, org.infinispan.cachestore.jdbc:{infinispanslot} services</Dependencies>
-           </manifestEntries>
-         </archive>
-      </configuration>
-    </plugin>
-  </plugins>
-</build>
-
-----
+include::topics/dependencies/eap_dependencies.adoc[]
 
 The next section illustrates the manifest entries for different types of {brandname}'s dependencies.
 
@@ -410,10 +376,8 @@ In order expose only {brandname} core dependencies to your application, add the 
 .MANIFEST.MF
 [source,subs=attributes]
 ----
-
 Manifest-Version: 1.0
 Dependencies: org.infinispan:{infinispanslot} services
-
 ----
 
 ===== Remote
@@ -480,84 +444,30 @@ standalone/domain.xml configuration. This allows cache instances to be shared ac
 lifecycle of the underlying cache container being independent of the deployed application.
 
 ====== Configuration
-To enable server mode, it is necessary to make the following additions to your wildfly configuration in standalone/domain.xml.
+To enable server mode, it is necessary to make the following additions to your wildfly configuration in `standalone/domain.xml`.
 Note, that only steps 1-4 are required for local cache instances:
 
-. Add the {brandname} extensions to your `<extensions>` section
+. Add the {brandname} extensions to your `<extensions>` section.
 
-[source,xml,subs=attributes+]
-----
-<extensions>
-  <extension module="org.infinispan.extension:ispn-9.2"/>
-  <extension module="org.infinispan.server.endpoint:ispn-9.2"/>
-  <extension module="org.jgroups.extension:ispn-9.2"/>
-
-  <!--Other wildfly extensions-->
-</extensions>
-----
+include::topics/configuration/wfly_extensions.adoc[]
 
 [start=2]
 . Configure the {brandname} subsystem, along with your required containers and caches, in the server profile which requires {brandname}.
-Note, it's important that the module attribue is defined so that correct {brandname} classes are loaded.
+Note, it's important that the module attribute is defined so that correct {brandname} classes are loaded.
 
-[source,xml,subs=attributes+]
-----
-<subsystem xmlns="urn:infinispan:server:core:9.4">
- <cache-container module="org.infinispan.extension:ispn-9.4" name="infinispan_container" default-cache="default">
-   <transport/>
-   <global-state/>
-   <distributed-cache name="default"/>
-   <distributed-cache name="memcachedCache"/>
-   <distributed-cache name="namedCache"/>
- </cache-container>
-</subsystem>
-----
+include::topics/configuration/wfly_subsystem.adoc[]
 
 [start=3]
 . Define the Wildfly https://docs.jboss.org/author/display/WFLY10/Interfaces+and+ports[socket-bindings] required by the endpoint and/or JGroup subsystems
 
 . Configure any endpoints that you require via the endpoint subsystem:
 
-[source,xml,subs=attributes+]
-----
-<subsystem xmlns="urn:infinispan:server:endpoint:9.2">
-  <hotrod-connector socket-binding="hotrod" cache-container="infinispan_container">
-    <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000"/>
-  </hotrod-connector>
-  <rest-connector socket-binding="rest" cache-container="infinispan_container">
-    <authentication security-realm="ApplicationRealm" auth-method="BASIC"/>
-  </rest-connector>
-</subsystem>
-----
+include::topics/configuration/wfly_endpoints.adoc[]
 
 [start=5]
 . Define JGroups transport, ensuring that you define the model attribute for all protocols specified.
 
-[source,xml,subs=attributes+]
-----
-<subsystem xmlns="urn:infinispan:server:jgroups:9.2">
- <channels default="cluster">
-   <channel name="cluster" stack="udp"/>
- </channels>
- <stacks>
-   <stack name="udp">
-     <transport type="UDP" socket-binding="jgroups-udp" module="org.jgroups:ispn-9.2"/>
-     <protocol type="PING" module="org.jgroups:ispn-9.2"/>
-     <protocol type="MERGE3" module="org.jgroups:ispn-9.2"/>
-     <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" module="org.jgroups:ispn-9.2"/>
-     <protocol type="FD_ALL" module="org.jgroups:ispn-9.2"/>
-     <protocol type="VERIFY_SUSPECT" module="org.jgroups:ispn-9.2"/>
-     <protocol type="pbcast.NAKACK2" module="org.jgroups:ispn-9.2"/>
-     <protocol type="UNICAST3" module="org.jgroups:ispn-9.2"/>
-     <protocol type="pbcast.STABLE" module="org.jgroups:ispn-9.2"/>
-     <protocol type="pbcast.GMS" module="org.jgroups:ispn-9.2"/>
-     <protocol type="UFC" module="org.jgroups:ispn-9.2"/>
-     <protocol type="MFC" module="org.jgroups:ispn-9.2"/>
-     <protocol type="FRAG2" module="org.jgroups:ispn-9.2"/>
-   </stack>
- </stacks>
-</subsystem>
-----
+include::topics/jgroups/wfly_jgroups.adoc[]
 
 ====== Accessing Containers and Caches
 Once a container has been defined in your server's configuration, it is possible to inject an instance of a CacheContainer
@@ -598,5 +508,4 @@ The following command can be used to print all dependencies for a certain module
 [subs=attributes]
 ----
 java -jar jboss-modules.jar -deptree -mp modules/ "org.infinispan:{infinispanslot}"
-
 ----

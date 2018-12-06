@@ -6,14 +6,7 @@ MutimapCache is a type of {brandname} Cache that maps keys to values in which ea
 === Installation and configuration
 
 .pom.xml
-[source,xml]
-----
-<dependency>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-multimap</artifactId>
-   <version>...</version>
-</dependency>
-----
+include::topics/dependencies/multimap.adoc[]
 
 === MultimapCache API
 
@@ -22,7 +15,6 @@ All these methods are non-blocking in most of the cases. See [limitations]
 
 [source,java]
 ----
-
 public interface MultimapCache<K, V> {
 
    CompletableFuture<Void> put(K key, V value);
@@ -46,7 +38,6 @@ public interface MultimapCache<K, V> {
    boolean supportsDuplicates();
 
 }
-
 ----
 
 ==== CompletableFuture<Void> put(K key, V value)
