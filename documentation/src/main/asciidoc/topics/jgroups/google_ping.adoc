@@ -1,0 +1,8 @@
+[source,xml,options="nowrap"]
+----
+<protocol type="GOOGLE_PING">
+  <property name="location">${jgroups.google.bucket:}</property>
+  <property name="access_key">${jgroups.google.access_key:}</property>
+  <property name="secret_access_key">${jgroups.google.secret_access_key:}</property>
+</protocol>
+----

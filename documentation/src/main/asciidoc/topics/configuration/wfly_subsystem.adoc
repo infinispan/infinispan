@@ -1,0 +1,12 @@
+[source,xml,options="nowrap",subs=attributes+]
+----
+<subsystem xmlns="urn:infinispan:server:core:9.4">
+ <cache-container module="org.infinispan.extension:{infinispanslot}" name="infinispan_container" default-cache="default">
+   <transport/>
+   <global-state/>
+   <distributed-cache name="default"/>
+   <distributed-cache name="memcachedCache"/>
+   <distributed-cache name="namedCache"/>
+ </cache-container>
+</subsystem>
+----

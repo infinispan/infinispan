@@ -1,0 +1,11 @@
+[source,xml,options="nowrap"]
+----
+<dependency>
+  <groupId>org.infinispan</groupId>
+  <artifactId>infinispan-jcache</artifactId>
+  <version>${version.infinispan}</version>
+  <scope>test</scope>
+</dependency>
+----
+
+Replace `${version.infinispan}` with the appropriate version of {brandname}.

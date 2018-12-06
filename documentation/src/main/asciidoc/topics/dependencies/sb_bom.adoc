@@ -24,3 +24,9 @@
     </dependencies>
  </dependencyManagement>
 ----
+
+Replace:
+
+* `${version.infinispan}` with the appropriate version of {brandname}.
+* `${version.spring.boot}` with the appropriate version of Spring Boot.
+* `${version.infinispan.starter}` with the appropriate version of the {brandname} Starter.

@@ -1,0 +1,26 @@
+[source,xml,options="nowrap"]
+----
+<management>
+  <security-realms>
+  ...
+    <security-realm name="ClusterRealm">
+      <authentication>
+        <properties path="cluster-users.properties" relative-to="jboss.server.config.dir"/>
+      </authentication>
+      <authorization>
+        <properties path="cluster-roles.properties" relative-to="jboss.server.config.dir"/>
+      </authorization>
+    </security-realm>
+  ...
+  </security-realms>
+</management>
+
+<stack name="udp">
+  ...
+  <sasl mech="DIGEST-MD5" security-realm="ClusterRealm" cluster-role="cluster">
+    <property name="client_name">node1</property>
+    <property name="client_password">password</property>
+  </sasl>
+  ...
+</stack>
+----

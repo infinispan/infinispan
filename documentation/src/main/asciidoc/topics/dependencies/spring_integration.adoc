@@ -1,0 +1,22 @@
+[source,xml,options="nowrap"]
+----
+<dependencies>
+    <dependency>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-spring5-embedded</artifactId>
+        <version>${version.infinispan}</version>
+    </dependency>
+    <!-- Tip: Use the Spring Boot starter
+    instead of the spring-boot artifact. -->
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context</artifactId>
+        <version>${version.spring}</version>
+    </dependency>
+</dependencies>
+----
+
+Replace:
+
+* `${version.infinispan}` with the appropriate version of {brandname}.
+* `${version.spring}` with the appropriate version of Spring.

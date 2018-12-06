@@ -1,0 +1,18 @@
+[source,xml,options="nowrap"]
+----
+<local-cache name="default" start="EAGER">
+  ...
+</local-cache>
+
+<replicated-cache name="replcache" mode="SYNC" remote-timeout="30000" start="EAGER">
+  ...
+</replicated-cache>
+
+<invalidation-cache name="invcache" mode="SYNC" remote-timeout="30000" start="EAGER">
+  ...
+</invalidation-cache>
+
+<distributed-cache name="distcache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+  ...
+</distributed-cache>
+----

@@ -1,0 +1,10 @@
+[source,xml,options="nowrap"]
+----
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-directory-provider</artifactId>
+   <version>${version.infinispan}</version>
+</dependency>
+----
+
+Replace `${version.infinispan}` with the appropriate version of {brandname}.

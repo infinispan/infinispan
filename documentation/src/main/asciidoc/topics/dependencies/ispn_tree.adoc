@@ -1,0 +1,14 @@
+[source,xml,options="nowrap"]
+----
+<dependencies>
+  ...
+  <dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-tree</artifactId>
+    <version>${version.infinispan}</version>
+  </dependency>
+  ...
+</dependencies>
+----
+
+Replace `${version.infinispan}` with the appropriate version of {brandname}.

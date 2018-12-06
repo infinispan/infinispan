@@ -24,7 +24,7 @@ Spring Boot 1.5.x::
 * Embedded Mode:
 +
 include::../dependencies/sb_embedded.adoc[]
-+
+
 * Remote Client/Server Mode:
 +
 include::../dependencies/sb_remote.adoc[]
@@ -33,7 +33,7 @@ Spring Boot 2.0::
 * Embedded Mode:
 +
 include::../dependencies/sb2_embedded.adoc[]
-+
+
 * Remote Client/Server Mode:
 +
 include::../dependencies/sb2_remote.adoc[]
@@ -42,11 +42,12 @@ include::../dependencies/sb2_remote.adoc[]
 
 This starter uses a high-level API to ensure compatibility between major versions of {brandname}. However you can enforce a specific version of {brandname} with the `infinispan-bom` module.
 
-Add `infinispan-bom` to your `pom.xml` file before the starter dependenices, as follows:
+Add `infinispan-bom` to your `pom.xml` file before the starter dependencies, as follows:
 
 Spring Boot 1.5.x::
 include::../dependencies/sb_bom.adoc[]
 
+//-
 Spring Boot 2.0::
 include::../dependencies/sb2_bom.adoc[]
 

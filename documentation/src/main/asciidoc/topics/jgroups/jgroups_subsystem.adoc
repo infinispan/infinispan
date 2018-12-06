@@ -1,0 +1,11 @@
+[source,xml,options="nowrap"]
+----
+<subsystem xmlns="urn:infinispan:server:jgroups:9.2">
+  <channels default="cluster">
+    <channel name="cluster"/>
+  </channels>
+  <stacks default="${jboss.default.jgroups.stack:udp}">
+    ...
+  </stacks>
+</subsystem>
+----

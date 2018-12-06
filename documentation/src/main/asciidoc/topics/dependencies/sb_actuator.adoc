@@ -12,3 +12,5 @@
   <version>${spring-boot.version}</version>
 </dependency>
 ----
+
+Replace `${spring-boot.version}` with the appropriate version of Spring Boot.
