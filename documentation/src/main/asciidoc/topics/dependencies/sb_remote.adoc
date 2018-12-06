@@ -1,0 +1,8 @@
+[source,xml,options="nowrap"]
+----
+<dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-spring-boot-starter-remote-1.0.4.redhat-00002</artifactId>
+    <version>${version.infinispan.starter}</version>
+</dependency>
+----
