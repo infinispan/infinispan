@@ -68,6 +68,7 @@ public class MockTransport implements Transport {
    }
 
    public void updateView(int viewId, List<Address> members) {
+      log.debugf("Installing view %d %s", viewId, members);
       this.viewId = viewId;
       this.members = members;
 
@@ -145,7 +146,7 @@ public class MockTransport implements Transport {
                                                 DeliverOrder deliverOrder, boolean anycast) throws Exception {
       Collection<Address> targets = recipients != null ? recipients : members;
       MapResponseCollector collector = MapResponseCollector.ignoreLeavers(shouldIgnoreLeavers(mode), targets.size());
-      CompletableFuture<Map<Address, Response>> rpcFuture = blockRequest(rpcCommand, collector);
+      CompletableFuture<Map<Address, Response>> rpcFuture = blockRequest(recipients, rpcCommand, collector);
       if (mode.isAsynchronous()) {
          return Collections.emptyMap();
       } else {
@@ -165,22 +166,22 @@ public class MockTransport implements Transport {
       Collection<Address> targets = recipients != null ? recipients : members;
       MapResponseCollector collector =
          mode.isSynchronous() ? MapResponseCollector.ignoreLeavers(shouldIgnoreLeavers(mode), targets.size()) : null;
-      return blockRequest(rpcCommand, collector);
+      return blockRequest(recipients, rpcCommand, collector);
    }
 
    @Override
    public void sendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) {
-      blockRequest(rpcCommand, null);
+      blockRequest(Collections.singleton(destination), rpcCommand, null);
    }
 
    @Override
    public void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) {
-      blockRequest(rpcCommand, null);
+      blockRequest(destinations, rpcCommand, null);
    }
 
    @Override
    public void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
-      blockRequest(rpcCommand, null);
+      blockRequest(members, rpcCommand, null);
    }
 
    @Override
@@ -280,34 +281,34 @@ public class MockTransport implements Transport {
    @Override
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command, ResponseCollector<T>
       collector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
-      return blockRequest(command, collector);
+      return blockRequest(Collections.singleton(target), command, collector);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
                                                ResponseCollector<T> collector, DeliverOrder deliverOrder, long
                                                   timeout, TimeUnit unit) {
-      return blockRequest(command, collector);
+      return blockRequest(targets, command, collector);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
                                                     DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
-      return blockRequest(command, collector);
+      return blockRequest(members, command, collector);
    }
 
    @Override
    public <T> CompletableFuture<T> invokeCommandOnAll(Collection<Address> requiredTargets, ReplicableCommand command,
                                                       ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                       long timeout, TimeUnit unit) {
-      return blockRequest(command, collector);
+      return blockRequest(requiredTargets, command, collector);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
                                                         ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                         long timeout, TimeUnit unit) {
-      return blockRequest(command, collector);
+      return blockRequest(targets, command, collector);
    }
 
    @Override
@@ -316,8 +317,8 @@ public class MockTransport implements Transport {
       throw new UnsupportedOperationException();
    }
 
-   private <T> CompletableFuture<T> blockRequest(ReplicableCommand command, ResponseCollector<T> collector) {
-      log.debugf("Intercepted command %s", command);
+   private <T> CompletableFuture<T> blockRequest(Collection<Address> targets, ReplicableCommand command, ResponseCollector<T> collector) {
+      log.debugf("Intercepted command %s to %s", command, targets);
       BlockedRequest request = new BlockedRequest(command, collector);
       blockedRequests.add(request);
       return request.getResultFuture();

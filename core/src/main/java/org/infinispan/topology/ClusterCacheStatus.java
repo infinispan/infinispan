@@ -379,14 +379,20 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
    }
 
-   public synchronized void doHandleClusterView() {
+   public synchronized void doHandleClusterView(int viewId) {
       // TODO Clean up ClusterCacheStatus instances once they no longer have any members
       if (currentTopology == null)
          return;
 
       List<Address> newClusterMembers = transport.getMembers();
+      int newViewId = transport.getViewId();
+      if (newViewId != viewId) {
+         log.debugf("Cache %s skipping members update for view %d, newer view received: %d",
+                    cacheName, viewId, newViewId);
+         return;
+      }
+      if (trace) log.tracef("Cache %s updating members for view %d: %s", cacheName, viewId, newClusterMembers);
       boolean cacheMembersModified = retainMembers(newClusterMembers);
-      if (trace) log.tracef("Cache %s doHandleClusterView newClusterMembers=%s", cacheName, newClusterMembers);
       availabilityStrategy.onClusterViewChange(this, newClusterMembers);
 
       if (cacheMembersModified) {

@@ -85,7 +85,8 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
       verifyStableTopologyUpdate();
 
       when(transport.getMembers()).thenReturn(singletonList(C));
-      status.doHandleClusterView();
+      when(transport.getViewId()).thenReturn(1);
+      status.doHandleClusterView(1);
 
       TestClusterCacheStatus cache = TestClusterCacheStatus.start(JOIN_INFO, C);
       cache.incrementIds(9, 2);
