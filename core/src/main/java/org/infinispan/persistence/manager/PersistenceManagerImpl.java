@@ -157,7 +157,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
             // Now schedule the availability check
             long interval = configuration.persistence().availabilityInterval();
-            availabilityFuture = persistenceExecutor.scheduleAtFixedRate(this::pollStoreAvailability, interval, interval, TimeUnit.MILLISECONDS);
+            if (interval > 0)
+               availabilityFuture = persistenceExecutor.scheduleAtFixedRate(this::pollStoreAvailability, interval, interval, TimeUnit.MILLISECONDS);
          } finally {
             if (xaTx != null) {
                transactionManager.resume(xaTx);
@@ -339,7 +340,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
 
          if (noMoreStores) {
-            availabilityFuture.cancel(true);
+            if (availabilityFuture != null)
+               availabilityFuture.cancel(true);
+
             AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
             AsyncInterceptor loaderInterceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
             if (loaderInterceptor == null) {
