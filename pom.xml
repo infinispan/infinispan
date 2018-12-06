@@ -129,6 +129,10 @@
       <module>spring/spring4/spring4-common</module>
       <module>spring/spring4/spring4-embedded</module>
       <module>spring/spring4/spring4-remote</module>
+      <module>spring/spring5</module>
+      <module>spring/spring5/spring5-common</module>
+      <module>spring/spring5/spring5-embedded</module>
+      <module>spring/spring5/spring5-remote</module>
       <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
       <module>tasks/api</module>
@@ -157,6 +161,7 @@
       <module>integrationtests/all-embedded-query-it</module>
       <module>integrationtests/all-remote-it</module>
       <module>integrationtests/spring-boot-it</module>
+      <module>integrationtests/spring-boot2-it</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
    </modules>
@@ -657,6 +662,8 @@
       <versionx.org.slf4j.slf4j-api>${version.slf4j}</versionx.org.slf4j.slf4j-api>
       <versionx.org.sonatype.plexus.plexus-cipher>${version.sonatype.plexus}</versionx.org.sonatype.plexus.plexus-cipher>
       <versionx.org.sonatype.plexus.plexus-sec-dispatcher>${version.sonatype.plexus}</versionx.org.sonatype.plexus.plexus-sec-dispatcher>
+
+      <!-- Spring 4 and SB 1.5.x-->
       <versionx.org.springframework.boot.spring-boot>${version.spring.boot}</versionx.org.springframework.boot.spring-boot>
       <versionx.org.springframework.boot.spring-boot-autoconfigure>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-autoconfigure>
       <versionx.org.springframework.boot.spring-boot-starter>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter>
@@ -682,6 +689,34 @@
       <versionx.org.springframework.spring-tx>${version.spring4}</versionx.org.springframework.spring-tx>
       <versionx.org.springframework.spring-web>${version.spring4}</versionx.org.springframework.spring-web>
       <versionx.org.springframework.spring-webmvc>${version.spring4}</versionx.org.springframework.spring-webmvc>
+
+      <!-- Spring 5 and SB 2.1.x-->
+      <versionx.org.springframework.boot.spring-boot2>${version.spring.boot2}</versionx.org.springframework.boot.spring-boot2>
+      <versionx.org.springframework.boot.spring-boot2-autoconfigure>${version.spring.boot2}</versionx.org.springframework.boot.spring-boot2-autoconfigure>
+      <versionx.org.springframework.boot.spring-boot2-starter>${version.spring.boot2}</versionx.org.springframework.boot.spring-boot2-starter>
+      <versionx.org.springframework.boot.spring-boot2-starter-logging>${version.spring.boot2}</versionx.org.springframework.boot.spring-boot2-starter-logging>
+      <versionx.org.springframework.boot.spring-boot2-starter-security>${version.spring.boot2}</versionx.org.springframework.boot.spring-boot2-starter-security>
+      <versionx.org.springframework.boot.spring-boot2-starter-test>${version.spring.boot2}</versionx.org.springframework.boot.spring-boot2-starter-test>
+      <versionx.org.springframework.boot.spring-boot2-starter-tomcat>${version.spring.boot2}</versionx.org.springframework.boot.spring-boot2-starter-tomcat>
+      <versionx.org.springframework.boot.spring-boot2-starter-web>${version.spring.boot2}</versionx.org.springframework.boot.spring-boot2-starter-web>
+      <versionx.org.springframework.boot.spring-boot2-test>${version.spring.boot2}</versionx.org.springframework.boot.spring-boot2-test>
+      <versionx.org.springframework.boot.spring-boot2-test-autoconfigure>${version.spring.boot2}</versionx.org.springframework.boot.spring-boot2-test-autoconfigure>
+      <versionx.org.springframework.security.spring5-security-config>${version.spring5.security}</versionx.org.springframework.security.spring5-security-config>
+      <versionx.org.springframework.security.spring5-security-core>${version.spring5.security}</versionx.org.springframework.security.spring5-security-core>
+      <versionx.org.springframework.security.spring5-security-web>${version.spring5.security}</versionx.org.springframework.security.spring5-security-web>
+      <versionx.org.springframework.session.spring5-session>${version.spring5.session}</versionx.org.springframework.session.spring5-session>
+      <versionx.org.springframework.spring5-aop>${version.spring5}</versionx.org.springframework.spring5-aop>
+      <versionx.org.springframework.spring5-beans>${version.spring5}</versionx.org.springframework.spring5-beans>
+      <versionx.org.springframework.spring5-context>${version.spring5}</versionx.org.springframework.spring5-context>
+      <versionx.org.springframework.spring5-context-support>${version.spring5}</versionx.org.springframework.spring5-context-support>
+      <versionx.org.springframework.spring5-core>${version.spring5}</versionx.org.springframework.spring5-core>
+      <versionx.org.springframework.spring5-expression>${version.spring5}</versionx.org.springframework.spring5-expression>
+      <versionx.org.springframework.spring5-jdbc>${version.spring5}</versionx.org.springframework.spring5-jdbc>
+      <versionx.org.springframework.spring5-test>${version.spring5}</versionx.org.springframework.spring5-test>
+      <versionx.org.springframework.spring5-tx>${version.spring5}</versionx.org.springframework.spring5-tx>
+      <versionx.org.springframework.spring5-web>${version.spring5}</versionx.org.springframework.spring5-web>
+      <versionx.org.springframework.spring5-webmvc>${version.spring5}</versionx.org.springframework.spring5-webmvc>
+
       <versionx.org.syslog4j.syslog4j>0.9.30</versionx.org.syslog4j.syslog4j>
       <versionx.org.testng.testng>6.9.9</versionx.org.testng.testng>
       <versionx.org.tukaani.xz>1.0</versionx.org.tukaani.xz>
@@ -2400,7 +2435,19 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring5-common</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring4-common</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring5-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
             <version>${version.infinispan}</version>
@@ -3473,156 +3520,6 @@
             <groupId>org.sonatype.plexus</groupId>
             <artifactId>plexus-sec-dispatcher</artifactId>
             <version>${versionx.org.sonatype.plexus.plexus-sec-dispatcher}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-aop</artifactId>
-            <version>${versionx.org.springframework.spring-aop}</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
-            <version>${versionx.org.springframework.spring-beans}</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${versionx.org.springframework.spring-context}</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context-support</artifactId>
-            <version>${versionx.org.springframework.spring-context-support}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <version>${versionx.org.springframework.spring-core}</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-expression</artifactId>
-            <version>${versionx.org.springframework.spring-expression}</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-            <version>${versionx.org.springframework.spring-jdbc}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <version>${versionx.org.springframework.spring-test}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-tx</artifactId>
-            <version>${versionx.org.springframework.spring-tx}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>${versionx.org.springframework.spring-web}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-webmvc</artifactId>
-            <version>${versionx.org.springframework.spring-webmvc}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-autoconfigure}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-logging</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter-logging}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter-security}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter-test}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-tomcat</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter-tomcat}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter-web}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-test</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-test}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-test-autoconfigure</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-test-autoconfigure}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-config</artifactId>
-            <version>${versionx.org.springframework.security.spring-security-config}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-core</artifactId>
-            <version>${versionx.org.springframework.security.spring-security-core}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-web</artifactId>
-            <version>${versionx.org.springframework.security.spring-security-web}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.springframework.session</groupId>
-            <artifactId>spring-session</artifactId>
-            <version>${versionx.org.springframework.session.spring-session}</version>
-            <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.syslog4j</groupId>
@@ -5652,6 +5549,9 @@
                               <source>${dir.ispn}/spring/spring4/spring4-common/src/main/java</source>
                               <source>${dir.ispn}/spring/spring4/spring4-embedded/src/main/java</source>
                               <source>${dir.ispn}/spring/spring4/spring4-remote/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring5/spring5-common/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring5/spring5-embedded/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring5/spring5-remote/src/main/java</source>
                               <source>${dir.ispn}/tasks/src/main/java</source>
                               <source>${dir.ispn}/tasks-api/src/main/java</source>
                               <source>${dir.ispn}/tools/src/main/java</source>

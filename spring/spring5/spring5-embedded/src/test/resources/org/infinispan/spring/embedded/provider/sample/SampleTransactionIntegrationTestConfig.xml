@@ -1,0 +1,50 @@
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:cache="http://www.springframework.org/schema/cache"
+       xmlns:p="http://www.springframework.org/schema/p" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:infinispan="http://www.infinispan.org/schemas/spring"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd
+        http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.infinispan.org/schemas/spring http://www.infinispan.org/schemas/infinispan-spring.xsd">
+
+    <cache:annotation-driven />
+
+    <infinispan:embedded-cache-manager
+            configuration="classpath:/org/infinispan/spring/embedded/provider/sample/books-infinispan-config.xml"/>
+
+    <context:component-scan base-package="
+        org.infinispan.spring.embedded.provider.sample.dao,
+        org.infinispan.spring.embedded.provider.sample.service" />
+
+    <tx:annotation-driven />
+
+    <bean id="arjunaTransactionManager" class="com.arjuna.ats.jta.TransactionManager" factory-method="transactionManager"/>
+    <bean id="arjunaUserTransaction" class="com.arjuna.ats.jta.UserTransaction" factory-method="userTransaction"/>
+
+    <bean id="transactionManager" class="org.springframework.transaction.jta.JtaTransactionManager">
+        <property name="transactionManager" ref="arjunaTransactionManager" />
+        <property name="userTransaction" ref="arjunaUserTransaction" />
+    </bean>
+
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource"
+          p:driverClassName="com.arjuna.ats.jdbc.TransactionalDriver" p:url="jdbc:arjuna:h2:mem:testTx"
+            >
+        <property name="connectionProperties">
+            <props>
+                <prop key="DYNAMIC_CLASS">org.infinispan.spring.embedded.provider.sample.DataSourceResolver</prop>
+                <prop key="user">sa</prop>
+                <prop key="password"></prop>
+            </props>
+        </property>
+    </bean>
+
+    <jdbc:initialize-database data-source="dataSource">
+        <jdbc:script location="classpath:/org/infinispan/spring/embedded/provider/sample/initDB.sql"/>
+        <jdbc:script location="classpath:/org/infinispan/spring/embedded/provider/sample/populateDB.sql"/>
+    </jdbc:initialize-database>
+
+</beans>

@@ -1,0 +1,236 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-integrationtests-parent</artifactId>
+      <version>9.4.4-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+
+    <artifactId>infinispan-spring-boot2-it</artifactId>
+    <name>Integration tests - Spring Boot 2</name>
+    <description>Integration tests for Infinispan and Spring Boot 2</description>
+
+    <properties>
+        <overridden.version.junit>${version.junit}</overridden.version.junit>
+        <!-- Spring Boot needs the MockUtil constructor to be public, so it can't use mockito-core 2+ -->
+        <overridden.version.mockito>1.10.19</overridden.version.mockito>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot</artifactId>
+                <version>${versionx.org.springframework.boot.spring-boot2}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-autoconfigure</artifactId>
+                <version>${versionx.org.springframework.boot.spring-boot2-autoconfigure}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+                <version>${versionx.org.springframework.boot.spring-boot2-starter}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-logging</artifactId>
+                <version>${versionx.org.springframework.boot.spring-boot2-starter-logging}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-security</artifactId>
+                <version>${versionx.org.springframework.boot.spring-boot2-starter-security}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <version>${versionx.org.springframework.boot.spring-boot2-starter-test}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-tomcat</artifactId>
+                <version>${versionx.org.springframework.boot.spring-boot2-starter-tomcat}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+                <version>${versionx.org.springframework.boot.spring-boot2-starter-web}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-test</artifactId>
+                <version>${versionx.org.springframework.boot.spring-boot2-test}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-test-autoconfigure</artifactId>
+                <version>${versionx.org.springframework.boot.spring-boot2-test-autoconfigure}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-config</artifactId>
+                <version>${versionx.org.springframework.security.spring5-security-config}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-core</artifactId>
+                <version>${versionx.org.springframework.security.spring5-security-core}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-web</artifactId>
+                <version>${versionx.org.springframework.security.spring5-security-web}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.session</groupId>
+                <artifactId>spring-session-core</artifactId>
+                <version>${versionx.org.springframework.session.spring5-session}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <dependencies>
+        <!-- Those are normal dependencies that are recommended for Spring Boot users -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.session</groupId>
+            <artifactId>spring-session-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring5-embedded</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring5-remote</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-commons-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Helper, test dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-hotrod</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+            <version>${overridden.version.junit}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+            <version>${overridden.version.mockito}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>smoke</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-test</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration combine.self="override">
+                    <groups combine.self="override">${defaultJUnitGroups}</groups>
+                    <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+                    <systemPropertyVariables>
+                       <!-- Copied from parent POM -->
+                       <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
+                       <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
+                       <jgroups.join_timeout>2000</jgroups.join_timeout>
+                       <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                       <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                       <build.directory>${project.build.directory}</build.directory>
+                       <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
+
+                       <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
+                       <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
+                       <ansi.strip>${ansi.strip}</ansi.strip>
+                       <!-- Log the correct thread name after we call Thread.setName(),
+                            see https://issues.apache.org/jira/browse/LOG4J2-2052 -->
+                       <AsyncLogger.ThreadNameStrategy>UNCACHED</AsyncLogger.ThreadNameStrategy>
+                    </systemPropertyVariables>
+                    <trimStackTrace>false</trimStackTrace>
+                    <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit47</artifactId>
+                        <version>${version.maven.surefire}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+</project>

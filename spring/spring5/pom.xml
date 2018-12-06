@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-parent</artifactId>
+        <version>9.4.4-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>infinispan-spring5-parent</artifactId>
+    <name>Infinispan Spring 5 support</name>
+    <packaging>pom</packaging>
+
+    <description>
+        The Infinispan Spring Integration project provides Spring
+        integration for Infinispan, a high performance distributed cache.
+        Its primary features are
+
+        * An implementation of org.springframework.cache.CacheManager,
+        Spring's central caching abstraction, backed by Infinispan's
+        EmbeddedCacheManager. To be used if your Spring-powered
+        application and Infinispan are colocated, i.e. running within
+        the same VM.
+        * An implementation of org.springframework.cache.CacheManager
+        backed by Infinispan's RemoteCacheManager. To bes used if your
+        Spring-powered application accesses Infinispan remotely, i.e.
+        over the network.
+        * An implementation of org.springframework.cache.CacheManager
+        backed by a CacheContainer reference. To be used if your Spring-
+        powered application needs access to a CacheContainer defined
+        outside the application (e.g. retrieved from JNDI)
+        * Spring namespace support allowing shortcut definitions for all the
+        components above
+
+        In addition, Infinispan Spring Integration offers various FactoryBeans
+        for facilitating creation of Infinispan core classes - Cache, CacheManager,
+        ... - within a Spring context.
+    </description>
+
+    <developers>
+        <developer>
+            <id>obergner</id>
+            <name>Olaf Bergner</name>
+            <email>olaf DOT bergner AT gmx DOT de</email>
+            <roles>
+                <role>Project Admin</role>
+                <role>Developer</role>
+            </roles>
+            <timezone>0</timezone>
+        </developer>
+        <developer>
+            <id>marius.bogoevici</id>
+            <name>Marius Bogoevici</name>
+            <email>marius.bogoevici AT gmail.com</email>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <timezone>-5</timezone>
+        </developer>
+    </developers>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${version.spring5}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${version.spring5}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${version.spring5}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context-support</artifactId>
+                <version>${version.spring5}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.session</groupId>
+                <artifactId>spring-session-core</artifactId>
+                <version>${version.spring5.session}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>${version.spring5}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-aop</artifactId>
+                <version>${versionx.org.springframework.spring5-aop}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-beans</artifactId>
+                <version>${versionx.org.springframework.spring5-beans}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${versionx.org.springframework.spring5-context}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context-support</artifactId>
+                <version>${versionx.org.springframework.spring5-context-support}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${versionx.org.springframework.spring5-core}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-expression</artifactId>
+                <version>${versionx.org.springframework.spring5-expression}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${versionx.org.springframework.spring5-jdbc}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${versionx.org.springframework.spring5-test}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-tx</artifactId>
+                <version>${versionx.org.springframework.spring5-tx}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>${versionx.org.springframework.spring5-web}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webmvc</artifactId>
+                <version>${versionx.org.springframework.spring5-webmvc}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.session</groupId>
+                <artifactId>spring-session-core</artifactId>
+                <version>${versionx.org.springframework.session.spring5-session}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
