@@ -735,8 +735,8 @@ public interface Log extends BasicLogger {
    void failedToRecoverClusterState(@Cause Throwable cause);
 
    @LogMessage(level = WARN)
-   @Message(value = "Error updating cluster member list", id = 197)
-   void errorUpdatingMembersList(@Cause Throwable cause);
+   @Message(value = "Error updating cluster member list for view %d, waiting for next view", id = 197)
+   void errorUpdatingMembersList(int viewId, @Cause Throwable cause);
 
    @LogMessage(level = INFO)
    @Message(value = "Unable to register MBeans for default cache", id = 198)

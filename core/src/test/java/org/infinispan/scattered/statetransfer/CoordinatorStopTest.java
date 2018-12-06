@@ -207,6 +207,8 @@ public class CoordinatorStopTest extends MultipleCacheManagersTest {
       oteBarrier.await(10, TimeUnit.SECONDS);
 
       assertEquals("value", future.get());
+      ((DelayedViewJGroupsTransport) transport1.getDelegate()).assertUnblocked();
+      ((DelayedViewJGroupsTransport) manager(2).getTransport()).assertUnblocked();
    }
 
    private void assertOwners(BlockedTopology t, boolean current, int segmentId, Address... address) {

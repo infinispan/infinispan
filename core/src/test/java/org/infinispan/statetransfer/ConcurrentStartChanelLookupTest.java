@@ -104,7 +104,7 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
    private EmbeddedCacheManager createCacheManager(String name1, JChannel ch1) {
       GlobalConfigurationBuilder gcb1 = new GlobalConfigurationBuilder();
       gcb1.transport().nodeName(ch1.getName()).distributedSyncTimeout(10, SECONDS);
-      CustomChannelLookup.registerChannel(gcb1, ch1, name1, false);
+      CustomChannelLookup.configureTransportWithChannel(gcb1, ch1, name1, false);
 
       ConfigurationBuilder replCfg = new ConfigurationBuilder();
       replCfg.clustering().cacheMode(CacheMode.REPL_SYNC);
