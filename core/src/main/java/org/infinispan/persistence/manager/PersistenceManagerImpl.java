@@ -25,7 +25,9 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -115,6 +117,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private final List<TransactionalCacheWriter> txWriters = new ArrayList<>();
    private final Semaphore publisherSemaphore = new Semaphore(Integer.MAX_VALUE);
    private final ReadWriteLock storesMutex = new ReentrantReadWriteLock();
+   private final Lock availabilityMutex = new ReentrantLock();
    @GuardedBy("storesMutex")
    private final Map<Object, StoreStatus> storeStatuses = new HashMap<>();
    private AdvancedPurgeListener<Object, Object> advancedListener;
@@ -167,25 +170,32 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    protected void pollStoreAvailability() {
-      storesMutex.writeLock().lock();
+      storesMutex.readLock().lock();
       try {
-         boolean availabilityChanged = false;
-         boolean failureDetected = false;
-         for (StoreStatus status : storeStatuses.values()) {
-            if (status.availabilityChanged())
-               availabilityChanged = true;
-            if (availabilityChanged && !status.availability && !failureDetected) {
-               failureDetected = true;
-               unavailableException = new StoreUnavailableException(String.format("Store %s is unavailable", status.store));
-               cacheNotifier.notifyPersistenceAvailabilityChanged(false);
+         // If the lock is not available, then it means that an availability check is in progress due to scheduled calls overlapping
+         if (availabilityMutex.tryLock()) {
+            try {
+               boolean availabilityChanged = false;
+               boolean failureDetected = false;
+               for (StoreStatus status : storeStatuses.values()) {
+                  if (status.availabilityChanged())
+                     availabilityChanged = true;
+                  if (availabilityChanged && !status.availability && !failureDetected) {
+                     failureDetected = true;
+                     unavailableException = new StoreUnavailableException(String.format("Store %s is unavailable", status.store));
+                     cacheNotifier.notifyPersistenceAvailabilityChanged(false);
+                  }
+               }
+               if (!failureDetected && availabilityChanged) {
+                  unavailableException = null;
+                  cacheNotifier.notifyPersistenceAvailabilityChanged(true);
+               }
+            } finally {
+               availabilityMutex.unlock();
             }
          }
-         if (!failureDetected && availabilityChanged) {
-            unavailableException = null;
-            cacheNotifier.notifyPersistenceAvailabilityChanged(true);
-         }
       } finally {
-         storesMutex.writeLock().unlock();
+         storesMutex.readLock().unlock();
       }
    }
 
