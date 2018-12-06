@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -26,6 +27,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
@@ -65,6 +67,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -74,8 +77,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
-
-import net.jcip.annotations.GuardedBy;
 
 /**
  * The {@code ClusterTopologyManager} implementation.
@@ -318,7 +319,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          if (clusterManagerStatus == ClusterManagerStatus.COORDINATOR) {
             // If we have recovered the cluster status, we rebalance the caches to include minor partitions
             // If we processed a regular view, we prune members that left.
-            updateCacheMembers(transport.getMembers());
+            updateCacheMembers(newViewId);
          }
       } catch (Throwable t) {
          log.viewHandlingError(newViewId, t);
@@ -500,29 +501,54 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       latch.await(getGlobalTimeout(), TimeUnit.MILLISECONDS);
    }
 
-   public void updateCacheMembers(List<Address> newClusterMembers) {
+   private void updateCacheMembers(int viewId) {
+      // Confirm that view's members are all available first, so in a network split scenario
+      // we can enter degraded mode without starting a rebalance first
+      // We don't really need to run on the view handling executor because ClusterCacheStatus
+      // has its own synchronization
+      confirmMembersAvailable().whenCompleteAsync((ignored, throwable) -> {
+         doUpdateCacheMembers(viewId, throwable);
+      }, viewHandlingExecutor);
+   }
+
+   private void doUpdateCacheMembers(int viewId, Throwable throwable) {
       try {
-         log.tracef("Updating cluster members for all the caches. New list is %s", newClusterMembers);
-         try {
-            // If we get a SuspectException here, it means we will have a new view soon and we can ignore this one.
-            confirmMembersAvailable();
-         } catch (SuspectException e) {
-            log.tracef("Node %s left while updating cache members", e.getSuspect());
+         if (throwable == null) {
+            int newViewId = transport.getViewId();
+            if (newViewId != viewId) {
+               log.debugf("Skipping cache members update for view %d, newer view received: %d", viewId, newViewId);
+               return;
+            }
+            for (ClusterCacheStatus cacheStatus : cacheStatusMap.values()) {
+               cacheStatus.doHandleClusterView(viewId);
+            }
+         } else if (throwable instanceof SuspectException) {
+            Address leaver = ((SuspectException) throwable).getSuspect();
+            log.debugf("Skipping cache members update for view %d, node %s left", viewId, leaver);
             return;
          }
-
-         for (ClusterCacheStatus cacheStatus : cacheStatusMap.values()) {
-            cacheStatus.doHandleClusterView();
-         }
-      } catch (Exception e) {
-         if (clusterManagerStatus.isRunning()) {
-            log.errorUpdatingMembersList(e);
-         }
+      } catch (Throwable t) {
+         throwable = t;
+      }
+      if (clusterManagerStatus.isRunning()) {
+         log.errorUpdatingMembersList(viewId, throwable);
       }
    }
 
-   private void confirmMembersAvailable() throws Exception {
-      transport.invokeRemotely(null, HeartBeatCommand.INSTANCE, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), null, DeliverOrder.NONE, false);
+   private CompletionStage<Void> confirmMembersAvailable() {
+      try {
+         Set<Address> expectedMembers = new HashSet<>();
+         for (ClusterCacheStatus cacheStatus : cacheStatusMap.values()) {
+            expectedMembers.addAll(cacheStatus.getExpectedMembers());
+         }
+         expectedMembers.retainAll(transport.getMembers());
+         return transport.invokeCommandOnAll(expectedMembers, HeartBeatCommand.INSTANCE,
+                                             VoidResponseCollector.validOnly(),
+                                             DeliverOrder.NONE, getGlobalTimeout() / CLUSTER_RECOVERY_ATTEMPTS,
+                                             TimeUnit.MILLISECONDS);
+      } catch (Exception e) {
+         return CompletableFutures.completedExceptionFuture(e);
+      }
    }
 
    /**

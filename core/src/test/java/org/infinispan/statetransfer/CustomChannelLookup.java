@@ -20,8 +20,8 @@ public class CustomChannelLookup implements JGroupsChannelLookup {
    private static final Map<String, JChannel> channelMap = CollectionFactory.makeConcurrentMap();
    private boolean connect;
 
-   public static void registerChannel(GlobalConfigurationBuilder gcb, JChannel channel, String nodeName,
-         boolean connect) {
+   public static void configureTransportWithChannel(GlobalConfigurationBuilder gcb, JChannel channel, String nodeName,
+                                                    boolean connect) {
       TransportConfigurationBuilder tcb = gcb.transport();
       tcb.defaultTransport();
       tcb.addProperty(JGroupsTransport.CHANNEL_LOOKUP, CustomChannelLookup.class.getName());
