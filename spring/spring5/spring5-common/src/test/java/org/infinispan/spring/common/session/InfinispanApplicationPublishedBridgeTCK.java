@@ -44,10 +44,15 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       //when
       MapSession sessionToBeDeleted = sessionRepository.createSession();
       MapSession sessionToBeExpired = sessionRepository.createSession();
-      sessionToBeExpired.setMaxInactiveInterval(Duration.ofSeconds(1));
+      sessionToBeExpired.setMaxInactiveInterval(Duration.ofSeconds(2));
 
       sessionRepository.save(sessionToBeExpired);
       sessionRepository.save(sessionToBeDeleted);
+
+      sleepOneSecond();
+
+      EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionCreatedEvent.class, 2, 2, TimeUnit.SECONDS);
+
       sessionRepository.deleteById(sessionToBeDeleted.getId());
 
       sleepOneSecond();
@@ -56,7 +61,6 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       //then
       assertNull(springCache.get(sessionToBeExpired.getId()));
       assertNull(springCache.get(sessionToBeDeleted.getId()));
-      EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionCreatedEvent.class, 2, 2, TimeUnit.SECONDS);
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDeletedEvent.class, 1, 2, TimeUnit.SECONDS);
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDestroyedEvent.class, 1, 10, TimeUnit.SECONDS);
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionExpiredEvent.class, 1, 2, TimeUnit.SECONDS);
