@@ -76,7 +76,7 @@
         <!-- Java source/target version -->
         <version.java>1.8</version.java>
 
-        <versionx.org.infinispan.infinispan-management-console>9.4.0.Final</versionx.org.infinispan.infinispan-management-console>
+        <versionx.org.infinispan.infinispan-management-console>10.0.0.Alpha2</versionx.org.infinispan.infinispan-management-console>
         <versionx.org.jboss.spec.javax.transaction.jboss-transaction-api_1.2_spec>1.1.1.Final</versionx.org.jboss.spec.javax.transaction.jboss-transaction-api_1.2_spec>
         <versionx.javax.cache.cache-api>${version.javax.cache}</versionx.javax.cache.cache-api>
     </properties>
