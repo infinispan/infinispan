@@ -69,7 +69,7 @@ class MockLocalTopologyManager implements LocalTopologyManager {
    }
 
    @Override
-   public void leave(String cacheName) {
+   public void leave(String cacheName, long timeout) {
       throw new UnsupportedOperationException();
    }
 

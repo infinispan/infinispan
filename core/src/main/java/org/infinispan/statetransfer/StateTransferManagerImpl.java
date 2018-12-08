@@ -251,7 +251,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          log.tracef("Shutting down StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
       initialStateTransferComplete.countDown();
-      localTopologyManager.leave(cacheName);
+      localTopologyManager.leave(cacheName, configuration.clustering().remoteTimeout());
    }
 
    @Override

@@ -185,14 +185,14 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    @Override
-   public void leave(String cacheName) {
+   public void leave(String cacheName, long timeout) {
       log.debugf("Node %s leaving cache %s", transport.getAddress(), cacheName);
       LocalCacheStatus cacheStatus = runningCaches.remove(cacheName);
 
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.LEAVE, transport.getAddress(), transport.getViewId());
       try {
-         executeOnCoordinator(command, cacheStatus.getJoinInfo().getTimeout());
+         executeOnCoordinator(command, timeout);
       } catch (Exception e) {
          log.debugf(e, "Error sending the leave request for cache %s to coordinator", cacheName);
       }
