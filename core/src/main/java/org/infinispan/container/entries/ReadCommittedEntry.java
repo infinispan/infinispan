@@ -29,7 +29,7 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    protected Object key;
    protected Object value;
-   protected long created, lastUsed;
+   protected long created = -1, lastUsed = -1;
    protected short flags = 0;
    protected Metadata metadata;
 
@@ -142,7 +142,7 @@ public class ReadCommittedEntry implements MVCCEntry {
          } else if (isRemoved()) {
             container.remove(segment, key);
          } else if (value != null) {
-            container.put(segment, key, value, metadata);
+            container.put(segment, key, value, metadata, created, lastUsed);
          }
       }
    }

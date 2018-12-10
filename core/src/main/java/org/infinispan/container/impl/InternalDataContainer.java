@@ -47,12 +47,19 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
    /**
     * Same as {@link DataContainer#put(Object, Object, Metadata)} except that the segment of the key can provided to
     * write/lookup entries without calculating the segment for the given key.
+    *
+    * <p>Note: The timestamps ignored if the entry already exists in the data container.</p>
+    *
     * @param segment segment for the key
     * @param k key under which to store entry
     * @param v value to store
     * @param metadata metadata of the entry
+    * @param createdTimestamp creation timestamp, or {@code -1} to use the current time
+    * @param lastUseTimestamp last use timestamp, or {@code -1} to use the current time
+    *
+    * @since 10.0
     */
-   void put(int segment, K k, V v, Metadata metadata);
+   void put(int segment, K k, V v, Metadata metadata, long createdTimestamp, long lastUseTimestamp);
 
    /**
     * Same as {@link DataContainer#containsKey(Object)}  except that the segment of the key can provided to

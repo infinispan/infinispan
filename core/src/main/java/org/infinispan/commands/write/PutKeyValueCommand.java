@@ -11,6 +11,7 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -91,13 +92,24 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          throw new IllegalStateException("Not wrapped");
       }
 
+      Object newValue;
+      if (!hasAllFlags(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.CACHE_MODE_LOCAL)) {
+         newValue = value;
+      } else {
+         // [Scattered]StateConsumerImpl guarantees the value is actually an entry
+         InternalCacheEntry ice = (InternalCacheEntry) value;
+         e.setCreated(ice.getCreated());
+         e.setLastUsed(ice.getLastUsed());
+         newValue = ice.getValue();
+      }
+
       Object prevValue = e.getValue();
-      if (!valueMatcher.matches(prevValue, null, value)) {
+      if (!valueMatcher.matches(prevValue, null, newValue)) {
          successful = false;
          return prevValue;
       }
 
-      return performPut(e, ctx);
+      return performPut(e, ctx, newValue);
    }
 
    @Override
@@ -217,7 +229,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       return isConditional() || super.isReturnValueExpected();
    }
 
-   private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx) {
+   private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx, Object newValue) {
       Object entryValue = e.getValue();
       Object o;
 
@@ -230,7 +242,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          }
       }
 
-      o = e.setValue(value);
+      o = e.setValue(newValue);
       Metadatas.updateMetadata(e, metadata);
       if (e.isRemoved()) {
          e.setCreated(true);

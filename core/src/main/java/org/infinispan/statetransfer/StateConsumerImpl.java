@@ -641,7 +641,8 @@ public class StateConsumerImpl implements StateConsumer {
                ctx = icf.createSingleKeyNonTxInvocationContext();
             }
 
-            PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), segmentId,
+            // CallInterceptor knows PUT_FOR_STATE_TRANSFER values are actually InternalCacheEntries
+            PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e, segmentId,
                   e.getMetadata(), STATE_TRANSFER_FLAGS);
             ctx.setLockOwner(put.getKeyLockOwner());
             interceptorChain.invoke(ctx, put);

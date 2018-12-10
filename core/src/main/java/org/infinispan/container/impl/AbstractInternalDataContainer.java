@@ -112,7 +112,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    }
 
    @Override
-   public void put(int segment, K k, V v, Metadata metadata) {
+   public void put(int segment, K k, V v, Metadata metadata, long createdTimestamp, long lastUseTimestamp) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
       if (entries != null) {
          boolean l1Entry = false;
@@ -132,7 +132,13 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
             copy = entryFactory.update(e, v, metadata);
          } else {
             // this is a brand-new entry
-            copy = entryFactory.create(k, v, metadata);
+            // -1 signals the timestamps should be ignored
+            if (createdTimestamp == -1 && lastUseTimestamp == -1) {
+               copy = entryFactory.create(k, v, metadata);
+            } else {
+               copy = entryFactory.create(k, v, metadata, createdTimestamp, metadata.lifespan(),
+                                          lastUseTimestamp, metadata.maxIdle());
+            }
          }
 
          if (trace)
@@ -150,7 +156,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    @Override
    public void put(K k, V v, Metadata metadata) {
-      put(getSegmentForKey(k), k, v, metadata);
+      put(getSegmentForKey(k), k, v, metadata, -1, -1);
    }
 
    @Override
