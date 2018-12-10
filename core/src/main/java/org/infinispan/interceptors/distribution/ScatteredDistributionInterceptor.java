@@ -714,6 +714,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             Metadata entryMetadata = command.getMetadata() == null ? value.getMetadata()
                : command.getMetadata().builder().version(value.getMetadata().version()).build();
             cacheEntry.setMetadata(entryMetadata);
+            cacheEntry.setCreated(value.getCreated());
+            cacheEntry.setLastUsed(value.getLastUsed());
             valueMap.put(key, value.getValue());
          }
          command.setMap(valueMap);

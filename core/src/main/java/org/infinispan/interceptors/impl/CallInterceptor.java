@@ -168,7 +168,16 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          throw new IllegalStateException("Not wrapped");
       }
 
-      Object newValue = command.getValue();
+      Object newValue;
+      if (!command.hasAllFlags(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.CACHE_MODE_LOCAL)) {
+         newValue = command.getValue();
+      } else {
+         // [Scattered]StateConsumerImpl guarantees the value is actually an entry
+         InternalCacheEntry ice = (InternalCacheEntry) command.getValue();
+         e.setCreated(ice.getCreated());
+         e.setLastUsed(ice.getLastUsed());
+         newValue = ice.getValue();
+      }
       Object prevValue = e.getValue();
       if (!valueMatcher.matches(prevValue, null, newValue)) {
          command.fail();
