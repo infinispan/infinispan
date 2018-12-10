@@ -3,13 +3,13 @@
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
-        <version>9.4.4-SNAPSHOT</version>
+        <version>9.4.5-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>infinispan-protocol-parser-generator-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-    <version>9.4.4-SNAPSHOT</version>
+    <version>9.4.5-SNAPSHOT</version>
     <name>Protocol Parser Generator Maven Plugin</name>
     <description>Generates an io.netty.handler.codec.ByteToMessageDecoder based on a grammar</description>
 
