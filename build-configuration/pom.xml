@@ -108,6 +108,7 @@
       <appserver.version>14.0.1.Final</appserver.version>
 
       <!-- === Component Versions === -->
+      <version.component.console>10.0.0.Alpha2</version.component.console>
       <!-- this can't be project.version otherwise it can't be consumed in other projects -->
       <!-- you can use 'mvn versions:set-property -Dproperty=version.component.infinispan -DnewVersion=<version>' to update it when change the version -->
       <version.component.infinispan>10.0.0-SNAPSHOT</version.component.infinispan>
