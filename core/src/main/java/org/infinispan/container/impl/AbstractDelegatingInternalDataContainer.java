@@ -28,8 +28,8 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> extends Abst
    }
 
    @Override
-   public void put(int segment, K k, V v, Metadata metadata) {
-      delegate().put(segment, k, v, metadata);
+   public void put(int segment, K k, V v, Metadata metadata, long createdTimestamp, long lastUseTimestamp) {
+      delegate().put(segment, k, v, metadata, createdTimestamp, lastUseTimestamp);
    }
 
    @Override

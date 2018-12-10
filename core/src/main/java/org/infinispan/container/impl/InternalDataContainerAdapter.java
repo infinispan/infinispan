@@ -55,7 +55,7 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
    }
 
    @Override
-   public void put(int segment, K k, V v, Metadata metadata) {
+   public void put(int segment, K k, V v, Metadata metadata, long createdTimestamp, long lastUseTimestamp) {
       put(k, v, metadata);
    }
 

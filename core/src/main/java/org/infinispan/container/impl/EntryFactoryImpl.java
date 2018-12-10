@@ -264,8 +264,8 @@ public class EntryFactoryImpl implements EntryFactory {
       }
 
       if (trace) log.tracef("Creating new entry for key %s", toStr(key));
+      MVCCEntry mvccEntry;
       if (useRepeatableRead) {
-         MVCCEntry mvccEntry;
          if (useVersioning) {
             if (metadata == null) {
                metadata = new EmbeddedMetadata.Builder().version(versionGenerator.nonExistingVersion()).build();
@@ -274,9 +274,13 @@ public class EntryFactoryImpl implements EntryFactory {
          } else {
             mvccEntry = new RepeatableReadEntry(key, value, metadata);
          }
-         return mvccEntry;
       } else {
-         return new ReadCommittedEntry(key, value, metadata);
+         mvccEntry = new ReadCommittedEntry(key, value, metadata);
       }
+      if (cacheEntry != null) {
+         mvccEntry.setCreated(cacheEntry.getCreated());
+         mvccEntry.setLastUsed(cacheEntry.getLastUsed());
+      }
+      return mvccEntry;
    }
 }

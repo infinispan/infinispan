@@ -508,7 +508,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             // the GetAllCommand. We'll just avoid NPEs here: data is lost as > 1 nodes have left.
             continue;
          }
-         PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(key, icv.getValue(),
+         PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(key, icv.toInternalCacheEntry(key),
                keyPartitioner.getSegment(key), icv.getMetadata(), STATE_TRANSFER_FLAGS);
          try {
             interceptorChain.invoke(icf.createSingleKeyNonTxInvocationContext(), put);
