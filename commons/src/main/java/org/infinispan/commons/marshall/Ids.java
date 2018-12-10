@@ -203,6 +203,9 @@ public interface Ids {
 
    int KEY_VALUE_FILTER_CONVERTER_AS_CACHE_EVENT_FILTER_CONVERTER = 139;
 
+   int SIMPLE_PUBLISHER_RESULT = 140;
+   int PUBLISHER_REDUCERS = 141;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

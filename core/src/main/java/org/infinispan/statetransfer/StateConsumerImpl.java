@@ -67,6 +67,7 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -131,6 +132,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject protected DistributionManager distributionManager;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject private InternalConflictManager conflictManager;
+   @Inject private LocalPublisherManager<Object, Object> localPublisherManager;
 
    protected String cacheName;
    protected long timeout;
@@ -966,6 +968,9 @@ public class StateConsumerImpl implements StateConsumer {
 
       // Keys that we used to own, and need to be removed from the data container AND the cache stores
       final ConcurrentHashSet<Object> keysToRemove = new ConcurrentHashSet<>();
+
+      // This has to be invoked before removing the segments on the data container
+      localPublisherManager.segmentsLost(removedSegments);
 
       dataContainer.removeSegments(removedSegments);
 

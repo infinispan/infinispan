@@ -2,6 +2,7 @@ package org.infinispan.test;
 
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -19,6 +20,9 @@ import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.Stubber;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * Utility methods for dealing with Mockito mocks.
@@ -118,6 +122,23 @@ public class Mocks {
    }
 
    /**
+    * Spies on the given object, but allows the caller to block on any method defined in the <b>mockStubConsumer</b>.
+    * Please see {@link #blockingMock(CheckPoint, Class, Cache, BiConsumer)} for more information on how the blocking
+    * works.
+    * @param checkPoint the check point to use to control blocking
+    * @param objectToSpy the spied object
+    * @param mockStubConsumer the consumer to invoke the method on the stubber and the actual mock
+    * @param <Mock> type of the spied object
+    * @return the new spy mock that will delegate all calls to the original object
+    */
+   public static <Mock> Mock blockingSpy(final CheckPoint checkPoint, Mock objectToSpy,
+         BiConsumer<? super Stubber, ? super Mock> mockStubConsumer) {
+      Mock mock = spy(objectToSpy);
+      mockStubConsumer.accept(doAnswer(blockingAnswer(AdditionalAnswers.delegatesTo(objectToSpy), checkPoint)), mock);
+      return mock;
+   }
+
+   /**
     * Allows for decorating an existing answer to apply before and after invocation and release checkpoints as
     * described in {@link Mocks#blockingMock(CheckPoint, Class, Cache, BiConsumer)}.
     * @param answer the answer to decorate with a blocking one
@@ -166,5 +187,17 @@ public class Mocks {
             }
          });
       };
+   }
+
+   public static <E> Publisher<E> blockingPublisher(Publisher<E> publisher, CheckPoint checkPoint) {
+      return Flowable.fromPublisher(publisher)
+            .doOnSubscribe(s -> {
+               checkPoint.trigger(BEFORE_INVOCATION);
+               assertTrue(checkPoint.await(BEFORE_RELEASE, 20, TimeUnit.SECONDS));
+            })
+            .doOnComplete(() -> {
+               checkPoint.trigger(AFTER_INVOCATION);
+               assertTrue(checkPoint.await(AFTER_RELEASE, 20, TimeUnit.SECONDS));
+            });
    }
 }

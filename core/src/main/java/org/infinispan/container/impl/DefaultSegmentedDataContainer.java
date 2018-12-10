@@ -27,6 +27,9 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * DataContainer implementation that internally stores entries in an array of maps. This array is indexed by
@@ -46,6 +49,8 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    protected final Supplier<ConcurrentMap<K, InternalCacheEntry<K, V>>> mapSupplier;
    protected boolean shouldStopSegments;
 
+   protected io.reactivex.functions.Predicate<InternalCacheEntry<K, V>> notExpiredPredicate;
+
 
    public DefaultSegmentedDataContainer(Supplier<ConcurrentMap<K, InternalCacheEntry<K, V>>> mapSupplier, int numSegments) {
       maps = new AtomicReferenceArray<>(numSegments);
@@ -63,6 +68,10 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       // Distributed is the only mode that allows for dynamic addition/removal of maps as others own all segments
       // in some fashion
       shouldStopSegments = configuration.clustering().cacheMode().isDistributed();
+
+      notExpiredPredicate = ice ->
+            // TODO: should we optimize wallClockTime per entry invocation?
+            !ice.canExpire() || !ice.isExpired(timeService.wallClockTime());
    }
 
    // Priority has to be higher than the clear priority - which is currently 999
@@ -81,6 +90,15 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    @Override
    public ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
       return maps.get(segment);
+   }
+
+   @Override
+   public Publisher<InternalCacheEntry<K, V>> publisher(int segment) {
+      ConcurrentMap<K, InternalCacheEntry<K, V>> mapForSegment = maps.get(segment);
+      if (mapForSegment == null) {
+         return Flowable.empty();
+      }
+      return Flowable.fromIterable(mapForSegment.values()).filter(notExpiredPredicate);
    }
 
    @Override

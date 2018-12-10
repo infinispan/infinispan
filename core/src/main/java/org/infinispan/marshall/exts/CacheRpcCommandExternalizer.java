@@ -42,6 +42,7 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.reactive.publisher.impl.PublisherRequestCommand;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.stream.impl.StreamIteratorCloseCommand;
@@ -97,7 +98,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                InvalidateVersionsCommand.class, StreamIteratorRequestCommand.class,
                StreamIteratorNextCommand.class, StreamIteratorCloseCommand.class,
                RevokeBiasCommand.class, RenewBiasCommand.class, RetrieveLastAccessCommand.class,
-               UpdateLastAccessCommand.class);
+               UpdateLastAccessCommand.class, PublisherRequestCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

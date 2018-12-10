@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -74,6 +75,7 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -82,6 +84,8 @@ import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.PublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -98,6 +102,7 @@ import org.infinispan.xsite.XSiteAdminCommand;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
+import org.reactivestreams.Publisher;
 
 /**
  * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
@@ -602,4 +607,14 @@ public interface CommandsFactory {
    MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand();
 
    MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand();
+
+   <K, R> PublisherRequestCommand<K> buildKeyPublisherCommand(boolean parallelStream, DeliveryGuarantee deliveryGuarantee,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
+         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
+
+   <K, V, R> PublisherRequestCommand<K> buildEntryPublisherCommand(boolean parallelStream, DeliveryGuarantee deliveryGuarantee,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
+         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 }

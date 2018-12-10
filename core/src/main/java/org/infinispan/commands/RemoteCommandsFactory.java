@@ -67,6 +67,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.impl.ReplicableManagerFunctionCommand;
 import org.infinispan.manager.impl.ReplicableRunnableCommand;
+import org.infinispan.reactive.publisher.impl.PublisherRequestCommand;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.stream.impl.StreamIteratorCloseCommand;
@@ -357,6 +358,9 @@ public class RemoteCommandsFactory {
                break;
             case UpdateLastAccessCommand.COMMAND_ID:
                command = new UpdateLastAccessCommand(cacheName);
+               break;
+            case PublisherRequestCommand.COMMAND_ID:
+               command = new PublisherRequestCommand<>(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
