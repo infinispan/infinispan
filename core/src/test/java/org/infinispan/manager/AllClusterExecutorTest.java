@@ -386,7 +386,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
-            ScheduledExecutorService stpe = Mockito.mock(ScheduledExecutorService.class);
+            ScheduledExecutorService stpe = Mockito.mock(ScheduledExecutorService.class, Mockito.RETURNS_DEEP_STUBS);
 
             for (EmbeddedCacheManager cm : cms) {
                TestingUtil.replaceComponent(cm, ScheduledExecutorService.class,
