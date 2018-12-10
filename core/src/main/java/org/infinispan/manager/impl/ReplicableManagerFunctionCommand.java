@@ -16,18 +16,18 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @author wburns
  * @since 8.2
  */
-public class ReplicableCommandManagerFunction implements ReplicableCommand {
+public class ReplicableManagerFunctionCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 60;
 
    private Function<? super EmbeddedCacheManager, ?> function;
    @Inject private EmbeddedCacheManager manager;
 
-   public ReplicableCommandManagerFunction() {
+   public ReplicableManagerFunctionCommand() {
 
    }
 
-   public ReplicableCommandManagerFunction(Function<? super EmbeddedCacheManager, ?> function) {
+   public ReplicableManagerFunctionCommand(Function<? super EmbeddedCacheManager, ?> function) {
       this.function = function;
    }
 

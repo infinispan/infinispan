@@ -96,7 +96,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
             log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
          }
          remoteFuture = new CompletableFuture<>();
-         ReplicableCommand command = new ReplicableCommandRunnable(runnable);
+         ReplicableCommand command = new ReplicableRunnableCommand(runnable);
          CompletionStage<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
          request.handle((r, t) -> {
             if (t != null) {
@@ -110,7 +110,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
          });
       } else if (size > 1) {
          remoteFuture = new CompletableFuture<>();
-         ReplicableCommand command = new ReplicableCommandRunnable(runnable);
+         ReplicableCommand command = new ReplicableRunnableCommand(runnable);
          ResponseCollector<Map<Address, Response>> collector = new PassthroughMapResponseCollector(targets.size());
          CompletionStage<Map<Address, Response>> request = transport.invokeCommand(targets, command, collector, DeliverOrder.NONE, time, unit);
          request.handle((r, t) -> {
@@ -178,7 +178,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
             if (isTrace) {
                log.tracef("Submitting consumer to single remote node - JGroups Address %s", target);
             }
-            ReplicableCommand command = new ReplicableCommandManagerFunction(function);
+            ReplicableCommand command = new ReplicableManagerFunctionCommand(function);
             CompletionStage<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
             futures[i] = request.toCompletableFuture().whenComplete((r, t) -> {
                if (t != null) {

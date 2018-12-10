@@ -65,8 +65,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.manager.impl.ReplicableCommandManagerFunction;
-import org.infinispan.manager.impl.ReplicableCommandRunnable;
+import org.infinispan.manager.impl.ReplicableManagerFunctionCommand;
+import org.infinispan.manager.impl.ReplicableRunnableCommand;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.stream.impl.StreamIteratorCloseCommand;
@@ -183,11 +183,11 @@ public class RemoteCommandsFactory {
             case RemoveExpiredCommand.COMMAND_ID:
                command = new RemoveExpiredCommand();
                break;
-            case ReplicableCommandRunnable.COMMAND_ID:
-               command = new ReplicableCommandRunnable();
+            case ReplicableRunnableCommand.COMMAND_ID:
+               command = new ReplicableRunnableCommand();
                break;
-            case ReplicableCommandManagerFunction.COMMAND_ID:
-               command = new ReplicableCommandManagerFunction();
+            case ReplicableManagerFunctionCommand.COMMAND_ID:
+               command = new ReplicableManagerFunctionCommand();
                break;
             case ReadOnlyKeyCommand.COMMAND_ID:
                command = new ReadOnlyKeyCommand();

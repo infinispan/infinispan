@@ -14,17 +14,17 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author wburns
  * @since 8.2
  */
-public class ReplicableCommandRunnable implements ReplicableCommand {
+public class ReplicableRunnableCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 59;
 
    private Runnable runnable;
 
-   public ReplicableCommandRunnable() {
+   public ReplicableRunnableCommand() {
 
    }
 
-   public ReplicableCommandRunnable(Runnable runnable) {
+   public ReplicableRunnableCommand(Runnable runnable) {
       this.runnable = runnable;
    }
 
