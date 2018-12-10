@@ -108,6 +108,7 @@
       <appserver.version>14.0.1.Final</appserver.version>
 
       <!-- === Component Versions === -->
+      <version.component.console>9.4.1.Final</version.component.console>
       <version.component.infinispan>${project.version}</version.component.infinispan>
       <version.component.jsclient>0.5.0-SNAPSHOT</version.component.jsclient>
       <version.component.spark16><!-- N/A --></version.component.spark16>
