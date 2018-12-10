@@ -97,8 +97,8 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
    }
 
    @Override
-   public void put(int segment, WrappedBytes wrappedBytes, WrappedBytes wrappedBytes2, Metadata metadata) {
-      super.put(segment, wrappedBytes, wrappedBytes2, metadata);
+   public void put(int segment, WrappedBytes key, WrappedBytes value, Metadata metadata, long createdTimestamp, long lastUseTimestamp) {
+      super.put(segment, key, value, metadata, createdTimestamp, lastUseTimestamp);
       // The following is called outside of the write lock specifically - since we may not have to evict and even
       // if we did it would quite possibly need a different lock
       ensureSize();

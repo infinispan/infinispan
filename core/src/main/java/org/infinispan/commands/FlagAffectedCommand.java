@@ -98,4 +98,13 @@ public interface FlagAffectedCommand extends VisitableCommand {
    default boolean hasAnyFlag(long flagsBitSet) {
       return EnumUtil.containsAny(getFlagsBitSet(), flagsBitSet);
    }
+
+   /**
+    * Check whether all of the flags in the {@code flagsBitSet} parameter are present in the command.
+    *
+    * Should be used with the constants in {@link FlagBitSets}.
+    */
+   default boolean hasAllFlags(long flagBitSet) {
+      return EnumUtil.containsAll(getFlagsBitSet(), flagBitSet);
+   }
 }

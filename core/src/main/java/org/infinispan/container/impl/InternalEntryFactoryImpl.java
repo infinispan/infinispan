@@ -59,8 +59,15 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
    @Override
    public InternalCacheEntry create(CacheEntry cacheEntry) {
-      return create(cacheEntry.getKey(), cacheEntry.getValue(),
-            cacheEntry.getMetadata(), cacheEntry.getLifespan(), cacheEntry.getMaxIdle());
+      // -1 signals the timestamps should be ignored
+      if (cacheEntry.getCreated() == -1 && cacheEntry.getLastUsed() == -1) {
+         return create(cacheEntry.getKey(), cacheEntry.getValue(),
+                       cacheEntry.getMetadata(), cacheEntry.getLifespan(), cacheEntry.getMaxIdle());
+      } else {
+         return create(cacheEntry.getKey(), cacheEntry.getValue(), cacheEntry.getMetadata(),
+                       cacheEntry.getCreated(), cacheEntry.getLifespan(),
+                       cacheEntry.getLastUsed(), cacheEntry.getMaxIdle());
+      }
    }
 
    @Override
@@ -112,14 +119,23 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
       long maxIdle = cacheEntry.getMaxIdle();
       if (!isStoreMetadata(metadata, null)) {
          if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheValue(cacheEntry.getValue());
-         if (lifespan > -1 && maxIdle < 0) return new MortalCacheValue(cacheEntry.getValue(), -1, lifespan);
-         if (lifespan < 0 && maxIdle > -1) return new TransientCacheValue(cacheEntry.getValue(), maxIdle, -1);
-         return new TransientMortalCacheValue(cacheEntry.getValue(), -1, lifespan, maxIdle, -1);
+         if (lifespan > -1 && maxIdle < 0)
+            return new MortalCacheValue(cacheEntry.getValue(), cacheEntry.getCreated(), lifespan);
+         if (lifespan < 0 && maxIdle > -1)
+            return new TransientCacheValue(cacheEntry.getValue(), maxIdle, cacheEntry.getLastUsed());
+         return new TransientMortalCacheValue(cacheEntry.getValue(), cacheEntry.getCreated(), lifespan, maxIdle,
+                                              cacheEntry.getLastUsed());
       } else {
-         if (lifespan < 0 && maxIdle < 0) return new MetadataImmortalCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata());
-         if (lifespan > -1 && maxIdle < 0) return new MetadataMortalCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata(), -1);
-         if (lifespan < 0 && maxIdle > -1) return new MetadataTransientCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata(), -1);
-         return new MetadataTransientMortalCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata(), -1, -1);
+         if (lifespan < 0 && maxIdle < 0) return new MetadataImmortalCacheValue(cacheEntry.getValue(),
+                                                                                cacheEntry.getMetadata());
+         if (lifespan > -1 && maxIdle < 0)
+            return new MetadataMortalCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata(),
+                                                cacheEntry.getCreated());
+         if (lifespan < 0 && maxIdle > -1)
+            return new MetadataTransientCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata(),
+                                                   cacheEntry.getLastUsed());
+         return new MetadataTransientMortalCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata(),
+                                                      cacheEntry.getCreated(), cacheEntry.getLastUsed());
       }
    }
 

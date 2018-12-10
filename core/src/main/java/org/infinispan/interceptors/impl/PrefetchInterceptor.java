@@ -282,7 +282,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       // from the main comman d correct.
       entryFactory.wrapExternalEntry(ctx, dataCommand.getKey(), maxValue.toInternalCacheEntry(dataCommand.getKey()), true, true);
       PutKeyValueCommand putKeyValueCommand = commandsFactory.buildPutKeyValueCommand(
-            dataCommand.getKey(), maxValue.getValue(), dataCommand.getSegment(), maxValue.getMetadata(), STATE_TRANSFER_FLAGS);
+            dataCommand.getKey(), maxValue.toInternalCacheEntry(dataCommand.getKey()), dataCommand.getSegment(), maxValue.getMetadata(), STATE_TRANSFER_FLAGS);
       putKeyValueCommand.setTopologyId(dataCommand.getTopologyId());
       return invokeNext(ctx, putKeyValueCommand);
    }
