@@ -6,9 +6,13 @@ import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.metadata.Metadata;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * Interface describing methods of a data container where operations can be indexed by the segment of the key
@@ -161,6 +165,10 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     * @return iterator that returns all entries mapped to the given segments that could be expired
     */
    Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired(IntSet segments);
+
+   default Publisher<InternalCacheEntry<K, V>> publisher(int segment) {
+      return Flowable.fromIterable(() -> iterator(IntSets.immutableSet(segment)));
+   }
 
    /**
     * Performs the given action for each element of the container that maps to the given set of segments

@@ -68,6 +68,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.container.entries.CacheEntry;
@@ -105,6 +106,12 @@ import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.UserRaisedFunctionalException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
+import org.infinispan.reactive.RxJavaInterop;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
+import io.reactivex.internal.functions.Functions;
 
 /**
  * Always at the end of the chain, directly in front of the cache. Simply calls into the cache using reflection. If the
@@ -1092,6 +1099,19 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       public CacheStream<CacheEntry<K, V>> parallelStream() {
          return doStream(true);
       }
+
+      @Override
+      public Publisher<CacheEntry<K, V>> localPublisher(int segment) {
+         // Cast is required since nested generic can't handle sub types properly
+         return (Publisher) dataContainer.publisher(segment);
+
+      }
+
+      @Override
+      public Publisher<CacheEntry<K, V>> localPublisher(IntSet segments) {
+         return new FlowableFromIntSetFunction<>(segments, dataContainer::publisher)
+               .flatMap(Functions.identity());
+      }
    }
 
    private static class BackingKeySet<K, V> extends AbstractCollection<K> implements CacheSet<K> {
@@ -1150,6 +1170,20 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       @Override
       public CacheStream<K> parallelStream() {
          return doStream(true);
+      }
+
+      @Override
+      public Publisher<K> localPublisher(int segment) {
+         return Flowable.fromPublisher(dataContainer.publisher(segment))
+               .map(RxJavaInterop.entryToKeyFunction());
+
+      }
+
+      @Override
+      public Publisher<K> localPublisher(IntSet segments) {
+         return new FlowableFromIntSetFunction<>(segments, dataContainer::publisher)
+               .flatMap(Functions.identity())
+               .map(RxJavaInterop.entryToKeyFunction());
       }
    }
 

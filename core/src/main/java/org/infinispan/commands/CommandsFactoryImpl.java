@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -93,6 +94,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.StateReceiver;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.VersionGenerator;
@@ -119,6 +121,9 @@ import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
+import org.infinispan.reactive.publisher.impl.PublisherRequestCommand;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.scattered.BiasManager;
@@ -155,6 +160,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateProvider;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
+import org.reactivestreams.Publisher;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -188,6 +194,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Inject private ComponentRef<XSiteStateTransferManager> xSiteStateTransferManager;
    @Inject private GroupManager groupManager;
    @Inject private ComponentRef<LocalStreamManager> localStreamManager;
+   @Inject private ComponentRef<LocalPublisherManager> localPublisherManager;
    @Inject private IteratorHandler iteratorHandler;
    @Inject private ComponentRef<ClusterStreamManager> clusterStreamManager;
    @Inject private ClusteringDependentLogic clusteringDependentLogic;
@@ -527,6 +534,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
             InvalidateVersionsCommand invalidateVersionsCommand = (InvalidateVersionsCommand) c;
             invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager, stateTransferLock, distributionManager, biasManager.running());
             break;
+         case PublisherRequestCommand.COMMAND_ID:
+            PublisherRequestCommand publisherRequestCommand = (PublisherRequestCommand) c;
+            publisherRequestCommand.inject(localPublisherManager.running());
+            break;
 
          // === Functional commands ====
          case ReadOnlyKeyCommand.COMMAND_ID:
@@ -844,5 +855,23 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand() {
       return new MultiKeyFunctionalBackupWriteCommand(cacheName);
+   }
+
+   @Override
+   public <K, R> PublisherRequestCommand<K> buildKeyPublisherCommand(boolean parallelStream,
+         DeliveryGuarantee deliveryGuarantee, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
+         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+      return new PublisherRequestCommand<>(cacheName, parallelStream, deliveryGuarantee, segments, keys, excludedKeys,
+            includeLoader, false, transformer, finalizer);
+   }
+
+   @Override
+   public <K, V, R> PublisherRequestCommand<K> buildEntryPublisherCommand(boolean parallelStream,
+         DeliveryGuarantee deliveryGuarantee, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
+         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+      return new PublisherRequestCommand<>(cacheName, parallelStream, deliveryGuarantee, segments, keys, excludedKeys,
+            includeLoader, true, transformer, finalizer);
    }
 }

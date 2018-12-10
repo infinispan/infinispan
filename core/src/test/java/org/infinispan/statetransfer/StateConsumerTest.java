@@ -49,6 +49,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -153,6 +154,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       BlockingTaskAwareExecutorService remoteCommandsExecutor = mock(BlockingTaskAwareExecutorService.class);
       InternalConflictManager conflictManager = mock(InternalConflictManager.class);
       DistributionManager distributionManager = mock(DistributionManager.class);
+      LocalPublisherManager localPublisherManager = mock(LocalPublisherManager.class);
 
       when(persistenceManager.publishKeys(any(), any())).thenReturn(Flowable.empty());
 
@@ -200,7 +202,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
                          commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
                          totalOrderManager, TestingUtil.named(REMOTE_COMMAND_EXECUTOR, remoteCommandsExecutor),
                          new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0),
-                         new HashFunctionPartitioner(), conflictManager, distributionManager);
+                         new HashFunctionPartitioner(), conflictManager, distributionManager, localPublisherManager);
       stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();

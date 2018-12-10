@@ -142,6 +142,10 @@ public class MagicKey implements Serializable, ExternalPojo {
       return hashcode;
    }
 
+   public int getSegment() {
+      return segment;
+   }
+
    @Override
    public boolean equals (Object o) {
       if (this == o) return true;
