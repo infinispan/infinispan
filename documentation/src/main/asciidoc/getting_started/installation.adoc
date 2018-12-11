@@ -77,9 +77,9 @@ which will install all the features defined in that repository:
 
 This should get you started using {brandname} in library mode. To get additional
 functionality just install the corresponding features. For example to use the
-LevelDB cachestore install:
+RocksDB cachestore install:
 
- karaf@root()> feature:repo-add -i mvn:org.infinispan/infinispan-cachestore-leveldb/${version}/xml/features
+ karaf@root()> feature:repo-add -i mvn:org.infinispan/infinispan-cachestore-rocksdb/${version}/xml/features
 
 The URL for the feature repositories is constructed from the Maven artifact coordinates
 using the format:
@@ -96,7 +96,7 @@ Currently feature repositories are available for the following artifacts:
 * infinispan-core
 * infinispan-cachestore-jdbc
 * infinispan-cachestore-jpa
-* infinispan-cachestore-leveldb
+* infinispan-cachestore-rocksdb
 * infinispan-cachestore-remote
 * infinispan-client-hotrod
 

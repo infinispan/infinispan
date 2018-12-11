@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<features name="infinispan-cachestore-leveldb-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
-   <repository>mvn:org.infinispan/infinispan-cachestore-rocksdb/${project.version}/xml/features</repository>
-   <feature name="infinispan-cachestore-leveldb" version="${project.version}">
-      <feature version="${project.version}">infinispan-cachestore-rocksdb</feature>
-      <bundle>mvn:org.infinispan/infinispan-cachestore-leveldb/${project.version}</bundle>
-   </feature>
-</features>

@@ -100,11 +100,6 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-cachestore-leveldb</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-cachestore-remote</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>

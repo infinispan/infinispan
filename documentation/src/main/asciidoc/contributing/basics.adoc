@@ -258,7 +258,7 @@ The last thing to figure out is which id to give to the message. Each module tha
 |cli client|20001 - 21000
 |mongodb cache store|21001 - 22000
 |rest cache store|22001 - 23000
-|leveldb cache store|23001 - 24000
+|leveldb cache store|23001 - 24000 [unused]
 |couchbase cache store|24001 - 25000
 |redis cache store|25001 - 26000
 |extended statistics|25001 - 26000

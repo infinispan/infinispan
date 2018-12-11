@@ -16,6 +16,7 @@ getBulk methods have been removed in favor of them.
 === Persistence changes
 
 * The CLI loader (`infinispan-persistence-cli`) has been removed.
+* The LevelDB store (`infinispan-cachestore-leveldb`) has been removed. Use the RocksDB store instead, as it is fully backwards compatible.
 
 == Upgrading from 9.3 to 9.4
 
