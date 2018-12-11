@@ -441,7 +441,7 @@
                          purgeOnStartup="false" tcpNoDelay="true" pingOnStartup="true" balancingStrategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
                          transportFactory="org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory" keySizeEstimate="32" valueSizeEstimate="512"
                          forceReturnValues="false" connectTimeout="5000" hotRodWrapping="false" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller"
-                         protocolVersion="1.0" rawValues="true" remoteCacheName="test" socketTimeout="12500">
+                         protocolVersion="2.0" rawValues="true" remoteCacheName="test" socketTimeout="12500">
                 <servers>
                     <server host="127.0.0.1" port="19711" />
                 </servers>

@@ -59,7 +59,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
       KEYSET(RemoteCache::keySet) {
          @Override
          ProtocolVersion minimumVersionForIteration() {
-            return ProtocolVersion.PROTOCOL_VERSION_12;
+            return ProtocolVersion.PROTOCOL_VERSION_20;
          }
       },
       VALUES(RemoteCache::values) {
