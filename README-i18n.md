@@ -33,7 +33,7 @@ Infinispan logs fully support internationalization. The following is a list of m
     20001 - 21000    cli client
     21001 - 22000    mongodb cachestore
     22001 - 23000    rest cache store
-    23001 - 24000    leveldb cache store
+    23001 - 24000    leveldb cache store [unused]
     24001 - 25000    couchbase cache store
     25001 - 26000    extended statistics
     26001 - 27000    infinispan directory provider

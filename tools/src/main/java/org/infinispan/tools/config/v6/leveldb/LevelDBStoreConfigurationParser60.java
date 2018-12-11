@@ -9,9 +9,8 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
-import org.infinispan.persistence.leveldb.configuration.CompressionType;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
+import org.infinispan.persistence.rocksdb.configuration.CompressionType;
+import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.tools.config.v6.Parser60;
 import org.kohsuke.MetaInfServices;
 
@@ -38,7 +37,7 @@ public class LevelDBStoreConfigurationParser60 implements ConfigurationParser {
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
       case LEVELDB_STORE: {
-         parseLevelDBCacheStore(reader, builder.persistence().addStore(LevelDBStoreConfigurationBuilder.class));
+         parseLevelDBCacheStore(reader, builder.persistence().addStore(RocksDBStoreConfigurationBuilder.class));
          break;
       }
       default: {
@@ -47,7 +46,7 @@ public class LevelDBStoreConfigurationParser60 implements ConfigurationParser {
       }
    }
 
-   private void parseLevelDBCacheStore(XMLExtendedStreamReader reader, LevelDBStoreConfigurationBuilder builder) throws XMLStreamException {
+   private void parseLevelDBCacheStore(XMLExtendedStreamReader reader, RocksDBStoreConfigurationBuilder builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -64,7 +63,7 @@ public class LevelDBStoreConfigurationParser60 implements ConfigurationParser {
                break;
             }
             case IMPLEMENTATION_TYPE: {
-               builder.implementationType(LevelDBStoreConfiguration.ImplementationType.valueOf(value));
+               // Ignore
                break;
             }
             case CLEAR_THRESHOLD: {
