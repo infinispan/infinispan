@@ -405,9 +405,9 @@
       <versionx.org.apache.maven.wagon.wagon-http-shared>${version.apache.maven.wagon}</versionx.org.apache.maven.wagon.wagon-http-shared>
       <versionx.org.apache.maven.wagon.wagon-provider-api>${version.apache.maven.wagon}</versionx.org.apache.maven.wagon.wagon-provider-api>
       <versionx.org.apache.sshd.sshd-core>1.7.0</versionx.org.apache.sshd.sshd-core>
-      <versionx.org.apache.tomcat.embed.tomcat-embed-core>${version.tomcat85}</versionx.org.apache.tomcat.embed.tomcat-embed-core>
-      <versionx.org.apache.tomcat.embed.tomcat-embed-el>${version.tomcat85}</versionx.org.apache.tomcat.embed.tomcat-embed-el>
-      <versionx.org.apache.tomcat.embed.tomcat-embed-websocket>${version.tomcat85}</versionx.org.apache.tomcat.embed.tomcat-embed-websocket>
+      <versionx.org.apache.tomcat.embed.tomcat-embed-core>${version.tomcat}</versionx.org.apache.tomcat.embed.tomcat-embed-core>
+      <versionx.org.apache.tomcat.embed.tomcat-embed-el>${version.tomcat}</versionx.org.apache.tomcat.embed.tomcat-embed-el>
+      <versionx.org.apache.tomcat.embed.tomcat-embed-websocket>${version.tomcat}</versionx.org.apache.tomcat.embed.tomcat-embed-websocket>
       <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
       <versionx.org.assertj.assertj-core>3.4.1</versionx.org.assertj.assertj-core>
       <versionx.org.beanshell.bsh>2.0b4</versionx.org.beanshell.bsh>
