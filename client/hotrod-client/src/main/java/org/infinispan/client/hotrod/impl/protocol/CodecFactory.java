@@ -1,9 +1,5 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_10;
-import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_11;
-import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_12;
-import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_13;
 import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_20;
 import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_21;
 import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_22;
@@ -29,10 +25,6 @@ import org.infinispan.client.hotrod.ProtocolVersion;
 public class CodecFactory {
    private static final Map<ProtocolVersion, Codec> codecMap;
 
-   private static final Codec CODEC_10 = new Codec10();
-   private static final Codec CODEC_11 = new Codec11();
-   private static final Codec CODEC_12 = new Codec12();
-   private static final Codec CODEC_13 = new Codec13();
    private static final Codec CODEC_20 = new Codec20();
    private static final Codec CODEC_21 = new Codec21();
    private static final Codec CODEC_22 = new Codec22();
@@ -46,10 +38,6 @@ public class CodecFactory {
 
    static {
       codecMap = new HashMap<>();
-      codecMap.put(PROTOCOL_VERSION_10, CODEC_10);
-      codecMap.put(PROTOCOL_VERSION_11, CODEC_11);
-      codecMap.put(PROTOCOL_VERSION_12, CODEC_12);
-      codecMap.put(PROTOCOL_VERSION_13, CODEC_13);
       codecMap.put(PROTOCOL_VERSION_20, CODEC_20);
       codecMap.put(PROTOCOL_VERSION_21, CODEC_21);
       codecMap.put(PROTOCOL_VERSION_22, CODEC_22);

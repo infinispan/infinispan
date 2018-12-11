@@ -7,11 +7,6 @@ package org.infinispan.server.hotrod;
  * @since 4.1
  */
 public interface HotRodConstants {
-
-   byte VERSION_10 = 10;
-   byte VERSION_11 = 11;
-   byte VERSION_12 = 12;
-   byte VERSION_13 = 13;
    byte VERSION_20 = 20;
    byte VERSION_21 = 21;
    byte VERSION_22 = 22;

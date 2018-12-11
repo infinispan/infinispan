@@ -15,10 +15,6 @@ import java.util.stream.Collectors;
 public enum ProtocolVersion {
 
    // These need to go in order of lowest version is first - this way compareTo works for versions
-   PROTOCOL_VERSION_10(1, 0),
-   PROTOCOL_VERSION_11(1, 1),
-   PROTOCOL_VERSION_12(1, 2),
-   PROTOCOL_VERSION_13(1, 3),
    PROTOCOL_VERSION_20(2, 0),
    PROTOCOL_VERSION_21(2, 1),
    PROTOCOL_VERSION_22(2, 2),
@@ -53,6 +49,11 @@ public enum ProtocolVersion {
    }
 
    public static ProtocolVersion parseVersion(String version) {
-      return versions.get(version);
+      ProtocolVersion v = versions.get(version);
+      if (v != null) {
+         return v;
+      } else {
+         throw new IllegalArgumentException("Illegal version " + version);
+      }
    }
 }

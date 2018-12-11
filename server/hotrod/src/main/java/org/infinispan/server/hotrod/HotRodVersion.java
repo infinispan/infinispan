@@ -11,10 +11,6 @@ import java.util.Arrays;
 
 public enum HotRodVersion {
    UNKNOWN(0, 0),
-   HOTROD_10(1, 0),
-   HOTROD_11(1, 1),
-   HOTROD_12(1, 2),
-   HOTROD_13(1, 3),
    HOTROD_20(2, 0),
    HOTROD_21(2, 1),
    HOTROD_22(2, 2),
@@ -24,7 +20,7 @@ public enum HotRodVersion {
    HOTROD_26(2, 6),
    HOTROD_27(2, 7),
    HOTROD_28(2, 8),
-   HOTROD_29(2, 9), //added in version 9.4 Beta1
+   HOTROD_29(2, 9),
    ;
 
    private final int major;
@@ -81,14 +77,6 @@ public enum HotRodVersion {
    }
 
    public static VersionedEncoder getEncoder(byte version) {
-      if (version >= 20) {
-         return new Encoder2x();
-      } else if (version == 10) {
-         return new AbstractEncoder1x() {};
-      } else if (version < 20) {
-         return new AbstractTopologyAwareEncoder1x() {};
-      } else {
-         return new Encoder2x();
-      }
+      return new Encoder2x();
    }
 }
