@@ -31,7 +31,7 @@ import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
@@ -391,7 +391,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNotNull("Key " + key + " does not exist in data container.", entry);
       assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
-      MarshalledEntry<Object, Object> entryLoaded = loader.load(key);
+      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNotNull("Key " + key + " does not exist in cache loader.", entryLoaded);
       assertEquals("Wrong value for key " + key + " in cache loader.", value, entryLoaded.getValue());
    }
@@ -403,7 +403,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
-      MarshalledEntry<Object, Object> entryLoaded = loader.load(key);
+      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);
       assertEquals("Wrong value for key " + key + " in cache loader", value, entryLoaded.getValue());
    }
@@ -414,7 +414,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       InternalCacheEntry entry = container.get(key);
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNull("Key " + key + " exists in data container", entry);
-      MarshalledEntry<Object, Object> entryLoaded = loader.load(key);
+      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);
       assertEquals("Wrong value for key " + key + " in cache loader", value, entryLoaded.getValue());
    }

@@ -9,7 +9,7 @@ import javax.transaction.Transaction;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
@@ -60,7 +60,7 @@ public interface PersistenceManager extends Lifecycle {
    /**
     * See {@link #publishEntries(Predicate, boolean, boolean, Predicate)}
     */
-   default <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(boolean fetchValue, boolean fetchMetadata) {
+   default <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(boolean fetchValue, boolean fetchMetadata) {
       return publishEntries(null, fetchValue, fetchMetadata, AccessMode.BOTH);
    }
 
@@ -79,8 +79,8 @@ public interface PersistenceManager extends Lifecycle {
     * @param <V> value type
     * @return publisher that will publish entries
     */
-   <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
-         boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate);
+   <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
+                                                            boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Returns a publisher that will publish entries that map to the provided segments. It will attempt to find the
@@ -95,8 +95,8 @@ public interface PersistenceManager extends Lifecycle {
     * @param <V> value type
     * @return publisher that will publish entries belonging to the given segments
     */
-   <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue,
-         boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate);
+   <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue,
+                                                            boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Returns a publisher that will publish all keys stored by the underlying cache store. Only the first cache store
@@ -139,7 +139,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param includeStores if a loader that is also a store can be loaded from
     * @return entry that maps to the key
     */
-   MarshalledEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores);
+   MarshallableEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores);
 
    /**
     * Same as {@link #loadFromAllStores(Object, boolean, boolean)} except that the segment of the key is also
@@ -151,7 +151,7 @@ public interface PersistenceManager extends Lifecycle {
     * @return entry that maps to the key
     * @implSpec default implementation invokes {@link #loadFromAllStores(Object, boolean, boolean)} ignoring the segment
     */
-   default MarshalledEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+   default MarshallableEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
       return loadFromAllStores(key, localInvocation, includeStores);
    }
 
@@ -248,14 +248,14 @@ public interface PersistenceManager extends Lifecycle {
     * @param segment         the segment the entry maps to
     * @param predicate       should we write to a given store
     */
-   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate);
+   void writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate);
 
    /**
-    * @see #writeToAllNonTxStores(MarshalledEntry, int, Predicate)
+    * @see #writeToAllNonTxStores(MarshallableEntry, int, Predicate)
     *
     * @param flags Flags used during command invocation
     */
-   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate, long flags);
+   void writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate, long flags);
 
    /**
     * Perform the prepare phase of 2PC on all Tx stores.
@@ -291,7 +291,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param predicate whether a given store should write the entry
     * @param flags Flags used during command invocation
     */
-   void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags);
+   void writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags);
 
    /**
     * Remove all entries from the underlying non-transactional stores as a single batch.

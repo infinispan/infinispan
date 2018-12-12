@@ -16,7 +16,7 @@ import org.infinispan.lucene.logging.Log;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -60,13 +60,13 @@ public class LuceneCacheLoader<K, V> implements AdvancedCacheLoader<K, V> {
    }
 
    @Override
-   public MarshalledEntry load(final Object key) {
+   public MarshallableEntry loadEntry(final Object key) {
       if (key instanceof IndexScopedKey) {
          final IndexScopedKey indexKey = (IndexScopedKey)key;
          DirectoryLoaderAdaptor directoryAdaptor = getDirectory(indexKey);
          Object value = directoryAdaptor.load(indexKey);
          if (value != null) {
-            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value, null);
+            return ctx.getMarshallableEntryFactory().create(key, value, null);
          }
          else {
             return null;
@@ -92,7 +92,7 @@ public class LuceneCacheLoader<K, V> implements AdvancedCacheLoader<K, V> {
    }
 
    @Override
-   public Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+   public Publisher<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
       return Flowable.defer(() -> {
          // Make sure that we update directories before we start iterating upon directories
          scanForUnknownDirectories();
@@ -102,8 +102,8 @@ public class LuceneCacheLoader<K, V> implements AdvancedCacheLoader<K, V> {
             .parallel()
             .runOn(Schedulers.from(ctx.getExecutor()))
             .flatMap(dir -> {
-               final Set<MarshalledEntry<K, V>> allInternalEntries = new HashSet<>();
-               dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getMarshalledEntryFactory());
+               final Set<MarshallableEntry<K, V>> allInternalEntries = new HashSet<>();
+               dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getMarshallableEntryFactory());
                return Flowable.fromIterable(allInternalEntries);
             })
             .filter(me -> filter == null || filter.test(me.getKey()))

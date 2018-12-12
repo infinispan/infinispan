@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.Iterator;
 
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
@@ -17,7 +17,7 @@ import org.infinispan.persistence.spi.PersistenceException;
  * @author Ryan Emerson
  * @since 9.0
  */
-abstract class AbstractJdbcEntryIterator implements Iterator<MarshalledEntry>, AutoCloseable {
+abstract class AbstractJdbcEntryIterator implements Iterator<MarshallableEntry>, AutoCloseable {
    final ConnectionFactory connectionFactory;
    final TableManager tableManager;
    final StreamingMarshaller marshaller;

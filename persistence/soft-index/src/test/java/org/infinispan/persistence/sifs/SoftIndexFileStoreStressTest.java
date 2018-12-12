@@ -25,7 +25,7 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -126,7 +126,7 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
          }
       }, new WithinThreadExecutor(), true, false);
       for (Map.Entry<Object, Object> entry : entries.entrySet()) {
-         MarshalledEntry loaded = store.load(entry.getKey());
+         MarshallableEntry loaded = store.loadEntry(entry.getKey());
          if (loaded == null) {
             fail("Did not load " + entry.getKey() + " -> " + entry.getValue());
          } else if (!Objects.equals(entry.getValue(), loaded.getValue())) {
@@ -154,7 +154,7 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
                   store.delete(key);
                   break;
                case 2:
-                  store.load(key);
+                  store.loadEntry(key);
             }
          }
       }

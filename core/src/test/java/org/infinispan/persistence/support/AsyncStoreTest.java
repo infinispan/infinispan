@@ -42,7 +42,7 @@ import org.infinispan.persistence.modifications.Remove;
 import org.infinispan.persistence.modifications.Store;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -265,7 +265,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             fail();
 
          loader = new AdvancedAsyncCacheLoader(underlying, writer.getState());
-         assertEquals("v2", loader.load(key).getValue());
+         assertEquals("v2", loader.loadEntry(key).getValue());
       } finally {
          writer.clear();
          writer.stop();
@@ -301,7 +301,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       writer.stop();
 
       // check that the last value successfully written to the AsyncStore has also been written to the underlying store
-      MarshalledEntry me = loader.undelegate().load(key);
+      MarshallableEntry me = loader.undelegate().loadEntry(key);
       assertNotNull(me);
       assertEquals(me.getValue(), key + lastValue[0]);
    }
@@ -340,7 +340,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       }
 
       for (int i = 0; i < number; i++) {
-         MarshalledEntry me = loader.load(key + i);
+         MarshallableEntry me = loader.loadEntry(key + i);
          assertNotNull(me);
          assertEquals(value + i, me.getValue());
       }
@@ -350,26 +350,26 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) {
          writer.write(MarshalledEntryUtil.create(key, value + i, marshaller));
       }
-      MarshalledEntry me = loader.load(key);
+      MarshallableEntry me = loader.loadEntry(key);
       assertNotNull(me);
       assertEquals(value + (number - 1), me.getValue());
    }
 
    private void doTestRemove(final int number, final String key) throws Exception {
       for (int i = 0; i < number; i++) writer.delete(key + i);
-      for (int i = 0; i < number; i++) assertNull(loader.load(key + i));
+      for (int i = 0; i < number; i++) assertNull(loader.loadEntry(key + i));
    }
 
    private void doTestSameKeyRemove(String key) throws Exception {
       writer.delete(key);
-      assertNull(loader.load(key));
+      assertNull(loader.loadEntry(key));
    }
 
    private void doTestClear(int number, String key) throws Exception {
       writer.clear();
 
       for (int i = 0; i < number; i++) {
-         assertNull(loader.load(key + i));
+         assertNull(loader.loadEntry(key + i));
       }
    }
 
@@ -473,7 +473,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public void write(MarshalledEntry entry) {
+      public void write(MarshallableEntry entry) {
          lock.lock();
          try {
             threads.add(Thread.currentThread());
@@ -577,7 +577,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             cache.put("Y", "1"); // force eviction of "X"
 
             // wait for X == 1 to appear in store
-            while (store.load("X") == null)
+            while (store.loadEntry("X") == null)
                TestingUtil.sleepThread(10);
 
             // simulate slow back end store
@@ -610,7 +610,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             cache.put("Y", "1"); // force eviction of "X"
 
             // wait for "X" to appear in store
-            while (store.load("X") == null)
+            while (store.loadEntry("X") == null)
                TestingUtil.sleepThread(10);
 
             // simulate slow back end store

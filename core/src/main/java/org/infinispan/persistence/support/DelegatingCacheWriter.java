@@ -1,6 +1,6 @@
 package org.infinispan.persistence.support;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.InitializationContext;
 
@@ -39,7 +39,7 @@ public abstract class DelegatingCacheWriter implements CacheWriter {
    }
 
    @Override
-   public void write(MarshalledEntry entry) {
+   public void write(MarshallableEntry entry) {
       actual.write(entry);
    }
 

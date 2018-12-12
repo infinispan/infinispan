@@ -74,7 +74,7 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       store.write(MarshalledEntryUtil.create("a", "b", cache));
       cache.put("a", "c");
       assertStoreAccess(1, 1, 3);
-      assert store.load("a").getValue().equals("c");
+      assert store.loadEntry("a").getValue().equals("c");
    }
 
    public void testGetValue() throws Exception {

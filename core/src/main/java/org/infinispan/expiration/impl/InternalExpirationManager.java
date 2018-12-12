@@ -6,7 +6,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 
 /**
  * Interface describing the internal operations for the the ExpirationManager.
@@ -58,7 +58,7 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
     * specific expiration to possibly occur.
     * @param marshalledEntry the entry that can be unmarshalled as needed
     */
-   void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry);
+   void handleInStoreExpiration(MarshallableEntry<K, V> marshalledEntry);
 
    /**
     * Retrieves the last access time for the given key in the data container if it is using max idle.

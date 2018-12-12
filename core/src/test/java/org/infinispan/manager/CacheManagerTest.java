@@ -45,7 +45,7 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.GlobalMarshaller;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
@@ -526,9 +526,9 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    public static class UnreliableCacheStore implements ExternalStore {
       @Override public void init(InitializationContext ctx) {}
-      @Override public void write(MarshalledEntry entry) {}
+      @Override public void write(MarshallableEntry entry) {}
       @Override public boolean delete(Object key) { return false; }
-      @Override public MarshalledEntry load(Object key) { return null; }
+      @Override public MarshallableEntry loadEntry(Object key) { return null; }
       @Override public boolean contains(Object key) { return false; }
       @Override public void start() {}
       @Override public void stop() {

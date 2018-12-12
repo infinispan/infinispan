@@ -15,7 +15,7 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.testng.annotations.Test;
 
@@ -44,19 +44,19 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
    public void testStoreWithJpaGoodKey() {
       TestObject obj = createTestObject("testStoreWithJpaGoodKey");
       assertFalse(cs.contains(obj.getKey()));
-      MarshalledEntry me = createEntry(obj);
+      MarshallableEntry me = createEntry(obj);
       cs.write(me);
    }
 
    public void testLoadAndStoreImmortal() {
       TestObject obj = createTestObject("testLoadAndStoreImmortal");
       assertFalse(cs.contains(obj.getKey()));
-      MarshalledEntry me = createEntry(obj);
+      MarshallableEntry me = createEntry(obj);
       cs.write(me);
 
       assertTrue(cs.contains(obj.getKey()));
-      assertEquals(obj.getValue(), cs.load(obj.getKey()).getValue());
-      assertNull(cs.load(obj.getKey()).getMetadata());
+      assertEquals(obj.getValue(), cs.loadEntry(obj.getKey()).getValue());
+      assertNull(cs.loadEntry(obj.getKey()).getMetadata());
 
       // TODO test with metadata
 
@@ -72,17 +72,17 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
       cs.write(createEntry(obj1));
       cs.write(createEntry(obj2));
       cs.write(createEntry(obj3));
-      assertEquals(cs.load(obj1.getKey()).getValue(), obj1.getValue());
-      assertEquals(cs.load(obj2.getKey()).getValue(), obj2.getValue());
-      assertEquals(cs.load(obj3.getKey()).getValue(), obj3.getValue());
+      assertEquals(cs.loadEntry(obj1.getKey()).getValue(), obj1.getValue());
+      assertEquals(cs.loadEntry(obj2.getKey()).getValue(), obj2.getValue());
+      assertEquals(cs.loadEntry(obj3.getKey()).getValue(), obj3.getValue());
 
       final ConcurrentHashMap map = new ConcurrentHashMap();
-      Consumer<MarshalledEntry<Object, Object>> taskWithValues = me -> {
+      Consumer<MarshallableEntry<Object, Object>> taskWithValues = me -> {
          if (me.getKey() != null && me.getValue() != null) {
             map.put(me.getKey(), me.getValue());
          }
       };
-      cs.publishEntries(null, true, false).blockingSubscribe(taskWithValues);
+      cs.entryPublisher(null, true, false).blockingSubscribe(taskWithValues);
 
       assertEquals(map.size(), 3);
       assertEquals(map.remove(obj1.getKey()), obj1.getValue());
@@ -91,13 +91,13 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
       assertTrue(map.isEmpty());
 
       final ConcurrentHashSet set = new ConcurrentHashSet();
-      Consumer<MarshalledEntry<Object, Object>> taskWithoutValues = me -> {
+      Consumer<MarshallableEntry<Object, Object>> taskWithoutValues = me -> {
          if (me.getKey() != null) {
             set.add(me.getKey());
          }
       };
 
-      cs.publishEntries(null, false, false).blockingSubscribe(taskWithoutValues);
+      cs.entryPublisher(null, false, false).blockingSubscribe(taskWithoutValues);
       assertEquals(set.size(), 3);
       assertTrue(set.remove(obj1.getKey()));
       assertTrue(set.remove(obj2.getKey()));

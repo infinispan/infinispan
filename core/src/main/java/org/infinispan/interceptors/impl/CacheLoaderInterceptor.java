@@ -67,7 +67,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -207,7 +207,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       final Predicate<? super K> keyFilter = new GroupFilter<>(command.getGroupName(), groupManager)
                                                 .and(k -> ctx.lookupEntry(k) == null);
 
-      Publisher<MarshalledEntry<K, V>> publisher = persistenceManager.publishEntries(keyFilter, true, false,
+      Publisher<MarshallableEntry<K, V>> publisher = persistenceManager.publishEntries(keyFilter, true, false,
             PersistenceManager.AccessMode.BOTH);
       Flowable.fromPublisher(publisher)
             .map(me -> PersistenceUtil.convert(me, iceFactory))
@@ -599,7 +599,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             seenKeys.add(e.getKey());
             return e;
          });
-         Flowable<MarshalledEntry<K, V>> flowable = Flowable.fromPublisher(persistenceManager.publishEntries(
+         Flowable<MarshallableEntry<K, V>> flowable = Flowable.fromPublisher(persistenceManager.publishEntries(
                k -> !seenKeys.contains(k), true, true, PersistenceManager.AccessMode.BOTH));
          Publisher<CacheEntry<K, V>> publisher = flowable
                .map(me -> (CacheEntry<K, V>) PersistenceUtil.convert(me, iceFactory));
@@ -621,7 +621,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             if (!contains) {
                Map.Entry<K, V> entry = toEntry(o);
                if (entry != null) {
-                  MarshalledEntry<K, V> me = persistenceManager.loadFromAllStores(entry.getKey(), true, true);
+                  MarshallableEntry<K, V> me = persistenceManager.loadFromAllStores(entry.getKey(), true, true);
                   if (me != null) {
                      contains = entry.getValue().equals(me.getValue());
                   }
@@ -690,7 +690,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          if (o != null) {
             contains = cacheSet.contains(o);
             if (!contains) {
-               MarshalledEntry<K, V> me = persistenceManager.loadFromAllStores(o, true, true);
+               MarshallableEntry<K, V> me = persistenceManager.loadFromAllStores(o, true, true);
                contains = me != null;
             }
          }

@@ -1,9 +1,9 @@
 package org.infinispan.persistence.modifications;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 
 /**
- * Modification representing {@link org.infinispan.persistence.spi.CacheWriter#write(MarshalledEntry)}.
+ * Modification representing {@link org.infinispan.persistence.spi.CacheWriter#write(MarshallableEntry)}.
  *
  * @author Manik Surtani
  * @since 4.0
@@ -11,9 +11,9 @@ import org.infinispan.persistence.spi.MarshalledEntry;
 public class Store implements Modification {
 
    final Object key;
-   final MarshalledEntry storedEntry;
+   final MarshallableEntry storedEntry;
 
-   public Store(Object key, MarshalledEntry storedValue) {
+   public Store(Object key, MarshallableEntry storedValue) {
       this.key = key;
       this.storedEntry = storedValue;
    }
@@ -23,7 +23,7 @@ public class Store implements Modification {
       return Type.STORE;
    }
 
-   public MarshalledEntry getStoredValue() {
+   public MarshallableEntry getStoredValue() {
       return storedEntry;
    }
 

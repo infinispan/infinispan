@@ -2,8 +2,9 @@ package org.infinispan.persistence.jpa;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -37,10 +38,9 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.executors.ExecutorAllCompletionService;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration;
 import org.infinispan.persistence.jpa.impl.EntityManagerFactoryRegistry;
@@ -49,12 +49,16 @@ import org.infinispan.persistence.jpa.impl.MetadataEntityKey;
 import org.infinispan.persistence.jpa.impl.Stats;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import io.reactivex.Scheduler;
+import io.reactivex.internal.functions.Functions;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -73,9 +77,9 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private EntityManagerFactory emf;
    private EntityManagerFactoryRegistry emfRegistry;
    private StreamingMarshaller marshaller;
-   private MarshalledEntryFactory marshallerEntryFactory;
+   private MarshallableEntryFactory marshallerEntryFactory;
    private TimeService timeService;
-   private ExecutorService executorService;
+   private Scheduler scheduler;
    private Stats stats = new Stats();
    private boolean setFetchSizeMinInteger = false;
 
@@ -83,10 +87,10 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    public void init(InitializationContext ctx) {
       this.configuration = ctx.getConfiguration();
       this.emfRegistry = ctx.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry().getComponent(EntityManagerFactoryRegistry.class);
-      this.marshallerEntryFactory = ctx.getMarshalledEntryFactory();
+      this.marshallerEntryFactory = ctx.getMarshallableEntryFactory();
       this.marshaller = ctx.getMarshaller();
       this.timeService = ctx.getTimeService();
-      this.executorService = ctx.getExecutor();
+      this.scheduler = Schedulers.from(ctx.getExecutor());
    }
 
    @Override
@@ -385,7 +389,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public void write(MarshalledEntry entry) {
+   public void write(MarshallableEntry entry) {
       EntityManager em = emf.createEntityManager();
 
       Object entity = entry.getValue();
@@ -422,14 +426,34 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> marshalledEntries) {
-      EntityManager em = emf.createEntityManager();
-      try {
-         EntityTransaction txn = em.getTransaction();
-         long txnBegin = timeService.time();
-         try {
-            txn.begin();
-            for (MarshalledEntry entry : marshalledEntries) {
+   public CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      Flowable.using(() -> {
+               EntityManager em = emf.createEntityManager();
+               EntityTransaction txn = em.getTransaction();
+               return new KeyValuePair<>(em, txn);
+            },
+            kvp -> createBatchFlowable(kvp.getKey(), kvp.getValue(), publisher),
+            kvp -> {
+               EntityTransaction txn = kvp.getValue();
+               if (txn != null && txn.isActive())
+                  txn.rollback();
+               kvp.getKey().close();
+            })
+            .doOnError(e -> {
+               if (e instanceof JpaStoreException)
+                  throw (JpaStoreException) e;
+               throw new JpaStoreException("Exception caught in bulkUpdate()", e);
+            })
+            .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
+      return future;
+   }
+
+   private Flowable<MarshallableEntry<? extends K, ? extends V>> createBatchFlowable(EntityManager em, EntityTransaction txn, Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
+      final long txnBegin = timeService.time();
+      txn.begin();
+      return Flowable.fromPublisher(publisher)
+            .doOnNext(entry -> {
                Object entity = entry.getValue();
                validateEntityIsAssignable(entity);
                validateObjectId(entry);
@@ -441,24 +465,19 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                mergeEntity(em, entity);
                if (metadata != null && metadata.hasBytes())
                   mergeMetadata(em, metadata);
-            }
-            txn.commit();
-            stats.addBatchWriteTxCommitted(timeService.time() - txnBegin);
-         } catch (Exception e) {
-            stats.addBatchWriteTxFailed(timeService.time() - txnBegin);
-            if (e instanceof JpaStoreException)
-               throw e;
-            throw new JpaStoreException("Exception caught in writeBatch()", e);
-         } finally {
-            if (txn != null && txn.isActive())
-               txn.rollback();
-         }
-      } finally {
-         em.close();
-      }
+            })
+            .doOnComplete(() -> {
+               stats.addBatchWriteTxCommitted(timeService.time() - txnBegin);
+               txn.commit();
+            })
+            .doOnError(e -> stats.addBatchWriteTxFailed(timeService.time() - txnBegin))
+            .doFinally(() -> {
+               if (txn.isActive())
+                  txn.rollback();
+            });
    }
 
-   private void validateObjectId(MarshalledEntry entry) {
+   private void validateObjectId(MarshallableEntry entry) {
       Object id = emf.getPersistenceUnitUtil().getIdentifier(entry.getValue());
       if (!entry.getKey().equals(id)) {
          throw new JpaStoreException(
@@ -516,7 +535,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public MarshalledEntry load(Object key) {
+   public MarshallableEntry loadEntry(Object key) {
       if (!isValidKeyType(key)) {
          return null;
       }
@@ -546,7 +565,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                   }
                }
                if (trace) log.trace("Loaded " + entity + " (" + m + ")");
-               return marshallerEntryFactory.newMarshalledEntry(key, entity, m);
+               return marshallerEntryFactory.create(key, entity, m);
             } finally {
                try {
                   txn.commit();
@@ -590,7 +609,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public Flowable<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+   public Flowable<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
       boolean innerFetchMetadata;
       if (fetchMetadata && !configuration.storeMetadata()) {
          log.debug("Metadata cannot be retrieved as JPA Store is not configured to persist metadata.");
@@ -618,11 +637,11 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          return keyPublisher
                // Run the loading in parallel using executor since it will be blocking
                .parallel()
-               .runOn(Schedulers.from(executorService))
+               .runOn(scheduler)
                .map(k -> loadEntry(k, fetchValue, innerFetchMetadata))
                .sequential();
       } else {
-         return keyPublisher.map(k -> marshallerEntryFactory.newMarshalledEntry(k, (Object) null, null));
+         return keyPublisher.map(k -> marshallerEntryFactory.create(k, (Object) null, null));
       }
    }
 
@@ -766,7 +785,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       }
    }
 
-   private MarshalledEntry<K, V> loadEntry(Object key, boolean fetchValue, boolean fetchMetadata) {
+   private MarshallableEntry<K, V> loadEntry(Object key, boolean fetchValue, boolean fetchMetadata) {
       Object entity;
       InternalMetadata metadata;
 
@@ -796,7 +815,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
       }
       try {
-         final MarshalledEntry<K, V> marshalledEntry = marshallerEntryFactory.newMarshalledEntry(key, entity, metadata);
+         final MarshallableEntry<K, V> marshalledEntry = marshallerEntryFactory.create(key, entity, metadata);
          if (marshalledEntry != null) {
             return marshalledEntry;
          }

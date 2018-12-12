@@ -3,8 +3,8 @@ package org.infinispan.jcache;
 import org.infinispan.jcache.embedded.JCacheLoaderAdapter;
 import org.infinispan.jcache.util.InMemoryJCacheLoader;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -38,7 +38,7 @@ public class JCacheLoaderAdapterTest extends AbstractInfinispanTest {
     public static void setUpClass() {
         TimeService timeService = new EmbeddedTimeService();
         marshaller = new TestObjectStreamMarshaller();
-        MarshalledEntryFactory marshalledEntryFactory = new MarshalledEntryFactoryImpl(marshaller);
+        MarshallableEntryFactory marshalledEntryFactory = new MarshalledEntryFactoryImpl(marshaller);
         ctx = new DummyInitializationContext() {
             @Override
             public TimeService getTimeService() {
@@ -46,7 +46,7 @@ public class JCacheLoaderAdapterTest extends AbstractInfinispanTest {
             }
 
             @Override
-            public MarshalledEntryFactory getMarshalledEntryFactory() {
+            public MarshallableEntryFactory getMarshallableEntryFactory() {
                 return marshalledEntryFactory;
             }
         };
@@ -65,15 +65,15 @@ public class JCacheLoaderAdapterTest extends AbstractInfinispanTest {
     }
 
     public void testLoad() {
-        assertNull(adapter.load(0));
+        assertNull(adapter.loadEntry(0));
 
-        MarshalledEntry v1Entry = adapter.load(1);
+        MarshallableEntry v1Entry = adapter.loadEntry(1);
 
         assertNotNull(v1Entry);
         assertEquals(1, v1Entry.getKey());
         assertEquals("v1", v1Entry.getValue());
 
-        MarshalledEntry v2Entry = adapter.load(2);
+        MarshallableEntry v2Entry = adapter.loadEntry(2);
 
         assertNotNull(v2Entry);
         assertEquals(2, v2Entry.getKey());

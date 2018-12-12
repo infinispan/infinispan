@@ -36,7 +36,7 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -147,7 +147,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    private <K> void assertInCacheAndStore(Cache<? super K, ?> cache, CacheLoader loader, K key, Object value, long lifespanMillis) throws PersistenceException {
       InternalCacheEntry se = cache.getAdvancedCache().getDataContainer().get(key);
       testStoredEntry(se.getValue(), value, se.getLifespan(), lifespanMillis, "Cache", key);
-      MarshalledEntry load = loader.load(key);
+      MarshallableEntry load = loader.loadEntry(key);
       testStoredEntry(load.getValue(), value, load.getMetadata() == null ? -1 : load.getMetadata().lifespan(), lifespanMillis, "Store", key);
    }
 
@@ -652,7 +652,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
          final long lifespan = i % 2 == 1 ? -1 : this.lifespan;
          boolean found = false;
          InternalCacheEntry se = preloadingCache.getAdvancedCache().getDataContainer().get(key);
-         MarshalledEntry load = preloadingCacheLoader.load(key);
+         MarshallableEntry load = preloadingCacheLoader.loadEntry(key);
          if (se != null) {
             testStoredEntry(se.getValue(), value, se.getLifespan(), lifespan, "Cache", key);
             found = true;
@@ -683,7 +683,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
          final long lifespan = i % 2 == 1 ? -1 : this.lifespan;
          boolean found = false;
          InternalCacheEntry se = preloadingCache.getAdvancedCache().getDataContainer().get(key);
-         MarshalledEntry load = preloadingCacheLoader.load(key);
+         MarshallableEntry load = preloadingCacheLoader.loadEntry(key);
          if (se != null) {
             testStoredEntry(se.getValue(), value, se.getLifespan(), lifespan, "Cache", key);
             found = true;

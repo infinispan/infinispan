@@ -12,8 +12,8 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.persistence.sifs.EntryHeader;
 import org.infinispan.persistence.sifs.EntryRecord;
 import org.infinispan.persistence.sifs.FileProvider;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.tools.store.migrator.Element;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;
@@ -21,7 +21,7 @@ import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 
 public class SoftIndexFileStoreIterator implements StoreIterator {
 
-   private final MarshalledEntryFactory entryFactory;
+   private final MarshallableEntryFactory entryFactory;
    private final String location;
 
    public SoftIndexFileStoreIterator(StoreProperties props) {
@@ -40,11 +40,11 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
    }
 
    @Override
-   public Iterator<MarshalledEntry> iterator() {
+   public Iterator<MarshallableEntry> iterator() {
       return new SoftIndexIterator(location);
    }
 
-   class SoftIndexIterator implements Iterator<MarshalledEntry> {
+   class SoftIndexIterator implements Iterator<MarshallableEntry> {
 
       final FileProvider fileProvider;
       final Iterator<Integer> iterator;
@@ -63,7 +63,7 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
       }
 
       @Override
-      public MarshalledEntry next() {
+      public MarshallableEntry next() {
          try {
             while (hasNext()) {
                if (file < 0) {
@@ -89,7 +89,7 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
                         handle.close();
                         file = -1;
                      }
-                     return entryFactory.newMarshalledEntry(new ByteBufferImpl(serializedKey), new ByteBufferImpl(serializedValue), (ByteBuffer) null);
+                     return entryFactory.create(new ByteBufferImpl(serializedKey), new ByteBufferImpl(serializedValue), (ByteBuffer) null);
                   }
                   offset += header.totalLength();
                }

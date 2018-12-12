@@ -15,7 +15,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
@@ -63,7 +63,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
    }
 
    @Override
-   public MarshalledEntry load(Object key) throws PersistenceException {
+   public MarshallableEntry loadEntry(Object key) throws PersistenceException {
       if (!isCacheReady()) return null;
 
       ClusteredGetCommand clusteredGetCommand = commandsFactory.buildClusteredGetCommand(key,
@@ -88,7 +88,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       if (response.isSuccessful() && response instanceof SuccessfulResponse) {
          InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) response).getResponseValue();
          return value == null ? null :
-               ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value.getValue(), null);
+               ctx.getMarshallableEntryFactory().create(key, value.getValue(), null);
       }
 
       log.unknownResponsesFromRemoteCache(responses);
@@ -98,7 +98,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
 
    @Override
    public boolean contains(Object key) {
-      return load(key) != null;
+      return loadEntry(key) != null;
    }
 
    @Override

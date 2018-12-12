@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.util.PersistenceManagerCloseableSupplier;
 import org.infinispan.util.CloseableSuppliedIterator;
 import org.infinispan.util.KeyValuePair;
@@ -69,12 +70,55 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
     * @implSpec
     * The default implementation just invokes {@link #publishEntries(Predicate, boolean, boolean)} passing along the
     * provided filter and {@code false} for fetchValue and {@code true} for fetchMetadata and retrieves
-    * the key from the {@link MarshalledEntry}.
+    * the key from the {@link MarshallableEntry}.
     * @param filter a filter - null is treated as allowing all entries
     * @return a publisher that will provide the keys from the store
     */
    default Publisher<K> publishKeys(Predicate<? super K> filter) {
-      return Flowable.fromPublisher(publishEntries(filter, false, true)).map(MarshalledEntry::getKey);
+      return Flowable.fromPublisher(entryPublisher(filter, false, true)).map(MarshallableEntry::getKey);
+   }
+
+   /**
+    * Publishes all entries from this store.  The given publisher can be used by as many
+    * {@link org.reactivestreams.Subscriber}s as desired. Entries are not retrieved until a given Subscriber requests
+    * them from the {@link org.reactivestreams.Subscription}.
+    * <p>
+    * If <b>fetchMetadata</b> is true this store must guarantee to not return any expired entries.
+    * @implSpec
+    * The default implementation falls back to invoking the
+    * {@link #process(KeyFilter, CacheLoaderTask, Executor, boolean, boolean)} method using a
+    * {@link Executors#newSingleThreadExecutor()} that is created per subscriber and is shut down when the publisher
+    * completes.
+    * @param filter a filter - null is treated as allowing all entries
+    * @param fetchValue    whether or not to fetch the value from the persistent store. E.g. if the iteration is
+    *                      intended only over the key set, no point fetching the values from the persistent store as
+    *                      well
+    * @param fetchMetadata whether or not to fetch the metadata from the persistent store. E.g. if the iteration is
+    *                      intended only ove the key set, then no point fetching the metadata from the persistent store
+    *                      as well
+    * @return a publisher that will provide the entries from the store
+    * @deprecated since 10.0, please us {@link #entryPublisher(Predicate, boolean, boolean)} instead.
+    */
+   @Deprecated
+   default Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
+                                                           boolean fetchMetadata) {
+      Callable<KeyValuePair<PersistenceManagerCloseableSupplier<K, V>, ExecutorService>> callable = () -> {
+         ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            t.setName("Infinispan-process-based-publish-entries");
+            return t;
+         });
+         return new KeyValuePair<>(new PersistenceManagerCloseableSupplier<>(executorService,
+               this, filter, fetchValue, fetchMetadata, 10, TimeUnit.SECONDS, 2048), executorService);
+      };
+      return Flowable.using(callable,
+            kvp -> Flowable.fromIterable(() -> new CloseableSuppliedIterator<>(kvp.getKey())),
+            kvp -> {
+               kvp.getKey().close();
+               kvp.getValue().shutdown();
+            }
+      );
    }
 
    /**
@@ -97,25 +141,9 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
     *                      as well
     * @return a publisher that will provide the entries from the store
     */
-   default Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
-         boolean fetchMetadata) {
-      Callable<KeyValuePair<PersistenceManagerCloseableSupplier<K, V>, ExecutorService>> callable = () -> {
-         ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            t.setName("Infinispan-process-based-publish-entries");
-            return t;
-         });
-         return new KeyValuePair<>(new PersistenceManagerCloseableSupplier<>(executorService,
-               this, filter, fetchValue, fetchMetadata, 10, TimeUnit.SECONDS, 2048), executorService);
-      };
-      return Flowable.using(callable,
-            kvp -> Flowable.fromIterable(() -> new CloseableSuppliedIterator<>(kvp.getKey())),
-            kvp -> {
-               kvp.getKey().close();
-               kvp.getValue().shutdown();
-            }
-      );
+   default Publisher<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue,
+                                                             boolean fetchMetadata) {
+      return Flowable.fromPublisher(publishEntries(filter, fetchValue, fetchMetadata));
    }
 
    /**
@@ -128,7 +156,7 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
    interface CacheLoaderTask<K, V> {
 
       /**
-       * @param marshalledEntry an iterated entry. Note that {@link MarshalledEntry#getValue()}
+       * @param marshalledEntry an iterated entry. Note that {@link MarshallableEntry#getValue()}
        *                        might be null if the fetchValue parameter passed to {@link AdvancedCacheLoader#process(KeyFilter,
        *                        org.infinispan.persistence.spi.AdvancedCacheLoader.CacheLoaderTask,
        *                        java.util.concurrent.Executor, boolean, boolean)} is false.

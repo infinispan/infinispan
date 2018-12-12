@@ -22,7 +22,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -297,7 +297,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
          writerKey = new WrappedByteArray(gm.objectToByteBuffer(key));
          writerValue = new WrappedByteArray(gm.objectToByteBuffer(value));
       }
-      MarshalledEntry entry = MarshalledEntryUtil.create(writerKey, writerValue, testCache);
+      MarshallableEntry entry = MarshalledEntryUtil.create(writerKey, writerValue, testCache);
       writer.write(entry);
    }
 

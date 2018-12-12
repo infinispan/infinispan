@@ -36,7 +36,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -266,7 +266,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
       return new Operation<String, Integer>("GET") {
          @Override
          public boolean call(String key, long run) {
-            MarshalledEntry me = store.load(key);
+            MarshallableEntry me = store.loadEntry(key);
             if (trace)
                log.tracef("Loaded key=%s, value=%s", key, me != null ? me.getValue() : "null");
             return me != null;

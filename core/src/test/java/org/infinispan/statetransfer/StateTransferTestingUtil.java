@@ -56,10 +56,10 @@ public class StateTransferTestingUtil {
       assert l.contains(A_B_NAME);
       assert l.contains(A_C_AGE);
       assert l.contains(A_C_NAME);
-      assert l.load(A_B_AGE).getValue().equals(TWENTY);
-      assert l.load(A_B_NAME).getValue().equals(JOE);
-      assert l.load(A_C_AGE).getValue().equals(FORTY);
-      assert l.load(A_C_NAME).getValue().equals(BOB);
+      assert l.loadEntry(A_B_AGE).getValue().equals(TWENTY);
+      assert l.loadEntry(A_B_NAME).getValue().equals(JOE);
+      assert l.loadEntry(A_C_AGE).getValue().equals(FORTY);
+      assert l.loadEntry(A_C_NAME).getValue().equals(BOB);
    }
 
    public static void verifyInitialData(Cache<Object, Object> c) {

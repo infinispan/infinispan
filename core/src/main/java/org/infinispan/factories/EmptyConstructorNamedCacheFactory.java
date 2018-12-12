@@ -33,7 +33,7 @@ import org.infinispan.factories.impl.ComponentAlias;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.functional.impl.FunctionalNotifierImpl;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
@@ -43,6 +43,7 @@ import org.infinispan.persistence.manager.OrderedUpdatesManagerImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.manager.PreloadManager;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.scattered.impl.BiasManagerImpl;
@@ -78,7 +79,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               PreloadManager.class, BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
                               ClusteringDependentLogic.class, L1Manager.class, TransactionFactory.class, BackupSender.class,
-                              TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class,
+                              TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class, MarshallableEntryFactory.class,
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
@@ -146,7 +147,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
                   new TotalOrderManager() : null;
          } else if (componentName.equals(ByteBufferFactory.class.getName())) {
             return new ByteBufferFactoryImpl();
-         } else if (componentName.equals(MarshalledEntryFactory.class.getName())) {
+         } else if (componentName.equals(MarshallableEntryFactory.class.getName()) || componentName.equals(MarshalledEntryFactory.class.getName())) {
             return new MarshalledEntryFactoryImpl();
          } else if (componentName.equals(CommitManager.class.getName())) {
             return new CommitManager();

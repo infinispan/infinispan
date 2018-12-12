@@ -24,7 +24,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -343,7 +343,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          while (stopLatch.getCount() != 0) {
             String key = keys.get(random.nextInt(keys.size()));
             String value = key + "_value_" + i + "_" + times(random.nextInt(1000) / 10);
-            MarshalledEntry entry = MarshalledEntryUtil.create(key, value, cache);
+            MarshallableEntry entry = MarshalledEntryUtil.create(key, value, cache);
             store.write(entry);
             i++;
          }
@@ -369,7 +369,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          Random random = new Random();
          while (stopLatch.getCount() != 0) {
             String key = keys.get(random.nextInt(keys.size()));
-            MarshalledEntry entryFromStore = store.load(key);
+            MarshallableEntry entryFromStore = store.loadEntry(key);
             if (entryFromStore == null) {
                assertTrue(allowNulls);
             } else {
@@ -426,7 +426,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());
 
-         Long sum = Flowable.fromPublisher(store.publishEntries(null, true, true))
+         Long sum = Flowable.fromPublisher(store.entryPublisher(null, true, true))
                .doOnNext(me -> {
                   String key = me.getKey();
                   String value = me.getValue();
@@ -449,7 +449,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());
 
-         Long sum = Flowable.fromPublisher(store.publishEntries(null, false, false))
+         Long sum = Flowable.fromPublisher(store.entryPublisher(null, false, false))
                .doOnNext(me -> {
                   Object key = me.getKey();
                   assertNotNull(key);

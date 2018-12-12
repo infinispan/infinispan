@@ -13,7 +13,7 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -74,7 +74,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public void write(MarshalledEntry entry) {
+      public void write(MarshallableEntry entry) {
          lock.lock();
          try {
             super.write(entry);
@@ -148,7 +148,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
             eventually(new Condition() {
                @Override
                public boolean isSatisfied() throws Exception {
-                  return store.load("k1") != null;
+                  return store.loadEntry("k1") != null;
                }
             });
 
@@ -182,7 +182,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
             cache.put("k1", "v1");
             cache.put("k2", "v2"); // force eviction of "k1"
 
-            eventually(() -> store.load("k1") != null);
+            eventually(() -> store.loadEntry("k1") != null);
 
             // simulate slow back end store
             store.lock.lock();

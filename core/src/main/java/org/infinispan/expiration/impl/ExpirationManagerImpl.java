@@ -19,7 +19,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -159,7 +159,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    @Override
-   public void handleInStoreExpiration(final MarshalledEntry<K, V> marshalledEntry) {
+   public void handleInStoreExpiration(final MarshallableEntry<K, V> marshalledEntry) {
       handleInStoreExpiration(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata());
    }
 

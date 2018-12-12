@@ -91,7 +91,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       HashSet exclusionSet = new HashSet();
       for(String fileName : fileNamesFromIndexDir) {
          FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
-         AssertJUnit.assertNotNull(cacheLoader.load(key));
+         AssertJUnit.assertNotNull(cacheLoader.loadEntry(key));
 
          exclusionSet.add(key);
       }
@@ -149,10 +149,10 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
       for(String fileName : fileNamesFromIndexDir) {
          FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
-         AssertJUnit.assertNotNull(cacheLoader.load(key));
+         AssertJUnit.assertNotNull(cacheLoader.loadEntry(key));
 
          //Testing non-existent keys with non-acceptable type
-         AssertJUnit.assertNull(cacheLoader.load(fileName));
+         AssertJUnit.assertNull(cacheLoader.loadEntry(fileName));
       }
    }
 
@@ -160,7 +160,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
    public void testLoadKeyWithNonExistentFile() throws Exception {
       LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
       FileCacheKey key = new FileCacheKey(indexName, "testKey", segmentId);
-      AssertJUnit.assertNull(cacheLoader.load(key));
+      AssertJUnit.assertNull(cacheLoader.loadEntry(key));
    }
 
    public void testLoadKeyWithInnerNonReadableDir() throws Exception {
@@ -175,7 +175,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
          if (isReadoff && isWriteoff) {
             LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
-            cacheLoader.load(5);
+            cacheLoader.loadEntry(5);
          } else {
             log.info("Skipping test because it is not possible to make the directory non-readable, i.e. because the tests are run with the root user.");
          }
@@ -198,7 +198,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
       for (String fileName : fileNamesFromIndexDir) {
          FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
-         AssertJUnit.assertNotNull(cacheLoader.load(key));
+         AssertJUnit.assertNotNull(cacheLoader.loadEntry(key));
 
          boolean found = false;
          for (InternalCacheEntry entry : loadedEntrySet) {
@@ -227,7 +227,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       Set keyList = PersistenceUtil.toKeySet(cacheLoader, null);
       for(String fileName : fileNamesFromIndexDir) {
          FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
-         AssertJUnit.assertNotNull(cacheLoader.load(key));
+         AssertJUnit.assertNotNull(cacheLoader.loadEntry(key));
 
          boolean found = false;
          for(Object keyFromList : keyList) {
@@ -290,7 +290,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
       for(String fileName : fileNamesFromIndexDir) {
          FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
-         AssertJUnit.assertNotNull(cacheLoader.load(key));
+         AssertJUnit.assertNotNull(cacheLoader.loadEntry(key));
 
          boolean found = false;
          for(Object keyFromList : keyList) {

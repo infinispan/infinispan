@@ -15,7 +15,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 
 /**
  * An interceptor which ensures that writes to an underlying transactional store are prepared->committed/rolledback as part
@@ -27,7 +27,7 @@ import org.infinispan.persistence.spi.MarshalledEntryFactory;
 public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    @Inject private PersistenceManager persistenceManager;
    @Inject private InternalEntryFactory entryFactory;
-   @Inject private MarshalledEntryFactory marshalledEntryFactory;
+   @Inject private MarshallableEntryFactory marshalledEntryFactory;
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

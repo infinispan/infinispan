@@ -88,8 +88,8 @@ public class TxStoreTest extends AbstractInfinispanTest {
 
       // Ensure the values committed in the Tx were actually written to the store as well as to the cache
       assertRowCount(2);
-      assertEquals(store.load(KEY1).getValue(), VAL2);
-      assertEquals(store.load(KEY2).getValue(), VAL1);
+      assertEquals(store.loadEntry(KEY1).getValue(), VAL2);
+      assertEquals(store.loadEntry(KEY2).getValue(), VAL1);
    }
 
    @Test

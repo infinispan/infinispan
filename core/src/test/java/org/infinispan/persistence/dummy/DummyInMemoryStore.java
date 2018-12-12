@@ -19,19 +19,19 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -104,7 +104,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    @Override
-   public void write(MarshalledEntry entry) {
+   public void write(MarshallableEntry entry) {
       assertRunning();
       record("write");
       if (configuration.slow()) {
@@ -143,7 +143,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       Set expired = new HashSet();
       for (Iterator<Map.Entry<Object, byte[]>> i = store.entrySet().iterator(); i.hasNext();) {
          Map.Entry<Object, byte[]> next = i.next();
-         MarshalledEntry se = deserialize(next.getKey(), next.getValue(), true, true);
+         MarshallableEntry se = deserialize(next.getKey(), next.getValue(), true, true);
          if (isExpired(se, currentTimeMillis)) {
             if (listener != null) listener.marshalledEntryPurged(se);
             i.remove();
@@ -153,11 +153,11 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    @Override
-   public MarshalledEntry load(Object key) {
+   public MarshallableEntry loadEntry(Object key) {
       assertRunning();
       record("load");
       if (key == null) return null;
-      MarshalledEntry me = deserialize(key, store.get(key), true, true);
+      MarshallableEntry me = deserialize(key, store.get(key), true, true);
       if (me == null) return null;
       long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
@@ -167,12 +167,12 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       return me;
    }
 
-   private boolean isExpired(MarshalledEntry me, long now) {
+   private boolean isExpired(MarshallableEntry me, long now) {
       return me.getMetadata() != null && me.getMetadata().isExpired(now);
    }
 
    @Override
-   public Flowable<MarshalledEntry> publishEntries(Predicate filter, boolean fetchValue, boolean fetchMetadata) {
+   public Flowable<MarshallableEntry> entryPublisher(Predicate filter, boolean fetchValue, boolean fetchMetadata) {
       assertRunning();
       record("publishEntries");
       log.tracef("Publishing entries in store %s with filter %s", storeName, filter);
@@ -288,7 +288,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    public void blockUntilCacheStoreContains(Object key, Object expectedValue, long timeout) {
       long killTime = timeService.wallClockTime() + timeout;
       while (timeService.wallClockTime() < killTime) {
-         MarshalledEntry entry = deserialize(key, store.get(key), true, false);
+         MarshallableEntry entry = deserialize(key, store.get(key), true, false);
          if (entry != null && entry.getValue().equals(expectedValue)) return;
          TestingUtil.sleepThread(50);
       }
@@ -335,7 +335,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       assertRunning();
       record("load");
       if (key == null) return false;
-      MarshalledEntry me = deserialize(key, store.get(key), false, true);
+      MarshallableEntry me = deserialize(key, store.get(key), false, true);
       if (me == null) return false;
       long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
@@ -345,7 +345,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       return true;
    }
 
-   private byte[] serialize(MarshalledEntry o) {
+   private byte[] serialize(MarshallableEntry o) {
       try {
          return marshaller.objectToByteBuffer(new KeyValuePair(o.getValue(), o.getMetadata()));
       } catch (IOException e) {
@@ -356,7 +356,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       }
    }
 
-   private MarshalledEntry deserialize(Object key, byte[] b, boolean fetchValue, boolean fetchMetadata) {
+   private MarshallableEntry deserialize(Object key, byte[] b, boolean fetchValue, boolean fetchMetadata) {
       try {
          if (b == null)
             return null;
@@ -365,7 +365,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
          fetchMetadata = true;
          KeyValuePair<Object, InternalMetadata> keyValuePair =
                (KeyValuePair<Object, InternalMetadata>) marshaller.objectFromByteBuffer(b);
-         return ctx.getMarshalledEntryFactory().newMarshalledEntry(key,
+         return ctx.getMarshallableEntryFactory().create(key,
                fetchValue ? keyValuePair.getKey() : null,
                fetchMetadata ? keyValuePair.getValue() : null);
       } catch (IOException e) {

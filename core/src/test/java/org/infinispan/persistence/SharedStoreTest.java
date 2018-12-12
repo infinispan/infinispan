@@ -8,7 +8,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -81,7 +81,7 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
          DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
          if (cacheMode.isScattered()) {
             // scattered cache leaves tombstones
-            MarshalledEntry entry = cs.load("key");
+            MarshallableEntry entry = cs.loadEntry("key");
             assert entry == null || entry.getValue() == null;
             assertEquals("Entry should have been replaced by tombstone", Integer.valueOf(2), dimcs.stats().get("write"));
          } else {

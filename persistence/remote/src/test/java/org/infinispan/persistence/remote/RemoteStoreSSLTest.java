@@ -117,9 +117,9 @@ public class RemoteStoreSSLTest extends BaseStoreTest {
    public void testReplaceExpiredEntry() throws Exception {
       cl.write(marshalledEntry(internalCacheEntry("k1", "v1", 100l)));
       timeService.advance(1101);
-      assertNull(cl.load("k1"));
+      assertNull(cl.loadEntry("k1"));
       long start = System.currentTimeMillis();
       cl.write(marshalledEntry(internalCacheEntry("k1", "v2", 100l)));
-      assertTrue(cl.load("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
+      assertTrue(cl.loadEntry("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
    }
 }

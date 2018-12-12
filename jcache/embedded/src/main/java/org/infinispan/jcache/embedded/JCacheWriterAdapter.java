@@ -4,7 +4,7 @@ import javax.cache.integration.CacheWriter;
 
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.JCacheEntry;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.InitializationContext;
 
 public class JCacheWriterAdapter<K, V> implements org.infinispan.persistence.spi.CacheWriter {
@@ -26,7 +26,7 @@ public class JCacheWriterAdapter<K, V> implements org.infinispan.persistence.spi
    }
 
    @Override
-   public void write(MarshalledEntry entry) {
+   public void write(MarshallableEntry entry) {
       try {
          delegate.write(new JCacheEntry(entry.getKey(), entry.getValue()));
       } catch (Exception e) {

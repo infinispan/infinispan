@@ -11,7 +11,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 
 /**
  * @author Ryan Emerson
@@ -37,7 +37,7 @@ public class StoreMigrator {
          // Txs used so that writes to the DB are batched. Migrator will always operate locally Tx overhead should be negligible
          TransactionManager tm = targetCache.getTransactionManager();
          int txBatchSize = 0;
-         for (MarshalledEntry entry : sourceReader) {
+         for (MarshallableEntry entry : sourceReader) {
             if (txBatchSize == 0) tm.begin();
 
             targetCache.put(entry.getKey(), entry.getValue());

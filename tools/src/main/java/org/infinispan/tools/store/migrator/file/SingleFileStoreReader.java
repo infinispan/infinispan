@@ -14,8 +14,8 @@ import java.util.NoSuchElementException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.tools.store.migrator.Element;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;
@@ -24,7 +24,7 @@ import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 public class SingleFileStoreReader implements StoreIterator {
 
    private final FileChannel channel;
-   private final MarshalledEntryFactory entryFactory;
+   private final MarshallableEntryFactory entryFactory;
 
    public SingleFileStoreReader(StoreProperties props) {
       props.required(Element.LOCATION);
@@ -47,11 +47,11 @@ public class SingleFileStoreReader implements StoreIterator {
    }
 
    @Override
-   public Iterator<MarshalledEntry> iterator() {
+   public Iterator<MarshallableEntry> iterator() {
       return new SingleFileIterator();
    }
 
-   class SingleFileIterator implements Iterator<MarshalledEntry> {
+   class SingleFileIterator implements Iterator<MarshallableEntry> {
 
       // CONSTANTS taken from the SingleFileStore impl we do not expose and reference
       // these variables as if the current impl changes then it will break the iterator
@@ -66,7 +66,7 @@ public class SingleFileStoreReader implements StoreIterator {
       }
 
       @Override
-      public MarshalledEntry next() {
+      public MarshallableEntry next() {
          for (;;) {
             // read next entry using same logic as SingleFileStore#rebuildIndex
             ByteBuffer buf = readFileEntry();
@@ -99,7 +99,7 @@ public class SingleFileStoreReader implements StoreIterator {
 
                   org.infinispan.commons.io.ByteBuffer keyBb = new ByteBufferImpl(data, 0, keyLen);
                   org.infinispan.commons.io.ByteBuffer valueBb = new ByteBufferImpl(data, keyLen, dataLen);
-                  return entryFactory.newMarshalledEntry(keyBb, valueBb, (org.infinispan.commons.io.ByteBuffer) null);
+                  return entryFactory.create(keyBb, valueBb, (org.infinispan.commons.io.ByteBuffer) null);
                } catch (IOException e) {
                   throw new CacheException(String.format("Unable to read file entry at offset %d", filePos), e);
                }

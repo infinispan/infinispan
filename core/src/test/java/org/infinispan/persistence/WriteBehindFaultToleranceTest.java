@@ -18,7 +18,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -57,7 +57,7 @@ public class WriteBehindFaultToleranceTest extends AbstractInfinispanTest {
       DummyInMemoryStore store = (DummyInMemoryStore) TestingUtil.extractField(AdvancedAsyncCacheWriter.class, asyncWriter, "actual");
       store.setAvailable(true);
       cache.put(1, 1);
-      eventually(() -> store.load(1) != null);
+      eventually(() -> store.loadEntry(1) != null);
       assertEquals(1, store.size());
 
       store.setAvailable(false);
@@ -102,7 +102,7 @@ public class WriteBehindFaultToleranceTest extends AbstractInfinispanTest {
       DummyInMemoryStore store = (DummyInMemoryStore) TestingUtil.extractField(AdvancedAsyncCacheWriter.class, asyncWriter, "actual");
       assertTrue(store.isAvailable());
       cache.put(1, 1);
-      eventually(() -> store.load(1) != null);
+      eventually(() -> store.loadEntry(1) != null);
       assertEquals(1, store.size());
 
       store.setAvailable(false);
@@ -110,7 +110,7 @@ public class WriteBehindFaultToleranceTest extends AbstractInfinispanTest {
       cache.put(1, 2); // Should fail on the store, but complete in-memory
       TestingUtil.sleepThread(1000); // Sleep to ensure async write is attempted
       store.setAvailable(true);
-      MarshalledEntry entry = store.load(1);
+      MarshallableEntry entry = store.loadEntry(1);
       assertNotNull(entry);
       assertEquals(1, entry.getValue());
       assertEquals(2, cache.get(1));

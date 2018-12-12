@@ -82,10 +82,10 @@ public class RestStoreTest extends BaseStoreTest {
       // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
       // and so data is stored for 1 second here. Adjust waiting time accordingly.
       timeService.advance(1101);
-      assertNull(cl.load("k1"));
+      assertNull(cl.loadEntry("k1"));
       InternalCacheEntry ice2 = internalCacheEntry("k1", "v2", 100);
       cl.write(marshalledEntry(ice2));
-      assertEquals("v2", cl.load("k1").getValue());
+      assertEquals("v2", cl.loadEntry("k1").getValue());
    }
 
    @Override

@@ -25,7 +25,7 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -202,7 +202,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public void write(MarshalledEntry entry) {
+      public void write(MarshallableEntry entry) {
 
       }
 
@@ -213,7 +213,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
 
       @Override
-      public MarshalledEntry load(Object key) throws PersistenceException {
+      public MarshallableEntry loadEntry(Object key) throws PersistenceException {
          incrementLoads();
          return null;
       }

@@ -9,7 +9,7 @@ import java.util.Iterator;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;
@@ -53,11 +53,11 @@ public class RocksDBReader implements StoreIterator {
    }
 
    @Override
-   public Iterator<MarshalledEntry> iterator() {
+   public Iterator<MarshallableEntry> iterator() {
       return new RocksDBIterator();
    }
 
-   class RocksDBIterator implements Iterator<MarshalledEntry>, AutoCloseable {
+   class RocksDBIterator implements Iterator<MarshallableEntry>, AutoCloseable {
 
       final RocksIterator it;
 
@@ -77,8 +77,8 @@ public class RocksDBReader implements StoreIterator {
       }
 
       @Override
-      public MarshalledEntry next() {
-         MarshalledEntry entry = unmarshall(it.value());
+      public MarshallableEntry next() {
+         MarshallableEntry entry = unmarshall(it.value());
          it.next();
          return entry;
       }

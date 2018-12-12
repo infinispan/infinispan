@@ -28,8 +28,8 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.support.BatchModification;
 
 /**
@@ -40,25 +40,25 @@ public class TxBatchUpdater extends AbstractVisitor {
    private final CacheWriterInterceptor cwi;
    private final PersistenceManager persistenceManager;
    private final InternalEntryFactory entryFactory;
-   private final MarshalledEntryFactory marshalledEntryFactory;
+   private final MarshallableEntryFactory marshalledEntryFactory;
    private final BatchModification modifications;
    private final BatchModification nonSharedModifications;
    private final boolean generateStatistics;
    private int putCount;
 
    static TxBatchUpdater createNonTxStoreUpdater(CacheWriterInterceptor interceptor, PersistenceManager persistenceManager,
-                                                 InternalEntryFactory entryFactory, MarshalledEntryFactory marshalledEntryFactory) {
+                                                 InternalEntryFactory entryFactory, MarshallableEntryFactory marshalledEntryFactory) {
       return new TxBatchUpdater(interceptor, persistenceManager, entryFactory, marshalledEntryFactory,
             new BatchModification(null), new BatchModification(null));
    }
 
    static TxBatchUpdater createTxStoreUpdater(PersistenceManager persistenceManager, InternalEntryFactory entryFactory,
-                                              MarshalledEntryFactory marshalledEntryFactory, Set<Object> affectedKeys) {
+                                              MarshallableEntryFactory marshalledEntryFactory, Set<Object> affectedKeys) {
       return new TxBatchUpdater(null, persistenceManager, entryFactory, marshalledEntryFactory, new BatchModification(affectedKeys), null);
    }
 
    private TxBatchUpdater(CacheWriterInterceptor cwi, PersistenceManager persistenceManager, InternalEntryFactory entryFactory,
-                          MarshalledEntryFactory marshalledEntryFactory, BatchModification modifications, BatchModification nonSharedModifications) {
+                          MarshallableEntryFactory marshalledEntryFactory, BatchModification modifications, BatchModification nonSharedModifications) {
       this.cwi = cwi;
       this.persistenceManager = persistenceManager;
       this.entryFactory = entryFactory;
@@ -146,7 +146,7 @@ public class TxBatchUpdater extends AbstractVisitor {
          if (generateStatistics) putCount++;
          InternalCacheValue sv = entryFactory.getValueFromCtx(key, ctx);
          if (sv != null && sv.getValue() != null) {
-            MarshalledEntry me = marshalledEntryFactory.newMarshalledEntry(key, sv.getValue(), internalMetadata(sv));
+            MarshallableEntry me = marshalledEntryFactory.create(key, sv.getValue(), internalMetadata(sv));
             getModifications(ctx, key, command).addMarshalledEntry(key, me);
          }
       }
@@ -164,7 +164,7 @@ public class TxBatchUpdater extends AbstractVisitor {
             if (generateStatistics) putCount++;
             InternalCacheValue sv = entryFactory.getValueFromCtx(key, ctx);
             if (sv != null) {
-               MarshalledEntry me = marshalledEntryFactory.newMarshalledEntry(key, sv.getValue(), internalMetadata(sv));
+               MarshallableEntry me = marshalledEntryFactory.create(key, sv.getValue(), internalMetadata(sv));
                getModifications(ctx, key, command).addMarshalledEntry(key, me);
             }
          }

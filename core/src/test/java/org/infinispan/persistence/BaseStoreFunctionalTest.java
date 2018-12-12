@@ -32,7 +32,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -269,7 +269,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
             }
 
             @Override
-            public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries,
+            public void writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries,
                   Predicate<? super StoreConfiguration> predicate, long flags) {
                passivate.set(true);
             }
@@ -300,7 +300,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertEquals(numberOfEntries, cache.size());
       CacheLoader cl = TestingUtil.getCacheLoader(cache);
       if (cl != null)
-         IntStream.range(0, numberOfEntries).forEach(i -> assertNotNull(cl.load(Integer.toString(i))));
+         IntStream.range(0, numberOfEntries).forEach(i -> assertNotNull(cl.loadEntry(Integer.toString(i))));
    }
 
    public void testLoadEntrySet() {

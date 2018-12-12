@@ -115,7 +115,7 @@ import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
@@ -1648,13 +1648,13 @@ public class TestingUtil {
       return (T) persistenceManager.getAllTxWriters().get(0);
    }
 
-   public static <K, V> Set<MarshalledEntry<K, V>> allEntries(AdvancedLoadWriteStore<K, V> cl, Predicate<K> filter) {
-      return Flowable.fromPublisher(cl.publishEntries(filter, true, true))
-            .collectInto(new HashSet<MarshalledEntry<K, V>>(), Set::add)
+   public static <K, V> Set<MarshallableEntry<K, V>> allEntries(AdvancedLoadWriteStore<K, V> cl, Predicate<K> filter) {
+      return Flowable.fromPublisher(cl.entryPublisher(filter, true, true))
+            .collectInto(new HashSet<MarshallableEntry<K, V>>(), Set::add)
             .blockingGet();
    }
 
-   public static <K, V> Set<MarshalledEntry<K, V>> allEntries(AdvancedLoadWriteStore<K, V> cl) {
+   public static <K, V> Set<MarshallableEntry<K, V>> allEntries(AdvancedLoadWriteStore<K, V> cl) {
       return allEntries(cl, null);
    }
 

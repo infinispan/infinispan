@@ -10,7 +10,7 @@ import javax.transaction.Transaction;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
@@ -71,13 +71,13 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
-         boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
+   public <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
+                                                                   boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
       return null;
    }
 
    @Override
-   public <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
+   public <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
       return null;
    }
 
@@ -92,21 +92,21 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public MarshalledEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
+   public MarshallableEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
       return null;
    }
 
    @Override
-   public MarshalledEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+   public MarshallableEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
       return null;
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicates) {
+   public void writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicates) {
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicates, long flags) {
+   public void writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicates, long flags) {
    }
 
    @Override
@@ -141,7 +141,7 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags) {
+   public void writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags) {
    }
 
    @Override

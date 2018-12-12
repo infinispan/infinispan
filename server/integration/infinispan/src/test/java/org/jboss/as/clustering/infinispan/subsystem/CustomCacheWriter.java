@@ -2,7 +2,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import java.util.concurrent.Executor;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.InitializationContext;
 
@@ -21,7 +21,7 @@ public class CustomCacheWriter implements AdvancedCacheWriter {
    }
 
    @Override
-   public void write(MarshalledEntry entry) {
+   public void write(MarshallableEntry entry) {
    }
 
    @Override

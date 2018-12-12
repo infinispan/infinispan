@@ -42,9 +42,10 @@ public class PersistenceMockUtil {
 
    public static InitializationContext createContext(String nodeName, Configuration configuration, StreamingMarshaller marshaller, TimeService timeService) {
       Cache mockCache = mockCache(nodeName, configuration, timeService);
+      MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(marshaller);
       return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
                                            SingleSegmentKeyPartitioner.getInstance(), marshaller,
-                                           timeService, new ByteBufferFactoryImpl(), new MarshalledEntryFactoryImpl(marshaller),
+                                           timeService, new ByteBufferFactoryImpl(), mef, mef,
                                            new WithinThreadExecutor());
    }
 

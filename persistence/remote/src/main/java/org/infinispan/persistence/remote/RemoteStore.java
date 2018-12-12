@@ -1,10 +1,12 @@
 package org.infinispan.persistence.remote;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -29,7 +31,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
@@ -44,6 +45,7 @@ import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
 import org.infinispan.persistence.spi.FlagAffectedStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.util.logging.LogFactory;
@@ -133,7 +135,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    }
 
    @Override
-   public MarshalledEntry<K, V> load(Object key) throws PersistenceException {
+   public MarshallableEntry<K, V> loadEntry(Object key) throws PersistenceException {
       if (configuration.rawValues()) {
          Object unwrappedKey;
          if (key instanceof WrappedByteArray) {
@@ -153,7 +155,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             if (realValue instanceof byte[]) {
                realValue = new WrappedByteArray((byte[]) realValue);
             }
-            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, realValue,
+            return ctx.getMarshallableEntryFactory().create(key, realValue,
                   new InternalMetadataImpl(metadata, created, lastUsed));
          } else {
             return null;
@@ -162,7 +164,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
          if (key instanceof WrappedByteArray) {
             key = ((WrappedByteArray) key).getBytes();
          }
-         return (MarshalledEntry<K, V>) remoteCache.get(key);
+         return (MarshallableEntry<K, V>) remoteCache.get(key);
       }
    }
 
@@ -190,15 +192,15 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    }
 
    @Override
-   public Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
-      return publishEntries(null, filter, fetchValue, fetchMetadata);
+   public Publisher<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+      return entryPublisher(null, filter, fetchValue, fetchMetadata);
    }
 
    @Override
-   public Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+   public Publisher<MarshallableEntry<K, V>> entryPublisher(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
       if (!fetchValue && !fetchMetadata) {
          Flowable<K> keyFlowable = publishKeys(segments, filter);
-         return keyFlowable.map(key -> ctx.getMarshalledEntryFactory().newMarshalledEntry(key, (Object) null, null));
+         return keyFlowable.map(key -> ctx.getMarshallableEntryFactory().create(key, (Object) null, null));
       }
       if (configuration.rawValues()) {
          io.reactivex.functions.Predicate<Map.Entry<Object, ?>> filterToUse = filter == null ? null :
@@ -210,7 +212,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             if (filterToUse != null) {
                entryFlowable = entryFlowable.filter(filterToUse);
             }
-            return entryFlowable.map(e -> ctx.getMarshalledEntryFactory().newMarshalledEntry(wrap(e.getKey()),
+            return entryFlowable.map(e -> ctx.getMarshallableEntryFactory().create(wrap(e.getKey()),
                   (V) wrap(e.getValue()), null));
          } else {
             Flowable<Map.Entry<Object, MetadataValue<Object>>> entryMetatdataFlowable = entryFlowable(
@@ -227,7 +229,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
                long created = value.getCreated();
                long lastUsed = value.getLastUsed();
                Object realValue = value.getValue();
-               return ctx.getMarshalledEntryFactory().newMarshalledEntry(wrap(e.getKey()), wrap(realValue),
+               return ctx.getMarshallableEntryFactory().create(wrap(e.getKey()), wrap(realValue),
                      new InternalMetadataImpl(metadata, created, lastUsed));
             });
          }
@@ -237,7 +239,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             entryFlowable = entryFlowable.filter(e -> filter.test(wrap(e.getKey())));
          }
          // Technically we will send the metadata and value to the user, no matter what.
-         return entryFlowable.map(e -> (MarshalledEntry<K, V>) e.getValue());
+         return entryFlowable.map(e -> (MarshallableEntry<K, V>) e.getValue());
       }
    }
 
@@ -271,7 +273,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    }
 
    @Override
-   public void write(MarshalledEntry entry) throws PersistenceException {
+   public void write(MarshallableEntry entry) throws PersistenceException {
       if (trace) {
          log.tracef("Adding entry: %s", entry);
       }
@@ -285,14 +287,14 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             toSeconds(maxIdle, entry.getKey(), MAXIDLE), TimeUnit.SECONDS);
    }
 
-   private Object getKey(MarshalledEntry entry) {
+   private Object getKey(MarshallableEntry entry) {
       Object key = entry.getKey();
       if (key instanceof WrappedByteArray)
          return ((WrappedByteArray) key).getBytes();
       return key;
    }
 
-   private Object getValue(MarshalledEntry entry) {
+   private Object getValue(MarshallableEntry entry) {
       if (configuration.rawValues()) {
          Object value = entry.getValue();
          return value instanceof WrappedByteArray ? ((WrappedByteArray) value).getBytes() : value;
@@ -301,18 +303,14 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    }
 
    @Override
-   public void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> marshalledEntries) {
-      Map<Object, Object> batch = new HashMap<>();
-      for (MarshalledEntry entry : marshalledEntries) {
-         batch.put(getKey(entry), getValue(entry));
-         if (batch.size() == configuration.maxBatchSize()) {
-            remoteCache.putAll(batch);
-            batch.clear();
-         }
-      }
-
-      if (!batch.isEmpty())
-         remoteCache.putAll(batch);
+   public CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      Flowable.fromPublisher(publisher)
+            .buffer(configuration.maxBatchSize())
+            .doOnNext(entries -> remoteCache.putAll(entries.stream().collect(Collectors.toMap(this::getKey, this::getValue))))
+            .doOnError(PersistenceException::new)
+            .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
+      return future;
    }
 
    @Override

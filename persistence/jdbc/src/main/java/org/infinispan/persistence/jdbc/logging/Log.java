@@ -167,7 +167,7 @@ public interface Log extends BasicLogger {
    void twoWayKey2StringMapperIsMissing(String className);
 
    @Message(value = "Error while writing entries in batch to the database:", id = 8037)
-   PersistenceException sqlFailureWritingBatch(@Cause Exception e);
+   PersistenceException sqlFailureWritingBatch(@Cause Throwable e);
 
    @Message(value = "Error whilst removing keys in batch from the database. Keys: %s", id = 8038)
    PersistenceException sqlFailureDeletingBatch(Iterable<Object> keys, @Cause Exception e);

@@ -285,32 +285,31 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          if (stProvider != null) {
             try {
                CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
-               AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
-                  int segmentId = keyPartitioner.getSegment(me.getKey());
-                  if (finalCompletedSegments.contains(segmentId)) {
-                     try {
-                        InternalMetadata metadata = me.getMetadata();
-                        if (metadata instanceof RemoteMetadata) {
-                           Address backup = ((RemoteMetadata) metadata).getAddress();
-                           retrieveEntry(me.getKey(), backup);
-                           for (Address member : cacheTopology.getActualMembers()) {
-                              if (!member.equals(backup)) {
-                                 invalidate(me.getKey(), metadata.version(), member);
+               Flowable.fromPublisher(stProvider.entryPublisher(filter::accept, true, true))
+                     .blockingForEach(me -> {
+                        int segmentId = keyPartitioner.getSegment(me.getKey());
+                        if (finalCompletedSegments.contains(segmentId)) {
+                           try {
+                              InternalMetadata metadata = me.getMetadata();
+                              if (metadata instanceof RemoteMetadata) {
+                                 Address backup = ((RemoteMetadata) metadata).getAddress();
+                                 retrieveEntry(me.getKey(), backup);
+                                 for (Address member : cacheTopology.getActualMembers()) {
+                                    if (!member.equals(backup)) {
+                                       invalidate(me.getKey(), metadata.version(), member);
+                                    }
+                                 }
+                              } else {
+                                 backupEntry(entryFactory.create(me.getKey(), me.getValue(), me.getMetadata()));
+                                 for (Address member : nonBackupAddresses) {
+                                    invalidate(me.getKey(), metadata.version(), member);
+                                 }
                               }
-                           }
-                        } else {
-                           backupEntry(entryFactory.create(me.getKey(), me.getValue(), me.getMetadata()));
-                           for (Address member : nonBackupAddresses) {
-                              invalidate(me.getKey(), metadata.version(), member);
+                           } catch (CacheException e) {
+                              log.failedLoadingValueFromCacheStore(me.getKey(), e);
                            }
                         }
-                     } catch (CacheException e) {
-                        log.failedLoadingValueFromCacheStore(me.getKey(), e);
-                     }
-                  }
-               };
-               Flowable.fromPublisher(stProvider.publishEntries(filter::accept, true, true))
-                     .blockingForEach(me -> task.processEntry(me, null));
+                     });
             } catch (CacheException e) {
                log.failedLoadingKeysFromCacheStore(e);
             }

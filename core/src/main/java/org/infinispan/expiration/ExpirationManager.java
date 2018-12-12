@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.configuration.cache.ExpirationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -63,7 +63,7 @@ public interface ExpirationManager<K, V> {
     * @deprecated since 9.3 this method is not intended for external use
     */
    @Deprecated
-   void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry);
+   void handleInStoreExpiration(MarshallableEntry<K, V> marshalledEntry);
 
    /**
     * Retrieves the last access time for the given key in the data container if it is using max idle.

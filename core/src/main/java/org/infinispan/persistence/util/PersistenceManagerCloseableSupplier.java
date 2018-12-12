@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
