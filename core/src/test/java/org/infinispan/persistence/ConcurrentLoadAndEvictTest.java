@@ -17,7 +17,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -60,14 +60,14 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       assert cache.get("a").equals("b");
       CacheLoader cl = TestingUtil.getCacheLoader(cache);
       assert cl != null;
-      MarshalledEntry se = cl.load("a");
+      MarshallableEntry se = cl.loadEntry("a");
       assert se != null;
       assert se.getValue().equals("b");
 
       // clear the cache
       cache.getAdvancedCache().withFlags(SKIP_CACHE_STORE).clear();
 
-      se = cl.load("a");
+      se = cl.loadEntry("a");
       assert se != null;
       assert se.getValue().equals("b");
 

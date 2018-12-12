@@ -8,7 +8,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.TestingUtil;
@@ -41,7 +41,7 @@ public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInB
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNotNull("Key " + key + " does not exist in data container.", entry);
       assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
-      MarshalledEntry<Object, Object> entryLoaded = loader.load(key);
+      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNull("Key " + key + " exists in cache loader.", entryLoaded);
    }
 
@@ -53,7 +53,7 @@ public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInB
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
-      MarshalledEntry<Object, Object> entryLoaded = loader.load(key);
+      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNull("Key " + key + " exists in cache loader.", entryLoaded);
    }
 
@@ -64,7 +64,7 @@ public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInB
       InternalCacheEntry entry = container.get(key);
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNull("Key " + key + " exists in data container", entry);
-      MarshalledEntry<Object, Object> entryLoaded = loader.load(key);
+      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);
       assertEquals("Wrong value for key " + key + " in cache loader", value, entryLoaded.getValue());
    }

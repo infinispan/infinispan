@@ -17,7 +17,7 @@ import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
 import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.async.AsyncCacheWriter;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
@@ -300,7 +300,7 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
 
       private boolean isSkip(Modification mod) {
          if (mod instanceof Store) {
-            MarshalledEntry storedValue = ((Store) mod).getStoredValue();
+            MarshallableEntry storedValue = ((Store) mod).getStoredValue();
             return storedValue.getValue().equals("skip");
          }
          return false;

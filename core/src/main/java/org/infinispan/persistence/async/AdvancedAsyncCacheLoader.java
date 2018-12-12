@@ -5,11 +5,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.Store;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -58,14 +58,14 @@ public class AdvancedAsyncCacheLoader<K, V> extends AsyncCacheLoader<K, V> imple
    }
 
    @Override
-   public Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+   public Publisher<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
       State state = this.state.get();
       ByRef<Boolean> hadClear = new ByRef<>(Boolean.FALSE);
       Map<Object, Modification> modificationMap = state.flattenModifications(hadClear);
       if (modificationMap.isEmpty()) {
-         return advancedLoader().publishEntries(filter, fetchValue, fetchMetadata);
+         return advancedLoader().entryPublisher(filter, fetchValue, fetchMetadata);
       }
-      Flowable<MarshalledEntry<K, V>> modFlowable = Flowable.fromIterable(modificationMap.entrySet())
+      Flowable<MarshallableEntry<K, V>> modFlowable = Flowable.fromIterable(modificationMap.entrySet())
             .map(Map.Entry::getValue)
             // REMOVE we ignore, LIST and CLEAR aren't possible
             .filter(e -> Modification.Type.STORE == e.getType())
@@ -87,7 +87,7 @@ public class AdvancedAsyncCacheLoader<K, V> extends AsyncCacheLoader<K, V> imple
          // Only use entry if it wasn't in modification map and passes filter
          filter = filter.and(k -> !modificationMap.containsKey(k));
       }
-      return Flowable.merge(modFlowable, advancedLoader().publishEntries(filter, fetchValue, fetchMetadata));
+      return Flowable.merge(modFlowable, advancedLoader().entryPublisher(filter, fetchValue, fetchMetadata));
    }
 
    @Override

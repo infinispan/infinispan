@@ -110,14 +110,14 @@ public class JpaStoreNoMetadataTest extends JpaStoreTest {
       cl.start();
       assertTrue(se1.isExpired(System.currentTimeMillis()));
       assertTrue(cl.contains("k1"));
-      assertEquals("v1", unwrap(cl.load("k1").getValue()));
+      assertEquals("v1", unwrap(cl.loadEntry("k1").getValue()));
       assertTrue(cl.contains("k2"));
-      assertEquals("v2", unwrap(cl.load("k2").getValue()));
+      assertEquals("v2", unwrap(cl.loadEntry("k2").getValue()));
       assertTrue(se3.isExpired(System.currentTimeMillis()));
       assertTrue(cl.contains("k3"));
-      assertEquals("v3", unwrap(cl.load("k3").getValue()));
+      assertEquals("v3", unwrap(cl.loadEntry("k3").getValue()));
       assertTrue(se3.isExpired(System.currentTimeMillis()));
       assertTrue(cl.contains("k4"));
-      assertEquals("v4", unwrap(cl.load("k4").getValue()));
+      assertEquals("v4", unwrap(cl.loadEntry("k4").getValue()));
    }
 }

@@ -225,7 +225,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       }
 
       for (int i = 0; i < INSERTION_COUNT; ++i) {
-         assertEquals("value " + i, l.load("key " + i).getValue());
+         assertEquals("value " + i, l.loadEntry("key " + i).getValue());
       }
    }
 }

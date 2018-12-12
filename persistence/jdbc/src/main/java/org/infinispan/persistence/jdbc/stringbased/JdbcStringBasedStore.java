@@ -9,8 +9,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Map;
 import java.util.PrimitiveIterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
@@ -23,13 +26,12 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
@@ -41,16 +43,18 @@ import org.infinispan.persistence.keymappers.Key2StringMapper;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
 import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import io.reactivex.internal.functions.Functions;
 
 /**
  * {@link org.infinispan.persistence.spi.AdvancedCacheLoader} implementation that stores the entries in a database.
@@ -93,7 +97,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    private Key2StringMapper key2StringMapper;
    private String cacheName;
    private ConnectionFactory connectionFactory;
-   private MarshalledEntryFactory<K, V> marshalledEntryFactory;
+   private MarshallableEntryFactory<K, V> marshalledEntryFactory;
    private StreamingMarshaller marshaller;
    private TableManager tableManager;
    private TimeService timeService;
@@ -105,7 +109,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       this.configuration = ctx.getConfiguration();
       this.cacheName = ctx.getCache().getName();
       this.globalConfiguration = ctx.getCache().getCacheManager().getCacheManagerConfiguration();
-      this.marshalledEntryFactory = ctx.getMarshalledEntryFactory();
+      this.marshalledEntryFactory = ctx.getMarshallableEntryFactory();
       this.marshaller = ctx.getMarshaller();
       this.timeService = ctx.getTimeService();
       this.keyPartitioner = configuration.segmented() ? ctx.getKeyPartitioner() : null;
@@ -197,7 +201,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       return connectionFactory;
    }
 
-   private int getSegment(MarshalledEntry entry) {
+   private int getSegment(MarshallableEntry entry) {
       if (keyPartitioner == null) {
          return -1;
       }
@@ -205,7 +209,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    }
 
    @Override
-   public void write(MarshalledEntry entry) {
+   public void write(MarshallableEntry<? extends K, ? extends V> entry) {
       Connection connection = null;
       String keyStr = key2Str(entry.getKey());
       try {
@@ -224,11 +228,11 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
    }
 
-   private void write(MarshalledEntry entry, Connection connection, int segment) throws SQLException, InterruptedException {
+   private void write(MarshallableEntry entry, Connection connection, int segment) throws SQLException, InterruptedException {
       write(entry, connection, key2Str(entry.getKey()), segment);
    }
 
-   private void write(MarshalledEntry entry, Connection connection, String keyStr, int segment) throws SQLException, InterruptedException {
+   private void write(MarshallableEntry entry, Connection connection, String keyStr, int segment) throws SQLException, InterruptedException {
       if (tableManager.isUpsertSupported()) {
          executeUpsert(connection, entry, keyStr, segment);
       } else {
@@ -236,7 +240,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
    }
 
-   private void executeUpsert(Connection connection, MarshalledEntry entry, String keyStr, int segment)
+   private void executeUpsert(Connection connection, MarshallableEntry entry, String keyStr, int segment)
          throws InterruptedException, SQLException {
       PreparedStatement ps = null;
       String sql = tableManager.getUpsertRowSql();
@@ -251,7 +255,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
    }
 
-   private void executeLegacyUpdate(Connection connection, MarshalledEntry entry, String keyStr, int segment)
+   private void executeLegacyUpdate(Connection connection, MarshallableEntry entry, String keyStr, int segment)
          throws InterruptedException, SQLException {
       String sql = tableManager.getSelectIdRowSql();
       if (trace) {
@@ -282,39 +286,47 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    }
 
    @Override
-   public void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> marshalledEntries) {
+   public CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
       // If upsert is not supported, then we must execute the legacy write for each entry; i.e. read then update/insert
       if (!tableManager.isUpsertSupported()) {
-         marshalledEntries.forEach(this::write);
-         return;
+         CompletableFuture<Void> future = new CompletableFuture<>();
+         Flowable.fromPublisher(publisher)
+               .doOnNext(this::write)
+               .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
+         return future;
       }
 
-      Connection connection = null;
-      try {
-         connection = connectionFactory.getConnection();
-         try (PreparedStatement upsertBatch = connection.prepareStatement(tableManager.getUpsertRowSql())) {
-            int batchSize = 0;
-            for (MarshalledEntry entry : marshalledEntries) {
-               String keyStr = key2Str(entry.getKey());
-               prepareUpsertStatement(entry, keyStr, getSegment(entry), upsertBatch);
-               upsertBatch.addBatch();
-               batchSize++;
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      Flowable
+            .using(() -> {
+                     Connection connection = connectionFactory.getConnection();
+                     PreparedStatement upsertBatch = connection.prepareStatement(tableManager.getUpsertRowSql());
+                     return new KeyValuePair<>(connection, upsertBatch);
+                  },
+                  kvp -> createBatchFlowable(kvp.getValue(), publisher),
+                  kvp -> {
+                     JdbcUtil.safeClose(kvp.getValue());
+                     connectionFactory.releaseConnection(kvp.getKey());
+                  })
+            .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
+      return future;
+   }
 
-               if (batchSize == configuration.maxBatchSize()) {
-                  batchSize = 0;
-                  upsertBatch.executeBatch();
-                  upsertBatch.clearBatch();
+   private Flowable<List<MarshallableEntry<? extends K, ? extends V>>> createBatchFlowable(PreparedStatement upsertBatch, Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
+      return Flowable.fromPublisher(publisher)
+            .buffer(configuration.maxBatchSize())
+            .doOnNext(entries -> {
+               for (MarshallableEntry<? extends K, ? extends V> entry : entries) {
+                  String keyStr = key2Str(entry.getKey());
+                  prepareUpsertStatement(entry, keyStr, getSegment(entry), upsertBatch);
+                  upsertBatch.addBatch();
                }
-            }
-
-            if (batchSize != 0)
                upsertBatch.executeBatch();
-         }
-      } catch (SQLException | InterruptedException e) {
-         throw log.sqlFailureWritingBatch(e);
-      } finally {
-         connectionFactory.releaseConnection(connection);
-      }
+               upsertBatch.clearBatch();
+            })
+            .doOnError(e -> {
+               throw log.sqlFailureWritingBatch(e);
+            });
    }
 
    @Override
@@ -348,12 +360,12 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    }
 
    @Override
-   public MarshalledEntry<K, V> load(Object key) {
+   public MarshallableEntry<K, V> loadEntry(Object key) {
       String lockingKey = key2Str(key);
       Connection conn = null;
       PreparedStatement ps = null;
       ResultSet rs = null;
-      MarshalledEntry<K, V> storedValue = null;
+      MarshallableEntry<K, V> storedValue = null;
       try {
          String sql = tableManager.getSelectRowSql();
          conn = connectionFactory.getConnection();
@@ -363,7 +375,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          if (rs.next()) {
             InputStream inputStream = rs.getBinaryStream(2);
             KeyValuePair<ByteBuffer, ByteBuffer> icv = unmarshall(inputStream);
-            storedValue = marshalledEntryFactory.newMarshalledEntry(key, icv.getKey(), icv.getValue());
+            storedValue = marshalledEntryFactory.create(key, icv.getKey(), icv.getValue());
          }
       } catch (SQLException e) {
          log.sqlFailureReadingKey(key, lockingKey, e);
@@ -501,7 +513,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    @Override
    public boolean contains(Object key) {
       //we can do better if needed...
-      return load(key) != null;
+      return loadEntry(key) != null;
    }
 
    private <P> Flowable<P> publish(IntSet segments, Function<ResultSet, Flowable<P>> function) {
@@ -549,12 +561,12 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    }
 
    @Override
-   public Flowable<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+   public Flowable<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
       return publish(null, rs -> Flowable.fromIterable(() -> new ResultSetEntryIterator(rs, filter, fetchValue, fetchMetadata)));
    }
 
    @Override
-   public Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+   public Publisher<MarshallableEntry<K, V>> entryPublisher(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
       return publish(segments, rs -> Flowable.fromIterable(() -> new ResultSetEntryIterator(rs, filter, fetchValue, fetchMetadata)));
    }
 
@@ -568,7 +580,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          try (PreparedStatement upsertBatch = upsertSupported ? connection.prepareStatement(tableManager.getUpsertRowSql()) : null;
               PreparedStatement deleteBatch = connection.prepareStatement(tableManager.getDeleteRowSql())) {
 
-            for (MarshalledEntry entry : batchModification.getMarshalledEntries()) {
+            for (MarshallableEntry entry : batchModification.getMarshallableEntries()) {
                int segment = getSegment(entry);
                if (upsertSupported) {
                   String keyStr = key2Str(entry.getKey());
@@ -585,7 +597,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
                deleteBatch.addBatch();
             }
 
-            if (upsertSupported && !batchModification.getMarshalledEntries().isEmpty())
+            if (upsertSupported && !batchModification.getMarshallableEntries().isEmpty())
                upsertBatch.executeBatch();
 
             if (!batchModification.getKeysToRemove().isEmpty())
@@ -691,11 +703,11 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
    }
 
-   private void prepareUpsertStatement(MarshalledEntry entry, String key, int segment, PreparedStatement ps) throws InterruptedException, SQLException {
+   private void prepareUpsertStatement(MarshallableEntry entry, String key, int segment, PreparedStatement ps) throws InterruptedException, SQLException {
       prepareStatement(entry, key, segment, ps, true);
    }
 
-   private void prepareStatement(MarshalledEntry entry, String key, int segment, PreparedStatement ps, boolean upsert) throws InterruptedException, SQLException {
+   private void prepareStatement(MarshallableEntry entry, String key, int segment, PreparedStatement ps, boolean upsert) throws InterruptedException, SQLException {
       ByteBuffer byteBuffer = marshall(new KeyValuePair(entry.getValueBytes(), entry.getMetadataBytes()));
       long expiryTime = getExpiryTime(entry.getMetadata());
       if (upsert) {
@@ -748,7 +760,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
    }
 
-   private class ResultSetEntryIterator extends AbstractIterator<MarshalledEntry<K, V>> {
+   private class ResultSetEntryIterator extends AbstractIterator<MarshallableEntry<K, V>> {
       private final ResultSet rs;
       private final Predicate<? super K> filter;
       private final boolean fetchValue;
@@ -762,8 +774,8 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
 
       @Override
-      protected MarshalledEntry<K, V> getNext() {
-         MarshalledEntry<K, V> entry = null;
+      protected MarshallableEntry<K, V> getNext() {
+         MarshallableEntry<K, V> entry = null;
          try {
             while (entry == null && rs.next()) {
                String keyStr = rs.getString(2);
@@ -773,10 +785,10 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
                   if (fetchValue || fetchMetadata) {
                      InputStream inputStream = rs.getBinaryStream(1);
                      KeyValuePair<ByteBuffer, ByteBuffer> kvp = unmarshall(inputStream);
-                     entry = marshalledEntryFactory.newMarshalledEntry(
+                     entry = marshalledEntryFactory.create(
                            key, fetchValue ? kvp.getKey() : null, fetchMetadata ? kvp.getValue() : null);
                   } else {
-                     entry = marshalledEntryFactory.newMarshalledEntry(key, (Object) null, null);
+                     entry = marshalledEntryFactory.create(key, (Object) null, null);
                   }
                }
             }

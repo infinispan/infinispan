@@ -22,7 +22,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.test.TestingUtil;
@@ -175,7 +175,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
 
       testCache.testCache.withFlags(Flag.SKIP_CACHE_STORE).removeGroup(GROUP);
       final Map<GroupKey, String> expectedGroupSet2 = new ConcurrentHashMap<>();
-      Flowable<MarshalledEntry<GroupKey, String>> flowable = Flowable.fromPublisher(
+      Flowable<MarshallableEntry<GroupKey, String>> flowable = Flowable.fromPublisher(
             TestingUtil.extractComponent(extractTargetCache(testCache), PersistenceManager.class)
                   .publishEntries(true, true));
       flowable.filter(me -> GROUP.equals(me.getKey().getGroup()))

@@ -95,13 +95,13 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
 
    public void testStoreLoadRemove() throws Exception {
       assertRowCount(0);
-      assertNull("should not be present in the store", cacheStore.load(MIRCEA));
+      assertNull("should not be present in the store", cacheStore.loadEntry(MIRCEA));
       String value = "adsdsadsa";
       cacheStore.write(MarshalledEntryUtil.create(MIRCEA, value, marshaller));
       assertRowCount(1);
-      assertEquals(value, cacheStore.load(MIRCEA).getValue());
+      assertEquals(value, cacheStore.loadEntry(MIRCEA).getValue());
       assertFalse(cacheStore.delete(MANIK));
-      assertEquals(value, cacheStore.load(MIRCEA).getValue());
+      assertEquals(value, cacheStore.loadEntry(MIRCEA).getValue());
       assertRowCount(1);
       assertTrue(cacheStore.delete(MIRCEA));
       assertRowCount(0);
@@ -126,7 +126,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
       Thread.sleep(1100);
       cacheStore.purge(new WithinThreadExecutor(), null);
       assertRowCount(1);
-      assertEquals("val2", cacheStore.load(MANIK).getValue());
+      assertEquals("val2", cacheStore.loadEntry(MANIK).getValue());
    }
 
    protected int rowCount() {

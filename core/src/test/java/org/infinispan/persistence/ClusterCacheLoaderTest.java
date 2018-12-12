@@ -61,7 +61,7 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
       assertNull(cache1.get("key"));
       assertNull(cache2.get("key"));
       writer.write(MarshalledEntryUtil.create("key", "value", cache2));
-      assertEquals(((CacheLoader)writer).load("key").getValue(), "value");
+      assertEquals(((CacheLoader)writer).loadEntry("key").getValue(), "value");
       assertEquals(cache1.get("key"), "value");
    }
 }

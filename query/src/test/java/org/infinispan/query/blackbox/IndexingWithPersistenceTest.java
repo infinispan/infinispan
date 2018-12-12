@@ -16,7 +16,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -105,7 +105,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
       cache.evict(KEY);
 
       // check the entry is in the store
-      MarshalledEntry inStore = store.load(KEY);
+      MarshallableEntry inStore = store.loadEntry(KEY);
       assertNotNull(inStore);
       assertTrue("In store: " + inStore, inStore.getValue() instanceof Person);
       // ...and not in the container
@@ -120,7 +120,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
       check.accept(sm);
 
       InternalCacheEntry ice = cache.getAdvancedCache().getDataContainer().get(KEY);
-      inStore = store.load(KEY);
+      inStore = store.loadEntry(KEY);
       if (remove) {
          assertEquals(null, ice);
          assertEquals(null, inStore);

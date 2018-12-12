@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
@@ -64,8 +67,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -84,6 +86,8 @@ import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.FlagAffectedStore;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.StoreUnavailableException;
@@ -118,6 +122,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private ScheduledExecutorService persistenceExecutor;
    @Inject private ByteBufferFactory byteBufferFactory;
    @Inject private MarshalledEntryFactory marshalledEntryFactory;
+   @Inject private MarshallableEntryFactory marshallableEntryFactory;
    @Inject private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
    @Inject private ComponentRef<InternalExpirationManager<Object, Object>> expirationManager;
    @Inject private CacheNotifier cacheNotifier;
@@ -313,7 +318,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       final long maxEntries = getMaxEntries();
       final AtomicInteger loadedEntries = new AtomicInteger(0);
       final AdvancedCache<Object, Object> flaggedCache = getCacheForStateInsertion();
-      Long insertAmount = Flowable.fromPublisher(preloadCl.publishEntries(null, true, true))
+      Long insertAmount = Flowable.fromPublisher(preloadCl.entryPublisher(null, true, true))
             .take(maxEntries)
             .doOnNext(me -> {
                //the downcast will go away with ISPN-3460
@@ -425,7 +430,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
 
       @Override
-      public void marshalledEntryPurged(MarshalledEntry<K, V> entry) {
+      public void marshalledEntryPurged(MarshallableEntry<K, V> entry) {
          expirationManager.handleInStoreExpiration(entry);
       }
 
@@ -550,8 +555,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
-         boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
+   public <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
+                                                                   boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
       AdvancedCacheLoader<K, V> advancedCacheLoader = getFirstAdvancedCacheLoader(predicate);
 
       if (advancedCacheLoader != null) {
@@ -559,20 +564,20 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // is done while processing data
          return Flowable.using(publisherSemaphoreCallable, semaphore -> {
             semaphore.acquire();
-            return advancedCacheLoader.publishEntries(filter, fetchValue, fetchMetadata);
+            return advancedCacheLoader.entryPublisher(filter, fetchValue, fetchMetadata);
          }, Semaphore::release);
       }
       return Flowable.empty();
    }
 
    @Override
-   public <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter,
-         boolean fetchValue, boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
+   public <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter,
+                                                                   boolean fetchValue, boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
       SegmentedAdvancedLoadWriteStore<K, V> segmentedStore = getFirstSegmentedStore(predicate);
       if (segmentedStore != null) {
          return Flowable.using(publisherSemaphoreCallable, semaphore -> {
             semaphore.acquire();
-            return segmentedStore.publishEntries(segments, filter, fetchValue, fetchMetadata);
+            return segmentedStore.entryPublisher(segments, filter, fetchValue, fetchMetadata);
          }, Semaphore::release);
       }
       return publishEntries(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), fetchValue, fetchMetadata, predicate);
@@ -611,13 +616,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public MarshalledEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
+   public MarshallableEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          for (CacheLoader l : loaders) {
             if (allowLoad(l, localInvocation, includeStores)) {
-               MarshalledEntry load = l.load(key);
+               MarshallableEntry load = l.loadEntry(key);
                if (load != null)
                   return load;
             }
@@ -629,20 +634,20 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public MarshalledEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+   public MarshallableEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          for (CacheLoader l : loaders) {
             if (allowLoad(l, localInvocation, includeStores) && l instanceof SegmentedAdvancedLoadWriteStore) {
-               MarshalledEntry load = ((SegmentedAdvancedLoadWriteStore) l).load(segment, key);
+               MarshallableEntry load = ((SegmentedAdvancedLoadWriteStore) l).get(segment, key);
                if (load != null)
                   return load;
             }
          }
          for (CacheLoader l : loaders) {
             if (allowLoad(l, localInvocation, includeStores)) {
-               MarshalledEntry load = l.load(key);
+               MarshallableEntry load = l.loadEntry(key);
                if (load != null)
                   return load;
             }
@@ -667,14 +672,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment,
-         Predicate<? super StoreConfiguration> predicate) {
+   public void writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment,
+                                     Predicate<? super StoreConfiguration> predicate) {
       writeToAllNonTxStores(marshalledEntry, segment, predicate, 0L);
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment,
-         Predicate<? super StoreConfiguration> predicate, long flags) {
+   public void writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment,
+                                     Predicate<? super StoreConfiguration> predicate, long flags) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
@@ -695,7 +700,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries,
+   public void writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries,
          Predicate<? super StoreConfiguration> predicate, long flags) {
       if (!entries.iterator().hasNext())
          return;
@@ -704,10 +709,22 @@ public class PersistenceManagerImpl implements PersistenceManager {
       try {
          checkStoreAvailability();
          //noinspection unchecked
-         nonTxWriters.stream()
+         CompletableFuture batchFutures = CompletableFuture.allOf(
+               nonTxWriters.stream()
                .filter(writer -> !(writer instanceof FlagAffectedStore) || FlagAffectedStore.class.cast(writer).shouldWrite(flags))
                .filter(writer -> predicate.test(getStoreConfig(writer)))
-               .forEach(writer -> writer.writeBatch(entries));
+               .map(writer -> writer.bulkUpdate(Flowable.fromIterable(entries)))
+               .map(CompletionStage::toCompletableFuture)
+               .toArray(CompletableFuture[]::new)
+         );
+         try {
+            batchFutures.get();
+         } catch (ExecutionException e) {
+            throw new PersistenceException(e.getCause());
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new PersistenceException(e);
+         }
       } finally {
          storesMutex.readLock().unlock();
       }
@@ -912,8 +929,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
          loader = postProcessReader(processedConfiguration, writer, loader);
 
          InitializationContextImpl ctx =
-            new InitializationContextImpl(processedConfiguration, cache.wired(), keyPartitioner, m, timeService,
-                                          byteBufferFactory, marshalledEntryFactory, persistenceExecutor);
+               new InitializationContextImpl(processedConfiguration, cache.wired(), keyPartitioner, m, timeService,
+                     byteBufferFactory, marshalledEntryFactory, marshallableEntryFactory, persistenceExecutor);
          initializeLoader(processedConfiguration, loader, ctx);
          initializeWriter(processedConfiguration, writer, ctx);
          initializeBareInstance(bareInstance, ctx);

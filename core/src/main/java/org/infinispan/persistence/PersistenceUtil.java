@@ -15,7 +15,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -122,7 +122,7 @@ public class PersistenceUtil {
    public static <K, V> Set<InternalCacheEntry<K, V>> toEntrySet(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter, final InternalEntryFactory ief) {
       if (acl == null)
          return Collections.emptySet();
-      return Flowable.fromPublisher(acl.publishEntries(filter, true, true))
+      return Flowable.fromPublisher(acl.entryPublisher(filter, true, true))
             .map(me -> ief.create(me.getKey(), me.getValue(), me.getMetadata()))
             .collectInto(new HashSet<InternalCacheEntry<K, V>>(), Set::add).blockingGet();
    }
@@ -176,13 +176,13 @@ public class PersistenceUtil {
     * @deprecated since 9.4 This method references PersistenceManager, which isn't a public class
     */
    @Deprecated
-   public static <K, V> MarshalledEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
-                                                        InvocationContext context, TimeService timeService) {
+   public static <K, V> MarshallableEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
+                                                                       InvocationContext context, TimeService timeService) {
       return org.infinispan.persistence.internal.PersistenceUtil.loadAndCheckExpiration(persistenceManager, key,
             SEGMENT_NOT_PROVIDED, context);
    }
 
-   public static <K, V> InternalCacheEntry<K, V> convert(MarshalledEntry<K, V> loaded, InternalEntryFactory factory) {
+   public static <K, V> InternalCacheEntry<K, V> convert(MarshallableEntry<K, V> loaded, InternalEntryFactory factory) {
       return org.infinispan.persistence.internal.PersistenceUtil.convert(loaded, factory);
    }
 

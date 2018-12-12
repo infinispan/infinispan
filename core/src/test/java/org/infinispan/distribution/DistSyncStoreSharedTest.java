@@ -13,7 +13,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
@@ -140,7 +140,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
          CacheLoader store = TestingUtil.getFirstLoader(c);
          if (isFirstOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
-            assert store.load(key).getValue().equals(value);
+            assert store.loadEntry(key).getValue().equals(value);
          }
       }
 
@@ -149,7 +149,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
       if (testRetVals) assert value.equals(retval);
       for (Cache<Object, String> c : caches) {
          CacheLoader store = TestingUtil.getFirstLoader(c);
-         MarshalledEntry me = store.load(key);
+         MarshallableEntry me = store.loadEntry(key);
          if (me == null) {
             assertNumberOfInvocations(store, "delete", 1);
             assertNumberOfInvocations(store, "write", 1);
@@ -167,7 +167,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
          CacheLoader store = TestingUtil.getFirstLoader(c);
          if (isFirstOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
-            assert store.load(key).getValue().equals(value);
+            assert store.loadEntry(key).getValue().equals(value);
          }
       }
 
@@ -179,7 +179,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
          if (isFirstOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
          }
-         assert store.load(key).getValue().equals(value2);
+         assert store.loadEntry(key).getValue().equals(value2);
          assertNumberOfInvocations(store, "write", 2);
       }
    }

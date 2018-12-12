@@ -20,7 +20,7 @@ import org.infinispan.configuration.global.SerializationConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.tools.store.migrator.StoreProperties;
 
 public class SerializationConfigUtil {
@@ -31,11 +31,11 @@ public class SerializationConfigUtil {
       configureExternalizers(props, builder);
    }
 
-   public static MarshalledEntryFactory getEntryFactory(StoreProperties props) {
+   public static MarshallableEntryFactory getEntryFactory(StoreProperties props) {
       return getEntryFactory(getMarshaller(props));
    }
 
-   public static MarshalledEntryFactory getEntryFactory(Marshaller marshaller) {
+   public static MarshallableEntryFactory getEntryFactory(Marshaller marshaller) {
       return new MarshalledEntryFactoryImpl(marshaller);
    }
 

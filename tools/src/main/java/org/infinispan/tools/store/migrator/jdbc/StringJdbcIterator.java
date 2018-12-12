@@ -10,8 +10,8 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 import org.infinispan.util.KeyValuePair;
@@ -23,7 +23,7 @@ import org.infinispan.util.KeyValuePair;
 class StringJdbcIterator extends AbstractJdbcEntryIterator {
 
    private final TwoWayKey2StringMapper key2StringMapper;
-   private final MarshalledEntryFactory entryFactory;
+   private final MarshallableEntryFactory entryFactory;
 
    StringJdbcIterator(ConnectionFactory connectionFactory, TableManager tableManager, StreamingMarshaller marshaller,
                       TwoWayKey2StringMapper key2StringMapper) {
@@ -38,13 +38,13 @@ class StringJdbcIterator extends AbstractJdbcEntryIterator {
    }
 
    @Override
-   public MarshalledEntry next() {
+   public MarshallableEntry next() {
       try {
          if (rs.next()) {
             rowIndex++;
             Object key = key2StringMapper.getKeyMapping(rs.getString(2));
             KeyValuePair<ByteBuffer, ByteBuffer> icv = unmarshall(rs.getBinaryStream(1));
-            return entryFactory.newMarshalledEntry(key, icv.getKey(), icv.getValue());
+            return entryFactory.create(key, icv.getKey(), icv.getValue());
          } else {
             close();
             throw new NoSuchElementException();

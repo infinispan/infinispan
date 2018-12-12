@@ -5,8 +5,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 
 /**
  * A simple wrapper class, necessary for Transactional stores, which allows MarshalledEntries and Object keys to be passed
@@ -17,7 +19,7 @@ import org.infinispan.persistence.spi.MarshalledEntry;
  * @author Ryan Emerson
  */
 public class BatchModification {
-   private final Map<Object, MarshalledEntry> marshalledEntries = new HashMap<>();
+   private final Map<Object, MarshallableEntry> marshalledEntries = new HashMap<>();
    private final Set<Object> keysToRemove = new HashSet<>();
    private final Set<Object> affectedKeys;
 
@@ -25,7 +27,7 @@ public class BatchModification {
       this.affectedKeys = affectedKeys;
    }
 
-   public void addMarshalledEntry(Object key, MarshalledEntry marshalledEntry) {
+   public void addMarshalledEntry(Object key, MarshallableEntry marshalledEntry) {
       keysToRemove.remove(key);
       marshalledEntries.put(key, marshalledEntry);
    }
@@ -43,7 +45,17 @@ public class BatchModification {
       return keysToRemove;
    }
 
+   /**
+    * @deprecated since 10.0, use {@link #getMarshallableEntries()} instead
+    */
+   @Deprecated
    public Collection<MarshalledEntry> getMarshalledEntries() {
+      return (Collection<MarshalledEntry>) marshalledEntries.values().stream()
+            .map(e -> MarshalledEntry.wrap(e))
+            .collect(Collectors.toList());
+   }
+
+   public Collection<MarshallableEntry> getMarshallableEntries() {
       return marshalledEntries.values();
    }
 }

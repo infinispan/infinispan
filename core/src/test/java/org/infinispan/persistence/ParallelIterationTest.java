@@ -20,7 +20,7 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -110,7 +110,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       assertEquals(loader.size(), 0);
       insertData();
 
-      Flowable<MarshalledEntry<Object, Object>> flowable = Flowable.fromPublisher(loader.publishEntries(null, fetchValues, fetchMetadata));
+      Flowable<MarshallableEntry<Object, Object>> flowable = Flowable.fromPublisher(loader.entryPublisher(null, fetchValues, fetchMetadata));
       flowable = flowable.doOnNext(me -> {
          Integer key = unwrapKey(me.getKey());
          if (fetchValues) {
@@ -134,7 +134,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
          }
       });
 
-      TestSubscriber<MarshalledEntry<Object, Object>> subscriber = TestSubscriber.create(0);
+      TestSubscriber<MarshallableEntry<Object, Object>> subscriber = TestSubscriber.create(0);
       flowable.subscribe(subscriber);
 
       int batchsize = 10;
@@ -176,7 +176,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    private void insertData() {
       for (int i = 0; i < NUM_ENTRIES; i++) {
          InternalMetadata im = insertMetadata(i) ? TestingUtil.internalMetadata(lifespan(i), maxIdle(i)) : null;
-         MarshalledEntry me = MarshalledEntryUtil.create(wrapKey(i), wrapValue(i, i), im, cache);
+         MarshallableEntry me = MarshalledEntryUtil.create(wrapKey(i), wrapValue(i, i), im, cache);
          writer.write(me);
       }
    }

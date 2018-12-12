@@ -12,17 +12,17 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
@@ -335,7 +335,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void write(MarshalledEntry entry) {
+   public void write(MarshallableEntry entry) {
       int keyLength = entry.getKeyBytes().getLength();
       if (keyLength > maxKeyLength) {
          throw log.keyIsTooLong(entry.getKey(), keyLength, configuration.maxNodeSize(), maxKeyLength);
@@ -391,7 +391,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public MarshalledEntry load(Object key) {
+   public MarshallableEntry loadEntry(Object key) {
       try {
          byte[] serializedValue;
          byte[] serializedKey;
@@ -488,7 +488,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    private <R> Flowable<R> handleFilePublisher(Flowable<Integer> filePublisher, boolean fetchValue, boolean fetchMetadata,
-         EntryFunctor<R> functor) {
+                                               EntryFunctor<R> functor) {
       return filePublisher.flatMap(f -> {
          // Unbox here once
          int file = f;
@@ -531,7 +531,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public Publisher<MarshalledEntry> publishEntries(Predicate filter, boolean fetchValue, boolean fetchMetadata) {
+   public Publisher<MarshallableEntry> entryPublisher(Predicate filter, boolean fetchValue, boolean fetchMetadata) {
       return handleFilePublisher(filePublisher(), fetchValue, fetchMetadata,
             (file, offset, size, serializedKey, serializedMetadata, serializedValue, seqId, expiration) -> {
 
@@ -557,7 +557,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       private final int file;
 
       public HandleIterator(AtomicInteger offset, FileProvider.Handle handle, boolean fetchMetadata, boolean fetchValue,
-            EntryFunctor<R> functor, int file) {
+                            EntryFunctor<R> functor, int file) {
          this.offset = offset;
          this.handle = handle;
          this.fetchMetadata = fetchMetadata;

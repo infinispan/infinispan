@@ -21,7 +21,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -242,7 +242,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    @Override
-   public void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry) {
+   public void handleInStoreExpiration(MarshallableEntry<K, V> marshalledEntry) {
       K key = marshalledEntry.getKey();
       if (expiring.putIfAbsent(key, key) == null) {
          try {

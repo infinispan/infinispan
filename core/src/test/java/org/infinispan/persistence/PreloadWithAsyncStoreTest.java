@@ -15,7 +15,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -115,7 +115,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
    private void assertInCacheAndStore(Cache cache, CacheLoader loader, Object key, Object value) throws PersistenceException {
       InternalCacheValue se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
       assertStoredEntry(se.getValue(), value, "Cache", key);
-      MarshalledEntry me = loader.load(key);
+      MarshallableEntry me = loader.loadEntry(key);
       assertStoredEntry(me.getValue(), value, "Store", key);
    }
 

@@ -1,6 +1,8 @@
 package org.infinispan.persistence.support;
 
 import java.util.PrimitiveIterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -16,16 +18,17 @@ import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
+import io.reactivex.internal.functions.Functions;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -56,10 +59,10 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    }
 
    @Override
-   public MarshalledEntry<K, V> load(int segment, Object key) {
+   public MarshallableEntry<K, V> get(int segment, Object key) {
       AdvancedLoadWriteStore<K, V> store = stores.get(segment);
       if (store != null) {
-         return store.load(key);
+         return store.loadEntry(key);
       }
       return null;
    }
@@ -71,7 +74,7 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    }
 
    @Override
-   public void write(int segment, MarshalledEntry<? extends K, ? extends V> entry) {
+   public void write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
       AdvancedLoadWriteStore<K, V> store = stores.get(segment);
       if (store != null) {
          store.write(entry);
@@ -133,19 +136,19 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    }
 
    @Override
-   public Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+   public Publisher<MarshallableEntry<K, V>> entryPublisher(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
       return PersistenceUtil.parallelizePublisher(segments, scheduler, i -> {
          AdvancedLoadWriteStore<K, V> alws = stores.get(i);
          if (alws != null) {
-            return alws.publishEntries(filter, fetchValue, fetchMetadata);
+            return alws.entryPublisher(filter, fetchValue, fetchMetadata);
          }
          return Flowable.empty();
       });
    }
 
    @Override
-   public Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
-      return publishEntries(IntSets.immutableRangeSet(stores.length()), filter, fetchValue, fetchMetadata);
+   public Publisher<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+      return entryPublisher(IntSets.immutableRangeSet(stores.length()), filter, fetchValue, fetchMetadata);
    }
 
    @Override
@@ -191,15 +194,17 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    }
 
    @Override
-   public void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> marshalledEntries) {
-      Flowable.fromIterable(marshalledEntries)
-            // Separate out batches by segment
+   public CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
+      CompletableFuture<Void> future = new CompletableFuture<>();
+
+      Flowable.fromPublisher(publisher)
             .groupBy(me -> keyPartitioner.getSegment(me.getKey()))
-            .blockingForEach(groupedFlowable ->
+            .flatMap(groupedFlowable ->
                   groupedFlowable
                         .buffer(configuration.maxBatchSize())
-                        .blockingForEach(batch -> stores.get(groupedFlowable.getKey()).writeBatch(batch))
-            );
+                        .doOnNext(batch -> stores.get(groupedFlowable.getKey()).bulkUpdate(Flowable.fromIterable(batch))))
+            .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
+      return future;
    }
 
    @Override
@@ -237,7 +242,7 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
          T storeConfiguration = configuration.newConfigurationFrom(segment);
          AdvancedLoadWriteStore<K, V> newStore = (AdvancedLoadWriteStore<K, V>) cacheStoreFactoryRegistry.createInstance(storeConfiguration);
          newStore.init(new InitializationContextImpl(storeConfiguration, cache, keyPartitioner, ctx.getMarshaller(), ctx.getTimeService(),
-               ctx.getByteBufferFactory(), ctx.getMarshalledEntryFactory(), ctx.getExecutor()));
+               ctx.getByteBufferFactory(), ctx.getMarshalledEntryFactory(), ctx.getMarshallableEntryFactory(), ctx.getExecutor()));
          newStore.start();
          stores.set(segment, newStore);
       }

@@ -4,7 +4,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.Expiration;
 import org.infinispan.jcache.logging.Log;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 
@@ -40,18 +40,18 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
    }
 
    @Override
-   public MarshalledEntry load(Object key) throws PersistenceException {
+   public MarshallableEntry loadEntry(Object key) throws PersistenceException {
       V value = loadValue(key);
 
       if (value != null) {
          Duration expiry = Expiration.getExpiry(expiryPolicy, Expiration.Operation.CREATION);
          long now = ctx.getTimeService().wallClockTime(); // ms
          if (expiry == null || expiry.isEternal()) {
-            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value, null);
+            return ctx.getMarshallableEntryFactory().create(key, value, null);
          } else {
             long exp = now + expiry.getTimeUnit().toMillis(expiry.getDurationAmount());
             JCacheInternalMetadata meta = new JCacheInternalMetadata(now, exp);
-            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value, meta);
+            return ctx.getMarshallableEntryFactory().create(key, value, meta);
          }
       }
 
@@ -79,7 +79,7 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
 
    @Override
    public boolean contains(Object key) {
-      return load(key) != null;
+      return loadEntry(key) != null;
    }
 
 }

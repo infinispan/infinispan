@@ -12,7 +12,7 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
@@ -71,7 +71,7 @@ public class PersistenceUtil {
             if (oldEntry.canExpire() && oldEntry.isExpired(timeService.wallClockTime())) {
                // If it was expired we can check CacheLoaders - since they can have different
                // metadata than a store
-               MarshalledEntry<K, V> loaded = loadAndCheckExpiration(persistenceManager, key, segment, ctx, false);
+               MarshallableEntry<K, V> loaded = loadAndCheckExpiration(persistenceManager, key, segment, ctx, false);
                if (loaded != null) {
                   if (isLoaded != null) {
                      isLoaded.set(Boolean.TRUE); //loaded!
@@ -94,7 +94,7 @@ public class PersistenceUtil {
             }
          } else {
             // There was no entry in memory so check all the stores to see if it is there
-            MarshalledEntry<K, V> loaded = loadAndCheckExpiration(persistenceManager, key, segment, ctx, true);
+            MarshallableEntry<K, V> loaded = loadAndCheckExpiration(persistenceManager, key, segment, ctx, true);
             if (loaded != null) {
                if (isLoaded != null) {
                   isLoaded.set(Boolean.TRUE); //loaded!
@@ -127,14 +127,14 @@ public class PersistenceUtil {
       }
    }
 
-   public static <K, V> MarshalledEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
-         int segment, InvocationContext context) {
+   public static <K, V> MarshallableEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
+                                                                       int segment, InvocationContext context) {
       return loadAndCheckExpiration(persistenceManager, key, segment, context, true);
    }
 
-   private static <K, V> MarshalledEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
-         int segment, InvocationContext context, boolean includeStores) {
-      final MarshalledEntry<K, V> loaded;
+   private static <K, V> MarshallableEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
+                                                                        int segment, InvocationContext context, boolean includeStores) {
+      final MarshallableEntry<K, V> loaded;
       if (segment != SEGMENT_NOT_PROVIDED) {
          loaded = persistenceManager.loadFromAllStores(key, segment, context.isOriginLocal(), includeStores);
       } else {
@@ -146,7 +146,7 @@ public class PersistenceUtil {
       return loaded;
    }
 
-   public static <K, V> InternalCacheEntry<K, V> convert(MarshalledEntry<K, V> loaded, InternalEntryFactory factory) {
+   public static <K, V> InternalCacheEntry<K, V> convert(MarshallableEntry<K, V> loaded, InternalEntryFactory factory) {
       InternalMetadata metadata = loaded.getMetadata();
       if (metadata != null) {
          Metadata actual = metadata instanceof InternalMetadataImpl ? ((InternalMetadataImpl) metadata).actual() :

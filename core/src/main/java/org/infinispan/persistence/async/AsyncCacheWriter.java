@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -25,18 +27,20 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.factories.threads.DefaultThreadFactory;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.ModificationsList;
 import org.infinispan.persistence.modifications.Remove;
 import org.infinispan.persistence.modifications.Store;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
+import io.reactivex.Flowable;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -188,23 +192,28 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
          availabilityLock.unlock();
       }
       // Available if actual == available || actual != available and queue has capacity
-      // Worst case, writeBatch comes in before isAvailable is called by the PersistenceManager, in which case the batch
+      // Worst case, bulkUpdate comes in before isAvailable is called by the PersistenceManager, in which case the batch
       // will wait on writeLock until the stateLock is reset when the queue is finally flushed
       return delegateAvailable || stateLock.hasCapacity();
    }
 
    @Override
-   public void write(MarshalledEntry entry) {
+   public void write(MarshallableEntry entry) {
       put(new Store(entry.getKey(), entry), 1);
    }
 
    @Override
-   public void writeBatch(Iterable entries) {
-      putAll(
-            StreamSupport.stream((Spliterator<MarshalledEntry>) entries.spliterator(), false)
-                  .map(me -> new Store(me.getKey(), me))
-                  .collect(Collectors.toList())
-      );
+   public CompletionStage<Void> bulkUpdate(Publisher publisher) {
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      Flowable.fromPublisher((Publisher<MarshallableEntry>) publisher)
+            .map(me -> new Store(me.getKey(), me))
+            .cast(Modification.class)
+            .toList()
+            .subscribe(modifications -> {
+               putAll(modifications);
+               future.complete(null);
+            }, future::completeExceptionally);
+      return future;
    }
 
    @Override
@@ -223,12 +232,11 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
    }
 
    protected void applyModificationsSync(List<Modification> mods) throws PersistenceException {
-      actual.writeBatch(
-            () -> StreamSupport.stream(Spliterators.spliterator(mods, Spliterator.NONNULL), false)
+      actual.bulkUpdate(
+            Flowable.fromIterable(mods)
                   .filter(m -> m.getType() == Modification.Type.STORE)
                   .map(Store.class::cast)
                   .map(Store::getStoredValue)
-                  .iterator()
       );
 
       actual.deleteBatch(

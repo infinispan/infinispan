@@ -10,9 +10,10 @@ import org.infinispan.metadata.InternalMetadata;
  * when the entries are fetched from the external store for the sole purpose of being sent over the wire to
  * another requestor node.
  *
+ * @author Ryan Emerson
  * @since 10.0
  */
-public interface MarshalledEntry<K, V> {
+public interface MarshallableEntry<K, V> {
 
    /**
     * Returns the key in serialized format.

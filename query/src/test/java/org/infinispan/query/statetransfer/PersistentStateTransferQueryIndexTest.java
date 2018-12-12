@@ -62,7 +62,7 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
       for (Cache<Object, Object> cache : caches()) {
          CacheLoader store = TestingUtil.getFirstLoader(cache);
          for (int i = 0; i < persons.length; i++)
-            assertEquals(persons[i], store.load(persons[i].getName()).getValue());
+            assertEquals(persons[i], store.loadEntry(persons[i].getName()).getValue());
       }
    }
 

@@ -59,19 +59,19 @@ public abstract class SegmentedStoreTest extends SingleCacheManagerTest {
    }
 
    public void testIterationWithValueAndMetadata() {
-      runTest(intSetFunctionFromIntSetPublisherFunction(is -> store.publishEntries(is, null, true, true)));
+      runTest(intSetFunctionFromIntSetPublisherFunction(is -> store.entryPublisher(is, null, true, true)));
    }
 
    public void testIterationWithValueWithoutMetadata() {
-      runTest(intSetFunctionFromIntSetPublisherFunction(is -> store.publishEntries(is, null, true, false)));
+      runTest(intSetFunctionFromIntSetPublisherFunction(is -> store.entryPublisher(is, null, true, false)));
    }
 
    public void testIterationWithoutValueWithMetadata() {
-      runTest(intSetFunctionFromIntSetPublisherFunction(is -> store.publishEntries(is, null, false, true)));
+      runTest(intSetFunctionFromIntSetPublisherFunction(is -> store.entryPublisher(is, null, false, true)));
    }
 
    public void testIterationWithoutValueOrMetadata() {
-      runTest(intSetFunctionFromIntSetPublisherFunction(is -> store.publishEntries(is, null, false, false)));
+      runTest(intSetFunctionFromIntSetPublisherFunction(is -> store.entryPublisher(is, null, false, false)));
    }
 
    // Provides a function that counts how many objects are in the returned publisher for the given IntSet

@@ -2,7 +2,7 @@ package org.jboss.as.clustering.infinispan.cs.factory;
 
 import java.util.concurrent.Executor;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 
@@ -25,7 +25,7 @@ public class MyCustomStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void write(MarshalledEntry entry) {
+   public void write(MarshallableEntry entry) {
    }
 
    @Override
@@ -34,7 +34,7 @@ public class MyCustomStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public MarshalledEntry load(Object key) {
+   public MarshallableEntry loadEntry(Object key) {
       return null;
    }
 

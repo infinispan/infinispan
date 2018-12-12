@@ -88,9 +88,9 @@ public class RemoteStoreRawValuesTest extends BaseStoreTest {
       // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
       // and so data is stored for 1 second here. Adjust waiting time accordingly.
       timeService.advance(1101);
-      assertNull(cl.load("k1"));
+      assertNull(cl.loadEntry("k1"));
       long start = System.currentTimeMillis();
       cl.write(marshalledEntry(internalCacheEntry("k1", "v2", 100l)));
-      assertTrue(cl.load("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
+      assertTrue(cl.loadEntry("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
    }
 }

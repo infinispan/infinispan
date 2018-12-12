@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.function.ToIntBiFunction;
 
-import io.reactivex.Flowable;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -32,6 +31,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import io.reactivex.Flowable;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -102,10 +103,10 @@ public class RemoteStoreTest extends BaseStoreTest {
       // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
       // and so data is stored for 1 second here. Adjust waiting time accordingly.
       timeService.advance(1101);
-      assertNull(cl.load("k1"));
+      assertNull(cl.loadEntry("k1"));
       long start = System.currentTimeMillis();
       cl.write(marshalledEntry(internalCacheEntry("k1", "v2", 100)));
-      assertTrue(cl.load("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
+      assertTrue(cl.loadEntry("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
    }
 
    void countWithSegments(ToIntBiFunction<SegmentedAdvancedLoadWriteStore<?, ?>, IntSet> countFunction) {
@@ -149,7 +150,7 @@ public class RemoteStoreTest extends BaseStoreTest {
 
    public void testPublishEntriesWithSegments() throws IOException, InterruptedException {
       countWithSegments((salws, intSet) ->
-            Flowable.fromPublisher(salws.publishEntries(intSet, null, true, true))
+            Flowable.fromPublisher(salws.entryPublisher(intSet, null, true, true))
                   .count()
                   .blockingGet().intValue()
       );

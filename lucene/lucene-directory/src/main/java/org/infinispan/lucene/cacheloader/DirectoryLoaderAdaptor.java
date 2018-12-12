@@ -18,8 +18,8 @@ import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.KeyVisitor;
 import org.infinispan.lucene.impl.FileListCacheValue;
 import org.infinispan.lucene.logging.Log;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -62,7 +62,7 @@ final class DirectoryLoaderAdaptor {
     * @param entriesCollector loaded entries are collected in this set
     * @param maxEntries to limit amount of entries loaded
     */
-   protected <K, V> void loadAllEntries(final Set<MarshalledEntry<K, V>> entriesCollector, final int maxEntries, MarshalledEntryFactory entryFactory) {
+   protected <K, V> void loadAllEntries(final Set<MarshallableEntry<K, V>> entriesCollector, final int maxEntries, MarshallableEntryFactory entryFactory) {
       int existingElements = entriesCollector.size();
       int toLoadElements = maxEntries - existingElements;
       if (toLoadElements <= 0) {
@@ -73,7 +73,7 @@ final class DirectoryLoaderAdaptor {
       for (IndexScopedKey key : keysCollector) {
          Object value = load(key);
          if (value != null) {
-            MarshalledEntry cacheEntry = entryFactory.newMarshalledEntry(key, value, null);
+            MarshallableEntry cacheEntry = entryFactory.create(key, value, null);
             entriesCollector.add(cacheEntry);
          }
       }

@@ -2,7 +2,7 @@ package org.infinispan.persistence.support;
 
 import java.util.function.ToIntFunction;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 
 /**
@@ -17,8 +17,8 @@ public abstract class AbstractSegmentedAdvancedLoadWriteStore<K, V> implements S
    protected abstract ToIntFunction<Object> getKeyMapper();
 
    @Override
-   public final MarshalledEntry<K, V> load(Object key) {
-      return load(getKeyMapper().applyAsInt(key), key);
+   public final MarshallableEntry<K, V> loadEntry(Object key) {
+      return get(getKeyMapper().applyAsInt(key), key);
    }
 
    @Override
@@ -27,7 +27,7 @@ public abstract class AbstractSegmentedAdvancedLoadWriteStore<K, V> implements S
    }
 
    @Override
-   public final void write(MarshalledEntry<? extends K, ? extends V> entry) {
+   public final void write(MarshallableEntry<? extends K, ? extends V> entry) {
       write(getKeyMapper().applyAsInt(entry.getKey()), entry);
    }
 

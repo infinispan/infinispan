@@ -9,8 +9,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -37,7 +37,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
 
    protected StreamingMarshaller marshaller;
 
-   protected MarshalledEntryFactory entryFactory;
+   protected MarshallableEntryFactory entryFactory;
 
    protected AbstractJpaStoreTest() {
      // gtf.init(false, false, true, false);
@@ -87,11 +87,11 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
       if (cm != null) cm.stop();
    }
 
-   protected MarshalledEntry createEntry(Object key, Object value) {
-      return entryFactory.newMarshalledEntry(key, value, null);
+   protected MarshallableEntry createEntry(Object key, Object value) {
+      return entryFactory.create(key, value, null);
    }
 
-   protected MarshalledEntry createEntry(TestObject obj) {
+   protected MarshallableEntry createEntry(TestObject obj) {
       return createEntry(obj.getKey(), obj.getValue());
    }
 }

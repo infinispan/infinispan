@@ -26,9 +26,10 @@ import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
@@ -89,14 +90,14 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    // Prevent clear() from truncating the file after a write() allocated the entry but before it wrote the data
    private ReadWriteLock resizeLock = new ReentrantReadWriteLock();
    private TimeService timeService;
-   private MarshalledEntryFactory entryFactory;
+   private MarshallableEntryFactory entryFactory;
 
    @Override
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       this.configuration = ctx.getConfiguration();
       this.timeService = ctx.getTimeService();
-      this.entryFactory = ctx.getMarshalledEntryFactory();
+      this.entryFactory = ctx.getMarshallableEntryFactory();
    }
 
    @Override
@@ -223,7 +224,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    /**
-    * The base class implementation calls {@link #load(Object)} for this, we can do better because
+    * The base class implementation calls {@link CacheLoader#loadEntry(Object)} for this, we can do better because
     * we keep all keys in memory.
     */
    @Override
@@ -325,7 +326,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public void write(MarshalledEntry<? extends K, ? extends V> marshalledEntry) {
+   public void write(MarshallableEntry<? extends K, ? extends V> marshalledEntry) {
       try {
          // serialize cache value
          org.infinispan.commons.io.ByteBuffer key = marshalledEntry.getKeyBytes();
@@ -440,11 +441,11 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public MarshalledEntry<K, V> load(Object key) {
+   public MarshallableEntry<K, V> loadEntry(Object key) {
       return _load(key, true, true);
    }
 
-   private MarshalledEntry<K, V> _load(Object key, boolean loadValue, boolean loadMetadata) {
+   private MarshallableEntry<K, V> _load(Object key, boolean loadValue, boolean loadMetadata) {
       final FileEntry fe;
       resizeLock.readLock().lock();
       try {
@@ -472,7 +473,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       // If we only require the key, then no need to read disk
       if (!loadValue && !loadMetadata) {
          try {
-            return entryFactory.newMarshalledEntry(key, valueBb, metadataBb);
+            return entryFactory.create(key, valueBb, metadataBb);
          } finally {
             fe.unlock();
          }
@@ -501,7 +502,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       if (loadMetadata && fe.metadataLen > 0) {
          metadataBb = factory.newByteBuffer(data, fe.keyLen + fe.dataLen, fe.metadataLen);
       }
-      return entryFactory.newMarshalledEntry(keyBb, valueBb, metadataBb);
+      return entryFactory.create(keyBb, valueBb, metadataBb);
    }
 
    @Override
@@ -523,7 +524,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public Flowable<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+   public Flowable<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
       if (fetchMetadata || fetchValue) {
          return Flowable.fromIterable(() -> {
             // This way the sorting of entries is lazily done on each invocation of the publisher
@@ -544,7 +545,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             });
             return keysToLoad.iterator();
          }).map(kvp -> {
-            MarshalledEntry<K, V> entry = _load(kvp.getKey(), fetchValue, fetchMetadata);
+            MarshallableEntry<K, V> entry = _load(kvp.getKey(), fetchValue, fetchMetadata);
             if (entry == null) {
                // Rxjava2 doesn't allow nulls
                entry = entryFactory.getEmpty();
@@ -552,7 +553,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             return entry;
          }).filter(me -> me != entryFactory.getEmpty());
       } else {
-         return publishKeys(filter).map(k -> entryFactory.newMarshalledEntry(k, (Object) null, null));
+         return publishKeys(filter).map(k -> entryFactory.create(k, (Object) null, null));
       }
    }
 

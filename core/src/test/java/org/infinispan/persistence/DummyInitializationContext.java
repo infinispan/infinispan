@@ -5,11 +5,12 @@ import java.util.concurrent.ExecutorService;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.commons.time.TimeService;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 
 /**
  * @author Mircea Markus
@@ -21,14 +22,14 @@ public class DummyInitializationContext implements InitializationContext {
    StreamingMarshaller marshaller;
 
    ByteBufferFactory byteBufferFactory;
-   MarshalledEntryFactory marshalledEntryFactory;
+   MarshallableEntryFactory marshalledEntryFactory;
    ExecutorService executorService;
 
    public DummyInitializationContext() {
    }
 
    public DummyInitializationContext(StoreConfiguration clc, Cache cache, StreamingMarshaller marshaller,
-                                     ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory,
+                                     ByteBufferFactory byteBufferFactory, MarshallableEntryFactory marshalledEntryFactory,
                                      ExecutorService executorService) {
       this.clc = clc;
       this.cache = cache;
@@ -69,12 +70,17 @@ public class DummyInitializationContext implements InitializationContext {
    }
 
    @Override
-   public MarshalledEntryFactory getMarshalledEntryFactory() {
+   public MarshallableEntryFactory getMarshallableEntryFactory() {
       return marshalledEntryFactory;
    }
 
    @Override
    public ExecutorService getExecutor() {
       return executorService;
+   }
+
+   @Override
+   public MarshalledEntryFactory getMarshalledEntryFactory() {
+      throw new UnsupportedOperationException("Use InitializationContext::getMarshallableEntryFactory instead");
    }
 }

@@ -17,7 +17,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -61,7 +61,7 @@ public class ActivationDuringEvictTest extends SingleCacheManagerTest {
       cache.put(KEY, VALUE);
       assertEquals(VALUE, cache.get(KEY));
 
-      MarshalledEntry se = cl.load(KEY);
+      MarshallableEntry se = cl.loadEntry(KEY);
       assertNull(se);
 
       // passivate the entry
@@ -99,9 +99,9 @@ public class ActivationDuringEvictTest extends SingleCacheManagerTest {
    }
 
    private void assertPassivated(DataContainer dc, CacheLoader cl, String key, String expected) {
-      MarshalledEntry se;
+      MarshallableEntry se;
       assertFalse(dc.containsKey(key));
-      se = cl.load(key);
+      se = cl.loadEntry(key);
       assertNotNull(se);
       assertEquals(expected, se.getValue());
    }

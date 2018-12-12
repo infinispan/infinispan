@@ -9,7 +9,7 @@ import java.util.Set;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -47,7 +47,7 @@ public class XSiteState {
       return new XSiteState(entry.getKey(), entry.getValue(), entry.getMetadata());
    }
 
-   public static XSiteState fromCacheLoader(MarshalledEntry marshalledEntry) {
+   public static XSiteState fromCacheLoader(MarshallableEntry marshalledEntry) {
       return new XSiteState(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata());
    }
 

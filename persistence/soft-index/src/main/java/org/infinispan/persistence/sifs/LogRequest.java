@@ -1,7 +1,7 @@
 package org.infinispan.persistence.sifs;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 
 /**
  * Request to persist entry in log file or request executed by the log appender thread.
@@ -40,7 +40,7 @@ class LogRequest {
       this(type, null, 0, null, null, null);
    }
 
-   public static LogRequest storeRequest(MarshalledEntry entry) {
+   public static LogRequest storeRequest(MarshallableEntry entry) {
       return new LogRequest(Type.STORE, entry.getKey(),
             entry.getMetadata() == null ? -1 : entry.getMetadata().expiryTime(),
             entry.getKeyBytes(), entry.getMetadataBytes(), entry.getValueBytes());

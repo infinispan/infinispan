@@ -1,6 +1,6 @@
 package org.infinispan.persistence.support;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 
@@ -44,8 +44,8 @@ public abstract class DelegatingCacheLoader<K, V> implements CacheLoader<K, V> {
    }
 
    @Override
-   public MarshalledEntry<K, V> load(Object key) {
-      return actual != null ? actual.load(key) : null;
+   public MarshallableEntry<K, V> loadEntry(Object key) {
+      return actual != null ? actual.loadEntry(key) : null;
    }
 
    public CacheLoader undelegate() {

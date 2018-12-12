@@ -9,7 +9,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
@@ -60,7 +60,7 @@ public class JdbcStoreReader implements StoreIterator {
       connectionFactory.stop();
    }
 
-   public Iterator<MarshalledEntry> iterator() {
+   public Iterator<MarshallableEntry> iterator() {
       switch (props.storeType()) {
          case JDBC_BINARY:
             return new BinaryJdbcIterator(connectionFactory, getTableManager(true), marshaller);

@@ -2,7 +2,7 @@ package org.infinispan.persistence.async;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.Store;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -31,7 +31,7 @@ public class AsyncCacheLoader<K, V> extends DelegatingCacheLoader<K, V> {
    public void stop() {}
 
    @Override
-   public MarshalledEntry<K, V> load(Object key) {
+   public MarshallableEntry<K, V> loadEntry(Object key) {
       Modification mod = state.get().get(key);
       if (mod != null) {
          switch (mod.getType()) {
@@ -42,7 +42,7 @@ public class AsyncCacheLoader<K, V> extends DelegatingCacheLoader<K, V> {
                return ((Store) mod).getStoredValue();
          }
       }
-      return super.load(key);
+      return super.loadEntry(key);
    }
 
 

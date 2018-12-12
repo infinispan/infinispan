@@ -7,7 +7,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -73,12 +73,12 @@ public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
       assert entry != null : src + " entry for key " + key + " should NOT be null";
    }
 
-   private void testStoredEntry(MarshalledEntry entry, Object key, String src) {
+   private void testStoredEntry(MarshallableEntry entry, Object key, String src) {
       assert entry != null : src + " entry for key " + key + " should NOT be null";
    }
 
    private void assertInStoreNotInCache(Object key) throws PersistenceException {
-      MarshalledEntry se = loader.load(key);
+      MarshallableEntry se = loader.loadEntry(key);
       testStoredEntry(se, key, "Store");
       assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Key " + key + " should not be in cache!";
    }

@@ -16,7 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -106,7 +106,7 @@ public class SingletonCacheWriter extends DelegatingCacheWriter {
    }
 
    @Override
-   public void write(MarshalledEntry entry) {
+   public void write(MarshallableEntry entry) {
       if (active) {
          if (trace)
             log.tracef("Storing key %s.  Instance: %s", entry.getKey(), this);
@@ -143,7 +143,7 @@ public class SingletonCacheWriter extends DelegatingCacheWriter {
    protected void pushState(final Cache<?, ?> cache) throws Exception {
       DataContainer<?, ?> dc = cache.getAdvancedCache().getDataContainer();
       dc.forEach(entry -> {
-         MarshalledEntry me = ctx.getMarshalledEntryFactory().newMarshalledEntry(entry.getKey(), entry.getValue(),
+         MarshallableEntry me = ctx.getMarshallableEntryFactory().create(entry.getKey(), entry.getValue(),
                internalMetadata(entry));
          write(me);
       });

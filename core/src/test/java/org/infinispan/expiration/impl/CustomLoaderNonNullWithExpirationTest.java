@@ -25,8 +25,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
@@ -93,23 +93,23 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
 
       static final String VALUE = "some-value";
 
-      private MarshalledEntryFactory<K, V> factory;
+      private MarshallableEntryFactory<K, V> factory;
       private TimeService timeService;
 
       @Override
       public void init(InitializationContext ctx) {
-         factory = ctx.getMarshalledEntryFactory();
+         factory = ctx.getMarshallableEntryFactory();
          timeService = ctx.getTimeService();
       }
 
       @Override
-      public MarshalledEntry<K, V> load(Object key) {
+      public MarshallableEntry<K, V> loadEntry(Object key) {
 
          Metadata metadata = new EmbeddedMetadata.Builder()
                .lifespan(1, TimeUnit.SECONDS).build();
 
          long now = timeService.wallClockTime();
-         return factory.newMarshalledEntry(key, VALUE, new InternalMetadataImpl(metadata, now, now));
+         return factory.create(key, VALUE, new InternalMetadataImpl(metadata, now, now));
       }
 
       @Override

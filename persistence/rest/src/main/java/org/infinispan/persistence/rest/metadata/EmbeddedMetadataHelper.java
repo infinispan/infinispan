@@ -2,14 +2,14 @@ package org.infinispan.persistence.rest.metadata;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 
 public class EmbeddedMetadataHelper implements MetadataHelper {
 
    @Override
-   public String getContentType(MarshalledEntry entry) {
+   public String getContentType(MarshallableEntry entry) {
       return "application/octet-stream";
    }
 

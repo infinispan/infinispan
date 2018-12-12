@@ -19,7 +19,7 @@ import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.Flag;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.LazyConcatIterator;
@@ -82,7 +82,7 @@ public class PersistenceEntryStreamSupplier<K, V> implements AbstractLocalCacheS
             });
          }
       } else {
-         Publisher<MarshalledEntry<K, V>> publisher;
+         Publisher<MarshallableEntry<K, V>> publisher;
          CacheStream<CacheEntry<K, V>> inMemoryStream = this.inMemoryStream;
          Set<K> seenKeys = new HashSet<>(2048);
          if (segmentsToFilter != null) {

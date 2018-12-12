@@ -12,7 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -80,7 +80,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    }
 
    private void assertInStoreNotInCache(Object key, Object value, long lifespanMillis) throws PersistenceException {
-      MarshalledEntry se = store.load(key);
+      MarshallableEntry se = store.loadEntry(key);
       testStoredEntry(se, value, lifespanMillis, "Store", key);
       assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Key " + key + " should not be in cache!";
    }
@@ -92,7 +92,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assert entry.getLifespan() == expectedLifespan : src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + entry.getLifespan() + ". Entry is " + entry;
    }
 
-   private void testStoredEntry(MarshalledEntry entry, Object expectedValue, long expectedLifespan, String src, Object key) {
+   private void testStoredEntry(MarshallableEntry entry, Object expectedValue, long expectedLifespan, String src, Object key) {
       assert entry != null : src + " entry for key " + key + " should NOT be null";
       assert entry.getValue().equals(expectedValue) : src + " should contain value " + expectedValue + " under key " + key + " but was " + entry.getValue() + ". Entry is " + entry;
       if (expectedLifespan > -1)

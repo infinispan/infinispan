@@ -5,7 +5,7 @@ import static org.junit.Assert.fail;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -34,7 +34,7 @@ public class MyCustomCacheStore implements ExternalStore {
     }
 
     @Override
-    public void write(MarshalledEntry marshalledEntry) {
+    public void write(MarshallableEntry marshalledEntry) {
     }
 
     @Override
@@ -43,7 +43,7 @@ public class MyCustomCacheStore implements ExternalStore {
     }
 
     @Override
-    public MarshalledEntry load(Object key) throws PersistenceException {
+    public MarshallableEntry loadEntry(Object key) throws PersistenceException {
         assert config.customProperty() == 10;
         return null;
     }

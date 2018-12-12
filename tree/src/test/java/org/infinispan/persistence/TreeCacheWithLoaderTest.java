@@ -83,7 +83,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
 
    @SuppressWarnings("unchecked")
    private Map<String, String> nodeContentsInCacheStore(CacheLoader cs, Fqn fqn) throws PersistenceException {
-      return (Map<String, String>) cs.load(new NodeKey(fqn, DATA)).getValue();
+      return (Map<String, String>) cs.loadEntry(new NodeKey(fqn, DATA)).getValue();
    }
 
    private CacheLoader extractCacheStore() {

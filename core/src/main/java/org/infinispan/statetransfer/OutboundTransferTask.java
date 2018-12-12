@@ -20,9 +20,9 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -53,7 +53,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final BiFunction<InternalCacheEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromDataContainer;
 
-   private final BiFunction<MarshalledEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromStore;
+   private final BiFunction<MarshallableEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromStore;
 
    private final int topologyId;
 
@@ -101,7 +101,7 @@ public class OutboundTransferTask implements Runnable {
                                int topologyId, KeyPartitioner keyPartitioner,
                                Consumer<OutboundTransferTask> onCompletion, Consumer<List<StateChunk>> onChunkReplicated,
                                BiFunction<InternalCacheEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromDataContainer,
-                               BiFunction<MarshalledEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromStore, InternalDataContainer dataContainer,
+                               BiFunction<MarshallableEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromStore, InternalDataContainer dataContainer,
                                PersistenceManager persistenceManager, RpcManager rpcManager,
                                CommandsFactory commandsFactory, InternalEntryFactory ef, long timeout, String cacheName,
                                boolean applyState, boolean pushTransfer) {
@@ -181,21 +181,20 @@ public class OutboundTransferTask implements Runnable {
          AdvancedCacheLoader<Object, Object> stProvider = persistenceManager.getStateTransferProvider();
          if (stProvider != null) {
             try {
-               AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
-                  int segmentId = keyPartitioner.getSegment(me.getKey());
-                  if (segments.contains(segmentId)) {
-                     try {
-                        InternalCacheEntry entry = mapEntryFromStore.apply(me, entryFactory);
-                        if (entry != null) {
-                           sendEntry(entry, segmentId);
+               Flowable.fromPublisher(stProvider.entryPublisher(k -> !dataContainer.containsKey(k), true, true))
+                     .blockingForEach(me -> {
+                        int segmentId = keyPartitioner.getSegment(me.getKey());
+                        if (segments.contains(segmentId)) {
+                           try {
+                              InternalCacheEntry entry = mapEntryFromStore.apply(me, entryFactory);
+                              if (entry != null) {
+                                 sendEntry(entry, segmentId);
+                              }
+                           } catch (CacheException e) {
+                              log.failedLoadingValueFromCacheStore(me.getKey(), e);
+                           }
                         }
-                     } catch (CacheException e) {
-                        log.failedLoadingValueFromCacheStore(me.getKey(), e);
-                     }
-                  }
-               };
-               Flowable.fromPublisher(stProvider.publishEntries(k -> !dataContainer.containsKey(k), true, true))
-                     .blockingForEach(me -> task.processEntry(me, null));
+                     });
             } catch (CacheException e) {
                log.failedLoadingKeysFromCacheStore(e);
             }
@@ -326,7 +325,7 @@ public class OutboundTransferTask implements Runnable {
       return ice;
    }
 
-   public static InternalCacheEntry defaultMapEntryFromStore(MarshalledEntry me, InternalEntryFactory entryFactory) {
+   public static InternalCacheEntry defaultMapEntryFromStore(MarshallableEntry me, InternalEntryFactory entryFactory) {
       return entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
    }
 }
