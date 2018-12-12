@@ -14,15 +14,23 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 
 class KeyValueVersionConverter implements CacheEventConverter<byte[], byte[], byte[]> {
-   private KeyValueVersionConverter() {
+   private final boolean returnOldValue;
+
+   private KeyValueVersionConverter(boolean returnOldValue) {
+      this.returnOldValue = returnOldValue;
    }
 
-   public static KeyValueVersionConverter SINGLETON = new KeyValueVersionConverter();
+   public static KeyValueVersionConverter EXCLUDING_OLD_VALUE_CONVERTER = new KeyValueVersionConverter(false);
+   public static KeyValueVersionConverter INCLUDING_OLD_VALUE_CONVERTER = new KeyValueVersionConverter(true);
 
    @Override
    public byte[] convert(byte[] key, byte[] oldValue, Metadata oldMetadata, byte[] newValue, Metadata newMetadata, EventType eventType) {
       int capacity = UnsignedNumeric.sizeUnsignedInt(key.length) + key.length +
             (newValue != null ? UnsignedNumeric.sizeUnsignedInt(newValue.length) + newValue.length + 8 : 0);
+
+      if (newValue == null && returnOldValue && oldValue != null) {
+         capacity += UnsignedNumeric.sizeUnsignedInt(oldValue.length) + oldValue.length + 8;
+      }
 
       byte[] out = new byte[capacity];
       int offset = UnsignedNumeric.writeUnsignedInt(out, 0, key.length);
@@ -32,16 +40,17 @@ class KeyValueVersionConverter implements CacheEventConverter<byte[], byte[], by
          offset += putBytes(newValue, offset, out);
          putLong(((NumericVersion) newMetadata.version()).getVersion(), offset, out);
       }
+      if (newValue == null && returnOldValue && oldValue != null) {
+         offset += UnsignedNumeric.writeUnsignedInt(out, offset, oldValue.length);
+         offset += putBytes(oldValue, offset, out);
+         putLong(((NumericVersion) newMetadata.version()).getVersion(), offset, out);
+      }
       return out;
    }
 
    private int putBytes(byte[] bytes, int offset, byte[] out) {
-      int localOffset = offset;
-      for (byte b : bytes) {
-         out[localOffset] = b;
-         localOffset += 1;
-      }
-      return localOffset - offset;
+      System.arraycopy(bytes, 0, out, offset, bytes.length);
+      return bytes.length;
    }
 
    private int putLong(long l, int offset, byte[] out) {
@@ -69,12 +78,14 @@ class KeyValueVersionConverter implements CacheEventConverter<byte[], byte[], by
 
       @Override
       public void writeObject(ObjectOutput output, KeyValueVersionConverter object) throws IOException {
-
+         output.writeBoolean(object.returnOldValue);
       }
 
       @Override
-      public KeyValueVersionConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return KeyValueVersionConverter.SINGLETON;
+      public KeyValueVersionConverter readObject(ObjectInput input) throws IOException {
+         boolean returnOldValue = input.readBoolean();
+         return returnOldValue ? KeyValueVersionConverter.INCLUDING_OLD_VALUE_CONVERTER
+               : KeyValueVersionConverter.EXCLUDING_OLD_VALUE_CONVERTER;
       }
    }
 }

@@ -220,7 +220,7 @@ class ClientListenerRegistry {
    }
 
    private CacheEventConverter<byte[], byte[], byte[]> getConverter(DataConversion valueDataConversion, MediaType requestMedia, String name, Boolean useRawData, List<byte[]> binaryParams) {
-      CacheEventConverterFactory factory = findConverterFactory(name, cacheEventConverterFactories);
+      CacheEventConverterFactory factory = findFactory(name, cacheEventConverterFactories, "converter");
       List<?> params = unmarshallParams(valueDataConversion, requestMedia, binaryParams, useRawData);
       return factory.getConverter(params.toArray());
    }
@@ -229,13 +229,6 @@ class ClientListenerRegistry {
       CacheEventFilterConverterFactory factory = findFactory(name, cacheEventFilterConverterFactories, "converter");
       List<?> params = unmarshallParams(valueDataConversion, requestMedia, binaryParams, useRawData);
       return factory.getFilterConverter(params.toArray());
-   }
-
-   private CacheEventConverterFactory findConverterFactory(String name, ConcurrentMap<String, CacheEventConverterFactory> factories) {
-      if (name.equals("___eager-key-value-version-converter"))
-         return KeyValueVersionConverterFactory.SINGLETON;
-      else
-         return findFactory(name, factories, "converter");
    }
 
    private <T> T findFactory(String name, ConcurrentMap<String, T> factories, String factoryType) {
