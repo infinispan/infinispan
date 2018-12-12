@@ -48,10 +48,6 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-cachestore-leveldb</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-remote</artifactId>
         </dependency>
         <dependency>
@@ -110,7 +106,6 @@
                                 <jar>infinispan-core</jar>
                                 <jar>infinispan-cachestore-jdbc</jar>
                                 <jar>infinispan-cachestore-jpa</jar>
-                                <jar>infinispan-cachestore-leveldb</jar>
                                 <jar>infinispan-cachestore-rocksdb</jar>
                                 <jar>infinispan-cachestore-remote</jar>
                                 <jar>infinispan-cachestore-rest</jar>
