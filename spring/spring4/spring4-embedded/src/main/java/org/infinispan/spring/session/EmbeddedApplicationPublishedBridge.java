@@ -16,7 +16,7 @@ import org.infinispan.spring.provider.SpringCache;
  * @author Sebastian Łaskawiec
  * @since 9.0
  */
-@Listener(observation = Listener.Observation.POST)
+@Listener(observation = Listener.Observation.POST, clustered = true)
 public class EmbeddedApplicationPublishedBridge extends AbstractApplicationPublisherBridge {
 
    public EmbeddedApplicationPublishedBridge(SpringCache eventSource) {

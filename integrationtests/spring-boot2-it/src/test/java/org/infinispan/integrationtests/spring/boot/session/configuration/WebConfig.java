@@ -31,4 +31,9 @@ public class WebConfig {
    public NoOpPasswordEncoder passwordEncoder() {
       return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
    }
+
+   @Bean
+   public InfinispanSessionListener httpSessionListener(){
+      return new InfinispanSessionListener();
+   }
 }

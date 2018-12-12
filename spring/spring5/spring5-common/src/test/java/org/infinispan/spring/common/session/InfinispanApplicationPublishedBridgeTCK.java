@@ -9,8 +9,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import org.infinispan.spring.common.session.util.EventsWaiter;
 import org.infinispan.spring.common.provider.SpringCache;
+import org.infinispan.spring.common.session.util.EventsWaiter;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -43,6 +43,9 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
 
       //when
       MapSession sessionToBeDeleted = sessionRepository.createSession();
+      sessionToBeDeleted.setAttribute("foo", "bar");
+      sessionRepository.save(sessionToBeDeleted);
+
       MapSession sessionToBeExpired = sessionRepository.createSession();
       sessionToBeExpired.setMaxInactiveInterval(Duration.ofSeconds(1));
 
@@ -60,6 +63,7 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDeletedEvent.class, 1, 2, TimeUnit.SECONDS);
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDestroyedEvent.class, 1, 10, TimeUnit.SECONDS);
       EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionExpiredEvent.class, 1, 2, TimeUnit.SECONDS);
+      EventsWaiter.assertSessionContent(() -> eventsCollector.getEvents(), SessionDeletedEvent.class, sessionToBeDeleted.getId(), "foo", "bar", 2, TimeUnit.SECONDS);
    }
 
    protected void init() throws Exception {
