@@ -61,21 +61,22 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
    public void testUpdatingTTLOnAccessingData() throws Exception {
       //when
       MapSession session = sessionRepository.createSession();
-      Instant accessTimeBeforeSaving = session.getLastAccessedTime();
+      long accessTimeBeforeSaving = session.getLastAccessedTime().toEpochMilli();
 
       sessionRepository.save(session);
-      Instant accessTimeAfterSaving = session.getLastAccessedTime();
+      long accessTimeAfterSaving = session.getLastAccessedTime().toEpochMilli();
 
-      Instant accessTimeAfterAccessing = sessionRepository.findById(session.getId()).getLastAccessedTime();
+      long accessTimeAfterAccessing = sessionRepository.findById(session.getId()).getLastAccessedTime().toEpochMilli();
+
+      long now = Instant.now().toEpochMilli();
 
       //then
-      assertNotNull(accessTimeBeforeSaving);
-      assertTrue(accessTimeBeforeSaving.isBefore(Instant.now()));
-      assertNotNull(accessTimeAfterSaving);
-      assertTrue(accessTimeAfterSaving.isBefore(Instant.now()));
-      assertNotNull(accessTimeAfterAccessing);
-      assertTrue(accessTimeAfterAccessing.isAfter(accessTimeAfterSaving));
-
+      assertTrue(accessTimeBeforeSaving > 0);
+      assertTrue(accessTimeBeforeSaving <= now);
+      assertTrue(accessTimeAfterSaving > 0);
+      assertTrue(accessTimeAfterSaving <= now);
+      assertTrue(accessTimeAfterAccessing > 0);
+      assertTrue(accessTimeAfterAccessing >= accessTimeAfterSaving);
    }
 
    @Test

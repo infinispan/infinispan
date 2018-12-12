@@ -3,7 +3,6 @@ package org.infinispan.spring.remote.session;
 
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository;
-import org.springframework.core.task.TaskExecutor;
 
 /**
  * Session Repository for Infinispan in client/server mode.
@@ -18,7 +17,7 @@ public class InfinispanRemoteSessionRepository extends AbstractInfinispanSession
     *
     * @param cache Cache which shall be used for session repository.
     */
-   public InfinispanRemoteSessionRepository(SpringCache cache, TaskExecutor taskExecutor) {
-      super(cache, new RemoteApplicationPublishedBridge(cache, taskExecutor));
+   public InfinispanRemoteSessionRepository(SpringCache cache) {
+      super(cache, new RemoteApplicationPublishedBridge(cache));
    }
 }
