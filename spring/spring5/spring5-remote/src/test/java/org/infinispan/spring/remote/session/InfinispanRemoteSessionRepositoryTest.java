@@ -9,7 +9,6 @@ import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository;
 import org.infinispan.spring.common.session.InfinispanSessionRepositoryTCK;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -22,7 +21,6 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
    private EmbeddedCacheManager embeddedCacheManager;
    private HotRodServer hotrodServer;
    private RemoteCacheManager remoteCacheManager;
-   private ThreadPoolTaskExecutor executor;
 
    @BeforeClass
    public void beforeClass() {
@@ -32,11 +30,6 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("localhost").port(hotrodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(builder.build());
-      executor = new ThreadPoolTaskExecutor();
-      executor.setCorePoolSize(4);
-      executor.setMaxPoolSize(4);
-      executor.setThreadNamePrefix("default_task_executor_thread");
-      executor.initialize();
    }
 
    @AfterMethod
@@ -63,7 +56,7 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
 
    @Override
    protected AbstractInfinispanSessionRepository createRepository(SpringCache springCache) {
-      InfinispanRemoteSessionRepository sessionRepository = new InfinispanRemoteSessionRepository(springCache, executor);
+      InfinispanRemoteSessionRepository sessionRepository = new InfinispanRemoteSessionRepository(springCache);
       sessionRepository.afterPropertiesSet();
       return sessionRepository;
    }

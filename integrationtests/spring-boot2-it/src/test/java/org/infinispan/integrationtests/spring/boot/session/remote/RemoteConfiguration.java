@@ -14,7 +14,7 @@ import org.springframework.util.SocketUtils;
 
 @Configuration
 @EnableAutoConfiguration
-@EnableInfinispanRemoteHttpSession(executorPoolSize = 1, executorMaxPoolSize = 1)
+@EnableInfinispanRemoteHttpSession
 @Import(WebConfig.class)
 public class RemoteConfiguration {
 

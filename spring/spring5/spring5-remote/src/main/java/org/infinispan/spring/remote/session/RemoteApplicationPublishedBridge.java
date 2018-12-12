@@ -1,40 +1,46 @@
+
 package org.infinispan.spring.remote.session;
 
+import java.nio.ByteBuffer;
+import java.util.Collections;
+
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
-import org.infinispan.client.hotrod.event.ClientCacheEntryExpiredEvent;
-import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
+import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
+import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractApplicationPublisherBridge;
-import org.springframework.core.task.TaskExecutor;
+import org.infinispan.util.KeyValuePair;
 import org.springframework.session.MapSession;
 import org.springframework.session.Session;
-import org.springframework.session.events.SessionDestroyedEvent;
-import org.springframework.session.events.SessionExpiredEvent;
 
 /**
  * A bridge between Infinispan Remote events and Spring.
  *
  * @author Sebastian Łaskawiec
+ * @author Katia Aresti, karesti@redhat.com
  * @since 9.0
  */
-@ClientListener
+@ClientListener(converterFactoryName = "___eager-key-value-version-converter", useRawData = true)
 public class RemoteApplicationPublishedBridge extends AbstractApplicationPublisherBridge {
 
-   private final TaskExecutor taskExecutor;
+   private final DataFormat dataFormat;
 
-   public RemoteApplicationPublishedBridge(SpringCache eventSource, TaskExecutor taskExecutor) {
+   private final ClassWhiteList whitelist = new ClassWhiteList(Collections.singletonList(".*"));
+
+   public RemoteApplicationPublishedBridge(SpringCache eventSource) {
       super(eventSource);
-      this.taskExecutor = taskExecutor;
+      this.dataFormat = ((RemoteCache) eventSource.getNativeCache()).getDataFormat();
    }
 
    @Override
    protected void registerListener() {
-      ((RemoteCache<?, ?>) eventSource.getNativeCache()).addClientListener(this);
+      ((RemoteCache<?, ?>) eventSource.getNativeCache()).addClientListener(this, null, new Object[]{Boolean.TRUE});
    }
 
    @Override
@@ -43,25 +49,47 @@ public class RemoteApplicationPublishedBridge extends AbstractApplicationPublish
    }
 
    @ClientCacheEntryCreated
-   public void processCacheEntryCreated(ClientCacheEntryCreatedEvent event) {
-      taskExecutor.execute(() -> {
-               Session session = (Session) eventSource.get(event.getKey()).get();
-               if (session != null) {
-                  emitSessionCreatedEvent(session);
-               }
-            }
-      );
+   public void processCacheEntryCreated(ClientCacheEntryCustomEvent<byte[]> event) {
+      emitSessionCreatedEvent(readEvent(event).getValue());
    }
 
    @ClientCacheEntryExpired
-   public void processCacheEntryExpired(ClientCacheEntryExpiredEvent event) {
-      springEventsPublisher.ifPresent(p -> p.publishEvent(new SessionExpiredEvent(eventSource, new MapSession((String) event.getKey()))));
+   public void processCacheEntryExpired(ClientCacheEntryCustomEvent<byte[]> event) {
+      emitSessionExpiredEvent(readEvent(event).getValue());
    }
 
    @ClientCacheEntryRemoved
-   public void processCacheEntryDestroyed(ClientCacheEntryRemovedEvent event) {
-      // We create a new session object because there is an incompatibility with the API right now
-      // We should be able to get the value that has been removed to pass it to the event from infinispan
-      springEventsPublisher.ifPresent(p -> p.publishEvent(new SessionDestroyedEvent(eventSource, new MapSession((String) event.getKey()))));
+   public void processCacheEntryDestroyed(ClientCacheEntryCustomEvent<byte[]> event) {
+      emitSessionDestroyedEvent(readEvent(event).getValue());
+   }
+
+   protected KeyValuePair<String, Session> readEvent(ClientCacheEntryCustomEvent<byte[]> event) {
+      byte[] eventData = event.getEventData();
+      ByteBuffer rawData = ByteBuffer.wrap(eventData);
+      byte[] rawKey = readElement(rawData);
+      byte[] rawValue = readElement(rawData);
+      String key = dataFormat.keyToObj(rawKey, whitelist);
+      KeyValuePair keyValuePair;
+      if (rawValue == null) {
+         // This events will hold either an old or a new value almost every time. But there are some corner cases
+         // during rebalance where neither a new or an old value will be present. This if handles this case
+         keyValuePair = new KeyValuePair<>(key, new MapSession(key));
+      } else {
+         keyValuePair = new KeyValuePair<>(key, dataFormat.valueToObj(rawValue, whitelist));
+      }
+      return keyValuePair;
+   }
+
+   private byte[] readElement(ByteBuffer buffer) {
+      byte[] element = null;
+      try {
+         int length = UnsignedNumeric.readUnsignedInt(buffer);
+         element = new byte[length];
+         buffer.get(element);
+      } catch (Exception ex) {
+
+      }
+
+      return element;
    }
 }
