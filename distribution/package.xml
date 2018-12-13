@@ -43,7 +43,10 @@
       <module dir="${output.dir}" target="modules/infinispan-extended-statistics" module="extended-statistics" artifact="infinispan-extended-statistics" />
       <module dir="${output.dir}" target="modules/persistence/remote" module="persistence/remote" artifact="infinispan-cachestore-remote" />
       <module dir="${output.dir}" target="modules/persistence/rest" module="persistence/rest" artifact="infinispan-cachestore-rest" />
-      <module dir="${output.dir}" target="modules/spring" module="spring4" artifact="infinispan-spring4-embedded" />
+      <module dir="${output.dir}" target="modules/spring4" module="spring4" artifact="infinispan-spring4-embedded" />
+      <module dir="${output.dir}" target="modules/spring4" module="spring4" artifact="infinispan-spring4-remote" />
+      <module dir="${output.dir}" target="modules/spring5" module="spring5" artifact="infinispan-spring5-embedded" />
+      <module dir="${output.dir}" target="modules/spring5" module="spring5" artifact="infinispan-spring5-remote" />
       <module dir="${output.dir}" target="modules/tools" module="tools" artifact="infinispan-tools" />
       <module dir="${output.dir}" target="modules/tree" module="tree" artifact="infinispan-tree" />
 
@@ -68,6 +71,8 @@
          <base-distribution-common-files dir="${output.dir}" type="remote" />
          <base-distribution-javadocs dir="${output.dir}" type="remote" />
          <base-distribution-licenses dir="${output.dir}"/>
+         <module dir="${output.dir}" target="modules/spring4" module="spring4" artifact="infinispan-spring4-remote" />
+         <module dir="${output.dir}" target="modules/spring5" module="spring5" artifact="infinispan-spring5-remote" />
          <delete dir="${output.dir}/bin" />
          <delete dir="${output.dir}/configs" />
          <delete file="${output.dir}/README-GUI-Demo.txt" />

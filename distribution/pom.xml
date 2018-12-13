@@ -54,6 +54,16 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-spring5-embedded</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-spring5-remote</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-tools</artifactId>
       </dependency>
 
