@@ -69,6 +69,7 @@ public class AffinityTest extends BaseAffinityTest {
 
    }
 
+   @Test(enabled = false,description = "ISPN-9825")
    public void shouldHaveIndexAffinity() {
       populate(1, getNumEntries() / 2);
       checkAffinity();
