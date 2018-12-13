@@ -7,6 +7,8 @@ import java.io.ObjectInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -216,8 +218,13 @@ public class ComponentMetadataRepo {
                }
                methodMetadata.setParameterClasses(parameterClasses);
 
-               Method m = ReflectionUtil.findMethod(componentClass, methodMetadata.getMethodName(), parameterClasses);
-               methodMetadata.setMethod(m);
+               Method method;
+               if (System.getSecurityManager() == null) {
+                  method = ReflectionUtil.findMethod(componentClass, methodMetadata.getMethodName(), parameterClasses);
+               } else {
+                  method = AccessController.doPrivileged((PrivilegedAction<Method>) () -> ReflectionUtil.findMethod(componentClass, methodMetadata.getMethodName(), parameterClasses));
+               }
+               methodMetadata.setMethod(method);
             } catch (ClassNotFoundException e) {
                throw new CacheConfigurationException(e);
             }
@@ -235,8 +242,14 @@ public class ComponentMetadataRepo {
             while (!declarationClass.getName().equals(fieldMetadata.getFieldClassName())) {
                declarationClass = declarationClass.getSuperclass();
             }
-            Field f = ReflectionUtil.getField(fieldMetadata.getFieldName(), declarationClass);
-            fieldMetadata.setField(f);
+            Field field;
+            if (System.getSecurityManager() == null) {
+               field = ReflectionUtil.getField(fieldMetadata.getFieldName(), declarationClass);
+            } else {
+               Class<?> finalDeclarationClass = declarationClass;
+               field = AccessController.doPrivileged((PrivilegedAction<Field>) () -> ReflectionUtil.getField(fieldMetadata.getFieldName(), finalDeclarationClass));
+            }
+            fieldMetadata.setField(field);
             fieldMetadata.setComponentClass(Util.loadClass(fieldMetadata.getComponentType(), classLoader));
          }
       }
@@ -246,7 +259,12 @@ public class ComponentMetadataRepo {
    private void initLifecycleMethods(ComponentMetadata.PrioritizedMethodMetadata[] prioritizedMethods,
          Class<?> componentClass) {
       for (ComponentMetadata.PrioritizedMethodMetadata prioritizedMethod : prioritizedMethods) {
-         Method method = ReflectionUtil.findMethod(componentClass, prioritizedMethod.getMethodName());
+         Method method;
+         if (System.getSecurityManager() == null) {
+            method = ReflectionUtil.findMethod(componentClass, prioritizedMethod.getMethodName());
+         } else {
+            method = AccessController.doPrivileged((PrivilegedAction<Method>) () -> ReflectionUtil.findMethod(componentClass, prioritizedMethod.getMethodName()));
+         }
          prioritizedMethod.setMethod(method);
       }
       if (prioritizedMethods.length > 1) {
