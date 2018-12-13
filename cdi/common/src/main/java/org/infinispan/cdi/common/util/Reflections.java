@@ -100,7 +100,7 @@ public class Reflections {
      * @return the accessible object after the accessible flag has been altered
      */
     public static <A extends AccessibleObject> A setAccessible(A member) {
-        AccessController.doPrivileged(new SetAccessiblePriviligedAction(member));
+        AccessController.doPrivileged(new SetAccessiblePrivilegedAction(member));
         return member;
     }
 
