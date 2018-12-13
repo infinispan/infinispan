@@ -9,11 +9,11 @@ import java.security.PrivilegedAction;
  *
  * @author Stuart Douglas
  */
-public class SetAccessiblePriviligedAction implements PrivilegedAction<Void> {
+public class SetAccessiblePrivilegedAction implements PrivilegedAction<Void> {
 
     private final AccessibleObject member;
 
-    public SetAccessiblePriviligedAction(AccessibleObject member) {
+    public SetAccessiblePrivilegedAction(AccessibleObject member) {
         this.member = member;
     }
 
