@@ -1,5 +1,7 @@
 package org.infinispan.globalstate;
 
+import org.infinispan.configuration.global.GlobalStateConfiguration;
+
 /**
  * Configuration storage
  *
