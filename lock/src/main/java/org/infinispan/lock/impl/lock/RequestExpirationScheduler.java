@@ -9,7 +9,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.lock.impl.log.Log;
+import org.infinispan.lock.logging.Log;
 
 /**
  * This class holds the logic to schedule/abort requests that need to be completed at a given time.

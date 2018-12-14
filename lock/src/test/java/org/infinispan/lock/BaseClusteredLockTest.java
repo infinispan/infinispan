@@ -3,17 +3,29 @@ package org.infinispan.lock;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.lock.api.ClusteredLockManager;
+import org.infinispan.lock.configuration.ClusteredLockManagerConfigurationBuilder;
+import org.infinispan.lock.configuration.Reliability;
 import org.infinispan.lock.impl.ClusteredLockModuleLifecycle;
 import org.infinispan.test.MultipleCacheManagersTest;
 
 public abstract class BaseClusteredLockTest extends MultipleCacheManagersTest {
+
+   protected Reliability reliability = Reliability.CONSISTENT;
+   protected int numOwner = -1;
 
    protected int clusterSize() {
       return 3;
    }
 
    protected GlobalConfigurationBuilder configure(int nodeId) {
-      return GlobalConfigurationBuilder.defaultClusteredBuilder();
+      GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+
+      globalConfigurationBuilder
+            .addModule(ClusteredLockManagerConfigurationBuilder.class)
+            .numOwner(numOwner)
+            .reliability(reliability);
+
+      return globalConfigurationBuilder;
    }
 
    @Override

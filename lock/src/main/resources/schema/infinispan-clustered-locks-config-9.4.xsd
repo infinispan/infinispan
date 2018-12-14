@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0"
+           targetNamespace="urn:infinispan:config:clustered-locks:10.0"
+           xmlns:tns="urn:infinispan:config:clustered-locks:10.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:element name="clustered-locks" type="tns:clustered-locks"/>
+
+    <xs:complexType name="clustered-locks">
+        <xs:sequence minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="clustered-lock" type="tns:clustered-lock">
+                <xs:annotation>
+                    <xs:documentation>
+                        Configures a clustered lock.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="num-owners" type="xs:integer" default="-1">
+            <xs:annotation>
+                <xs:documentation>
+                    Sets the number of copies of the clustered lock's status to keep in the cluster, or -1 to keep it on all the nodes.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="reliability" type="tns:reliability" default="AVAILABLE">
+            <xs:annotation>
+                <xs:documentation>
+                    Sets the reliability mode for the partitions when the cluster splits.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="clustered-lock">
+        <xs:attribute name="name" type="xs:ID" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    Sets the clustered lock's name. It must be unique.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:simpleType name="reliability">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AVAILABLE">
+                <xs:annotation>
+                    <xs:documentation>
+                        All partitions are allowed to read and update the clustered locks.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="CONSISTENT">
+                <xs:annotation>
+                    <xs:documentation>
+                        Only the majority partition is allowed to read and update the clustered lock if it is available on that partition.
+                        The remaining partitions are only allowed to read if the clustered lock is available on that partition.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>

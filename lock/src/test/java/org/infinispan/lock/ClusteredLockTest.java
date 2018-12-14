@@ -12,11 +12,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockConfiguration;
 import org.infinispan.lock.api.ClusteredLockManager;
 import org.infinispan.lock.exception.ClusteredLockException;
-import org.infinispan.lock.impl.log.Log;
+import org.infinispan.lock.logging.Log;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -25,6 +26,11 @@ import org.testng.annotations.Test;
 public class ClusteredLockTest extends BaseClusteredLockTest {
 
    protected static final String LOCK_NAME = "ClusteredLockTest";
+
+   public ClusteredLockTest() {
+      super();
+      cacheMode = CacheMode.REPL_SYNC;
+   }
 
    @BeforeMethod(alwaysRun = true)
    public void createLock() throws Throwable {
