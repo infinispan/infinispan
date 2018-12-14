@@ -39,7 +39,7 @@ public class OffHeapSingleNodeTest extends OffHeapMultiNodeTest {
    }
 
    protected void configureTimeService() {
-      timeService = new ControlledTimeService(14151);
+      timeService = new ControlledTimeService();
       TestingUtil.replaceComponent(cacheManagers.get(0), TimeService.class, timeService, true);
    }
 

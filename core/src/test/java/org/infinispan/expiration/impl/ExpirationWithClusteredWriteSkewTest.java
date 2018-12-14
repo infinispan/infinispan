@@ -32,7 +32,7 @@ public class ExpirationWithClusteredWriteSkewTest extends MultipleCacheManagersT
    public static final String KEY = "key";
    public static final String VALUE = "value";
 
-   private ControlledTimeService timeService = new ControlledTimeService(0);
+   private ControlledTimeService timeService = new ControlledTimeService();
    private ExpirationManager expirationManager1;
    private ExpirationManager expirationManager2;
 

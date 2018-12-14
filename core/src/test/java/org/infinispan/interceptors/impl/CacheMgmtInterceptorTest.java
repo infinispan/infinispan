@@ -42,7 +42,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
    @BeforeMethod(alwaysRun = true)
    public void setup() {
       nextInterceptor = new ControlledNextInterceptor();
-      timeService = new ControlledTimeService(System.currentTimeMillis());
+      timeService = new ControlledTimeService();
       ctx = new SingleKeyNonTxInvocationContext(null);
 
       interceptor = new CacheMgmtInterceptor();

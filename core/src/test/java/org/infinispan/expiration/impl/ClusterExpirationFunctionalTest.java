@@ -72,11 +72,11 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void injectTimeServices() {
-      ts0 = new ControlledTimeService(0);
+      ts0 = new ControlledTimeService();
       TestingUtil.replaceComponent(manager(0), TimeService.class, ts0, true);
-      ts1 = new ControlledTimeService(0);
+      ts1 = new ControlledTimeService();
       TestingUtil.replaceComponent(manager(1), TimeService.class, ts1, true);
-      ts2 = new ControlledTimeService(0);
+      ts2 = new ControlledTimeService();
       TestingUtil.replaceComponent(manager(2), TimeService.class, ts2, true);
    }
 
