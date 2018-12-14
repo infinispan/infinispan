@@ -10,11 +10,7 @@ public class ControlledTimeService extends EmbeddedTimeService {
    protected long currentMillis;
 
    public ControlledTimeService() {
-      this(System.currentTimeMillis());
-   }
-
-   public ControlledTimeService(long currentMillis) {
-      this.currentMillis = currentMillis;
+      this.currentMillis = 1_000_000L;
    }
 
    @Override

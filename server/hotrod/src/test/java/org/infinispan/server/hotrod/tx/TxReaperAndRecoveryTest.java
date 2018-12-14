@@ -73,7 +73,7 @@ import org.testng.annotations.Test;
 public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
 
    private static final AtomicInteger XID_GENERATOR = new AtomicInteger(1);
-   private final ControlledTimeService timeService = new ControlledTimeService(0);
+   private final ControlledTimeService timeService = new ControlledTimeService();
 
    private static DummyXid newXid() {
       return new DummyXid(XID_GENERATOR.getAndIncrement());
