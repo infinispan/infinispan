@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} http://www.infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd"
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
+
+    <cache-container default-cache="default">
+        <transport/>
+        <local-cache name="default">
+            <locking concurrency-level="100" acquire-timeout="1000"/>
+        </local-cache>
+
+        <clustered-locks xmlns="urn:infinispan:config:clustered-locks:${infinispan.core.schema.version}"
+                         reliability="CONSISTENT">
+            <clustered-lock name="consi-lock1" />
+            <clustered-lock name="consi-lock2" />
+        </clustered-locks>
+    </cache-container>
+
+</infinispan>

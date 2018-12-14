@@ -1,5 +1,6 @@
-package org.infinispan.lock.impl.log;
+package org.infinispan.lock.logging;
 
+import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.lock.exception.ClusteredLockException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Message;
@@ -26,4 +27,15 @@ public interface Log extends BasicLogger {
    @Message(value = UNLOCK_FAILED_MSG, id = 29003)
    ClusteredLockException unlockFailed(String lockName, Object originator);
 
+   @Message(value = "Missing name for the clustered lock", id = 29004)
+   ClusteredLockException missingName();
+
+   @Message(value = "Invalid number of owner. It must be higher than zero or -1 but it was %s", id = 29005)
+   ClusteredLockException invalidNumOwners(Integer value);
+
+   @Message(value = "Invalid reliability mode. Modes are AVAILABLE or CONSISTENT", id = 29006)
+   ClusteredLockException invalidReliabilityMode();
+
+   @Message(value = "Invalid scope for tag <clustered-lock>. Expected CACHE_CONTAINER but was %s", id = 29007)
+   ClusteredLockException invalidScope(ParserScope scope);
 }

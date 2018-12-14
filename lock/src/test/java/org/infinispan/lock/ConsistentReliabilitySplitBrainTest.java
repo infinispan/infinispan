@@ -2,7 +2,6 @@ package org.infinispan.lock;
 
 import static java.util.Arrays.asList;
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.infinispan.lock.impl.ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME;
 import static org.infinispan.test.Exceptions.assertException;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -13,39 +12,25 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockManager;
 import org.infinispan.lock.exception.ClusteredLockException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityException;
-import org.infinispan.partitionhandling.BasePartitionHandlingTest;
-import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "clusteredLock.ClusteredLockSplitBrainTest")
-public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
-
-   private static final String LOCK_NAME = "ClusteredLockSplitBrainTest";
-
-   public ClusteredLockSplitBrainTest() {
-      this.numMembersInCluster = 6;
-      this.cacheMode = null;
-   }
+@Test(groups = "functional", testName = "clusteredLock.ConsistentReliabilitySplitBrainTest")
+public class ConsistentReliabilitySplitBrainTest extends BaseClusteredLockSplitBrainTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder dcc = cacheConfiguration();
-      dcc.clustering().cacheMode(CacheMode.REPL_SYNC).partitionHandling().whenSplit(partitionHandling);
-      createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
-      waitForClusterToForm(CLUSTERED_LOCK_CACHE_NAME);
+   protected String getLockName() {
+      return "ConsistentReliabilitySplitBrainTest";
    }
 
    @Test
-   public void testLockCreationWhenPartitionHappening() throws Throwable {
+   public void testLockCreationWhenPartitionHappening() {
       ClusteredLockManager clusteredLockManager = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(0));
-      await(clusteredLockManager.remove(LOCK_NAME));
+      await(clusteredLockManager.remove(getLockName()));
 
       splitCluster(new int[]{0, 1, 2}, new int[]{3, 4, 5});
 
@@ -55,18 +40,8 @@ public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
       }
    }
 
-   private boolean availabilityExceptionRaised(ClusteredLockManager clm) {
-      Exception ex = null;
-      try {
-         clm.defineLock(LOCK_NAME);
-      } catch (AvailabilityException a) {
-         ex = a;
-      }
-      return ex != null;
-   }
-
    @Test
-   public void testLockUseAfterPartitionWithoutMajority() throws Throwable {
+   public void testLockUseAfterPartitionWithoutMajority() {
 
       ClusteredLockManager clm0 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(0));
       ClusteredLockManager clm1 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(1));
@@ -75,15 +50,15 @@ public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
       ClusteredLockManager clm4 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(4));
       ClusteredLockManager clm5 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(5));
 
-      clm0.defineLock(LOCK_NAME);
-      assertTrue(clm0.isDefined(LOCK_NAME));
+      clm0.defineLock(getLockName());
+      assertTrue(clm0.isDefined(getLockName()));
 
-      ClusteredLock lock0 = clm0.get(LOCK_NAME);
-      ClusteredLock lock1 = clm1.get(LOCK_NAME);
-      ClusteredLock lock2 = clm2.get(LOCK_NAME);
-      ClusteredLock lock3 = clm3.get(LOCK_NAME);
-      ClusteredLock lock4 = clm4.get(LOCK_NAME);
-      ClusteredLock lock5 = clm5.get(LOCK_NAME);
+      ClusteredLock lock0 = clm0.get(getLockName());
+      ClusteredLock lock1 = clm1.get(getLockName());
+      ClusteredLock lock2 = clm2.get(getLockName());
+      ClusteredLock lock3 = clm3.get(getLockName());
+      ClusteredLock lock4 = clm4.get(getLockName());
+      ClusteredLock lock5 = clm5.get(getLockName());
 
       splitCluster(new int[]{0, 1, 2}, new int[]{3, 4, 5});
 
@@ -103,7 +78,7 @@ public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
    }
 
    @Test
-   public void testLockUseAfterPartitionWithMajority() throws Throwable {
+   public void testLockUseAfterPartitionWithMajority() {
 
       ClusteredLockManager clm0 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(0));
       ClusteredLockManager clm1 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(1));
@@ -112,19 +87,19 @@ public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
       ClusteredLockManager clm4 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(4));
       ClusteredLockManager clm5 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(5));
 
-      assertTrue(clm0.defineLock(LOCK_NAME));
-      assertFalse(clm1.defineLock(LOCK_NAME));
-      assertFalse(clm2.defineLock(LOCK_NAME));
-      assertFalse(clm3.defineLock(LOCK_NAME));
-      assertFalse(clm4.defineLock(LOCK_NAME));
-      assertFalse(clm5.defineLock(LOCK_NAME));
+      assertTrue(clm0.defineLock(getLockName()));
+      assertFalse(clm1.defineLock(getLockName()));
+      assertFalse(clm2.defineLock(getLockName()));
+      assertFalse(clm3.defineLock(getLockName()));
+      assertFalse(clm4.defineLock(getLockName()));
+      assertFalse(clm5.defineLock(getLockName()));
 
-      ClusteredLock lock0 = clm0.get(LOCK_NAME);
-      ClusteredLock lock1 = clm1.get(LOCK_NAME);
-      ClusteredLock lock2 = clm2.get(LOCK_NAME);
-      ClusteredLock lock3 = clm3.get(LOCK_NAME);
-      ClusteredLock lock4 = clm4.get(LOCK_NAME);
-      ClusteredLock lock5 = clm5.get(LOCK_NAME);
+      ClusteredLock lock0 = clm0.get(getLockName());
+      ClusteredLock lock1 = clm1.get(getLockName());
+      ClusteredLock lock2 = clm2.get(getLockName());
+      ClusteredLock lock3 = clm3.get(getLockName());
+      ClusteredLock lock4 = clm4.get(getLockName());
+      ClusteredLock lock5 = clm5.get(getLockName());
 
       splitCluster(new int[]{0, 1, 2, 3}, new int[]{4, 5});
 
@@ -138,17 +113,17 @@ public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
    }
 
    @Test
-   public void testAutoReleaseIfLockIsAcquiredFromAMinorityPartition() throws Throwable {
+   public void testAutoReleaseIfLockIsAcquiredFromAMinorityPartition() {
 
       ClusteredLockManager clm0 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(0));
       ClusteredLockManager clm1 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(1));
       ClusteredLockManager clm2 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(2));
 
-      assertTrue(clm0.defineLock(LOCK_NAME));
+      assertTrue(clm0.defineLock(getLockName()));
 
-      ClusteredLock lock0 = clm0.get(LOCK_NAME);
-      ClusteredLock lock1 = clm1.get(LOCK_NAME);
-      ClusteredLock lock2 = clm2.get(LOCK_NAME);
+      ClusteredLock lock0 = clm0.get(getLockName());
+      ClusteredLock lock1 = clm1.get(getLockName());
+      ClusteredLock lock2 = clm2.get(getLockName());
 
       await(lock0.tryLock());
       assertTrue(await(lock0.isLockedByMe()));
@@ -164,17 +139,17 @@ public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
    }
 
    @Test
-   public void testTryLocksBeforeSplitBrain() throws Throwable {
+   public void testTryLocksBeforeSplitBrain() {
 
       ClusteredLockManager clm0 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(0));
       ClusteredLockManager clm1 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(1));
       ClusteredLockManager clm2 = EmbeddedClusteredLockManagerFactory.from(getCacheManagers().get(2));
 
-      assertTrue(clm0.defineLock(LOCK_NAME));
+      assertTrue(clm0.defineLock(getLockName()));
 
-      ClusteredLock lock0 = clm0.get(LOCK_NAME);
-      ClusteredLock lock1 = clm1.get(LOCK_NAME);
-      ClusteredLock lock2 = clm2.get(LOCK_NAME);
+      ClusteredLock lock0 = clm0.get(getLockName());
+      ClusteredLock lock1 = clm1.get(getLockName());
+      ClusteredLock lock2 = clm2.get(getLockName());
 
       CompletableFuture<Boolean> tryLock1 = lock1.tryLock();
       CompletableFuture<Boolean> tryLock2 = lock2.tryLock();

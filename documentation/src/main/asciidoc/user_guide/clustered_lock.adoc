@@ -11,8 +11,6 @@ In order to start using the clustered locks, you needs to add the dependency in 
 .pom.xml
 include::topics/dependencies/clustered_locks.adoc[]
 
-Currently no extra configuration needs to be provided.
-
 === The ClusteredLockConfiguration
 
 Currently there is a single type of `ClusteredLock` supported : non reentrant, NODE ownership lock.
@@ -188,4 +186,50 @@ Returns `true` when the lock is owned by the caller and `false` when the lock is
        }
     });
  }
+----
+
+=== The ClusteredLockManager configuration
+The Clustered lock manager can be configured to follow different strategies for the locks. It can be configured either by code
+or by XML.
+
+There are two available attributes:
+
+* `num-owners` :
+Number of owners, default -1 (meaning locks are replicated to all the nodes in the cluster).
++
+Defines the total number of members in the cluster that will keep a copy of the clustered lock state value.
+
+* `reliability` :
++
+Lock behaviour when the cluster splits into multiple partitions or a multiple nodes crash, default CONSISTENT.
+
+** AVAILABLE: It will let partitions operate at the same time with the lock, regardless they are in the majority partition.
+** CONSISTENT: Won't allow members to operate with the lock if they don't belong to the majority partition
+
+==== XML configuration example
+
+.configuration.xml
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:9.4 http://www.infinispan.org/schemas/infinispan-config-9.4.xsd"
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
+
+    <cache-container default-cache="default">
+        <transport/>
+        <local-cache name="default">
+            <locking concurrency-level="100" acquire-timeout="1000"/>
+        </local-cache>
+
+        <clustered-locks xmlns="urn:infinispan:config:clustered-locks:9.4"
+                         num-owners = "3"
+                         reliability="AVAILABLE">
+            <clustered-lock name="lock1" />
+            <clustered-lock name="lock2" />
+        </clustered-locks>
+    </cache-container>
+
+</infinispan>
 ----
