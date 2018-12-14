@@ -164,6 +164,16 @@
          </cache-container>
       </replacement>
    </supplement>
+   <supplement name="clustered-locks">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <clustered-locks>
+               <clustered-lock />
+            </clustered-locks>
+         </cache-container>
+      </replacement>
+   </supplement>
    <supplement name="rocksdb-cs-local">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">

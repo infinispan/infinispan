@@ -25,7 +25,7 @@ import org.infinispan.lock.impl.entries.ClusteredLockValue;
 import org.infinispan.lock.impl.functions.IsLocked;
 import org.infinispan.lock.impl.functions.LockFunction;
 import org.infinispan.lock.impl.functions.UnlockFunction;
-import org.infinispan.lock.impl.log.Log;
+import org.infinispan.lock.logging.Log;
 import org.infinispan.lock.impl.manager.EmbeddedClusteredLockManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;

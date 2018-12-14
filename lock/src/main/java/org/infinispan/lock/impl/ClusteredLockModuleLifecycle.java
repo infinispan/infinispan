@@ -14,6 +14,9 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.lock.api.ClusteredLockManager;
+import org.infinispan.lock.configuration.ClusteredLockManagerConfiguration;
+import org.infinispan.lock.configuration.ClusteredLockManagerConfigurationBuilder;
+import org.infinispan.lock.configuration.Reliability;
 import org.infinispan.lock.impl.entries.ClusteredLockKey;
 import org.infinispan.lock.impl.entries.ClusteredLockValue;
 import org.infinispan.lock.impl.functions.IsLocked;
@@ -57,20 +60,38 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       final EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
       final InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
 
-      internalCacheRegistry.registerInternalCache(CLUSTERED_LOCK_CACHE_NAME, createClusteredLockCacheConfiguration(),
+      ClusteredLockManagerConfiguration config = extractConfiguration(gcr);
+
+      internalCacheRegistry.registerInternalCache(CLUSTERED_LOCK_CACHE_NAME, createClusteredLockCacheConfiguration(config),
             EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
 
       CompletableFuture<CacheHolder> future = startCaches(cacheManager);
-      registerClusteredLockManager(gcr, future);
+      registerClusteredLockManager(gcr, future, config);
    }
 
-   private static Configuration createClusteredLockCacheConfiguration() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.REPL_SYNC)
-            .stateTransfer().fetchInMemoryState(true)
-            .partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES)
-            .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+   private static ClusteredLockManagerConfiguration extractConfiguration(GlobalComponentRegistry globalComponentRegistry) {
+      ClusteredLockManagerConfiguration config = globalComponentRegistry.getGlobalConfiguration()
+            .module(ClusteredLockManagerConfiguration.class);
+      return config == null ? ClusteredLockManagerConfigurationBuilder.defaultConfiguration() : config;
+   }
 
+   private static Configuration createClusteredLockCacheConfiguration(ClusteredLockManagerConfiguration config) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+
+      if (config.numOwners() > 0) {
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC)
+               .hash().numOwners(config.numOwners());
+      } else {
+         builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+      }
+
+      if (config.reliability() == Reliability.CONSISTENT) {
+         builder.clustering()
+               .partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES);
+      } else {
+         builder.clustering().partitionHandling().whenSplit(PartitionHandling.ALLOW_READ_WRITES);
+      }
       return builder.build();
    }
 
@@ -88,12 +109,14 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       return future;
    }
 
-   private static void registerClusteredLockManager(GlobalComponentRegistry registry, CompletableFuture<CacheHolder> future) {
+   private static void registerClusteredLockManager(GlobalComponentRegistry registry,
+                                                    CompletableFuture<CacheHolder> future,
+                                                    ClusteredLockManagerConfiguration config) {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (registry) {
          ClusteredLockManager clusteredLockManager = registry.getComponent(ClusteredLockManager.class);
          if (clusteredLockManager == null || !(clusteredLockManager instanceof EmbeddedClusteredLockManager)) {
-            clusteredLockManager = new EmbeddedClusteredLockManager(future);
+            clusteredLockManager = new EmbeddedClusteredLockManager(future, config);
             registry.registerComponent(clusteredLockManager, ClusteredLockManager.class);
             //this start() is only invoked when the DefaultCacheManager.start() is invoked
             //it is invoked here again to force it to check the managed global components

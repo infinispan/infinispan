@@ -14,7 +14,7 @@ import org.infinispan.lock.impl.entries.ClusteredLockKey;
 import org.infinispan.lock.impl.entries.ClusteredLockState;
 import org.infinispan.lock.impl.entries.ClusteredLockValue;
 import org.infinispan.lock.impl.externalizers.ExternalizerIds;
-import org.infinispan.lock.impl.log.Log;
+import org.infinispan.lock.logging.Log;
 
 /**
  * IsLocked function that allows to know if a lock is already acquired. It returns {@link Boolean#TRUE} when the lock is
