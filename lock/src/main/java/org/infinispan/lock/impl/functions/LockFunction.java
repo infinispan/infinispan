@@ -15,7 +15,7 @@ import org.infinispan.lock.impl.entries.ClusteredLockKey;
 import org.infinispan.lock.impl.entries.ClusteredLockState;
 import org.infinispan.lock.impl.entries.ClusteredLockValue;
 import org.infinispan.lock.impl.externalizers.ExternalizerIds;
-import org.infinispan.lock.impl.log.Log;
+import org.infinispan.lock.logging.Log;
 
 /**
  * Lock function that allows to acquire the lock by a requestor, if such action is possible. It returns {@link

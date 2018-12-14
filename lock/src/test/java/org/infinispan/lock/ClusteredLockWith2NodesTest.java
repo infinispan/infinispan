@@ -27,8 +27,6 @@ public class ClusteredLockWith2NodesTest extends BaseClusteredLockTest {
       return 2;
    }
 
-   @Test(groups = {"functional", "unstable"},
-         description = "The cache may become degraded after killing the coordinator")
    public void testTryLockAndKillCoordinator() {
       doTest(0, 1);
    }
@@ -55,7 +53,7 @@ public class ClusteredLockWith2NodesTest extends BaseClusteredLockTest {
 
          await(secondLockOwner.tryLock(1, TimeUnit.SECONDS));
       } finally {
-         ClusteredLockManager clusteredLockManager = clusteredLockManager(0);
+         ClusteredLockManager clusteredLockManager = clusteredLockManager(survivingNode);
          await(clusteredLockManager.remove(LOCK_NAME));
       }
    }

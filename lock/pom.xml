@@ -18,6 +18,15 @@
         <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
     </properties>
 
+    <build>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>org.infinispan</groupId>
