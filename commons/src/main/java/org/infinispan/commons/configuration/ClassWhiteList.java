@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.jboss.JBossExternalizerAdapter;
 
 /**
  * The {@link ClassWhiteList} maintains classes definitions either by name or regular expression and is used for
@@ -56,7 +55,7 @@ public final class ClassWhiteList {
       SYS_ALLOWED_CLASSES.add(HashSet.class.getName());
       SYS_ALLOWED_CLASSES.add(HashMap.class.getName());
       SYS_ALLOWED_CLASSES.add(Date.class.getName());
-      SYS_ALLOWED_CLASSES.add(JBossExternalizerAdapter.class.getName());
+      SYS_ALLOWED_CLASSES.add("org.infinispan.commons.marshall.jboss.JBossExternalizerAdapter");
 
       String regexps = System.getProperty(REGEXPS_PROPERTY_NAME);
       if (regexps != null) {
