@@ -81,6 +81,14 @@
    <MFC
       max_credits="2m"
       min_threshold="0.40"/>
+   <UFC_NB
+      max_credits="2m"
+      max_queue_size="2m"
+      min_threshold="0.40"/>
+   <MFC_NB
+      max_credits="2m"
+      max_queue_size="2m"
+      min_threshold="0.40"/>
    <FRAG2 frag_size="8000"/>
    <FRAG3 frag_size="8000"/>
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false"/>
