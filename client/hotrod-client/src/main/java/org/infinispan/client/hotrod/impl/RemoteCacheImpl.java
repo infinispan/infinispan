@@ -127,9 +127,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    /**
-    * Used only by {@link #newInstance()}, does not register JMX, reuses statistics object
+    * Inititalize without mbeans
     */
-   private void init(Marshaller marshaller, OperationsFactory operationsFactory,
+   public void init(Marshaller marshaller, OperationsFactory operationsFactory,
                     int estimateKeySize, int estimateValueSize, int batchSize) {
       this.defaultMarshaller = marshaller;
       this.operationsFactory = operationsFactory;
@@ -137,7 +137,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       this.estimateValueSize = estimateValueSize;
       this.batchSize = batchSize;
       this.dataFormat = defaultDataFormat;
-      this.mbeanObjectName = null;
    }
 
    public ClientStatistics getClientStatistics() {
