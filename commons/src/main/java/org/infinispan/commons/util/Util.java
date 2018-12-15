@@ -15,6 +15,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
@@ -212,6 +214,34 @@ public final class Util {
       for (Method m : c.getMethods()) {
          if (m.getName().equals("getInstance") && m.getParameterTypes().length == 0 && Modifier.isStatic(m.getModifiers()))
             return m;
+      }
+      return null;
+   }
+
+   /**
+    * Instantiates a class by invoking the constructor that matches the provided parameter types passing the given
+    * arguments. If no matching constructor is found this will return null. Note that the constructor must be public.
+    * <p/>
+    * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
+    * @param clazz class to instantiate
+    * @param <T> the instance type
+    * @return the new instance if a matching constructor was found otherwise null
+    */
+   public static <T> T newInstanceOrNull(Class<T> clazz, Class[] parameterTypes, Object... arguments) {
+      if (parameterTypes.length != arguments.length) {
+         throw new IllegalArgumentException("Parameter type count: " + parameterTypes.length +
+               " does not match parameter arguments count: " + arguments.length);
+      }
+      try {
+         Constructor<T> constructor = clazz.getDeclaredConstructor(parameterTypes);
+
+         if (constructor != null) {
+            return constructor.newInstance(arguments);
+         }
+
+      } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+         throw new CacheConfigurationException("Unable to instantiate class " + clazz.getName() + " with constructor " +
+               "taking parameters " + Arrays.toString(arguments), e);
       }
       return null;
    }

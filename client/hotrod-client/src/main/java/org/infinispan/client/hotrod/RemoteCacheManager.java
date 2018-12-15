@@ -49,13 +49,15 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.jmx.RemoteCacheManagerMXBean;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.marshall.BytesOnlyJBossLikeMarshaller;
+import org.infinispan.client.hotrod.marshall.BytesOnlyMarshaller;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -276,14 +278,21 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          marshaller = configuration.marshaller();
          if (marshaller == null) {
             Class<? extends Marshaller> clazz = configuration.marshallerClass();
-            if (clazz == GenericJBossMarshaller.class && !configuration.serialWhitelist().isEmpty())
-               marshaller = new GenericJBossMarshaller(configuration.getClassWhiteList());
-            else
+            if (!configuration.serialWhitelist().isEmpty()) {
+               // First try to instantiate the instance with the white list if possible
+               marshaller = Util.newInstanceOrNull(clazz, new Class[] {ClassWhiteList.class},
+                     configuration.getClassWhiteList());
+            }
+            if (marshaller == null) {
                marshaller = Util.getInstance(clazz);
+            }
          }
       }
-      marshallerRegistry.registerMarshaller(marshaller);
+      marshallerRegistry.registerMarshaller(BytesOnlyJBossLikeMarshaller.INSTANCE);
+      marshallerRegistry.registerMarshaller(BytesOnlyMarshaller.INSTANCE);
       marshallerRegistry.registerMarshaller(new UTF8StringMarshaller());
+      // Register this one last, so it will replace any that may support the same media type
+      marshallerRegistry.registerMarshaller(marshaller);
 
       codec = CodecFactory.getCodec(configuration.version());
 
