@@ -435,9 +435,19 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       OperationsFactory operationsFactory = new OperationsFactory(
             channelFactory, remoteCache.getName(), remoteCacheHolder.forceReturnValue, codec, listenerNotifier,
             configuration, remoteCache.getClientStatistics());
-      remoteCache.init(marshaller, operationsFactory,
-            configuration.keySizeEstimate(), configuration.valueSizeEstimate(), configuration.batchSize(), mbeanObjectName);
+      initRemoteCache(remoteCache, operationsFactory);
       remoteCache.start();
+   }
+
+   // Method that handles cache initialization - needed as a placeholder
+   private void initRemoteCache(RemoteCacheImpl remoteCache, OperationsFactory operationsFactory) {
+      if (configuration.statistics().jmxEnabled()) {
+         remoteCache.init(marshaller, operationsFactory, configuration.keySizeEstimate(),
+               configuration.valueSizeEstimate(), configuration.batchSize(), mbeanObjectName);
+      } else {
+         remoteCache.init(marshaller, operationsFactory, configuration.keySizeEstimate(),
+               configuration.valueSizeEstimate(), configuration.batchSize());
+      }
    }
 
    @Override
