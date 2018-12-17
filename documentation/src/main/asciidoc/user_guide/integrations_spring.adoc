@@ -1,10 +1,24 @@
+//RHDG only: Productized Spring Boot starter
+ifdef::productized[]
+[[rhdg_spring_boot_starter]]
+include::topics/productized/spring_boot_starter.adoc[]
+endif::productized[]
+
 [[spring_integration]]
 === Using {brandname} with Spring
 {brandname} integrates with the Spring Framework to make it easy to add caching capabilities to your applications.
 
+[NOTE]
+====
+{brandname} supports Spring 4 and Spring 5 with different sets of dependencies.
+====
+
 [[spring_boot_starter]]
+//Infinispan only: Refer to GitHub.
+ifndef::productized[]
 ==== Spring Boot Starter
 Check out the {brandname} link:https://github.com/infinispan/infinispan-spring-boot[Spring Boot Starter on GitHub] to quickly get up and running.
+endif::productized[]
 
 [[spring_cache_provider]]
 ==== Setting Up {brandname} as a Spring Cache Provider
@@ -12,7 +26,7 @@ Check out the {brandname} link:https://github.com/infinispan/infinispan-spring-b
 
 [[spring_add_support]]
 ===== Adding Spring Cache Support
-The link:http://spring.io/[Spring Framework] offers a link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[cache abstraction] with two simple annotations:
+The link:http://spring.io/[Spring Framework] offers a link:https://docs.spring.io/spring/docs/5.1.3.RELEASE/spring-framework-reference/integration.html#cache[cache abstraction] with two simple annotations:
 
 * `@Cacheable` adds entries to the cache.
 * `@CacheEvict` removes entries from the cache.
@@ -49,26 +63,31 @@ public class Config {
 +
 . Add {brandname} and the Spring integration module to your `pom.xml`.
 +
+Spring 4::
 * Embedded mode: `infinispan-spring4-embedded`
 * Remote client-server mode: `infinispan-spring4-remote`
+Spring 5::
+* Embedded mode: `infinispan-spring5-embedded`
+* Remote client-server mode: `infinispan-spring5-remote`
 +
-.pom.xml for Spring 4 (embedded mode)
+The following is an example with Spring 4 in embedded mode:
++
 [source,xml]
 ----
-    <dependencies>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring4-embedded</artifactId>
-            <version>${version.infinispan}</version>
-        </dependency>
-        <!-- Use the Spring Boot Starter
-        instead of spring-boot. -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${version.spring}</version>
-        </dependency>
-    </dependencies>
+<dependencies>
+  <dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-spring4-embedded</artifactId>
+    <version>${version.infinispan}</version>
+  </dependency>
+  <!-- Tip: Use the Spring Boot starter
+  instead of the spring-boot artifact. -->
+  <dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context</artifactId>
+    <version>${version.spring}</version>
+  </dependency>
+</dependencies>
 ----
 
 [[spring_configure_cache_provider]]
@@ -86,8 +105,8 @@ You can configure your application context either declaratively or programmatica
 
 <!-- Infinispan cache manager -->
 <bean id="cacheManager"
-          class="org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean"
-          p:configurationFileLocation="classpath:/org/infinispan/spring/provider/sample/books-infinispan-config.xml" />
+          class="org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBean"
+          p:configurationFileLocation="classpath:/org/infinispan/spring/embedded/provider/sample/books-infinispan-config.xml" />
 ----
 * *Programmatically:*
 +
@@ -181,7 +200,7 @@ The following example shows the timeout properties in the context XML for `Sprin
 [source,xml,options=nowrap]
 ----
 <bean id="springRemoteCacheManagerConfiguredUsingConfigurationProperties"
-      class="org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean">
+      class="org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean">
     <property name="configurationProperties">
         <props>
            <prop key="infinispan.spring.operation.read.timeout">500</prop>
@@ -200,10 +219,14 @@ To configure Spring Session integration in your application, do the following:
 
 . Add dependencies to your `pom.xml`.
 +
+Spring 4::
 * Embedded mode: `infinispan-spring4-embedded`
 * Remote client-server mode: `infinispan-spring4-remote`
+* Spring Framework: `spring-session`
 +
-.pom.xml (embedded mode)
+The following is an example with Spring 4 in embedded mode:
++
+[source,xml,options="nowrap"]
 ----
     <dependencies>
         <dependency>
@@ -223,6 +246,44 @@ To configure Spring Session integration in your application, do the following:
         <dependency>
            <groupId>org.springframework</groupId>
            <artifactId>spring-session</artifactId>
+           <artifactId>spring-session</artifactId>
+           <version>${version.spring}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.springframework</groupId>
+           <artifactId>spring-web</artifactId>
+           <version>${version.spring}</version>
+       </dependency>
+    </dependencies>
+----
+Spring 5::
+* Embedded mode: `infinispan-spring5-embedded`
+* Remote client-server mode: `infinispan-spring5-remote`
+* Spring Framework: `spring-session-core`
++
+The following is an example with Spring 5 in remote client-server mode:
++
+[source,xml,options="nowrap"]
+----
+    <dependencies>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring5-remote</artifactId>
+            <version>${version.infinispan}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${version.spring}</version>
+        </dependency>
+        <dependency>
+           <groupId>org.springframework</groupId>
+           <artifactId>spring-session</artifactId>
+           <artifactId>spring-session-core</artifactId>
            <version>${version.spring}</version>
        </dependency>
        <dependency>
@@ -243,7 +304,7 @@ To configure Spring Session integration in your application, do the following:
 * Embedded mode: `@EnableInfinispanEmbeddedHttpSession`
 * Remote client-server mode: `@EnableInfinispanRemoteHttpSession`
 +
-There annotations have optional parameters:
+These annotations have optional parameters:
 +
 - `maxInactiveIntervalInSeconds` sets session expiration time in seconds. The default is `1800`.
 - `cacheName` specifies the name of the cache that stores sessions. The default is `sessions`.
