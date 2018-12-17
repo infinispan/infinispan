@@ -1,17 +1,28 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.TRANSACTION;
+import static org.infinispan.configuration.parsing.Parser.TransactionMode.fromConfiguration;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ClassAttributeSerializer;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
-import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
 /**
@@ -21,24 +32,48 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
  * @author Pedro Ruivo
  *
  */
-public class TransactionConfiguration implements Matchable<TransactionConfiguration> {
+public class TransactionConfiguration implements Matchable<TransactionConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<Boolean> AUTO_COMMIT = AttributeDefinition.builder("auto-commit", true).immutable().build();
    public static final AttributeDefinition<Long> CACHE_STOP_TIMEOUT = AttributeDefinition.builder("stop-timeout", TimeUnit.SECONDS.toMillis(30)).build();
    public static final AttributeDefinition<LockingMode> LOCKING_MODE = AttributeDefinition.builder("locking", LockingMode.OPTIMISTIC).build();
-   public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder("transaction-manager-lookup", GenericTransactionManagerLookup.INSTANCE).copier(IdentityAttributeCopier.INSTANCE).autoPersist(false).build();
+   public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder("transaction-manager-lookup", GenericTransactionManagerLookup.INSTANCE).copier(IdentityAttributeCopier.INSTANCE).autoPersist(false).serializer(ClassAttributeSerializer.INSTANCE).build();
+
    public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transaction-synchronization-registry-lookup", null, TransactionSynchronizationRegistryLookup.class).copier(IdentityAttributeCopier.INSTANCE).autoPersist(false).build();
-   public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("mode", TransactionMode.NON_TRANSACTIONAL).immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Boolean> USE_SYNCHRONIZATION = AttributeDefinition.builder("synchronization", false).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("mode", TransactionMode.NON_TRANSACTIONAL).immutable()
+         .serializer(new AttributeSerializer<TransactionMode, TransactionConfiguration, TransactionConfigurationBuilder>() {
+            @Override
+            public Object getSerializationValue(Attribute<TransactionMode> attribute, TransactionConfiguration transactionConfiguration) {
+               Parser.TransactionMode mode = fromConfiguration(transactionConfiguration.transactionMode(), !transactionConfiguration.useSynchronization(), transactionConfiguration.recovery().enabled(), transactionConfiguration.invocationBatching);
+               return mode.toString();
+            }
+
+            @Override
+            public Object readAttributeValue(String enclosingElement, String nesting, AttributeDefinition attributeDefinition, Object value, TransactionConfigurationBuilder builderInfo) {
+               Parser.TransactionMode txMode = Parser.TransactionMode.valueOf(value.toString());
+               builderInfo.transaction().transactionMode(txMode.getMode());
+               builderInfo.transaction().useSynchronization(!txMode.isXAEnabled() && txMode.getMode().isTransactional());
+               builderInfo.transaction().recovery().enabled(txMode.isRecoveryEnabled());
+               builderInfo.invocationBatching().enable(txMode.isBatchingEnabled());
+               return txMode.getMode();
+            }
+         })
+         .autoPersist(false).build();
+   public static final AttributeDefinition<Boolean> USE_SYNCHRONIZATION = AttributeDefinition.builder("synchronization", false).immutable().xmlName("").autoPersist(false).build();
    public static final AttributeDefinition<Boolean> USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS = AttributeDefinition.builder("single-phase-auto-commit", false).build();
    public static final AttributeDefinition<Long> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder("reaper-wake-up-interval", 30000L).immutable().xmlName("reaper-interval").build();
    public static final AttributeDefinition<Long> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder("complete-timeout", 60000L).immutable().build();
    public static final AttributeDefinition<TransactionProtocol> TRANSACTION_PROTOCOL = AttributeDefinition.builder("transaction-protocol", TransactionProtocol.DEFAULT).immutable().xmlName("protocol").build();
    public static final AttributeDefinition<Boolean> NOTIFICATIONS = AttributeDefinition.builder("notifications", true).immutable().build();
+   public static final ElementDefinition ELEMENT_DEFINTION = new DefaultElementDefinition(TRANSACTION.getLocalName());
+
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(TransactionConfiguration.class, AUTO_COMMIT, CACHE_STOP_TIMEOUT, LOCKING_MODE,
             TRANSACTION_MANAGER_LOOKUP, TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP, TRANSACTION_MODE, USE_SYNCHRONIZATION, USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS,
             REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, TRANSACTION_PROTOCOL, NOTIFICATIONS);
    }
+
+   private final List<ConfigurationInfo> subElements = new ArrayList<>();
+
 
    private final Attribute<Boolean> autoCommit;
    private final Attribute<Long> cacheStopTimeout;
@@ -54,8 +89,9 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
    private final Attribute<Boolean> notifications;
    private final AttributeSet attributes;
    private final RecoveryConfiguration recovery;
+   private final boolean invocationBatching;
 
-   TransactionConfiguration(AttributeSet attributes, RecoveryConfiguration recovery) {
+   TransactionConfiguration(AttributeSet attributes, RecoveryConfiguration recovery, boolean invocationBatching) {
       this.attributes = attributes.checkProtection();
       autoCommit = attributes.attribute(AUTO_COMMIT);
       cacheStopTimeout = attributes.attribute(CACHE_STOP_TIMEOUT);
@@ -70,6 +106,8 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
       transactionProtocol = attributes.attribute(TRANSACTION_PROTOCOL);
       notifications = attributes.attribute(NOTIFICATIONS);
       this.recovery = recovery;
+      this.invocationBatching = invocationBatching;
+      subElements.add(recovery);
    }
 
    /**
@@ -277,6 +315,11 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
    }
 
    @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINTION;
+   }
+
+   @Override
    public String toString() {
       return "TransactionConfiguration [attributes=" + attributes + ", recovery=" + recovery + "]";
    }
@@ -301,6 +344,16 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
       } else if (!recovery.equals(other.recovery))
          return false;
       return true;
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
+   }
+
+   @Override
+   public boolean matches(TransactionConfiguration other) {
+      return attributes.matches(other.attributes);
    }
 
    @Override

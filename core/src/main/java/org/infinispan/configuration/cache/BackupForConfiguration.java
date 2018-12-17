@@ -1,8 +1,13 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.BACKUP_FOR;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Defines the remote caches for which this cache acts as a backup.
@@ -10,10 +15,10 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author Mircea Markus
  * @since 5.2
  */
-public class BackupForConfiguration {
+public class BackupForConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<String> REMOTE_CACHE = AttributeDefinition.<String>builder("remoteCache", null, String.class).immutable().build();
    public static final AttributeDefinition<String> REMOTE_SITE = AttributeDefinition.<String>builder("remoteSite", null, String.class).immutable().build();
-
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(BACKUP_FOR.getLocalName());
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(BackupForConfiguration.class, REMOTE_CACHE, REMOTE_SITE);
    }
@@ -44,6 +49,11 @@ public class BackupForConfiguration {
 
    public AttributeSet attributes() {
       return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    @Override

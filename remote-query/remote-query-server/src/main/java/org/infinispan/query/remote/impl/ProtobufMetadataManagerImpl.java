@@ -111,7 +111,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
             .transactionMode(TransactionMode.TRANSACTIONAL).invocationBatching().enable()
             .transaction().lockingMode(LockingMode.PESSIMISTIC)
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
-            .clustering().cacheMode(cacheMode).sync()
+            .clustering().cacheMode(cacheMode)
             .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
             .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
             .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE)

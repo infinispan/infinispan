@@ -14,6 +14,8 @@ import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_
 import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import javax.transaction.Synchronization;
@@ -21,13 +23,15 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
-import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,7 +42,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author pmuir
  * @author Pedro Ruivo
  */
-public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TransactionConfiguration> {
+public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TransactionConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final AttributeSet attributes;
    private final RecoveryConfigurationBuilder recovery;
@@ -47,6 +51,21 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       super(builder);
       attributes = TransactionConfiguration.attributeDefinitionSet();
       this.recovery = new RecoveryConfigurationBuilder(this);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return TransactionConfiguration.ELEMENT_DEFINTION;
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return Collections.singleton(recovery);
    }
 
    /**
@@ -311,11 +330,12 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public TransactionConfiguration create() {
-      if (transactionMode() == null && getBuilder().invocationBatching().isEnabled())
+      boolean batchingEnabled = getBuilder().invocationBatching().isEnabled();
+      if (transactionMode() == null && batchingEnabled)
          transactionMode(TransactionMode.TRANSACTIONAL);
       else if (transactionMode() == null)
          transactionMode(TransactionMode.NON_TRANSACTIONAL);
-      return new TransactionConfiguration(attributes.protect(), recovery.create());
+      return new TransactionConfiguration(attributes.protect(), recovery.create(), batchingEnabled);
    }
 
    @Override

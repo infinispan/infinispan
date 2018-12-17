@@ -6,18 +6,23 @@ import static org.infinispan.configuration.cache.Configuration.SIMPLE_CACHE;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-public class ConfigurationBuilder implements ConfigurationChildBuilder {
+public class ConfigurationBuilder implements ConfigurationChildBuilder, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(ConfigurationBuilder.class, Log.class);
 
    private final ClusteringConfigurationBuilder clustering;
@@ -45,6 +50,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    private boolean template = false;
 
+   @Override
+   public ElementDefinition<? extends ConfigurationInfo> getElementDefinition() {
+      return Configuration.ELEMENT_DEFINITION;
+   }
+
+   private List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
+
    public ConfigurationBuilder() {
       this.attributes = Configuration.attributeDefinitionSet();
       this.clustering = new ClusteringConfigurationBuilder(this);
@@ -67,6 +79,19 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.sites = new SitesConfigurationBuilder(this);
       this.compatibility = new CompatibilityModeConfigurationBuilder(this);
       this.memory = new MemoryConfigurationBuilder(this);
+
+      subElements.addAll(Arrays.asList(clustering, persistence, unsafe, dataContainer, jmxStatistics, locking, indexing, expiration, encoding, memory, transaction, sites, customInterceptors, security, sites.backupFor(), compatibility));
+   }
+
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return subElements;
    }
 
    @Override

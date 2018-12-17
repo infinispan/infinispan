@@ -12,6 +12,15 @@
                   <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
                </string-keyed-table>
             </string-keyed-jdbc-store>
+             <string-keyed-jdbc-store fetch-state="true" read-only="true" purge="false" dialect="H2">
+                 <simple-connection connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1"
+                                    username="sa" password="" driver="org.h2.Driver"/>
+                 <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_ANOTHER_STRING_TABLE">
+                     <id-column name="ID_COLUMN" type="VARCHAR(20)"/>
+                     <data-column name="DATA_COLUMN" type="BINARY"/>
+                     <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT"/>
+                 </string-keyed-table>
+             </string-keyed-jdbc-store>
          </persistence>
       </local-cache-configuration>
       <local-cache name="first" configuration="default"/>

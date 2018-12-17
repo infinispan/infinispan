@@ -3,6 +3,8 @@ package org.infinispan.commons.configuration.attributes;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -34,12 +36,14 @@ public final class AttributeDefinition<T> {
    private final AttributeCopier copier;
    private final AttributeInitializer<? extends T> initializer;
    private final AttributeValidator<? super T> validator;
+   private final AttributeSerializer<? super T, ? extends ConfigurationInfo, ? extends ConfigurationBuilderInfo> serializerConfig;
    private final Class<T> type;
 
    AttributeDefinition(String name, String xmlName, T initialValue, Class<T> type,
                        boolean immutable, boolean autoPersist, boolean global,
                        AttributeCopier copier, AttributeValidator<? super T> validator,
-                       AttributeInitializer<? extends T> initializer) {
+                       AttributeInitializer<? extends T> initializer,
+                       AttributeSerializer<? super T, ? extends ConfigurationInfo, ? extends ConfigurationBuilderInfo> serializerConfig) {
       this.name = name;
       this.xmlName = xmlName;
       this.defaultValue = initialValue;
@@ -50,6 +54,8 @@ public final class AttributeDefinition<T> {
       this.initializer = initializer;
       this.validator = validator;
       this.type = type;
+      this.serializerConfig = serializerConfig;
+
    }
 
    public String name() {
@@ -62,6 +68,10 @@ public final class AttributeDefinition<T> {
 
    public Class<T> getType() {
       return type;
+   }
+
+   public AttributeSerializer<? super T, ? extends ConfigurationInfo, ? extends ConfigurationBuilderInfo> getSerializerConfig() {
+      return serializerConfig;
    }
 
    public T getDefaultValue() {
@@ -168,6 +178,7 @@ public final class AttributeDefinition<T> {
       private AttributeCopier copier = null;
       private AttributeInitializer<? extends T> initializer;
       private AttributeValidator<? super T> validator;
+      private AttributeSerializer<? super T, ? extends ConfigurationInfo, ? extends ConfigurationBuilderInfo> serializer;
 
 
       private Builder(String name, T defaultValue, Class<T> type) {
@@ -188,6 +199,11 @@ public final class AttributeDefinition<T> {
 
       public Builder<T> initializer(AttributeInitializer<? extends T> initializer) {
          this.initializer = initializer;
+         return this;
+      }
+
+      public Builder<T> serializer(AttributeSerializer<? super T, ? extends ConfigurationInfo, ? extends ConfigurationBuilderInfo> serializer) {
+         this.serializer = serializer;
          return this;
       }
 
@@ -212,7 +228,7 @@ public final class AttributeDefinition<T> {
       }
 
       public AttributeDefinition<T> build() {
-         return new AttributeDefinition<T>(name, xmlName == null ? Util.xmlify(name) : xmlName, defaultValue, type, immutable, autoPersist, global, copier, validator, initializer);
+         return new AttributeDefinition<>(name, xmlName == null ? Util.xmlify(name) : xmlName, defaultValue, type, immutable, autoPersist, global, copier, validator, initializer, serializer == null ? new DefaultSerializer<>(xmlName == null ? Util.xmlify(name) : xmlName) : serializer);
       }
    }
 

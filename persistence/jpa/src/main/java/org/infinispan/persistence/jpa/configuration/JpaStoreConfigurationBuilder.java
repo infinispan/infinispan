@@ -4,6 +4,8 @@ import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration
 import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.PERSISTENCE_UNIT_NAME;
 import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.STORE_METADATA;
 
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 /**
@@ -12,7 +14,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
  *
  */
 public class JpaStoreConfigurationBuilder
-      extends AbstractStoreConfigurationBuilder<JpaStoreConfiguration, JpaStoreConfigurationBuilder> {
+      extends AbstractStoreConfigurationBuilder<JpaStoreConfiguration, JpaStoreConfigurationBuilder> implements ConfigurationBuilderInfo {
 
    public JpaStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, JpaStoreConfiguration.attributeDefinitionSet());
@@ -27,6 +29,12 @@ public class JpaStoreConfigurationBuilder
       attributes.attribute(ENTITY_CLASS).set(entityClass);
       return self();
    }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return JpaStoreConfiguration.ELEMENT_DEFINITION;
+   }
+
 
    @Deprecated
    public JpaStoreConfigurationBuilder batchSize(long batchSize) {

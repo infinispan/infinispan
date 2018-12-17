@@ -337,4 +337,11 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    public Collection<Attribute<?>> attributes() {
       return attributes.values();
    }
+
+   public boolean isEmpty() {
+      return attributes.entrySet().stream().allMatch(attrs -> {
+         Attribute<?> attr = attrs.getValue();
+         return attr.isNull() || !attr.isModified();
+      });
+   }
 }

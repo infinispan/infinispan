@@ -6,7 +6,9 @@ import static org.infinispan.configuration.cache.RecoveryConfiguration.RECOVERY_
 import java.lang.invoke.MethodHandles;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -19,7 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author pmuir
  *
  */
-public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder implements Builder<RecoveryConfiguration> {
+public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder implements Builder<RecoveryConfiguration>, ConfigurationBuilderInfo {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final AttributeSet attributes;
@@ -27,6 +29,16 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
    RecoveryConfigurationBuilder(TransactionConfigurationBuilder builder) {
       super(builder);
       attributes = RecoveryConfiguration.attributeDefinitionSet();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return RecoveryConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

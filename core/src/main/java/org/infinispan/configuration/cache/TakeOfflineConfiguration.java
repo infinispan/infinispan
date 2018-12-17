@@ -1,20 +1,27 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.TAKE_OFFLINE;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * @author Mircea Markus
  * @since 5.2
  */
-public class TakeOfflineConfiguration implements Matchable<TakeOfflineConfiguration> {
+public class TakeOfflineConfiguration implements Matchable<TakeOfflineConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<Integer> AFTER_FAILURES = AttributeDefinition.builder("after-failures", 0).immutable().build();
    public static final AttributeDefinition<Long> MIN_TIME_TO_WAIT = AttributeDefinition.builder("min-wait", 0l).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(TakeOfflineConfiguration.class, AFTER_FAILURES, MIN_TIME_TO_WAIT);
    }
+
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(TAKE_OFFLINE.getLocalName());
 
    private final Attribute<Integer> afterFailures;
    private final Attribute<Long> minTimeToWait;
@@ -24,6 +31,11 @@ public class TakeOfflineConfiguration implements Matchable<TakeOfflineConfigurat
       this.attributes = attributes.checkProtection();
       afterFailures = attributes.attribute(AFTER_FAILURES);
       minTimeToWait = attributes.attribute(MIN_TIME_TO_WAIT);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

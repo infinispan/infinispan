@@ -9,6 +9,12 @@ import static org.infinispan.persistence.rest.configuration.RestStoreConfigurati
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.PORT;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.RAW_VALUES;
 
+import java.util.Collection;
+import java.util.Collections;
+
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.keymappers.MarshallingTwoWayKey2StringMapper;
@@ -21,14 +27,29 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 6.0
  */
-public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RestStoreConfiguration, RestStoreConfigurationBuilder> implements
-                                                                                                                                            RestStoreConfigurationChildBuilder<RestStoreConfigurationBuilder> {
+public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RestStoreConfiguration, RestStoreConfigurationBuilder>
+      implements RestStoreConfigurationChildBuilder<RestStoreConfigurationBuilder>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(RestStoreConfigurationBuilder.class, Log.class);
    private final ConnectionPoolConfigurationBuilder connectionPool;
 
    public RestStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, RestStoreConfiguration.attributeDefinitionSet());
       connectionPool = new ConnectionPoolConfigurationBuilder(this);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return RestStoreConfiguration.ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return Collections.singletonList(connectionPool);
    }
 
    @Override

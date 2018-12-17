@@ -84,9 +84,9 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
       ConfigurationBuilder builder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false);
       builder.persistence()
-               .addStore(SoftIndexFileStoreConfigurationBuilder.class)
-                  .indexLocation(tmpDirectory).dataLocation(tmpDirectory + "/data")
-                  .maxFileSize(1000);
+            .addStore(SoftIndexFileStoreConfigurationBuilder.class)
+            .indexLocation(tmpDirectory).dataLocation(tmpDirectory + "/data")
+            .maxFileSize(1000);
 
       store.init(createContext(builder.build()));
       return store;

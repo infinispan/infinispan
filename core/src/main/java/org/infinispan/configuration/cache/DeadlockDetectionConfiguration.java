@@ -2,10 +2,13 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Configures deadlock detection.
@@ -13,11 +16,12 @@ import org.infinispan.commons.configuration.attributes.Matchable;
  * @deprecated Since 9.0, deadlock detection is always disabled.
  */
 @Deprecated
-public class DeadlockDetectionConfiguration implements Matchable<DeadlockDetectionConfiguration> {
+public class DeadlockDetectionConfiguration implements Matchable<DeadlockDetectionConfiguration>, ConfigurationInfo {
    @Deprecated
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    @Deprecated
    public static final AttributeDefinition<Long> SPIN_DURATION = AttributeDefinition.builder("spinDuration", TimeUnit.MILLISECONDS.toMillis(-1)).immutable().build();
+   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("", false);
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(DeadlockDetectionConfiguration.class, ENABLED, SPIN_DURATION);
@@ -31,6 +35,11 @@ public class DeadlockDetectionConfiguration implements Matchable<DeadlockDetecti
       this.attributes = attributes.checkProtection();
       enabled = attributes.attribute(ENABLED);
       spinDuration = attributes.attribute(SPIN_DURATION);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

@@ -15,7 +15,8 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
       return new Object[][]{
-            {Paths.get("configs/string-based.xml")}
+            {Paths.get("configs/string-based.xml")},
+            {Paths.get("configs/string-based-jndi.xml")}
       };
    }
 

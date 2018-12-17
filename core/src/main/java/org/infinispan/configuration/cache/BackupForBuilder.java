@@ -7,7 +7,9 @@ import java.lang.invoke.MethodHandles;
 
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -15,13 +17,23 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea Markus
  * @since 5.2
  */
-public class BackupForBuilder extends AbstractConfigurationChildBuilder implements Builder<BackupForConfiguration> {
+public class BackupForBuilder extends AbstractConfigurationChildBuilder implements Builder<BackupForConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private final AttributeSet attributes;
 
    public BackupForBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = BackupForConfiguration.attributeDefinitionSet();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return BackupForConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

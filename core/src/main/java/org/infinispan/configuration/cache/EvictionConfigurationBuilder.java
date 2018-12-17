@@ -6,7 +6,9 @@ import static org.infinispan.configuration.cache.EvictionConfiguration.THREAD_PO
 import static org.infinispan.configuration.cache.EvictionConfiguration.TYPE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
@@ -19,7 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  * @deprecated Use {@link MemoryConfiguration} instead
  */
 @Deprecated
-public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<EvictionConfiguration> {
+public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<EvictionConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(EvictionConfigurationBuilder.class);
    private final AttributeSet attributes;
 
@@ -28,6 +30,16 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    EvictionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = EvictionConfiguration.attributeDefinitionSet();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return EvictionConfiguration.ELEMENT_DEFINITION;
    }
 
    /**
@@ -80,6 +92,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    public EvictionConfigurationBuilder size(long size) {
       attributes.attribute(SIZE).set(size);
       memory().size(size);
+      memory().storageType(StorageType.OBJECT);
       return this;
    }
 

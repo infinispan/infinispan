@@ -9,8 +9,10 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -20,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Configures indexing of entries in the cache for searching.
  */
-public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration> {
+public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration>, ConfigurationBuilderInfo {
 
    private static final Log log = LogFactory.getLog(IndexingConfigurationBuilder.class);
 
@@ -243,8 +245,17 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
+   public ElementDefinition getElementDefinition() {
+      return IndexingConfiguration.ELEMENT_DEFINITION;
+   }
+
+   @Override
    public String toString() {
       return "IndexingConfigurationBuilder [attributes=" + attributes + "]";
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
 }

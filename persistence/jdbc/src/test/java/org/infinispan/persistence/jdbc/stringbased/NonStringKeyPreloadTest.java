@@ -9,16 +9,16 @@ import java.sql.Connection;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationChildBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -170,8 +170,9 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
 
    @BuiltBy(SharedConnectionFactoryConfigurationBuilder.class)
    public static class SharedConnectionFactoryConfiguration extends PooledConnectionFactoryConfiguration {
-      SharedConnectionFactoryConfiguration(String connectionUrl, String driverClass, String username, String password) {
-         super(null, connectionUrl, driverClass, username, password);
+
+      protected SharedConnectionFactoryConfiguration(AttributeSet attributes) {
+         super(attributes);
       }
 
       @Override
@@ -180,17 +181,10 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       }
    }
 
-   public static class SharedConnectionFactoryConfigurationBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>> extends AbstractJdbcStoreConfigurationChildBuilder<S> implements ConnectionFactoryConfigurationBuilder<SharedConnectionFactoryConfiguration> {
-
-      public SharedConnectionFactoryConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
+   public static class SharedConnectionFactoryConfigurationBuilder extends PooledConnectionFactoryConfigurationBuilder {
+      public SharedConnectionFactoryConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder builder) {
          super(builder);
       }
-
-      private String connectionUrl;
-      private String driverClass;
-      private String username;
-      private String password;
-
       @Override
       public void validate() {
       }
@@ -198,28 +192,5 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       @Override
       public void validate(GlobalConfiguration globalConfig) {
       }
-
-      @Override
-      public SharedConnectionFactoryConfiguration create() {
-         return new SharedConnectionFactoryConfiguration(connectionUrl, driverClass, username, password);
-      }
-
-      @Override
-      public Builder<?> read(SharedConnectionFactoryConfiguration template) {
-         this.connectionUrl = template.connectionUrl();
-         this.driverClass = template.driverClass();
-         this.username = template.username();
-         this.password = template.password();
-         return this;
-      }
-
-      public Builder<?> read(PooledConnectionFactoryConfiguration template) {
-         this.connectionUrl = template.connectionUrl();
-         this.driverClass = template.driverClass();
-         this.username = template.username();
-         this.password = template.password();
-         return this;
-      }
-
    }
 }

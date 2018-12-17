@@ -11,10 +11,14 @@ import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SHAR
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.TRANSACTIONAL;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.persistence.Store;
@@ -27,7 +31,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>>
-      extends AbstractPersistenceConfigurationChildBuilder implements StoreConfigurationBuilder<T, S> {
+      extends AbstractPersistenceConfigurationChildBuilder implements StoreConfigurationBuilder<T, S>, ConfigurationBuilderInfo {
 
    private static final Log log = LogFactory.getLog(AbstractStoreConfigurationBuilder.class);
 
@@ -48,16 +52,14 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Deprecated
    protected boolean fetchPersistentState;
 
+   private final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
+
    /**
     * @deprecated Use {@link AbstractStoreConfigurationBuilder#AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder, AttributeSet)} instead
     */
    @Deprecated
    public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
-      this.attributes = AbstractStoreConfiguration.attributeDefinitionSet();
-      this.async = new AsyncStoreConfigurationBuilder(this);
-      this.singletonStore = new SingletonStoreConfigurationBuilder(this);
-      initCompatibilitySettings();
+      this(builder, AbstractStoreConfiguration.attributeDefinitionSet());
    }
 
    public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes) {
@@ -66,6 +68,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       this.async = new AsyncStoreConfigurationBuilder(this);
       this.singletonStore = new SingletonStoreConfigurationBuilder(this);
       initCompatibilitySettings();
+      subElements.add(async);
+      subElements.add(singletonStore);
    }
 
    @Deprecated
@@ -76,6 +80,16 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       shared = attributes.attribute(SHARED).get();
       ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS).get();
       properties = attributes.attribute(PROPERTIES).get();
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return subElements;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    /**

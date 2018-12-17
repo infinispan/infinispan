@@ -1,8 +1,16 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration.CONNECTION_URL;
+import static org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration.DRIVER_CLASS;
+import static org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration.PASSWORD;
+import static org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration.USERNAME;
+
 import java.sql.Driver;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -12,44 +20,53 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 5.2
  */
 public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>> extends AbstractJdbcStoreConfigurationChildBuilder<S>
-      implements ConnectionFactoryConfigurationBuilder<SimpleConnectionFactoryConfiguration> {
+      implements ConnectionFactoryConfigurationBuilder<SimpleConnectionFactoryConfiguration>, ConfigurationBuilderInfo {
 
-   private String connectionUrl;
-   private String driverClass;
-   private String username;
-   private String password;
+   private final AttributeSet attributes;
 
    public SimpleConnectionFactoryConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
       super(builder);
+      attributes = SimpleConnectionFactoryConfiguration.attributeSet();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return SimpleConnectionFactoryConfiguration.ELEMENT_DEFINITION;
    }
 
    public SimpleConnectionFactoryConfigurationBuilder<S> connectionUrl(String connectionUrl) {
-      this.connectionUrl = connectionUrl;
+      attributes.attribute(CONNECTION_URL).set(connectionUrl);
       return this;
    }
 
    public SimpleConnectionFactoryConfigurationBuilder<S> driverClass(Class<? extends Driver> driverClass) {
-      this.driverClass = driverClass.getName();
+      attributes.attribute(DRIVER_CLASS).set(driverClass.getName());
       return this;
    }
 
    public SimpleConnectionFactoryConfigurationBuilder<S> driverClass(String driverClass) {
-      this.driverClass = driverClass;
+      attributes.attribute(DRIVER_CLASS).set(driverClass);
       return this;
    }
 
    public SimpleConnectionFactoryConfigurationBuilder<S> username(String username) {
-      this.username = username;
+      attributes.attribute(USERNAME).set(username);
       return this;
    }
 
    public SimpleConnectionFactoryConfigurationBuilder<S> password(String password) {
-      this.password = password;
+      attributes.attribute(PASSWORD).set(password);
       return this;
    }
 
    @Override
    public void validate() {
+      String connectionUrl = attributes.attribute(CONNECTION_URL).get();
       if (connectionUrl == null) {
          throw new CacheConfigurationException("A connectionUrl has not been specified");
       }
@@ -61,16 +78,12 @@ public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
 
    @Override
    public SimpleConnectionFactoryConfiguration create() {
-      return new SimpleConnectionFactoryConfiguration(connectionUrl, driverClass, username, password);
+      return new SimpleConnectionFactoryConfiguration(attributes.protect());
    }
 
    @Override
    public SimpleConnectionFactoryConfigurationBuilder<S> read(SimpleConnectionFactoryConfiguration template) {
-      this.connectionUrl = template.connectionUrl();
-      this.driverClass = template.driverClass();
-      this.username = template.username();
-      this.password = template.password();
-
+      attributes.read(template.attributes());
       return this;
    }
 

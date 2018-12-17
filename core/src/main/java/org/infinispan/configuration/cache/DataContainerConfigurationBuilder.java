@@ -6,7 +6,9 @@ import static org.infinispan.configuration.cache.DataContainerConfiguration.DATA
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -19,7 +21,7 @@ import org.infinispan.container.DataContainer;
  * @deprecated Please use {@link MemoryConfiguration}
  */
 @Deprecated
-public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<DataContainerConfiguration> {
+public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<DataContainerConfiguration>, ConfigurationBuilderInfo {
 
    private AttributeSet attributes;
 
@@ -38,6 +40,16 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
    public DataContainerConfigurationBuilder dataContainer(DataContainer dataContainer) {
       attributes.attribute(DATA_CONTAINER).set(dataContainer);
       return this;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return DataContainerConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

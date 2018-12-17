@@ -1,5 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.persistence.remote.configuration.Element.REMOTE_STORE;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,9 +11,12 @@ import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrate
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
@@ -33,15 +38,18 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<ProtocolVersion> PROTOCOL_VERSION = AttributeDefinition.builder("protocolVersion", ProtocolVersion.DEFAULT_PROTOCOL_VERSION).immutable().build();
    static final AttributeDefinition<String> REMOTE_CACHE_NAME = AttributeDefinition.builder("remoteCacheName", BasicCacheContainer.DEFAULT_CACHE_NAME).immutable().xmlName("cache").build();
    static final AttributeDefinition<List<RemoteServerConfiguration>> SERVERS = AttributeDefinition.builder("servers", null, (Class<List<RemoteServerConfiguration>>)(Class<?>)List.class)
-         .initializer(() -> new ArrayList<>()).autoPersist(false).build();
+         .initializer(ArrayList::new).autoPersist(false).build();
    static final AttributeDefinition<Long> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", (long)ConfigurationProperties.DEFAULT_SO_TIMEOUT).build();
    static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder("tcpNoDelay", true).build();
    static final AttributeDefinition<String> TRANSPORT_FACTORY = AttributeDefinition.builder("transportFactory", null, String.class).immutable().build();
+   private final List<ConfigurationInfo> subElements;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RemoteStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), BALANCING_STRATEGY, CONNECTION_TIMEOUT, FORCE_RETURN_VALUES,
             HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SERVERS, SOCKET_TIMEOUT, TCP_NO_DELAY, TRANSPORT_FACTORY, VALUE_SIZE_ESTIMATE);
    }
+
+   static ElementDefinition ELELEMENT_DEFINITION = new DefaultElementDefinition(REMOTE_STORE.getLocalName());
 
    private final Attribute<String> balancingStrategy;
    private final Attribute<Long> connectionTimeout;
@@ -82,6 +90,21 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.connectionPool = connectionPool;
       this.security = security;
+      this.subElements = new ArrayList<>(super.subElements());
+      subElements.add(connectionPool);
+      subElements.add(asyncExecutorFactory);
+      subElements.add(security);
+      subElements.addAll(servers());
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELELEMENT_DEFINITION;
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {

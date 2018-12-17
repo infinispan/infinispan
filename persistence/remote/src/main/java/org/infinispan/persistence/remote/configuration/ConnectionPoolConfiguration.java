@@ -1,11 +1,16 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.persistence.remote.configuration.Element.CONNECTION_POOL;
+
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 @BuiltBy(ConnectionPoolConfigurationBuilder.class)
-public class ConnectionPoolConfiguration {
+public class ConnectionPoolConfiguration implements ConfigurationInfo {
 
    static final AttributeDefinition<ExhaustedAction> EXHAUSTED_ACTION = AttributeDefinition.builder("exhaustedAction", ExhaustedAction.WAIT, ExhaustedAction.class).immutable().build();
    static final AttributeDefinition<Integer> MAX_ACTIVE = AttributeDefinition.builder("maxActive", -1).immutable().build();
@@ -21,13 +26,21 @@ public class ConnectionPoolConfiguration {
             MIN_IDLE, TIME_BETWEEN_EVICTION_RUNS, MIN_EVICTABLE_IDLE_TIME, TEST_WHILE_IDLE);
    }
 
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CONNECTION_POOL.getLocalName());
+
    private final AttributeSet attributes;
 
    ConnectionPoolConfiguration(AttributeSet attributes) {
       this.attributes = attributes;
    }
 
-   AttributeSet attributes() {
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
+   }
+
+   public AttributeSet attributes() {
       return attributes;
    }
 

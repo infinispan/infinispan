@@ -1,13 +1,17 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.container.DataContainer;
 
 /**
@@ -17,7 +21,7 @@ import org.infinispan.container.DataContainer;
  * @deprecated Please use {@link MemoryConfiguration}
  */
 @Deprecated
-public class DataContainerConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<DataContainerConfiguration> {
+public class DataContainerConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<DataContainerConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<DataContainer> DATA_CONTAINER = AttributeDefinition
          .builder("dataContainer", null, DataContainer.class).xmlName("class").copier(IdentityAttributeCopier.INSTANCE).immutable().build();
 
@@ -26,11 +30,18 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
             DATA_CONTAINER);
    }
 
+   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.DATA_CONTAINER.getLocalName());
+
    private final Attribute<DataContainer> dataContainer;
 
    DataContainerConfiguration(AttributeSet attributes) {
       super(attributes);
       dataContainer = attributes.attribute(DATA_CONTAINER);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

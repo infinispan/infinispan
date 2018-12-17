@@ -4,6 +4,9 @@ import static org.infinispan.configuration.cache.PersistenceConfiguration.AVAILA
 import static org.infinispan.configuration.cache.PersistenceConfiguration.CONNECTION_ATTEMPTS;
 import static org.infinispan.configuration.cache.PersistenceConfiguration.CONNECTION_INTERVAL;
 import static org.infinispan.configuration.cache.PersistenceConfiguration.PASSIVATION;
+import static org.infinispan.configuration.parsing.Element.CLUSTER_LOADER;
+import static org.infinispan.configuration.parsing.Element.FILE_STORE;
+import static org.infinispan.configuration.parsing.Element.STORE;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -12,9 +15,15 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.ConfigurationUtils;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -22,11 +31,17 @@ import org.infinispan.util.logging.LogFactory;
  * Configuration for cache stores.
  *
  */
-public class PersistenceConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<PersistenceConfiguration> {
+public class PersistenceConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<PersistenceConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(PersistenceConfigurationBuilder.class);
 
-   private final List<StoreConfigurationBuilder<?,?>> stores = new ArrayList<StoreConfigurationBuilder<?,?>>(2);
+   private final List<StoreConfigurationBuilder<?, ?>> stores = new ArrayList<>(2);
    private final AttributeSet attributes;
+
+   private static List<Class<? extends StoreConfigurationBuilder<?, ?>>> subElements = new ArrayList<>();
+
+   static {
+      subElements.addAll(Configurations.lookupPersistenceBuilders());
+   }
 
    protected PersistenceConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -36,6 +51,53 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    public PersistenceConfigurationBuilder passivation(boolean b) {
       attributes.attribute(PASSIVATION).set(b);
       return this;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return PersistenceConfiguration.ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ConfigurationBuilderInfo getNewBuilderInfo(String name) {
+      return getBuilderInfo(name, null);
+   }
+
+   @Override
+   public ConfigurationBuilderInfo getBuilderInfo(String name, String qualifier) {
+      if (name.equals(FILE_STORE.getLocalName())) {
+         return addSingleFileStore();
+      }
+      if (name.equals(CLUSTER_LOADER.getLocalName())) {
+         return addClusterLoader();
+      }
+      if (name.equals(STORE.getLocalName())) {
+         CacheLoader store = Util.getInstance(qualifier, Thread.currentThread().getContextClassLoader());
+         ConfiguredBy annotation = store.getClass().getAnnotation(ConfiguredBy.class);
+         Class<? extends StoreConfigurationBuilder> builderClass = null;
+         if (annotation != null) {
+            Class<?> configuredBy = annotation.value();
+            BuiltBy builtBy = configuredBy.getAnnotation(BuiltBy.class);
+            builderClass = builtBy.value().asSubclass(StoreConfigurationBuilder.class);
+         }
+         StoreConfigurationBuilder configBuilder;
+         if (builderClass == null) {
+            configBuilder = addStore(CustomStoreConfigurationBuilder.class).customStoreClass(store.getClass());
+         } else {
+            configBuilder = addStore(builderClass);
+         }
+
+         return configBuilder;
+
+      }
+      return subElements.stream().map(this::addStore)
+            .filter(r -> r.getElementDefinition().supports(name))
+            .findFirst().orElse(null);
    }
 
    /**

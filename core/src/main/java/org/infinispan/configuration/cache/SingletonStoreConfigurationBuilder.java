@@ -8,7 +8,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -16,12 +18,22 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * then a shared store should be used instead, as this only performs store writes at a key's primary owner.
  */
 @Deprecated
-public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements Builder<SingletonStoreConfiguration> {
+public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements Builder<SingletonStoreConfiguration>, ConfigurationBuilderInfo {
    private final AttributeSet attributes;
 
    SingletonStoreConfigurationBuilder(AbstractStoreConfigurationBuilder<? extends AbstractStoreConfiguration, ?> builder) {
       super(builder);
       attributes = SingletonStoreConfiguration.attributeDefinitionSet();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return SingletonStoreConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

@@ -1,30 +1,29 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.BACKUPS;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-public class SitesConfiguration implements Matchable<SitesConfiguration> {
+public class SitesConfiguration implements Matchable<SitesConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<Boolean> DISABLE_BACKUPS = AttributeDefinition.builder("disable", false).immutable().build();
-   public static final AttributeDefinition<Set<String>> IN_USE_BACKUP_SITES = AttributeDefinition.builder("backup-sites-in-use", null, (Class<Set<String>>)(Class<?>)Set.class)
-         .initializer(new AttributeInitializer<Set<String>>() {
-            @Override
-            public Set<String> initialize() {
-               return new HashSet<>(2);
-            }
-         }).immutable().build();
+   public static final AttributeDefinition<Set<String>> IN_USE_BACKUP_SITES = AttributeDefinition.builder("backup-sites-in-use", null, (Class<Set<String>>) (Class<?>) Set.class).initializer(() -> new HashSet<>(2)).immutable().build();
+   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(BACKUPS.getLocalName());
 
    static final AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SitesConfiguration.class, DISABLE_BACKUPS, IN_USE_BACKUP_SITES);
@@ -36,12 +35,26 @@ public class SitesConfiguration implements Matchable<SitesConfiguration> {
    private final Attribute<Set<String>> inUseBackupSites;
    private final AttributeSet attributes;
 
+   private final List<ConfigurationInfo> subElements = new ArrayList<>();
+
    public SitesConfiguration(AttributeSet attributes, List<BackupConfiguration> allBackups, BackupForConfiguration backupFor) {
       this.attributes = attributes.checkProtection();
       this.allBackups = Collections.unmodifiableList(allBackups);
       this.disableBackups = attributes.attribute(DISABLE_BACKUPS);
       this.inUseBackupSites = attributes.attribute(IN_USE_BACKUP_SITES);
       this.backupFor = backupFor;
+      this.subElements.addAll(allBackups);
+   }
+
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

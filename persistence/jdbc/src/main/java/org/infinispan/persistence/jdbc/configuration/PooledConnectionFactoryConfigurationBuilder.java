@@ -1,8 +1,18 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.AbstractUnmanagedConnectionFactoryConfiguration.CONNECTION_URL;
+import static org.infinispan.persistence.jdbc.configuration.AbstractUnmanagedConnectionFactoryConfiguration.DRIVER_CLASS;
+import static org.infinispan.persistence.jdbc.configuration.AbstractUnmanagedConnectionFactoryConfiguration.PASSWORD;
+import static org.infinispan.persistence.jdbc.configuration.AbstractUnmanagedConnectionFactoryConfiguration.USERNAME;
+import static org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration.ELEMENT_DEFINITION;
+import static org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration.PROPERTY_FILE;
+
 import java.sql.Driver;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -12,51 +22,60 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 5.2
  */
 public class PooledConnectionFactoryConfigurationBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>> extends AbstractJdbcStoreConfigurationChildBuilder<S>
-      implements ConnectionFactoryConfigurationBuilder<PooledConnectionFactoryConfiguration> {
+      implements ConnectionFactoryConfigurationBuilder<PooledConnectionFactoryConfiguration>, ConfigurationBuilderInfo {
+
+   private final AttributeSet attributes;
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
 
    protected PooledConnectionFactoryConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
       super(builder);
+      attributes = PooledConnectionFactoryConfiguration.attributeSet();
    }
 
-   private String propertyFile;
-   private String connectionUrl;
-   private String driverClass;
-   private String username;
-   private String password;
-
    public PooledConnectionFactoryConfigurationBuilder<S> propertyFile(String propertyFile) {
-      this.propertyFile = propertyFile;
+      attributes.attribute(PROPERTY_FILE).set(propertyFile);
       return this;
    }
 
    public PooledConnectionFactoryConfigurationBuilder<S> connectionUrl(String connectionUrl) {
-      this.connectionUrl = connectionUrl;
+      attributes.attribute(CONNECTION_URL).set(connectionUrl);
       return this;
    }
 
    public PooledConnectionFactoryConfigurationBuilder<S> driverClass(Class<? extends Driver> driverClass) {
-      this.driverClass = driverClass.getName();
+      attributes.attribute(DRIVER_CLASS).set(driverClass.getName());
       return this;
    }
 
    public PooledConnectionFactoryConfigurationBuilder<S> driverClass(String driverClass) {
-      this.driverClass = driverClass;
+      attributes.attribute(DRIVER_CLASS).set(driverClass);
       return this;
    }
 
    public PooledConnectionFactoryConfigurationBuilder<S> username(String username) {
-      this.username = username;
+      attributes.attribute(USERNAME).set(username);
       return this;
    }
 
    public PooledConnectionFactoryConfigurationBuilder<S> password(String password) {
-      this.password = password;
+      attributes.attribute(PASSWORD).set(password);
       return this;
    }
 
    @Override
    public void validate() {
       // If a propertyFile is specified, then no exceptions are thrown for an incorrect config until the pool is created
+      String propertyFile = attributes.attribute(PROPERTY_FILE).get();
+      String connectionUrl = attributes.attribute(CONNECTION_URL).get();
       if (propertyFile == null && connectionUrl == null) {
          throw new CacheConfigurationException("Missing connectionUrl parameter");
       }
@@ -68,16 +87,12 @@ public class PooledConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
 
    @Override
    public PooledConnectionFactoryConfiguration create() {
-      return new PooledConnectionFactoryConfiguration(propertyFile, connectionUrl, driverClass, username, password);
+      return new PooledConnectionFactoryConfiguration(attributes.protect());
    }
 
    @Override
    public PooledConnectionFactoryConfigurationBuilder<S> read(PooledConnectionFactoryConfiguration template) {
-      this.propertyFile = template.propertyFile();
-      this.connectionUrl = template.connectionUrl();
-      this.driverClass = template.driverClass();
-      this.username = template.username();
-      this.password = template.password();
+      attributes.read(template.attributes);
       return this;
    }
 

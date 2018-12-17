@@ -8,7 +8,9 @@ import static org.infinispan.configuration.cache.L1Configuration.LIFESPAN;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.util.logging.Log;
@@ -18,13 +20,23 @@ import org.infinispan.util.logging.LogFactory;
  * this element is ignored.
  */
 
-public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<L1Configuration> {
+public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<L1Configuration>, ConfigurationBuilderInfo {
    private final static Log log = LogFactory.getLog(L1ConfigurationBuilder.class, Log.class);
    private final AttributeSet attributes;
 
    L1ConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
       attributes = L1Configuration.attributeDefinitionSet();
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return L1Configuration.ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    /**

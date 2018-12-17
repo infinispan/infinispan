@@ -1,8 +1,13 @@
 package org.infinispan.persistence.rest.configuration;
 
+import static org.infinispan.persistence.rest.configuration.Element.CONNECTION_POOL;
+
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * ConnectionPoolConfiguration.
@@ -11,9 +16,9 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @since 6.0
  */
 @BuiltBy(ConnectionPoolConfigurationBuilder.class)
-public class ConnectionPoolConfiguration {
+public class ConnectionPoolConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Integer> CONNECTION_TIMEOUT = AttributeDefinition.builder("connectionTimeout", 60000).immutable().build();
-   public static final AttributeDefinition<Integer> MAX_CONNECTIONS_PER_HOST = AttributeDefinition.builder("maxConnectionsPerHostTimeout", 4).immutable().build();
+   public static final AttributeDefinition<Integer> MAX_CONNECTIONS_PER_HOST = AttributeDefinition.builder("maxConnectionsPerHostTimeout", 4).immutable().xmlName(Attribute.MAX_CONNECTIONS_PER_HOST.getLocalName()).build();
    public static final AttributeDefinition<Integer> MAX_TOTAL_CONNECTIONS = AttributeDefinition.builder("maxTotalConnections", 20).immutable().build();
    public static final AttributeDefinition<Integer> BUFFER_SIZE = AttributeDefinition.builder("bufferSize", 8192).immutable().build();
    public static final AttributeDefinition<Integer> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", 60000).immutable().build();
@@ -24,7 +29,19 @@ public class ConnectionPoolConfiguration {
             MAX_TOTAL_CONNECTIONS, BUFFER_SIZE, SOCKET_TIMEOUT, TCP_NO_DELAY);
    }
 
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CONNECTION_POOL.getLocalName());
+
    private final AttributeSet attributes;
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
+   }
 
    public ConnectionPoolConfiguration(AttributeSet attributes) {
       this.attributes = attributes;

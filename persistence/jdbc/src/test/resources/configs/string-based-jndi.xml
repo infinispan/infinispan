@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan>
+
+    <cache-container default-cache="first">
+        <local-cache-configuration name="default">
+            <persistence>
+                <string-keyed-jdbc-store fetch-state="false" read-only="false" dialect="ORACLE">
+                    <data-source jndi-url="java:jboss/datasources/ExampleDS"/>
+                </string-keyed-jdbc-store>
+            </persistence>
+        </local-cache-configuration>
+        <local-cache name="first" configuration="default"/>
+        <local-cache name="second" configuration="default"/>
+    </cache-container>
+
+</infinispan>

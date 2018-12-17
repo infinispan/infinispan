@@ -2,6 +2,8 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
+
 /**
  * StoreConfiguration contains generic configuration elements available to all the stores.
  *
@@ -9,7 +11,7 @@ import java.util.Properties;
  * @author Mircea Markus
  * @since 5.2
  */
-public interface StoreConfiguration {
+public interface StoreConfiguration extends ConfigurationInfo {
 
    /**
     * Configuration for the async cache loader. If enabled, this provides you with asynchronous

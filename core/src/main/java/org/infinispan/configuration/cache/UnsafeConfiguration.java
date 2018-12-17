@@ -1,11 +1,16 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.UNSAFE;
+
 import java.util.Map;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  *
@@ -18,7 +23,7 @@ import org.infinispan.commons.configuration.attributes.Matchable;
  *
  * @see UnsafeConfigurationBuilder
  */
-public class UnsafeConfiguration implements Matchable<UnsafeConfiguration> {
+public class UnsafeConfiguration implements Matchable<UnsafeConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<Boolean> UNRELIABLE_RETURN_VALUES = AttributeDefinition.builder("unreliable-return-values", false).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(UnsafeConfiguration.class, UNRELIABLE_RETURN_VALUES);
@@ -26,9 +31,16 @@ public class UnsafeConfiguration implements Matchable<UnsafeConfiguration> {
    private final Attribute<Boolean> unreliableReturnValues;
    private final AttributeSet attributes;
 
+   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(UNSAFE.getLocalName(), false);
+
    UnsafeConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       unreliableReturnValues = attributes.attribute(UNRELIABLE_RETURN_VALUES);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**
@@ -51,13 +63,16 @@ public class UnsafeConfiguration implements Matchable<UnsafeConfiguration> {
 
    @Override
    public boolean equals(Object o) {
-      UnsafeConfiguration other = (UnsafeConfiguration) o;
-      return attributes.equals(other.attributes);
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      UnsafeConfiguration that = (UnsafeConfiguration) o;
+
+      return attributes.equals(that.attributes);
    }
 
    @Override
    public int hashCode() {
       return attributes.hashCode();
    }
-
 }

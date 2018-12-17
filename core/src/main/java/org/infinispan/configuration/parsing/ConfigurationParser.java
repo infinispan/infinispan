@@ -2,6 +2,7 @@ package org.infinispan.configuration.parsing;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 
 /**
  *
@@ -23,4 +24,11 @@ public interface ConfigurationParser {
    void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException;
 
    Namespace[] getNamespaces();
+
+   /**
+    * @return The {@link ConfigurationBuilderInfo} used to build the root element of the parser.
+    */
+   default Class<? extends ConfigurationBuilderInfo> getConfigurationBuilderInfo() {
+      return null;
+   }
 }

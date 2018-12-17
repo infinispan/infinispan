@@ -1,9 +1,12 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Determines whether statistics are gather and reported.
@@ -11,13 +14,16 @@ import org.infinispan.commons.configuration.attributes.Matchable;
  * @author pmuir
  *
  */
-public class JMXStatisticsConfiguration implements Matchable<JMXStatisticsConfiguration> {
+public class JMXStatisticsConfiguration implements Matchable<JMXStatisticsConfiguration>, ConfigurationInfo {
 
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).build();
-   public static final AttributeDefinition<Boolean> AVAILABLE = AttributeDefinition.builder("available", true).build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).xmlName("statistics")
+         .build();
+   public static final AttributeDefinition<Boolean> AVAILABLE = AttributeDefinition.builder("available", true).xmlName("statistics-available").build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(JMXStatisticsConfiguration.class, ENABLED, AVAILABLE);
    }
+
+   static ElementDefinition<JMXStatisticsConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>("", false);
 
    private final Attribute<Boolean> enabled;
    private final Attribute<Boolean> available;
@@ -32,6 +38,11 @@ public class JMXStatisticsConfiguration implements Matchable<JMXStatisticsConfig
       this.attributes = attributes.checkProtection();
       enabled = attributes.attribute(ENABLED);
       available = attributes.attribute(AVAILABLE);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    public boolean enabled() {

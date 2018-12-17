@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.LockingConfiguration.CONCURRENCY_LEVEL;
+import static org.infinispan.configuration.cache.LockingConfiguration.ELEMENT_DEFINITION;
 import static org.infinispan.configuration.cache.LockingConfiguration.ISOLATION_LEVEL;
 import static org.infinispan.configuration.cache.LockingConfiguration.LOCK_ACQUISITION_TIMEOUT;
 import static org.infinispan.configuration.cache.LockingConfiguration.USE_LOCK_STRIPING;
@@ -8,8 +9,10 @@ import static org.infinispan.configuration.cache.LockingConfiguration.USE_LOCK_S
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -21,7 +24,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author pmuir
  *
  */
-public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<LockingConfiguration> {
+public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<LockingConfiguration>, ConfigurationBuilderInfo {
 
    private static final Log log = LogFactory.getLog(LockingConfigurationBuilder.class);
 
@@ -40,6 +43,16 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    public LockingConfigurationBuilder concurrencyLevel(int i) {
       attributes.attribute(CONCURRENCY_LEVEL).set(i);
       return this;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

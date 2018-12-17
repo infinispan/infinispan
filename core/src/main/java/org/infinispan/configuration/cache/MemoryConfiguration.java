@@ -1,11 +1,18 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.MEMORY;
+
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.ConfigurationInfo;
+import org.infinispan.commons.configuration.attributes.AsElementAttributeSerializer;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 
@@ -14,13 +21,50 @@ import org.infinispan.eviction.EvictionType;
  *
  * @author William Burns
  */
-public class MemoryConfiguration implements Matchable<MemoryConfiguration> {
-   public static final AttributeDefinition<Integer> ADDRESS_COUNT = AttributeDefinition.builder("address-count", 1_048_576).build();
+public class MemoryConfiguration implements Matchable<MemoryConfiguration>, ConfigurationInfo {
+
+   private static AttributeSerializer<StorageType, MemoryConfiguration, MemoryConfigurationBuilder> STORAGE_SERIALIZER = new AsElementAttributeSerializer<StorageType, MemoryConfiguration, MemoryConfigurationBuilder>() {
+      @Override
+      public boolean canRead(String enclosing, String nestingName, String nestedName, AttributeDefinition attributeDefinition) {
+         return nestedName == null && StorageType.forElement(nestingName) != null;
+      }
+
+      @Override
+      public String getParentElement(MemoryConfiguration configurationElement) {
+         StorageType storageType = configurationElement.storageType();
+         return storageType != null ? storageType.getElement().getLocalName() : null;
+      }
+
+      @Override
+      public Object readAttributeValue(String enclosingElement, String nesting, AttributeDefinition attributeDefinition, Object attrValue, MemoryConfigurationBuilder builderInfo) {
+         return StorageType.forElement(nesting);
+      }
+
+   };
+
+   private static AttributeSerializer<Object, MemoryConfiguration, MemoryConfigurationBuilder> UNDER_STORAGE = new AttributeSerializer<Object, MemoryConfiguration, MemoryConfigurationBuilder>() {
+      @Override
+      public String getParentElement(MemoryConfiguration configurationElement) {
+         StorageType storageType = configurationElement.storageType();
+         return storageType != null ? storageType.getElement().getLocalName() : null;
+      }
+
+      @Override
+      public boolean canRead(String enclosing, String nestingName, String nestedName, AttributeDefinition attributeDefinition) {
+         return StorageType.forElement(nestingName) != null && nestedName.equals(attributeDefinition.xmlName());
+      }
+   };
+
+   public static final AttributeDefinition<Integer> ADDRESS_COUNT = AttributeDefinition.builder("address-count", 1_048_576).serializer(UNDER_STORAGE).build();
    public static final AttributeDefinition<StorageType> STORAGE_TYPE = AttributeDefinition
-         .builder("storage", StorageType.OBJECT).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Long> SIZE  = AttributeDefinition.builder("size", -1L).build();
-   public static final AttributeDefinition<EvictionType> EVICTION_TYPE  = AttributeDefinition.builder("type", EvictionType.COUNT).build();
-   public static final AttributeDefinition<EvictionStrategy> EVICTION_STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).build();
+         .builder("storage", StorageType.OBJECT).copier(IdentityAttributeCopier.INSTANCE)
+         .serializer(STORAGE_SERIALIZER)
+         .immutable().build();
+   public static final AttributeDefinition<Long> SIZE = AttributeDefinition.builder("size", -1L).serializer(UNDER_STORAGE).build();
+   public static final AttributeDefinition<EvictionType> EVICTION_TYPE = AttributeDefinition.builder("type", EvictionType.COUNT).xmlName(org.infinispan.configuration.parsing.Attribute.EVICTION.getLocalName()).serializer(UNDER_STORAGE).build();
+   public static final AttributeDefinition<EvictionStrategy> EVICTION_STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).serializer(UNDER_STORAGE).build();
+
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(MEMORY.getLocalName());
 
    static public AttributeSet attributeDefinitionSet() {
       return new AttributeSet(MemoryConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(),
@@ -41,6 +85,11 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration> {
       evictionType = attributes.attribute(EVICTION_TYPE);
       evictionStrategy = attributes.attribute(EVICTION_STRATEGY);
       addressCount = attributes.attribute(ADDRESS_COUNT);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**
@@ -116,7 +165,6 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration> {
       return true;
    }
 
-   @Override
    public int hashCode() {
       final int prime = 31;
       int result = 1;

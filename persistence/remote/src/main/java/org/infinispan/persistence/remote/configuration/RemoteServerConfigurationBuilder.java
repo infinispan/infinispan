@@ -4,13 +4,26 @@ import static org.infinispan.persistence.remote.configuration.RemoteServerConfig
 import static org.infinispan.persistence.remote.configuration.RemoteServerConfiguration.PORT;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class RemoteServerConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements
-      Builder<RemoteServerConfiguration> {
+      Builder<RemoteServerConfiguration>, ConfigurationBuilderInfo {
 
    RemoteServerConfigurationBuilder(RemoteStoreConfigurationBuilder builder) {
       super(builder, RemoteServerConfiguration.attributeDefinitionSet());
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return RemoteStoreConfiguration.ELELEMENT_DEFINITION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    public RemoteServerConfigurationBuilder host(String host) {

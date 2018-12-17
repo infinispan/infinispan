@@ -1,6 +1,11 @@
 package org.infinispan.configuration.cache;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -9,12 +14,22 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class SecurityConfigurationBuilder extends AbstractConfigurationChildBuilder implements SecurityConfigurationChildBuilder, Builder<SecurityConfiguration> {
+public class SecurityConfigurationBuilder extends AbstractConfigurationChildBuilder implements SecurityConfigurationChildBuilder, Builder<SecurityConfiguration>, ConfigurationBuilderInfo {
    private final AuthorizationConfigurationBuilder authorizationBuilder;
 
    public SecurityConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       authorizationBuilder = new AuthorizationConfigurationBuilder(this);
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return Collections.singleton(authorizationBuilder);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return SecurityConfiguration.ELEMENT_DEFINITION;
    }
 
    @Override

@@ -22,7 +22,7 @@
                   persistence-unit="org.infinispan.persistence.jpa.configurationTest"
                   entity-class="org.infinispan.persistence.jpa.entity.Vehicle"
                   batch-size="1">
-          <write-behind />
+          <write-behind modification-queue-size="1024" thread-pool-size="1"/>
         </jpa-store>
       </persistence>
     </local-cache>

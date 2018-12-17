@@ -8,13 +8,15 @@ import static org.infinispan.configuration.cache.ExpirationConfiguration.WAKEUP_
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Controls the default expiration settings for entries in the cache.
  */
-public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ExpirationConfiguration> {
+public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ExpirationConfiguration>, ConfigurationBuilderInfo {
 
 
    private final AttributeSet attributes;
@@ -22,6 +24,11 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    ExpirationConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = ExpirationConfiguration.attributeDefinitionSet();
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ExpirationConfiguration.ELEMENT_DEFINITION;
    }
 
    /**
@@ -129,6 +136,11 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override

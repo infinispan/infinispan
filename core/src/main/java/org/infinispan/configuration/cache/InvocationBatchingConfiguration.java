@@ -1,11 +1,12 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
 
-public class InvocationBatchingConfiguration implements Matchable<InvocationBatchingConfiguration> {
+public class InvocationBatchingConfiguration implements Matchable<InvocationBatchingConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(InvocationBatchingConfiguration.class, ENABLED);

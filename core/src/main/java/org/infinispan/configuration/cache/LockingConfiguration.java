@@ -1,11 +1,16 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.LOCKING;
+
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
@@ -14,7 +19,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
  * @author pmuir
  *
  */
-public class LockingConfiguration implements Matchable<LockingConfiguration> {
+public class LockingConfiguration implements Matchable<LockingConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<Integer> CONCURRENCY_LEVEL = AttributeDefinition.builder("concurrencyLevel", 32).immutable().build();
    public static final AttributeDefinition<IsolationLevel> ISOLATION_LEVEL  = AttributeDefinition.builder("isolationLevel", IsolationLevel.REPEATABLE_READ).xmlName("isolation").immutable().build();
    public static final AttributeDefinition<Long> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder("lockAcquisitionTimeout", TimeUnit.SECONDS.toMillis(10)).xmlName("acquire-timeout").build();
@@ -24,6 +29,8 @@ public class LockingConfiguration implements Matchable<LockingConfiguration> {
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(LockingConfiguration.class, CONCURRENCY_LEVEL, ISOLATION_LEVEL, LOCK_ACQUISITION_TIMEOUT, USE_LOCK_STRIPING, WRITE_SKEW_CHECK);
    }
+
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(LOCKING.getLocalName());
 
    private final Attribute<Integer> concurrencyLevel;
    private final Attribute<IsolationLevel> isolationLevel;
@@ -39,6 +46,11 @@ public class LockingConfiguration implements Matchable<LockingConfiguration> {
       isolationLevel = attributes.attribute(ISOLATION_LEVEL);
       lockAcquisitionTimeout = attributes.attribute(LOCK_ACQUISITION_TIMEOUT);
       useLockStriping = attributes.attribute(USE_LOCK_STRIPING);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

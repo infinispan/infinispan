@@ -1,23 +1,35 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.EXPIRATION;
+
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Controls the default expiration settings for entries in the cache.
  */
-public class ExpirationConfiguration implements Matchable<ExpirationConfiguration> {
+public class ExpirationConfiguration implements Matchable<ExpirationConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<Long> LIFESPAN = AttributeDefinition.builder("lifespan", -1l).build();
    public static final AttributeDefinition<Long> MAX_IDLE = AttributeDefinition.builder("maxIdle", -1l).build();
    public static final AttributeDefinition<Boolean> REAPER_ENABLED = AttributeDefinition.builder("reaperEnabled", true).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Long> WAKEUP_INTERVAL = AttributeDefinition.builder("wakeUpInterval", TimeUnit.MINUTES.toMillis(1)).xmlName("interval").build();
 
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(EXPIRATION.getLocalName());
+
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ExpirationConfiguration.class, LIFESPAN, MAX_IDLE, REAPER_ENABLED, WAKEUP_INTERVAL);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    private final Attribute<Long> lifespan;
