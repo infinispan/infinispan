@@ -68,6 +68,11 @@
          <artifactId>jmh-core</artifactId>
          <scope>test</scope>
       </dependency>
+       <dependency>
+           <groupId>org.infinispan</groupId>
+           <artifactId>infinispan-cachestore-jdbc</artifactId>
+           <scope>test</scope>
+       </dependency>
       <dependency>
          <groupId>org.openjdk.jmh</groupId>
          <artifactId>jmh-generator-annprocess</artifactId>
