@@ -10,6 +10,7 @@ import org.infinispan.rest.framework.RestDispatcher;
 import org.infinispan.rest.framework.impl.ResourceManagerImpl;
 import org.infinispan.rest.framework.impl.RestDispatcherImpl;
 import org.infinispan.rest.resources.CacheResource;
+import org.infinispan.rest.resources.ConfigResource;
 import org.infinispan.rest.resources.SplashResource;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -94,6 +95,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       ResourceManager resourceManager = new ResourceManagerImpl(rootContext);
       resourceManager.registerResource(new CacheResource(restCacheManager, configuration));
       resourceManager.registerResource(new SplashResource());
+      resourceManager.registerResource(new ConfigResource(cacheManager));
       this.restDispatcher = new RestDispatcherImpl(resourceManager);
    }
 

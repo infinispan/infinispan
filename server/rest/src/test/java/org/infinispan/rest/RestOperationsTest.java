@@ -21,6 +21,7 @@ import org.assertj.core.api.Assertions;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.util.BytesContentProvider;
+import org.eclipse.jetty.client.util.InputStreamContentProvider;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
@@ -31,6 +32,7 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.search.entity.Person;
 import org.infinispan.server.core.dataconversion.JsonTranscoder;
 import org.infinispan.server.core.dataconversion.XMLTranscoder;
@@ -409,6 +411,31 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       assertThat(response4).isError();
       assertThat(response4).containsReturnedText(expectError);
 
+   }
+
+   @Test
+   public void testGetExistingConfig() throws Exception {
+      ContentResponse response = client.newRequest(String.format("http://localhost:%d/rest/v2/configurations/objectCache", restServer().getPort())).send();
+
+      ResponseAssertion.assertThat(response).isOk();
+
+      JsonNode jsonNode = new ObjectMapper().readTree(response.getContentAsString());
+
+      assertEquals(APPLICATION_OBJECT_TYPE, jsonNode
+            .path("distributed-cache").path("encoding").path("value").path("media-type").asText());
+   }
+
+   @Test
+   public void testConfigConverter() throws Exception {
+      ContentResponse response = client.newRequest(String.format("http://localhost:%d/rest/v2/configurations?action=toJSON", restServer().getPort()))
+            .method(HttpMethod.POST)
+            .content(new InputStreamContentProvider(getClass().getResourceAsStream("/infinispan.xml"))).send();
+
+      ResponseAssertion.assertThat(response).isOk();
+
+      JsonNode jsonNode = new ObjectMapper().readTree(response.getContentAsString());
+
+      assertEquals(2, jsonNode.findValue("string-keyed-jdbc-store").size());
    }
 
 }
