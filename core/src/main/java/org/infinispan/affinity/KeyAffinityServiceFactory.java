@@ -39,7 +39,7 @@ public class KeyAffinityServiceFactory {
     * @throws IllegalStateException if the supplied cache is not DIST.
     */
    public static <K, V> KeyAffinityService<K> newKeyAffinityService(Cache<K, V> cache, Executor ex, KeyGenerator<K> keyGenerator, int keyBufferSize, boolean start) {
-      return new KeyAffinityServiceImpl<K>(ex, cache, keyGenerator, keyBufferSize, null, start);
+      return new KeyAffinityServiceImpl<>(ex, cache, keyGenerator, keyBufferSize, null, start);
    }
 
    /**
@@ -56,7 +56,7 @@ public class KeyAffinityServiceFactory {
     * @param filter the set of addresses for which to generate keys
     */
    public static <K, V> KeyAffinityService<K> newKeyAffinityService(Cache<K, V> cache, Collection<Address> filter, KeyGenerator<K> keyGenerator, Executor ex, int keyBufferSize, boolean start) {
-      return new KeyAffinityServiceImpl<K>(ex, cache, keyGenerator, keyBufferSize, filter, start);
+      return new KeyAffinityServiceImpl<>(ex, cache, keyGenerator, keyBufferSize, filter, start);
    }
 
    /**
