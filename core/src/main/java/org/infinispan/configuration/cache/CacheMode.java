@@ -1,5 +1,16 @@
 package org.infinispan.configuration.cache;
 
+
+import static org.infinispan.configuration.parsing.Element.DISTRIBUTED_CACHE;
+import static org.infinispan.configuration.parsing.Element.INVALIDATION_CACHE;
+import static org.infinispan.configuration.parsing.Element.LOCAL_CACHE;
+import static org.infinispan.configuration.parsing.Element.REPLICATED_CACHE;
+import static org.infinispan.configuration.parsing.Element.SCATTERED_CACHE;
+
+import java.util.Arrays;
+
+import org.infinispan.commons.CacheConfigurationException;
+
 /**
  * Cache replication mode.
  */
@@ -124,5 +135,47 @@ public enum CacheMode {
             return "LOCAL";
       }
       throw new IllegalArgumentException("Unknown cache mode " + this);
+   }
+
+   public String toCacheType() {
+      switch (this) {
+         case DIST_SYNC:
+         case DIST_ASYNC:
+            return DISTRIBUTED_CACHE.getLocalName();
+         case REPL_SYNC:
+         case REPL_ASYNC:
+            return REPLICATED_CACHE.getLocalName();
+         case INVALIDATION_SYNC:
+         case INVALIDATION_ASYNC:
+            return INVALIDATION_CACHE.getLocalName();
+         case SCATTERED_SYNC:
+            return SCATTERED_CACHE.getLocalName();
+         default:
+            return LOCAL_CACHE.getLocalName();
+      }
+   }
+
+   public static boolean isValidCacheMode(String serializedCacheMode) {
+      return Arrays.stream(values()).map(CacheMode::toCacheType).anyMatch(s -> s.equals(serializedCacheMode));
+   }
+
+   public static CacheMode fromParts(String distribution, String synchronicity) {
+      String sync = synchronicity.toLowerCase();
+      if (!sync.equals("sync") && !sync.equals("async"))
+         throw new CacheConfigurationException("Invalid cache mode " + distribution + "," + synchronicity);
+      switch (distribution.toLowerCase()) {
+         case "distributed":
+            return sync.equals("sync") ? DIST_SYNC : DIST_ASYNC;
+         case "replicated":
+            return sync.equals("sync") ? REPL_SYNC : REPL_ASYNC;
+         case "local":
+            return LOCAL;
+         case "scattered":
+            return SCATTERED_SYNC;
+         case "invalidation":
+            return sync.equals("sync") ? INVALIDATION_SYNC : INVALIDATION_ASYNC;
+         default:
+            throw new CacheConfigurationException("Invalid cache mode " + distribution + "," + synchronicity);
+      }
    }
 }

@@ -1,8 +1,16 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.PARTITION_HANDLING;
+
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.util.Util;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.partitionhandling.PartitionHandling;
@@ -13,14 +21,26 @@ import org.infinispan.partitionhandling.PartitionHandling;
  * @author Mircea Markus
  * @since 7.0
  */
-public class PartitionHandlingConfiguration implements Matchable<PartitionHandlingConfiguration> {
+public class PartitionHandlingConfiguration implements Matchable<PartitionHandlingConfiguration>, ConfigurationInfo {
 
    @Deprecated
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable()
          .build();
    public static final AttributeDefinition<PartitionHandling> WHEN_SPLIT = AttributeDefinition.builder("whenSplit", PartitionHandling.ALLOW_READ_WRITES)
          .immutable().build();
-   public static final AttributeDefinition<EntryMergePolicy> MERGE_POLICY = AttributeDefinition.builder("mergePolicy", MergePolicy.NONE, EntryMergePolicy.class).immutable().build();
+   public static final AttributeDefinition<EntryMergePolicy> MERGE_POLICY = AttributeDefinition.builder("mergePolicy", MergePolicy.NONE, EntryMergePolicy.class)
+         .serializer(new AttributeSerializer<EntryMergePolicy, ConfigurationInfo, ConfigurationBuilderInfo>() {
+            @Override
+            public Object readAttributeValue(String enclosingElement, String nesting, AttributeDefinition attributeDefinition, Object attrValue, ConfigurationBuilderInfo builderInfo) {
+               String strValue = attrValue.toString();
+               MergePolicy mp = MergePolicy.fromString(strValue);
+               return mp == MergePolicy.CUSTOM ? Util.getInstance(strValue, builderInfo.getClass().getClassLoader()) : mp;
+            }
+         })
+         .immutable().build();
+
+
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(PARTITION_HANDLING.getLocalName());
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(PartitionHandlingConfiguration.class, ENABLED, WHEN_SPLIT, MERGE_POLICY);
@@ -50,6 +70,11 @@ public class PartitionHandlingConfiguration implements Matchable<PartitionHandli
 
    public AttributeSet attributes() {
       return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    public boolean resolveConflictsOnMerge() {

@@ -15,9 +15,11 @@ import static org.infinispan.persistence.jdbc.configuration.TableManipulationCon
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TIMESTAMP_COLUMN_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.jdbc.logging.Log;
@@ -28,14 +30,26 @@ import org.infinispan.persistence.jdbc.logging.Log;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public abstract class TableManipulationConfigurationBuilder<B extends AbstractJdbcStoreConfigurationBuilder<?, B>, S extends TableManipulationConfigurationBuilder<B, S>> extends
-                                                                                                                                                                          AbstractJdbcStoreConfigurationChildBuilder<B> implements Builder<TableManipulationConfiguration>, Self<S> {
+public abstract class TableManipulationConfigurationBuilder<B extends AbstractJdbcStoreConfigurationBuilder<?, B>, S extends TableManipulationConfigurationBuilder<B, S>>
+      extends AbstractJdbcStoreConfigurationChildBuilder<B>
+      implements Builder<TableManipulationConfiguration>, Self<S>, ConfigurationBuilderInfo {
+
    private static final Log log = LogFactory.getLog(TableManipulationConfigurationBuilder.class, Log.class);
    private final AttributeSet attributes;
 
    TableManipulationConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, B> builder) {
       super(builder);
       attributes = TableManipulationConfiguration.attributeSet();
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return TableManipulationConfiguration.ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    /**
@@ -167,10 +181,6 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
-   }
-
-   AttributeSet attributes() {
-      return attributes;
    }
 
    @Override

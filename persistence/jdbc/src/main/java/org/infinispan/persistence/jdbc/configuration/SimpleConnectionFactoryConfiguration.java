@@ -1,6 +1,11 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.Element.SIMPLE_CONNECTION;
+
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
 
@@ -11,43 +16,27 @@ import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory
  * @since 5.2
  */
 @BuiltBy(SimpleConnectionFactoryConfigurationBuilder.class)
-public class SimpleConnectionFactoryConfiguration implements ConnectionFactoryConfiguration {
-   private final String connectionUrl;
-   private final String driverClass;
-   private final String username;
-   private final String password;
+public class SimpleConnectionFactoryConfiguration extends AbstractUnmanagedConnectionFactoryConfiguration {
 
-   SimpleConnectionFactoryConfiguration(String connectionUrl, String driverClass, String username, String password) {
-      this.connectionUrl = connectionUrl;
-      this.driverClass = driverClass;
-      this.username = username;
-      this.password = password;
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(SIMPLE_CONNECTION.getLocalName());
+
+   SimpleConnectionFactoryConfiguration(AttributeSet attributes) {
+      super(attributes);
    }
 
-   public String connectionUrl() {
-      return connectionUrl;
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
-   public String driverClass() {
-      return driverClass;
-   }
-
-   public String username() {
-      return username;
-   }
-
-   public String password() {
-      return password;
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    @Override
    public Class<? extends ConnectionFactory> connectionFactoryClass() {
       return SimpleConnectionFactory.class;
-   }
-
-   @Override
-   public String toString() {
-      return "SimpleConnectionFactoryConfiguration [connectionUrl=" + connectionUrl + ", driverClass=" + driverClass + ", username=" + username + ", password=" + password + "]";
    }
 
    @Override
@@ -57,19 +46,16 @@ public class SimpleConnectionFactoryConfiguration implements ConnectionFactoryCo
 
       SimpleConnectionFactoryConfiguration that = (SimpleConnectionFactoryConfiguration) o;
 
-      if (connectionUrl != null ? !connectionUrl.equals(that.connectionUrl) : that.connectionUrl != null) return false;
-      if (driverClass != null ? !driverClass.equals(that.driverClass) : that.driverClass != null) return false;
-      if (username != null ? !username.equals(that.username) : that.username != null) return false;
-      return password != null ? password.equals(that.password) : that.password == null;
-
+      return attributes != null ? attributes.equals(that.attributes) : that.attributes == null;
    }
 
    @Override
    public int hashCode() {
-      int result = connectionUrl != null ? connectionUrl.hashCode() : 0;
-      result = 31 * result + (driverClass != null ? driverClass.hashCode() : 0);
-      result = 31 * result + (username != null ? username.hashCode() : 0);
-      result = 31 * result + (password != null ? password.hashCode() : 0);
-      return result;
+      return attributes != null ? attributes.hashCode() : 0;
+   }
+
+   @Override
+   public String toString() {
+      return "SimpleConnectionFactoryConfiguration [" + "attributes=" + attributes + "]";
    }
 }

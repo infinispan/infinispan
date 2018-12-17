@@ -1,15 +1,5 @@
 package org.infinispan.server.hotrod.configuration;
 
-import java.lang.invoke.MethodHandles;
-
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.configuration.cache.LockingConfigurationBuilder;
-import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
-import org.infinispan.configuration.cache.SyncConfigurationBuilder;
-import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
-import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.HOST;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_HOST;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_PORT;
@@ -17,6 +7,15 @@ import static org.infinispan.server.hotrod.configuration.HotRodServerConfigurati
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_LOCK_TIMEOUT;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_REPL_TIMEOUT;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_STATE_TRANSFER;
+
+import java.lang.invoke.MethodHandles;
+
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.cache.LockingConfigurationBuilder;
+import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
+import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * HotRodServerConfigurationBuilder.
@@ -72,7 +71,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    }
 
    /**
-    * Configures the replication timeout for the topology cache. See {@link SyncConfigurationBuilder#replTimeout(long)}.
+    * Configures the replication timeout for the topology cache. See {@link org.infinispan.configuration.cache.ClusteringConfigurationBuilder#remoteTimeout(long)}.
     * Defaults to 10 seconds
     */
    @Override

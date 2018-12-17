@@ -51,7 +51,7 @@ public class ClusterRoleMapper implements PrincipalRoleMapper {
       GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
       CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.clustering().cacheMode(cacheMode).sync()
+      cfg.clustering().cacheMode(cacheMode)
             .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
             .security().authorization().disable();
 

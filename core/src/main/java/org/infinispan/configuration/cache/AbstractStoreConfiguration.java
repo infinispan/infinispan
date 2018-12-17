@@ -1,13 +1,17 @@
 package org.infinispan.configuration.cache;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
-public class AbstractStoreConfiguration implements StoreConfiguration {
+public class AbstractStoreConfiguration implements StoreConfiguration, ConfigurationInfo {
    public static final AttributeDefinition<Boolean> FETCH_PERSISTENT_STATE = AttributeDefinition.builder("fetchPersistentState", false).xmlName("fetch-state").immutable().build();
    public static final AttributeDefinition<Boolean> PURGE_ON_STARTUP = AttributeDefinition.builder("purgeOnStartup", false).immutable().xmlName("purge").build();
    public static final AttributeDefinition<Boolean> IGNORE_MODIFICATIONS = AttributeDefinition.builder("ignoreModifications", false).immutable().xmlName("read-only").build();
@@ -18,6 +22,8 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    public static final AttributeDefinition<Boolean> SEGMENTED = AttributeDefinition.builder("segmented", false).immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class)
          .initializer(() -> new TypedProperties()).autoPersist(false).immutable().build();
+
+   private final List<ConfigurationInfo> subElements = new ArrayList<>();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP,
@@ -43,7 +49,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
     */
    @Deprecated
    public AbstractStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
-         AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties) {
+                                     AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties) {
       attributes = attributeDefinitionSet();
       attributes.attribute(PURGE_ON_STARTUP).set(purgeOnStartup);
       attributes.attribute(FETCH_PERSISTENT_STATE).set(fetchPersistentState);
@@ -65,10 +71,16 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
       this.maxBatchSize = attributes.attribute(MAX_BATCH_SIZE);
       this.segmented = attributes.attribute(SEGMENTED);
       this.properties = attributes.attribute(PROPERTIES);
+      this.subElements.addAll(Arrays.asList(async, singletonStore));
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
    }
 
    public AbstractStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
-         SingletonStoreConfiguration singletonStore) {
+                                     SingletonStoreConfiguration singletonStore) {
       this.attributes = attributes.checkProtection();
       this.async = async;
       this.singletonStore = singletonStore;
@@ -81,6 +93,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
       this.maxBatchSize = attributes.attribute(MAX_BATCH_SIZE);
       this.segmented = attributes.attribute(SEGMENTED);
       this.properties = attributes.attribute(PROPERTIES);
+      this.subElements.addAll(Arrays.asList(async, singletonStore));
    }
 
    /**

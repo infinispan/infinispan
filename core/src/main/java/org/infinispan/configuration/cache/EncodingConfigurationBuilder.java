@@ -1,18 +1,33 @@
 package org.infinispan.configuration.cache;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @since 9.2
  */
-public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<EncodingConfiguration> {
+public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<EncodingConfiguration>, ConfigurationBuilderInfo {
 
-   private ContentTypeConfigurationBuilder keyContentTypeBuilder = new ContentTypeConfigurationBuilder(this);
-   private ContentTypeConfigurationBuilder valueContentTypeBuilder = new ContentTypeConfigurationBuilder(this);
+   private ContentTypeConfigurationBuilder keyContentTypeBuilder = new ContentTypeConfigurationBuilder(true, this);
+   private ContentTypeConfigurationBuilder valueContentTypeBuilder = new ContentTypeConfigurationBuilder(false, this);
+   private List<ConfigurationBuilderInfo> builders = new ArrayList<>();
+
 
    EncodingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      builders.addAll(Arrays.asList(keyContentTypeBuilder, valueContentTypeBuilder));
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return EncodingConfiguration.ELEMENT_DEFINITION;
    }
 
    @Override
@@ -38,8 +53,8 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public Builder<?> read(EncodingConfiguration template) {
-      this.keyContentTypeBuilder = new ContentTypeConfigurationBuilder(this).read(template.keyDataType());
-      this.valueContentTypeBuilder = new ContentTypeConfigurationBuilder(this).read(template.valueDataType());
+      this.keyContentTypeBuilder = new ContentTypeConfigurationBuilder(true, this).read(template.keyDataType());
+      this.valueContentTypeBuilder = new ContentTypeConfigurationBuilder(false, this).read(template.valueDataType());
       return this;
    }
 
@@ -56,5 +71,11 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
             "keyContentTypeBuilder=" + keyContentTypeBuilder +
             ", valueContentTypeBuilder=" + valueContentTypeBuilder +
             '}';
+   }
+
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return builders;
    }
 }

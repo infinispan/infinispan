@@ -7,7 +7,9 @@ import static org.infinispan.configuration.cache.MemoryConfiguration.SIZE;
 import static org.infinispan.configuration.cache.MemoryConfiguration.STORAGE_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.offheap.OffHeapDataContainer;
@@ -21,7 +23,7 @@ import org.infinispan.util.logging.Log;
  *
  * @author William Burns
  */
-public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<MemoryConfiguration> {
+public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<MemoryConfiguration>, ConfigurationBuilderInfo {
 
    private static final Log log = LogFactory.getLog(MemoryConfigurationBuilder.class, Log.class);
 
@@ -62,6 +64,16 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    public MemoryConfigurationBuilder size(long size) {
       attributes.attribute(SIZE).set(size);
       return this;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return MemoryConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

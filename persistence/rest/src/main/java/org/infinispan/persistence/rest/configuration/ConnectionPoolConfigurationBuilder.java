@@ -26,6 +26,9 @@ import static org.infinispan.persistence.rest.configuration.ConnectionPoolConfig
 import static org.infinispan.persistence.rest.configuration.ConnectionPoolConfiguration.TCP_NO_DELAY;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -36,10 +39,20 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 6.0
  */
 public class ConnectionPoolConfigurationBuilder extends AbstractRestStoreConfigurationChildBuilder<RestStoreConfigurationBuilder> implements
-      Builder<ConnectionPoolConfiguration> {
+      Builder<ConnectionPoolConfiguration>, ConfigurationBuilderInfo {
 
    ConnectionPoolConfigurationBuilder(RestStoreConfigurationBuilder builder) {
       super(builder, ConnectionPoolConfiguration.attributeDefinitionSet());
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ConnectionPoolConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

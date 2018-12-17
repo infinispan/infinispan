@@ -1,12 +1,17 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.AUTHORIZATION;
+
 import java.util.HashSet;
 import java.util.Set;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * AuthorizationConfiguration.
@@ -14,7 +19,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class AuthorizationConfiguration {
+public class AuthorizationConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<Set> ROLES = AttributeDefinition.builder("roles", null, Set.class).initializer(new AttributeInitializer<Set>() {
       @Override
@@ -27,6 +32,8 @@ public class AuthorizationConfiguration {
       return new AttributeSet(AuthorizationConfiguration.class, ENABLED, ROLES);
    }
 
+   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(AUTHORIZATION.getLocalName());
+
    private final Attribute<Boolean> enabled;
    private final Attribute<Set> roles;
    private final AttributeSet attributes;
@@ -35,6 +42,11 @@ public class AuthorizationConfiguration {
       this.attributes = attributes.checkProtection();
       enabled = attributes.attribute(ENABLED);
       roles = attributes.attribute(ROLES);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    public boolean enabled() {

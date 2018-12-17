@@ -1,9 +1,14 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.EVICTION;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.EvictionType;
@@ -15,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
  * @deprecated Use {@link MemoryConfiguration} instead
  */
 @Deprecated
-public class EvictionConfiguration implements Matchable<EvictionConfiguration> {
+public class EvictionConfiguration implements Matchable<EvictionConfiguration>, ConfigurationInfo {
    static final Log log = LogFactory.getLog(EvictionConfiguration.class);
    public static final AttributeDefinition<Long> SIZE  = AttributeDefinition.builder("size", -1l).build();
    public static final AttributeDefinition<EvictionType> TYPE  = AttributeDefinition.builder("type", EvictionType.COUNT).build();
@@ -25,6 +30,8 @@ public class EvictionConfiguration implements Matchable<EvictionConfiguration> {
       return new AttributeSet(EvictionConfiguration.class, SIZE,
             TYPE, STRATEGY, THREAD_POLICY);
    }
+
+   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(EVICTION.getLocalName());
 
    private final Attribute<Long> size;
    private final Attribute<EvictionType> type;
@@ -38,6 +45,11 @@ public class EvictionConfiguration implements Matchable<EvictionConfiguration> {
       type = attributes.attribute(TYPE);
       strategy = attributes.attribute(STRATEGY);
       threadPolicy = attributes.attribute(THREAD_POLICY);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

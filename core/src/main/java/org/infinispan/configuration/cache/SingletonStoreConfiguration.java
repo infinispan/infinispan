@@ -2,10 +2,13 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * SingletonStore is a delegating cache store used for situations when only one instance in a
@@ -18,13 +21,15 @@ import org.infinispan.commons.configuration.attributes.Matchable;
  * then a shared store should be used instead, as this only performs store writes at a key's primary owner.
  */
 @Deprecated
-public class SingletonStoreConfiguration implements Matchable<SingletonStoreConfiguration> {
-   public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+public class SingletonStoreConfiguration implements Matchable<SingletonStoreConfiguration>, ConfigurationInfo {
+   public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).xmlName("singleton").immutable().build();
    public final static AttributeDefinition<Long> PUSH_STATE_TIMEOUT = AttributeDefinition.builder("push-state-timeout", TimeUnit.SECONDS.toMillis(10)).immutable().build();
    public final static AttributeDefinition<Boolean> PUSH_STATE_WHEN_COORDINATOR = AttributeDefinition.builder("push-state-when-coordinator", true).immutable().build();
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SingletonStoreConfiguration.class, ENABLED, PUSH_STATE_TIMEOUT, PUSH_STATE_WHEN_COORDINATOR);
    }
+
+   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("", false);
 
    private final Attribute<Boolean> enabled;
    private final Attribute<Long> pushStateTimeout;
@@ -36,6 +41,11 @@ public class SingletonStoreConfiguration implements Matchable<SingletonStoreConf
       enabled = attributes.attribute(ENABLED);
       pushStateTimeout = attributes.attribute(PUSH_STATE_TIMEOUT);
       pushStateWhenCoordinator = attributes.attribute(PUSH_STATE_WHEN_COORDINATOR);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

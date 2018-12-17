@@ -1,14 +1,23 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.BACKUP;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-public class BackupConfiguration {
+public class BackupConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<String> SITE = AttributeDefinition.builder("site", null, String.class).immutable().build();
    public static final AttributeDefinition<BackupConfiguration.BackupStrategy> STRATEGY = AttributeDefinition.builder("strategy", BackupConfiguration.BackupStrategy.ASYNC).immutable().build();
    public static final AttributeDefinition<Long> REPLICATION_TIMEOUT = AttributeDefinition.builder("replicationTimeout", 15000L).xmlName("timeout").build();
@@ -16,10 +25,13 @@ public class BackupConfiguration {
    public static final AttributeDefinition<String> FAILURE_POLICY_CLASS = AttributeDefinition.builder("failurePolicyClass", null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> USE_TWO_PHASE_COMMIT = AttributeDefinition.builder("useTwoPhaseCommit", false).immutable().xmlName("two-phase-commit").build();
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", true).immutable().build();
+   private final List<ConfigurationInfo> subElements = new ArrayList<>();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(BackupConfiguration.class, SITE, STRATEGY, REPLICATION_TIMEOUT, FAILURE_POLICY,  FAILURE_POLICY_CLASS, USE_TWO_PHASE_COMMIT, ENABLED);
    }
+
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(BACKUP.getLocalName());
 
    private final Attribute<String> site;
    private final Attribute<BackupConfiguration.BackupStrategy> strategy;
@@ -43,6 +55,17 @@ public class BackupConfiguration {
       this.failurePolicyClass = attributes.attribute(FAILURE_POLICY_CLASS);
       this.useTwoPhaseCommit = attributes.attribute(USE_TWO_PHASE_COMMIT);
       this.enabled = attributes.attribute(ENABLED);
+      this.subElements.addAll(Arrays.asList(takeOfflineConfiguration, xSiteStateTransferConfiguration));
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

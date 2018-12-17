@@ -1,13 +1,21 @@
 package org.infinispan.configuration.cache;
 
+import java.util.Collections;
+import java.util.List;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ClassAttributeSerializer;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.commons.configuration.attributes.SimpleInstanceAttributeCopier;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -18,8 +26,8 @@ import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
  *
  * @author pmuir
  */
-public class HashConfiguration implements Matchable<HashConfiguration> {
-   public static final AttributeDefinition<ConsistentHashFactory> CONSISTENT_HASH_FACTORY  = AttributeDefinition.builder("consistentHashFactory", null, ConsistentHashFactory.class).immutable().build();
+public class HashConfiguration implements Matchable<HashConfiguration>, ConfigurationInfo {
+   public static final AttributeDefinition<ConsistentHashFactory> CONSISTENT_HASH_FACTORY = AttributeDefinition.builder("consistentHashFactory", null, ConsistentHashFactory.class).serializer(ClassAttributeSerializer.INSTANCE).immutable().build();
    public static final AttributeDefinition<Hash> HASH = AttributeDefinition.builder("hash", (Hash)MurmurHash3.getInstance()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    public static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder("numOwners" , 2).xmlName("owners").immutable().build();
    // Because it assigns owners randomly, SyncConsistentHashFactory doesn't work very well with a low number
@@ -28,7 +36,13 @@ public class HashConfiguration implements Matchable<HashConfiguration> {
    public static final AttributeDefinition<Float> CAPACITY_FACTOR= AttributeDefinition.builder("capacityFactor", 1.0f).immutable().global(false).xmlName("capacity").build();
    public static final AttributeDefinition<KeyPartitioner> KEY_PARTITIONER = AttributeDefinition
          .builder("keyPartitioner", new HashFunctionPartitioner(), KeyPartitioner.class)
-         .copier(SimpleInstanceAttributeCopier.INSTANCE).immutable().build();
+         .copier(SimpleInstanceAttributeCopier.INSTANCE)
+         .serializer(ClassAttributeSerializer.INSTANCE)
+         .immutable().build();
+
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.HASH.getLocalName(), false);
+
+   private final List<ConfigurationInfo> elements;
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(HashConfiguration.class, CONSISTENT_HASH_FACTORY, HASH, NUM_OWNERS,
@@ -57,6 +71,7 @@ public class HashConfiguration implements Matchable<HashConfiguration> {
       numSegments = attributes.attribute(NUM_SEGMENTS);
       capacityFactor = attributes.attribute(CAPACITY_FACTOR);
       keyPartitioner = attributes.attribute(KEY_PARTITIONER);
+      elements = Collections.singletonList(groupsConfiguration);
    }
 
    /**
@@ -154,6 +169,16 @@ public class HashConfiguration implements Matchable<HashConfiguration> {
 
    public AttributeSet attributes() {
       return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return elements;
    }
 
    @Override

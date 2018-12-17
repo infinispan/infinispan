@@ -1,12 +1,21 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.Element.CONNECTION_POOL;
+import static org.infinispan.persistence.jdbc.configuration.Element.DATA_SOURCE;
+import static org.infinispan.persistence.jdbc.configuration.Element.SIMPLE_CONNECTION;
+import static org.infinispan.persistence.jdbc.configuration.Element.STRING_KEYED_TABLE;
 import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.KEY2STRING_MAPPER;
 import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.PROPERTIES;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
@@ -20,12 +29,44 @@ import org.infinispan.persistence.keymappers.Key2StringMapper;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreConfigurationBuilder<JdbcStringBasedStoreConfiguration, JdbcStringBasedStoreConfigurationBuilder> {
+public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreConfigurationBuilder<JdbcStringBasedStoreConfiguration, JdbcStringBasedStoreConfigurationBuilder> implements ConfigurationBuilderInfo {
    private StringTableManipulationConfigurationBuilder table;
 
    public JdbcStringBasedStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, JdbcStringBasedStoreConfiguration.attributeDefinitionSet());
       table = new StringTableManipulationConfigurationBuilder(this);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ConfigurationBuilderInfo getBuilderInfo(String name, String qualifier) {
+      if (name.equals(CONNECTION_POOL.getLocalName())) {
+         return connectionPool();
+      }
+      if (name.equals(DATA_SOURCE.getLocalName())) {
+         return dataSource();
+      }
+      if (name.equals(SIMPLE_CONNECTION.getLocalName())) {
+         return simpleConnection();
+      }
+      if (name.equals(STRING_KEYED_TABLE.getLocalName())) {
+         return table;
+      }
+      return null;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return JdbcStringBasedStoreConfiguration.ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return Collections.singletonList(table);
    }
 
    @Override

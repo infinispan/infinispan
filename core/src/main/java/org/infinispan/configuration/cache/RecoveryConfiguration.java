@@ -1,9 +1,14 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.RECOVERY;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Defines recovery configuration for the cache.
@@ -11,14 +16,17 @@ import org.infinispan.commons.configuration.attributes.Matchable;
  * @author pmuir
  *
  */
-public class RecoveryConfiguration implements Matchable<RecoveryConfiguration> {
+public class RecoveryConfiguration implements Matchable<RecoveryConfiguration>, ConfigurationInfo {
    public static final String DEFAULT_RECOVERY_INFO_CACHE = "__recoveryInfoCacheName__";
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).xmlName("").autoPersist(false).immutable().build();
    public static final AttributeDefinition<String> RECOVERY_INFO_CACHE_NAME = AttributeDefinition.builder("recoveryInfoCacheName", DEFAULT_RECOVERY_INFO_CACHE)
          .xmlName("recovery-cache").immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RecoveryConfiguration.class, ENABLED, RECOVERY_INFO_CACHE_NAME);
    }
+
+
+   static ElementDefinition<RecoveryConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(RECOVERY.getLocalName(), false);
 
    private final Attribute<Boolean> enabled;
    private final Attribute<String> recoveryInfoCacheName;
@@ -35,6 +43,11 @@ public class RecoveryConfiguration implements Matchable<RecoveryConfiguration> {
     */
    public boolean enabled() {
       return enabled.get();
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

@@ -19,6 +19,9 @@ import javax.security.auth.callback.CallbackHandler;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * AuthenticationConfigurationBuilder.
@@ -26,15 +29,21 @@ import org.infinispan.commons.configuration.Builder;
  * @author Tristan Tarrant
  * @since 9.1
  */
-public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration> {
+public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(AuthenticationConfigurationBuilder.class);
-
-   private String username;
-   private char[] password;
-   private String realm;
 
    public AuthenticationConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder, AuthenticationConfiguration.attributeDefinitionSet());
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return AuthenticationConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

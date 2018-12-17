@@ -46,7 +46,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
       ConfigurationBuilder cacheCfg = TestCacheManagerFactory.getDefaultCacheConfiguration(transactionsEnabled(), false);
       cacheCfg.
             clustering()
-            .cacheMode(getCacheMode()).sync()
+            .cacheMode(getCacheMode())
             .indexing()
             .index(Index.ALL)
             .addIndexedEntity(ClassWithLongIndexName.class)

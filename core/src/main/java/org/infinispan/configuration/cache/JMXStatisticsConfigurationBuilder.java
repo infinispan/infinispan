@@ -1,13 +1,16 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.AVAILABLE;
+import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.ELEMENT_DEFINITION;
 import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.ENABLED;
 
 import java.lang.invoke.MethodHandles;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -17,13 +20,23 @@ import org.infinispan.util.logging.LogFactory;
  * @author pmuir
  *
  */
-public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<JMXStatisticsConfiguration> {
+public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<JMXStatisticsConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private final AttributeSet attributes;
 
    JMXStatisticsConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       this.attributes = JMXStatisticsConfiguration.attributeDefinitionSet();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

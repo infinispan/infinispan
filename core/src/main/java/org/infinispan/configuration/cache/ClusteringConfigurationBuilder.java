@@ -4,12 +4,19 @@ import static org.infinispan.configuration.cache.ClusteringConfiguration.BIAS_AC
 import static org.infinispan.configuration.cache.ClusteringConfiguration.BIAS_LIFESPAN;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.INVALIDATION_BATCH_SIZE;
+import static org.infinispan.configuration.cache.ClusteringConfiguration.REMOTE_TIMEOUT;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -21,15 +28,15 @@ import org.infinispan.util.logging.LogFactory;
  *
  */
 public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBuilder implements
-      ClusteringConfigurationChildBuilder, Builder<ClusteringConfiguration> {
+      ClusteringConfigurationChildBuilder, Builder<ClusteringConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(ClusteringConfigurationBuilder.class, Log.class);
 
    private final HashConfigurationBuilder hashConfigurationBuilder;
    private final L1ConfigurationBuilder l1ConfigurationBuilder;
    private final StateTransferConfigurationBuilder stateTransferConfigurationBuilder;
-   private final SyncConfigurationBuilder syncConfigurationBuilder;
    private final PartitionHandlingConfigurationBuilder partitionHandlingConfigurationBuilder;
    private final AttributeSet attributes;
+   private final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
 
    ClusteringConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -37,8 +44,19 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       this.hashConfigurationBuilder = new HashConfigurationBuilder(this);
       this.l1ConfigurationBuilder = new L1ConfigurationBuilder(this);
       this.stateTransferConfigurationBuilder = new StateTransferConfigurationBuilder(this);
-      this.syncConfigurationBuilder = new SyncConfigurationBuilder(this);
       this.partitionHandlingConfigurationBuilder = new PartitionHandlingConfigurationBuilder(this);
+      this.subElements.addAll(Arrays.asList(hashConfigurationBuilder, l1ConfigurationBuilder, stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder));
+   }
+
+   @Override
+   public ElementDefinition<? extends ConfigurationInfo> getElementDefinition() {
+      return ClusteringConfiguration.ELEMENT_DEFINITION;
+   }
+
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return subElements;
    }
 
    /**
@@ -58,7 +76,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
     * the call is aborted and an exception is thrown.
     */
    public ClusteringConfigurationBuilder remoteTimeout(long l) {
-      syncConfigurationBuilder.replTimeout(l);
+      attributes.attribute(REMOTE_TIMEOUT).set(l);
       return this;
    }
 
@@ -123,13 +141,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
-   public SyncConfigurationBuilder sync() {
-      if (!cacheMode().isSynchronous())
-         throw log.syncPropertiesConfigOnAsyncCache();
-      return syncConfigurationBuilder;
-   }
-
-   @Override
    public PartitionHandlingConfigurationBuilder partitionHandling() {
       return partitionHandlingConfigurationBuilder;
    }
@@ -138,7 +149,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    public
    void validate() {
       for (Builder<?> validatable : Arrays.asList(hashConfigurationBuilder, l1ConfigurationBuilder,
-                          syncConfigurationBuilder, stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
+            stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
          validatable.validate();
       }
       if (cacheMode().isScattered()) {
@@ -168,8 +179,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       }
 
       for (ConfigurationChildBuilder validatable : Arrays
-            .asList(hashConfigurationBuilder, l1ConfigurationBuilder,
-                       syncConfigurationBuilder, stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
+            .asList(hashConfigurationBuilder, l1ConfigurationBuilder, stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
          validatable.validate(globalConfig);
       }
    }
@@ -178,7 +188,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    public
    ClusteringConfiguration create() {
       return new ClusteringConfiguration(attributes.protect(), hashConfigurationBuilder.create(),
-            l1ConfigurationBuilder.create(), stateTransferConfigurationBuilder.create(), syncConfigurationBuilder.create(), partitionHandlingConfigurationBuilder.create());
+            l1ConfigurationBuilder.create(), stateTransferConfigurationBuilder.create(), partitionHandlingConfigurationBuilder.create());
    }
 
    @Override
@@ -187,7 +197,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       hashConfigurationBuilder.read(template.hash());
       l1ConfigurationBuilder.read(template.l1());
       stateTransferConfigurationBuilder.read(template.stateTransfer());
-      syncConfigurationBuilder.read(template.sync());
       partitionHandlingConfigurationBuilder.read(template.partitionHandling());
 
       return this;
@@ -198,9 +207,13 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       return "ClusteringConfigurationBuilder [hashConfigurationBuilder=" + hashConfigurationBuilder +
             ", l1ConfigurationBuilder=" + l1ConfigurationBuilder +
             ", stateTransferConfigurationBuilder=" + stateTransferConfigurationBuilder +
-            ", syncConfigurationBuilder=" + syncConfigurationBuilder +
             ", partitionHandlingConfigurationBuilder=" + partitionHandlingConfigurationBuilder +
             ", attributes=" + attributes + "]";
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
 }

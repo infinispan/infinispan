@@ -3,6 +3,7 @@ package org.infinispan.persistence.rocksdb.configuration;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
@@ -137,4 +138,8 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
       return ParseUtils.getNamespaceAnnotations(getClass());
    }
 
+   @Override
+   public Class<? extends ConfigurationBuilderInfo> getConfigurationBuilderInfo() {
+      return RocksDBStoreConfigurationBuilder.class;
+   }
 }

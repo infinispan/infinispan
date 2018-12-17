@@ -2,7 +2,6 @@ package org.infinispan.server.hotrod.configuration;
 
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
-import org.infinispan.configuration.cache.SyncConfigurationBuilder;
 
 /**
  * HotRodServerChildConfigurationBuilder.
@@ -34,7 +33,7 @@ public interface HotRodServerChildConfigurationBuilder {
    HotRodServerChildConfigurationBuilder topologyLockTimeout(long topologyLockTimeout);
 
    /**
-    * Configures the replication timeout for the topology cache. See {@link SyncConfigurationBuilder#replTimeout(long)}.
+    * Configures the replication timeout for the topology cache. See {@link org.infinispan.configuration.cache.ClusteringConfigurationBuilder#remoteTimeout(long)}.
     * Defaults to 10 seconds
     */
    HotRodServerChildConfigurationBuilder topologyReplTimeout(long topologyReplTimeout);

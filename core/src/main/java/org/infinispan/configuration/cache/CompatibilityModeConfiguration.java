@@ -1,9 +1,14 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.COMPATIBILITY;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.marshall.Marshaller;
 
 /**
@@ -12,12 +17,14 @@ import org.infinispan.commons.marshall.Marshaller;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public final class CompatibilityModeConfiguration implements Matchable<CompatibilityModeConfiguration> {
+public final class CompatibilityModeConfiguration implements Matchable<CompatibilityModeConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(CompatibilityModeConfiguration.class, ENABLED, MARSHALLER);
    }
+
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(COMPATIBILITY.getLocalName());
 
    private final Attribute<Boolean> enabled;
    private final Attribute<Marshaller> marshaller;
@@ -27,6 +34,11 @@ public final class CompatibilityModeConfiguration implements Matchable<Compatibi
       this.attributes = attributes.checkProtection();
       enabled = attributes.attribute(ENABLED);
       marshaller = attributes.attribute(MARSHALLER);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    public boolean enabled() {

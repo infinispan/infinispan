@@ -12,6 +12,9 @@ import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreCo
 import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.SYNC_WRITES;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.sifs.Log;
@@ -20,11 +23,21 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<SoftIndexFileStoreConfiguration, SoftIndexFileStoreConfigurationBuilder> {
+public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<SoftIndexFileStoreConfiguration, SoftIndexFileStoreConfigurationBuilder> implements ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(SoftIndexFileStoreConfigurationBuilder.class, Log.class);
 
    public SoftIndexFileStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, SoftIndexFileStoreConfiguration.attributeDefinitionSet());
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return SoftIndexFileStoreConfiguration.ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    public SoftIndexFileStoreConfigurationBuilder dataLocation(String dataLocation) {

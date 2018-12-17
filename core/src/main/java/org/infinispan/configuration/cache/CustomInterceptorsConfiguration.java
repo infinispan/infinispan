@@ -1,25 +1,35 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.CUSTOM_INTERCEPTORS;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Configures custom interceptors to be added to the cache.
  *
  * @author pmuir
  */
-public class CustomInterceptorsConfiguration implements Matchable<CustomInterceptorsConfiguration> {
+public class CustomInterceptorsConfiguration implements Matchable<CustomInterceptorsConfiguration>, ConfigurationInfo {
 
+   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CUSTOM_INTERCEPTORS.getLocalName());
    private List<InterceptorConfiguration> interceptors;
+   private List<ConfigurationInfo> subElement;
 
    CustomInterceptorsConfiguration(List<InterceptorConfiguration> interceptors) {
       this.interceptors = interceptors;
+      subElement = new ArrayList<>(interceptors.size());
+      subElement.addAll(interceptors);
    }
 
    public CustomInterceptorsConfiguration() {
-      this.interceptors = Collections.emptyList();
+      this(Collections.emptyList());
    }
 
    /**
@@ -59,4 +69,13 @@ public class CustomInterceptorsConfiguration implements Matchable<CustomIntercep
       return interceptors != null ? interceptors.hashCode() : 0;
    }
 
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElement;
+   }
 }

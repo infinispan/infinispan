@@ -9,8 +9,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -22,7 +24,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.1
  */
 public class StateTransferConfigurationBuilder extends
-      AbstractClusteringConfigurationChildBuilder implements Builder<StateTransferConfiguration> {
+      AbstractClusteringConfigurationChildBuilder implements Builder<StateTransferConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(StateTransferConfigurationBuilder.class);
 
    private final AttributeSet attributes;
@@ -30,6 +32,16 @@ public class StateTransferConfigurationBuilder extends
    StateTransferConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
       attributes = StateTransferConfiguration.attributeDefinitionSet();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return StateTransferConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

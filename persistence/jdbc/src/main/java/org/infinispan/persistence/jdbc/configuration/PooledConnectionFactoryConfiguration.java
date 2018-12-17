@@ -1,44 +1,41 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.Element.CONNECTION_POOL;
+
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
 
 @BuiltBy(PooledConnectionFactoryConfigurationBuilder.class)
-public class PooledConnectionFactoryConfiguration implements ConnectionFactoryConfiguration {
-   private final String propertyFile;
-   private final String connectionUrl;
-   private final String driverClass;
-   private final String username;
-   private final String password;
+public class PooledConnectionFactoryConfiguration extends AbstractUnmanagedConnectionFactoryConfiguration {
 
-   protected PooledConnectionFactoryConfiguration(String propertyFile, String connectionUrl, String driverClass,
-                                                  String username, String password) {
-      this.propertyFile = propertyFile;
-      this.connectionUrl = connectionUrl;
-      this.driverClass = driverClass;
-      this.username = username;
-      this.password = password;
+   public static final AttributeDefinition<String> PROPERTY_FILE = AttributeDefinition.builder("propertyFile", null, String.class).immutable().build();
+
+   public static AttributeSet attributeSet() {
+      return new AttributeSet(PooledConnectionFactoryConfiguration.class, AbstractUnmanagedConnectionFactoryConfiguration.attributeSet(), PROPERTY_FILE);
+   }
+
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CONNECTION_POOL.getLocalName());
+
+   private final Attribute<String> propertyFile;
+
+   protected PooledConnectionFactoryConfiguration(AttributeSet attributes) {
+      super(attributes);
+      this.propertyFile = attributes.attribute(PROPERTY_FILE);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    public String propertyFile() {
-      return propertyFile;
-   }
-
-   public String connectionUrl() {
-      return connectionUrl;
-   }
-
-   public String driverClass() {
-      return driverClass;
-   }
-
-   public String username() {
-      return username;
-   }
-
-   public String password() {
-      return password;
+      return propertyFile.get();
    }
 
    @Override
@@ -47,33 +44,7 @@ public class PooledConnectionFactoryConfiguration implements ConnectionFactoryCo
    }
 
    @Override
-   public String toString() {
-      return "PooledConnectionFactoryConfiguration [propertyFile=" + propertyFile + ", connectionUrl=" +
-            connectionUrl + ", driverClass=" + driverClass + ", username=" + username + ", password=" + password + "]";
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      PooledConnectionFactoryConfiguration that = (PooledConnectionFactoryConfiguration) o;
-
-      if (propertyFile != null ? !propertyFile.equals(that.propertyFile) : that.propertyFile != null) return false;
-      if (connectionUrl != null ? !connectionUrl.equals(that.connectionUrl) : that.connectionUrl != null) return false;
-      if (driverClass != null ? !driverClass.equals(that.driverClass) : that.driverClass != null) return false;
-      if (username != null ? !username.equals(that.username) : that.username != null) return false;
-      return password != null ? password.equals(that.password) : that.password == null;
-
-   }
-
-   @Override
-   public int hashCode() {
-      int result = propertyFile != null ? propertyFile.hashCode() : 0;
-      result = 31 * result + (connectionUrl != null ? connectionUrl.hashCode() : 0);
-      result = 31 * result + (driverClass != null ? driverClass.hashCode() : 0);
-      result = 31 * result + (username != null ? username.hashCode() : 0);
-      result = 31 * result + (password != null ? password.hashCode() : 0);
-      return result;
+   public AttributeSet attributes() {
+      return attributes;
    }
 }

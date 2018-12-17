@@ -42,7 +42,7 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL).invocationBatching().enable()
             .clustering().cacheMode(CacheMode.REPL_SYNC)
-            .clustering().sync()
+            .clustering()
             .stateTransfer().fetchInMemoryState(true)
             .transaction().lockingMode(LockingMode.PESSIMISTIC)
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)

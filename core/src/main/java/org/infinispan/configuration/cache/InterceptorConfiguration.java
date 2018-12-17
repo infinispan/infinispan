@@ -1,18 +1,22 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 /**
  * Describes a custom interceptor
  */
-public class InterceptorConfiguration extends AbstractTypedPropertiesConfiguration {
+public class InterceptorConfiguration extends AbstractTypedPropertiesConfiguration implements ConfigurationInfo {
    /**
     * Positional placing of a new custom interceptor
     */
@@ -42,6 +46,8 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(InterceptorConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), POSITION, AFTER, BEFORE, INTERCEPTOR, INTERCEPTOR_CLASS, INDEX);
    }
+
+   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.INTERCEPTOR.getLocalName());
 
    private final Attribute<Position> position;
    private final Attribute<Class> after;
@@ -120,6 +126,11 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
 
    public AttributeSet attributes() {
       return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    @Override

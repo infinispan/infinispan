@@ -1,8 +1,13 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.WRITE_BEHIND;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Configuration for the async cache store. If enabled, this provides you with asynchronous writes
@@ -11,7 +16,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author pmuir
  *
  */
-public class AsyncStoreConfiguration {
+public class AsyncStoreConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<Integer> MODIFICATION_QUEUE_SIZE  = AttributeDefinition.builder("modificationQueueSize", 1024).immutable().build();
    public static final AttributeDefinition<Integer> THREAD_POOL_SIZE = AttributeDefinition.builder("threadPoolSize", 1).immutable().build();
@@ -20,6 +25,8 @@ public class AsyncStoreConfiguration {
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AsyncStoreConfiguration.class, ENABLED, MODIFICATION_QUEUE_SIZE, THREAD_POOL_SIZE, FAIL_SILENTLY);
    }
+
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(WRITE_BEHIND.getLocalName());
 
    private final Attribute<Boolean> enabled;
    private final Attribute<Integer> modificationQueueSize;
@@ -34,6 +41,11 @@ public class AsyncStoreConfiguration {
       this.modificationQueueSize = attributes.attribute(MODIFICATION_QUEUE_SIZE);
       this.threadPoolSize = attributes.attribute(THREAD_POOL_SIZE);
       this.failSilently = attributes.attribute(FAIL_SILENTLY);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

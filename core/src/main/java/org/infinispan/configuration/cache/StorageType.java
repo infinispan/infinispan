@@ -1,5 +1,8 @@
 package org.infinispan.configuration.cache;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.configuration.parsing.Element;
 
 /**
@@ -37,4 +40,18 @@ public enum StorageType {
    public Element getElement() {
       return element;
    }
+
+   public static StorageType forElement(String element) {
+      return STORAGE_PER_ELEMENT.get(element);
+   }
+
+   private static final Map<String, StorageType> STORAGE_PER_ELEMENT = new HashMap<>(3);
+
+   static {
+      for (StorageType storageType : StorageType.values()) {
+         STORAGE_PER_ELEMENT.put(storageType.element.getLocalName(), storageType);
+      }
+   }
+
+
 }

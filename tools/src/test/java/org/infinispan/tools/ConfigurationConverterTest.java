@@ -490,7 +490,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       config = holder.getNamedConfigurationBuilders().get("syncRepl").build();
       assertTrue(config.clustering().cacheMode().isReplicated());
       assertTrue(config.clustering().cacheMode().isSynchronous());
-      assertEquals(15000, config.clustering().sync().replTimeout());
+      assertEquals(15000, config.clustering().remoteTimeout());
       assertEquals(15000, config.clustering().remoteTimeout());
       assertFalse(config.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(config.clustering().stateTransfer().awaitInitialTransfer());
@@ -684,7 +684,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       config = holder.getNamedConfigurationBuilders().get("lockingWithJDBCLoader").build();
       assertTrue(config.clustering().cacheMode().isClustered());
       assertTrue(config.clustering().cacheMode().isSynchronous());
-      assertEquals(20000, config.clustering().sync().replTimeout());
+      assertEquals(20000, config.clustering().remoteTimeout());
       assertFalse(config.persistence().usingAsyncStore());
       assertTrue(config.persistence().passivation());
       assertTrue(config.persistence().usingStores());

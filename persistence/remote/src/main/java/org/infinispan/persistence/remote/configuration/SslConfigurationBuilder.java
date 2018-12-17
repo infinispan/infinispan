@@ -20,6 +20,9 @@ import javax.net.ssl.SSLContext;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  *
@@ -28,11 +31,21 @@ import org.infinispan.commons.configuration.Builder;
  * @author Tristan Tarrant
  * @since 9.1
  */
-public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<SslConfiguration> {
+public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<SslConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(SslConfigurationBuilder.class);
 
    protected SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder, SslConfiguration.attributeDefinitionSet());
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return SslConfiguration.attributeDefinitionSet();
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return SslConfiguration.ELEMENT_DEFINITION;
    }
 
    /**

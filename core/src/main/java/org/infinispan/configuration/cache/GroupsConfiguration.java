@@ -1,13 +1,20 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.GROUPS;
+
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeInitializer;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.distribution.group.Grouper;
 
@@ -17,14 +24,19 @@ import org.infinispan.distribution.group.Grouper;
  * @author pmuir
  *
  */
-public class GroupsConfiguration implements Matchable<GroupsConfiguration> {
+public class GroupsConfiguration implements Matchable<GroupsConfiguration>, ConfigurationInfo {
    public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   public final static AttributeDefinition<List<Grouper<?>>> GROUPERS = AttributeDefinition.builder("groupers", null, (Class<List<Grouper<?>>>)(Class<?>)List.class).initializer(new AttributeInitializer<List<Grouper<?>>>() {
-      @Override
-      public List<Grouper<?>> initialize() {
-         return new LinkedList<Grouper<?>>();
-      }
-   }).immutable().build();
+   public final static AttributeDefinition<List<Grouper<?>>> GROUPERS = AttributeDefinition.builder("groupers", null, (Class<List<Grouper<?>>>) (Class<?>) List.class).initializer(LinkedList::new)
+         .serializer(new AttributeSerializer<List<Grouper<?>>, GroupsConfiguration, GroupsConfigurationBuilder>() {
+            @Override
+            public Object readAttributeValue(String enclosingElement, String nesting, AttributeDefinition attributeDefinition, Object attrValue, GroupsConfigurationBuilder builderInfo) {
+               List<String> values = (List<String>) attrValue;
+               return values.stream().map(v -> Util.getInstance(v, builderInfo.getClass().getClassLoader())).collect(Collectors.toList());
+            }
+         })
+         .immutable().build();
+   static final ElementDefinition ELEMENT_DEFINTION = new DefaultElementDefinition(GROUPS.getLocalName());
+
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GroupsConfiguration.class, ENABLED, GROUPERS);
    }
@@ -37,6 +49,11 @@ public class GroupsConfiguration implements Matchable<GroupsConfiguration> {
       this.attributes = attributes.checkProtection();
       enabled = attributes.attribute(ENABLED);
       groupers = attributes.attribute(GROUPERS);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINTION;
    }
 
    /**

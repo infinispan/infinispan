@@ -1,24 +1,39 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.KEY_DATA_TYPE;
+import static org.infinispan.configuration.parsing.Element.VALUE_DATA_TYPE;
+
+import java.util.Collections;
+import java.util.List;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.dataconversion.MediaType;
 
 /**
  * @since 9.2
  */
-public class ContentTypeConfiguration {
+public class ContentTypeConfiguration implements ConfigurationInfo {
 
    public static final String DEFAULT_MEDIA_TYPE = MediaType.APPLICATION_OBJECT_TYPE;
+
+   public static final ElementDefinition KEY_ELEMENT_DEFINITION = new DefaultElementDefinition(KEY_DATA_TYPE.getLocalName());
+
+   public static final ElementDefinition VALUE_ELEMENT_DEFINITION = new DefaultElementDefinition(VALUE_DATA_TYPE.getLocalName());
 
    public static final AttributeDefinition<String> MEDIA_TYPE =
          AttributeDefinition.builder("media-type", null, String.class).build();
 
    private final Attribute<String> mediaType;
+   private final boolean key;
    private final AttributeSet attributes;
 
-   ContentTypeConfiguration(AttributeSet attributes) {
+   ContentTypeConfiguration(boolean key, AttributeSet attributes) {
+      this.key = key;
       this.attributes = attributes.checkProtection();
       mediaType = attributes.attribute(MEDIA_TYPE);
    }
@@ -40,6 +55,16 @@ public class ContentTypeConfiguration {
       return attributes;
    }
 
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return key ? KEY_ELEMENT_DEFINITION : VALUE_ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return Collections.emptyList();
+   }
+
    public boolean isMediaTypeChanged() {
       return attributes.attribute(MEDIA_TYPE).isModified();
    }
@@ -49,27 +74,20 @@ public class ContentTypeConfiguration {
    }
 
    @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      ContentTypeConfiguration other = (ContentTypeConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ContentTypeConfiguration that = (ContentTypeConfiguration) o;
+
+      if (key != that.key) return false;
+      return attributes != null ? attributes.equals(that.attributes) : that.attributes == null;
    }
 
    @Override
    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      int result = (key ? 1 : 0);
+      result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
       return result;
    }
 

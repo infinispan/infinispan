@@ -1,5 +1,9 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -8,7 +12,7 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.persistence.jdbc.DatabaseType;
 
-public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfiguration {
+public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<Boolean> MANAGE_CONNECTION_FACTORY = AttributeDefinition.builder("manageConnectionFactory", true).immutable().build();
    static final AttributeDefinition<DatabaseType> DIALECT = AttributeDefinition.builder("databaseType", null, DatabaseType.class).immutable().xmlName("dialect").build();
    static final AttributeDefinition<Integer> DB_MAJOR_VERSION = AttributeDefinition.builder("databaseMajorVersion", null, Integer.class).immutable().xmlName("db-major-version").build();
@@ -19,21 +23,28 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
                               MANAGE_CONNECTION_FACTORY, DIALECT, DB_MAJOR_VERSION, DB_MINOR_VERSION);
    }
 
-
    private final Attribute<Boolean> manageConnectionFactory;
    private final Attribute<DatabaseType> dialect;
    private final Attribute<Integer> dbMajorVersion;
    private final Attribute<Integer> dbMinorVersion;
    private final ConnectionFactoryConfiguration connectionFactory;
 
-   protected AbstractJdbcStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
-                                            ConnectionFactoryConfiguration connectionFactory) {
+   private final List<ConfigurationInfo> subElements;
+
+   protected AbstractJdbcStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, ConnectionFactoryConfiguration connectionFactory) {
       super(attributes, async, singletonStore);
       this.connectionFactory = connectionFactory;
       manageConnectionFactory = attributes.attribute(MANAGE_CONNECTION_FACTORY);
       dialect = attributes.attribute(DIALECT);
       dbMajorVersion = attributes.attribute(DB_MAJOR_VERSION);
       dbMinorVersion = attributes.attribute(DB_MINOR_VERSION);
+      subElements = new ArrayList<>(super.subElements());
+      subElements.add(connectionFactory);
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
    }
 
    public ConnectionFactoryConfiguration connectionFactory() {

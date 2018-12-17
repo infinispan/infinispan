@@ -25,11 +25,6 @@ abstract class AbstractClusteringConfigurationChildBuilder extends AbstractConfi
    }
 
    @Override
-   public SyncConfigurationBuilder sync() {
-      return clusteringBuilder.sync();
-   }
-
-   @Override
    public PartitionHandlingConfigurationBuilder partitionHandling() {
       return clusteringBuilder.partitionHandling();
    }

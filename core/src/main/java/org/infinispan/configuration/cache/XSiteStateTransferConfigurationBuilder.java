@@ -1,12 +1,15 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.CHUNK_SIZE;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.ELEMENT_DEFINITION;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.MAX_RETRIES;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.TIMEOUT;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.WAIT_TIME;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -18,7 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 public class XSiteStateTransferConfigurationBuilder extends AbstractConfigurationChildBuilder
-      implements Builder<XSiteStateTransferConfiguration> {
+      implements Builder<XSiteStateTransferConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(XSiteStateTransferConfigurationBuilder.class);
    private final BackupConfigurationBuilder backupConfigurationBuilder;
    private final AttributeSet attributes;
@@ -38,6 +41,16 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
       if (attributes.attribute(WAIT_TIME).get() <= 0) {
          throw log.invalidXSiteStateTransferWaitTime();
       }
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override

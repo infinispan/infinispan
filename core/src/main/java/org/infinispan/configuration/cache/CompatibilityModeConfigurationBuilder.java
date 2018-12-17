@@ -4,7 +4,9 @@ import static org.infinispan.configuration.cache.CompatibilityModeConfiguration.
 import static org.infinispan.configuration.cache.CompatibilityModeConfiguration.MARSHALLER;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
 /**
@@ -14,13 +16,23 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 5.3
  */
 public class CompatibilityModeConfigurationBuilder
-      extends AbstractConfigurationChildBuilder implements Builder<CompatibilityModeConfiguration> {
+      extends AbstractConfigurationChildBuilder implements Builder<CompatibilityModeConfiguration>, ConfigurationBuilderInfo {
 
    private final AttributeSet attributes;
 
    CompatibilityModeConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = CompatibilityModeConfiguration.attributeDefinitionSet();
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return CompatibilityModeConfiguration.ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    /**

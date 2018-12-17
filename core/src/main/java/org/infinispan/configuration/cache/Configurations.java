@@ -1,7 +1,15 @@
 package org.infinispan.configuration.cache;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.internal.PrivateGlobalConfiguration;
+import org.infinispan.configuration.parsing.ConfigurationParser;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 
@@ -85,5 +93,19 @@ public class Configurations {
 
    public static boolean isClustered(GlobalConfiguration globalConfiguration) {
       return globalConfiguration.transport().transport() != null;
+   }
+
+   static Set<Class<? extends StoreConfigurationBuilder<?, ?>>> lookupPersistenceBuilders() {
+      Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, Configurations.class.getClassLoader(), ParserRegistry.class.getClassLoader());
+      Set<Class<? extends StoreConfigurationBuilder<?, ?>>> builders = new HashSet<>();
+      for (ConfigurationParser parser : parsers) {
+         Class<? extends ConfigurationBuilderInfo> builderClass = parser.getConfigurationBuilderInfo();
+         if (builderClass != null) {
+            if (AbstractStoreConfigurationBuilder.class.isAssignableFrom(builderClass)) {
+               builders.add((Class<? extends StoreConfigurationBuilder<?, ?>>) builderClass);
+            }
+         }
+      }
+      return builders;
    }
 }

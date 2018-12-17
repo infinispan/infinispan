@@ -1,23 +1,47 @@
 package org.infinispan.configuration.cache;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.configuration.BasicConfiguration;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.parsing.ParserRegistry;
 
-public class Configuration implements BasicConfiguration, Matchable<Configuration> {
+public class Configuration implements BasicConfiguration, Matchable<Configuration>, ConfigurationInfo {
+
    public static final AttributeDefinition<Boolean> SIMPLE_CACHE = AttributeDefinition.builder("simpleCache", false).immutable().build();
+   private final List<ConfigurationInfo> subElements = new ArrayList<>();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(Configuration.class, SIMPLE_CACHE);
    }
+
+   public static ElementDefinition ELEMENT_DEFINITION = new ElementDefinition<Configuration>() {
+      @Override
+      public boolean isTopLevel() {
+         return true;
+      }
+
+      @Override
+      public ElementOutput toExternalName(Configuration configuration) {
+         String serializedCacheName = configuration.clustering().cacheMode().toCacheType();
+         return new ElementOutput(serializedCacheName);
+      }
+
+      @Override
+      public boolean supports(String name) {
+         return CacheMode.isValidCacheMode(name);
+      }
+   };
 
    private final Attribute<Boolean> simpleCache;
    private final ClusteringConfiguration clusteringConfiguration;
@@ -90,10 +114,21 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
          modulesMap.put(module.getClass(), module);
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
+      this.subElements.addAll(Arrays.asList(clusteringConfiguration, deadlockDetectionConfiguration, sitesConfiguration, dataContainerConfiguration, encodingConfiguration, sitesConfiguration.backupFor(), transactionConfiguration, expirationConfiguration, memoryConfiguration, persistenceConfiguration, lockingConfiguration, indexingConfiguration, securityConfiguration, customInterceptorsConfiguration, jmxStatisticsConfiguration, unsafeConfiguration, invocationBatchingConfiguration, compatibilityConfiguration));
    }
 
    public AttributeSet attributes() {
       return attributes;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
    }
 
    public boolean simpleCache() {

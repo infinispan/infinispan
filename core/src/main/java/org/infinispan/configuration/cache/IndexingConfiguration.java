@@ -1,20 +1,25 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Element.INDEXING;
+
 import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.CollectionAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
  * Configures indexing of entries in the cache for searching.
  */
-public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<IndexingConfiguration> {
+public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<IndexingConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", Index.NONE).immutable().build();
    public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder("autoConfig", false).immutable().build();
    public static final AttributeDefinition<Set<Class<?>>> INDEXED_ENTITIES = AttributeDefinition.builder("indexed-entities", null, (Class<Set<Class<?>>>) (Class<?>) Set.class)
@@ -24,6 +29,8 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, INDEXED_ENTITIES);
    }
+
+   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(INDEXING.getLocalName());
 
    private static final String DIRECTORY_PROVIDER_KEY = "directory_provider";
 
@@ -65,6 +72,11 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    @Deprecated
    public boolean indexLocalOnly() {
       return index().isLocalOnly();
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    /**

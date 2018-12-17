@@ -4,6 +4,7 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -259,7 +260,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                // already processed
                break;
             case TYPE: {
-               ssl.keyStoreType(value);
+               ssl.trustStoreType(value);
                break;
             }
             default: {
@@ -438,5 +439,11 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
    @Override
    public Namespace[] getNamespaces() {
       return ParseUtils.getNamespaceAnnotations(getClass());
+   }
+
+   @Override
+   public Class<? extends ConfigurationBuilderInfo> getConfigurationBuilderInfo() {
+      return RemoteStoreConfigurationBuilder.class;
+
    }
 }

@@ -1,11 +1,21 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.parsing.Attribute.MODE;
+import static org.infinispan.configuration.parsing.Element.CLUSTERING;
+
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 
 /**
@@ -14,17 +24,47 @@ import org.infinispan.commons.configuration.attributes.Matchable;
  * @author pmuir
  *
  */
-public class ClusteringConfiguration implements Matchable<ClusteringConfiguration> {
-   public static final AttributeDefinition<CacheMode> CACHE_MODE = AttributeDefinition.builder("cacheMode",  CacheMode.LOCAL).immutable().build();
+public class ClusteringConfiguration implements Matchable<ClusteringConfiguration>, ConfigurationInfo {
+
+   public static final AttributeDefinition<CacheMode> CACHE_MODE = AttributeDefinition.builder("cacheMode", CacheMode.LOCAL).serializer(new AttributeSerializer<CacheMode, ClusteringConfiguration, ConfigurationBuilderInfo>() {
+      @Override
+      public String getSerializationName(Attribute<CacheMode> attribute, ClusteringConfiguration element) {
+         if (element.cacheMode().isClustered()) {
+            return MODE.getLocalName();
+         }
+         return null;
+      }
+
+      @Override
+      public Object getSerializationValue(Attribute<CacheMode> attribute, ClusteringConfiguration element) {
+         CacheMode cacheMode = attribute.get();
+         if (cacheMode.isClustered()) return cacheMode.toString().split("_")[1];
+         return null;
+      }
+
+      @Override
+      public boolean canRead(String enclosing, String nestingName, String nestedName, AttributeDefinition attributeDefinition) {
+         return nestedName != null && nestedName.equals(MODE.getLocalName());
+      }
+
+      @Override
+      public Object readAttributeValue(String enclosing, String nesting, AttributeDefinition attributeDefinition, Object value, ConfigurationBuilderInfo builderInfo) {
+         return CacheMode.fromParts(enclosing.substring(0, enclosing.indexOf("-")), value.toString());
+      }
+
+   }).immutable().build();
    public static final AttributeDefinition<Long> REMOTE_TIMEOUT =
          AttributeDefinition.builder("remoteTimeout", TimeUnit.SECONDS.toMillis(15)).build();
    public static final AttributeDefinition<Integer> INVALIDATION_BATCH_SIZE = AttributeDefinition.builder("invalidationBatchSize",  128).immutable().build();
    public static final AttributeDefinition<BiasAcquisition> BIAS_ACQUISITION = AttributeDefinition.builder("biasAcquisition", BiasAcquisition.ON_WRITE).immutable().build();
    public static final AttributeDefinition<Long> BIAS_LIFESPAN = AttributeDefinition.builder("biasLifespan", TimeUnit.MINUTES.toMillis(5)).immutable().build();
+   private final List<ConfigurationInfo> elements;
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ClusteringConfiguration.class, CACHE_MODE, REMOTE_TIMEOUT, INVALIDATION_BATCH_SIZE, BIAS_ACQUISITION, BIAS_LIFESPAN);
    }
+
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CLUSTERING.getLocalName(), false);
 
    private final Attribute<CacheMode> cacheMode;
    private final Attribute<Long> remoteTimeout;
@@ -32,13 +72,12 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
    private final HashConfiguration hashConfiguration;
    private final L1Configuration l1Configuration;
    private final StateTransferConfiguration stateTransferConfiguration;
-   private final SyncConfiguration syncConfiguration;
    private final PartitionHandlingConfiguration partitionHandlingConfiguration;
    private final AttributeSet attributes;
 
    ClusteringConfiguration(AttributeSet attributes, HashConfiguration hashConfiguration,
-         L1Configuration l1Configuration, StateTransferConfiguration stateTransferConfiguration, SyncConfiguration syncConfiguration,
-         PartitionHandlingConfiguration partitionHandlingStrategy) {
+                           L1Configuration l1Configuration, StateTransferConfiguration stateTransferConfiguration,
+                           PartitionHandlingConfiguration partitionHandlingStrategy) {
       this.attributes = attributes.checkProtection();
       this.cacheMode = attributes.attribute(CACHE_MODE);
       this.remoteTimeout = attributes.attribute(REMOTE_TIMEOUT);
@@ -46,14 +85,8 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
       this.hashConfiguration = hashConfiguration;
       this.l1Configuration = l1Configuration;
       this.stateTransferConfiguration = stateTransferConfiguration;
-      this.syncConfiguration = syncConfiguration;
       this.partitionHandlingConfiguration  = partitionHandlingStrategy;
-
-      // Expose the true value for users of attributes().attribute(REMOTE_TIMEOUT).get()
-      // and attributes().attribute(REMOTE_TIMEOUT).addListener()
-      syncConfiguration.attributes().attribute(SyncConfiguration.REPL_TIMEOUT)
-                       .addListener((attribute, oldValue) -> remoteTimeout.set(attribute.get()));
-      remoteTimeout.set(syncConfiguration.replTimeout());
+      this.elements = Arrays.asList(hashConfiguration, l1Configuration, stateTransferConfiguration, partitionHandlingStrategy);
    }
 
    /**
@@ -68,7 +101,7 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
     * the call is aborted and an exception is thrown.
     */
    public long remoteTimeout() {
-      return syncConfiguration.replTimeout();
+      return attributes.attribute(REMOTE_TIMEOUT).get();
    }
 
    /**
@@ -76,7 +109,7 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
     * the call is aborted and an exception is thrown.
     */
    public void remoteTimeout(long timeoutMillis) {
-      syncConfiguration.replTimeout(timeoutMillis);
+      attributes.attribute(REMOTE_TIMEOUT).set(timeoutMillis);
    }
 
    /**
@@ -127,17 +160,6 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
       return l1Configuration;
    }
 
-   /**
-    * Configure sync sub element. Once this method is invoked users cannot subsequently invoke
-    * <code>async()</code> as two are mutually exclusive
-    *
-    * @deprecated Since 9.0, the {@code replTimeout} attribute is now in {@link ClusteringConfiguration}.
-    */
-   @Deprecated
-   public SyncConfiguration sync() {
-      return syncConfiguration;
-   }
-
    public StateTransferConfiguration stateTransfer() {
       return stateTransferConfiguration;
    }
@@ -147,13 +169,22 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
    }
 
    @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return elements;
+   }
+
+   @Override
    public boolean matches(ClusteringConfiguration other) {
       return (attributes.matches(other.attributes) &&
             hashConfiguration.matches(other.hashConfiguration) &&
             l1Configuration.matches(other.l1Configuration) &&
             partitionHandlingConfiguration.matches(other.partitionHandlingConfiguration) &&
-            stateTransferConfiguration.matches(other.stateTransferConfiguration) &&
-            syncConfiguration.matches(other.syncConfiguration));
+            stateTransferConfiguration.matches(other.stateTransferConfiguration));
    }
 
    @Override
@@ -161,8 +192,7 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
       return "ClusteringConfiguration [hashConfiguration=" + hashConfiguration +
             ", l1Configuration=" + l1Configuration +
             ", stateTransferConfiguration=" + stateTransferConfiguration +
-            ", syncConfiguration=" + syncConfiguration
-            + ", partitionHandlingConfiguration=" + partitionHandlingConfiguration +
+            ", partitionHandlingConfiguration=" + partitionHandlingConfiguration +
             ", attributes=" + attributes + "]";
    }
 
@@ -200,11 +230,6 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
             return false;
       } else if (!stateTransferConfiguration.equals(other.stateTransferConfiguration))
          return false;
-      if (syncConfiguration == null) {
-         if (other.syncConfiguration != null)
-            return false;
-      } else if (!syncConfiguration.equals(other.syncConfiguration))
-         return false;
       return true;
    }
 
@@ -218,7 +243,6 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
       result = prime * result
             + ((partitionHandlingConfiguration == null) ? 0 : partitionHandlingConfiguration.hashCode());
       result = prime * result + ((stateTransferConfiguration == null) ? 0 : stateTransferConfiguration.hashCode());
-      result = prime * result + ((syncConfiguration == null) ? 0 : syncConfiguration.hashCode());
       return result;
    }
 

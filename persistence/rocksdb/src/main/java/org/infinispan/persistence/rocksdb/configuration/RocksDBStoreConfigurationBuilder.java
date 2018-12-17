@@ -1,26 +1,40 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.BLOCK_SIZE;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.CACHE_SIZE;
-import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.LOCATION;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.CLEAR_THRESHOLD;
+import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.COMPRESSION_TYPE;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.EXPIRED_LOCATION;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.EXPIRY_QUEUE_SIZE;
-import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.COMPRESSION_TYPE;
+import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.LOCATION;
+
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
-public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RocksDBStoreConfiguration, RocksDBStoreConfigurationBuilder> {
+public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RocksDBStoreConfiguration, RocksDBStoreConfigurationBuilder>
+      implements ConfigurationBuilderInfo {
 
    public RocksDBStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, RocksDBStoreConfiguration.attributeDefinitionSet());
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return RocksDBStoreConfiguration.ELEMENT_DEFINTION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    public RocksDBStoreConfigurationBuilder location(String location) {

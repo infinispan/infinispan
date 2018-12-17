@@ -1,20 +1,35 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.Element.DATA_COLUMN;
+import static org.infinispan.persistence.jdbc.configuration.Element.ID_COLUMN;
+import static org.infinispan.persistence.jdbc.configuration.Element.STRING_KEYED_TABLE;
+import static org.infinispan.persistence.jdbc.configuration.Element.TIMESTAMP_COLUMN;
+
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.NestingAttributeSerializer;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 
-public class TableManipulationConfiguration {
-   public static final AttributeDefinition<String> ID_COLUMN_NAME = AttributeDefinition.builder("idColumnName", null, String.class).immutable().build();
-   public static final AttributeDefinition<String> ID_COLUMN_TYPE = AttributeDefinition.builder("idColumnType", null, String.class).immutable().build();
-   public static final AttributeDefinition<String> TABLE_NAME_PREFIX = AttributeDefinition.builder("tableNamePrefix", null, String.class).immutable().build();
+public class TableManipulationConfiguration implements ConfigurationInfo {
+
+   private static final AttributeSerializer<String, ?, ?> UNDER_ID = new NestingAttributeSerializer<>(ID_COLUMN.getLocalName());
+   private static final AttributeSerializer<String, ?, ?> UNDER_DATA = new NestingAttributeSerializer<>(DATA_COLUMN.getLocalName());
+   private static final AttributeSerializer<String, ?, ?> UNDER_TIMESTAMP = new NestingAttributeSerializer<>(TIMESTAMP_COLUMN.getLocalName());
+
+   public static final AttributeDefinition<String> ID_COLUMN_NAME = AttributeDefinition.builder("idColumnName", null, String.class).serializer(UNDER_ID).xmlName("name").immutable().build();
+   public static final AttributeDefinition<String> ID_COLUMN_TYPE = AttributeDefinition.builder("idColumnType", null, String.class).immutable().serializer(UNDER_ID).xmlName("type").build();
+   public static final AttributeDefinition<String> TABLE_NAME_PREFIX = AttributeDefinition.builder("tableNamePrefix", null, String.class).xmlName("prefix").immutable().build();
    public static final AttributeDefinition<String> CACHE_NAME = AttributeDefinition.builder("cacheName", null, String.class).immutable().build();
-   public static final AttributeDefinition<String> DATA_COLUMN_NAME = AttributeDefinition.builder("dataColumnName", null, String.class).immutable().build();
-   public static final AttributeDefinition<String> DATA_COLUMN_TYPE = AttributeDefinition.builder("dataColumnType", null, String.class).immutable().build();
-   public static final AttributeDefinition<String> TIMESTAMP_COLUMN_NAME = AttributeDefinition.builder("timestampColumnName", null, String.class).immutable().build();
-   public static final AttributeDefinition<String> TIMESTAMP_COLUMN_TYPE = AttributeDefinition.builder("timestampColumnType", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> DATA_COLUMN_NAME = AttributeDefinition.builder("dataColumnName", null, String.class).serializer(UNDER_DATA).xmlName("name").immutable().build();
+   public static final AttributeDefinition<String> DATA_COLUMN_TYPE = AttributeDefinition.builder("dataColumnType", null, String.class).immutable().serializer(UNDER_DATA).xmlName("type").build();
+   public static final AttributeDefinition<String> TIMESTAMP_COLUMN_NAME = AttributeDefinition.builder("timestampColumnName", null, String.class).serializer(UNDER_TIMESTAMP).xmlName("name").immutable().build();
+   public static final AttributeDefinition<String> TIMESTAMP_COLUMN_TYPE = AttributeDefinition.builder("timestampColumnType", null, String.class).serializer(UNDER_TIMESTAMP).xmlName("type").immutable().build();
    public static final AttributeDefinition<String> SEGMENT_COLUMN_NAME = AttributeDefinition.builder("segmentColumnName", null, String.class).immutable().build();
    public static final AttributeDefinition<String> SEGMENT_COLUMN_TYPE = AttributeDefinition.builder("segmentColumnType", null, String.class).immutable().build();
    // TODO remove in 10.0
@@ -28,6 +43,8 @@ public class TableManipulationConfiguration {
             CACHE_NAME, DATA_COLUMN_NAME, DATA_COLUMN_TYPE, TIMESTAMP_COLUMN_NAME, TIMESTAMP_COLUMN_TYPE,
             SEGMENT_COLUMN_NAME, SEGMENT_COLUMN_TYPE, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT);
    }
+
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(STRING_KEYED_TABLE.getLocalName());
 
    private final Attribute<String> idColumnName;
    private final Attribute<String> idColumnType;
@@ -61,6 +78,11 @@ public class TableManipulationConfiguration {
       fetchSize = attributes.attribute(FETCH_SIZE);
       createOnStart = attributes.attribute(CREATE_ON_START);
       dropOnExit = attributes.attribute(DROP_ON_EXIT);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    public boolean createOnStart() {
@@ -124,7 +146,7 @@ public class TableManipulationConfiguration {
       return batchSize.get();
    }
 
-   AttributeSet attributes() {
+   public AttributeSet attributes() {
       return attributes;
    }
 
