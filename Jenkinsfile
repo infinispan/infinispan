@@ -60,8 +60,8 @@ pipeline {
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
                 // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
                 junit testResults: '**/target/*-reports*/*.xml',
-                        testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
-                        healthScaleFactor: 100, allowEmptyResults: true
+                    testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
+                    healthScaleFactor: 100, allowEmptyResults: true
 
                 // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed
                 script {
@@ -79,64 +79,58 @@ pipeline {
     }
 
     post {
-        always {
-            // Archive logs and dump files
-            sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" -o -name "*.hprof" \\) -exec xz {} \\;'
-            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**,**/surefire-reports/TEST-*.xml'
-
-            // Clean
-            sh 'git clean -qfdx || echo "git clean failed, exit code $?"'
+        // Deploy snapshots of successful master builds
+        success {
+            script {
+                if (!env.BRANCH_NAME.startsWith('PR-')) {
+                    configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
+                        sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -s $MAVEN_SETTINGS -Dmaven.main.skip=true -Dmaven.test.skip=true"
+                    }
+                }
+            }
         }
 
-        changed {
+        // Send notification email when a build fails, has test failures, or is the first successful build
+        failure {
             script {
-              echo "post build status: changed"
-              changed = true
+                echo "Build result notify policy is: ${params.BUILD_RESULT_NOTIFY}"
+                if (params.BUILD_RESULT_NOTIFY == 'EMAIL') {
+                    echo 'Sending notify'
+                    emailext to: '${DEFAULT_RECIPIENTS}', subject: '${DEFAULT_SUBJECT}',
+                    body: '${DEFAULT_CONTENT}'
+                }
             }
         }
 
         unstable {
-            echo "post build status: unstable"
             script {
                 echo "Build result notify policy is: ${params.BUILD_RESULT_NOTIFY}"
                 if (params.BUILD_RESULT_NOTIFY == 'EMAIL') {
                     echo 'Sending notify'
                     emailext to: '${DEFAULT_RECIPIENTS}', subject: '${DEFAULT_SUBJECT}',
-                    body: '${DEFAULT_CONTENT}'
-                }
-            }
-        }
-
-        failure {
-            echo "post build status: failure"
-            script {
-                echo "Build result notify policy is: ${params.BUILD_RESULT_NOTIFY}"
-                if (params.BUILD_RESULT_NOTIFY == 'EMAIL') {
-                    echo 'Sending notify'
-                    emailext to: '${DEFAULT_RECIPIENTS}', subject: '${DEFAULT_SUBJECT}',
-                    body: '${DEFAULT_CONTENT}'
-                }
-            }
-        }
-
-        success {
-            echo "post build status: success"
-            script {
-                echo "changed = ${changed}"
-                if (changed) {
-                    echo "Build result notify policy is: ${params.BUILD_RESULT_NOTIFY}"
-                    if ( params.BUILD_RESULT_NOTIFY == 'EMAIL') {
-                        echo 'Sending notify'
-                        emailext to: '${DEFAULT_RECIPIENTS}', subject: '${DEFAULT_SUBJECT}',
                         body: '${DEFAULT_CONTENT}'
-                    }
-                }
-                if (!env.BRANCH_NAME.startsWith('PR-')) {
-                    configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                        sh "$MAVEN_HOME/bin/mvn deploy:deploy -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip -DskipTests=true"
-                    }
                 }
             }
+        }
+
+        fixed {
+            script {
+                echo "Build result notify policy is: ${params.BUILD_RESULT_NOTIFY}"
+                if (params.BUILD_RESULT_NOTIFY == 'EMAIL') {
+                    echo 'Sending notify'
+                    emailext to: '${DEFAULT_RECIPIENTS}', subject: '${DEFAULT_SUBJECT}',
+                        body: '${DEFAULT_CONTENT}'
+                }
+            }
+        }
+
+        cleanup {
+            // Archive logs and dump files
+            sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" -o -name "*.hprof" \\) -exec xz {} \\;'
+            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**,**/surefire-reports/TEST-*.xml'
+
+            // Remove all untracked files, ignoring .gitignore
+            sh 'git clean -qfdx || echo "git clean failed, exit code $?"'
         }
     }
 }
