@@ -265,3 +265,54 @@ infinispan.remote.socketTimeout = # Sets a timeout value, in milliseconds, for s
 infinispan.remote.connectTimeout = # Sets a timeout value for initializing connections with Data Grid servers.
 infinispan.remote.maxRetries = # Sets the maximum number of attempts to connect to Data Grid servers.
 ----
+
+==== Exposing {brandname} Statistics
+
+{brandname} supports the Spring Boot Actuator to expose cache statistics as metrics.
+
+To use the Actuator, add the following to your `pom.xml` file:
+
+include::../dependencies/sb_actuator.adoc[]
+
+You must then activate statistics for the appropriate cache instances, either programmatically or declaratively.
+
+.Programmatically
+[source,java,options="nowrap"]
+----
+@Bean
+public InfinispanCacheConfigurer cacheConfigurer() {
+  return cacheManager -> {
+     final org.infinispan.configuration.cache.Configuration config =
+           new ConfigurationBuilder()
+                 .jmxStatistics().enable()
+                 .build();
+
+     cacheManager.defineConfiguration("my-cache", config);
+  };
+}
+----
+
+.Declaratively
+[source,xml,options="nowrap"]
+----
+<infinispan xmlns="urn:infinispan:config:9.4">
+  <cache-container>
+    <local-cache name="my-cache" statistics="true"/>
+    <local-cache name="other"/>
+  </cache-container>
+</infinispan>
+----
+
+The Spring Boot Actuator registry binds cache instances when your application starts. If you create caches dynamically, you should use the `CacheMetricsRegistrar` bean to bind caches to the Actuator registry, as follows:
+
+[source,java,options="nowrap"]
+----
+@Autowire
+CacheMetricsRegistrar cacheMetricsRegistrar;
+
+@Autowire
+CacheManager cacheManager;
+...
+
+cacheMetricsRegistrar.bindCacheToRegistry(cacheManager.getCache("my-cache"));
+----
