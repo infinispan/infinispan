@@ -44,13 +44,23 @@ This starter uses a high-level API to ensure compatibility between major version
 
 Add `infinispan-bom` to your `pom.xml` file before the starter dependenices, as follows:
 
+Spring Boot 1.5.x::
 include::../dependencies/sb_bom.adoc[]
+
+Spring Boot 2.0::
+include::../dependencies/sb2_bom.adoc[]
 
 ==== Running in Embedded Mode
 
-. Add `{sb_starter_embedded}` to your project's classpath to enable Embedded mode.
+. Add one of the following to your project's classpath to enable Embedded mode:
 +
-This starter operates in Remote Client/Server mode with `{sb_starter_remote}` on the classpath by default.
+Spring Boot 1.5.x::
++
+{sb_starter_embedded}
++
+Spring Boot 2.0::
++
+{sb2_starter_embedded}
 +
 . Use the Spring `@Autowired` annotation to include an `EmbeddedCacheManager` bean in your Java configuration classes, as in the following example:
 +
