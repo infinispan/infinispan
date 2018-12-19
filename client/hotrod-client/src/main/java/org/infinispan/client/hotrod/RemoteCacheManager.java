@@ -174,7 +174,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       this.syncTransactionTable = new SyncModeTransactionTable(configuration.transaction().timeout());
       this.xaTransactionTable = new XaModeTransactionTable(configuration.transaction().timeout());
       registerMBean();
-      if (start) start();
+      if (start) actualStart();
    }
 
    /**
@@ -272,6 +272,12 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    @Override
    public void start() {
+      if (!started) {
+         actualStart();
+      }
+   }
+
+   private void actualStart() {
       channelFactory = new ChannelFactory();
 
       if (marshaller == null) {
