@@ -199,8 +199,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       return rpcManager.invokeCommandStaggered(info.readOwners(), getCommand, new RemoteGetSingleKeyCollector(),
                                                rpcManager.getSyncRpcOptions())
-                       .thenAccept(r -> {
-                          Object responseValue = r.getResponseValue();
+                       .thenAccept(response -> {
+                          Object responseValue = response.getResponseValue();
                           if (responseValue == null) {
                              if (rvrl != null) {
                                 rvrl.remoteValueNotFound(key);
@@ -714,9 +714,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          CompletionStage<SuccessfulResponse> rpc =
             rpcManager.invokeCommandStaggered(owners, remoteCommand, new RemoteGetSingleKeyCollector(),
                                               rpcManager.getSyncRpcOptions());
-         return asyncValue(rpc).thenApply(ctx, command, (rCtx, rCommand, rsp) -> {
-            return unwrapFunctionalResultOnOrigin(rCtx, ((ReadOnlyKeyCommand) rCommand).getKey(),
-                                                  ((SuccessfulResponse) rsp).getResponseValue());
+         return asyncValue(rpc).thenApply(ctx, command, (rCtx, rCommand, response) -> {
+            Object responseValue = ((SuccessfulResponse) response).getResponseValue();
+            return unwrapFunctionalResultOnOrigin(rCtx, ((ReadOnlyKeyCommand) rCommand).getKey(), responseValue);
          });
       } else {
          // This has LOCAL flags, just wrap NullCacheEntry and let the command run
@@ -1004,7 +1004,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             CacheEntry entry = value == null ? NullCacheEntry.getInstance() : value.toInternalCacheEntry(key);
             wrapRemoteEntry(ctx, key, entry, false);
          }
-         // TODO Dan: transform the remote entries before wrapping them in the context
+         // TODO Dan: handleRemotelyRetrievedKeys could call wrapRemoteEntry itself after transforming the entries
          handleRemotelyRetrievedKeys(ctx, command instanceof WriteCommand ? (WriteCommand) command : null, senderKeys);
          return null;
       }

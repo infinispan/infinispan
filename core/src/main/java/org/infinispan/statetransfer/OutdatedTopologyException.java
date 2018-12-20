@@ -5,23 +5,26 @@ import org.infinispan.commons.CacheException;
 /**
  * An exception signalling that a command should be retried because a newer topology was seen during execution.
  *
- * <p>Most of the time, read commands can be retried in the same topology, see {@link #RETRY_SAME_TOPOLOGY}.</p>
+ * <p>Most of the time, read commands can be retried in the same topology, so they use a delta of 0,
+ * see {@link #RETRY_SAME_TOPOLOGY}.
+ * Write commands cannot be retried in the same topology, so they always use a delta of 1 (or more).</p>
  *
- * <p>This exception can be thrown very often, so it has not stack trace information, and using the constants
- * is preferred.</p>
+ * <p>This exception can be thrown very often when node is joining or leaving, so it has not stack trace information,
+ * and using the constants is preferred.</p>
  *
  * @author Dan Berindei
  * @since 6.0
  */
 public class OutdatedTopologyException extends CacheException {
-   public final int requestedTopologyId;
+   private static final long serialVersionUID = -7405935610562980779L;
+
+   public final int topologyIdDelta;
 
    /**
     * A cached instance that requests the command's topology id + 1.
     */
-   @SuppressWarnings("ThrowableInstanceNeverThrown")
    public static final OutdatedTopologyException RETRY_NEXT_TOPOLOGY =
-      new OutdatedTopologyException("Retry in the next topology", -1);
+      new OutdatedTopologyException("Retry in the next topology", 1);
 
    /**
     * A cached instance, used for read commands that need to be retried in the same topology.
@@ -35,18 +38,29 @@ public class OutdatedTopologyException extends CacheException {
    public static final OutdatedTopologyException RETRY_SAME_TOPOLOGY =
       new OutdatedTopologyException("Retry command in the same topology", 0);
 
+   private OutdatedTopologyException(String message, int topologyIdDelta) {
+      super(message, null, false, false);
+      this.topologyIdDelta = topologyIdDelta;
+   }
+
    /**
-    * Request an explicit topology id and use a custom message.
+    * Request the next topology (delta = 1) and use a custom message.
+    *
+    * @deprecated Since 10.0, please use the constants
     */
-   public OutdatedTopologyException(String msg, int requestedTopologyId) {
+   @Deprecated
+   public OutdatedTopologyException(String msg) {
       super(msg, null, false, false);
-      this.requestedTopologyId = requestedTopologyId;
+      this.topologyIdDelta = 1;
    }
 
    /**
     * Request retrying the command in explicitly set topology (or later one).
+    *
+    * @deprecated Since 10.0, the explicit topology is ignored and the delta is set to 1
     */
-   public OutdatedTopologyException(int requestedTopologyId) {
-      this(null, requestedTopologyId);
+   @Deprecated
+   public OutdatedTopologyException(int topologyIdDelta) {
+      this(null, 1);
    }
 }

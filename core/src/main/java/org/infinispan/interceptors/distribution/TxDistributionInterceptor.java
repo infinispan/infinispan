@@ -459,7 +459,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          InvocationContext ctx, C command, Collection<K> keys, BiFunction<C, List<K>, C> copyCommand) {
       boolean ignorePreviousValue = command.hasAnyFlag(SKIP_REMOTE_FLAGS) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD;
       List<K> filtered = new ArrayList<>(keys.size());
-      List<Object> remoteKeys = new ArrayList<>();
+      List<Object> remoteKeys = null;
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       for (K key : keys) {
          if (ctx.isOriginLocal() || cacheTopology.isWriteOwner(key)) {
@@ -467,13 +467,16 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                if (ignorePreviousValue) {
                   entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                } else {
+                  if (remoteKeys == null) {
+                     remoteKeys = new ArrayList<>();
+                  }
                   remoteKeys.add(key);
                }
             }
             filtered.add(key);
          }
       }
-      CompletionStage<?> remoteGetMany = remoteGetMany(ctx, command, keys);
+      CompletionStage<?> remoteGetMany = remoteKeys != null ? remoteGetMany(ctx, command, remoteKeys) : CompletableFutures.completedNull();
       return asyncInvokeNext(ctx, copyCommand.apply(command, filtered), remoteGetMany);
    }
 
@@ -507,8 +510,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             CompletionStage<SuccessfulResponse> remoteGet =
                   rpcManager.invokeCommandStaggered(distributionInfo.readOwners(), remoteRead,
                                                     new RemoteGetSingleKeyCollector(), rpcManager.getSyncRpcOptions());
-            return asyncValue(remoteGet).thenApply(ctx, command, (rCtx, rCommand, r) -> {
-               Object responseValue = ((SuccessfulResponse) r).getResponseValue();
+            return asyncValue(remoteGet).thenApply(ctx, command, (rCtx, rCommand, response) -> {
+               Object responseValue = ((SuccessfulResponse) response).getResponseValue();
                return unwrapFunctionalResultOnOrigin(ctx, command.getKey(), responseValue);
             });
          }
