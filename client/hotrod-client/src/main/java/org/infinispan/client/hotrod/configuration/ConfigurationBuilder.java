@@ -338,7 +338,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          this.asyncExecutorFactory().factoryClass(typed.getProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, null, true));
       }
       this.asyncExecutorFactory().withExecutorProperties(typed);
-      this.balancingStrategy(typed.getProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyFactory.get().getClass().getName(), true));
+      String balancingStrategyClass = typed.getProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, null, true);
+      if (balancingStrategyClass != null) {
+         this.balancingStrategy(balancingStrategyClass);
+      }
       this.clientIntelligence(typed.getEnumProperty(ConfigurationProperties.CLIENT_INTELLIGENCE, ClientIntelligence.class, ClientIntelligence.getDefault(), true));
       this.connectionPool.withPoolProperties(typed);
       this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
@@ -348,9 +351,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       for (int i = 0; i < consistentHashImpl.length; i++) {
          if (consistentHashImpl[i] != null) {
             int version = i + 1;
-            this.consistentHashImpl(version,
-                  typed.getProperty(ConfigurationProperties.HASH_FUNCTION_PREFIX + "." + version,
-                        consistentHashImpl[i].getName(), true));
+            String hashClassName = typed.getProperty(ConfigurationProperties.HASH_FUNCTION_PREFIX + "." + version,
+                  null, true);
+            if (hashClassName != null) {
+               this.consistentHashImpl(version, hashClassName);
+            }
          }
       }
       this.forceReturnValues(typed.getBooleanProperty(ConfigurationProperties.FORCE_RETURN_VALUES, forceReturnValues, true));
