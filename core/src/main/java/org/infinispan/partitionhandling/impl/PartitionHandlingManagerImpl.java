@@ -103,14 +103,14 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    @Override
    public void checkClear() {
-      if (!isBulkOperationAllowed()) {
+      if (!isBulkOperationAllowed(true)) {
          throw log.clearDisallowedWhilePartitioned();
       }
    }
 
    @Override
    public void checkBulkRead() {
-      if (!isBulkOperationAllowed()) {
+      if (!isBulkOperationAllowed(false)) {
          throw log.partitionDegraded();
       }
    }
@@ -277,10 +277,11 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return true;
 
+      assert partitionHandling != PartitionHandling.ALLOW_READ_WRITES :
+         "ALLOW_READ_WRITES caches should always be AVAILABLE";
+
       List<Address> actualMembers = cacheTopology.getActualMembers();
       switch (partitionHandling) {
-         case ALLOW_READ_WRITES:
-            return true;
          case ALLOW_READS:
             List<Address> owners = getOwners(cacheTopology, key, isWrite);
             if (isWrite || EnumUtil.containsAny(flagBitSet, FlagBitSets.FORCE_WRITE_LOCK)) {
@@ -290,24 +291,39 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
                // Reads only require one owner in the local partition
                return InfinispanCollections.containsAny(actualMembers, owners);
             }
-         default:
+         case DENY_READ_WRITES:
             // Both reads and writes require all the owners to be in the local partition
             return actualMembers.containsAll(getOwners(cacheTopology, key, isWrite));
+         default:
+            throw new IllegalStateException("Unsupported partition handling type: " + partitionHandling);
       }
    }
 
-   protected boolean isBulkOperationAllowed() {
+   protected boolean isBulkOperationAllowed(boolean isWrite) {
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return true;
 
+      assert partitionHandling != PartitionHandling.ALLOW_READ_WRITES :
+         "ALLOW_READ_WRITES caches should always be AVAILABLE";
+
+      // We reject bulk writes because some owners are always missing in degraded mode
+      if (isWrite)
+         return false;
+
       switch (partitionHandling) {
-         case ALLOW_READ_WRITES:
-            return true;
          case ALLOW_READS:
-            // Never allow bulk reads/writes
+            // Bulk reads require only one owner of each segment in the local partition
+            LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
+            for (int i = 0; i < cacheTopology.getReadConsistentHash().getNumSegments(); i++) {
+               List<Address> owners = cacheTopology.getSegmentDistribution(i).readOwners();
+               if (!InfinispanCollections.containsAny(owners, cacheTopology.getActualMembers()))
+                  return false;
+            }
+            return true;
+         case DENY_READ_WRITES:
             return false;
          default:
-            return false;
+            throw new IllegalStateException("Unsupported partition handling type: " + partitionHandling);
       }
    }
 

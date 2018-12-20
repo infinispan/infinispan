@@ -40,7 +40,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -276,9 +275,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    private <C extends WriteCommand, Container, Item> Object handleReadWriteManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, Item, Container> helper) throws Exception {
       // TODO: due to possible repeating of the operation (after OutdatedTopologyException is thrown)
-      // it is possible that the function will be applied multiple times on some of the nodes.
-      // There is no general solution for this ATM; proper solution will probably record CommandInvocationId
-      // in the entry, and implement some housekeeping
+      //  it is possible that the function will be applied multiple times on some of the nodes.
+      //  There is no general solution for this ATM; proper solution will probably record CommandInvocationId
+      //  in the entry, and implement some housekeeping
       ConsistentHash ch = checkTopologyId(command).getWriteConsistentHash();
       if (ctx.isOriginLocal()) {
          Map<Address, IntSet> segmentMap = primaryOwnersOfSegments(ch);
@@ -312,7 +311,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          InvocationContext ctx, C command, WriteManyCommandHelper<C, Container, Item> helper, ConsistentHash ch,
          MergingCompletableFuture<Object> allFuture, MutableInt offset, IntSet segments) throws Exception {
       Container myItems = helper.newContainer();
-      List<Object> remoteKeys = new ArrayList<>();
+      List<Object> remoteKeys = null;
       // Filter command keys/entries into the collection, and record remote retrieval for those that are not
       // in the context yet
       for (Item item : helper.getItems(command)) {
@@ -325,13 +324,16 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
                   entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                } else {
+                  if (remoteKeys == null) {
+                     remoteKeys = new ArrayList<>();
+                  }
                   remoteKeys.add(key);
                }
             }
          }
       }
 
-      CompletionStage<Void> retrievals = remoteGetMany(ctx, command, remoteKeys);
+      CompletionStage<Void> retrievals = remoteKeys != null ? remoteGetMany(ctx, command, remoteKeys) : null;
       int size = helper.containerSize(myItems);
       if (size == 0) {
          allFuture.countDown();
@@ -344,7 +346,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       localCommand.setTopologyId(command.getTopologyId());
       InvocationFinallyAction handler =
             createLocalInvocationHandler(ch, allFuture, segments, helper, MergingCompletableFuture.moveListItemsToFuture(myOffset));
-      if (remoteKeys.isEmpty()) {
+      // It's safe to ignore the invocation stages below, because handleRemoteSegmentsForReadWriteManyCommand
+      // does not touch the context.
+      if (retrievals == null) {
          invokeNextAndFinally(ctx, localCommand, handler);
       } else {
          // We must wait until all retrievals finish before proceeding with the local command
@@ -392,29 +396,30 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private <C extends WriteCommand, Item> Object handleRemoteReadWriteManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, ?, Item> helper) throws Exception {
-      List<Object> remoteKeys = new ArrayList<>();
+      List<Object> remoteKeys = null;
       // check that we have all the data we need
       for (Item item : helper.getItems(command)) {
          Object key = helper.item2key(item);
          CacheEntry cacheEntry = ctx.lookupEntry(key);
          if (cacheEntry == null) {
             // this should be a rare situation, so we don't mind being a bit ineffective with the remote gets
-            if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP) || command.hasAnyFlag(
-               FlagBitSets.CACHE_MODE_LOCAL)) {
+            if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             } else {
+               if (remoteKeys == null) {
+                  remoteKeys = new ArrayList<>();
+               }
                remoteKeys.add(key);
             }
          }
       }
 
-      CompletionStage<Void> delay;
-      if (!remoteKeys.isEmpty()) {
-         delay = remoteGetMany(ctx, command, remoteKeys);
+      Object result;
+      if (remoteKeys != null) {
+         result = asyncInvokeNext(ctx, command, remoteGetMany(ctx, command, remoteKeys));
       } else {
-         delay = CompletableFutures.completedNull();
+         result = invokeNext(ctx, command);
       }
-      Object result = asyncInvokeNext(ctx, command, delay);
       if (helper.shouldRegisterRemoteCallback(command)) {
          return makeStage(result).thenApply(ctx, command, helper.remoteCallback);
       } else {
