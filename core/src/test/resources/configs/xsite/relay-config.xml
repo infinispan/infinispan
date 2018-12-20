@@ -3,19 +3,19 @@
 
     <sites>
 
-        <site name="LON" id="0">
+        <site name="LON">
             <bridges>
                 <bridge config="configs/xsite/bridge.xml" name="global"/>
             </bridges>
         </site>
 
-        <site name="NYC" id="1">
+        <site name="NYC">
             <bridges>
                 <bridge config="configs/xsite/bridge.xml" name="global"/>
             </bridges>
         </site>
 
-        <site name="SFO" id="2">
+        <site name="SFO">
             <bridges>
                 <bridge name="global" config="configs/xsite/bridge.xml"/>
             </bridges>

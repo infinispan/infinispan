@@ -29,8 +29,8 @@
    -->
 
    <jgroups>
-      <stack-file name="udp" path="jgroups-udp.xml"/>
-      <stack-file name="tcp" path="jgroups-tcp.xml"/>
+      <stack-file name="custom-udp" path="stacks/udp.xml"/>
+      <stack-file name="custom-tcp" path="stacks/tcp.xml"/>
    </jgroups>
 
    <!--

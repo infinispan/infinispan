@@ -4,11 +4,6 @@
         xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} http://www.infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd"
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
-    <jgroups>
-        <stack-file name="udp" path="default-configs/default-jgroups-udp.xml"/>
-        <stack-file name="tcp" path="default-configs/default-jgroups-tcp.xml"/>
-    </jgroups>
-
     <cache-container name="SampleCacheManager" statistics="true" default-cache="default">
         <transport stack="tcp" cluster="infinispan-cluster" node-name="Node-A" machine="m1" rack="r1" site="LON"/>
         <jmx domain="org.infinispan" duplicate-domains="true"/>

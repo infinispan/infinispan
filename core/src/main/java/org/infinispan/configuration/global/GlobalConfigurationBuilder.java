@@ -3,8 +3,11 @@ package org.infinispan.configuration.global;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -28,7 +31,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final ThreadPoolConfigurationBuilder asyncThreadPool;
    private final ShutdownConfigurationBuilder shutdown;
    private final GlobalStateConfigurationBuilder globalState;
-   private final List<Builder<?>> modules = new ArrayList<>();
+   private final Map<Class<?>, Builder<?>> modules;
    private final SiteConfigurationBuilder site;
    private Optional<String> defaultCacheName;
    private Features features;
@@ -52,6 +55,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.persistenceThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.stateTransferThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.asyncThreadPool = new ThreadPoolConfigurationBuilder(this);
+      this.modules = new LinkedHashMap();
       this.defaultCacheName = Optional.empty();
    }
 
@@ -154,7 +158,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @Override
    public List<Builder<?>> modules() {
-      return modules;
+      return Collections.unmodifiableList(new ArrayList<>(modules.values()));
+   }
+
+   public <T> T module(Class<T> moduleClass) {
+      return (T)modules.get(moduleClass);
    }
 
    public GlobalConfigurationBuilder clearModules() {
@@ -171,7 +179,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       try {
          Constructor<T> constructor = klass.getDeclaredConstructor(GlobalConfigurationBuilder.class);
          T builder = constructor.newInstance(this);
-         this.modules.add(builder);
+         this.modules.put(klass, builder);
          return builder;
       } catch (Exception e) {
          throw new CacheConfigurationException("Could not instantiate module configuration builder '" + klass.getName() + "'", e);
@@ -218,7 +226,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             validationExceptions.add(e);
          }
       });
-      modules.forEach(c -> {
+      modules.values().forEach(c -> {
          try {
             c.validate();
          } catch (RuntimeException e) {
@@ -232,7 +240,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    public GlobalConfiguration build() {
       validate();
       List<Object> modulesConfig = new LinkedList<>();
-      for (Builder<?> module : modules)
+      for (Builder<?> module : modules.values())
          modulesConfig.add(module.create());
       return new GlobalConfiguration(
             expirationThreadPool.create(),

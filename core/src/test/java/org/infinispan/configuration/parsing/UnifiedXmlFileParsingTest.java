@@ -61,11 +61,14 @@ import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.jgroups.conf.ProtocolConfiguration;
+import org.jgroups.conf.ProtocolStackConfigurator;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -101,7 +104,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
       try (InputStream is = FileLookupFactory.newInstance().lookupFileStrict(config.toString(), Thread.currentThread().getContextClassLoader())) {
          ConfigurationBuilderHolder holder = parserRegistry.parse(is);
-         for(ParserVersionCheck check : ParserVersionCheck.values()) {
+         for (ParserVersionCheck check : ParserVersionCheck.values()) {
             if (check.isIncludedBy(major, minor)) {
                check.check(holder);
             }
@@ -110,6 +113,42 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_100(10, 0) {
+         @Override
+         public void check(ConfigurationBuilderHolder holder) {
+            // tcp-test and mytcp should be identical aside from MERGE3.max_interval
+            ProtocolStackConfigurator tcp = holder.getJGroupsStack("tcp-test");
+            ProtocolStackConfigurator mytcp = holder.getJGroupsStack("mytcp");
+            assertEquals(tcp.getProtocolStack().size(), mytcp.getProtocolStack().size());
+            for (int i = 0; i < tcp.getProtocolStack().size(); i++) {
+               ProtocolConfiguration proto1 = tcp.getProtocolStack().get(i);
+               ProtocolConfiguration proto2 = mytcp.getProtocolStack().get(i);
+               assertEquals(proto1.getProtocolName(), proto2.getProtocolName());
+               if (proto1.getProtocolName().equals("FD_ALL")) {
+                  assertEquals("tcp>FD_ALL>timeout", "3000", proto1.getProperties().get("timeout"));
+                  assertEquals("tcp>FD_ALL>interval", "1000", proto1.getProperties().get("interval"));
+                  assertEquals("mytcp>FD_ALL>timeout", "3500", proto2.getProperties().get("timeout"));
+                  assertEquals("mytcp>FD_ALL>interval", "1000", proto2.getProperties().get("interval"));
+               } else {
+                  assertEquals(proto1.getProtocolName(), proto1.getProperties(), proto2.getProperties());
+               }
+            }
+            // tcp and tcpgossip should differ only in the PING protocol
+            ProtocolStackConfigurator tcpgossip = holder.getJGroupsStack("tcpgossip");
+            assertEquals(tcp.getProtocolStack().size(), tcpgossip.getProtocolStack().size());
+            for (int i = 0; i < tcp.getProtocolStack().size(); i++) {
+               ProtocolConfiguration proto1 = tcp.getProtocolStack().get(i);
+               ProtocolConfiguration proto2 = tcpgossip.getProtocolStack().get(i);
+               if (proto1.getProtocolName().equals("MPING")) {
+                  assertEquals("TCPGOSSIP", proto2.getProtocolName());
+               } else {
+                  assertEquals(proto1.getProtocolName(), proto2.getProtocolName());
+                  assertEquals(proto1.getProtocolName(), proto1.getProperties(), proto2.getProperties());
+               }
+            }
+         }
+      },
+
       INFINISPAN_93(9, 3) {
          @Override
          public void check(ConfigurationBuilderHolder holder) {
@@ -321,11 +360,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             // Transport
             assertEquals("maximal-cluster", g.transport().clusterName());
             assertEquals(120000, g.transport().distributedSyncTimeout());
-            assertEquals("udp", g.transport().properties().getProperty("stack-udp"));
-            assertEquals("tcp", g.transport().properties().getProperty("stack-tcp"));
-            assertEquals("jgroups-udp.xml", g.transport().properties().getProperty("stackFilePath-udp"));
-            assertEquals("jgroups-tcp.xml", g.transport().properties().getProperty("stackFilePath-tcp"));
-            assertEquals("tcp", g.transport().properties().getProperty("stack"));
+
+            assertNotNull("udp", holder.getJGroupsStack("udp"));
+            assertNotNull("tcp", holder.getJGroupsStack("tcp"));
+            assertEquals(holder.getJGroupsStack("tcp"), g.transport().properties().get(JGroupsTransport.CHANNEL_CONFIGURATOR));
 
             DefaultThreadFactory threadFactory;
             BlockingThreadPoolExecutorFactory threadPool;
@@ -670,7 +708,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    private static <T> T getStoreConfiguration(Configuration c, Class<T> configurationClass) {
-      for (StoreConfiguration pc: c.persistence().stores()) {
+      for (StoreConfiguration pc : c.persistence().stores()) {
          if (configurationClass.isInstance(pc)) {
             return (T) pc;
          }

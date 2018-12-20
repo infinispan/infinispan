@@ -16,11 +16,11 @@
    </threads>
 
    <jgroups>
-      <stack-file name="tcp" path="jgroups-tcp.xml"/>
+      <stack-file name="custom-tcp" path="stacks/tcp.xml"/>
    </jgroups>
 
    <cache-container default-cache="default" listener-executor="infinispan-listener" persistence-executor="infinispan-persistence">
-      <transport stack="tcp"/>
+      <transport stack="custom-tcp"/>
       <replicated-cache name="default" mode="SYNC">
          <locking
                isolation="${StringPropertyReplacementTest.IsolationLevel:REPEATABLE_READ}"

@@ -62,6 +62,9 @@ import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
 import org.infinispan.security.impl.ClusterRoleMapper;
@@ -69,6 +72,8 @@ import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jgroups.conf.ProtocolConfiguration;
+import org.jgroups.conf.ProtocolStackConfigurator;
 
 /**
  * Serializes an Infinispan configuration to an {@link XMLExtendedStreamWriter}
@@ -102,14 +107,30 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          writer.writeStartElement(Element.JGROUPS);
          writer.writeAttribute(Attribute.TRANSPORT, globalConfiguration.transport().transport().getClass().getName());
          TypedProperties properties = globalConfiguration.transport().properties();
-         for (String property : properties.stringPropertyNames()) {
-            if (property.startsWith("stack-")) {
-               String stackName = properties.getProperty(property);
-               String path = properties.getProperty("stackFilePath-" + stackName);
-               writer.writeStartElement(Element.STACK_FILE);
-               writer.writeAttribute(Attribute.NAME, stackName);
-               writer.writeAttribute(Attribute.PATH, path);
-               writer.writeEndElement();
+         for (Object oProperty : properties.keySet()) {
+            String property = oProperty.toString();
+            if (JGroupsTransport.CHANNEL_CONFIGURATOR.equals(property)) {
+               ProtocolStackConfigurator configurator = (ProtocolStackConfigurator) properties.get(property);
+
+               if (configurator.getClass() == FileJGroupsChannelConfigurator.class) {
+                  FileJGroupsChannelConfigurator fileConfigurator = (FileJGroupsChannelConfigurator) configurator;
+                  writer.writeStartElement(Element.STACK_FILE);
+                  writer.writeAttribute(Attribute.NAME, fileConfigurator.getName());
+                  writer.writeAttribute(Attribute.PATH, fileConfigurator.getPath());
+                  writer.writeEndElement();
+               } else if (configurator instanceof EmbeddedJGroupsChannelConfigurator) {
+                  EmbeddedJGroupsChannelConfigurator embeddedConfigurator = (EmbeddedJGroupsChannelConfigurator)configurator;
+                  writer.writeStartElement(Element.STACK);
+                  writer.writeAttribute(Attribute.NAME, embeddedConfigurator.getName());
+                  for(ProtocolConfiguration protocol : embeddedConfigurator.getProtocolStack()) {
+                     writer.writeStartElement(protocol.getProtocolName());
+                     for(Entry<String, String> attr : protocol.getProperties().entrySet()) {
+                        writer.writeAttribute(attr.getKey(), attr.getValue());
+                     }
+                     writer.writeEndElement();
+                  }
+                  writer.writeEndElement();
+               }
             }
          }
          writer.writeEndElement();

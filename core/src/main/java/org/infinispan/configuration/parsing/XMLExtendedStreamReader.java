@@ -1,5 +1,7 @@
 package org.infinispan.configuration.parsing;
 
+import java.util.Properties;
+
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
@@ -16,8 +18,7 @@ public interface XMLExtendedStreamReader extends XMLStreamReader {
     * the end of the element. Must be positioned on a {@code START_ELEMENT} or an exception will
     * occur. On return the cursor will be positioned on the corresponding {@code END_ELEMENT}.
     *
-    * @param value
-    *           the value to pass in
+    * @param holder a ConfigurationBuilderHolder
     * @throws XMLStreamException
     *            if an error occurs (e.g. the given value does not match the type of the handler for
     *            the element, or the element is unknown)
@@ -44,5 +45,12 @@ public interface XMLExtendedStreamReader extends XMLStreamReader {
     * @param schema
     */
    void setSchema(Schema schema);
+
+   /**
+    * Returns the properties used for property-replacement
+    *
+    * @return the properties
+    */
+   Properties getProperties();
 
 }

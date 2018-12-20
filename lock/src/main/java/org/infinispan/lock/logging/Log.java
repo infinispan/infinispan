@@ -1,6 +1,5 @@
 package org.infinispan.lock.logging;
 
-import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.lock.exception.ClusteredLockException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Message;
@@ -37,5 +36,5 @@ public interface Log extends BasicLogger {
    ClusteredLockException invalidReliabilityMode();
 
    @Message(value = "Invalid scope for tag <clustered-lock>. Expected CACHE_CONTAINER but was %s", id = 29007)
-   ClusteredLockException invalidScope(ParserScope scope);
+   ClusteredLockException invalidScope(String scope);
 }

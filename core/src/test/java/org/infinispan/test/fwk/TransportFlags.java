@@ -15,6 +15,7 @@ public class TransportFlags {
    private int portRange = -1;
    private String siteName;
    private String relayConfig;
+   private boolean preserveConfig;
 
    public TransportFlags withFD(boolean withFD) {
       this.withFD = withFD;
@@ -49,6 +50,11 @@ public class TransportFlags {
       return this;
    }
 
+   public TransportFlags withPreserveConfig(boolean preserveConfig) {
+      this.preserveConfig = preserveConfig;
+      return this;
+   }
+
    public String siteName() {
       return siteName;
    }
@@ -67,5 +73,9 @@ public class TransportFlags {
 
    public boolean isRelayRequired() {
       return isPortRangeSpecified() && siteName != null;
+   }
+
+   public boolean isPreserveConfig() {
+      return preserveConfig;
    }
 }

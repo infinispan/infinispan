@@ -55,7 +55,7 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
          cm.getCache();
          fail("CacheManager construction should have failed");
       } catch (Exception e) {
-         TestingUtil.expectCause(e, CacheConfigurationException.class, "ISPN000085:.*");
+         TestingUtil.expectCause(e, CacheConfigurationException.class, "ISPN000541:.*");
       } finally {
          TestingUtil.killCacheManagers(cm);
       }

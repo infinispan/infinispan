@@ -6,10 +6,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
+
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
@@ -24,8 +27,6 @@ import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.threads.DefaultThreadFactory;
-import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -82,21 +83,24 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager fromXml(String xmlFile, boolean keepJmxDomainName) throws IOException {
-      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
-            xmlFile, Thread.currentThread().getContextClassLoader());
-      return fromStream(is, keepJmxDomainName);
+      try (InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
+            xmlFile, Thread.currentThread().getContextClassLoader())) {
+         return fromStream(is, keepJmxDomainName);
+      }
    }
 
    public static EmbeddedCacheManager fromXml(String xmlFile, boolean keepJmxDomainName, boolean defaultParserOnly) throws IOException {
-      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
-            xmlFile, Thread.currentThread().getContextClassLoader());
-      return fromStream(is, keepJmxDomainName, defaultParserOnly, true);
+      try (InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
+            xmlFile, Thread.currentThread().getContextClassLoader())) {
+         return fromStream(is, keepJmxDomainName, defaultParserOnly, true);
+      }
    }
 
    public static EmbeddedCacheManager fromXml(String xmlFile, boolean keepJmxDomainName, boolean defaultParserOnly, boolean start) throws IOException {
-      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
-            xmlFile, Thread.currentThread().getContextClassLoader());
-      return fromStream(is, keepJmxDomainName, defaultParserOnly, start);
+      try (InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
+            xmlFile, Thread.currentThread().getContextClassLoader())) {
+         return fromStream(is, keepJmxDomainName, defaultParserOnly, start);
+      }
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is) throws IOException {
@@ -112,6 +116,17 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName, boolean defaultParsersOnly, boolean start) throws IOException {
+      return createClusteredCacheManager(start, holderFromStream(is, defaultParsersOnly), keepJmxDomainName);
+   }
+
+   public static ConfigurationBuilderHolder holderFromXml(String xmlFile) throws IOException {
+      try (InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
+            xmlFile, Thread.currentThread().getContextClassLoader())) {
+         return holderFromStream(is, false);
+      }
+   }
+
+   public static ConfigurationBuilderHolder holderFromStream(InputStream is, boolean defaultParsersOnly) {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), defaultParsersOnly, System.getProperties());
       ConfigurationBuilderHolder holder = parserRegistry.parse(is);
 
@@ -124,8 +139,7 @@ public class TestCacheManagerFactory {
       updateNodeName(testShortName, gc.stateTransferThreadPool());
       updateNodeName(testShortName, gc.asyncThreadPool());
       updateNodeName(testShortName, gc.transport().transportThreadPool());
-
-      return createClusteredCacheManager(start, holder, keepJmxDomainName);
+      return holder;
    }
 
    private static void updateNodeName(String nodeName, ThreadPoolConfiguration threadPoolConfiguration) {
@@ -189,7 +203,10 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManager(boolean start, ConfigurationBuilderHolder holder, boolean keepJmxDomainName) {
-      TransportFlags flags = new TransportFlags();
+      return createClusteredCacheManager(start, holder, keepJmxDomainName, new TransportFlags());
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(boolean start, ConfigurationBuilderHolder holder, boolean keepJmxDomainName, TransportFlags flags) {
       amendGlobalConfiguration(holder.getGlobalConfigurationBuilder(), flags);
       for (ConfigurationBuilder builder : holder.getNamedConfigurationBuilders().values())
          amendJTA(builder);
@@ -378,9 +395,10 @@ public class TestCacheManagerFactory {
       String testName = TestResourceTracker.getCurrentTestName();
 
       GlobalConfiguration gc = builder.build();
-      if (gc.transport().transport() != null) {
+      if (!flags.isPreserveConfig() && gc.transport().transport() != null) {
          // Remove any configuration file that might have been set.
          builder.transport().removeProperty(JGroupsTransport.CONFIGURATION_FILE);
+         builder.transport().removeProperty(JGroupsTransport.CHANNEL_CONFIGURATOR);
 
          builder.transport().addProperty(JGroupsTransport.CONFIGURATION_STRING, getJGroupsConfig(testName, flags));
       }

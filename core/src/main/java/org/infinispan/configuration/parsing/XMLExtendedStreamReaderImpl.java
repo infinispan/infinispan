@@ -54,7 +54,11 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
 
    @Override
    public Object getProperty(final String name) throws IllegalArgumentException {
-      return streamReader.getProperty(name);
+      if (properties.containsKey(name)) {
+         return properties.getProperty(name);
+      } else {
+         return streamReader.getProperty(name);
+      }
    }
 
    @Override
@@ -323,6 +327,11 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
    @Override
    public void setSchema(Schema schema) {
       this.schema = schema;
+   }
+
+   @Override
+   public Properties getProperties() {
+      return properties;
    }
 
    // private members

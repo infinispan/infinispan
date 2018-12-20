@@ -7,9 +7,13 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.xml.XMLConstants;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
@@ -37,7 +41,11 @@ import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
+import org.w3c.dom.ls.LSInput;
+import org.w3c.dom.ls.LSResourceResolver;
+import org.xml.sax.InputSource;
 
 @Test(groups = "functional", testName = "configuration.ConfigurationUnitTest")
 public class ConfigurationUnitTest extends AbstractInfinispanTest {
@@ -172,7 +180,15 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          throw new NullPointerException("Failed to find a schema file " + schemaFilename);
       }
       Source xmlFile = new StreamSource(lookup.lookupFile(String.format("configs/unified/%s.xml", Version.getMajorMinor()), Thread.currentThread().getContextClassLoader()));
-      SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaFile).newValidator().validate(xmlFile);
+      //SchemaFactory factory = org.apache.xerces.jaxp.validation.XMLSchema11Factory.newInstance("http://www.w3.org/XML/XMLSchema/v1.1");
+
+      try {
+        SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/XML/XMLSchema/v1.1");
+         factory.setResourceResolver(new TestResolver());
+         factory.newSchema(schemaFile).newValidator().validate(xmlFile);
+      } catch (IllegalArgumentException e) {
+         throw new SkipException("No XMLSchema 1.1 validator available");
+      }
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -351,32 +367,36 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    public void testMultipleValidationErrors() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.transaction().reaperWakeUpInterval(-1);
-      builder.modules().add(new NonValidatingBuilder());
+      builder.addModule(NonValidatingBuilder.class);
       try {
          builder.validate();
          fail("Expected CacheConfigurationException");
       } catch (CacheConfigurationException e) {
-         assertTrue(e.getMessage().startsWith("ISPN000919"));
          assertEquals(e.getSuppressed().length, 2);
+         assertTrue(e.getMessage().startsWith("ISPN000919"));
          assertTrue(e.getSuppressed()[0].getMessage().startsWith("ISPN000344"));
          assertEquals("MODULE ERROR", e.getSuppressed()[1].getMessage());
       }
 
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.security().authorization().enable();
-      global.modules().add(new NonValidatingBuilder());
+      global.addModule(NonValidatingBuilder.class);
       try {
          global.validate();
          fail("Expected CacheConfigurationException");
       } catch (CacheConfigurationException e) {
-         assertTrue(e.getMessage().startsWith("ISPN000919"));
          assertEquals(e.getSuppressed().length, 2);
+         assertTrue(e.getMessage(), e.getMessage().startsWith("ISPN000919"));
          assertTrue(e.getSuppressed()[0].getMessage().startsWith("ISPN000288"));
          assertEquals("MODULE ERROR", e.getSuppressed()[1].getMessage());
       }
    }
 
    public static class NonValidatingBuilder implements Builder<Object> {
+      public NonValidatingBuilder(GlobalConfigurationBuilder builder) {}
+
+      public NonValidatingBuilder(ConfigurationBuilder builder) {}
+
       @Override
       public void validate() {
          throw new RuntimeException("MODULE ERROR");
@@ -390,6 +410,160 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       @Override
       public Builder<?> read(Object template) {
          return this;
+      }
+   }
+
+   public static class TestResolver implements LSResourceResolver {
+      Map<String, String> entities = new HashMap<>();
+
+      public TestResolver() {
+         entities.put("urn:org:jgroups", "jgroups-4.0.xsd");
+         entities.put("urn:jgroups:relay:1.0", "relay.xsd");
+         entities.put("fork", "fork-stacks.xsd");
+      }
+
+      @Override
+      public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
+         String entity = entities.get(namespaceURI);
+         if (entity != null) {
+            InputStream is = this.loadResource(entity);
+            if (is != null) {
+               InputSource inputSource = new InputSource(is);
+               inputSource.setSystemId(systemId);
+               return new LSInputImpl(type, namespaceURI, publicId, systemId, baseURI, inputSource);
+            }
+         }
+         return null;
+      }
+
+      private InputStream loadResource(String resource) {
+         ClassLoader classLoader = this.getClass().getClassLoader();
+         InputStream inputStream = loadResource(classLoader, resource);
+         if (inputStream == null) {
+            classLoader = Thread.currentThread().getContextClassLoader();
+            inputStream = this.loadResource(classLoader, resource);
+         }
+
+         return inputStream;
+      }
+
+      private InputStream loadResource(ClassLoader loader, String resource) {
+         URL url = loader.getResource(resource);
+         if (url == null) {
+            if (resource.endsWith(".dtd")) {
+               resource = "dtd/" + resource;
+            } else if (resource.endsWith(".xsd")) {
+               resource = "schema/" + resource;
+            }
+
+            url = loader.getResource(resource);
+         }
+
+         InputStream inputStream = null;
+         if (url != null) {
+            try {
+               inputStream = url.openStream();
+            } catch (IOException e) {
+            }
+         }
+
+         return inputStream;
+      }
+   }
+   public static class LSInputImpl implements LSInput {
+      private final String type;
+      private final String namespaceURI;
+      private final String publicId;
+      private final String systemId;
+      private final String baseURI;
+      private final InputSource inputSource;
+
+      public LSInputImpl(String type, String namespaceURI, String publicId, String systemId, String baseURI, InputSource inputSource) {
+         this.type = type;
+         this.namespaceURI = namespaceURI;
+         this.publicId = publicId;
+         this.systemId = systemId;
+         this.baseURI = baseURI;
+         this.inputSource = inputSource;
+      }
+
+      @Override
+      public Reader getCharacterStream() {
+         return null;
+      }
+
+      @Override
+      public void setCharacterStream(Reader characterStream) {
+      }
+
+      @Override
+      public InputStream getByteStream() {
+         return this.inputSource.getByteStream();
+      }
+
+      @Override
+      public void setByteStream(InputStream byteStream) {
+
+      }
+
+      @Override
+      public String getStringData() {
+         return null;
+      }
+
+      @Override
+      public void setStringData(String stringData) {
+
+      }
+
+      @Override
+      public String getSystemId() {
+         return systemId;
+      }
+
+      @Override
+      public void setSystemId(String systemId) {
+
+      }
+
+      @Override
+      public String getPublicId() {
+         return publicId;
+      }
+
+      @Override
+      public void setPublicId(String publicId) {
+
+      }
+
+      @Override
+      public String getBaseURI() {
+         return baseURI;
+      }
+
+      @Override
+      public void setBaseURI(String baseURI) {
+
+      }
+
+      @Override
+      public String getEncoding() {
+         return null;
+      }
+
+      @Override
+      public void setEncoding(String encoding) {
+
+      }
+
+      @Override
+      public boolean getCertifiedText() {
+         return false;
+      }
+
+      @Override
+      public void setCertifiedText(boolean certifiedText) {
+
       }
    }
 }

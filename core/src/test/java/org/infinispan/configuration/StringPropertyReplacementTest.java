@@ -9,6 +9,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -45,8 +47,8 @@ public class StringPropertyReplacementTest extends AbstractInfinispanTest {
             gc.persistenceThreadPool().threadPoolFactory();
       assertEquals(4, persistenceThreadPool.maxThreads());
 
-      Properties transportProps = gc.transport().properties();
-      assertEquals("jgroups-tcp.xml", transportProps.get("configurationFile"));
+      FileJGroupsChannelConfigurator transportConfigurator = (FileJGroupsChannelConfigurator) gc.transport().properties().get(JGroupsTransport.CHANNEL_CONFIGURATOR);
+      assertEquals("stacks/tcp.xml", transportConfigurator.getPath());
 
       Configuration configuration = holder.getDefaultConfigurationBuilder().build();
       assertEquals(IsolationLevel.READ_COMMITTED, configuration.locking().isolationLevel());

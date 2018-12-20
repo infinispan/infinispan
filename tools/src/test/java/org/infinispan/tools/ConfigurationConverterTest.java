@@ -42,6 +42,8 @@ import org.infinispan.persistence.remote.configuration.ConnectionPoolConfigurati
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.rest.configuration.RestStoreConfiguration;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration;
+import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.tools.config.ConfigurationConverter;
 import org.infinispan.tools.customs.CustomDataContainer;
@@ -102,8 +104,11 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       TypedProperties props = globalConfiguration.transport().properties();
       boolean stackVerified = false;
       for (String name: props.stringPropertyNames()) {
-         if (name.startsWith("stackFilePath-")) {
-            assertEquals("jgroups-udp.xml", props.get(name));
+         if ("stack".equals(name)) {
+            String stackName = props.getProperty(name);
+            JGroupsChannelConfigurator jGroupsStack = holder.getJGroupsStack(stackName);
+            assertEquals(FileJGroupsChannelConfigurator.class, jGroupsStack.getClass());
+            assertEquals("udp.xml", ((FileJGroupsChannelConfigurator)jGroupsStack).getPath());
             stackVerified = true;
          }
       }

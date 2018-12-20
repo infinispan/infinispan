@@ -3,6 +3,7 @@ package org.infinispan.configuration.parsing;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
@@ -194,8 +195,7 @@ public final class ParseUtils {
      */
     public static String readStringAttributeElement(final XMLStreamReader reader, final String attributeName)
             throws XMLStreamException {
-        requireSingleAttribute(reader, attributeName);
-        final String value = reader.getAttributeValue(0);
+        final String value = requireSingleAttribute(reader, attributeName);
         requireNoContent(reader);
         return value;
     }
@@ -223,6 +223,11 @@ public final class ParseUtils {
         return reader.getAttributeValue(0);
     }
 
+    public static String requireSingleAttribute(final XMLStreamReader reader, final Enum<?> attribute)
+          throws XMLStreamException {
+        return requireSingleAttribute(reader, attribute.toString());
+    }
+
     /**
      * Require all the named attributes, returning their values in order.
      * @param reader the reader
@@ -248,6 +253,15 @@ public final class ParseUtils {
     public static String[] requireAttributes(final XMLStreamReader reader, final String... attributeNames)
           throws XMLStreamException {
         return requireAttributes(reader, false, attributeNames);
+    }
+
+    public static String[] requireAttributes(final XMLStreamReader reader, final Enum<?>... attributes)
+          throws XMLStreamException {
+        String attributeNames[] = new String[attributes.length];
+        for(int i=0; i< attributes.length; i++) {
+            attributeNames[i] = attributes[i].toString();
+        }
+        return requireAttributes(reader, true, attributeNames);
     }
 
     public static boolean isNoNamespaceAttribute(final XMLStreamReader reader, final int index) {
@@ -285,4 +299,16 @@ public final class ParseUtils {
    public static String[] getListAttributeValue(String value) {
       return value.split("\\s+");
    }
+
+    public static String resolvePath(String path, String relativeTo) {
+        if (path == null) {
+            return null;
+        } else if (new File(path).isAbsolute()) {
+            return path;
+        } else if (relativeTo != null) {
+            return new File(new File(relativeTo), path).getAbsolutePath();
+        } else {
+            return path;
+        }
+    }
 }

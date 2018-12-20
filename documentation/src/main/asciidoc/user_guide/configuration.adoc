@@ -465,6 +465,96 @@ The configurations available are:
 *  default-jgroups-ec2.xml - Uses TCP as a transport and link:http://jgroups.org/manual/index.html#_s3_ping[S3_PING] for discovery.  Suitable on link:http://aws.amazon.com/ec2/[Amazon EC2] nodes where UDP multicast isn't available.
 *  default-jgroups-kubernetes.xml - Uses TCP as a transport and link:https://github.com/jgroups-extras/jgroups-kubernetes[KUBE_PING] for discovery.  Suitable on link:http://kubernetes.io/[Kubernetes] and link:https://www.openshift.org/[OpenShift] nodes where UDP multicast is not always available.
 
+When using the XML configuration, the `tcp` and `udp` stacks are pre-declared for you, so that you don't need to do it yourself. Just reference them directly in the transport:
+
+[source,xml]
+----
+<infinispan>
+  <cache-container default-cache="replicatedCache">
+    <transport stack="tcp" />
+
+    ...
+
+  </cache-container>
+</infinispan>
+
+----
+
+==== Inline JGroups configurations
+
+The Infinispan XML configuration also allows you to embed JGroups configurations without requiring an external file:
+
+[source,xml]
+----
+<infinispan>
+  <jgroups>
+    <stack name="prod">
+      <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"/>
+      <MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"
+             mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
+             mcast_port="${jgroups.mping.mcast_port:43366}"
+             ip_ttl="${jgroups.udp.ip_ttl:2}"/>
+      <MERGE3 />
+      <FD_SOCK />
+      <FD_ALL timeout="3000" interval="1000" timeout_check_interval="1000" />
+      <VERIFY_SUSPECT timeout="1000" />
+      <pbcast.NAKACK2 use_mcast_xmit="false" xmit_interval="100" xmit_table_num_rows="50"
+                      xmit_table_msgs_per_row="1024" xmit_table_max_compaction_time="30000" />
+      <UNICAST3 xmit_interval="100" xmit_table_num_rows="50" xmit_table_msgs_per_row="1024"
+                xmit_table_max_compaction_time="30000" />
+      <RSVP />
+      <pbcast.STABLE stability_delay="200" desired_avg_gossip="2000" max_bytes="1M" />
+      <pbcast.GMS print_local_addr="false" join_timeout="${jgroups.join_timeout:2000}" />
+      <MFC max_credits="2M" min_threshold="0.40" />
+      <FRAG3 />
+    </stack>
+  </jgroups>
+  <cache-container default-cache="replicatedCache">
+    <transport stack="mystack" />
+
+    ...
+
+  </cache-container>
+</infinispan>
+
+----
+
+JGroups stacks can be quite complex: most of the time, you only need to use a different discovery mechanism, add security,
+or make a slight tweak to a couple of parameters. For these cases, you can use stack inheritance to base your configuration off a
+known "good" JGroups stack.
+The following example creates a new `gossip-prod` based on  the `prod` stack defined above, replacing the `MPING` protocol
+with `TCPGOSSIP`, increasing the `VERIFY_SUSPECT` timeout, removing the `FD_SOCK` protocol and adding `SYM_ENCRYPT`:
+
+[source,xml]
+----
+
+  ...
+
+  <jgroups>
+    <stack name="gossip-prod" extends="prod">
+      <TCPGOSSIP initial_hosts="${jgroups.tunnel.gossip_router_hosts:localhost[12001]}"
+               stack.combine="REPLACE" stack.position="MPING" />
+      <FD_SOCK stack.combine="REMOVE"/>
+      <VERIFY_SUSPECT timeout="2000"/>
+      <SYM_ENCRYPT sym_algorithm="AES"
+                   key_store_name="defaultStore.keystore"
+                   store_password="changeit"
+                   alias="myKey" stack.combine="INSERT_AFTER" stack.position="pbcast.NAKACK2" />
+    </stack>
+  </jgroups>
+ 
+  ...
+
+----
+
+The `stack.combine` attribute determines the type of the operation:
+
+* `COMBINE`: overrides an existing protocol's attributes
+* `REPLACE`: replaces an existing protocol, identified by the `stack.position` attribute. If this attribute is missing,
+   it defaults to the same protocol, in which case all non-specified attributes are reset to their defaults.
+* `INSERT_AFTER`: inserts a protocol after another protocol identified by the `stack.position` attribute.
+* `REMOVE`: removes the protocol.
+
 ====== Tuning JGroups settings
 The settings above can be further tuned without editing the XML files themselves.
 Passing in certain system properties to your JVM at startup can affect the behaviour of some of these settings.  The table below shows you which settings can be configured in this way.  E.g.,

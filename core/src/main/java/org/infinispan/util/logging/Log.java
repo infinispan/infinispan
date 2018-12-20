@@ -1832,4 +1832,34 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error stopping module %s", id = 538)
    void moduleStopError(String module, @Cause Throwable t);
+
+   @Message(value = "Duplicate JGroups stack '%s'", id = 539)
+   CacheConfigurationException duplicateJGroupsStack(String name);
+
+   @Message(value = "No such JGroups stack '%s'", id = 540)
+   CacheConfigurationException missingJGroupsStack(String name);
+
+   @Message(value = "Error while trying to create a channel using the specified configuration '%s'", id = 541)
+   CacheConfigurationException errorCreatingChannelFromConfigurator(String configurator, @Cause Throwable t);
+
+   @Message(value = "Invalid parser scope. Expected '%s' but was '%s'", id = 542)
+   CacheConfigurationException invalidScope(String expected, String found);
+
+   @Message(value = "Cannot use stack.position when stack.combine is '%s'", id = 543)
+   CacheConfigurationException jgroupsNoStackPosition(String combineMode);
+
+   @Message(value = "The protocol '%s' does not exist in the base stack for operation '%s'", id = 544)
+   CacheConfigurationException jgroupsNoSuchProtocol(String protocolName, String combineMode);
+
+   @Message(value = "Inserting protocol '%s' in a JGroups stack requires the 'stack.position' attribute", id = 545)
+   CacheConfigurationException jgroupsInsertAfterRequiresPosition(String protocolName);
+
+   @Message(value = "Duplicate remote site '%s' in stack '%s'", id = 546)
+   CacheConfigurationException duplicateRemoteSite(String remoteSite, String name);
+
+   @Message(value = "JGroups stack '%s' declares remote sites but does not have a RELAY2 protocol", id = 547)
+   CacheConfigurationException jgroupsRemoteSitesWithoutRelay(String name);
+
+   @Message(value = "JGroups stack '%s' has a RELAY2 protocol without remote sites", id = 548)
+   CacheConfigurationException jgroupsRelayWithoutRemoteSites(String name);
 }

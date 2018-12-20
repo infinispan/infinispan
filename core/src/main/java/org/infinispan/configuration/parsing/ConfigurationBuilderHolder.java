@@ -7,15 +7,19 @@ import java.util.Stack;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
 
 public class ConfigurationBuilderHolder {
 
-   private final GlobalConfigurationBuilder globalConfigurationBuilder;
+   private GlobalConfigurationBuilder globalConfigurationBuilder;
    private final Map<String, ConfigurationBuilder> namedConfigurationBuilders;
    private ConfigurationBuilder currentConfigurationBuilder;
    private final Map<Class<? extends ConfigurationParser>, ParserContext> parserContexts;
    private final WeakReference<ClassLoader> classLoader;
-   private final Stack<ParserScope> scope;
+   private final Stack<String> scope;
+   private final Map<String, JGroupsChannelConfigurator> jgroupsStacks;
 
    public ConfigurationBuilderHolder() {
       this(Thread.currentThread().getContextClassLoader());
@@ -27,7 +31,8 @@ public class ConfigurationBuilderHolder {
       this.parserContexts = new HashMap<>();
       this.classLoader = new WeakReference<>(classLoader);
       scope = new Stack<>();
-      scope.push(ParserScope.GLOBAL);
+      scope.push(ParserScope.GLOBAL.name());
+      this.jgroupsStacks = new HashMap<>();
    }
 
    public GlobalConfigurationBuilder getGlobalConfigurationBuilder() {
@@ -57,15 +62,27 @@ public class ConfigurationBuilderHolder {
       }
    }
 
-   void pushScope(ParserScope scope) {
+   void pushScope(Enum<?> scope) {
+      pushScope(scope.name());
+   }
+
+   public void pushScope(String scope) {
       this.scope.push(scope);
    }
 
-   void popScope() {
-      this.scope.pop();
+   public String popScope() {
+      return this.scope.pop();
    }
 
-   public ParserScope getScope() {
+   public boolean inScope(String scope) {
+      return getScope().equals(scope);
+   }
+
+   public boolean inScope(Enum<?> scope) {
+      return inScope(scope.name());
+   }
+
+   public String getScope() {
       return scope.peek();
    }
 
@@ -92,4 +109,37 @@ public class ConfigurationBuilderHolder {
             throw Parser.log.missingDefaultCacheDeclaration(name);
       });
    }
+
+   public void addJGroupsStack(FileJGroupsChannelConfigurator stack) {
+      String name = stack.getName();
+      if (jgroupsStacks.containsKey(name)) {
+         throw Parser.log.duplicateJGroupsStack(name);
+      }
+      jgroupsStacks.put(name, stack);
+   }
+
+   public void addJGroupsStack(EmbeddedJGroupsChannelConfigurator stack, String extend) {
+      String name = stack.getName();
+      if (jgroupsStacks.containsKey(name)) {
+         throw Parser.log.duplicateJGroupsStack(name);
+      }
+
+      if (extend == null) {
+         // Add as is
+         jgroupsStacks.put(stack.getName(), stack);
+      } else {
+         // See if the parent exists
+         if (!jgroupsStacks.containsKey(extend)) {
+            throw Parser.log.missingJGroupsStack(extend);
+         } else {
+            JGroupsChannelConfigurator baseStack = jgroupsStacks.get(extend);
+            jgroupsStacks.put(stack.getName(), EmbeddedJGroupsChannelConfigurator.combine(baseStack, stack));
+         }
+      }
+   }
+
+   public JGroupsChannelConfigurator getJGroupsStack(String name) {
+      return jgroupsStacks.get(name);
+   }
+
 }

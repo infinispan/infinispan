@@ -29,7 +29,7 @@ public enum StorageType {
     * Entries are stored in internal memory off the normal Java heap. This mode has equality defined by the byte[]
     * created from the serialized form of the provided object.
     */
-   OFF_HEAP(Element.OFFHEAP);
+   OFF_HEAP(Element.OFF_HEAP);
 
    private final Element element;
 
