@@ -65,8 +65,7 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
             @Override
             protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                             ResponseCollector<T> collector,
-                                                            Function<ResponseCollector<T>,
-                                                                       CompletionStage<T>> invoker,
+                                                            Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                             RpcOptions rpcOptions) {
                if (command instanceof SingleRpcCommand) {
                   command = ((SingleRpcCommand) command).getCommand();

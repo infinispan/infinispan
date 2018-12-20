@@ -539,22 +539,21 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    private <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<?> checkRemoteGetIfNeeded(
          InvocationContext ctx, C command, Set<Object> keys, LocalizedCacheTopology cacheTopology,
          boolean needsPreviousValue) {
-      List<Object> remoteKeys = new ArrayList<>();
+      List<Object> remoteKeys = null;
       for (Object key : keys) {
          CacheEntry cacheEntry = ctx.lookupEntry(key);
          if (cacheEntry == null && cacheTopology.isWriteOwner(key)) {
             if (!needsPreviousValue || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             } else {
+               if (remoteKeys == null) {
+                  remoteKeys = new ArrayList<>();
+               }
                remoteKeys.add(key);
             }
          }
       }
-      final int size = remoteKeys.size();
-      if (size == 0) {
-         return CompletableFutures.completedNull();
-      }
-      return remoteGetMany(ctx, command, remoteKeys);
+      return remoteKeys != null ? remoteGetMany(ctx, command, remoteKeys) : CompletableFutures.completedNull();
    }
 
    private void checkTopologyId(int topologyId, Collector<?> collector) {

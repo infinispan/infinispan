@@ -96,7 +96,6 @@ public class StateTransferLockImpl implements StateTransferLock {
          if (transactionDataTopologyId >= expectedTopologyId) {
             return CompletableFutures.completedNull();
          } else {
-            // TODO Dan: Use thenComposeAsync to continue each command in a separate thread?
             return transactionDataFuture.thenCompose(nil -> transactionDataFuture(expectedTopologyId));
          }
       }
