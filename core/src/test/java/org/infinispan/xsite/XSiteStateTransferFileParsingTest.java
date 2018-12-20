@@ -29,9 +29,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "xsite.XSiteStateTransferFileParsingTest")
 public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
    private static final String FILE_NAME = "configs/xsite/xsite-state-transfer-test.xml";
-   private static final String XML_FORMAT = "<infinispan>\n<jgroups>\n"
-         + "  <stack-file name=\"udp\" path=\"jgroups-udp.xml\"/>\n"
-         + "</jgroups>\n"
+   private static final String XML_FORMAT = "<infinispan>\n"
          + "<cache-container default-cache=\"default\">\n"
          + "  <transport cluster=\"infinispan-cluster\" lock-timeout=\"50000\" stack=\"udp\" node-name=\"Jalapeno\" machine=\"m1\"\n"
          + "                   rack=\"r1\" site=\"LON\"/>\n" + "  <replicated-cache name=\"default\">\n"

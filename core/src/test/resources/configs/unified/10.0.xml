@@ -1,10 +1,79 @@
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:10.0 http://www.infinispan.org/schemas/infinispan-config-10.0.xsd"
-      xmlns="urn:infinispan:config:10.0">
+      xsi:schemaLocation="urn:infinispan:config:10.0 http://www.infinispan.org/schemas/infinispan-config-10.0.xsd
+                          urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd"
+      xmlns="urn:infinispan:config:10.0"
+      xmlns:ispn="urn:infinispan:config:10.0">
    <jgroups transport="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
-      <stack-file name="udp" path="jgroups-udp.xml"/>
-      <stack-file name="tcp" path="jgroups-tcp.xml"/>
+      <!-- Load external JGroups stacks -->
+      <stack-file name="udp-test" path="stacks/udp.xml"/>
+      <stack-file name="tcp-test" path="stacks/tcp_mping/tcp1.xml"/>
+      <!-- Inline definition -->
+      <stack name="mping">
+         <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"
+              sock_conn_timeout="300" bundler_type="no-bundler"
+              thread_pool.min_threads="0" thread_pool.max_threads="25" thread_pool.keep_alive_time="5000"
+              xmlns="urn:org:jgroups"/>
+         <MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"
+                mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
+                mcast_port="${jgroups.mping.mcast_port:43366}"
+                ip_ttl="${jgroups.udp.ip_ttl:2}"
+                xmlns="urn:org:jgroups"/>
+
+         <MERGE3 xmlns="urn:org:jgroups"/>
+         <FD_SOCK xmlns="urn:org:jgroups"/>
+         <FD_ALL timeout="3000"
+                 interval="1000"
+                 timeout_check_interval="1000"
+                 xmlns="urn:org:jgroups"
+         />
+         <VERIFY_SUSPECT timeout="1000" xmlns="urn:org:jgroups"/>
+         <pbcast.NAKACK2
+                 use_mcast_xmit="false"
+                 xmit_interval="100"
+                 xmit_table_num_rows="50"
+                 xmit_table_msgs_per_row="1024"
+                 xmit_table_max_compaction_time="30000"
+                 xmlns="urn:org:jgroups"/>
+         <UNICAST3
+                 xmit_interval="100"
+                 xmit_table_num_rows="50"
+                 xmit_table_msgs_per_row="1024"
+                 xmit_table_max_compaction_time="30000"
+                 xmlns="urn:org:jgroups"
+         />
+         <RSVP xmlns="urn:org:jgroups"/>
+         <pbcast.STABLE stability_delay="200"
+                        desired_avg_gossip="2000"
+                        max_bytes="1M"
+                        xmlns="urn:org:jgroups"
+         />
+         <pbcast.GMS print_local_addr="false"
+                     join_timeout="${jgroups.join_timeout:2000}"
+                     xmlns="urn:org:jgroups"/>
+         <MFC max_credits="2M" min_threshold="0.40" xmlns="urn:org:jgroups"/>
+         <FRAG3 xmlns="urn:org:jgroups"/>
+      </stack>
+      <!-- Use the "tcp" stack but override some protocol attributes -->
+      <stack name="mytcp" extends="tcp-test">
+         <FD_ALL timeout="3500" ispn:stack.combine="COMBINE" xmlns="urn:org:jgroups"/>
+      </stack>
+      <!-- Use the "tcp" stack but replace the discovery -->
+      <stack name="tcpgossip" extends="tcp-test">
+         <MPING ispn:stack.combine="REMOVE" xmlns="urn:org:jgroups"/>
+         <TCPGOSSIP initial_hosts="${jgroups.tunnel.gossip_router_hosts:localhost[12001]}" ispn:stack.combine="INSERT_AFTER" ispn:stack.position="TCP" xmlns="urn:org:jgroups"/>
+      </stack>
+      <!-- Use the "tcp" stack but replace the discovery -->
+      <stack name="tcpfdhost" extends="tcp">
+         <FD_HOST ispn:stack.combine="REPLACE" ispn:stack.position="FD_ALL" xmlns="urn:org:jgroups"/>
+      </stack>
+      <!-- Add a relay configuration using a previously declared stack to talk to the remote site -->
+      <stack name="xsite" extends="udp">
+         <relay.RELAY2 site="LON" xmlns="urn:org:jgroups"/>
+         <remote-sites default-stack="tcpgossip">
+            <remote-site name="NYC"/>
+         </remote-sites>
+      </stack>
    </jgroups>
    <threads>
       <thread-factory name="infinispan-factory" group-name="infinispan" thread-name-pattern="%G %i" priority="5"/>

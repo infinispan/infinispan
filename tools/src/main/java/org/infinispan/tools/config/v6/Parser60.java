@@ -8,6 +8,7 @@ import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
 
+import java.io.InputStream;
 import java.util.Properties;
 
 import javax.xml.stream.XMLStreamConstants;
@@ -23,6 +24,7 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -59,6 +61,7 @@ import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -1521,9 +1524,9 @@ public class Parser60 implements ConfigurationParser {
                Properties properties = parseProperties(reader);
                if (properties.containsKey(JGroupsTransport.CONFIGURATION_FILE)) {
                   String stackFile = (String) properties.remove(JGroupsTransport.CONFIGURATION_FILE);
+                  addJGroupsStackFile(holder, "jgroups", stackFile, System.getProperties());
+                  properties.put(JGroupsTransport.CHANNEL_CONFIGURATOR, holder.getJGroupsStack("jgroups"));
                   properties.put("stack", "jgroups");
-                  properties.put("stack-jgroups", "jgroups");
-                  properties.put("stackFilePath-jgroups", stackFile);
                }
                builder.transport().withProperties(properties);
                break;
@@ -1532,6 +1535,14 @@ public class Parser60 implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader);
             }
          }
+      }
+   }
+
+   private void addJGroupsStackFile(ConfigurationBuilderHolder holder, String name, String path, Properties properties) {
+      try (InputStream xml = FileLookupFactory.newInstance().lookupFileStrict(path, holder.getClassLoader())) {
+         holder.addJGroupsStack(new FileJGroupsChannelConfigurator(name, path, xml, properties));
+      } catch (Exception e) {
+         throw new RuntimeException(e);
       }
    }
 

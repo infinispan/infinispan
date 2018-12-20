@@ -1,6 +1,7 @@
 package org.infinispan.commons.util;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commons.logging.Log;
@@ -192,6 +193,10 @@ public class StringPropertyReplacer {
 
       // Done
       return buffer.toString();
+   }
+
+   public static void replaceProperties(Map<String, String> map, Properties properties) {
+      map.replaceAll((k, v) -> replaceProperties(v, properties));
    }
 
    /**

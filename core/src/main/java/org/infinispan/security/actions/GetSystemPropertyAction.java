@@ -11,16 +11,20 @@ import java.security.PrivilegedAction;
 public class GetSystemPropertyAction implements PrivilegedAction<String> {
 
    private final String propertyName;
+   private final String defaultValue;
 
    public GetSystemPropertyAction(String propertyName) {
       this.propertyName = propertyName;
+      this.defaultValue = null;
+   }
+
+   public GetSystemPropertyAction(String propertyName, String defaultValue) {
+      this.propertyName = propertyName;
+      this.defaultValue = defaultValue;
    }
 
    @Override
    public String run() {
-      return System.getProperty(propertyName);
+      return System.getProperty(propertyName, defaultValue);
    }
-
-
-
 }

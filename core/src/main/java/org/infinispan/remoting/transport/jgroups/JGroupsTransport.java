@@ -128,10 +128,11 @@ public class JGroupsTransport implements Transport {
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
    public static final String CHANNEL_LOOKUP = "channelLookup";
+   public static final String CHANNEL_CONFIGURATOR = "channelConfigurator";
    public static final short REPLY_FLAGS =
          (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
    protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "default-configs/default-jgroups-udp.xml";
-   private static final Log log = LogFactory.getLog(JGroupsTransport.class);
+   public static final Log log = LogFactory.getLog(JGroupsTransport.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<Map<Address, Response>> EMPTY_RESPONSES_FUTURE =
          CompletableFuture.completedFuture(Collections.emptyMap());
@@ -544,6 +545,15 @@ public class JGroupsTransport implements Transport {
             } catch (Exception e) {
                log.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
                throw new CacheException(e);
+            }
+         }
+
+         if (channel == null && props.containsKey(CHANNEL_CONFIGURATOR)) {
+            JGroupsChannelConfigurator configurator = (JGroupsChannelConfigurator) props.get(CHANNEL_CONFIGURATOR);
+            try {
+               channel = configurator.createChannel();
+            } catch (Exception e) {
+               throw log.errorCreatingChannelFromConfigurator(configurator.getProtocolStackString(), e);
             }
          }
 

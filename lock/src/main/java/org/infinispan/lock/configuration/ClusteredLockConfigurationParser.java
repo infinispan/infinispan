@@ -31,7 +31,7 @@ public class ClusteredLockConfigurationParser implements ConfigurationParser {
    @Override
    public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder)
          throws XMLStreamException {
-      if (holder.getScope() != ParserScope.CACHE_CONTAINER) {
+      if (!holder.inScope(ParserScope.CACHE_CONTAINER)) {
          throw log.invalidScope(holder.getScope());
       }
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();

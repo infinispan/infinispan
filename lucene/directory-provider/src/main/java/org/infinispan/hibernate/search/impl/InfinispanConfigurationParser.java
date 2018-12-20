@@ -2,12 +2,16 @@ package org.infinispan.hibernate.search.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
 
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.engine.service.spi.ServiceManager;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 
 /**
  * The Infinispan configuration is ClassLoader sensitive, this wrapper around the standard Parser is used to allow it to
@@ -46,7 +50,7 @@ public class InfinispanConfigurationParser {
       }
    }
 
-   private ConfigurationBuilderHolder parseFile(ClassLoaderService classLoaderService, String filename, String transportOverrideResource) {
+   private ConfigurationBuilderHolder parseFile(ClassLoaderService classLoaderService, String filename, String transportOverrideResource) throws IOException {
       InputStream is = classLoaderService.locateResourceStream(filename);
       try {
          //Infinispan requires the context ClassLoader to have full visibility on all
@@ -80,9 +84,14 @@ public class InfinispanConfigurationParser {
     * @param builderHolder
     * @param transportOverrideResource The alternative JGroups configuration file to be used, or null
     */
-   private void patchTransportConfiguration(ConfigurationBuilderHolder builderHolder, String transportOverrideResource) {
+   private void patchTransportConfiguration(ConfigurationBuilderHolder builderHolder, String transportOverrideResource) throws IOException {
       if (transportOverrideResource != null) {
-         builderHolder.getGlobalConfigurationBuilder().transport().addProperty("configurationFile", transportOverrideResource);
+         try (InputStream xml = FileLookupFactory.newInstance().lookupFileStrict(transportOverrideResource, ispnClassLoadr)) {
+            Properties p = new Properties();
+            FileJGroupsChannelConfigurator configurator = new FileJGroupsChannelConfigurator("override", transportOverrideResource, xml, System.getProperties());
+            p.put(JGroupsTransport.CHANNEL_CONFIGURATOR, configurator);
+            builderHolder.getGlobalConfigurationBuilder().transport().withProperties(p);
+         }
       }
    }
 

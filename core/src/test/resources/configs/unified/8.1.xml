@@ -3,8 +3,8 @@
       xsi:schemaLocation="urn:infinispan:config:8.1 http://www.infinispan.org/schemas/infinispan-config-8.1.xsd"
       xmlns="urn:infinispan:config:8.1">
    <jgroups transport="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
-      <stack-file name="udp" path="jgroups-udp.xml"/>
-      <stack-file name="tcp" path="jgroups-tcp.xml"/>
+      <stack-file name="test-udp" path="stacks/udp.xml"/>
+      <stack-file name="test-tcp" path="stacks/tcp.xml"/>
    </jgroups>
    <threads>
       <thread-factory name="infinispan-factory" group-name="infinispan" thread-name-pattern="%G %i" priority="5"/>

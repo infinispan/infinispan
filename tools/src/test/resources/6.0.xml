@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan xmlns="urn:infinispan:config:6.0" xmlns:jdbc="urn:infinispan:config:jdbc:6.0" xmlns:remote="urn:infinispan:config:remote:6.0"
-            xmlns:leveldb="urn:infinispan:config:leveldb:6.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:leveldb="urn:infinispan:config:store:leveldb:6.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd
                         urn:infinispan:config:jpa:6.0 http://www.infinispan.org/schemas/infinispan-cachestore-jpa-config-6.0.xsd
                         urn:infinispan:config:jdbc:6.0 http://www.infinispan.org/schemas/infinispan-cachestore-jdbc-config-6.0.xsd
@@ -73,7 +73,7 @@
                    transportClass="org.infinispan.tools.customs.CustomTransport">
             <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
             <properties>
-                <property name="configurationFile" value="jgroups-udp.xml" />
+                <property name="configurationFile" value="udp.xml" />
             </properties>
             <!-- See the JGroupsTransport javadocs for more flags -->
         </transport>

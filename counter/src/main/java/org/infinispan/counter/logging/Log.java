@@ -2,7 +2,6 @@ package org.infinispan.counter.logging;
 
 import java.io.File;
 
-import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.counter.exception.CounterException;
 import org.infinispan.util.ByteString;
@@ -82,7 +81,7 @@ public interface Log extends BasicLogger {
 //   void noSuchCounterCAS(long expected, long value, ByteString counterName);
 
    @Message(value = "Invalid scope for tag <counter>. Expected CACHE_CONTAINER but was %s", id = 29520)
-   CounterConfigurationException invalidScope(ParserScope scope);
+   CounterConfigurationException invalidScope(String scope);
 
 //   @Message(value = "Clustered counters only available with clustered cache manager.", id = 29521)
 //   CounterException expectedClusteredEnvironment();

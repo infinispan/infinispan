@@ -87,7 +87,7 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
 
    /**
     * Defines the {@link ConfigurationStorage} strategy to use. If using {@link ConfigurationStorage#CUSTOM}, then
-    * the actual implementation must be passed by invoking {@link #localConfigurationManager(LocalConfigurationStorage)}
+    * the actual implementation must be passed by invoking {@link #configurationStorageSupplier(Supplier)}
     */
    public GlobalStateConfigurationBuilder configurationStorage(ConfigurationStorage storage) {
       attributes.attribute(CONFIGURATION_STORAGE).set(storage);

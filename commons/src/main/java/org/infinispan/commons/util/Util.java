@@ -1075,7 +1075,7 @@ public final class Util {
     * Deletes directory recursively.
     *
     * @param directoryName Directory to be deleted
-     */
+    */
    public static void recursiveFileRemove(String directoryName) {
       File file = new File(directoryName);
       recursiveFileRemove(file);
@@ -1085,7 +1085,7 @@ public final class Util {
     * Deletes directory recursively.
     *
     * @param directory Directory to be deleted
-     */
+    */
    public static void recursiveFileRemove(File directory) {
       if (directory.exists()) {
          log.tracef("Deleting file %s", directory);

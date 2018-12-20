@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified"
+<xs:schema elementFormDefault="qualified"
            version="1.0" targetNamespace="urn:infinispan:config:10.0"
-           xmlns:tns="urn:infinispan:config:10.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+           xmlns:tns="urn:infinispan:config:10.0"
+           xmlns:jgroups="urn:org:jgroups"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:import namespace="urn:org:jgroups" schemaLocation="http://www.jgroups.org/schema/jgroups-4.0.xsd"/>
 
   <xs:element name="infinispan" type="tns:infinispan">
     <xs:annotation>
@@ -12,18 +16,22 @@
   </xs:element>
 
   <xs:complexType name="infinispan">
-    <xs:all>
+    <xs:sequence>
       <xs:element name="jgroups" type="tns:jgroups" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Defines JGroups stacks.</xs:documentation>
         </xs:annotation>
+        <xs:unique name="stack_id_unique">
+          <xs:selector xpath="./tns:stack|./tns:stack-file" />
+          <xs:field xpath="@name" />
+        </xs:unique>
       </xs:element>
       <xs:element name="threads" type="tns:threads" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Defines the threading subsystem.</xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="cache-container" type="tns:cache-container" minOccurs="1">
+      <xs:element name="cache-container" type="tns:cache-container">
         <xs:annotation>
           <xs:documentation>Defines an embedded cache container.</xs:documentation>
         </xs:annotation>
@@ -32,7 +40,8 @@
           <xs:field xpath="@name" />
         </xs:unique>
       </xs:element>
-    </xs:all>
+      <xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
   </xs:complexType>
   <xs:complexType name="jgroups">
     <xs:annotation>
@@ -41,7 +50,7 @@
       </xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="stack-file" minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="stack-file" minOccurs="0" maxOccurs="unbounded">
         <xs:complexType>
           <xs:annotation>
             <xs:documentation>
@@ -56,12 +65,52 @@
           </xs:attribute>
         </xs:complexType>
       </xs:element>
+      <xs:element name="stack" type="tns:jgroups-stack" minOccurs="0" maxOccurs="unbounded" />
     </xs:sequence>
     <xs:attribute name="transport" type="xs:string" default="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
       <xs:annotation>
         <xs:documentation>Class that represents a network transport. Must implement org.infinispan.remoting.transport.Transport.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="jgroups-stack">
+    <xs:complexContent>
+      <xs:extension base="jgroups:ConfigType">
+        <xs:sequence>
+          <xs:element name="remote-sites" type="tns:jgroups-remote-sites" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation>
+                Defines the relay configuration.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:any minOccurs="0" maxOccurs="unbounded" namespace="##other" processContents="lax"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation>Name of the stack, to be referenced by transport's stack attribute.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="extends" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>The base stack to extend.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="jgroups-remote-sites">
+    <xs:sequence>
+      <xs:element name="remote-site" type="tns:jgroups-stack-relay-remote-site" />
+    </xs:sequence>
+    <xs:attribute name="default-stack" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="jgroups-stack-relay-remote-site">
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="stack" type="xs:string"/>
   </xs:complexType>
 
   <xs:complexType name="threads">
@@ -2341,5 +2390,35 @@
       </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
+
+  <!-- JGroups extension attributes -->
+  <xs:attribute name="stack.combine" default="COMBINE">
+    <xs:simpleType>
+      <xs:restriction base="xs:token">
+        <xs:enumeration value="COMBINE">
+          <xs:annotation>
+            <xs:documentation>Combines the protocol attributes, overriding any that have been set in the base stack.</xs:documentation>
+          </xs:annotation>
+        </xs:enumeration>
+        <xs:enumeration value="INSERT_AFTER">
+          <xs:annotation>
+            <xs:documentation>Inserts the protocol after an existing protocol in the stack, referenced using the stack.position attribute.</xs:documentation>
+          </xs:annotation>
+        </xs:enumeration>
+        <xs:enumeration value="REPLACE">
+          <xs:annotation>
+            <xs:documentation>Replaces the protocol in the base stack.</xs:documentation>
+          </xs:annotation>
+        </xs:enumeration>
+        <xs:enumeration value="REMOVE">
+          <xs:annotation>
+            <xs:documentation>Removes the protocol from the stack.</xs:documentation>
+          </xs:annotation>
+        </xs:enumeration>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:attribute>
+
+  <xs:attribute name="stack.position" type="xs:string" />
 
 </xs:schema>

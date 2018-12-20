@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} http://www.infinispan.org/schemas/infinispan-config:${infinispan.core.schema.version}
+                            urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd"
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
+   <jgroups>
+      <stack name="bridge">
+         <TCP bind_addr="127.0.0.1"
+              bind_port="7200"
+              port_range="30"
+              recv_buf_size="20000000"
+              send_buf_size="640000"
+              sock_conn_timeout="300"
+              enable_diagnostics="false"
+              bundler_type="no-bundler"
+
+              thread_pool.min_threads="0"
+              thread_pool.max_threads="8"
+              thread_pool.keep_alive_time="5000"
+         />
+         <org.infinispan.test.fwk.TEST_PING ergonomics="false" testName=""/>
+         <MERGE3 max_interval="5000"
+                 min_interval="3000"/>
+         <FD_SOCK bind_addr="127.0.0.1"/>
+         <pbcast.NAKACK2 xmit_interval="100"
+                         xmit_table_num_rows="50"
+                         xmit_table_msgs_per_row="1024"
+                         xmit_table_max_compaction_time="30000"
+                         use_mcast_xmit="false"
+                         discard_delivered_msgs="true"/>
+         <UNICAST3
+                 xmit_interval="100"
+                 xmit_table_num_rows="50"
+                 xmit_table_msgs_per_row="1024"
+                 xmit_table_max_compaction_time="30000"
+         />
+         <pbcast.STABLE stability_delay="200"
+                        desired_avg_gossip="2000"
+                        max_bytes="1M"
+         />
+         <pbcast.GMS print_local_addr="false"
+                     join_timeout="${jgroups.join_timeout:2000}"/>
+         <MFC max_credits="2M"
+              min_threshold="0.40"/>
+         <RSVP />
+         <FRAG3/>
+      </stack>
+      <stack name="xsite" extends="udp">
+         <relay.RELAY2 site="LON" xmlns="urn:org:jgroups"/>
+         <remote-sites default-stack="bridge">
+            <remote-site name="LON"/>
+            <remote-site name="NYC"/>
+            <remote-site name="SFO"/>
+         </remote-sites>
+      </stack>
+   </jgroups>
+
+   <cache-container default-cache="default">
+      <transport cluster="infinispan-cluster" lock-timeout="50000" stack="xsite" node-name="Jalapeno" machine="m1" rack="r1" site="LON"/>
+      <local-cache name="default">
+         <backups>
+            <backup site="NYC" strategy="SYNC" failure-policy="IGNORE" timeout="12003"/>
+            <backup site="SFO" strategy="ASYNC"/>
+         </backups>
+      </local-cache>
+   </cache-container>
+
+</infinispan>

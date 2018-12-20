@@ -8,6 +8,7 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -217,7 +218,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
    public MemoryConfigurationBuilder memory() { return memory; }
 
    public List<Builder<?>> modules() {
-      return modules;
+      return Collections.unmodifiableList(modules);
    }
 
    public ConfigurationBuilder clearModules() {

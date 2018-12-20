@@ -17,5 +17,4 @@ public class LogFactory {
    public static <T> T getLog(Class<?> clazz, Class<T> logClass) {
       return Logger.getMessageLogger(logClass, clazz.getName());
    }
-
 }

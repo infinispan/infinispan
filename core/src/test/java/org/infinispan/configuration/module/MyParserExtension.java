@@ -22,7 +22,7 @@ public class MyParserExtension implements ConfigurationParser {
 
    @Override
    public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      if (holder.getScope() != ParserScope.CACHE && holder.getScope() != ParserScope.CACHE_TEMPLATE) {
+      if (!holder.inScope(ParserScope.CACHE) && !holder.inScope(ParserScope.CACHE_TEMPLATE)) {
          throw new IllegalStateException("WRONG SCOPE");
       }
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();

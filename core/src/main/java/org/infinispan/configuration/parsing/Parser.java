@@ -9,8 +9,11 @@ import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUT
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.shortened;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ThreadFactory;
@@ -29,6 +32,7 @@ import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.GlobUtils;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -73,6 +77,11 @@ import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.BuiltinJGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
@@ -82,6 +91,7 @@ import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jgroups.conf.ProtocolConfiguration;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -108,6 +118,9 @@ public class Parser implements ConfigurationParser {
 
    @Override
    public void readElement(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
+      // Preload some default JGroups stacks
+      holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.TCP(reader.getProperties()));
+      holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.UDP(reader.getProperties()));
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -124,7 +137,8 @@ public class Parser implements ConfigurationParser {
                break;
             }
             default: {
-               throw ParseUtils.unexpectedElement(reader);
+               reader.handleAny(holder);
+               break;
             }
          }
       }
@@ -186,7 +200,6 @@ public class Parser implements ConfigurationParser {
                }
 
                ParseUtils.requireNoContent(reader);
-
 
                if (id != null) {
                   builder.serialization().addAdvancedExternalizer(id, advancedExternalizer);
@@ -436,10 +449,15 @@ public class Parser implements ConfigurationParser {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
-            case STACK_FILE: {
+            case STACK_FILE:
                parseStackFile(reader, holder);
                break;
-            }
+            case STACK:
+               if (!reader.getSchema().since(10, 0)) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               parseJGroupsStack(reader, holder);
+               break;
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -447,31 +465,95 @@ public class Parser implements ConfigurationParser {
       }
    }
 
-   private void parseStackFile(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      String stackName = null;
+   private void addJGroupsStackFile(ConfigurationBuilderHolder holder, String name, String path, Properties properties) {
+      try (InputStream xml = FileLookupFactory.newInstance().lookupFileStrict(path, holder.getClassLoader())) {
+         holder.addJGroupsStack(new FileJGroupsChannelConfigurator(name, path, xml, properties));
+      } catch (IOException e) {
+         throw log.jgroupsConfigurationNotFound(path);
+      }
+   }
+
+   private void parseJGroupsStack(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      String stackName = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
+      EmbeddedJGroupsChannelConfigurator stackConfigurator = new EmbeddedJGroupsChannelConfigurator(stackName);
+      String extend = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-
          switch (attribute) {
-            case NAME: {
-               stackName = value;
-               holder.getGlobalConfigurationBuilder().transport()
-                     .addProperty("stack-" + stackName, value);
+            case NAME:
                break;
-            }
-            case PATH: {
-               holder.getGlobalConfigurationBuilder().transport()
-                     .addProperty("stackFilePath-" + stackName, value);
+            case EXTENDS:
+               extend = value;
                break;
-            }
-            default: {
+            default:
                throw ParseUtils.unexpectedAttribute(reader, i);
-            }
          }
       }
+
+      List<ProtocolConfiguration> stack = stackConfigurator.getProtocolStack();
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case REMOTE_SITES:
+               parseJGroupsRelay(reader, holder, stackConfigurator);
+               break;
+            default:
+               // It should be an actual JGroups protocol
+               String protocolName = reader.getLocalName();
+               Map<String, String> protocolAttributes = new HashMap<>();
+               for (int i = 0; i < reader.getAttributeCount(); i++) {
+                  protocolAttributes.put(reader.getAttributeLocalName(i), reader.getAttributeValue(i));
+               }
+               ParseUtils.requireNoContent(reader);
+               stack.add(new ProtocolConfiguration(protocolName, protocolAttributes));
+               break;
+         }
+      }
+      holder.addJGroupsStack(stackConfigurator, extend);
+   }
+
+   private void parseJGroupsRelay(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, EmbeddedJGroupsChannelConfigurator stackConfigurator) throws XMLStreamException {
+      String defaultStack = ParseUtils.requireSingleAttribute(reader, Attribute.DEFAULT_STACK);
+      if (holder.getJGroupsStack(defaultStack) == null) {
+         throw log.missingJGroupsStack(defaultStack);
+      }
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case REMOTE_SITE:
+               String remoteSite = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
+               String stack = defaultStack;
+               for (int i = 0; i < reader.getAttributeCount(); i++) {
+                  Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+                  switch (attribute) {
+                     case NAME:
+                        break;
+                     case STACK:
+                        stack = reader.getAttributeValue(i);
+                        if (holder.getJGroupsStack(stack) == null) {
+                           throw log.missingJGroupsStack(stack);
+                        }
+                        break;
+                     default:
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                  }
+               }
+               ParseUtils.requireNoContent(reader);
+               stackConfigurator.addRemoteSite(remoteSite, holder.getJGroupsStack(stack));
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseStackFile(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      String attributes[] = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.PATH);
       ParseUtils.requireNoContent(reader);
+
+      addJGroupsStackFile(holder, attributes[0], attributes[1], reader.getProperties());
    }
 
    private void parseContainer(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -805,68 +887,22 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case STACK: {
-               boolean stackFound = transport.getProperty("stack-" + value) != null;
-               if (stackFound) {
-                  String filePath = transport.getProperty("stackFilePath-" + value);
-                  transport.addProperty("stack", value);
-                  transport.addProperty("configurationFile", filePath);
+               JGroupsChannelConfigurator jGroupsStack = holder.getJGroupsStack(value);
+               if (jGroupsStack == null) {
+                  throw log.missingJGroupsStack(value);
                }
+               Properties p = new Properties();
+               p.put(JGroupsTransport.CHANNEL_CONFIGURATOR, jGroupsStack);
+               p.put("stack", value);
+               transport.withProperties(p);
                break;
             }
-            case UNKNOWN:
-               break;
-            case ACQUIRE_TIMEOUT:
-               break;
-            case AFTER:
-               break;
-            case ALIASES:
-               break;
-            case ALLOW_DUPLICATE_DOMAINS:
-               break;
-            case ASYNC_EXECUTOR:
-               break;
-            case ASYNC_MARSHALLING:
-               break;
-            case AUDIT_LOGGER:
-               break;
-            case AUTO_COMMIT:
-               break;
-            case AUTO_CONFIG:
-               break;
-            case AWAIT_INITIAL_TRANSFER:
-               break;
-            case BACKUP_FAILURE_POLICY:
-               break;
-            case BEFORE:
-               break;
-            case CAPACITY_FACTOR:
-               break;
-            case CHUNK_SIZE:
-               break;
-            case CLASS:
-               break;
             case CLUSTER: {
-               globalBuilder.transport().clusterName(value);
+               transport.clusterName(value);
                break;
             }
-            case COMPLETED_TX_TIMEOUT:
-               break;
-            case CONCURRENCY_LEVEL:
-               break;
-            case CONFIGURATION:
-               break;
-            case CONSISTENT_HASH_FACTORY:
-               break;
-            case CORE_THREADS:
-               break;
-            case DATA_CONTAINER:
-               break;
-            case DEFAULT_CACHE:
-               break;
-            case ENABLED:
-               break;
             case EXECUTOR: {
-               globalBuilder.transport().transportThreadPool().read(
+               transport.transportThreadPool().read(
                      createThreadPoolConfiguration(value, ASYNC_TRANSPORT_EXECUTOR));
                break;
             }
@@ -878,56 +914,16 @@ public class Parser implements ConfigurationParser {
                }
             }
             case REMOTE_COMMAND_EXECUTOR: {
-               globalBuilder.transport().remoteCommandThreadPool().read(
+               transport.remoteCommandThreadPool().read(
                      createThreadPoolConfiguration(value, REMOTE_COMMAND_EXECUTOR));
                break;
             }
-            case EVICTION_EXECUTOR:
-               break;
-            case EXPIRATION_EXECUTOR:
-               break;
-            case FAILURE_POLICY_CLASS:
-               break;
-            case FETCH_STATE:
-               break;
-            case FLUSH_LOCK_TIMEOUT:
-               break;
-            case GROUP_NAME:
-               break;
-            case ID:
-               break;
-            case INDEX:
-               break;
-            case INTERVAL:
-               break;
-            case INVALIDATION_CLEANUP_TASK_FREQUENCY:
-               break;
-            case ISOLATION:
-               break;
-            case JNDI_NAME:
-               break;
-            case JMX_DOMAIN:
-               break;
-            case KEEP_ALIVE_TIME:
-               break;
-            case KEY_EQUIVALENCE:
-               break;
-            case KEY_PARTITIONER:
-               break;
-            case L1_LIFESPAN:
-               break;
-            case LIFESPAN:
-               break;
-            case LISTENER_EXECUTOR:
-               break;
-            case LOCATION:
-               break;
             case LOCK_TIMEOUT: {
-               globalBuilder.transport().distributedSyncTimeout(Long.valueOf(value));
+               transport.distributedSyncTimeout(Long.valueOf(value));
                break;
             }
             case NODE_NAME: {
-               globalBuilder.transport().nodeName(value);
+               transport.nodeName(value);
                for (DefaultThreadFactory threadFactory : threadFactories.values())
                   threadFactory.setNode(value);
 
@@ -936,21 +932,21 @@ public class Parser implements ConfigurationParser {
             case LOCKING:
                break;
             case MACHINE_ID: {
-               globalBuilder.transport().machineId(value);
+               transport.machineId(value);
                break;
             }
             case RACK_ID: {
-               globalBuilder.transport().rackId(value);
+               transport.rackId(value);
                break;
             }
             case SITE: {
-               globalBuilder.transport().siteId(value);
+               transport.siteId(value);
                globalBuilder.site().localSite(value);
                break;
             }
             case INITIAL_CLUSTER_SIZE: {
                if (reader.getSchema().since(8, 2)) {
-                  globalBuilder.transport().initialClusterSize(Integer.valueOf(value));
+                  transport.initialClusterSize(Integer.valueOf(value));
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
@@ -958,156 +954,12 @@ public class Parser implements ConfigurationParser {
             }
             case INITIAL_CLUSTER_TIMEOUT: {
                if (reader.getSchema().since(8, 2)) {
-                  globalBuilder.transport().initialClusterTimeout(Long.parseLong(value), TimeUnit.MILLISECONDS);
+                  transport.initialClusterTimeout(Long.parseLong(value), TimeUnit.MILLISECONDS);
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
                break;
             }
-            case MAPPER:
-               break;
-            case MARSHALLER_CLASS:
-               break;
-            case MAX_ENTRIES:
-               break;
-            case MAX_IDLE:
-               break;
-            case MAX_RETRIES:
-               break;
-            case MAX_THREADS:
-               break;
-            case MBEAN_SERVER_LOOKUP:
-               break;
-            case MODE:
-               break;
-            case MODIFICATION_QUEUE_SIZE:
-               break;
-            case MODULE:
-               break;
-            case NAME:
-               break;
-            case NAMES:
-               break;
-            case NOTIFICATIONS:
-               break;
-            case ON_REHASH:
-               break;
-            case OWNERS:
-               break;
-            case PATH:
-               break;
-            case PASSIVATION:
-               break;
-            case PERMISSIONS:
-               break;
-            case PERSISTENCE_EXECUTOR:
-               break;
-            case POSITION:
-               break;
-            case PRELOAD:
-               break;
-            case PRIORITY:
-               break;
-            case PURGE:
-               break;
-            case QUEUE_FLUSH_INTERVAL:
-               break;
-            case QUEUE_LENGTH:
-               break;
-            case QUEUE_SIZE:
-               break;
-            case READ_ONLY:
-               break;
-            case REAPER_WAKE_UP_INTERVAL:
-               break;
-            case RECOVERY_INFO_CACHE_NAME:
-               break;
-            case RELATIVE_TO:
-               break;
-            case REMOTE_CACHE:
-               break;
-            case REMOTE_SITE:
-               break;
-            case REMOTE_TIMEOUT:
-               break;
-            case REPLICATION_QUEUE_EXECUTOR:
-               break;
-            case ROLES:
-               break;
-            case SEGMENTS:
-               break;
-            case SHARED:
-               break;
-            case SHUTDOWN_HOOK:
-               break;
-            case SHUTDOWN_TIMEOUT:
-               break;
-            case SIMPLE_CACHE:
-               break;
-            case SINGLETON:
-               break;
-            case SIZE:
-               break;
-            case SPIN_DURATION:
-               break;
-            case STATISTICS:
-               break;
-            case STATISTICS_AVAILABLE:
-               break;
-            case START:
-               break;
-            case STATE_TRANSFER_EXECUTOR:
-               break;
-            case STORE_KEYS_AS_BINARY:
-               break;
-            case STORE_VALUES_AS_BINARY:
-               break;
-            case STRATEGY:
-               break;
-            case STRIPING:
-               break;
-            case STOP_TIMEOUT:
-               break;
-            case TAKE_BACKUP_OFFLINE_AFTER_FAILURES:
-               break;
-            case TAKE_BACKUP_OFFLINE_MIN_WAIT:
-               break;
-            case THREAD_FACTORY:
-               break;
-            case THREAD_NAME_PATTERN:
-               break;
-            case THREAD_POLICY:
-               break;
-            case THREAD_POOL_SIZE:
-               break;
-            case TIMEOUT:
-               break;
-            case TRANSACTION_MANAGER_LOOKUP_CLASS:
-               break;
-            case TRANSACTION_PROTOCOL:
-               break;
-            case TRANSPORT:
-               break;
-            case TYPE:
-               break;
-            case UNRELIABLE_RETURN_VALUES:
-               break;
-            case USE_TWO_PHASE_COMMIT:
-               break;
-            case VALUE:
-               break;
-            case VALUE_EQUIVALENCE:
-               break;
-            case VERSION:
-               break;
-            case VERSIONING_SCHEME:
-               break;
-            case WAIT_TIME:
-               break;
-            case WRITE_SKEW_CHECK:
-               break;
-            case FRAGMENTATION_FACTOR:
-               break;
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
@@ -1187,11 +1039,12 @@ public class Parser implements ConfigurationParser {
 
    private String parseGlobalStatePath(XMLExtendedStreamReader reader) throws XMLStreamException {
       String path = ParseUtils.requireAttributes(reader, Attribute.PATH.getLocalName())[0];
+      String relativeTo = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               log.ignoreXmlAttribute(attribute);
+               relativeTo = (String)reader.getProperty(reader.getAttributeValue(i));
                break;
             }
             case PATH: {
@@ -1204,7 +1057,7 @@ public class Parser implements ConfigurationParser {
          }
       }
       ParseUtils.requireNoContent(reader);
-      return path;
+      return ParseUtils.resolvePath(path, relativeTo);
    }
 
    private Supplier<? extends LocalConfigurationStorage> parseCustomConfigurationStorage(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -1642,7 +1495,7 @@ public class Parser implements ConfigurationParser {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
-            case OFFHEAP:
+            case OFF_HEAP:
                memoryBuilder.storageType(StorageType.OFF_HEAP);
                parseOffHeapMemoryAttributes(reader, holder);
                break;
@@ -2380,16 +2233,18 @@ public class Parser implements ConfigurationParser {
 
    protected void parseFileStore(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       SingleFileStoreConfigurationBuilder storeBuilder = holder.getCurrentConfigurationBuilder().persistence().addSingleFileStore();
+      String path = null;
+      String relativeTo = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               log.ignoreXmlAttribute(attribute);
+               relativeTo = (String) reader.getProperty(value);
                break;
             }
             case PATH: {
-               storeBuilder.location(value);
+               path = value;
                break;
             }
             case MAX_ENTRIES: {
@@ -2404,6 +2259,10 @@ public class Parser implements ConfigurationParser {
                parseStoreAttribute(reader, i, storeBuilder);
             }
          }
+      }
+      path = ParseUtils.resolvePath(path, relativeTo);
+      if (path != null) {
+         storeBuilder.location(path);
       }
       this.parseStoreElements(reader, storeBuilder);
    }

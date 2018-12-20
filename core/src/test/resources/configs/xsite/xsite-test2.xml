@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan>
 
-   <jgroups>
-      <stack-file name="udp" path="jgroups-udp.xml"/>
-   </jgroups>
-
    <cache-container default-cache="default">
       <transport cluster="infinispan-cluster" lock-timeout="50000" stack="udp" node-name="Jalapeno" machine="m1" rack="r1" site="LON"/>
       <local-cache-configuration name="base">

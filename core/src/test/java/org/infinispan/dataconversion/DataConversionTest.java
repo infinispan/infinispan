@@ -124,6 +124,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
    @Test
    public void testObjectEncoder() {
+      GenericJbossMarshallerEncoder encoder = new GenericJbossMarshallerEncoder(DataConversionTest.class.getClassLoader());
       withCacheManager(new CacheManagerCallable(
             createCacheManager(new ConfigurationBuilder())) {
 

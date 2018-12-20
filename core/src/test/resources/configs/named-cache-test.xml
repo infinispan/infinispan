@@ -4,10 +4,6 @@
         xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} http://www.infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd"
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
-   <jgroups>
-      <stack-file name="udp" path="jgroups-udp.xml"/>
-   </jgroups>
-
    <threads>
       <thread-factory name="listener-factory" group-name="infinispan" thread-name-pattern="AsyncListenerThread"/>
       <thread-factory name="persistence-factory" group-name="infinispan" thread-name-pattern="PersistenceThread"/>
