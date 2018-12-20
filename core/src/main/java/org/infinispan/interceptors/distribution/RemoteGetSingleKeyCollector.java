@@ -22,7 +22,6 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
  */
 public class RemoteGetSingleKeyCollector implements ResponseCollector<SuccessfulResponse> {
    private boolean hasSuspectResponse;
-   private boolean hasUnsureResponse;
 
    @Override
    public SuccessfulResponse addResponse(Address sender, Response response) {
@@ -34,7 +33,6 @@ public class RemoteGetSingleKeyCollector implements ResponseCollector<Successful
       }
 
       if (response instanceof UnsureResponse) {
-         hasUnsureResponse = true;
          return null;
       } else if (response instanceof CacheNotFoundResponse) {
          hasSuspectResponse = true;

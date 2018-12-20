@@ -81,8 +81,6 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
             GetKeysInGroupCommand cmd = (GetKeysInGroupCommand) rCommand;
             final int commandTopologyId = cmd.getTopologyId();
-            // TODO Dan: We used to throw an exception if the node was still a write owner
-            //  The new check should be better, but maybe we should retry if it's not a primary owner any more?
             if (currentTopologyId() != commandTopologyId &&
                 !distributionManager.getCacheTopology().isReadOwner(cmd.getGroupName())) {
                throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
@@ -195,7 +193,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       return invokeNextAndHandle(ctx, command, handleReadCommandReturn);
    }
 
-   private Object handleExceptionOnCommandReturn(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) throws Throwable {
+   private Object handleExceptionOnReadCommandReturn(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) throws Throwable {
       Throwable ce = t;
       while (ce instanceof RemoteException) {
          ce = ce.getCause();
@@ -205,15 +203,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       int currentTopologyId = cacheTopology.getTopologyId();
       int requestedTopologyId;
       if (ce instanceof SuspectException) {
-         if (trace)
-            getLog().tracef("Retrying command because of suspected node, current topology is %d: %s",
-                  currentTopologyId, rCommand);
-         requestedTopologyId = cmd.getTopologyId() + 1;
-         // Broadcast commands are sent to all cluster members, and they must ignore CacheNotFoundResponses
-         // from nodes that do not have the cache running.
-         if (currentTopologyId == cmd.getTopologyId() && !cacheTopology.getActualMembers().contains(((SuspectException) ce).getSuspect())) {
-            throw new IllegalStateException("Broadcast commands must ignore leavers");
-         }
+         // Read commands must ignore CacheNotFoundResponses
+         throw new IllegalStateException("Read commands must ignore leavers");
       } else if (ce instanceof OutdatedTopologyException) {
          logRetry(currentTopologyId, cmd);
 
@@ -225,12 +216,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          // 5. A receives two unsure responses and throws OTE
          // However, now we are sure that we can immediately retry the request, because C must have updated its topology
          OutdatedTopologyException ote = (OutdatedTopologyException) ce;
-         if (ote.requestedTopologyId >= 0) {
-            // OutdatedTopologyException.RETRY_SAME_TOPOLOGY must preserve the command's topology id
-            requestedTopologyId = Math.max(cmd.getTopologyId(), ote.requestedTopologyId);
-         } else {
-            requestedTopologyId = cmd.getTopologyId() + 1;
-         }
+         requestedTopologyId = cmd.getTopologyId() + ote.topologyIdDelta;
       } else if (ce instanceof AllOwnersLostException) {
          if (trace)
             getLog().tracef("All owners for command %s have been lost.", cmd);
@@ -261,18 +247,18 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          return rv;
 
       // Separate method to allow for inlining of this method since exception should rarely occur
-      return handleExceptionOnCommandReturn(rCtx, rCommand, t);
+      return handleExceptionOnReadCommandReturn(rCtx, rCommand, t);
    }
 
    protected int getNewTopologyId(Throwable ce, int currentTopologyId, TopologyAffectedCommand command) {
-      int requestedTopologyId = command.getTopologyId() + 1;
+      int requestedDelta;
       if (ce instanceof OutdatedTopologyException) {
-         OutdatedTopologyException ote = (OutdatedTopologyException) ce;
-         if (ote.requestedTopologyId >= 0) {
-            requestedTopologyId = ote.requestedTopologyId;
-         }
+         requestedDelta = ((OutdatedTopologyException) ce).topologyIdDelta;
+      } else {
+         // SuspectException
+         requestedDelta = 1;
       }
-      return Math.max(currentTopologyId, requestedTopologyId);
+      return Math.max(currentTopologyId, command.getTopologyId() + requestedDelta);
    }
 
    @Override
