@@ -105,7 +105,10 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    void withTransactionProperties(Properties properties) {
       ConfigurationProperties cp = new ConfigurationProperties(properties);
       this.transactionMode = cp.getTransactionMode();
-      this.transactionManagerLookup = getInstance(loadClass(cp.getTransactionManagerLookup(), builder.classLoader()));
+      String managerLookupClass = cp.getTransactionManagerLookup();
+      if (managerLookupClass != null && !transactionManagerLookup.getClass().getName().equals(managerLookupClass)) {
+         this.transactionManagerLookup = getInstance(loadClass(managerLookupClass, builder.classLoader()));
+      }
       this.timeout = cp.getTransactionTimeout();
    }
 }
