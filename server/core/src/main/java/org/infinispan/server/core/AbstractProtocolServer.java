@@ -11,6 +11,7 @@ import javax.management.ObjectName;
 
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -51,6 +52,11 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
 
    protected AbstractProtocolServer(String protocolName) {
       this.protocolName = protocolName;
+   }
+
+   @Override
+   public String getName() {
+      return protocolName;
    }
 
    protected void startInternal(A configuration, EmbeddedCacheManager cacheManager) {
@@ -218,7 +224,15 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    }
 
    protected void startDefaultCache() {
-      cacheManager.getCache(configuration.defaultCacheName());
+      cacheManager.getCache(defaultCacheName());
+   }
+
+   public String defaultCacheName() {
+      if (configuration.defaultCacheName() != null) {
+         return configuration.defaultCacheName();
+      } else {
+         return cacheManager.getCacheManagerConfiguration().defaultCacheName().orElse(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      }
    }
 
    public boolean isTransportEnabled() {

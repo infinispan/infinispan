@@ -46,6 +46,8 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
    }
 
    private void parseRocksDBCacheStore(XMLExtendedStreamReader reader, RocksDBStoreConfigurationBuilder builder) throws XMLStreamException {
+      String path = null;
+      String relativeTo = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -54,11 +56,11 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
 
          switch (attribute) {
             case PATH: {
-               builder.location(value);
+               path = value;
                break;
             }
             case RELATIVE_TO: {
-               log.ignoreXmlAttribute(attribute);
+               relativeTo = (String) reader.getProperty(value);
                break;
             }
             case CLEAR_THRESHOLD: {
@@ -77,6 +79,10 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
                Parser.parseStoreAttribute(reader, i, builder);
             }
          }
+      }
+      path = ParseUtils.resolvePath(path, relativeTo);
+      if (path != null) {
+         builder.location(path);
       }
 
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {

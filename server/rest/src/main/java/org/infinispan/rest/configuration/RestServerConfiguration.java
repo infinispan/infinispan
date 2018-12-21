@@ -8,12 +8,15 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.rest.RestServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 
 import io.netty.handler.codec.http.cors.CorsConfig;
 
 @BuiltBy(RestServerConfigurationBuilder.class)
+@ConfigurationFor(RestServer.class)
 public class RestServerConfiguration extends ProtocolServerConfiguration {
    public static final AttributeDefinition<ExtendedHeaders> EXTENDED_HEADERS = AttributeDefinition.builder("extended-header", ExtendedHeaders.ON_DEMAND).immutable().build();
    public static final AttributeDefinition<String> CONTEXT_PATH = AttributeDefinition.builder("context-path", "rest").immutable().build();

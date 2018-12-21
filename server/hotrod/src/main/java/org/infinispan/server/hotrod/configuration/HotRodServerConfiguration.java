@@ -4,10 +4,13 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
+import org.infinispan.server.hotrod.HotRodServer;
 
 @BuiltBy(HotRodServerConfigurationBuilder.class)
+@ConfigurationFor(HotRodServer.class)
 public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    public static final String TOPOLOGY_CACHE_NAME_PREFIX = "___hotRodTopologyCache";
 

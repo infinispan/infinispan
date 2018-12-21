@@ -431,7 +431,7 @@ class Encoder2x implements VersionedEncoder {
       ByteBuf buf = alloc.ioBuffer();
       // Sometimes an error happens before we have added the cache to the knownCaches/knownCacheConfigurations map
       // If that happens, we pretend the cache is LOCAL and we skip the topology update
-      String cacheName = header.cacheName.isEmpty() ? server.getConfiguration().defaultCacheName() : header.cacheName;
+      String cacheName = header.cacheName.isEmpty() ? server.defaultCacheName() : header.cacheName;
       Cache<Address, ServerAddress> addressCache = HotRodVersion.forVersion(header.version) != HotRodVersion.UNKNOWN ?
             server.getAddressCache() : null;
 

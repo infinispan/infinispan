@@ -47,6 +47,16 @@
          <artifactId>infinispan-multimap</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>test</scope>
@@ -207,6 +217,7 @@
                   </Export-Package>
                   <Include-Resource>
                      {maven-resources},
+                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
                      ${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
                   </Include-Resource>
                </instructions>
