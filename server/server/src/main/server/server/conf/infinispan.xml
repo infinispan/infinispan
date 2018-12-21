@@ -1,0 +1,63 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:10.0 http://www.infinispan.org/schemas/infinispan-config-10.0.xsd
+                            urn:infinispan:server:10.0 http://www.infinispan.org/schemas/infinispan-server-10.0.xsd"
+        xmlns="urn:infinispan:config:10.0"
+        xmlns:server="urn:infinispan:server:10.0">
+
+   <cache-container default-cache="default" statistics="false">
+      <local-cache name="default" simple-cache="true">
+         <memory>
+            <off-heap/>
+         </memory>
+      </local-cache>
+   </cache-container>
+
+   <server xmlns="urn:infinispan:server:10.0">
+      <interfaces>
+         <interface name="public">
+            <loopback/>
+         </interface>
+         <interface name="admin">
+            <loopback/>
+         </interface>
+      </interfaces>
+
+      <socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
+         <socket-binding name="hotrod" port="11222"/>
+         <socket-binding name="rest" port="8080"/>
+         <socket-binding name="memcached" port="11221"/>
+         <socket-binding name="admin" port="9990" interface="admin"/>
+      </socket-bindings>
+
+      <security>
+         <security-realms>
+            <security-realm name="ManagementRealm">
+               <properties-realm groups-attribute="Roles">
+                  <user-properties path="mgmt-users.properties" relative-to="infinispan.server.config.dir" plain-text="true"/>
+                  <group-properties path="mgmt-groups.properties" relative-to="infinispan.server.config.dir" />
+               </properties-realm>
+            </security-realm>
+            <security-realm name="PublicRealm">
+               <properties-realm groups-attribute="Roles">
+                  <user-properties path="public-users.properties" relative-to="infinispan.server.config.dir" plain-text="true"/>
+                  <group-properties path="public-groups.properties" relative-to="infinispan.server.config.dir" />
+               </properties-realm>
+               <server-identities>
+                  <ssl>
+                     <keystore path="application.keystore" relative-to="infinispan.server.config.dir"
+                               keystore-password="password" alias="server" key-password="password"
+                               generate-self-signed-certificate-host="localhost"/>
+                  </ssl>
+               </server-identities>
+            </security-realm>
+         </security-realms>
+      </security>
+
+      <endpoints>
+         <hotrod-connector socket-binding="hotrod"/>
+         <memcached-connector socket-binding="memcached"/>
+         <rest-connector cache-container="" socket-binding="rest"/>
+      </endpoints>
+   </server>
+</infinispan>

@@ -1,9 +1,10 @@
 package org.infinispan.configuration.parsing;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Stack;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -18,7 +19,7 @@ public class ConfigurationBuilderHolder {
    private ConfigurationBuilder currentConfigurationBuilder;
    private final Map<Class<? extends ConfigurationParser>, ParserContext> parserContexts;
    private final WeakReference<ClassLoader> classLoader;
-   private final Stack<String> scope;
+   private final Deque<String> scope;
    private final Map<String, JGroupsChannelConfigurator> jgroupsStacks;
 
    public ConfigurationBuilderHolder() {
@@ -30,7 +31,7 @@ public class ConfigurationBuilderHolder {
       this.namedConfigurationBuilders = new HashMap<>();
       this.parserContexts = new HashMap<>();
       this.classLoader = new WeakReference<>(classLoader);
-      scope = new Stack<>();
+      scope = new ArrayDeque<>();
       scope.push(ParserScope.GLOBAL.name());
       this.jgroupsStacks = new HashMap<>();
    }

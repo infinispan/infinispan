@@ -48,4 +48,9 @@ public interface ProtocolServer<C extends ProtocolServerConfiguration> extends C
     * Returns a pipeline factory
     */
    ChannelInitializer<Channel> getInitializer();
+
+   /**
+    * Returns the name of this server
+    */
+   String getName();
 }

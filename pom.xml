@@ -115,6 +115,7 @@
       <module>server/hotrod</module>
       <module>server/rest</module>
       <module>server/router</module>
+      <module>server/server</module>
       <module>client/hotrod-client</module>
       <module>atomic-factory</module>
       <module>all</module>

@@ -303,7 +303,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    protected void startDefaultCache() {
-      getCacheInstance(UNKNOWN_TYPES, null, configuration.defaultCacheName(), cacheManager, true, true);
+      getCacheInstance(UNKNOWN_TYPES, null, defaultCacheName(), cacheManager, true, true);
    }
 
    private void preStartCaches() {
@@ -446,7 +446,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       if (!skipCacheCheck) cache = knownCaches.get(scopedCacheKey);
 
       if (cache == null) {
-         String validCacheName = cacheName.isEmpty() ? configuration.defaultCacheName() : cacheName;
+         String validCacheName = cacheName.isEmpty() ? defaultCacheName() : cacheName;
          cache = SecurityActions.getCache(cacheManager, validCacheName).getAdvancedCache();
          Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
          // We don't need synchronization as long as we store the cache last

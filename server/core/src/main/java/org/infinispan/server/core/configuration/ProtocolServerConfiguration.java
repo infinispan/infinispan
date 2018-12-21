@@ -3,7 +3,6 @@ package org.infinispan.server.core.configuration;
 import java.util.Collections;
 import java.util.Set;
 
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -17,7 +16,7 @@ import org.infinispan.server.core.admin.AdminOperationsHandler;
  * @since 5.3
  */
 public abstract class ProtocolServerConfiguration {
-   public static final AttributeDefinition<String> DEFAULT_CACHE_NAME = AttributeDefinition.builder("default-cache", BasicCacheContainer.DEFAULT_CACHE_NAME).immutable().build();
+   public static final AttributeDefinition<String> DEFAULT_CACHE_NAME = AttributeDefinition.builder("default-cache", null, String.class).immutable().build();
    public static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", "").immutable().build();
    public static final AttributeDefinition<String> HOST = AttributeDefinition.builder("host", "127.0.0.1").immutable().build();
    public static final AttributeDefinition<Integer> PORT = AttributeDefinition.builder("port", -1).immutable().build();

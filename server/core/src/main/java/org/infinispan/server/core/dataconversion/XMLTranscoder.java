@@ -29,6 +29,7 @@ import org.xml.sax.XMLReader;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
+import com.thoughtworks.xstream.io.xml.StaxDriver;
 import com.thoughtworks.xstream.security.ForbiddenClassException;
 import com.thoughtworks.xstream.security.NoTypePermission;
 
@@ -44,7 +45,7 @@ public class XMLTranscoder extends OneToManyTranscoder {
    private static final SAXParserFactory SAXFACTORY = SAXParserFactory.newInstance();
 
    private static class XStreamHolder {
-      static final XStream XStream = new XStream();
+      static final XStream XStream = new XStream(new StaxDriver());
    }
 
    public XMLTranscoder() {

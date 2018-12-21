@@ -68,6 +68,16 @@
       <dependency>
          <groupId>com.thoughtworks.xstream</groupId>
          <artifactId>xstream</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>xmlpull</groupId>
+               <artifactId>xmlpull</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>xpp3</groupId>
+               <artifactId>xpp3_min</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -75,14 +85,9 @@
          <optional>true</optional>
       </dependency>
       <dependency>
-         <groupId>org.apache.logging.log4j</groupId>
-         <artifactId>log4j-core</artifactId>
-         <scope>runtime</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.apache.logging.log4j</groupId>
-         <artifactId>log4j-slf4j-impl</artifactId>
-         <scope>runtime</scope>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.testng</groupId>
@@ -110,6 +115,7 @@
                   </Export-Package>
                   <Include-Resource>
                      {maven-resources},
+                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
                      ${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
                   </Include-Resource>
                </instructions>
@@ -118,3 +124,4 @@
       </plugins>
    </build>
 </project>
+

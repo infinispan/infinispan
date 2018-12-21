@@ -5,6 +5,8 @@ import static org.jboss.logging.Logger.Level.WARN;
 
 import java.net.SocketAddress;
 
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -104,4 +106,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Illegal number of ioThreads: %d", id = 5036)
    IllegalArgumentException illegalIOThreads(int ioThreads);
+
+   @Message(value = "No provider for authorization realm", id = 5037)
+   XMLStreamException noProviderForAuthorizationRealm();
 }

@@ -12,6 +12,10 @@
    <name>Parent pom for server modules</name>
    <packaging>pom</packaging>
 
+   <properties>
+      <server.output.dir.prefix>${infinispan.brand.prefix}-server</server.output.dir.prefix>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
