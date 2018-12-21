@@ -13,6 +13,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
@@ -31,6 +32,16 @@ public class MarshallUtil {
    private static final byte NULL_VALUE = -1;
 
    private static final Log log = LogFactory.getLog(MarshallUtil.class);
+
+   public static byte[] toByteArray(ByteBuffer buf) {
+      if (buf.getOffset() == 0 && buf.getLength() == buf.getBuf().length) {
+         return buf.getBuf();
+      } else {
+         byte[] bytes = new byte[buf.getLength()];
+         System.arraycopy(buf.getBuf(), buf.getOffset(), bytes, 0, buf.getLength());
+         return bytes;
+      }
+   }
 
    /**
     * Marshall the {@code map} to the {@code ObjectOutput}.

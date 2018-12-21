@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.DataContainer;
@@ -12,12 +13,9 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.commons.time.TimeService;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
@@ -147,17 +145,12 @@ public class PersistenceUtil {
    }
 
    public static <K, V> InternalCacheEntry<K, V> convert(MarshallableEntry<K, V> loaded, InternalEntryFactory factory) {
-      InternalMetadata metadata = loaded.getMetadata();
+      Metadata metadata = loaded.getMetadata();
       if (metadata != null) {
-         Metadata actual = metadata instanceof InternalMetadataImpl ? ((InternalMetadataImpl) metadata).actual() :
-               metadata;
-         //noinspection unchecked
-         return factory.create(loaded.getKey(), loaded.getValue(), actual, metadata.created(), metadata.lifespan(),
-               metadata.lastUsed(), metadata.maxIdle());
+         return factory.create(loaded.getKey(), loaded.getValue(), metadata, loaded.created(), metadata.lifespan(),
+               loaded.lastUsed(), metadata.maxIdle());
       } else {
-         //metadata is null!
-         //noinspection unchecked
-         return factory.create(loaded.getKey(), loaded.getValue(), (Metadata) null);
+         return factory.create(loaded.getKey(), loaded.getValue(), (Metadata) null, loaded.created(), -1, loaded.lastUsed(), -1);
       }
    }
 

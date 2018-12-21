@@ -9,7 +9,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
@@ -20,6 +19,7 @@ import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.tools.store.migrator.Element;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;
@@ -65,7 +65,9 @@ public class JdbcStoreReader implements StoreIterator {
          case JDBC_BINARY:
             return new BinaryJdbcIterator(connectionFactory, getTableManager(true), marshaller);
          case JDBC_STRING:
-            return new StringJdbcIterator(connectionFactory, getTableManager(false), marshaller, getTwoWayMapper());
+            return props.getMajorVersion() > 9 ?
+                  new StringJdbcIterator10(connectionFactory, getTableManager(false), marshaller, getTwoWayMapper()) :
+                  new StringJdbcIterator(connectionFactory, getTableManager(false), marshaller, getTwoWayMapper());
          case JDBC_MIXED:
             return new MixedJdbcIterator(connectionFactory, getTableManager(true), getTableManager(false),
                   marshaller, getTwoWayMapper());

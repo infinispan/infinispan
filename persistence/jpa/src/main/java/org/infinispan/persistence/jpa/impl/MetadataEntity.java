@@ -7,7 +7,9 @@ import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Version;
 
-import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.persistence.spi.MarshallableEntry;
 
 /**
  * Entity which should hold serialized metadata
@@ -18,6 +20,8 @@ import org.infinispan.commons.io.ByteBuffer;
 @Table(name = "`__ispn_metadata__`")
 public class MetadataEntity {
    public static final String EXPIRATION = "expiration";
+   private static final String CREATED = "created";
+   private static final String LAST_USED = "lastused";
 
    @EmbeddedId
    private MetadataEntityKey key;
@@ -29,31 +33,26 @@ public class MetadataEntity {
    private byte[] metadata;
    @Column(name = EXPIRATION)
    private long expiration; // to simplify query for expired entries
+   @Column(name = CREATED)
+   private long created;
+   @Column(name = LAST_USED)
+   private long lastUsed;
    @Version
    private int version;
 
    public MetadataEntity() {
    }
 
-   public MetadataEntity(ByteBuffer key, ByteBuffer metadata, long expiration) {
-      this.keyBytes = trimmedBytes(key);
+   public MetadataEntity(MarshallableEntry me) {
+      this.keyBytes = MarshallUtil.toByteArray(me.getKeyBytes());
       this.key = new MetadataEntityKey(keyBytes);
-      if (metadata != null) {
-         this.metadata = trimmedBytes(metadata);
+      Metadata meta = me.getMetadata();
+      if (meta != null) {
+         this.metadata = MarshallUtil.toByteArray(me.getMetadataBytes());
       }
-      this.expiration = expiration < 0 ? Long.MAX_VALUE : expiration;
-   }
-
-   private byte[] trimmedBytes(ByteBuffer buf) {
-      // If the underlying buffer is correctly aligned we can use it, but otherwise that
-      // would produce different result when the key was marshalled second time
-      if (buf.getOffset() == 0 && buf.getLength() == buf.getBuf().length) {
-         return buf.getBuf();
-      } else {
-         byte[] bytes = new byte[buf.getLength()];
-         System.arraycopy(buf.getBuf(), buf.getOffset(), bytes, 0, buf.getLength());
-         return bytes;
-      }
+      this.expiration = (meta == null || me.expiryTime() < 0) ? Long.MAX_VALUE : me.expiryTime();
+      this.created = me.created();
+      this.lastUsed = me.lastUsed();
    }
 
    public MetadataEntityKey getKey() {
@@ -86,6 +85,22 @@ public class MetadataEntity {
 
    public void setExpiration(long expiration) {
       this.expiration = expiration;
+   }
+
+   public long getCreated() {
+      return created;
+   }
+
+   public void setCreated(long created) {
+      this.created = created;
+   }
+
+   public long getLastUsed() {
+      return lastUsed;
+   }
+
+   public void setLastUsed(long lastUsed) {
+      this.lastUsed = lastUsed;
    }
 
    public int getVersion() {

@@ -110,7 +110,6 @@ import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -1631,12 +1630,6 @@ public class TestingUtil {
       return new EmbeddedMetadata.Builder().lifespan(lifespan != null ? lifespan : -1)
             .maxIdle(maxIdle != null ? maxIdle : -1).build();
    }
-
-   public static InternalMetadataImpl internalMetadata(Long lifespan, Long maxIdle) {
-      long now = System.currentTimeMillis();
-      return new InternalMetadataImpl(metadata(lifespan, maxIdle), now, now);
-   }
-
 
    public static <T extends CacheLoader<K, V>, K, V>  T getFirstLoader(Cache<K, V> cache) {
       PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);

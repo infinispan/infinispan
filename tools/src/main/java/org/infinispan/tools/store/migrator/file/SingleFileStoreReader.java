@@ -99,7 +99,7 @@ public class SingleFileStoreReader implements StoreIterator {
 
                   org.infinispan.commons.io.ByteBuffer keyBb = new ByteBufferImpl(data, 0, keyLen);
                   org.infinispan.commons.io.ByteBuffer valueBb = new ByteBufferImpl(data, keyLen, dataLen);
-                  return entryFactory.create(keyBb, valueBb, (org.infinispan.commons.io.ByteBuffer) null);
+                  return entryFactory.create(keyBb, valueBb);
                } catch (IOException e) {
                   throw new CacheException(String.format("Unable to read file entry at offset %d", filePos), e);
                }

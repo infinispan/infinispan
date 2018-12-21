@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
@@ -146,7 +145,7 @@ public class TxBatchUpdater extends AbstractVisitor {
          if (generateStatistics) putCount++;
          InternalCacheValue sv = entryFactory.getValueFromCtx(key, ctx);
          if (sv != null && sv.getValue() != null) {
-            MarshallableEntry me = marshalledEntryFactory.create(key, sv.getValue(), internalMetadata(sv));
+            MarshallableEntry me = marshalledEntryFactory.create(key, sv.getValue(), sv.getMetadata(), sv.getCreated(), sv.getLastUsed());
             getModifications(ctx, key, command).addMarshalledEntry(key, me);
          }
       }
@@ -164,7 +163,7 @@ public class TxBatchUpdater extends AbstractVisitor {
             if (generateStatistics) putCount++;
             InternalCacheValue sv = entryFactory.getValueFromCtx(key, ctx);
             if (sv != null) {
-               MarshallableEntry me = marshalledEntryFactory.create(key, sv.getValue(), internalMetadata(sv));
+               MarshallableEntry me = marshalledEntryFactory.create(key, sv.getValue(), sv.getMetadata(), sv.getCreated(), sv.getLastUsed());
                getModifications(ctx, key, command).addMarshalledEntry(key, me);
             }
          }

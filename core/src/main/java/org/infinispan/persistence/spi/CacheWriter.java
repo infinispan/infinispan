@@ -34,7 +34,7 @@ public interface CacheWriter<K, V> extends Lifecycle {
     * @see MarshallableEntry
     */
    default void write(MarshallableEntry<? extends K, ? extends V> entry) {
-      write(MarshalledEntry.wrap(entry));
+      write(entry.asMarshalledEntry());
    }
 
    /**
@@ -79,7 +79,7 @@ public interface CacheWriter<K, V> extends Lifecycle {
       try {
          writeBatch(
                Flowable.fromPublisher((Publisher) publisher)
-                     .map(e -> MarshalledEntry.wrap((MarshallableEntry) e))
+                     .map(e -> ((MarshallableEntry) e).asMarshalledEntry())
                      .blockingIterable()
          );
          future.complete(null);

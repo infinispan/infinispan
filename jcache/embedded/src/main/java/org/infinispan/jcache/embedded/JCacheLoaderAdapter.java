@@ -1,20 +1,18 @@
 package org.infinispan.jcache.embedded;
 
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.jcache.Exceptions;
-import org.infinispan.jcache.Expiration;
-import org.infinispan.jcache.logging.Log;
-import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.PersistenceException;
-
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CacheLoader;
 
-public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi.CacheLoader {
+import org.infinispan.jcache.Exceptions;
+import org.infinispan.jcache.Expiration;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.PersistenceException;
 
-   private static final Log log = LogFactory.getLog(JCacheLoaderAdapter.class, Log.class);
+public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi.CacheLoader {
 
    private CacheLoader<K, V> delegate;
    private InitializationContext ctx;
@@ -40,21 +38,19 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
    }
 
    @Override
-   public MarshallableEntry loadEntry(Object key) throws PersistenceException {
+   public MarshallableEntry<K,V> loadEntry(Object key) throws PersistenceException {
       V value = loadValue(key);
-
       if (value != null) {
          Duration expiry = Expiration.getExpiry(expiryPolicy, Expiration.Operation.CREATION);
-         long now = ctx.getTimeService().wallClockTime(); // ms
          if (expiry == null || expiry.isEternal()) {
-            return ctx.getMarshallableEntryFactory().create(key, value, null);
+            return ctx.<K,V>getMarshallableEntryFactory().create(key, value);
          } else {
+            long now = ctx.getTimeService().wallClockTime();
             long exp = now + expiry.getTimeUnit().toMillis(expiry.getDurationAmount());
-            JCacheInternalMetadata meta = new JCacheInternalMetadata(now, exp);
-            return ctx.getMarshallableEntryFactory().create(key, value, meta);
+            Metadata meta = new EmbeddedMetadata.Builder().lifespan(exp - now).build();
+            return ctx.<K,V>getMarshallableEntryFactory().create(key, value, meta, now, -1);
          }
       }
-
       return null;
    }
 

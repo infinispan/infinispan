@@ -58,5 +58,5 @@ public interface InitializationContext {
    /**
     * Should be used to build all {@link MarshallableEntry} objects.
     */
-   MarshallableEntryFactory getMarshallableEntryFactory();
+   <K,V> MarshallableEntryFactory<K,V> getMarshallableEntryFactory();
 }

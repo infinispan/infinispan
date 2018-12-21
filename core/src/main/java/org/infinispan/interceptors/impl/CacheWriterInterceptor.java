@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
@@ -471,7 +470,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    MarshallableEntry marshalledEntry(InvocationContext ctx, Object key) {
       InternalCacheValue sv = entryFactory.getValueFromCtx(key, ctx);
-      return sv != null ? marshalledEntryFactory.create(key, sv.getValue(), internalMetadata(sv)) : null;
+      return sv != null ? marshalledEntryFactory.create(key, sv.getValue(), sv.getMetadata(), sv.getCreated(), sv.getLastUsed()) : null;
    }
 
    protected boolean skipSharedStores(InvocationContext ctx, Object key, FlagAffectedCommand command) {

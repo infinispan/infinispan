@@ -88,7 +88,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       if (response.isSuccessful() && response instanceof SuccessfulResponse) {
          InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) response).getResponseValue();
          return value == null ? null :
-               ctx.getMarshallableEntryFactory().create(key, value.getValue(), null);
+               ctx.getMarshallableEntryFactory().create(key, value.getValue());
       }
 
       log.unknownResponsesFromRemoteCache(responses);

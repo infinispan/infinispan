@@ -206,6 +206,8 @@ public interface Ids {
    int SIMPLE_PUBLISHER_RESULT = 140;
    int PUBLISHER_REDUCERS = 141;
 
+   int MARSHALLED_VALUE = 142;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

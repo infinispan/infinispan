@@ -24,30 +24,34 @@ class LogRequest {
    private final ByteBuffer serializedKey;
    private final ByteBuffer serializedMetadata;
    private final ByteBuffer serializedValue;
+   private final long created;
+   private final long lastUsed;
    private boolean canContinue = false;
    private volatile IndexRequest indexRequest;
 
-   private LogRequest(Type type, Object key, long expirationTime, ByteBuffer serializedKey, ByteBuffer serializedMetadata, ByteBuffer serializedValue) {
+   private LogRequest(Type type, Object key, long expirationTime, ByteBuffer serializedKey, ByteBuffer serializedMetadata,
+                      ByteBuffer serializedValue, long created, long lastUsed) {
       this.key = key;
       this.expirationTime = expirationTime;
       this.serializedKey = serializedKey;
       this.serializedMetadata = serializedMetadata;
       this.serializedValue = serializedValue;
+      this.created = created;
+      this.lastUsed = lastUsed;
       this.type = type;
    }
 
    private LogRequest(Type type) {
-      this(type, null, 0, null, null, null);
+      this(type, null, 0, null, null, null, -1, -1);
    }
 
    public static LogRequest storeRequest(MarshallableEntry entry) {
-      return new LogRequest(Type.STORE, entry.getKey(),
-            entry.getMetadata() == null ? -1 : entry.getMetadata().expiryTime(),
-            entry.getKeyBytes(), entry.getMetadataBytes(), entry.getValueBytes());
+      return new LogRequest(Type.STORE, entry.getKey(), entry.expiryTime(), entry.getKeyBytes(), entry.getMetadataBytes(),
+            entry.getValueBytes(), entry.created(), entry.lastUsed());
    }
 
    public static LogRequest deleteRequest(Object key, ByteBuffer serializedKey) {
-      return new LogRequest(Type.DELETE, key, -1, serializedKey, null, null);
+      return new LogRequest(Type.DELETE, key, -1, serializedKey, null, null, -1, -1);
    }
 
    public static LogRequest clearRequest() {
@@ -65,7 +69,7 @@ class LogRequest {
    public int length() {
       return EntryHeader.HEADER_SIZE + serializedKey.getLength()
             + (serializedValue != null ? serializedValue.getLength() : 0)
-            + (serializedMetadata != null ? serializedMetadata.getLength() : 0);
+            + EntryMetadata.size(serializedMetadata);
    }
 
    public Object getKey() {
@@ -82,6 +86,14 @@ class LogRequest {
 
    public ByteBuffer getSerializedValue() {
       return serializedValue;
+   }
+
+   public long getCreated() {
+      return created;
+   }
+
+   public long getLastUsed() {
+      return lastUsed;
    }
 
    public long getExpiration() {

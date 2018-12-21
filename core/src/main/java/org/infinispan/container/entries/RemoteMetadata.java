@@ -1,17 +1,17 @@
 package org.infinispan.container.entries;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
+
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
-import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.transport.Address;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 
 /**
  * This is a metadata type used by scattered cache during state transfer. The address points to node which has last
@@ -21,7 +21,7 @@ import java.util.Set;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class RemoteMetadata implements InternalMetadata {
+public class RemoteMetadata implements Metadata {
    private final Address address;
    private final int topologyId;
    private final long version;
@@ -41,26 +41,6 @@ public class RemoteMetadata implements InternalMetadata {
 
    public Address getAddress() {
       return address;
-   }
-
-   @Override
-   public long created() {
-      return -1;
-   }
-
-   @Override
-   public long lastUsed() {
-      return -1;
-   }
-
-   @Override
-   public boolean isExpired(long now) {
-      return false;
-   }
-
-   @Override
-   public long expiryTime() {
-      return -1;
    }
 
    @Override

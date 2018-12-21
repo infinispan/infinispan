@@ -37,7 +37,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.remoting.responses.Response;
@@ -291,7 +291,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                         int segmentId = keyPartitioner.getSegment(me.getKey());
                         if (finalCompletedSegments.contains(segmentId)) {
                            try {
-                              InternalMetadata metadata = me.getMetadata();
+                              Metadata metadata = me.getMetadata();
                               if (metadata instanceof RemoteMetadata) {
                                  Address backup = ((RemoteMetadata) metadata).getAddress();
                                  retrieveEntry(me.getKey(), backup);

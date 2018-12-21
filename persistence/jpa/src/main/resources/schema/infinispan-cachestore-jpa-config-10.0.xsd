@@ -40,7 +40,7 @@
         <xs:attribute name="store-metadata" type="xs:boolean" default="${JpaStore.storeMetadata}">
           <xs:annotation>
             <xs:documentation>
-              Store Infinispan metadata (expiration, versioning) with the
+              Store Infinispan metadata (expiration, versioning, timestamps) with the
               entries. Default is true.
             </xs:documentation>
           </xs:annotation>

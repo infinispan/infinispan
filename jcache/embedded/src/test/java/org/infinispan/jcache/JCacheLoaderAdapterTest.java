@@ -1,26 +1,26 @@
 package org.infinispan.jcache;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.jcache.embedded.JCacheLoaderAdapter;
 import org.infinispan.jcache.util.InMemoryJCacheLoader;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.EmbeddedTimeService;
-import org.infinispan.commons.time.TimeService;
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.assertFalse;
+import org.testng.annotations.Test;
 
 /**
  * Unit tests for {@link JCacheLoaderAdapter}.
