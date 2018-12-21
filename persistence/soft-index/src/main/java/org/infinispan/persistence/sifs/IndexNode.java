@@ -957,7 +957,7 @@ class IndexNode {
                      if (key == null) {
                         throw new IllegalStateException("Error reading key from " + file + ":" + readOffset);
                      }
-                     headerAndKey = new EntryRecord(header, key, null, null);
+                     headerAndKey = new EntryRecord(header, key);
                      keyReference = new SoftReference<>(headerAndKey);
                   } finally {
                      if (ownHandle) {

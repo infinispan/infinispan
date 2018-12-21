@@ -13,6 +13,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternallyMarshallable;
 import org.infinispan.persistence.jpa.entity.User;
 import org.infinispan.persistence.jpa.entity.Vehicle;
 import org.infinispan.persistence.jpa.entity.VehicleId;
@@ -27,6 +28,7 @@ public class JpaConfigurationTest {
    private static final String PERSISTENCE_UNIT_NAME = "org.infinispan.persistence.jpa.configurationTest";
 
    public void testConfigBuilder() {
+      ExternallyMarshallable.addToWhiteList(User.class.getName());
       GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
             .globalJmxStatistics().transport().defaultTransport().build();
 

@@ -39,7 +39,8 @@ public enum Element {
    TABLE_NAME_PREFIX("table_name_prefix"),
    TIMESTAMP("timestamp"),
    TYPE("type"),
-   USERNAME("username");
+   USERNAME("username"),
+   VERSION("version");
 
    private final String name;
 

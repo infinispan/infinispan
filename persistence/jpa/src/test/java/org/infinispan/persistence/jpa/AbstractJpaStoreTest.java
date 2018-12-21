@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.ExternallyMarshallable;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
@@ -47,6 +48,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
    }
 
    protected JpaStore createCacheStore() {
+      ExternallyMarshallable.addToWhiteList(getEntityClass().getName());
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JpaStoreConfigurationBuilder.class)
             .persistenceUnitName(PERSISTENCE_UNIT_NAME)
@@ -86,7 +88,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
    }
 
    protected MarshallableEntry createEntry(Object key, Object value) {
-      return entryFactory.create(key, value, null);
+      return entryFactory.create(key, value);
    }
 
    protected MarshallableEntry createEntry(TestObject obj) {

@@ -1,7 +1,7 @@
 package org.infinispan.persistence;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
@@ -27,7 +27,7 @@ public class AsyncStoreParallelIterationTest extends ParallelIterationTest {
    }
 
    @Override
-   protected void assertMetadataEmpty(InternalMetadata metadata) {
+   protected void assertMetadataEmpty(Metadata metadata) {
       // Async store always returns the metadata
    }
 }

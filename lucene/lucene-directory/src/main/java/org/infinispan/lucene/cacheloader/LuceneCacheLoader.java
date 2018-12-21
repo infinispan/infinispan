@@ -60,13 +60,13 @@ public class LuceneCacheLoader<K, V> implements AdvancedCacheLoader<K, V> {
    }
 
    @Override
-   public MarshallableEntry loadEntry(final Object key) {
+   public MarshallableEntry<K,V> loadEntry(final Object key) {
       if (key instanceof IndexScopedKey) {
          final IndexScopedKey indexKey = (IndexScopedKey)key;
          DirectoryLoaderAdaptor directoryAdaptor = getDirectory(indexKey);
          Object value = directoryAdaptor.load(indexKey);
          if (value != null) {
-            return ctx.getMarshallableEntryFactory().create(key, value, null);
+            return ctx.<K,V>getMarshallableEntryFactory().create(key, value);
          }
          else {
             return null;

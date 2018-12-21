@@ -20,11 +20,11 @@ import org.infinispan.util.logging.LogFactory;
  * LegacyVersionAwareMarshaller that is used to read bytes marshalled using Infinispan 8.x. This is useful for providing
  * a migration path between 8.x and 9.x stores.
  */
-public class LegacyVersionAwareMarshaller extends AbstractMarshaller implements StreamingMarshaller {
-   private static final Log log = LogFactory.getLog(LegacyVersionAwareMarshaller.class);
+public class Infinispan8Marshaller extends AbstractMarshaller implements StreamingMarshaller {
+   private static final Log log = LogFactory.getLog(Infinispan8Marshaller.class);
    private final LegacyJBossMarshaller defaultMarshaller;
 
-   public LegacyVersionAwareMarshaller(Map<Integer, ? extends AdvancedExternalizer<?>> externalizerMap) {
+   public Infinispan8Marshaller(Map<Integer, ? extends AdvancedExternalizer<?>> externalizerMap) {
       this.defaultMarshaller = new LegacyJBossMarshaller(this, externalizerMap);
    }
 

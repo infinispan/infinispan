@@ -1,13 +1,13 @@
 package org.infinispan.eviction.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
-import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -19,12 +19,11 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -74,8 +73,8 @@ public class PassivationManagerImpl implements PassivationManager {
                ImmutableContext.INSTANCE, null);
          if (trace) log.tracef("Passivating entry %s", toStr(key));
          try {
-            MarshallableEntry marshalledEntry = marshalledEntryFactory.create(key, entry.getValue(),
-                                                                                        internalMetadata(entry));
+            MarshallableEntry marshalledEntry = marshalledEntryFactory.create(key, entry.getValue(), entry.getMetadata(),
+                  entry.getExpiryTime(), entry.getLastUsed());
             persistenceManager.writeToAllNonTxStores(marshalledEntry, keyPartitioner.getSegment(key), BOTH);
             if (statsEnabled) passivations.getAndIncrement();
          } catch (CacheException e) {
@@ -94,7 +93,7 @@ public class PassivationManagerImpl implements PassivationManager {
 
          int count = container.sizeIncludingExpired();
          Iterable<MarshallableEntry> iterable = () -> new IteratorMapper<>(container.iterator(), e ->
-            marshalledEntryFactory.create(e.getKey(), e.getValue(), internalMetadata(e)));
+            marshalledEntryFactory.create(e.getKey(), e.getValue(), e.getMetadata(), e.getExpiryTime(), e.getLastUsed()));
          persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0);
          log.passivatedEntries(count, Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
       }

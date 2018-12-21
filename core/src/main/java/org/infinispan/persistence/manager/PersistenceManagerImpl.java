@@ -69,7 +69,6 @@ import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
@@ -320,11 +319,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
       final AdvancedCache<Object, Object> flaggedCache = getCacheForStateInsertion();
       Long insertAmount = Flowable.fromPublisher(preloadCl.entryPublisher(null, true, true))
             .take(maxEntries)
-            .doOnNext(me -> {
-               //the downcast will go away with ISPN-3460
-               Metadata metadata = me.getMetadata() != null ? ((InternalMetadataImpl) me.getMetadata()).actual() : null;
-               preloadKey(flaggedCache, me.getKey(), me.getValue(), metadata);
-            }).count().blockingGet();
+            .doOnNext(me ->  preloadKey(flaggedCache, me.getKey(), me.getValue(), me.getMetadata()))
+            .count()
+            .blockingGet();
       this.preloaded = insertAmount < maxEntries;
 
       log.debugf("Preloaded %d keys in %s", loadedEntries.get(), Util.prettyPrintTime(timeService.timeDuration(start, MILLISECONDS)));

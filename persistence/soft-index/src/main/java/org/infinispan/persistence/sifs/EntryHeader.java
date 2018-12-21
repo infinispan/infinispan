@@ -49,7 +49,7 @@ public class EntryHeader {
 
    @Override
    public String toString() {
-      return String.format("[keyLength=%d, valueLength=%d, seqId=%d, expiration=%d]", keyLength, valueLength, seqId, expiration);
+      return String.format("[keyLength=%d, valueLength=%d, metadataLength=%d, seqId=%d, expiration=%d]", keyLength, valueLength, metadataLength, seqId, expiration);
    }
 
    public int totalLength() {

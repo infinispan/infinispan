@@ -75,7 +75,8 @@ public class InitializationContextImpl implements InitializationContext {
    }
 
    @Override
-   public MarshallableEntryFactory getMarshallableEntryFactory() {
+   public <K,V> MarshallableEntryFactory<K,V> getMarshallableEntryFactory() {
+      //noinspection unchecked
       return marshallableEntryFactory;
    }
 

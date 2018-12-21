@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
@@ -21,8 +20,8 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -31,6 +30,8 @@ import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Allows for cluster based expirations to occur.  This provides guarantees that when an entry is expired that it will
@@ -246,7 +247,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       K key = marshalledEntry.getKey();
       if (expiring.putIfAbsent(key, key) == null) {
          try {
-            InternalMetadata metadata = marshalledEntry.getMetadata();
+            Metadata metadata = marshalledEntry.getMetadata();
             cache.removeLifespanExpired(key, marshalledEntry.getValue(), metadata.lifespan() == -1 ? null : metadata.lifespan())
                   .join();
          } finally {

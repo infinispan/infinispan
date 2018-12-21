@@ -1,7 +1,5 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import static org.infinispan.persistence.PersistenceUtil.getExpiryTime;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -45,6 +43,7 @@ import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
+import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
@@ -365,7 +364,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       Connection conn = null;
       PreparedStatement ps = null;
       ResultSet rs = null;
-      MarshallableEntry<K, V> storedValue = null;
+      MarshallableEntry<K, V> entry = null;
       try {
          String sql = tableManager.getSelectRowSql();
          conn = connectionFactory.getConnection();
@@ -374,8 +373,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          rs = ps.executeQuery();
          if (rs.next()) {
             InputStream inputStream = rs.getBinaryStream(2);
-            KeyValuePair<ByteBuffer, ByteBuffer> icv = unmarshall(inputStream);
-            storedValue = marshalledEntryFactory.create(key, icv.getKey(), icv.getValue());
+            entry = marshalledEntryFactory.create(key, unmarshall(inputStream));
          }
       } catch (SQLException e) {
          log.sqlFailureReadingKey(key, lockingKey, e);
@@ -387,11 +385,11 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
       }
-      if (storedValue != null && storedValue.getMetadata() != null &&
-            storedValue.getMetadata().isExpired(timeService.wallClockTime())) {
+      if (entry != null && entry.getMetadata() != null &&
+            entry.isExpired(timeService.wallClockTime())) {
          return null;
       }
-      return storedValue;
+      return entry;
    }
 
    @Override
@@ -733,12 +731,11 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    }
 
    private void prepareStatement(MarshallableEntry entry, String key, int segment, PreparedStatement ps, boolean upsert) throws InterruptedException, SQLException {
-      ByteBuffer byteBuffer = marshall(new KeyValuePair(entry.getValueBytes(), entry.getMetadataBytes()));
-      long expiryTime = getExpiryTime(entry.getMetadata());
+      ByteBuffer byteBuffer = marshall(entry.getMarshalledValue());
       if (upsert) {
-         tableManager.prepareUpsertStatement(ps, key, expiryTime, segment, byteBuffer);
+         tableManager.prepareUpsertStatement(ps, key, entry.expiryTime(), segment, byteBuffer);
       } else {
-         tableManager.prepareUpdateStatement(ps, key, expiryTime, segment, byteBuffer);
+         tableManager.prepareUpdateStatement(ps, key, entry.expiryTime(), segment, byteBuffer);
       }
    }
 
@@ -791,7 +788,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       private final boolean fetchValue;
       private final boolean fetchMetadata;
 
-      public ResultSetEntryIterator(ResultSet rs, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+      ResultSetEntryIterator(ResultSet rs, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
          this.rs = rs;
          this.filter = filter;
          this.fetchValue = fetchValue;
@@ -800,27 +797,29 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
 
       @Override
       protected MarshallableEntry<K, V> getNext() {
-         MarshallableEntry<K, V> entry = null;
          try {
-            while (entry == null && rs.next()) {
+            while (rs.next()) {
                String keyStr = rs.getString(2);
                K key = (K) ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
 
                if (filter == null || filter.test(key)) {
                   if (fetchValue || fetchMetadata) {
                      InputStream inputStream = rs.getBinaryStream(1);
-                     KeyValuePair<ByteBuffer, ByteBuffer> kvp = unmarshall(inputStream);
-                     entry = marshalledEntryFactory.create(
-                           key, fetchValue ? kvp.getKey() : null, fetchMetadata ? kvp.getValue() : null);
+                     MarshalledValue value = unmarshall(inputStream);
+                     return marshalledEntryFactory.create(key,
+                           fetchValue ? value.getValueBytes() : null,
+                           fetchMetadata ? value.getMetadataBytes() : null,
+                           value.getCreated(),
+                           value.getLastUsed());
                   } else {
-                     entry = marshalledEntryFactory.create(key, (Object) null, null);
+                     return marshalledEntryFactory.create(key);
                   }
                }
             }
          } catch (SQLException e) {
             throw new CacheException(e);
          }
-         return entry;
+         return null;
       }
    }
 

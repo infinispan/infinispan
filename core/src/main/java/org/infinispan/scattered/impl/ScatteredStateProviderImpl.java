@@ -14,7 +14,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
@@ -175,7 +174,7 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
             }
          },
          (me, ef) -> {
-            InternalMetadata metadata = me.getMetadata();
+            Metadata metadata = me.getMetadata();
             if (metadata != null && metadata.version() != null) {
                return ef.create(me.getKey(), null, new RemoteMetadata(localAddress, metadata.version()));
             } else {

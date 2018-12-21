@@ -18,16 +18,16 @@ import org.testng.annotations.Test;
  * Tests to ensure that LegacyVersionAwareMarshaller can correctly unmarshall infinispan 8.x bytes. Note, instructions
  * on how to generate the bin file used in this test are found in the comments at the bottom of the test.
  */
-@Test(testName = "tools.LegacyVersionAwareMarshallerTest", groups = "functional")
-public class LegacyVersionAwareMarshallerTest {
+@Test(testName = "tools.Infinispan8MarshallerTest", groups = "functional")
+public class Infinispan8MarshallerTest {
 
    private final StreamingMarshaller marshaller;
    private Map<String, byte[]> byteMap;
 
-   public LegacyVersionAwareMarshallerTest() {
+   public Infinispan8MarshallerTest() {
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = new HashMap<>();
       externalizerMap.put(256, new TestUtil.TestObjectExternalizer());
-      marshaller = new LegacyVersionAwareMarshaller(externalizerMap);
+      marshaller = new Infinispan8Marshaller(externalizerMap);
    }
 
    @BeforeClass(alwaysRun = true)

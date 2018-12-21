@@ -8,20 +8,17 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -125,18 +122,6 @@ public class PersistenceUtil {
       return Flowable.fromPublisher(acl.entryPublisher(filter, true, true))
             .map(me -> ief.create(me.getKey(), me.getValue(), me.getMetadata()))
             .collectInto(new HashSet<InternalCacheEntry<K, V>>(), Set::add).blockingGet();
-   }
-
-   public static long getExpiryTime(InternalMetadata internalMetadata) {
-      return internalMetadata == null ? -1 : internalMetadata.expiryTime();
-   }
-
-   public static InternalMetadata internalMetadata(InternalCacheEntry ice) {
-      return ice.getMetadata() == null ? null : new InternalMetadataImpl(ice);
-   }
-
-   public static InternalMetadata internalMetadata(InternalCacheValue icv) {
-      return icv.getMetadata() == null ? null : new InternalMetadataImpl(icv.getMetadata(), icv.getCreated(), icv.getLastUsed());
    }
 
    /**

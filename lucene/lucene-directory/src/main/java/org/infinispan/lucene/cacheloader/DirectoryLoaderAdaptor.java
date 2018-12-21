@@ -62,7 +62,7 @@ final class DirectoryLoaderAdaptor {
     * @param entriesCollector loaded entries are collected in this set
     * @param maxEntries to limit amount of entries loaded
     */
-   protected <K, V> void loadAllEntries(final Set<MarshallableEntry<K, V>> entriesCollector, final int maxEntries, MarshallableEntryFactory entryFactory) {
+   protected <K, V> void loadAllEntries(final Set<MarshallableEntry<K, V>> entriesCollector, final int maxEntries, MarshallableEntryFactory<K,V> entryFactory) {
       int existingElements = entriesCollector.size();
       int toLoadElements = maxEntries - existingElements;
       if (toLoadElements <= 0) {
@@ -73,7 +73,7 @@ final class DirectoryLoaderAdaptor {
       for (IndexScopedKey key : keysCollector) {
          Object value = load(key);
          if (value != null) {
-            MarshallableEntry cacheEntry = entryFactory.create(key, value, null);
+            MarshallableEntry<K,V> cacheEntry = entryFactory.create(key, value);
             entriesCollector.add(cacheEntry);
          }
       }

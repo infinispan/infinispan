@@ -14,6 +14,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
@@ -25,18 +26,16 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
 /**
@@ -109,7 +108,7 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
                .lifespan(1, TimeUnit.SECONDS).build();
 
          long now = timeService.wallClockTime();
-         return factory.create(key, VALUE, new InternalMetadataImpl(metadata, now, now));
+         return factory.create(key, VALUE, metadata, now, now);
       }
 
       @Override

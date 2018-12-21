@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
 
 /**
  * A byte buffer that exposes the internal byte array with minimal copying
@@ -63,11 +64,7 @@ public class ByteBufferImpl implements ByteBuffer {
 
    @Override
    public String toString() {
-      StringBuilder sb = new StringBuilder();
-      sb.append(length).append(" bytes");
-      if (offset > 0)
-         sb.append(" (offset=").append(offset).append(")");
-      return sb.toString();
+      return String.format("ByteBufferImpl{length=%d, offset=%d, bytes=%s}", length, offset, buf == null ? null : Util.hexDump(buf));
    }
 
    @Override

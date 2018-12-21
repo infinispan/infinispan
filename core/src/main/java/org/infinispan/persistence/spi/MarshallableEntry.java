@@ -1,7 +1,8 @@
 package org.infinispan.persistence.spi;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.metadata.Metadata;
 
 /**
  * Defines an externally persisted entry. External stores that keep the data in serialised form should return an
@@ -43,5 +44,29 @@ public interface MarshallableEntry<K, V> {
    /**
     * @return might be null if there's no metadata associated with the object (e.g. expiry info, version..).
     */
-   InternalMetadata getMetadata();
+   Metadata getMetadata();
+
+   long created();
+
+   long lastUsed();
+
+   boolean isExpired(long now);
+
+   long expiryTime();
+
+   /**
+    * A bridge method required to ensure backwards compatibility with old store implementations that rely on {@link
+    * MarshalledEntry}. It's not possible to simply create a static wrapper class around a {@link MarshallableEntry} as
+    * {@link MarshalledEntry#getMetadataBytes()} is different from {@link MarshalledEntry#getMetadataBytes()} and we
+    * require a {@link org.infinispan.commons.marshall.Marshaller} instance to generate said bytes.
+    *
+    * @deprecated This should not be used by users and will be removed in subsequent versions along with {@link
+    * MarshalledEntry}.
+    */
+   @Deprecated
+   default MarshalledEntry<K, V> asMarshalledEntry() {
+      return null;
+   }
+
+   MarshalledValue getMarshalledValue();
 }

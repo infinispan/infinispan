@@ -50,8 +50,8 @@ public class BatchModification {
     */
    @Deprecated
    public Collection<MarshalledEntry> getMarshalledEntries() {
-      return (Collection<MarshalledEntry>) marshalledEntries.values().stream()
-            .map(e -> MarshalledEntry.wrap(e))
+      return marshalledEntries.values().stream()
+            .map(MarshallableEntry::asMarshalledEntry)
             .collect(Collectors.toList());
    }
 

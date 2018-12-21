@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.persistence.sifs.EntryHeader;
 import org.infinispan.persistence.sifs.EntryRecord;
@@ -89,7 +88,7 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
                         handle.close();
                         file = -1;
                      }
-                     return entryFactory.create(new ByteBufferImpl(serializedKey), new ByteBufferImpl(serializedValue), (ByteBuffer) null);
+                     return entryFactory.create(new ByteBufferImpl(serializedKey), new ByteBufferImpl(serializedValue));
                   }
                   offset += header.totalLength();
                }

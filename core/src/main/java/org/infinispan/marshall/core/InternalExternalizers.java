@@ -80,6 +80,7 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.TriangleAckExternalizer;
 import org.infinispan.marshall.exts.UuidExternalizer;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.impl.MarshalledValueImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
@@ -240,6 +241,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new SimpleClusteredVersion.Externalizer(), exts);
       addInternalExternalizer(new StateChunk.Externalizer(), exts);
       addInternalExternalizer(new StatsEnvelope.Externalizer(), exts);
+      addInternalExternalizer(new MarshalledValueImpl.Externalizer(), exts);
       addInternalExternalizer(new StreamMarshalling.StreamMarshallingExternalizer(), exts);
       addInternalExternalizer(new SuccessfulResponse.Externalizer(), exts);
       addInternalExternalizer(new SyncConsistentHashFactory.Externalizer(), exts);

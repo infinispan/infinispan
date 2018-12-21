@@ -70,7 +70,8 @@ public class DummyInitializationContext implements InitializationContext {
    }
 
    @Override
-   public MarshallableEntryFactory getMarshallableEntryFactory() {
+   public <K,V> MarshallableEntryFactory<K,V> getMarshallableEntryFactory() {
+      //noinspection unchecked
       return marshalledEntryFactory;
    }
 

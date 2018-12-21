@@ -38,7 +38,7 @@ public interface AdvancedCacheExpirationWriter<K, V> extends AdvancedCacheWriter
        * entries that are removed from the persistent store directly.
        */
       default void marshalledEntryPurged(MarshallableEntry<K, V> entry) {
-         marshalledEntryPurged(MarshalledEntry.wrap(entry));
+         marshalledEntryPurged(entry.asMarshalledEntry());
       }
 
       /**

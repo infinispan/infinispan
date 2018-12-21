@@ -40,7 +40,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.test.data.Person;
 import org.infinispan.tools.store.migrator.jdbc.JdbcConfigurationUtil;
-import org.infinispan.tools.store.migrator.marshaller.LegacyVersionAwareMarshaller;
+import org.infinispan.tools.store.migrator.marshaller.Infinispan8Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.MarshallerType;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 import org.testng.annotations.BeforeMethod;
@@ -83,7 +83,7 @@ public class MigratorConfigurationTest {
       StoreProperties props = new StoreProperties(SOURCE, properties);
       StreamingMarshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assert marshaller != null;
-      assert marshaller instanceof LegacyVersionAwareMarshaller;
+      assert marshaller instanceof Infinispan8Marshaller;
 
       byte[] bytes = new byte[] {3, 1, -2, 3, -1, 1, 1};
       Object object = marshaller.objectFromByteBuffer(bytes);

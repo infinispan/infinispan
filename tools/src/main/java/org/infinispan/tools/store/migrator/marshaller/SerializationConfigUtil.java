@@ -40,8 +40,28 @@ public class SerializationConfigUtil {
    }
 
    public static StreamingMarshaller getMarshaller(StoreProperties props) {
-      switch (getMarshallerType(props)) {
-         case CURRENT:
+      if (isCustomMarshaller(props)) {
+         String marshallerClass = props.get(MARSHALLER, CLASS);
+         if (marshallerClass == null)
+            throw new CacheConfigurationException(
+                  String.format("The property %s.%s must be set if a custom marshaller type is specified", MARSHALLER, CLASS));
+
+         try {
+            return (StreamingMarshaller) Util.loadClass(marshallerClass, SerializationConfigUtil.class.getClassLoader()).newInstance();
+         } catch (IllegalAccessException | InstantiationException e) {
+            throw new CacheConfigurationException(String.format("Unable to load StreamingMarshaller '%s' for %s store",
+                  marshallerClass, SOURCE), e);
+         }
+      }
+
+      int majorVersion = props.getMajorVersion();
+      switch (majorVersion) {
+         case 8:
+            if (props.isTargetStore())
+               throw new CacheConfigurationException(String.format("The marshaller associated with Infinispan %d can only be specified for source stores.", majorVersion));
+            return new Infinispan8Marshaller(getExternalizersFromProps(props));
+         case 9:
+         case 10:
             if (props.isTargetStore())
                return null;
 
@@ -51,33 +71,16 @@ public class SerializationConfigUtil {
 
             EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build(), new ConfigurationBuilder().build());
             return manager.getCache().getAdvancedCache().getComponentRegistry().getComponent(StreamingMarshaller.class);
-         case CUSTOM:
-            String marshallerClass = props.get(MARSHALLER, CLASS);
-            if (marshallerClass == null)
-               throw new CacheConfigurationException(
-                     String.format("The property %s.%s must be set if a custom marshaller type is specified", MARSHALLER, CLASS));
-
-            try {
-               return (StreamingMarshaller) Util.loadClass(marshallerClass, SerializationConfigUtil.class.getClassLoader()).newInstance();
-            } catch (IllegalAccessException | InstantiationException e) {
-               throw new CacheConfigurationException(String.format("Unable to load StreamingMarshaller '%s' for %s store",
-                     marshallerClass, SOURCE), e);
-            }
-         case LEGACY:
-            if (props.isTargetStore())
-               throw new CacheConfigurationException("The legacy marshaller can only be specified for source stores.");
-            return new LegacyVersionAwareMarshaller(getExternalizersFromProps(props));
          default:
-            throw new IllegalStateException("Unexpected marshaller type");
+            throw new IllegalStateException(String.format("Unexpected major version '%d'", majorVersion));
       }
    }
 
-   private static MarshallerType getMarshallerType(StoreProperties props) {
-      MarshallerType marshallerType = MarshallerType.CURRENT;
+   private static boolean isCustomMarshaller(StoreProperties props) {
       String marshallerTypeProp = props.get(MARSHALLER, TYPE);
       if (marshallerTypeProp != null)
-         marshallerType = MarshallerType.valueOf(props.get(MARSHALLER, TYPE).toUpperCase());
-      return marshallerType;
+         return MarshallerType.valueOf(props.get(MARSHALLER, TYPE).toUpperCase()) == MarshallerType.CUSTOM;
+      return false;
    }
 
    private static void configureExternalizers(StoreProperties props, SerializationConfigurationBuilder builder) {

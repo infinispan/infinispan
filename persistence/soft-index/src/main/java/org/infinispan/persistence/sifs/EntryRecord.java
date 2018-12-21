@@ -13,14 +13,12 @@ public class EntryRecord {
 
    private EntryHeader header;
    private byte[] key;
-   private byte[] metadata;
    private byte[] value;
+   private EntryMetadata meta;
 
-   public EntryRecord(EntryHeader header, byte[] key, byte[] metadata, byte[] value) {
+   EntryRecord(EntryHeader header, byte[] key) {
       this.header = header;
       this.key = key;
-      this.metadata = metadata;
-      this.value = value;
    }
 
    public EntryHeader getHeader() {
@@ -32,28 +30,26 @@ public class EntryRecord {
    }
 
    public byte[] getMetadata() {
-      return metadata;
+      return meta == null ? null : meta.getBytes();
    }
 
    public byte[] getValue() {
       return value;
    }
 
+   public long getCreated() {
+      return meta == null ? -1 : meta.getCreated();
+   }
+
+   public long getLastUsed() {
+      return meta == null ? -1 :meta.getLastUsed();
+   }
+
    public EntryRecord loadMetadataAndValue(FileProvider.Handle handle, int offset) throws IOException {
-      int metadataOffset = offset + EntryHeader.HEADER_SIZE + header.keyLength();
       if (header.metadataLength() > 0) {
-         metadata = new byte[header.metadataLength()];
-         if (read(handle, ByteBuffer.wrap(metadata), metadataOffset, header.metadataLength()) < 0) {
-            throw new IllegalStateException("End of file reached when reading metadata on "
-                  + handle.getFileId() + ":" + offset + ": " + header);
-         }
+         meta = readMetadata(handle, header, offset);
       }
-      assert header.valueLength() > 0;
-      value = new byte[header.valueLength()];
-      if (read(handle, ByteBuffer.wrap(value), metadataOffset + header.metadataLength(), header.valueLength()) < 0) {
-         throw new IllegalStateException("End of file reached when reading value on "
-               + handle.getFileId() + ":" + offset + ": " + header);
-      }
+      value = readValue(handle, header, offset);
       return this;
    }
 
@@ -78,14 +74,25 @@ public class EntryRecord {
       return key;
    }
 
-   public static byte[] readMetadata(FileProvider.Handle handle, EntryHeader header, long offset) throws IOException {
+   public static EntryMetadata readMetadata(FileProvider.Handle handle, EntryHeader header, long offset) throws IOException {
       assert header.metadataLength() > 0;
-      byte[] metadata = new byte[header.metadataLength()];
-      if (read(handle, ByteBuffer.wrap(metadata), offset + EntryHeader.HEADER_SIZE + header.keyLength(), header.metadataLength()) < 0) {
+      offset += EntryHeader.HEADER_SIZE + header.keyLength();
+      int metaLength = header.metadataLength() - EntryMetadata.TIMESTAMP_BYTES;
+      assert metaLength > 0;
+      byte[] metadata = new byte[metaLength];
+      if (read(handle, ByteBuffer.wrap(metadata), offset, metaLength) < 0) {
          throw new IllegalStateException("End of file reached when reading metadata on "
                + handle.getFileId() + ":" + offset + ": " + header);
       }
-      return metadata;
+
+      offset += metaLength;
+      ByteBuffer buffer = ByteBuffer.allocate(EntryMetadata.TIMESTAMP_BYTES);
+      if (read(handle, buffer, offset, EntryMetadata.TIMESTAMP_BYTES) < 0) {
+         throw new IllegalStateException("End of file reached when reading timestamps on "
+               + handle.getFileId() + ":" + offset + ": " + header);
+      }
+      buffer.flip();
+      return new EntryMetadata(metadata, buffer.getLong(), buffer.getLong());
    }
 
    public static byte[] readValue(FileProvider.Handle handle, EntryHeader header, long offset) throws IOException {
@@ -110,46 +117,38 @@ public class EntryRecord {
       return read;
    }
 
-   private static boolean read(FileChannel fileChannel, ByteBuffer buffer, int length) throws IOException {
-      int read = 0;
-      do {
-         int newRead = fileChannel.read(buffer);
-         if (newRead < 0) {
-            return false;
-         }
-         read += newRead;
-      } while (read < length);
-      return true;
-   }
-
-   public static void writeEntry(FileChannel fileChannel, byte[] serializedKey, byte[] serializedMetadata, byte[] serializedValue, long seqId, long expiration) throws IOException {
+   public static void writeEntry(FileChannel fileChannel, byte[] serializedKey, EntryMetadata metadata, byte[] serializedValue,
+                                 long seqId, long expiration) throws IOException {
       ByteBuffer header = ByteBuffer.allocate(EntryHeader.HEADER_SIZE);
       if (EntryHeader.useMagic) {
          header.putInt(EntryHeader.MAGIC);
       }
       header.putShort((short) serializedKey.length);
-      header.putShort(serializedMetadata == null ? (short) 0 : (short) serializedMetadata.length);
+      header.putShort(metadata == null ? (short) 0 : (short) metadata.length());
       header.putInt(serializedValue == null ? 0 : serializedValue.length);
       header.putLong(seqId);
       header.putLong(expiration);
       header.flip();
       write(fileChannel, header);
       write(fileChannel, ByteBuffer.wrap(serializedKey));
-      if (serializedMetadata != null) {
-         write(fileChannel, ByteBuffer.wrap(serializedMetadata));
+      if (metadata != null) {
+         write(fileChannel, ByteBuffer.wrap(metadata.getBytes()));
+         writeTimestamps(fileChannel, metadata.getCreated(), metadata.getLastUsed());
       }
       if (serializedValue != null) {
          write(fileChannel, ByteBuffer.wrap(serializedValue));
       }
    }
 
-   public static void writeEntry(FileChannel fileChannel, org.infinispan.commons.io.ByteBuffer serializedKey, org.infinispan.commons.io.ByteBuffer serializedMetadata, org.infinispan.commons.io.ByteBuffer serializedValue, long seqId, long expiration) throws IOException {
+   public static void writeEntry(FileChannel fileChannel, org.infinispan.commons.io.ByteBuffer serializedKey,
+                                 org.infinispan.commons.io.ByteBuffer serializedMetadata, org.infinispan.commons.io.ByteBuffer serializedValue,
+                                 long seqId, long expiration, long created, long lastUsed) throws IOException {
       ByteBuffer header = ByteBuffer.allocate(EntryHeader.HEADER_SIZE);
       if (EntryHeader.useMagic) {
          header.putInt(EntryHeader.MAGIC);
       }
       header.putShort((short) serializedKey.getLength());
-      header.putShort(serializedMetadata == null ? (short) 0 : (short) serializedMetadata.getLength());
+      header.putShort(EntryMetadata.size(serializedMetadata));
       header.putInt(serializedValue == null ? 0 : serializedValue.getLength());
       header.putLong(seqId);
       header.putLong(expiration);
@@ -158,10 +157,19 @@ public class EntryRecord {
       write(fileChannel, ByteBuffer.wrap(serializedKey.getBuf(), serializedKey.getOffset(), serializedKey.getLength()));
       if (serializedMetadata != null) {
          write(fileChannel, ByteBuffer.wrap(serializedMetadata.getBuf(), serializedMetadata.getOffset(), serializedMetadata.getLength()));
+         writeTimestamps(fileChannel, created, lastUsed);
       }
       if (serializedValue != null) {
          write(fileChannel, ByteBuffer.wrap(serializedValue.getBuf(), serializedValue.getOffset(), serializedValue.getLength()));
       }
+   }
+
+   private static void writeTimestamps(FileChannel fileChannel, long created, long lastUsed) throws IOException {
+      ByteBuffer buffer = ByteBuffer.allocate(EntryMetadata.TIMESTAMP_BYTES);
+      buffer.putLong(created);
+      buffer.putLong(lastUsed);
+      buffer.flip();
+      write(fileChannel, buffer);
    }
 
    private static void write(FileChannel fileChannel, ByteBuffer buffer) throws IOException {

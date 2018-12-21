@@ -41,7 +41,7 @@ import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.executors.ExecutorAllCompletionService;
-import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration;
 import org.infinispan.persistence.jpa.impl.EntityManagerFactoryRegistry;
 import org.infinispan.persistence.jpa.impl.MetadataEntity;
@@ -77,7 +77,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private EntityManagerFactory emf;
    private EntityManagerFactoryRegistry emfRegistry;
    private StreamingMarshaller marshaller;
-   private MarshallableEntryFactory marshallerEntryFactory;
+   private MarshallableEntryFactory<K,V> marshallerEntryFactory;
    private TimeService timeService;
    private Scheduler scheduler;
    private Stats stats = new Stats();
@@ -303,7 +303,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          if (entity == null) {
             return false;
          }
-         MetadataEntity metadata = getMetadata(key, em);
+         MetadataEntity metadata = getMetadataEntity(key, em);
          EntityTransaction txn = em.getTransaction();
          if (trace) log.trace("Removing " + entity + "(" + toString(metadata) + ")");
          long txnBegin = timeService.time();
@@ -384,7 +384,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       return new MetadataEntityKey(keyBytes);
    }
 
-   private MetadataEntity getMetadata(Object key, EntityManager em) {
+   private MetadataEntity getMetadataEntity(Object key, EntityManager em) {
       return configuration.storeMetadata() ? findMetadata(em, getMetadataKey(key)) : null;
    }
 
@@ -393,9 +393,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       EntityManager em = emf.createEntityManager();
 
       Object entity = entry.getValue();
-      MetadataEntity metadata = configuration.storeMetadata() ?
-            new MetadataEntity(entry.getKeyBytes(), entry.getMetadataBytes(),
-                  entry.getMetadata() == null ? Long.MAX_VALUE : entry.getMetadata().expiryTime()) : null;
+      MetadataEntity metadata = configuration.storeMetadata() ? new MetadataEntity(entry) : null;
       try {
          validateEntityIsAssignable(entity);
          validateObjectId(entry);
@@ -458,10 +456,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                validateEntityIsAssignable(entity);
                validateObjectId(entry);
 
-               MetadataEntity metadata = configuration.storeMetadata() ?
-                     new MetadataEntity(entry.getKeyBytes(), entry.getMetadataBytes(),
-                           entry.getMetadata() == null ? Long.MAX_VALUE : entry.getMetadata().expiryTime()) : null;
-
+               MetadataEntity metadata = configuration.storeMetadata() ? new MetadataEntity(entry) : null;
                mergeEntity(em, entity);
                if (metadata != null && metadata.hasBytes())
                   mergeMetadata(em, metadata);
@@ -547,25 +542,26 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          txn.begin();
          try {
             Object entity = findEntity(em, key);
+            if (entity == null)
+               return null;
+
             try {
-               if (entity == null)
-                  return null;
-               InternalMetadata m = null;
-               if (configuration.storeMetadata()) {
-                  MetadataEntity metadata = findMetadata(em, getMetadataKey(key));
-                  if (metadata != null && metadata.getMetadata() != null) {
-                     try {
-                        m = (InternalMetadata) marshaller.objectFromByteBuffer(metadata.getMetadata());
-                     } catch (Exception e) {
-                        throw new JpaStoreException("Failed to unmarshall metadata", e);
-                     }
-                     if (m.isExpired(timeService.wallClockTime())) {
-                        return null;
-                     }
+               MetadataEntity metaEntity = getMetadataEntity(key, em);
+               if (metaEntity != null && metaEntity.getMetadata() != null) {
+                  Metadata metadata;
+                  try {
+                     metadata = (Metadata) marshaller.objectFromByteBuffer(metaEntity.getMetadata());
+                  } catch (Exception e) {
+                     throw new JpaStoreException("Failed to unmarshall metadata", e);
                   }
+                  if (isExpired(metaEntity)) {
+                     return null;
+                  }
+                  if (trace) log.trace("Loaded " + entity + " (" + metadata + ")");
+                  return marshallerEntryFactory.create(key, entity, metadata, metaEntity.getCreated(), metaEntity.getLastUsed());
                }
-               if (trace) log.trace("Loaded " + entity + " (" + m + ")");
-               return marshallerEntryFactory.create(key, entity, m);
+               if (trace) log.trace("Loaded " + entity);
+               return marshallerEntryFactory.create(key, entity);
             } finally {
                try {
                   txn.commit();
@@ -641,16 +637,21 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                .map(k -> loadEntry(k, fetchValue, innerFetchMetadata))
                .sequential();
       } else {
-         return keyPublisher.map(k -> marshallerEntryFactory.create(k, (Object) null, null));
+         return keyPublisher.map(k -> marshallerEntryFactory.create(k));
       }
    }
 
-   private InternalMetadata getMetadata(EntityManager em, Object key) {
-      MetadataEntity m = findMetadata(em, getMetadataKey(key));
-      if (m == null) return null;
+   private boolean isExpired(MetadataEntity entity) {
+      long expiry = entity.getExpiration();
+      return expiry > 0 && expiry <= timeService.wallClockTime();
+   }
+
+   private Metadata getMetadata(MetadataEntity entity) {
+      if (entity == null)
+         return null;
 
       try {
-         return (InternalMetadata) marshaller.objectFromByteBuffer(m.getMetadata());
+         return (Metadata) marshaller.objectFromByteBuffer(entity.getMetadata());
       } catch (Exception e) {
          throw new JpaStoreException("Failed to unmarshall metadata", e);
       }
@@ -787,18 +788,20 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    private MarshallableEntry<K, V> loadEntry(Object key, boolean fetchValue, boolean fetchMetadata) {
       Object entity;
-      InternalMetadata metadata;
+      Metadata metadata;
+      MetadataEntity metaEntity;
 
       // The loading of entries and metadata is offloaded to another thread.
       // We need second entity manager anyway because with MySQL we can't do streaming
       // in parallel with other queries using single connection
       EntityManager emExec = emf.createEntityManager();
       try {
-         metadata = fetchMetadata ? getMetadata(emExec, key) : null;
+         metaEntity = fetchMetadata ? getMetadataEntity(key, emExec) : null;
+         metadata = getMetadata(metaEntity);
          if (trace) {
             log.tracef("Fetched metadata (fetching? %s) %s", fetchMetadata, metadata);
          }
-         if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
+         if (metaEntity != null && isExpired(metaEntity)) {
             return null;
          }
          if (fetchValue) {
@@ -815,11 +818,9 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
       }
       try {
-         final MarshallableEntry<K, V> marshalledEntry = marshallerEntryFactory.create(key, entity, metadata);
-         if (marshalledEntry != null) {
-            return marshalledEntry;
-         }
-         return null;
+         return metaEntity == null ?
+               marshallerEntryFactory.create(key, entity) :
+               marshallerEntryFactory.create(key, entity, metadata, metaEntity.getCreated(), metaEntity.getLastUsed());
       } catch (Exception e) {
          log.errorExecutingParallelStoreTask(e);
          throw e;

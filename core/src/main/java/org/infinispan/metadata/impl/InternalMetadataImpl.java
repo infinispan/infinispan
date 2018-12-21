@@ -20,6 +20,7 @@ import org.infinispan.metadata.Metadata;
  * @author Mircea Markus
  * @since 6.0
  */
+@Deprecated
 public class InternalMetadataImpl implements InternalMetadata {
    private final Metadata actual;
    private final long created;
@@ -126,7 +127,7 @@ public class InternalMetadataImpl implements InternalMetadata {
             '}';
    }
 
-   private static Metadata extractMetadata(Metadata metadata) {
+   public static Metadata extractMetadata(Metadata metadata) {
       Metadata toCheck = metadata;
       while (toCheck != null) {
          if (toCheck instanceof InternalMetadataImpl) {

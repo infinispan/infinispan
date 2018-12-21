@@ -12,167 +12,50 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 
 /**
  * @author Mircea Markus
  * @since 6.0
  */
-public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
+@Deprecated
+public class MarshalledEntryImpl<K,V> extends MarshallableEntryImpl<K,V> implements MarshalledEntry<K,V> {
 
-   private ByteBuffer keyBytes;
-   private ByteBuffer valueBytes;
-   private ByteBuffer metadataBytes;
-   private transient K key;
-   private transient V value;
-   private transient InternalMetadata metadata;
-   private final transient org.infinispan.commons.marshall.Marshaller marshaller;
-
-   MarshalledEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
-      this.keyBytes = key;
+   MarshalledEntryImpl(ByteBuffer keyBytes, ByteBuffer valueBytes, ByteBuffer metadataBytes, Marshaller marshaller) {
+      InternalMetadata internalMetadata = metadataBytes == null ? null: unmarshall(metadataBytes, marshaller);
+      this.keyBytes = keyBytes;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
+      this.created = created(internalMetadata);
+      this.lastUsed = lastUsed(internalMetadata);
       this.marshaller = marshaller;
    }
 
-   MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
+   MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, Marshaller marshaller) {
+      this(marshall(key, marshaller), valueBytes, metadataBytes, marshaller);
       this.key = key;
-      this.valueBytes = valueBytes;
-      this.metadataBytes = metadataBytes;
-      this.marshaller = marshaller;
    }
 
-   MarshalledEntryImpl(K key, V value, InternalMetadata im, org.infinispan.commons.marshall.Marshaller sm) {
-      this.key = key;
-      this.value = value;
-      this.metadata = im;
-      this.marshaller = sm;
+   MarshalledEntryImpl(K key, V value, InternalMetadata metadata, Marshaller marshaller) {
+      super(key, value, InternalMetadataImpl.extractMetadata(metadata), created(metadata), lastUsed(metadata), marshaller);
    }
 
-   @Override
-   public K getKey() {
-      if (key == null) {
-         if (keyBytes == null) {
-            return null;
-         }
-         key = unmarshall(keyBytes);
-      }
-      return key;
+   private static long created(InternalMetadata internalMetadata) {
+      return internalMetadata == null ? -1 : internalMetadata.created();
    }
 
-   @Override
-   public V getValue() {
-      if (value == null) {
-         if (valueBytes == null) {
-            return null;
-         }
-         value = unmarshall(valueBytes);
-      }
-      return value;
+   private static long lastUsed(InternalMetadata internalMetadata) {
+      return internalMetadata == null ? -1 : internalMetadata.lastUsed();
    }
 
    @Override
    public InternalMetadata getMetadata() {
-      if (metadata == null) {
-         if (metadataBytes == null)
-            return null;
-         else
-            metadata = unmarshall(metadataBytes);
-      }
-      return metadata;
-   }
+      Metadata metadata = super.getMetadata();
+      if (metadata == null)
+         return null;
 
-   @Override
-   public ByteBuffer getKeyBytes() {
-      if (keyBytes == null) {
-         if (key == null) {
-            return null;
-         }
-         keyBytes = marshall(key);
-      }
-      return keyBytes;
-   }
-
-   @Override
-   public ByteBuffer getValueBytes() {
-      if (valueBytes == null) {
-         if (value == null) {
-            return null;
-         }
-         valueBytes = marshall(value);
-      }
-      return valueBytes;
-   }
-
-   @Override
-   public ByteBuffer getMetadataBytes() {
-      if (metadataBytes == null) {
-         if  (metadata == null)
-            return null;
-         metadataBytes = marshall(metadata);
-      }
-      return metadataBytes;
-   }
-
-   private ByteBuffer marshall(Object obj) {
-      try {
-         return marshaller.objectToBuffer(obj);
-      } catch (Exception e) {
-         throw new PersistenceException(e);
-      }
-   }
-
-   @SuppressWarnings(value = "unchecked")
-   private <T> T unmarshall(ByteBuffer buf) {
-      try {
-         return (T) marshaller.objectFromByteBuffer(buf.getBuf(), buf.getOffset(), buf.getLength());
-      } catch (Exception e) {
-         throw new PersistenceException(e);
-      }
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof MarshalledEntryImpl)) return false;
-
-      MarshalledEntryImpl that = (MarshalledEntryImpl) o;
-
-      if (getKeyBytes() != null ? !getKeyBytes().equals(that.getKeyBytes()) : that.getKeyBytes() != null) return false;
-      if (getMetadataBytes() != null ? !getMetadataBytes().equals(that.getMetadataBytes()) : that.getMetadataBytes() != null) return false;
-      if (getValueBytes() != null ? !getValueBytes().equals(that.getValueBytes()) : that.getValueBytes() != null) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = getKeyBytes() != null ? getKeyBytes().hashCode() : 0;
-      result = 31 * result + (getValueBytes() != null ? getValueBytes().hashCode() : 0);
-      result = 31 * result + (getMetadataBytes() != null ? getMetadataBytes().hashCode() : 0);
-      return result;
-   }
-
-   @Override
-   public String toString() {
-      StringBuilder sb = new StringBuilder().append("MarshalledEntryImpl{")
-            .append("keyBytes=").append(keyBytes)
-            .append(", valueBytes=").append(valueBytes)
-            .append(", metadataBytes=").append(metadataBytes)
-            .append(", key=").append(key);
-      if (key == null && keyBytes != null && marshaller != null) {
-         sb.append('/').append(this.<Object>unmarshall(keyBytes));
-      }
-      sb.append(", value=").append(value);
-      if (value == null && valueBytes != null && marshaller != null) {
-         sb.append('/').append(this.<Object>unmarshall(valueBytes));
-      }
-      sb.append(", metadata=").append(metadata);
-      if (metadata == null && metadataBytes != null && marshaller != null) {
-         sb.append('/').append(this.<Object>unmarshall(metadataBytes));
-      }
-      sb.append(", marshaller=").append(marshaller).append('}');
-      return sb.toString();
+      return metadata instanceof InternalMetadata ? (InternalMetadata) metadata : new InternalMetadataImpl(metadata, created(), lastUsed());
    }
 
    public static class Externalizer extends AbstractExternalizer<MarshalledEntryImpl> {
