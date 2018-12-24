@@ -81,15 +81,12 @@ public class RemoteApplicationPublishedBridge extends AbstractApplicationPublish
    }
 
    private byte[] readElement(ByteBuffer buffer) {
-      byte[] element = null;
-      try {
-         int length = UnsignedNumeric.readUnsignedInt(buffer);
-         element = new byte[length];
-         buffer.get(element);
-      } catch (Exception ex) {
+      if (buffer.remaining() == 0)
+         return null;
 
-      }
-
+      int length = UnsignedNumeric.readUnsignedInt(buffer);
+      byte[] element = new byte[length];
+      buffer.get(element);
       return element;
    }
 }
