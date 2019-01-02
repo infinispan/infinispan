@@ -1,0 +1,14 @@
+// Show the table of contents
+:toc:
+
+// The name of the title
+:ProjectName: Managing {brandname}
+
+// The name of the title for the purposes of {context}
+:ProjectNameID: managing-data-grid
+
+// Subtitle
+:Subtitle: Managing {brandname}
+
+// Abstract
+:Abstract: Perform tasks to manage {brandname}.

@@ -1,9 +1,0 @@
-= {brandname} {infinispanversion} Performance Guide
-The {brandname} community
-:toc2:
-:icons: font
-:toclevels: 3
-:numbered:
-:stem:
-
-include::performance.adoc[]

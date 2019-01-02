@@ -1,0 +1,3 @@
+= Hawt.io
+link:http://hawt.io[Hawt.io], a slick, fast, HTML5-based open source management console, also has support for {brandname}.
+Refer to link:http://hawt.io/plugins/infinispan/[Hawt.io's documentation] for information regarding this plugin.

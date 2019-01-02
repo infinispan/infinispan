@@ -1,0 +1,14 @@
+[id='configuring_eviction_{context}']
+= Configuring {brandname} to Evict Entries from Memory
+
+. Set a maximum limit for entries in the cache using either a `COUNT` or `MEMORY` measurement.
+. Set a storage type that defines how {brandname} stores entries, either as objects or `bytes[]` in or outside the Java heap.
+
+Declaratively::
+Use the `<memory />` element.
+Programmatically::
+Use the `MemoryConfigurationBuilder` class.
+
+.Additional resources
+* _Javadocs_
+* _Configuring {brandname}_
