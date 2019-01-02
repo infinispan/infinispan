@@ -14,10 +14,10 @@ The {brandname} Spring Boot starter gives you a convenient way to get started wi
 To set up your project, add one of the following to your `pom.xml` file:
 
 .Embedded Mode
-include::../dependencies/sb_embedded.adoc[]
+include::maven_dependencies/sb_embedded.adoc[]
 
 .Remote Client/Server Mode
-include::../dependencies/sb_remote.adoc[]
+include::maven_dependencies/sb_remote.adoc[]
 
 = Enforcing {brandname} Versions
 
@@ -25,7 +25,7 @@ This starter uses a high-level API to ensure compatibility between major version
 
 Add `infinispan-bom` to your `pom.xml` file before the starter dependencies, as follows:
 
-include::../dependencies/sb_bom.adoc[]
+include::maven_dependencies/sb_bom.adoc[]
 
 = Running in Embedded Mode
 
@@ -270,7 +270,7 @@ infinispan.remote.maxRetries = # Sets the maximum number of attempts to connect 
 
 To use the Actuator, add the following to your `pom.xml` file:
 
-include::../dependencies/sb_actuator.adoc[]
+include::maven_dependencies/sb_actuator.adoc[]
 
 You must then activate statistics for the appropriate cache instances, either programmatically or declaratively.
 

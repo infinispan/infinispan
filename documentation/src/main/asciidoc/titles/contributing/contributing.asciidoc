@@ -1,0 +1,16 @@
+// Include global attributes
+include::topics/attributes/community-attributes.adoc[]
+
+= Contributing to {brandname}
+The {brandname} community
+:toc2:
+:icons: font
+:toclevels: 2
+:numbered:
+
+Feel like contributing to {brandname}?  This guide will help you set up your
+environment, walk you through best practices, and help you debug, improve
+and add features to {brandname}.
+
+//Reference .adoc topic files for the title content.
+include::topics.adoc[]

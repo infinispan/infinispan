@@ -1,8 +1,0 @@
-= Frequently Asked Questions
-The {brandname} community
-:toc2:
-:icons: font
-:toclevels: 1
-:numbered:
-
-include::faq-content.adoc[]

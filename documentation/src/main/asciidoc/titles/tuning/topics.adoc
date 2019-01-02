@@ -1,0 +1,4 @@
+//Reference .adoc topic files for the title content.
+//Please review authoring guidelines in the Contributors Guide.
+
+include::topics/performance.adoc[leveloffset=+1]

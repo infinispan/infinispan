@@ -1,0 +1,9 @@
+//
+// This file contains Javadoc and related attributes for Red Hat Data Grid.
+//
+
+:javadocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/api
+:configdocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/Configuration/
+:wildflydocroot: https://docs.jboss.org/author/display/WFLY11
+:jdkdocroot: https://docs.oracle.com/javase/8/docs/api
+:javaeedocroot: https://docs.oracle.com/javaee/7/api

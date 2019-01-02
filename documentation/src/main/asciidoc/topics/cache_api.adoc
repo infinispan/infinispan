@@ -1,0 +1,357 @@
+[[cache_api]]
+= The Cache API
+
+== The Cache interface
+{brandname}'s Caches are manipulated through the link:{javadocroot}/org/infinispan/Cache.html[Cache] interface.
+
+A Cache exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
+
+NOTE: For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to {brandname}'s Cache should be trivial.
+
+=== Performance Concerns of Certain Map Methods
+Certain methods exposed in Map have certain performance consequences when used with {brandname}, such as
+link:{javadocroot}/org/infinispan/Cache.html#size--[size()] ,
+link:{javadocroot}/org/infinispan/Cache.html#values--[values()] ,
+link:{javadocroot}/org/infinispan/Cache.html#keySet--[keySet()] and
+link:{javadocroot}/org/infinispan/Cache.html#entrySet--[entrySet()] .
+Specific methods on the `keySet`, `values` and `entrySet` are fine for use please see their Javadoc for further details.
+
+Attempting to perform these operations globally would have large performance impact as well as become a scalability bottleneck.  As such, these methods should only be used for informational or debugging purposes only.
+
+It should be noted that using certain flags with the link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags] method can mitigate some of these concerns, please check each method's documentation for more details.
+
+=== Mortal and Immortal Data
+Further to simply storing entries, {brandname}'s cache API allows you to attach mortality information to data.  For example, simply using link:{jdkdocroot}/java/util/Map.html#put-K-V-[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:{javadocroot}/org/infinispan/commons/api/BasicCache.html#put-K-V-long-java.util.concurrent.TimeUnit-[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
+
+In addition to _lifespan_ , {brandname} also supports _maxIdle_ as an additional metric with which to determine expiration.  Any combination of lifespans or maxIdles can be used.
+
+=== Expiration and Mortal Data
+See expiration for more information about using mortal data with {brandname}.
+
+//old_link: link:#expiration_anchor[Expiration]
+
+=== putForExternalRead operation
+{brandname}'s link:{javadocroot}/org/infinispan/Cache.html[Cache] class contains a different 'put' operation called link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] . This operation is particularly useful when {brandname} is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way.
+
+To achieve this, putForExternalRead acts as a put call that only operates if the key is not present in the cache, and fails fast and silently if another thread is trying to store the same key at the same time. In this particular scenario, caching data is a way to optimise the system and it's not desirable that a failure in caching affects the on-going transaction, hence why failure is handled differently. putForExternalRead is considered to be a fast operation because regardless of whether it's successful or not, it doesn't wait for any locks, and so returns to the caller promptly.
+
+To understand how to use this operation, let's look at basic example. Imagine a cache of Person instances, each keyed by a PersonId , whose data originates in a separate data store. The following code shows the most common pattern of using link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] within the context of this example:
+
+[source,java]
+----
+
+// Id of the person to look up, provided by the application
+PersonId id = ...;
+
+// Get a reference to the cache where person instances will be stored
+Cache<PersonId, Person> cache = ...;
+
+// First, check whether the cache contains the person instance
+// associated with with the given id
+Person cachedPerson = cache.get(id);
+
+if (cachedPerson == null) {
+   // The person is not cached yet, so query the data store with the id
+   Person person = dataStore.lookup(id);
+
+   // Cache the person along with the id so that future requests can
+   // retrieve it from memory rather than going to the data store
+   cache.putForExternalRead(id, person);
+} else {
+   // The person was found in the cache, so return it to the application
+   return cachedPerson;
+}
+
+----
+
+Please note that link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:{jdkdocroot}/java/util/Map.html#put-K-V-[put] operation, otherwise the possibility of caching corrupt data is likely.
+
+== The AdvancedCache interface
+In addition to the simple Cache interface, {brandname} offers an link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to inject custom interceptors, access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained:
+
+[source,java]
+----
+AdvancedCache advancedCache = cache.getAdvancedCache();
+
+----
+
+
+=== Flags
+Flags are applied to regular cache methods to alter the behavior of certain methods.  For a list of all available flags, and their effects, see the link:{javadocroot}/org/infinispan/context/Flag.html[Flag] enumeration.  Flags are applied using link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[AdvancedCache.withFlags()] .  This builder method can be used to apply any number of flags to a cache invocation, for example:
+
+[source,java]
+----
+advancedCache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_LOCKING)
+   .withFlags(Flag.FORCE_SYNCHRONOUS)
+   .put("hello", "world");
+
+
+----
+
+=== Custom Interceptors
+
+The AdvancedCache interface also offers advanced developers a mechanism with which to attach custom interceptors.  Custom interceptors allow developers to alter the behavior of the cache API methods, and the AdvancedCache interface allows developers to attach these interceptors programmatically, at run-time.  See the AdvancedCache Javadocs for more details.
+
+//old_link: For more information on writing custom interceptors, see link:#custom_interceptors_chapter[Custom Interceptors].
+
+[[listeners_and_notifications]]
+==  Listeners and Notifications
+
+{brandname} offers a listener API, where clients can register for and get notified when events take place.  This annotation-driven API applies to 2 different levels: cache level events and cache manager level events.
+
+Events trigger a notification which is dispatched to listeners.   Listeners are simple link:http://en.wikipedia.org/wiki/Plain_Old_Java_Object[POJO] s annotated with link:{javadocroot}/org/infinispan/notifications/Listener.html[@Listener] and registered using the methods defined in the link:{javadocroot}/org/infinispan/notifications/Listenable.html[Listenable] interface.
+
+NOTE: Both Cache and CacheManager implement Listenable, which means you can attach listeners to either a cache or a cache manager, to receive either cache-level or cache manager-level notifications.
+
+For example, the following class defines a listener to print out some information every time a new entry is added to the cache, in a non blocking fashion:
+
+[source,java]
+----
+@Listener
+public class PrintWhenAdded {
+  Queue<CacheEntryCreatedEvent> events = new ConcurrentLinkedQueue<>();
+
+  @CacheEntryCreated
+  public CompletionStage<Void> print(CacheEntryCreatedEvent event) {
+    events.add(event);
+    return null;
+  }
+
+}
+
+----
+
+For more comprehensive examples, please see the link:{javadocroot}/org/infinispan/notifications/Listener.html[Javadocs for @Listener].
+
+
+=== Cache-level notifications
+Cache-level events occur on a per-cache basis, and by default are only raised on nodes where the events occur.  Note in a distributed cache these events are only raised on the owners of data being affected.  Examples of cache-level events are entries being added, removed, modified, etc.  These events trigger notifications to listeners registered to a specific cache.
+
+Please see the link:{javadocroot}/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for a comprehensive list of all cache-level notifications, and their respective method-level annotations.
+
+NOTE: Please refer to the link:{javadocroot}/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for the list of cache-level notifications available in {brandname}.
+
+==== Cluster Listeners
+The cluster listeners should be used when it is desirable to listen to the cache events on a single node.
+
+To do so all that is required is set to annotate your listener as being clustered.
+
+[source,java]
+----
+@Listener (clustered = true)
+public class MyClusterListener { .... }
+
+----
+
+There are some limitations to cluster listeners from a non clustered listener.
+
+. A cluster listener can only listen to `@CacheEntryModified`, `@CacheEntryCreated`, `@CacheEntryRemoved` and `@CacheEntryExpired` events.  Note this means any other type of event will not be listened to for this listener.
+. Only the post event is sent to a cluster listener, the pre event is ignored.
+
+==== Event filtering and conversion
+All applicable events on the node where the listener is installed will be raised to the listener.  It is possible to dynamically filter what events are raised by using a link:{javadocroot}/org/infinispan/filter/KeyFilter.html[KeyFilter] (only allows filtering on keys) or link:{javadocroot}/org/infinispan/notifications/cachelistener/filter/CacheEventFilter.html[CacheEventFilter] (used to filter for keys, old value, old metadata, new value, new metadata, whether command was retried, if the event is before the event (ie. isPre) and also the command type).
+
+The example here shows a simple `KeyFilter` that will only allow events to be raised when an event modified the entry for the key `Only Me`.
+[source,java]
+----
+public class SpecificKeyFilter implements KeyFilter<String> {
+    private final String keyToAccept;
+
+    public SpecificKeyFilter(String keyToAccept) {
+      if (keyToAccept == null) {
+        throw new NullPointerException();
+      }
+      this.keyToAccept = keyToAccept;
+    }
+
+    boolean accept(String key) {
+      return keyToAccept.equals(key);
+    }
+}
+
+...
+cache.addListener(listener, new SpecificKeyFilter("Only Me"));
+...
+
+----
+
+This can be useful when you want to limit what events you receive in a more efficient manner.
+
+There is also a link:{javadocroot}/org/infinispan/notifications/cachelistener/filter/CacheEventConverter.html[CacheEventConverter] that can be supplied that allows for converting a value to another before raising the event.  This can be nice to modularize any code that does value conversions.
+
+NOTE: The mentioned filters and converters are especially beneficial when used in conjunction with a Cluster Listener.  This is because the filtering and conversion is done on the node where the event originated and not on the node where event is listened to.  This can provide benefits of not having to replicate events across the cluster (filter) or even have reduced payloads (converter).
+
+==== Initial State Events
+When a listener is installed it will only be notified of events after it is fully installed.
+
+It may be desirable to get the current state of the cache contents upon first registration of listener by having an event generated of type `@CacheEntryCreated` for each element in the cache.  Any additionally generated events during this initial phase will be queued until appropriate events have been raised.
+
+NOTE: This only works for clustered listeners at this time.  link:https://issues.jboss.org/browse/ISPN-4608[ISPN-4608] covers adding this for non clustered listeners.
+
+==== Duplicate Events
+
+It is possible in a non transactional cache to receive duplicate events.  This is possible when the primary owner of a key goes down while trying to perform a write operation such as a put.
+
+{brandname} internally will rectify the put operation by sending it to the new primary owner for the given key automatically, however there are no guarantees in regards to if the write was first replicated to backups.  Thus more than 1 of the following write events (`CacheEntryCreatedEvent`, `CacheEntryModifiedEvent` & `CacheEntryRemovedEvent`) may be sent on a single operation.
+
+If more than one event is generated {brandname} will mark the event that it was generated by a retried command to help the user to know when this occurs without having to pay attention to view changes.
+
+[source,java]
+----
+@Listener
+public class MyRetryListener {
+  @CacheEntryModified
+  public void entryModified(CacheEntryModifiedEvent event) {
+    if (event.isCommandRetried()) {
+      // Do something
+    }
+  }
+}
+----
+
+Also when using a `CacheEventFilter` or `CacheEventConverter` the link:{javadocroot}/org/infinispan/notifications/cachelistener/filter/EventType.html[EventType] contains a method `isRetry` to tell if the event was generated due to retry.
+
+=== Cache manager-level notifications
+Cache manager-level events occur on a cache manager.  These too are global and  cluster-wide, but involve events that affect all caches created by a single cache manager.  Examples of cache manager-level events are nodes joining or leaving a cluster, or caches starting or stopping.
+
+Please see the link:{javadocroot}/org/infinispan/notifications/cachemanagerlistener/annotation/package-summary.html[Javadocs  on the org.infinispan.notifications.cachemanagerlistener.annotation package] for a comprehensive list of all cache manager-level notifications,  and their respective method-level annotations.
+
+=== Synchronicity of events
+By default, all async notifications are dispatched in the notification thread pool.
+Sync notifications will delay the operation from continuing until the listener method completes or the CompletionStage
+completes (the former causing the thread to block). Alternatively, you could annotate your listener as _asynchronous_ in
+which case the operation will continue immediately, while the notification is completed asynchronously on the notification thread pool.
+To do this, simply annotate your listener such:
+
+Asynchronous Listener
+[source,java]
+----
+@Listener (sync = false)
+public class MyAsyncListener {
+   @CacheEntryCreated
+   void listen(CacheEntryCreatedEvent event) { }
+}
+----
+
+Blocking Synchronous Listener
+[source,java]
+----
+@Listener
+public class MySyncListener {
+   @CacheEntryCreated
+   void listen(CacheEntryCreatedEvent event) { }
+}
+----
+
+Non-Blocking Listener
+[source,java]
+----
+@Listener
+public class MyNonBlockingListener {
+   @CacheEntryCreated
+   CompletionStage<Void> listen(CacheEntryCreatedEvent event) { }
+}
+----
+
+==== Asynchronous thread pool
+To tune the thread pool used to dispatch such asynchronous notifications, use the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<listener-executor />`] XML element in your configuration file.
+
+[[cache_asynchronous_api]]
+==  Asynchronous API
+In addition to synchronous API methods like link:{jdkdocroot}/java/util/Map.html#put-K-V-[Cache.put()] , link:{jdkdocroot}/java/util/Map.html#remove-java.lang.Object-[Cache.remove()] , etc., {brandname} also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
+
+These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:{javadocroot}/org/infinispan/commons/api/AsyncCache.html#putAsync-K-V-[Cache.putAsync()] , link:{javadocroot}/org/infinispan/commons/api/AsyncCache.html#removeAsync-java.lang.Object-[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:{jdkdocroot}/java/util/concurrent/Future.html[Future] containing the actual result of the operation.
+
+For example, in a cache parameterized as `Cache<String, String>`, `Cache.put(String key, String value)` returns a `String`.
+`Cache.putAsync(String key, String value)` would return a `Future<String>`.
+
+=== Why use such an API?
+Non-blocking APIs are powerful in that they provide all of the guarantees of synchronous communications - with the ability to handle communication failures and exceptions - with the ease of not having to block until a call completes.  This allows you to better harness parallelism in your system.  For example:
+
+[source,java]
+----
+Set<Future<?>> futures = new HashSet<Future<?>>();
+futures.add(cache.putAsync(key1, value1)); // does not block
+futures.add(cache.putAsync(key2, value2)); // does not block
+futures.add(cache.putAsync(key3, value3)); // does not block
+
+// the remote calls for the 3 puts will effectively be executed
+// in parallel, particularly useful if running in distributed mode
+// and the 3 keys would typically be pushed to 3 different nodes
+// in the cluster
+
+// check that the puts completed successfully
+for (Future<?> f: futures) f.get();
+
+----
+
+=== Which processes actually happen asynchronously?
+There are 4 things in {brandname} that can be considered to be on the critical path of a typical write operation.
+These are, in order of cost:
+
+* network calls
+* marshalling
+* writing to a cache store (optional)
+* locking
+
+As of {brandname} 4.0, using the async methods will take the network calls and marshalling off the critical path.  For various technical reasons, writing to a cache store and acquiring locks, however, still happens in the caller's thread.  In future, we plan to take these offline as well.  See link:http://lists.jboss.org/pipermail/infinispan-dev/2010-January/002219.html[this developer mail list thread] about this topic.
+
+=== Notifying futures
+Strictly, these methods do not return JDK Futures, but rather a sub-interface known as a link:{javadocroot}/org/infinispan/commons/util/concurrent/NotifyingFuture.html[NotifyingFuture] .  The main difference is that you can attach a listener to a NotifyingFuture such that you could be notified when the future completes.  Here is an example of making use of a notifying future:
+
+[source,java]
+----
+
+FutureListener futureListener = new FutureListener() {
+
+   public void futureDone(Future future) {
+      try {
+         future.get();
+      } catch (Exception e) {
+         // Future did not complete successfully
+         System.out.println("Help!");
+      }
+   }
+};
+     
+cache.putAsync("key", "value").attachListener(futureListener);
+
+----
+
+=== Further reading
+The Javadocs on the link:{javadocroot}/org/infinispan/Cache.html[Cache] interface has some examples on using the asynchronous API, as does link:http://infinispan.blogspot.com/2009/05/whats-so-cool-about-asynchronous-api.html[this article] by Manik Surtani introducing the API.
+
+==  Invocation Flags
+An important aspect of getting the most of {brandname} is the use of per-invocation flags in order to provide specific behaviour to each particular cache call. By doing this, some important optimizations can be implemented potentially saving precious time and network resources. One of the most popular usages of flags can be found right in Cache API, underneath the link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead()] method which is used to load an {brandname} cache with data read from an external resource. In order to make this call efficient, {brandname} basically calls a normal put operation passing the following flags: link:{javadocroot}/org/infinispan/context/Flag.html#FAIL_SILENTLY[FAIL_SILENTLY] , link:{javadocroot}/org/infinispan/context/Flag.html#FORCE_ASYNCHRONOUS[FORCE_ASYNCHRONOUS] , link:{javadocroot}/org/infinispan/context/Flag.html#ZERO_LOCK_ACQUISITION_TIMEOUT[ZERO_LOCK_ACQUISITION_TIMEOUT]
+
+What {brandname} is doing here is effectively saying that when putting data read from external read, it will use an almost-zero lock acquisition time and that if the locks cannot be acquired, it will fail silently without throwing any exception related to lock acquisition. It also specifies that regardless of the cache mode, if the cache is clustered, it will replicate asynchronously and so won't wait for responses from other nodes. The combination of all these flags make this kind of operation very efficient, and the efficiency comes from the fact this type of _putForExternalRead_ calls are used with the knowledge that client can always head back to a persistent store of some sorts to retrieve the data that should be stored in memory. So, any attempt to store the data is just a best effort and if not possible, the client should try again if there's a cache miss.
+
+=== Examples
+If you want to use these or any other flags available, which by the way are described in detail the link:{javadocroot}/org/infinispan/context/Flag.html[Flag enumeration] , you simply need to get hold of the advanced cache and add the flags you need via the link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags()] method call. For example:
+
+[source,java]
+----
+Cache cache = ...
+cache.getAdvancedCache()
+   .withFlags(Flag.SKIP_CACHE_STORE, Flag.CACHE_MODE_LOCAL)
+   .put("local", "only");
+
+----
+
+It's worth noting that these flags are only active for the duration of the cache operation. If the same flags need to be used in several invocations, even if they're in the same transaction, link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags()] needs to be called repeatedly. Clearly, if the cache operation is to be replicated in another node, the flags are carried over to the remote nodes as well.
+
+
+==== Suppressing return values from a put() or remove()
+Another very important use case is when you want a write operation such as put() to _not_ return the previous value. To do that, you need to use two flags to make sure that in a distributed environment, no remote lookup is done to potentially get previous value, and if the cache is configured with a cache loader, to avoid loading the previous value from the cache store. You can see these two flags in action in the following example:
+
+
+[source,java]
+----
+Cache cache = ...
+cache.getAdvancedCache()
+   .withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD)
+   .put("local", "only")
+
+----
+
+For more information, please check the link:{javadocroot}/org/infinispan/context/Flag.html[Flag enumeration] javadoc.

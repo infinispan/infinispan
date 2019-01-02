@@ -1,0 +1,47 @@
+= SPI
+
+The following class diagram presents the main SPI interfaces of the persistence API:
+
+image::images/Figure2_1_persistence_API.png[align="center", title="Persistence SPI"]
+
+Some notes about the classes:
+
+* link:{javadocroot}/org/infinispan/commons/io/ByteBuffer.html[ByteBuffer] - abstracts the serialized form of an object
+
+* link:{javadocroot}/org/infinispan/persistence/spi/MarshalledEntry.html[MarshalledEntry] - abstracts the information held within
+  a persistent store corresponding to a key-value added to the cache. Provides method for reading this information both in serialized (link:{javadocroot}/org/infinispan/commons/io/ByteBuffer.html[ByteBuffer]) and deserialized (Object) format. Normally data read from the store is kept in serialized format and lazily deserialized on demand, within the
+  link:{javadocroot}/org/infinispan/persistence/spi/MarshalledEntry.html[MarshalledEntry] implementation
+
+* link:{javadocroot}/org/infinispan/persistence/spi/CacheWriter.html[CacheWriter] and link:{javadocroot}/org/infinispan/persistence/spi/CacheLoader.html[CacheLoader] provide basic methods for reading and writing to a store
+
+* link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheLoader.html[AdvancedCacheLoader] and link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter] provide operations to manipulate the underlaying storage in bulk: parallel iteration and purging of expired entries, clear and size.
+
+//Exclude segmented cache stores from productized docs.
+ifndef::productized[]
+* link:{javadocroot}/org/infinispan/persistence/spi/SegmentedAdvancedLoadWriteStore.html[SegmentedAdvancedLoadWriteStore] provide all the various operations that deal with segments.
+
+A cache store can be segmented if it does one of the following:
+
+* Implements the
+link:{javadocroot}/org/infinispan/persistence/spi/SegmentedAdvancedLoadWriteStore.html[SegmentedAdvancedLoadWriteStore] interface. In this case only a single
+store instance is used per cache.
+
+* Has a configuration that extends the link:{javadocroot}/org/infinispan/configuration/cache/AbstractSegmentedConfiguration.html[AbstractSegmentedConfiguration] abstract class. Doing this requires you to implement the `newConfigurationFrom` method where it is expected
+that a new `StoreConfiguration` instance is created per invocation. This
+creates a store instance per segment to which a node can write. Stores might
+start and stop as data is moved between nodes.
+endif::productized[]
+
+A provider might choose to only implement a subset of these interfaces:
+
+* Not implementing the  link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter] makes the given writer not usable for purging expired entries or clear
+
+* If a loader does not implement the link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheLoader.html[AdvancedCacheLoader]
+inteface, then it will not participate in preloading nor in cache iteration
+(required also for stream operations).
+
+If you're looking at migrating your existing store to the new API or to write a new store implementation, the link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/persistence/file/SingleFileStore.java[SingleFileStore] might be a good starting point/example.
+
+== More implementations
+Many more cache loader and cache store implementations exist.
+Visit link:http://infinispan.org/cache-store-implementations[this website] for more details.

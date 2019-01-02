@@ -1,0 +1,10 @@
+[id='managing_heap_space']
+= Managing Heap Space
+:context: managing_heap_space
+
+Manage the Java heap space to tune performance and prevent `OutOfMemoryError` exceptions.
+
+include::topics/data_container/con_eviction_expiration.adoc[leveloffset=+1]
+include::topics/data_container/proc_configuring_eviction.adoc[leveloffset=+2]
+include::topics/data_container/proc_setting_cache_size.adoc[leveloffset=+2]
+include::topics/data_container/ref_eviction_strategies.adoc[leveloffset=+2]

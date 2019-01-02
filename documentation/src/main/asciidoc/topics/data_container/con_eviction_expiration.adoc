@@ -1,0 +1,16 @@
+[id='eviction_expiration_{context}']
+= Eviction and Expiration
+
+Eviction::
+Removes unused entries from memory after the number of entries in the cache reaches a maximum limit.
++
+The operation is local to a single cache instance. It removes entries from memory only.
++
+Executes each time an entry is added or updated in the cache.
+
+Expiration::
+Removes entries from memory after a certain amount of time.
++
+Is cluster-wide. It removes entries from memory across all cache instances and also removes entries from the cache store.
++
+Expiration operations are processed by threads that you can configure with the `ExpirationManager` interface.

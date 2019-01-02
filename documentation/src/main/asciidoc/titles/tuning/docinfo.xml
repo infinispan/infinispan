@@ -1,0 +1,15 @@
+<!--Productized Content-->
+<productname>{FullProductName}</productname>
+<productnumber>{DocInfoProductNumber}</productnumber>
+<subtitle>For use with {FullProductName} {ProductRelease}</subtitle>
+<title>Tuning {FullProductName} Performance</title>
+<release>{DocInfoProductNumber}</release>
+<abstract>
+	<para>
+		Tuning Performance for {FullProductName} {ProductRelease}.
+	</para>
+</abstract>
+<authorgroup>
+    <orgname>Red Hat Customer Content Services</orgname>
+</authorgroup>
+<xi:include href="Common_Content/Legal_Notice.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />

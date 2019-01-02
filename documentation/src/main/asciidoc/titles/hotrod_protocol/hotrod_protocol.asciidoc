@@ -1,0 +1,16 @@
+// Include global attributes
+include::topics/attributes/community-attributes.adoc[]
+
+= Hot Rod Protocol Reference Guide
+The {brandname} community
+:toc2:
+:icons: font
+:toclevels: 2
+:numbered:
+
+//Reference .adoc topic files for the title content.
+//Will eventually be replaced with user stories (assemblies).
+include::topics.adoc[]
+
+//Topics assembled into user stories.
+//include::stories.adoc[]
