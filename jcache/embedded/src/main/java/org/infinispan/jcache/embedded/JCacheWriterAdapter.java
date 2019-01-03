@@ -4,7 +4,7 @@ import javax.cache.integration.CacheWriter;
 
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.JCacheEntry;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.InitializationContext;
 
 public class JCacheWriterAdapter<K, V> implements org.infinispan.persistence.spi.CacheWriter {

@@ -1,7 +1,7 @@
 package org.infinispan.persistence.sifs;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 
 /**
  * Request to persist entry in log file or request executed by the log appender thread.

@@ -15,7 +15,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 /**
  * An interceptor which ensures that writes to an underlying transactional store are prepared->committed/rolledback as part

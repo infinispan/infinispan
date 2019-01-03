@@ -35,7 +35,7 @@ import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration;
 import org.infinispan.persistence.rocksdb.logging.Log;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.util.KeyValuePair;

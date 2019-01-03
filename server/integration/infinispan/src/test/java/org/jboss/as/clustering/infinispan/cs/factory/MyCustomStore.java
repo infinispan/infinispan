@@ -2,7 +2,7 @@ package org.jboss.as.clustering.infinispan.cs.factory;
 
 import java.util.concurrent.Executor;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 

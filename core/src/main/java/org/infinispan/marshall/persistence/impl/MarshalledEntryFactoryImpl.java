@@ -4,8 +4,8 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 /**
  * @author Mircea Markus

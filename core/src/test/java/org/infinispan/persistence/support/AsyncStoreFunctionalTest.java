@@ -17,7 +17,7 @@ import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
 import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.async.AsyncCacheWriter;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;

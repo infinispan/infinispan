@@ -10,13 +10,13 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 
 /**
- * @author Mircea Markus
- * @since 6.0
+ * @author Ryan Emerson
+ * @since 10.0
  */
 public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
 
@@ -28,21 +28,21 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
    private transient InternalMetadata metadata;
    private final transient org.infinispan.commons.marshall.Marshaller marshaller;
 
-   MarshalledEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
+   protected MarshalledEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
       this.keyBytes = key;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
       this.marshaller = marshaller;
    }
 
-   MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
+   protected MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
       this.key = key;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
       this.marshaller = marshaller;
    }
 
-   MarshalledEntryImpl(K key, V value, InternalMetadata im, org.infinispan.commons.marshall.Marshaller sm) {
+   protected MarshalledEntryImpl(K key, V value, InternalMetadata im, org.infinispan.commons.marshall.Marshaller sm) {
       this.key = key;
       this.value = value;
       this.metadata = im;
@@ -208,7 +208,7 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
       @Override
       @SuppressWarnings("unchecked")
       public Set<Class<? extends MarshalledEntryImpl>> getTypeClasses() {
-         return Util.asSet(MarshalledEntryImpl.class);
+         return Util.asSet(MarshalledEntryImpl.class, org.infinispan.marshall.core.MarshalledEntryImpl.class);
       }
    }
 }

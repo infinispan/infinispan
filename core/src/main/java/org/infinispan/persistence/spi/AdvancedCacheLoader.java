@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.util.PersistenceManagerCloseableSupplier;
 import org.infinispan.util.CloseableSuppliedIterator;
 import org.infinispan.util.KeyValuePair;

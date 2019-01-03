@@ -14,7 +14,7 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;

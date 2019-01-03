@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.Store;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;

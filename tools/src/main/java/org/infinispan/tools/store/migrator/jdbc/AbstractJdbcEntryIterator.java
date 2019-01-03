@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.Iterator;
 
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.table.management.TableManager;

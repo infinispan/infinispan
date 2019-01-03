@@ -5,8 +5,8 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 public class MarshalledEntryUtil {
 

@@ -2,7 +2,7 @@ package org.infinispan.persistence.support;
 
 import java.util.function.ToIntFunction;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 
 /**

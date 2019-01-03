@@ -1,6 +1,6 @@
 package org.infinispan.persistence.modifications;
 
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 
 /**
  * Modification representing {@link org.infinispan.persistence.spi.CacheWriter#write(MarshalledEntry)}.

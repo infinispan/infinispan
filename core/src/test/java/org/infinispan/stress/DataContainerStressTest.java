@@ -18,7 +18,7 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.PersistenceException;

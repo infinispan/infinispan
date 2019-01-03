@@ -33,7 +33,7 @@ import org.infinispan.factories.impl.ComponentAlias;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.functional.impl.FunctionalNotifierImpl;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;

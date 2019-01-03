@@ -20,7 +20,7 @@ import org.infinispan.configuration.global.SerializationConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
-import org.infinispan.persistence.spi.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.tools.store.migrator.StoreProperties;
 
 public class SerializationConfigUtil {
