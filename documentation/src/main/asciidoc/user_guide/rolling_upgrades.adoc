@@ -1,130 +1,125 @@
 [[rolling_upgrades]]
-== Rolling upgrades
-Rolling upgrades is the process by which an {brandname} installation is
-upgraded without a service shutdown. In the case of {brandname} library/embedded mode, it refers to an
-installation to the nodes where {brandname} is running in library/embedded mode.
-For {brandname} servers, it refers to the server side components, not
-the client side. The upgrade could involve hardware change, or software
-change, such as upgrading the {brandname} version in use.
+== Performing Rolling Upgrades
 
-Rolling upgrades can be done in {brandname} installations using {brandname} in
-embedded or library mode, or in server mode. Here are the instructions for
-each use case:
+Upgrade {brandname} without downtime or data loss. You can perform rolling upgrades in Library Mode (embedded) or Remote Client/Server Mode to start using a more recent version of {brandname}.
 
-=== Rolling upgrades for {brandname} library/embedded mode
+From a high-level, you do the following to perform rolling upgrades:
 
-Rolling upgrades for {brandname} library/embedded mode are done taking
-advantage of the Command-Line Interface (CLI) that {brandname} provides
-in order to interact with a remote {brandname} cluster. When a new cluster is
-started, it will get the data from the existing cluster using the
-CLI, so the existing cluster must be ready to receive CLI requests. Please
-check the link:#command_line_interface[Command-Line Interface chapter] for information on how to set
-up a cluster to receive CLI requests.
+. Set up a target cluster. The target cluster is the {brandname} version to which you want to migrate data. The source cluster is the {brandname} deployment that is currently in use.
+. Configure all clients to start using the target cluster instead of the source cluster.
+. Synchronize data from the source cluster to the target cluster.
 
-NOTE: Rolling upgrades for {brandname} library/embedded mode are only supported
-for caches using standard JDK types as keys. Custom keys are not currently
-supported. Custom value types are supported, using JSON as the format to ship
-them between source and target cluster.
+=== Performing Rolling Upgrades in Library Mode
 
-==== Steps
+[NOTE]
+====
+{brandname} supports rolling upgrades in Library Mode only for caches that use standard JDK types as keys. Custom keys are not currently supported, however, custom value types are supported. {brandname} uses JSON format to transfer custom value types from the source cluster to the target cluster.
+====
 
-.  Start a new cluster ( _Target Cluster_ ) with the new version of
-{brandname}, using either different network settings or JGroups cluster name so
-that the old cluster ( _Source Cluster_ ) and the new one don't overlap.
+Perform a rolling upgrade of {brandname} in Library Mode as follows:
 
-
-.  For each cache to be migrated, the _Target Cluster_ is configured with a
-Command-Line Interface cache loader which will retrieve data from the source
-cluster, with these settings:
-
-
-.  _connection_: JMX connection string to use to connect to _Source Cluster_.
-The connection string specifies how to connect to one of the source cluster
-members. Connection to one of the nodes is enough, there's no need to specify
-connection information for all nodes in the _Source Cluster_. The connection
-URL contains cache name information and this name must coincide with the name
-of the cache on the Source Cluster. The URL might change depending on the set
-up, check the Command-Line Interface chapter for more information. Here is a
-sample connection value: `jmx://1.1.1.1:4444/MyCacheManager/myCache`
-
-
-.  Configure clients to point to the _Target Cluster_ instead of the
-_Source Cluster_ , and one by one, restart each client node.  Gradually,
-all requests will be handled by the _Target Cluster_ rather than the
-_Source Cluster_ . The _Target Cluster_ will lazily load data from the
-_Source Cluster_ on demand via the Command-Line Interface cache loader.
-
-
-.  At this point the _Target Cluster_ needs to fetch all remaining data from
-the _Source Cluster_ :
-
-
-.  JMX: invoke the _synchronizeData_ operation specifying the "cli"
-parameter on the _RollingUpgradeManager_ MBean on the _Target Cluster_ for all
-of the caches that need to be migrated
-
-
-.  CLI: invoke the _upgrade --synchronize=cli_ command on the _Target Cluster_
-for all of the caches that need to be migrated (additionally the _--all_ switch
-can be used to synchronize all caches in the cluster)
-
-
-.  Once the above operation is complete, the _CLInterfaceLoader_ on the
-_Target Cluster_ must be disabled as follows:
-
-
-.  JMX: invoke the _disconnectSource_ operation specifying the "cli"
-parameter on the _RollingUpgradeManager_ MBean on the _Target Cluster_ for
-all of the caches that have been migrated
-
-
-.  CLI: invoke the _upgrade --disconnectsource=cli_ command on the _Target
-Cluster_ for all of the caches that have been migrated (additionally the
-_--all_ switch can be used to disconnect all caches in the cluster)
-
-
-.  The _Source Cluster_ can be decomissioned now.
-
-
-
-=== Rolling upgrades for {brandname} Servers
-
-This process is used for  installations making use of {brandname} as a remote grid, via Hot Rod.   This assumes an upgrade of the {brandname} grid, and _not_ the client application.
-
-In  the following description we will refer to the Source and Target  clusters, where the Source cluster is the old cluster which is currently  in use and the Target cluster is the new cluster to which the data will  be migrated to.
-
-=== Steps
-
-.  Start a new cluster ( _Target Cluster_ ) with the new version of {brandname}, using either different network settings or JGroups cluster name so that the old cluster ( _Source Cluster_ ) and the new one don't overlap.
+. Start the target cluster with unique network properties or a different JGroups cluster name to keep it separate from the source cluster.
+. Configure the target cluster with a CLI cache loader to retrieve data from each cache instance in the source cluster.
+.. Use a JMX connection string to connect to one of the nodes in the source cluster.
+.. Ensure that the cache name in the connection URL matches the cache name in the source cluster.
 +
-.  For each cache to be migrated, the _Target Cluster_ is configured with a RemoteCacheStore with the following settings:
+For example, `jmx://1.1.1.1:4444/MyCacheManager/myCache`. See link:#command_line_interface[Command Line Interface] for more information.
 +
-..  _servers_ should point to the _Source Cluster_
+. Configure the target cluster to handle all client requests instead of the source cluster.
+.. Configure all clients to point to the target cluster instead of the source cluster.
+.. Restart each client node.
 +
-..  _remoteCacheName_ must coincide with the name of the cache on the _Source Cluster_
+The target cluster lazily loads data from the source cluster on demand via the CLI cache loader.
 +
-..  _hotRodWrapping_ must be enabled ( _true_ )
+. Fetch data from the source cluster. Do one of the following on the target cluster for each cache that you want to migrate:
 +
-.. _shared_ should be _true_
+JMX::
+Invoke the `synchronizeData` operation specifying the `cli`
+parameter on the `RollingUpgradeManager` MBean for each cache that you want to migrate.
+CLI::
+Invoke the _upgrade --synchronize=cli_ command for each cache that you want to migrate. Use the `--all` switch to synchronize all caches in the cluster.
 +
-.  Configure clients to point to the _Target Cluster_ instead of the _Source Cluster_ , and one by one, restart each client node.  Gradually, all requests will be handled by the _Target Cluster_ rather than the _Source Cluster_ . The _Target Cluster_ will lazily load data from the _Source Cluster_ on demand via the RemoteCacheStore.
+. Disable the CLI cache loader on the target cluster. Do one of the following:
 +
-.  If the _Source Cluster_ version is **older than 8.2**, its keyset must be dumped. This can be achieved either via a JMX operation or via the CLI:
+JMX::
+Invoke the `disconnectSource` operation and specify the `cli`
+parameter on the `RollingUpgradeManager` MBean for
+all caches that are migrated.
+CLI::
+Invoke the `upgrade --disconnectsource=cli` command for all caches that are migrated. Use the `--all` switch to disconnect all caches.
 +
-..  JMX: invoke the _recordKnownGlobalKeyset_ operation on the _RollingUpgradeManager_ MBean on the _Source Cluster_ for all of the caches that need to be migrated
-+
-..  CLI: invoke the _upgrade --dumpkeys_ command on the _Source Cluster_ for all of the caches that need to be migrated (additionally the _--all_ switch can be used to dump all caches in the cluster)
-+
-.  At this point the _Target Cluster_ needs to fetch all remaining data from the _Source Cluster_ . This can be achieved either via a JMX operation or via the CLI:
-+
-..  JMX: invoke the _synchronizeData_ operation specifying the "hotrod" parameter on the _RollingUpgradeManager_ MBean on the _Target Cluster_ for all of the caches that need to be migrated
-+
-..  CLI: invoke the _upgrade --synchronize=hotrod_ command on the _Target Cluster_ for all of the caches that need to be migrated (additionally the _--all_ switch can be used to synchronize all caches in the cluster)
-+
-.  Once the above operation is complete, the _RemoteCacheStore_ on the _Target Cluster_ must be disabled either via JMX or CLI:
-+
-..  JMX: invoke the _disconnectSource_ operation specifying the "hotrod" parameter on the _RollingUpgradeManager_ MBean on the _Target Cluster_ for all of the caches that have been migrated
-+
-..  CLI: invoke the _upgrade --disconnectsource=hotrod_ command on the _Target Cluster_ for all of the caches that have been migrated (additionally the _--all_ switch can be used to disconnect all caches in the cluster)
+. Decommission the source cluster.
 
-You can now decommission the _Source Cluster_.
+=== Performing Rolling Upgrades in Remote Client/Server Mode
+
+Perform a rolling upgrade of {brandname} servers as follows:
+
+[NOTE]
+====
+This procedure explains how to upgrade {brandname} servers, not client applications.
+====
+
+. Start the target cluster with unique network properties or a different JGroups cluster name to keep it separate from the source cluster.
+. Configure a `RemoteCacheStore` on the target cluster for each cache you want to migrate from the source cluster.
++
+`RemoteCacheStore` settings::
++
+* `remote-server` must point to the source cluster via the `outbound-socket-binding` property.
+* `remoteCacheName` must match the cache name on the source cluster.
+* `hotrod-wrapping` must be `true` (enabled).
+* `shared` must be `true` (enabled).
+* `purge` must be `false` (disabled).
+* `passivation` must be `false` (disabled).
+* `protocol-version` matches the Hot Rod protocol version of the source cluster.
++
+.Example `RemoteCacheStore` Configuration
+[source,xml,options="nowrap"]
+----
+<distributed-cache>
+   <remote-store cache="MyCache" socket-timeout="60000" tcp-no-delay="true" protocol-version="2.5" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
+      <remote-server outbound-socket-binding="remote-store-hotrod-server"/>
+   </remote-store>
+</distributed-cache>
+...
+<socket-binding-group name="standard-sockets" default-interface="public" port-offset="${jboss.socket.binding.port-offset:0}">
+  ...
+  <outbound-socket-binding name="remote-store-hotrod-server">
+     <remote-destination host="198.51.100.0" port="11222"/>
+  </outbound-socket-binding>
+  ...
+</socket-binding-group>
+----
++
+. Configure the target cluster to handle all client requests instead of the source cluster:
+.. Configure all clients to point to the target cluster instead of the source cluster.
+.. Restart each client node.
++
+The target cluster lazily loads data from the source cluster on demand via `RemoteCacheStore`.
++
+. Fetch data from the source cluster. Do one of the following on the target cluster for each cache that you want to migrate:
++
+JMX::
++
+Invoke the `synchronizeData` operation and specify the `hotrod` parameter on the `RollingUpgradeManager` MBean.
++
+CLI::
++
+[source,bash,options="nowrap"]
+----
+$ JDG_HOME/bin/cli.sh --connect controller=127.0.0.1:9990 -c "/subsystem=datagrid-infinispan/cache-container=clustered/distributed-cache=MyCache:synchronize-data(migrator-name=hotrod)"
+----
++
+. Disable the `RemoteCacheStore` on the target cluster. Do one of the following:
++
+JMX::
++
+Invoke the `disconnectSource` operation and specify the `hotrod` parameter on the `RollingUpgradeManager` MBean.
++
+CLI::
++
+[source,bash,options="nowrap"]
+----
+$ JDG_HOME/bin/cli.sh --connect controller=127.0.0.1:9990 -c "/subsystem=datagrid-infinispan/cache-container=clustered/distributed-cache=MyCache:disconnect-source(migrator-name=hotrod)"
+----
++
+. Decommission the source cluster.
