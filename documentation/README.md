@@ -1,44 +1,38 @@
-# Instructions on the documentation process
+# Infinispan Documentation
 
-This file is not fleshed out, it's just a collection of tips.
-A lot of inspiration has been gained from the 
-[Hibernate-OGM](https://github.com/hibernate/hibernate-ogm/tree/master/hibernate-ogm-documentation) 
-project documentation, as well as the [AsciiDoctor website sources](https://github.com/asciidoctor/asciidoctor.org),
-which also uses AsciiDoc for documentation as well as 
-[Awestruct](http://www.awestruct.org) to build and publish
-the website.
+Tips to get started with Infinispan documentation.
 
-## Authoring documents
-Read the _Contributing To Infinispan Guide's_ section on [Writing Documentation](http://www.infinispan.org/docs/6.0.x/contributing/contributing.html#_writing_documentation_and_faqs) for more details.
+## Documentation Guidelines
 
-### Editing
-You will want to install the entire AsciiDoctor toolchain on your computer.
+Start by reading the [Documentation Guidelines](http://infinispan.org/docs/stable/contributing/contributing.html#documentation_guidelines) in the _Contributer's Guide_.
+
+## Tooling
+
+Install the complete AsciiDoctor toolchain. See the following:
 * [Installing AsciiDoctor](http://asciidoctor.org/docs/install-toolchain/#installing-or-updating-asciidoctor)
-  * [On a Mac](http://asciidoctor.org/docs/install-asciidoctor-macosx/)
+  * [Mac OS](http://asciidoctor.org/docs/install-asciidoctor-macosx/)
 * [Text editors](http://asciidoctor.org/docs/install-toolchain/#text-editors-and-syntax-highlighting)
 
-## Building and rendering documents
-A `pom.xml` file is included here, but this is _*experimental*_ and probably will
-not work.
+## Building Documentation
 
-*TIP:* Don't bother with it.
+Use _live previews_ to review your changes while editing or contributing
+content. See [Editing AsciiDoc with Live Preview](http://asciidoctor.org/docs/editing-asciidoc-with-live-preview/).
 
-### Publishing
-There are scripts in the 
-[Infinispan Website](https://github.com/infinispan/infinispan.github.io) repository
-which are capable of grabbing docs from here and building/integrating the docs as a
-part of the Infinispan.org website.
+Run the _asciidoctor_ command against the main book file to build HTML locally.
+For example, to build the _User Guide_ locally, run:
 
-*NOTE:* This is the preferred method of rendering the documentation.
+```bash
+$ asciidoctor user_guide.asciidoc
+```
 
-### Live editing
-Naturally, while editing the docs, you don't want to have to build the entire website to see your changes.
-A good way to do this is to set up _live previews_ as described
-[here](http://asciidoctor.org/docs/editing-asciidoc-with-live-preview/).
+**Tips:**
 
-#### Guardfile
-A `Guardfile` is included here in this repository which should be used instead of the `Guardfile` as specified in the link above.
-This will ensure proper application of stylesheets, etc.
+- Use the `Guardfile` in the documentation repository to apply stylesheets correctly if you use Guard to monitor changes and regenerate HTML as you edit.
+- The `pom.xml` for documentation is _*experimental*_ and is not
+currently functional.
 
-*NOTE:* Aggregate files (i.e., using AsciiDoc's `include` directive) does _not_ work with live previews.
-However, these will be rendered correctly when the site is properly built.
+## Publishing Documentation
+
+The [Infinispan Website](https://github.com/infinispan/infinispan.github.io)
+hosts public documentation for each release. Documentation source files are
+pulled from this repository and included in the website build process.
