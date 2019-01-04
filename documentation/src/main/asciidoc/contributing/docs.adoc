@@ -1,247 +1,180 @@
-== Writing Documentation and FAQs
-{brandname} makes use of link:http://www.methods.co.nz/asciidoc/[AsciiDoc] as a
-lightweight markup language to write all documentation.
-AsciiDoc is quick and easy to write, easy to learn, and there are a number of
-ways to render AsciiDoc, including HTML5, PDF and DocBook.
+[[documentation_guidelines]]
+== Documentation Guidelines
 
-.AsciiDoc resources
-* link:http://www.methods.co.nz/asciidoc/[AsciiDoc website]
-* link:http://asciidoctor.org/docs/asciidoc-syntax-quick-reference/[Quick Syntax Reference]
+Welcome to {brandname} documentation. This is a place where anyone can
+contribute and share their knowledge.
 
-=== Practicalities
-==== Style guide
-link:http://asciidoctor.org/[AsciiDoctor] has some excellent resources on authoring
-documentation effectively, including:
+[[documentation_guidelines_source_files]]
+=== Working with Documentation Source Files
 
-* link:http://asciidoctor.org/docs/asciidoc-writers-guide/[Writers' Guide]
-* link:http://asciidoctor.org/docs/asciidoc-recommended-practices/[Style Guide]
+All you need to do is fork {brandname} to edit the documentation source files.
+You can then submit your changes in a _pull request_ as you would any other
+contribution to the project.
 
-==== Editing
-You will want to install the entire AsciiDoctor toolchain on your computer.
+See the `README` file in the _documentation/src/main/asciidoc_ directory for
+information on what you need to edit and build the documentation.
 
-* link:http://asciidoctor.org/docs/install-toolchain/#installing-or-updating-asciidoctor[Installing AsciiDoctor]
-** link:http://asciidoctor.org/docs/install-asciidoctor-macosx/[On a Mac]
-* link:http://asciidoctor.org/docs/install-toolchain/#text-editors-and-syntax-highlighting[Text editors]
+[[documentation_guidelines_style_guide]]
+=== Style Guide
 
-In order to see the result of your editing, from the infinispan's root dir (embedded):
-[source,bash]
+Infinispan is the community project on which Red Hat Data Grid is based. For
+this reason, we follow link:https://redhat-documentation.github.io/[Guidelines
+for Red Hat Documentation].
+
+The link:http://asciidoctor.org/docs/asciidoc-writers-guide/[AsciiDoctor
+Writer's Guide] also has some excellent resources on writing effective
+documentation.
+
+[[documentation_guidelines_format_reference]]
+=== AsciiDoc Format Reference
+
+Tips for which AsciiDoc markup to use when formatting text.
+
+Monospace (```)::
+[cols="50%,50%",options="header"]
+|===
+|Item |Example
+|File names and paths |The \`/home/user/.bashrc` file ...
+|Literal values | If the value is \`true` ...
+|Configuration attributes | Set the \`enabled` attribute ...
+|Java class names |The \`java.sql.Connection` class ...
+|Java annotations |The \`@Clustered` annotation ...
+|===
+
+Italics (`_`)::
+[cols="50%,50%",options="header"]
+|===
+|Item |Example
+|Guide titles |See the \_Installation Guide_ ...
+|Emphasis _(first occurrence of the term only)_ |\_High availability_ refers to the ...
+|===
+
+Bold (`*`)::
+[cols="50%,50%",options="header"]
+|===
+|Item |Example
+|GUI items _(menus, buttons)_|Click the \*Add* button and ...
+|===
+
+Underline (`[.underline]#value#`)::
+[cols="50%,50%",options="header"]
+|===
+|Item |Example
+|Default item in a multi-select | \`yes\[.underline]\#no#\maybe`
+|===
+
+[[documentation_guidelines_general]]
+=== General Guidelines
+
+* Always use `++{brandname}++` to refer to the product. Never abbreviate the product name to something like "ISPN".
+* Prefer active voice to passive voice.
+* Use the second or third person, but never the first. Prefer second person singular to address the user directly.
+* Always use the present tense. There are instances where future tense makes sense but do not mix tenses. Never use the past tense.
+* Use American English spelling conventions.
+* Avoid contractions. Use "do not" instead of "don't".
+* Terminate bulleted and numbered lists with periods (.) except for simple name
+  lists.
+* Avoid the word "simply" unless it clarifies.
+* For substitution of `{attr}` in code blocks, use `[subs=+attributes]`.
+* For styling of `++*bold*++` (`*bold*`) in code blocks, use
+  `[subs=+quotes]`.
+* Never use colloquialisms or slang in documentation.
+
+[cols="33%,33%a,33%a",options="header"]
+|===
+|Item |Use |Do Not Use
+|Root commands  | $ sudo  |#
+|Emphasis  |\_yay_  |\*yay*
+|Decimal integers < 10  |four  |4
+|Decimal integers >= 10  |12  |twelve
+|Hexadecimal integers (_always numeric, lowercase x_) |0x123 |0X13
+|Number ranges (_always use numerals_)  |1-20 |1-twenty
+.3+|Avoid Latin abbreviations  |that is |i.e.
+|and so on |etc.
+|for example  |e.g.
+|===
+
+Characters Per Line::
+Use a soft limit of 80 characters per line. This makes it easier to see changes
+in GitHub diffs, which are about 90 characters long.
+Asciidoc End of File::
+To avoid formatting issues, end `adoc` files with two empty lines.
+Notes and Admonitions::
+Encapsulate notes, tips, and warnings in brackets. Surround the text in four equals characters, as follows:
++
 ----
-## compile the user guide and the index
-$ asciidoctor ./documentation/src/main/asciidoc/user_guide/user_guide.adoc
-$ asciidoctor ./documentation/src/main/asciidoc/index.adoc
-
-## open the documentation and make sure it renders correctly (this is OS-X specific)
-$ open /Applications/Google\ Chrome.app documentation/src/main/asciidoc/index.html
+[NOTE]
+====
+This is a note that you should read.
+====
 ----
 
-==== Linefeed
-A soft limit of 80 characters is recommended.
-At the end of each sentence, go to the next line.
-Consider going to the next line for each new clause,
-in particular if the sentence would go beyond 80 characters.
-But do not obsess: if a multi-clause sentence is below 80 characters,
-don't split it to limit the _verticality_ of the document.
-For long links, tend to go to the next line.
+[[documentation_guidelines_section_ids]]
+=== Section IDs
 
-The 80 characters limit is used because GitHub diffs are around 90 chars long.
+When creating anchors for section IDs, use the following format:
 
-For more information, read
-http://emmanuelbernard.com/blog/2013/08/08/one-line-per-idea/[this blog post]
+`++[[anchor_name]]++`
 
-==== End of file
-If you intend your file to be included in another file (aggregated),
-such as the technique used in the User Guide, then you *must* end
-the file with two blank lines.  
+You should always use underscores (_) to delimit anchors. Do not use other characters such as dashes (-) or periods (.) to avoid issues at build time.
 
-WARNING: Failure to do so _will_ mess up formatting and layout.
+To create anchors for reusable content, use this format:
 
-==== Diagrams
-As far as possible, use OmniGraffle for diagrams.
-Please store diagram sources if possible as well, XML files in `src/main/omnigraffle`.
-Export the omnigraffle files as `png` with a dot per inch of 72. This will create
-a file of the right size for the web.
+`++[id="same-as-section-heading-{context}"]++`
 
-Binary images should be stored under `documentation/src/main/asciidoc/${your_document}/images`
+Learn more about content reuse in the link:https://redhat-documentation.github.io/modular-docs/#reusing-modules[Modular Documentation Reference Guide].
 
-==== Live editing
-Naturally, while editing the docs, you don't want to have to build the entire docs to see your changes.
-A good way to do this is to set up _live previews_ as described
-link:http://asciidoctor.org/docs/editing-asciidoc-with-live-preview/[here].
+[[documentation_guidelines_xrefs]]
+=== Cross References
 
-=== Who can contribute documentation?
-Anyone.  Just fork {brandname} on GitHub, and edit away in the `documents` directory.
-Then submit a _pull request_, just as you would do with any code contributions.
-See the <<_source_control, Source Control>> chapter for more information on this process.
+To reference a section within the same book, use `link:#`:
 
-=== Layout
+`++link:#anchor_name[Link Text]++`
 
-==== What goes where?
-Official documentation - a User Guide, Getting Started Guide, FAQs, guides to contributing, extending 
-and upgrading {brandname} - live in {brandname}'s source code repository on GitHub.
+[[documentation_guidelines_images]]
+=== Diagrams, Screenshots, and Other Media
 
-Additional documentation - such as for cache stores, Hot Rod clients and modules that live outside
-of {brandname}'s core repository - live alongside the code in their respective repositories
-following a similar structure.
+* Images should be saved as *PNG* or *JPG*, with a width of at least *660 px*, at *110 dpi*. Try to keep file size less than *300 KB*.
+* Screenshots supplement the text, not replace it.  *Do not use images as the sole means to convey information or context*.
+* *Do not include any test or pre-release labels*.
+* *Do not include any personally identifying information*.
+* Capture just the part of the screen or window that users must focus on; *do not include window headers in the final screenshots unless completely necessary*.
+* Crop screenshots to *condense important information* and limit empty GUI space and other inconsequential parts.
+* All information in an image must be available in an alternative text format for accessibility (Section 508).
+* Save all images under `documentation/src/main/asciidoc/${your_document}/images`
 
-In addition, {brandname} maintains a wiki for design documents and the like, on link:community.jboss.org/en/infinispan[this site].
+[[documentation_guidelines_images_include]]
+==== Including Images
+Insert images using the `image::` or `image:` directive.
 
-NOTE: {brandname} no longer uses link:https://docs.jboss.org/author/display/ISPN/Home[Confluence] for online documentation.
+* Example 1: Image title in title case (which automatically appends a Figure #).
++
+----
+.Image Title
+image::icon.png[Alt text, 50, 50]
+----
 
-==== Headers, Page Structure and the Table of Contents
-Each _book_ has its own structure.  Longer books such as the User Guide and the Getting Started Guide may have a 
-table of contents, while shorter books like the guide to extending or upgrading {brandname} may skip this.
+* Example 2: Inline image. Note, there is only one colon (:) used here.
++
+----
+This is an inline image. image:icon.png[Alt text] Cool!
+----
 
-===== Table of Contents
-Tables of contents should use the `:toc2:` AsciiDoctor directive at the start of the page.
+[[documentation_guidelines_code_blocks]]
+=== Code Samples
 
-Each book may choose how many levels deep the TOC should go to, by using the `:toclevels: N` directive, where `1 <= N <= 5`.
+Include code samples in blocks such as the following:
 
-===== Headers
-Each book should have a title, along with a section for authors, TOC information, etc.  
-For example, copied from the User Guide:
+----
+  [source,java,options="nowrap"]
+  .MyClass.java
+  ----
+  //some Java code
+  ----
+----
 
- = {brandname} User Guide
- Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the {brandname} community
- :toc2:
- :icons: font
- :toclevels: 3
- :numbered:
-
-===== Chapters
-Each chapter thereafter - whether written directly into the book or included via the `include::` directive - 
-should then begin with `==`.  For example, from this very document:
-
- == Writing Documentation and FAQs
- {brandname} makes use of link:http://www.methods.co.nz/asciidoc/[AsciiDoc] as a
- lightweight markup language to write all documentation.
-
-
-==== Images and other media
-If you are describing the use of a GUI, or showing results of some operation, images embedded in the page
-can bring the documentation to life for the reader. Images can be included via the `image::[]` directive.
-
-See <<_diagrams, this section>> for details on where to store your images.
-
-
-==== Code samples
-link:http://coderay.rubychan.de/[CodeRay] is used for image highlighting.
-Visit the CodeRay site for a list of supported languages.
-Highlighting code is as simple as:
-
- [source,java]
- .MyClass.java
- ----
- // some Java code
- ----
-
-TIP: Only include snippets you want to use to demonstrate an idea.
-If you want to share a reusable block of code or a configuration file, consider storing it in GitHub
-as a link:https://gist.github.com/[gist] and linking to it.
-
-==== Versioning
-If you are writing about a feature that has existed from {brandname} 5.0 onwards, there is
-no need to specify a version that the feature existed from.
-However, if you are writing about a new feature, use a `TIP` callout to specify the version
-it applies to.
-Also, only specify a MINOR version rather than a detailed version.
-
-.A bad version statement
+[TIP]
 ====
-_This section talks about a new API in {brandname}, called a WidgetMeister.  The WidgetMeister has the power to rule all widgets in your cluster, and is included in {brandname} from version 6.2.3.Beta2 onwards._
+Include code samples that demonstrate an idea. To share reusable blocks of code or configuration files, store them in GitHub
+as a link:https://gist.github.com/[gist] and linking to them.
 ====
-
-Why is this bad?  A number of reasons.
-
-* It mixes feature detail (what the WidgetMeister does) with versioning (when it was released)
-* It points to a beta version!!
-
-How _should_ this be written?
-
-.A good version statement
-====
-This section talks about a new API in {brandname}, called a WidgetMeister.  The WidgetMeister has the power to rule all widgets in your cluster.
-
-
-TIP: The WidgetMeister API is new in {brandname} 6.2.x.
-====
-
-=== Voice and grammar guide
-By using a consistent voice throughout the documentation, the {brandname} documentation appears more professional
-The aim is to make it feel to the user like the documentation was written by a single person.
-This can only be completely achieved by regular editing, however in order to make the workload of the editor
-lighter, following these rules will produce a pretty consistent voice.
-
-
-* Never use abbreviations. On the other hand, contractions are fine.
-* Always use the project name "{brandname}". Never abbreviate it, for example, to "ISPN"
-* Always write in the second or third person, never the first (plural or singular forms). Use the second person to emphasize you are giving instructions to the user.
-
-TIP: Naturally, most people write in the first person, and, typically find it the easiest form to write, however without a lot of care it can produce the most "unprofessional" text. Conversely, writing in the third person is trickier, but will produce text that feels well written almost without fail. The first person can be used for emphasis but in general it is recommended to avoid it unless you feel confident!
-
-Writing entirely in the third person can produce quite "dry" text, so it is recommended that you use the second person when you are giving instructions to the user. This could be when you are walking through a sequence of steps they should perform, or could be when you are stating that they _must_ do something in order for them to succeed. 
-
-So, are there any tricks to reformulate a sentence so the first person is not used?
-
-* Use the passive voice. "I recommend" can become "It is recommended". However, extensive use of the can produce boring, dry and indefinite text, so don't do this too much!
-* Change the subject. For example you can change "Here we discuss" to "This section discusses"
-* Use a "chatty" style. Although the use of the first person is avoided, the documentation shouldn't be too dry. Use the second person as needed. Short sentences and good use of punctuation help too!
-* If you define a list, keep the ordering of the list the same whenever you express the list. For example, if you say "In this section you will learn about interceptors, commands and factories" do not go on to say "First, let's discuss factories". This will subconsciously confuse the user
-* You should only capitalize proper nouns only. For example "data grid" is lower case (it's a concept), whilst "{brandname}" is capitalized (it's a project/product name)
-* You should always use American spelling. *Enable a spell checker!*
-* Use the definite article when discussing a specific instance or the indefinite article when describing a generalization of something; generally you omit the article when using a name for a project or product.
-
-
-.Articles used correctly
-====
-_{brandname} uses **a** logging framework to communicate messages to the user, **the** logging framework used by {brandname} is JBoss Logging_.
-====
-
-Let's dig into this. 
-. The sentence states that "{brandname} uses logging", and the indefinite article is used - we are not stating which of many possibilities is used.
-. The sentence goes on to discuss the logging framework {brandname} uses, and here the definite article is used, as the specific framework in use is discussed.
-. The sentence is concluded by stating that the logging framework used is called "JBoss Logging", and as this is a product name, no article is used.
-
-This is not a formal or complete description, but is a good rule of thumb.
-
-* Keep the tense the same. It's very easy to slip between the present, past and future tenses, but this produces text that is feels "unnatural" to the reader. 
-
-.Bad tenses
-====
-Data is collected from {brandname} every hour. Upon analysis the data showed that {brandname} is 2 million times faster than it's nearest competitor.
-====
-
-You may not have noticed, but the phrase starts using the present tense ( _is_ ) and slips into the past tense ( _showed_ ).
-This is clearly not actually the order in which the events happened! 
-
-Of course, if you are actually describing the progression of time, then changing tenses is fine.
-
-.Tenses used correctly
-====
-In the last section you _were_ shown how to configure {brandname} using XML, and in the next section you _will be_ shown how to configure {brandname} programmatically.
-====
-
-* If you are telling the user about a procedure they can follow, do be explicit about this, and enumerate the steps clearly
-
-==== Colloquialisms
-Please stay away from colloquialisms at all cost.
-This impacts the professionalism and readability of the documentation.
-The examples below probably need no explanation.
-
-.Bad colloquialisms
-====
-_You should use the WidgetMeister API for this sort of problem, coz it's the fastest way and its pretty cool._
-====
-====
-_You've then gotta install the downloaded archive._
-====
-====
-_If the dload fails, contact the SA who runs the svr._
-====
-
-=== Glossary and FAQs
-When writing a glossary or FAQ entry, you should follow the existing entries as a template. 
-
-* If the entry is commonly referred to using an acronym, then the title should consistent of the fully expanded name, with the acronym in brackets. You can then use the acronym always within the main text body.
-* If you want to refer to other glossary articles using links in the text body, then just link them with no alternative text.
-* If you want to make external links (e.g. Wikipedia, user guide), then add a bulleted list with title "More resources", and list them there. This clearly indicates to users when they are moving outside of our definitions.
-
