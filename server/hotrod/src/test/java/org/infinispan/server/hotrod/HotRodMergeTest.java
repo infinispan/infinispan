@@ -64,7 +64,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
          nextServerPort += 1;
       }
 
-      client = new HotRodClient("127.0.0.1", servers.get(0).getPort(), DEFAULT_CACHE_NAME, 60, (byte) 21);
+      client = new HotRodClient("127.0.0.1", servers.get(0).getPort(), "", 60, (byte) 21);
       TestingUtil.waitForNoRebalance(cache(0), cache(1));
    }
 

@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
@@ -65,10 +64,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned
     * by this method.
     * <p/>
-    * As an alternative to setting this on every invocation, users could also consider using the {@link DecoratedCache}
-    * wrapper, as this allows for more readable code.  E.g.:
+    * As an alternative to setting this on every invocation, users should also consider saving the decorated
+    * cache, as this allows for more readable code.  E.g.:
     * <pre>
-    *    Cache forceWriteLockCache = new DecoratedCache(cache, Flag.FORCE_WRITE_LOCK);
+    *    AdvancedCache&lt;?, ?&gt; forceWriteLockCache = cache.withFlags(Flag.FORCE_WRITE_LOCK);
     *    forceWriteLockCache.get(key1);
     *    forceWriteLockCache.get(key2);
     *    forceWriteLockCache.get(key3);
@@ -82,14 +81,23 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
 
    /**
     * An alternative to {@link #withFlags(Flag...)} not requiring array allocation.
-    * @param flags
-    * @return
+    *
+    * @since 9.2
     */
    default AdvancedCache<K, V> withFlags(Collection<Flag> flags) {
       if (flags == null) return this;
       int numFlags = flags.size();
       if (numFlags == 0) return this;
       return withFlags(flags.toArray(new Flag[numFlags]));
+   }
+
+   /**
+    * An alternative to {@link #withFlags(Flag...)} optimized for a single flag.
+    *
+    * @since 10.0
+    */
+   default AdvancedCache<K, V> withFlags(Flag flag) {
+      return withFlags(new Flag[]{flag});
    }
 
    /**
@@ -355,10 +363,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned
     * by this method.
     * <p/>
-    * As an alternative to setting this on every invocation, users could also consider using the {@link DecoratedCache}
-    * wrapper, as this allows for more readable code.  E.g.:
+    * As an alternative to setting this on every invocation, users should also consider saving the decorated
+    * cache, as this allows for more readable code.  E.g.:
     * <pre>
-    *    Cache classLoaderSpecificCache = new DecoratedCache(cache, classLoader);
+    *    AdvancedCache classLoaderSpecificCache = cache.with(classLoader);
     *    classLoaderSpecificCache.get(key1);
     *    classLoaderSpecificCache.get(key2);
     *    classLoaderSpecificCache.get(key3);

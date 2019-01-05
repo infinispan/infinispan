@@ -429,9 +429,6 @@ class Encoder2x implements VersionedEncoder {
 
    private ByteBuf writeHeader(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, boolean sendMediaType) {
       ByteBuf buf = alloc.ioBuffer();
-      // Sometimes an error happens before we have added the cache to the knownCaches/knownCacheConfigurations map
-      // If that happens, we pretend the cache is LOCAL and we skip the topology update
-      String cacheName = header.cacheName.isEmpty() ? server.defaultCacheName() : header.cacheName;
       Cache<Address, ServerAddress> addressCache = HotRodVersion.forVersion(header.version) != HotRodVersion.UNKNOWN ?
             server.getAddressCache() : null;
 
@@ -442,23 +439,28 @@ class Encoder2x implements VersionedEncoder {
       boolean objectStorage = false;
       CacheTopology cacheTopology;
 
-      if (CounterModuleLifecycle.COUNTER_CACHE_NAME.equals(cacheName)) {
-         cacheTopology = getCounterCacheTopology(server.getCacheManager());
-         newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, CacheMode.DIST_SYNC, cacheTopology);
-      } else {
-         ComponentRegistry cr = server.getCacheRegistry(cacheName);
-         Configuration configuration = server.getCacheConfiguration(cacheName);
-         CacheMode cacheMode = configuration == null ? CacheMode.LOCAL : configuration.clustering().cacheMode();
+      if (header.op != HotRodOperation.ERROR) {
+         if (CounterModuleLifecycle.COUNTER_CACHE_NAME.equals(header.cacheName)) {
+            cacheTopology = getCounterCacheTopology(server.getCacheManager());
+            newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, CacheMode.DIST_SYNC,
+                                              cacheTopology);
+         } else {
+            HotRodServer.CacheInfo cacheInfo = server.getCacheInfo(header);
+            Configuration configuration = cacheInfo.configuration;
+            CacheMode cacheMode = configuration.clustering().cacheMode();
 
-         cacheTopology = cacheMode.isClustered() ? cr.getDistributionManager().getCacheTopology() : null;
-         newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, cacheMode, cacheTopology);
-         if (configuration != null) {
+            cacheTopology =
+               cacheMode.isClustered() ? cacheInfo.distributionManager.getCacheTopology() : null;
+            newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, cacheMode,
+                                              cacheTopology);
             keyMediaType = configuration.encoding().keyDataType().mediaType();
             valueMediaType = configuration.encoding().valueDataType().mediaType();
             objectStorage = APPLICATION_OBJECT.match(keyMediaType);
          }
+      } else {
+         cacheTopology = null;
+         newTopology = Optional.empty();
       }
-
 
       buf.writeByte(Constants.MAGIC_RES);
       writeUnsignedLong(header.messageId, buf);

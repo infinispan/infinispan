@@ -116,14 +116,14 @@ mediaTypeDescription returns MediaType switch mediaTypeDefinition
 key: array;
 value: array;
 
-expiration returns Metadata
+expiration returns Metadata.Builder
    : { version < VERSION_22 }? lifespanInt maxIdleInt {
-      server.buildMetadata(header,
+      server.buildMetadata(
          defaultExpiration(lifespanInt, flags, ProtocolFlag.DefaultLifespan), TimeUnitValue.SECONDS,
          defaultExpiration(maxIdleInt, flags, ProtocolFlag.DefaultMaxIdle), TimeUnitValue.SECONDS) }
    | timeUnits lifespanLong maxIdleLong {
-      server.buildMetadata(header, lifespanLong, TimeUnitValue.decode(BitShift.right(timeUnits, 4)),
-                               maxIdleLong, TimeUnitValue.decode(BitShift.mask(timeUnits, 0x0F))) }
+      server.buildMetadata(lifespanLong, TimeUnitValue.decode(BitShift.right(timeUnits, 4)),
+                           maxIdleLong, TimeUnitValue.decode(BitShift.mask(timeUnits, 0x0F))) }
    ;
 lifespanInt: vInt;
 maxIdleInt: vInt;

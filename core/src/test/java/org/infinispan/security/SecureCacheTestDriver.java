@@ -330,6 +330,11 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)
+   public void testWithFlags_Flag(SecureCache<String, String> cache) {
+      cache.withFlags(Flag.IGNORE_RETURN_VALUES);
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
    public void testNoFlags(SecureCache<String, String> cache) {
       cache.noFlags();
    }

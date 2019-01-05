@@ -1,7 +1,7 @@
 package org.infinispan.distribution;
 
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
@@ -50,7 +50,7 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
       this.suspended.set(s);
    }
 
-   private void blockIfNeeded(InvocationContext ctx, VisitableCommand command) throws BrokenBarrierException, InterruptedException {
+   private void blockIfNeeded(InvocationContext ctx, VisitableCommand command) throws Exception {
       if (suspended.get()) {
          log.tracef("Suspended, not blocking command %s", command);
          return;
@@ -58,9 +58,9 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
       if ((!originLocalOnly || ctx.isOriginLocal()) && acceptCommand.test(command)) {
          log.tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", command);
          // The first arrive and await is to sync with main thread
-         barrier.await();
+         barrier.await(30, TimeUnit.SECONDS);
          // Now we actually block until main thread lets us go
-         barrier.await();
+         barrier.await(30, TimeUnit.SECONDS);
          log.tracef("Command completed blocking completion of %s", command);
       } else {
          log.tracef("Not blocking command %s", command);

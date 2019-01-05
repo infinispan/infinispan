@@ -87,7 +87,7 @@ public class WrappedByteArray implements WrappedBytes {
    @Override
    public String toString() {
       return "WrappedByteArray{" +
-            "bytes=" + Util.printArray(bytes) +
+            "bytes=" + Util.hexDump(bytes) +
             ", hashCode=" + hashCode +
             '}';
    }

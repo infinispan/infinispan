@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.server.hotrod.logging.Log;
 
@@ -100,7 +99,8 @@ public class HotRodHeader {
       }
    }
 
-   AdvancedCache<byte[], byte[]> getOptimizedCache(AdvancedCache<byte[], byte[]> c, Configuration cacheCfg) {
+   AdvancedCache<byte[], byte[]> getOptimizedCache(AdvancedCache<byte[], byte[]> c,
+                                                   boolean transactional, boolean clustered) {
       if (version < 20) {
          if (!hasFlag(ProtocolFlag.ForceReturnPreviousValue)) {
             switch (op) {
@@ -111,11 +111,9 @@ public class HotRodHeader {
          }
          return c;
       }
-      boolean isTransactional = cacheCfg.transaction().transactionMode().isTransactional();
-      boolean isClustered = cacheCfg.clustering().cacheMode().isClustered();
 
       AdvancedCache<byte[], byte[]> optCache = c;
-      if (isClustered && !isTransactional && op.isConditional()) {
+      if (clustered && !transactional && op.isConditional()) {
          log.warnConditionalOperationNonTransactional(op.toString());
       }
 
@@ -130,7 +128,7 @@ public class HotRodHeader {
          if (op.isNotConditionalAndCanReturnPrevious()) {
             optCache = optCache.withFlags(Flag.IGNORE_RETURN_VALUES);
          }
-      } else if (!isTransactional && op.canReturnPreviousValue()) {
+      } else if (!transactional && op.canReturnPreviousValue()) {
          log.warnForceReturnPreviousNonTransactional(op.toString());
       }
       return optCache;

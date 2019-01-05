@@ -960,7 +960,7 @@ class Decoder extends ReplayingDecoder<Void> {
       }
       // We cannot assert this since in concurrent case we could get two responses in single buffer
       if (log.isTraceEnabled() && buf.readerIndex() != buf.writerIndex()) {
-         log.tracef("Left bytes in the buffer: " +
+         log.tracef("Left bytes in the buffer: %s",
                new String(ByteBufUtil.getBytes(buf, buf.readerIndex(), buf.writerIndex() - buf.readerIndex())));
       }
       if (resp != null) {

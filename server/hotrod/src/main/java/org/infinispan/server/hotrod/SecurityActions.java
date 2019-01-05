@@ -5,6 +5,7 @@ import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -14,7 +15,6 @@ import org.infinispan.security.actions.AddCacheManagerListenerAction;
 import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
-import org.infinispan.security.actions.GetCacheGlobalComponentRegistryAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.RemoveListenerAction;
 import org.infinispan.security.impl.SecureCacheImpl;
@@ -47,15 +47,14 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
+   static DistributionManager getDistributionManager(AdvancedCache<?, ?> cache) {
+      return doPrivileged(cache::getDistributionManager);
+   }
+
    @SuppressWarnings("unchecked")
    static <K, V> org.infinispan.Cache<K, V> getCache(final EmbeddedCacheManager cacheManager, String cacheName) {
       GetCacheAction action = new GetCacheAction(cacheManager, cacheName);
       return (org.infinispan.Cache<K, V>) doPrivileged(action);
-   }
-
-   static GlobalComponentRegistry getCacheGlobalComponentRegistry(final AdvancedCache<?, ?> cache) {
-      GetCacheGlobalComponentRegistryAction action = new GetCacheGlobalComponentRegistryAction(cache);
-      return doPrivileged(action);
    }
 
    static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
@@ -91,5 +90,4 @@ final class SecurityActions {
          return cache;
       }
    }
-
 }
