@@ -7,11 +7,11 @@ import org.infinispan.server.hotrod.tx.ControlByte;
 class TransactionWrite {
    final byte[] key;
    final long versionRead;
-   final Metadata metadata;
+   final Metadata.Builder metadata;
    final byte[] value;
    private final byte control;
 
-   TransactionWrite(byte[] key, long versionRead, byte control, byte[] value, Metadata metadata) {
+   TransactionWrite(byte[] key, long versionRead, byte control, byte[] value, Metadata.Builder metadata) {
       this.key = key;
       this.versionRead = versionRead;
       this.control = control;

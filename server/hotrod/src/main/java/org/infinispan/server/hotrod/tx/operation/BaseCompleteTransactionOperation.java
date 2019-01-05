@@ -175,7 +175,9 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
     */
    private CompletableFuture<Void> completeCache(ByteString cacheName) throws Throwable {
       TxState state = globalTxTable.getState(new CacheXid(cacheName, xid));
-      AdvancedCache<?, ?> cache = server.cache(header, subject, cacheName.toString());
+      HotRodServer.CacheInfo cacheInfo =
+         server.getCacheInfo(cacheName.toString(), header.getVersion(), header.getMessageId(), true);
+      AdvancedCache<?, ?> cache = server.cache(cacheInfo, header, subject);
       RpcManager rpcManager = cache.getRpcManager();
       if (rpcManager == null || rpcManager.getAddress().equals(state.getOriginator())) {
          if (isTraceEnabled()) {

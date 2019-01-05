@@ -17,7 +17,7 @@ public class DecoratedCacheTest {
 
    public void testDecoratedCacheFlagsSet() {
       CacheImpl impl = new CacheImpl("baseCache");
-      DecoratedCache decoratedCache = new DecoratedCache(impl);
+      DecoratedCache decoratedCache = new DecoratedCache(impl, EnumUtil.EMPTY_BIT_SET);
       DecoratedCache nofailCache = (DecoratedCache) decoratedCache.withFlags(Flag.FAIL_SILENTLY);
       EnumSet<Flag> nofailCacheFlags = EnumUtil.enumSetOf(nofailCache.getFlagsBitSet(), Flag.class);
       assert nofailCacheFlags.contains(Flag.FAIL_SILENTLY);

@@ -27,7 +27,7 @@ public class TaskRequestProcessor extends BaseRequestProcessor {
    }
 
    public void exec(HotRodHeader header, Subject subject, String taskName, Map<String, byte[]> taskParams) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       TaskContext taskContext = new TaskContext()
             .cache(cache)
             .parameters(taskParams)

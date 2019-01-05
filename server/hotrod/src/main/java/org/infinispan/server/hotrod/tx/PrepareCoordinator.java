@@ -23,8 +23,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -256,14 +256,14 @@ public class PrepareCoordinator {
 
    private <K, V> AdvancedCache<K, V> transform(AdvancedCache<K, V> cache) {
       if (cache instanceof CacheImpl) {
-         return withTransaction(cache);
+         return withTransaction((CacheImpl) cache);
       } else {
          return cache;
       }
    }
 
-   private <K, V> AdvancedCache<K, V> withTransaction(AdvancedCache<K, V> cache) {
-      return new DecoratedCache<K, V>(cache, Flag.FORCE_WRITE_LOCK) {
+   private <K, V> AdvancedCache<K, V> withTransaction(CacheImpl<K, V> cache) {
+      return new DecoratedCache<K, V>(cache, FlagBitSets.FORCE_WRITE_LOCK) {
          @Override
          protected InvocationContext readContext(int size) {
             return localTxInvocationContext;

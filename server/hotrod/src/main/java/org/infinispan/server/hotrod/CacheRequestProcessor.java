@@ -15,9 +15,6 @@ import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
-import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.server.hotrod.HotRodServer.CacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
@@ -25,7 +22,6 @@ import org.infinispan.server.hotrod.logging.Log;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
-@Listener
 class CacheRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(CacheRequestProcessor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -36,42 +32,38 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);
       listenerRegistry = server.getClientListenerRegistry();
-      SecurityActions.addListener(server.getCacheManager(), this);
-   }
-
-   @CacheStopped
-   public void cacheStopped(CacheStoppedEvent event) {
-      server.cacheStopped(event.getCacheName());
    }
 
    private boolean isBlockingRead(CacheInfo info, HotRodHeader header) {
-      return info.persistence && !header.isSkipCacheLoad();
+      return info.persistence && !header.isSkipCacheLoad() || info.syncListener;
    }
 
-   private boolean isBlockingWrite(AdvancedCache<byte[], byte[]> cache, HotRodHeader header) {
-      CacheInfo info = server.getCacheInfo(cache, header);
+   private boolean isBlockingWrite(CacheInfo cacheInfo, HotRodHeader header) {
       // Note: cache store cannot be skipped (yet)
-      return info.persistence || info.indexing && !header.isSkipIndexing() || info.syncListener;
+      return cacheInfo.persistence || cacheInfo.indexing && !header.isSkipIndexing() || cacheInfo.syncListener;
    }
 
    void ping(HotRodHeader header, Subject subject) {
-      server.cache(header, subject); // we need to throw an exception when this cache is inaccessible
+      // we need to throw an exception when this cache is inaccessible
+      server.cache(server.getCacheInfo(header), header, subject);
       writeResponse(header, header.encoder().pingResponse(header, server, channel.alloc(), OperationStatus.Success));
    }
 
    void stats(HotRodHeader header, Subject subject) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      writeResponse(header, header.encoder().statsResponse(header, server, channel.alloc(), cache.getStats(), server.getTransport(), server.getCacheRegistry(header.cacheName)));
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
+      writeResponse(header, header.encoder().statsResponse(header, server, channel.alloc(), cache.getStats(), server.getTransport(), SecurityActions.getCacheComponentRegistry(cache)));
    }
 
    void get(HotRodHeader header, Subject subject, byte[] key) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      CacheInfo info = server.getCacheInfo(cache, header);
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      AdvancedCache<byte[], byte[]> localNonBlockingCache = server.localNonBlockingCache(cacheInfo, header, subject);
+
       // This request is very fast, try to satisfy immediately
-      CacheEntry<byte[], byte[]> entry = info.localNonBlocking(subject).getCacheEntry(key);
+      CacheEntry<byte[], byte[]> entry = localNonBlockingCache.getCacheEntry(key);
       if (entry != null) {
          handleGet(header, entry, null);
-      } else if (isBlockingRead(info, header)) {
+      } else if (isBlockingRead(cacheInfo, header)) {
          executor.execute(() -> getInternal(header, cache, key));
       } else {
          getInternal(header, cache, key);
@@ -116,13 +108,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void getWithMetadata(HotRodHeader header, Subject subject, byte[] key, int offset) {
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       // This request is very fast, try to satisfy immediately
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      CacheInfo info = server.getCacheInfo(cache, header);
-      CacheEntry<byte[], byte[]> entry = info.localNonBlocking(subject).getCacheEntry(key);
+      AdvancedCache<byte[], byte[]> localNonBlockingCache = server.cache(cacheInfo, header, subject);
+      CacheEntry<byte[], byte[]> entry = localNonBlockingCache.getCacheEntry(key);
       if (entry != null) {
          handleGetWithMetadata(header, offset, entry, null);
-      } else if (isBlockingRead(info, header)) {
+      } else if (isBlockingRead(cacheInfo, header)) {
          executor.execute(() -> getWithMetadataInternal(header, cache, key, offset));
       } else {
          getWithMetadataInternal(header, cache, key, offset);
@@ -154,12 +147,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void containsKey(HotRodHeader header, Subject subject, byte[] key) {
       // This request is very fast, try to satisfy immediately
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      CacheInfo info = server.getCacheInfo(cache, header);
-      boolean contains = info.localNonBlocking(subject).containsKey(key);
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      AdvancedCache<byte[], byte[]> localNonBlockingCache = server.localNonBlockingCache(cacheInfo, header, subject);
+      boolean contains = localNonBlockingCache.containsKey(key);
       if (contains) {
          writeSuccess(header);
-      } else if (isBlockingRead(info, header)) {
+      } else if (isBlockingRead(cacheInfo, header)) {
          executor.execute(() -> containsKeyInternal(header, cache, key));
       } else {
          containsKeyInternal(header, cache, key);
@@ -181,12 +175,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   void put(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata metadata) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      if (isBlockingWrite(cache, header)) {
-         executor.execute(() -> putInternal(header, cache, key, value, metadata));
+   void put(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      metadata.version(cacheInfo.versionGenerator.generateNew());
+      if (isBlockingWrite(cacheInfo, header)) {
+         executor.execute(() -> putInternal(header, cache, key, value, metadata.build()));
       } else {
-         putInternal(header, cache, key, value, metadata);
+         putInternal(header, cache, key, value, metadata.build());
       }
    }
 
@@ -203,12 +199,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   void replaceIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version, byte[] value, Metadata metadata) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      if (isBlockingWrite(cache, header)) {
-         executor.execute(() -> replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata));
+   void replaceIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version, byte[] value, Metadata.Builder metadata) {
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      metadata.version(cacheInfo.versionGenerator.generateNew());
+      if (isBlockingWrite(cacheInfo, header)) {
+         executor.execute(() -> replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build()));
       } else {
-         replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata);
+         replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build());
       }
    }
 
@@ -242,12 +240,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   void replace(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata metadata) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      if (isBlockingWrite(cache, header)) {
-         executor.execute(() -> replaceInternal(header, cache, key, value, metadata));
+   void replace(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      metadata.version(cacheInfo.versionGenerator.generateNew());
+      if (isBlockingWrite(cacheInfo, header)) {
+         executor.execute(() -> replaceInternal(header, cache, key, value, metadata.build()));
       } else {
-         replaceInternal(header, cache, key, value, metadata);
+         replaceInternal(header, cache, key, value, metadata.build());
       }
    }
 
@@ -280,12 +280,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   void putIfAbsent(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata metadata) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      if (isBlockingWrite(cache, header)) {
-         executor.execute(() -> putIfAbsentInternal(header, cache, key, value, metadata));
+   void putIfAbsent(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      metadata.version(cacheInfo.versionGenerator.generateNew());
+      if (isBlockingWrite(cacheInfo, header)) {
+         executor.execute(() -> putIfAbsentInternal(header, cache, key, value, metadata.build()));
       } else {
-         putIfAbsentInternal(header, cache, key, value, metadata);
+         putIfAbsentInternal(header, cache, key, value, metadata.build());
       }
    }
 
@@ -316,8 +318,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void remove(HotRodHeader header, Subject subject, byte[] key) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      if (isBlockingWrite(cache, header)) {
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      if (isBlockingWrite(cacheInfo, header)) {
          executor.execute(() -> removeInternal(header, cache, key));
       } else {
          removeInternal(header, cache, key);
@@ -339,8 +342,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void removeIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      if (isBlockingWrite(cache, header)) {
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      if (isBlockingWrite(cacheInfo, header)) {
          executor.execute(() -> removeIfUnmodifiedInternal(header, cache, key, version));
       } else {
          removeIfUnmodifiedInternal(header, cache, key, version);
@@ -377,8 +381,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void clear(HotRodHeader header, Subject subject) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      if (isBlockingWrite(cache, header)) {
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      if (isBlockingWrite(cacheInfo, header)) {
          executor.execute(() -> clearInternal(header, cache));
       } else {
          clearInternal(header, cache);
@@ -395,12 +400,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       });
    }
 
-   void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata metadata) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      if (isBlockingWrite(cache, header)) {
-         executor.execute(() -> putAllInternal(header, cache, entries, metadata));
+   void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata.Builder metadata) {
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      if (isBlockingWrite(cacheInfo, header)) {
+         executor.execute(() -> putAllInternal(header, cache, entries, metadata.build()));
       } else {
-         putAllInternal(header, cache, entries, metadata);
+         putAllInternal(header, cache, entries, metadata.build());
       }
    }
 
@@ -417,8 +423,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void getAll(HotRodHeader header, Subject subject, Set<?> keys) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
-      if (isBlockingRead(server.getCacheInfo(cache, header), header)) {
+      CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      if (isBlockingRead(cacheInfo, header)) {
          executor.execute(() -> getAllInternal(header, cache, keys));
       } else {
          getAllInternal(header, cache, keys);
@@ -444,7 +451,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void sizeInternal(HotRodHeader header, Subject subject) {
       try {
-         AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+         AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
          writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel.alloc(), cache.size()));
       } catch (Throwable t) {
          writeException(header, t);
@@ -452,7 +459,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void bulkGet(HotRodHeader header, Subject subject, int size) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> bulkGetInternal(header, cache, size));
    }
 
@@ -468,7 +475,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void bulkGetKeys(HotRodHeader header, Subject subject, int scope) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> bulkGetKeysInternal(header, cache, scope));
    }
 
@@ -484,7 +491,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void query(HotRodHeader header, Subject subject, byte[] queryBytes) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> queryInternal(header, cache, queryBytes));
    }
 
@@ -498,7 +505,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void addClientListener(HotRodHeader header, Subject subject, byte[] listenerId, boolean includeCurrentState, String filterFactory, List<byte[]> filterParams, String converterFactory, List<byte[]> converterParams, boolean useRawData, int listenerInterests) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> {
          try {
             listenerRegistry.addClientListener(this, channel, header, listenerId,
@@ -514,7 +521,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void removeClientListener(HotRodHeader header, Subject subject, byte[] listenerId) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> removeClientListenerInternal(header, cache, listenerId));
    }
 
@@ -530,8 +537,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   void iterationStart(HotRodHeader header, Subject subject, byte[] segmentMask, String filterConverterFactory, List<byte[]> filterConverterParams, int batch, boolean includeMetadata) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+   void iterationStart(HotRodHeader header, Subject subject, byte[] segmentMask, String filterConverterFactory,
+                       List<byte[]> filterConverterParams, int batch, boolean includeMetadata) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> {
          try {
             String iterationId = server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
@@ -544,7 +552,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void iterationNext(HotRodHeader header, Subject subject, String iterationId) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> {
          try {
             IterableIterationResult iterationResult = server.getIterationManager().next(cache.getName(), iterationId);
@@ -556,7 +564,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void iterationEnd(HotRodHeader header, Subject subject, String iterationId) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> {
          try {
             boolean removed = server.getIterationManager().close(cache.getName(), iterationId);
@@ -567,7 +575,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       });
    }
 
-   void putStream(HotRodHeader header, Subject subject, byte[] key, ByteBuf buf, long version, Metadata metadata) {
+   void putStream(HotRodHeader header, Subject subject, byte[] key, ByteBuf buf, long version, Metadata.Builder metadata) {
       try {
          byte[] value = new byte[buf.readableBytes()];
          buf.readBytes(value);

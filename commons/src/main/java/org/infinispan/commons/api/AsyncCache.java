@@ -282,11 +282,18 @@ public interface AsyncCache<K, V> {
     * Asynchronous version of {@link BasicCache#containsKey(Object)}
     * @param key key to retrieve
     * @return future containing true if the mapping exists.
+    *
+    * @since 9.2
     */
    default CompletableFuture<Boolean> containsKeyAsync(K key) {
       return getAsync(key).thenApply(Objects::nonNull);
    }
 
+   /**
+    * TODO This should be in AdvancedCache with getAll
+    *
+    * @since 9.2
+    */
    default CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys) {
       Object[] orderedKeys = new Object[keys.size()];
       CompletableFuture[] futures = new CompletableFuture[keys.size()];

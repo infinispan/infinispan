@@ -45,41 +45,16 @@ import org.infinispan.stream.impl.local.ValueCacheCollection;
  * @since 5.1
  */
 public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
-
-   private static final Flag[] EMPTY_FLAGS = new Flag[0];
    private final long flags;
    private final Object lockOwner;
    private final CacheImpl<K, V> cacheImplementation;
    private final CacheImpl.ContextBuilder contextBuilder = this::writeContext;
 
-   public DecoratedCache(AdvancedCache<K, V> delegate) {
-      this(delegate, EMPTY_FLAGS);
+   public DecoratedCache(CacheImpl<K, V> delegate, long flagsBitSet) {
+      this(delegate, null, flagsBitSet);
    }
 
-   public DecoratedCache(AdvancedCache<K, V> delegate, Flag... flags) {
-      this(delegate, null, flags);
-   }
-
-   public DecoratedCache(AdvancedCache<K, V> delegate, Collection<Flag> flags) {
-      this((CacheImpl<K, V>) delegate, null, EnumUtil.bitSetOf(flags));
-   }
-
-   public DecoratedCache(AdvancedCache<K, V> delegate, Object lockOwner, Flag... flags) {
-      super(delegate);
-      if (flags.length == 0)
-         this.flags = EnumUtil.EMPTY_BIT_SET;
-      else {
-         this.flags = EnumUtil.bitSetOf(flags);
-      }
-
-      this.lockOwner = lockOwner;
-
-      // Yuk
-      cacheImplementation = (CacheImpl<K, V>) delegate;
-   }
-
-   private DecoratedCache(CacheImpl<K, V> delegate, Object lockOwner, long newFlags) {
-      //this constructor is private so we already checked for argument validity
+   public DecoratedCache(CacheImpl<K, V> delegate, Object lockOwner, long newFlags) {
       super(delegate);
       this.flags = newFlags;
       this.lockOwner = lockOwner;
@@ -94,20 +69,17 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public AdvancedCache<K, V> withFlags(final Flag... flags) {
-      if (flags == null || flags.length == 0)
-         return this;
-      else {
-         return withFlags(EnumUtil.bitSetOf(flags));
-      }
+      return withFlags(EnumUtil.bitSetOf(flags));
    }
 
    @Override
    public AdvancedCache<K, V> withFlags(Collection<Flag> flags) {
-      if (flags == null || flags.isEmpty()) {
-         return this;
-      } else {
-         return withFlags(EnumUtil.bitSetOf(flags));
-      }
+      return withFlags(EnumUtil.bitSetOf(flags));
+   }
+
+   @Override
+   public AdvancedCache<K, V> withFlags(Flag flag) {
+      return withFlags(EnumUtil.bitSetOf(flag));
    }
 
    private AdvancedCache<K, V> withFlags(long newFlags) {

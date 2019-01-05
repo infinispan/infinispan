@@ -13,6 +13,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.tx.PrepareCoordinator;
 import org.infinispan.server.hotrod.tx.operation.CommitTransactionOperation;
@@ -63,9 +64,11 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
     */
    void prepareTransaction(HotRodHeader header, Subject subject, XidImpl xid, boolean onePhaseCommit,
          List<TransactionWrite> writes, boolean recoverable, long timeout) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      HotRodServer.CacheInfo cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       validateConfiguration(cache);
-      executor.execute(() -> prepareTransactionInternal(header, cache, xid, onePhaseCommit, writes, recoverable, timeout));
+      executor.execute(() -> prepareTransactionInternal(header, cache, cacheInfo.versionGenerator, xid, onePhaseCommit,
+                                                        writes, recoverable, timeout));
    }
 
    void forgetTransaction(HotRodHeader header, Subject subject, XidImpl xid) {
@@ -98,8 +101,10 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       });
    }
 
-   private void prepareTransactionInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, XidImpl xid,
-         boolean onePhaseCommit, List<TransactionWrite> writes, boolean recoverable, long timeout) {
+   private void prepareTransactionInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
+                                           VersionGenerator versionGenerator, XidImpl xid,
+                                           boolean onePhaseCommit, List<TransactionWrite> writes,
+                                           boolean recoverable, long timeout) {
       try {
          if (writes.isEmpty()) {
             //the client can optimize and avoid contacting the server when no data is written.
@@ -137,7 +142,8 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
                   if (write.isRemove()) {
                      txCache.remove(write.key);
                   } else {
-                     txCache.put(write.key, write.value, write.metadata);
+                     write.metadata.version(versionGenerator.generateNew());
+                     txCache.put(write.key, write.value, write.metadata.build());
                   }
                } else {
                   prepareCoordinator.setRollbackOnly();

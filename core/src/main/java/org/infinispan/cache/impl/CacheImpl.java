@@ -1236,7 +1236,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> lockAs(Object lockOwner) {
-      return new DecoratedCache<>(this, requireNonNull(lockOwner, "lockOwner can't be null"));
+      return new DecoratedCache<>(this, requireNonNull(lockOwner, "lockOwner can't be null"), EnumUtil.EMPTY_BIT_SET);
    }
 
    @Override
@@ -1859,7 +1859,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       if (flags == null || flags.length == 0)
          return this;
       else
-         return new DecoratedCache<>(this, flags);
+         return new DecoratedCache<>(this, EnumUtil.bitSetOf(flags));
    }
 
    @Override
@@ -1867,7 +1867,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       if (flags == null || flags.isEmpty())
          return this;
       else
-         return new DecoratedCache<>(this, flags);
+         return new DecoratedCache<>(this, EnumUtil.bitSetOf(flags));
    }
 
    @Override
