@@ -4807,7 +4807,6 @@
          <id>distribution</id>
          <modules>
             <module>documentation</module>
-            <module>javadoc/doclets</module>
             <module>javadoc/javadoc-embedded</module>
             <module>javadoc/javadoc-remote</module>
             <module>javadoc/javadoc-all</module>
