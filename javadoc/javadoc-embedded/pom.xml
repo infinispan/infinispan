@@ -175,9 +175,9 @@
                   <configuration>
                      <doclet>org.infinispan.doclets.DocletMultiplexer</doclet>
                      <docletArtifact>
-                        <groupId>org.infinispan</groupId>
+                        <groupId>org.infinispan.doclets</groupId>
                         <artifactId>infinispan-doclets</artifactId>
-                        <version>${project.version}</version>
+                        <version>${version.infinispan.doclets}</version>
                      </docletArtifact>
                      <doctitle>${infinispan.brand.name} ${infinispan.base.version} Embedded API</doctitle>
 
@@ -242,6 +242,7 @@
                      <stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile>
                      <subpackages>org.infinispan</subpackages>
                      <additionalparam>-Xdoclint:none</additionalparam>
+                     <useStandardDocletOptions>false</useStandardDocletOptions>
 
                      <additionalDependencies>
                         <additionalDependency>
@@ -295,13 +296,6 @@
                   </configuration>
                </execution>
             </executions>
-            <dependencies>
-               <dependency>
-                  <groupId>org.infinispan</groupId>
-                  <artifactId>infinispan-doclets</artifactId>
-                  <version>${version.infinispan}</version>
-               </dependency>
-            </dependencies>
          </plugin>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
