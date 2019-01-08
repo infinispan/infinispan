@@ -4,6 +4,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import javax.security.auth.Subject;
@@ -68,11 +69,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void get(HotRodHeader header, Subject subject, byte[] key) {
       AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
       CacheInfo info = server.getCacheInfo(cache, header);
-      // This request is very fast, try to satisfy immediately
-      CacheEntry<byte[], byte[]> entry = info.localNonBlocking(subject).getCacheEntry(key);
-      if (entry != null) {
-         handleGet(header, entry, null);
-      } else if (isBlockingRead(info, header)) {
+      if (isBlockingRead(info, header)) {
          executor.execute(() -> getInternal(header, cache, key));
       } else {
          getInternal(header, cache, key);
@@ -80,8 +77,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void getInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
-      cache.withFlags(SKIP_STATISTICS).getCacheEntryAsync(key)
-            .whenComplete((result, throwable) -> handleGet(header, result, throwable));
+      CompletableFuture<CacheEntry<byte[], byte[]>> get = cache.getCacheEntryAsync(key);
+      if (get.isDone() && !get.isCompletedExceptionally()) {
+         handleGet(header, get.join(), null);
+      } else {
+         get.whenComplete((result, throwable) -> handleGet(header, result, throwable));
+      }
    }
 
    private void handleGet(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable) {
@@ -117,13 +118,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void getWithMetadata(HotRodHeader header, Subject subject, byte[] key, int offset) {
-      // This request is very fast, try to satisfy immediately
       AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
       CacheInfo info = server.getCacheInfo(cache, header);
-      CacheEntry<byte[], byte[]> entry = info.localNonBlocking(subject).getCacheEntry(key);
-      if (entry != null) {
-         handleGetWithMetadata(header, offset, entry, null);
-      } else if (isBlockingRead(info, header)) {
+      if (isBlockingRead(info, header)) {
          executor.execute(() -> getWithMetadataInternal(header, cache, key, offset));
       } else {
          getWithMetadataInternal(header, cache, key, offset);
@@ -131,8 +128,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void getWithMetadataInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, int offset) {
-      cache.withFlags(SKIP_STATISTICS).getCacheEntryAsync(key)
-            .whenComplete((ce, throwable) -> handleGetWithMetadata(header, offset, ce, throwable));
+      CompletableFuture<CacheEntry<byte[], byte[]>> get = cache.getCacheEntryAsync(key);
+      if (get.isDone() && !get.isCompletedExceptionally()) {
+         handleGetWithMetadata(header, offset, get.join(), null);
+      } else {
+         get.whenComplete((ce, throwable) -> handleGetWithMetadata(header, offset, ce, throwable));
+      }
    }
 
    private void handleGetWithMetadata(HotRodHeader header, int offset, CacheEntry<byte[], byte[]> entry, Throwable throwable) {
@@ -154,13 +155,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void containsKey(HotRodHeader header, Subject subject, byte[] key) {
-      // This request is very fast, try to satisfy immediately
       AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
       CacheInfo info = server.getCacheInfo(cache, header);
-      boolean contains = info.localNonBlocking(subject).containsKey(key);
-      if (contains) {
-         writeSuccess(header);
-      } else if (isBlockingRead(info, header)) {
+      if (isBlockingRead(info, header)) {
          executor.execute(() -> containsKeyInternal(header, cache, key));
       } else {
          containsKeyInternal(header, cache, key);
@@ -168,8 +165,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void containsKeyInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
-      cache.withFlags(SKIP_STATISTICS).containsKeyAsync(key)
-            .whenComplete((result, throwable) -> handleContainsKey(header, result, throwable));
+      CompletableFuture<Boolean> contains = cache.containsKeyAsync(key);
+      if (contains.isDone() && !contains.isCompletedExceptionally()) {
+         handleContainsKey(header, contains.join(), null);
+      } else {
+         contains.whenComplete((result, throwable) -> handleContainsKey(header, result, throwable));
+      }
    }
 
    private void handleContainsKey(HotRodHeader header, Boolean result, Throwable throwable) {
