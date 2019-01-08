@@ -51,6 +51,13 @@
                 <socket server="127.0.0.1" port="${hotrod.port}"/>
             </and>
         </waitfor>
+        <fail message="Server did not start">
+            <condition>
+               <not>
+                  <socket server="127.0.0.1" port="${hotrod.port}"/>
+               </not>
+            </condition>
+        </fail>
         <echo message="Infinispan server started"/>
     </target>
 

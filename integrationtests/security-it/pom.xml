@@ -107,6 +107,13 @@
                   </configuration>
                </execution>
             </executions>
+            <dependencies>
+               <dependency>
+                  <groupId>org.apache.maven.surefire</groupId>
+                  <artifactId>surefire-junit47</artifactId>
+                  <version>${version.maven.surefire}</version>
+               </dependency>
+            </dependencies>
          </plugin>
 
          <plugin>
@@ -124,37 +131,44 @@
                      <goal>copy-dependencies</goal>
                   </goals>
                </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <groupId>org.wildfly.build</groupId>
+            <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
+            <executions>
                <execution>
-                  <id>unpack</id>
-                  <phase>pre-integration-test</phase>
+                  <id>server-provisioning-node0</id>
                   <goals>
-                     <goal>unpack</goal>
+                     <goal>build</goal>
                   </goals>
+                  <phase>compile</phase>
                   <configuration>
-                     <skip>${skipTests}</skip>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>${appserver.groupId}</groupId>
-                           <artifactId>wildfly-dist</artifactId>
-                           <type>zip</type>
-                           <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/testnode</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>${appserver.groupId}</groupId>
-                           <artifactId>wildfly-dist</artifactId>
-                           <type>zip</type>
-                           <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/node0</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>${appserver.groupId}</groupId>
-                           <artifactId>wildfly-dist</artifactId>
-                           <type>zip</type>
-                           <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/node1</outputDirectory>
-                        </artifactItem>
-                     </artifactItems>
+                     <config-file>server-provisioning.xml</config-file>
+                     <server-name>node0</server-name>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>server-provisioning-node1</id>
+                  <goals>
+                     <goal>build</goal>
+                  </goals>
+                  <phase>compile</phase>
+                  <configuration>
+                     <config-file>server-provisioning.xml</config-file>
+                     <server-name>node1</server-name>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>server-provisioning-testnode</id>
+                  <goals>
+                     <goal>build</goal>
+                  </goals>
+                  <phase>compile</phase>
+                  <configuration>
+                     <config-file>server-provisioning.xml</config-file>
+                     <server-name>testnode</server-name>
                   </configuration>
                </execution>
             </executions>

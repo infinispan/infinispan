@@ -2,6 +2,5 @@
 	<feature-packs>
 		<!-- We must specify the exact wildfly version as some of our external feature-pack dependencies may reference a different version -->
 		<feature-pack groupId="${appserver.groupId}" artifactId="wildfly-feature-pack" version="${appserver.version}"/>
-		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-wf-modules" version="${project.version}" />
 	</feature-packs>
 </server-provisioning>
