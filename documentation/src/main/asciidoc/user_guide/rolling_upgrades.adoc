@@ -109,6 +109,18 @@ CLI::
 $ JDG_HOME/bin/cli.sh --connect controller=127.0.0.1:9990 -c "/subsystem=datagrid-infinispan/cache-container=clustered/distributed-cache=MyCache:synchronize-data(migrator-name=hotrod)"
 ----
 +
+Data migrates to all nodes in the target cluster in parallel, with each node
+receiving a subset of the data.
++
+Use the following parameters to tune the operation:
++
+* `read-batch` configures the number of entries to read from the source cluster at a time. The default value is `10000`.
+* `write-threads` configures the number of threads used to write data. The default value is the number of processors available.
++
+For example:
++
+`synchronize-data(migrator-name=hotrod, read-batch=100000, write-threads=3)`
++
 . Disable the `RemoteCacheStore` on the target cluster. Do one of the following:
 +
 JMX::
