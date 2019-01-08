@@ -197,6 +197,7 @@
                            <property name="hotrod.port" value="11222" />
                            <property name="jboss.node.name" value="ispn-server" />
                            <property name="jboss.config.file" value="standalone.xml" />
+                           <property name="server.jvm.args" value="${server.jvm.args}" />
                         </ant>
                      </target>
                   </configuration>

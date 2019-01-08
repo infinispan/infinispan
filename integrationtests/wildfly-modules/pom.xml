@@ -218,6 +218,13 @@
                   </configuration>
                </execution>
             </executions>
+            <dependencies>
+               <dependency>
+                  <groupId>org.apache.maven.surefire</groupId>
+                  <artifactId>surefire-junit47</artifactId>
+                  <version>${version.maven.surefire}</version>
+               </dependency>
+            </dependencies>
          </plugin>
          <plugin>
             <groupId>org.wildfly.build</groupId>
@@ -231,7 +238,7 @@
                   <phase>pre-integration-test</phase>
                   <configuration>
                      <config-file>server-provisioning.xml</config-file>
-                     <server-name>node1/wildfly-${version.org.wildfly}</server-name>
+                     <server-name>node1</server-name>
                   </configuration>
                </execution>
                <execution>
@@ -242,7 +249,7 @@
                   <phase>pre-integration-test</phase>
                   <configuration>
                      <config-file>server-provisioning.xml</config-file>
-                     <server-name>node2/wildfly-${version.org.wildfly}</server-name>
+                     <server-name>node2</server-name>
                   </configuration>
                </execution>
             </executions>
@@ -289,7 +296,7 @@
                   </goals>
                   <configuration>
                      <skip>${skipTests}</skip>
-                     <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}</outputDirectory>
+                     <outputDirectory>${project.build.directory}/node2</outputDirectory>
                      <overwrite>true</overwrite>
                      <resources>
                         <resource>
@@ -306,7 +313,7 @@
                   </goals>
                   <configuration>
                      <skip>${skipTests}</skip>
-                     <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}</outputDirectory>
+                     <outputDirectory>${project.build.directory}/node1</outputDirectory>
                      <overwrite>true</overwrite>
                      <resources>
                         <resource>
