@@ -112,7 +112,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    private static final long MILLISECONDS_IN_30_DAYS = TimeUnit.DAYS.toMillis(30);
 
-   private static final Flag[] LOCAL_NON_BLOCKING_GET = new Flag[]{Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_LOAD};
    public static final int LISTENERS_CHECK_INTERVAL = 10;
 
 
@@ -367,25 +366,15 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    public AdvancedCache<byte[], byte[]> cache(CacheInfo cacheInfo, HotRodHeader header, Subject subject) {
-      return cache(cacheInfo, header, subject, false);
-   }
-
-   public AdvancedCache<byte[], byte[]> localNonBlockingCache(CacheInfo cacheInfo, HotRodHeader header,
-                                                              Subject subject) {
-      return cache(cacheInfo, header, subject, true);
-   }
-
-   private AdvancedCache<byte[], byte[]> cache(CacheInfo cacheInfo, HotRodHeader header, Subject subject,
-                                              boolean localNonBlocking) {
       KeyValuePair<MediaType, MediaType> requestMediaTypes = getRequestMediaTypes(header, cacheInfo.configuration);
       AdvancedCache<byte[], byte[]> cache =
-         cacheInfo.getCache(requestMediaTypes.getKey(), requestMediaTypes.getValue(), localNonBlocking, subject);
+         cacheInfo.getCache(requestMediaTypes, subject);
       cache = header.getOptimizedCache(cache, cacheInfo.transactional, cacheInfo.clustered);
       return cache;
    }
 
    public EmbeddedMultimapCache<WrappedByteArray, WrappedByteArray> multimap(HotRodHeader header, Subject subject) {
-      return new EmbeddedMultimapCache(cache(getCacheInfo(header), header, subject, false));
+      return new EmbeddedMultimapCache(cache(getCacheInfo(header), header, subject));
    }
 
    boolean hasSyncListener(CacheNotifierImpl<?, ?> cacheNotifier) {
@@ -642,7 +631,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    public static class CacheInfo {
       final AdvancedCache<byte[], byte[]> anonymizedCache;
-      final Map<CacheInfoKey, AdvancedCache<byte[], byte[]>> encodedCaches = new ConcurrentHashMap<>();
+      final Map<KeyValuePair<MediaType, MediaType>, AdvancedCache<byte[], byte[]>> encodedCaches =
+         new ConcurrentHashMap<>();
       final DistributionManager distributionManager;
       final VersionGenerator versionGenerator;
       final Configuration configuration;
@@ -667,18 +657,13 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          this.syncListener = true;
       }
 
-      AdvancedCache<byte[], byte[]> getCache(MediaType keyMediaType, MediaType valueMediaType, boolean localNonBlocking,
-                                             Subject subject) {
-         CacheInfoKey key = new CacheInfoKey(keyMediaType, valueMediaType, localNonBlocking);
-         AdvancedCache<byte[], byte[]> cache = encodedCaches.get(key);
+      AdvancedCache<byte[], byte[]> getCache(KeyValuePair<MediaType, MediaType> requestMediaTypes, Subject subject) {
+         AdvancedCache<byte[], byte[]> cache = encodedCaches.get(requestMediaTypes);
          if (cache == null) {
             // The client always sends byte[] keys and values
-            cache = (AdvancedCache<byte[], byte[]>) anonymizedCache.withMediaType(keyMediaType.getTypeSubtype(),
-                                                                                  valueMediaType.getTypeSubtype());
-            if (localNonBlocking) {
-               cache = cache.noFlags().withFlags(LOCAL_NON_BLOCKING_GET);
-            }
-            encodedCaches.put(key, cache);
+            cache = (AdvancedCache<byte[], byte[]>) anonymizedCache.withMediaType(
+               requestMediaTypes.getKey().getTypeSubtype(), requestMediaTypes.getValue().getTypeSubtype());
+            encodedCaches.put(requestMediaTypes, cache);
          }
          if (subject == null) {
             return cache;
@@ -691,51 +676,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          this.persistence = enabled;
          this.indexing = indexing;
          this.syncListener = syncListener;
-      }
-   }
-
-   private static class CacheInfoKey {
-      private final MediaType keyMediaType;
-      private final MediaType valueMediaType;
-      private final boolean localNonBlocking;
-
-      public CacheInfoKey(MediaType keyMediaType, MediaType valueMediaType, boolean localNonBlocking) {
-         this.keyMediaType = keyMediaType;
-         this.valueMediaType = valueMediaType;
-         this.localNonBlocking = localNonBlocking;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o)
-            return true;
-         if (o == null || getClass() != o.getClass())
-            return false;
-
-         CacheInfoKey that = (CacheInfoKey) o;
-
-         if (localNonBlocking != that.localNonBlocking)
-            return false;
-         if (keyMediaType != null ? !keyMediaType.equals(that.keyMediaType) : that.keyMediaType != null)
-            return false;
-         return valueMediaType != null ? valueMediaType.equals(that.valueMediaType) : that.valueMediaType == null;
-      }
-
-      @Override
-      public int hashCode() {
-         int result = keyMediaType != null ? keyMediaType.hashCode() : 0;
-         result = 31 * result + (valueMediaType != null ? valueMediaType.hashCode() : 0);
-         result = 31 * result + (localNonBlocking ? 1 : 0);
-         return result;
-      }
-
-      @Override
-      public String toString() {
-         return "CacheInfoKey{" +
-                "keyMediaType='" + keyMediaType + '\'' +
-                ", valueMediaType='" + valueMediaType + '\'' +
-                ", localNonBlocking=" + localNonBlocking +
-                '}';
       }
    }
 
