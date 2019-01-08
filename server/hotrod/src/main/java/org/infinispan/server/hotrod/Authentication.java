@@ -142,20 +142,20 @@ public class Authentication {
       }
    }
 
-   public Subject getSubject(HotRodOperation op) {
-      if (!enabled) {
+   public Subject getSubject(HotRodOperation operation) {
+      return getSubject(operation.requiresAuthentication());
+   }
+
+   public Subject getSubject(boolean authenticatedOperation) {
+      if (!enabled || !authenticatedOperation) {
          return null;
       }
       // We haven't yet authenticated don't let them run other commands unless the command is fine
       // not being authenticated
-      if (requireAuthentication && op.requiresAuthentication() && subject == ANONYMOUS) {
+      if (requireAuthentication && subject == ANONYMOUS) {
          throw log.unauthorizedOperation();
       }
-      if (op.requiresAuthentication()) {
-         return subject;
-      } else {
-         return null;
-      }
+      return subject;
    }
 
    String normalizeAuthorizationId(String id) {
