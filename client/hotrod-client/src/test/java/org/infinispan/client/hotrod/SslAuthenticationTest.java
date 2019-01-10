@@ -108,7 +108,7 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
 
       log.info("Started server on port: " + hotrodServer.getPort());
 
-      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+      ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
             .addServer()
                .host("127.0.0.1")

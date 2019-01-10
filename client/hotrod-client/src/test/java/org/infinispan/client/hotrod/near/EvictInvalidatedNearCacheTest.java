@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.near;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.testng.annotations.Test;
 
@@ -17,7 +18,7 @@ public class EvictInvalidatedNearCacheTest extends SingleHotRodServerTest {
    }
 
    protected <K, V> AssertsNearCache<K, V> createClient() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       builder.nearCache().mode(getNearCacheMode()).maxEntries(2);
       return AssertsNearCache.create(this.<byte[], Object>cache(), builder);

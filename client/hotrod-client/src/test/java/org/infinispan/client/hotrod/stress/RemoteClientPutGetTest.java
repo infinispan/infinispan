@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -31,7 +31,8 @@ public class RemoteClientPutGetTest {
 
    @BeforeClass
    public void prepare() {
-      RemoteCacheManager cacheManager = new RemoteCacheManager(new ConfigurationBuilder().addServer().host("localhost").port(11222).build());
+      RemoteCacheManager cacheManager = new RemoteCacheManager(
+         HotRodClientTestingUtil.newRemoteConfigurationBuilder().addServer().host("localhost").port(11222).build());
       cache = cacheManager.getCache();
       cache.clear();
    }

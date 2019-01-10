@@ -29,7 +29,7 @@ public class SecureServerFailureRetryTest extends ServerFailureRetryTest {
 
    @Override
    protected RemoteCacheManager createRemoteCacheManager(int port) {
-      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+      ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
          .security().authentication()
             .enable()

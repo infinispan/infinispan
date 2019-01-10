@@ -28,7 +28,7 @@ public class HotRodLocalProfilingTest extends SingleCacheManagerTest {
       HotRodServer hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       String servers = HotRodClientTestingUtil.getServersString(hotRodServer);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServers(servers);
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache();

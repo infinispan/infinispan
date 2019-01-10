@@ -50,7 +50,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
             .connectionPool()
                .timeBetweenEvictionRuns(500)
