@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
@@ -40,7 +41,7 @@ public class CustomMarshallerEventIT extends SingleHotRodServerTest {
 
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       builder.marshaller(new IdMarshaller());
       return new RemoteCacheManager(builder.build());

@@ -41,7 +41,9 @@ public class ExecTypedTest extends MultiHotRodServersTest {
             getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
       defineInAll(NAME, builder);
       execClient = createExecClient();
+      clients.add(execClient);
       addScriptClient = createAddScriptClient();
+      clients.add(addScriptClient);
    }
 
    protected ProtocolVersion getProtocolVersion() {

@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.multimap.MetadataCollection;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.testng.annotations.Test;
@@ -28,7 +29,7 @@ public class RemoteMultimapCacheAPITest extends SingleHotRodServerTest {
 
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.forceReturnValues(isForceReturnValuesViaConfiguration());
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       return new InternalRemoteCacheManager(builder.build());

@@ -138,7 +138,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
       String servers = HotRodClientTestingUtil.getServersString(hotrodServers);
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServers(servers);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
@@ -372,7 +372,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
          String servers = HotRodClientTestingUtil.getServersString(hotrodServers);
 
          org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-               new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+               HotRodClientTestingUtil.newRemoteConfigurationBuilder();
          // Set the version on the manager to connect with
          clientBuilder.version(version);
          clientBuilder.addServers(servers);

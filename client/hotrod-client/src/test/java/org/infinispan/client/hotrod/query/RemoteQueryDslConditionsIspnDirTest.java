@@ -29,7 +29,7 @@ public class RemoteQueryDslConditionsIspnDirTest extends RemoteQueryDslCondition
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(manager(0));
 
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
       clientBuilder.marshaller(new ProtoStreamMarshaller());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());

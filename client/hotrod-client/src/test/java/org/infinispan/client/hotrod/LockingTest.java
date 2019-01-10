@@ -71,7 +71,7 @@ public class LockingTest extends SingleCacheManagerTest {
       super.setup();
       hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
    }

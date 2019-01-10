@@ -70,7 +70,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
       clientBuilder.marshaller(new ProtoStreamMarshaller());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());

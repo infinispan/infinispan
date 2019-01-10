@@ -42,7 +42,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
    RemoteCacheManager client(String siteName, Optional<String> backupSiteName) {
       HotRodServer server = siteServers.get(siteName).get(0);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-         new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+         HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       /*
        * Use 127.0.0.1 as host address to avoid the first PING after a cluster switch causing an invalidation of the
        * channel pools just to switch from localhost -> 127.0.0.1. This causes immediately subsequent ops to be

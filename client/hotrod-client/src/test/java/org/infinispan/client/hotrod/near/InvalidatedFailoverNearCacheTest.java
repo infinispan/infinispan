@@ -9,6 +9,7 @@ import java.util.List;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.event.StickyServerLoadBalancingStrategy;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -40,7 +41,7 @@ public class InvalidatedFailoverNearCacheTest extends MultiHotRodServersTest {
 
    protected <K, V> AssertsNearCache<K, V> createStickyAssertClient() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       for (HotRodServer server : servers)
          clientBuilder.addServer().host(server.getHost()).port(server.getPort());
       clientBuilder.balancingStrategy(StickyServerLoadBalancingStrategy.class);

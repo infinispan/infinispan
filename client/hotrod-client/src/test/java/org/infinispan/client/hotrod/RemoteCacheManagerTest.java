@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(testName = "client.hotrod.RemoteCacheManagerTest", groups = "functional" )
+@Test(testName = "client.hotrod.RemoteCacheManagerTest", groups = "functional")
 public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
    HotRodServer hotrodServer;
@@ -27,8 +27,7 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(
-            hotRodCacheConfiguration());
+      return TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
    }
 
    @Override
@@ -67,7 +66,7 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
    }
 
    public void testConfigurationConstructor() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder
          .addServer()
             .host("127.0.0.1")

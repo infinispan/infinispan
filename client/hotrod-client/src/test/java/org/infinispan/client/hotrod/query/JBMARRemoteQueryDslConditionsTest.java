@@ -73,7 +73,7 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(manager(0));
 
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
       clientBuilder.version(getProtocolVersion());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());

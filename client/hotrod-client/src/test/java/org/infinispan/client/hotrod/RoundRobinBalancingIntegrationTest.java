@@ -65,7 +65,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
       String servers = HotRodClientTestingUtil.getServersString(hotRodServer1, hotRodServer2, hotRodServer3);
       log.trace("Server list is: " + servers);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServers(servers);
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();

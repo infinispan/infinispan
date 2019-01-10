@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -16,6 +15,8 @@ import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory.ClusterSwitchStatus;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Exceptions;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
@@ -23,7 +24,6 @@ import org.testng.annotations.Test;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.util.concurrent.EventExecutor;
-
 /**
  * Tests the number of retries.
  *
@@ -31,7 +31,7 @@ import io.netty.util.concurrent.EventExecutor;
  * @since 7.0
  */
 @Test(groups = "unit", testName = "client.hotrod.retry.RetryOnFailureUnitTest")
-public class RetryOnFailureUnitTest {
+public class RetryOnFailureUnitTest extends AbstractInfinispanTest {
 
    private EventExecutor mockExecutor = Mockito.mock(EventExecutor.class, invocation -> {
       throw new UnsupportedOperationException(invocation.toString());
@@ -95,7 +95,8 @@ public class RetryOnFailureUnitTest {
       private final boolean failOnTransport;
 
       MockOperation(ChannelFactory channelFactory, boolean failOnTransport) {
-         super(ILLEGAL_OP_CODE, ILLEGAL_OP_CODE, null, channelFactory, null, null, 0, new ConfigurationBuilder().build(), null);
+         super(ILLEGAL_OP_CODE, ILLEGAL_OP_CODE, null, channelFactory, null, null, 0,
+               HotRodClientTestingUtil.newRemoteConfigurationBuilder().build(), null);
          this.failOnTransport = failOnTransport;
          channelInvocationCount = new AtomicInteger(0);
          executeInvocationCount = new AtomicInteger(0);

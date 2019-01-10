@@ -41,7 +41,7 @@ public class EventSocketTimeoutTest extends SingleHotRodServerTest {
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
-         new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+         HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host(hotrodServer.getHost()).port(hotrodServer.getPort());
       builder.socketTimeout(2000);
       builder.maxRetries(0);

@@ -39,7 +39,7 @@ public class ClusterInvalidatedNearCacheTest extends MultiHotRodServersTest {
 
    private <K, V> AssertsNearCache<K, V> createAssertClient() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       for (HotRodServer server : servers)
          clientBuilder.addServer().host("127.0.0.1").port(server.getPort());
 
