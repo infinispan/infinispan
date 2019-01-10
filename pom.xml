@@ -4307,7 +4307,8 @@
                <version>${version.karaf-maven-plugin}</version>
                <configuration>
                   <descriptors>
-                     <descriptor>file://${project.build.directory}/classes/features.xml</descriptor>
+                     <!--On Windows we need /// or C: is interpreted as a host name -->
+                     <descriptor>file:///${project.build.directory}/classes/features.xml</descriptor>
                      <!-- ideally, those profiles should be referenced in the features file -->
                      <descriptor>mvn:org.apache.karaf.features/framework/${version.karaf}/xml/features</descriptor>
                      <descriptor>mvn:org.apache.karaf.features/enterprise/${version.karaf}/xml/features</descriptor>
