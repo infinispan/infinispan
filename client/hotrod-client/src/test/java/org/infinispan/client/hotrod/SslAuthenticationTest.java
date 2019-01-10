@@ -90,9 +90,11 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
                .requireClientAuth(true)
                .keyStoreFileName(cl.getResource("keystore_server.p12").getPath())
                .keyStorePassword("secret".toCharArray())
+               .keyStoreType("pkcs12")
                .keyAlias("hotrod")
                .trustStoreFileName(cl.getResource("ca.p12").getPath())
-               .trustStorePassword("secret".toCharArray());
+               .trustStorePassword("secret".toCharArray())
+               .trustStoreType("pkcs12");
       serverBuilder
             .authentication()
                .enable()
@@ -123,9 +125,11 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
                   .enable()
                   .keyStoreFileName(cl.getResource("keystore_client.p12").getPath())
                   .keyStorePassword("secret".toCharArray())
+                  .keyStoreType("pkcs12")
                   .keyAlias("client1")
                   .trustStoreFileName(cl.getResource("ca.p12").getPath())
-                  .trustStorePassword("secret".toCharArray());
+                  .trustStorePassword("secret".toCharArray())
+                  .trustStoreType("pkcs12");
 
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
    }
