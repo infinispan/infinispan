@@ -29,7 +29,7 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
          serializationContext = ((ProtoStreamMarshaller) marshaller).getSerializationContext();
          try {
             if (!serializationContext.canMarshall(QueryRequest.class)) {
-               MarshallerRegistration.registerMarshallers(serializationContext);
+               MarshallerRegistration.init(serializationContext);
             }
          } catch (Exception e) {
             throw new HotRodClientException("Failed to initialise the Protobuf serialization context", e);
