@@ -60,14 +60,12 @@ public class UpgradeTest extends AbstractInfinispanTest {
       targetServer = HotRodClientTestingUtil.startHotRodServer(targetContainer);
 
       sourceRemoteCacheManager = new RemoteCacheManager(
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
-                  .addServers("localhost:" + sourceServer.getPort()).build());
+         HotRodClientTestingUtil.newRemoteConfigurationBuilder(sourceServer).build());
       sourceRemoteCacheManager.start();
       sourceRemoteCache = sourceRemoteCacheManager.getCache();
 
       targetRemoteCacheManager = new RemoteCacheManager(
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
-                  .addServers("localhost:" + sourceServer.getPort()).build());
+         HotRodClientTestingUtil.newRemoteConfigurationBuilder(sourceServer).build());
       targetRemoteCacheManager.start();
    }
 

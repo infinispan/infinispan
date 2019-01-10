@@ -45,7 +45,7 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
 
    public void testTouchServer() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(hotRodServer1.getPort());
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build(), true);
       RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache();

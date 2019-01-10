@@ -277,6 +277,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    private void actualStart() {
+      log.debugf("Starting remote cache manager %x", System.identityHashCode(this));
       channelFactory = new ChannelFactory();
 
       if (marshaller == null) {
@@ -346,6 +347,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    @Override
    public void stop() {
       if (isStarted()) {
+         log.debugf("Stopping remote cache manager %x", System.identityHashCode(this));
          synchronized (cacheName2RemoteCache) {
             for(Map.Entry<RemoteCacheKey, RemoteCacheHolder> cache : cacheName2RemoteCache.entrySet()) {
                cache.getValue().remoteCache().stop();

@@ -57,9 +57,8 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
    }
 
    protected RemoteCacheManager getRemoteCacheManager() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder
-         .addServers("127.0.0.1:" + hotrodServer.getPort())
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      HotRodClientTestingUtil.newRemoteConfigurationBuilder(hotrodServer)
          .socketTimeout(1000).connectionTimeout(5000)
          .connectionPool().maxActive(2)
          .maxRetries(0);

@@ -30,8 +30,7 @@ public class RemoteCacheManagerExtendedTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(
-            hotRodCacheConfiguration());
+      return TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
    }
 
    @Override
@@ -51,7 +50,7 @@ public class RemoteCacheManagerExtendedTest extends SingleCacheManagerTest {
 
    public void testGetUndefinedCache() {
       ConfigurationBuilder clientBuilder =
-            new ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(port);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build(), false);
       assert !remoteCacheManager.isStarted();
@@ -60,7 +59,7 @@ public class RemoteCacheManagerExtendedTest extends SingleCacheManagerTest {
    }
 
    public void testMarshallerInstance() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(port);
       GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
       builder.marshaller(marshaller);

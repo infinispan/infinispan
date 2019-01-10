@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.stress;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.ProcessorInfo;
@@ -37,7 +38,7 @@ public class IterationStressTest extends SingleHotRodServerTest {
     protected void setup() throws Exception {
         String serverHost = System.getProperty(SERVER_HOST);
         org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
-                new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+                HotRodClientTestingUtil.newRemoteConfigurationBuilder();
 
         if (serverHost == null) {
             cacheManager = createCacheManager();

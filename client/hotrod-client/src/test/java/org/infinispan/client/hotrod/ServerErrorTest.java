@@ -51,7 +51,7 @@ public class ServerErrorTest extends SingleCacheManagerTest {
    protected RemoteCacheManager getRemoteCacheManager() {
       Properties config = new Properties();
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
       return new RemoteCacheManager(clientBuilder.build());
    }

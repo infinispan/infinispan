@@ -51,7 +51,7 @@ public abstract class BaseGetAllTest extends MultipleCacheManagersTest {
 
       String servers = HotRodClientTestingUtil.getServersString(hotrodServers);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServers(servers);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();

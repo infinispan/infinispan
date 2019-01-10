@@ -23,6 +23,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -59,7 +60,7 @@ public class EagerNearCacheStressTest {
    }
 
    RemoteCacheManager getRemoteCacheManager(int port, NearCacheMode nearCacheMode, int maxEntries) {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.nearCache().mode(nearCacheMode).maxEntries(maxEntries);
       builder.addServer().host("127.0.0.1").port(port);
       return new InternalRemoteCacheManager(builder.build());
