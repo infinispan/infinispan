@@ -173,8 +173,10 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
                 .sniHostName(domain)
                 .keyStoreFileName(keystoreFileName)
                 .keyStorePassword(keystorePassword.toCharArray())
+                .keyStoreType("pkcs12")
                 .trustStoreFileName(truststoreFileName)
-                .trustStorePassword(truststorePassword.toCharArray());
+                .trustStorePassword(truststorePassword.toCharArray())
+                .trustStoreType("pkcs12");
          return this;
       }
 

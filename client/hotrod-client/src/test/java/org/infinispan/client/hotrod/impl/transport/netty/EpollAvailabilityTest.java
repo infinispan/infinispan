@@ -28,7 +28,8 @@ public class EpollAvailabilityTest extends AbstractInfinispanTest {
                new String[]{"io.netty.channel.epoll.Epoll"}, this.getClass().getClassLoader()
          );
          Class.forName(TRANSPORT_HELPER_CLASS, true, classLoader);
-         assertTrue(logAppender.getLog(0).contains(" is discarded"));
+         String firstLine = logAppender.getLog(0);
+         assertTrue(firstLine, firstLine.contains("io.netty.channel.epoll.Epoll"));
       } finally {
          logAppender.uninstall();
       }
