@@ -66,6 +66,7 @@ public class SslTest extends SingleCacheManagerTest {
          serverSSLConfig
                .requireClientAuth(true)
                .trustStoreFileName(serverTrustStore)
+               .trustStoreType("PKCS12")
                .trustStorePassword(STORE_PASSWORD);
       }
       hotrodServer.start(serverBuilder.build(), cacheManager);
@@ -89,7 +90,8 @@ public class SslTest extends SingleCacheManagerTest {
       if (sslClient) {
          clientSSLConfig
                .trustStoreFileName(clientTrustStore)
-               .trustStorePassword(STORE_PASSWORD);
+               .trustStorePassword(STORE_PASSWORD)
+               .trustStoreType("PKCS12");
          if (clientAuth) {
             clientSSLConfig
                   .keyStoreFileName(clientKeyStore)
