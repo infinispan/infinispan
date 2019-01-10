@@ -20,7 +20,7 @@ public final class ContinuousQueryResult {
       UPDATED,
       LEAVING;
 
-      static final class Marshaller implements EnumMarshaller<ResultType> {
+      public static final class Marshaller implements EnumMarshaller<ResultType> {
 
          @Override
          public ResultType decode(int enumValue) {
@@ -102,7 +102,7 @@ public final class ContinuousQueryResult {
             '}';
    }
 
-   static final class Marshaller implements MessageMarshaller<ContinuousQueryResult> {
+   public static final class Marshaller implements MessageMarshaller<ContinuousQueryResult> {
 
       @Override
       public ContinuousQueryResult readFrom(ProtoStreamReader reader) throws IOException {

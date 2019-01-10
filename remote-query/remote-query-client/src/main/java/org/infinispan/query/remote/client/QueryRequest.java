@@ -78,7 +78,7 @@ public final class QueryRequest {
       return indexedQueryMode;
    }
 
-   static final class Marshaller implements MessageMarshaller<QueryRequest> {
+   public static final class Marshaller implements MessageMarshaller<QueryRequest> {
 
       @Override
       public QueryRequest readFrom(ProtoStreamReader reader) throws IOException {
@@ -137,7 +137,7 @@ public final class QueryRequest {
          return value;
       }
 
-      static final class Marshaller implements MessageMarshaller<NamedParameter> {
+      public static final class Marshaller implements MessageMarshaller<NamedParameter> {
 
          @Override
          public NamedParameter readFrom(ProtoStreamReader reader) throws IOException {

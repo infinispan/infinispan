@@ -51,7 +51,7 @@ public final class FilterResult {
             '}';
    }
 
-   static final class Marshaller implements MessageMarshaller<FilterResult> {
+   public static final class Marshaller implements MessageMarshaller<FilterResult> {
 
       @Override
       public FilterResult readFrom(ProtoStreamReader reader) throws IOException {

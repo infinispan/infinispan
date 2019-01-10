@@ -84,7 +84,7 @@ public final class QueryResponse implements BaseQueryResponse {
       this.totalResults = totalResults;
    }
 
-   static final class Marshaller implements MessageMarshaller<QueryResponse> {
+   public static final class Marshaller implements MessageMarshaller<QueryResponse> {
 
       @Override
       public QueryResponse readFrom(ProtoStreamReader reader) throws IOException {
