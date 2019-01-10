@@ -64,7 +64,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       IndexingMetadata.configure(cfgBuilder);
       serCtx = ProtobufUtil.newSerializationContext(cfgBuilder.build());
       try {
-         MarshallerRegistration.registerMarshallers(serCtx);
+         MarshallerRegistration.init(serCtx);
       } catch (IOException | DescriptorParserException e) {
          throw new CacheException("Failed to initialise the Protobuf serialization context", e);
       }

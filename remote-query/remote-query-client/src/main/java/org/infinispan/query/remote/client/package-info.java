@@ -1,5 +1,6 @@
 /**
- * Hot Rod query API.
+ * Query client support classes.
+ *
  * @public
  */
 package org.infinispan.query.remote.client;
