@@ -30,7 +30,7 @@ public class ServerShutdownTest extends AbstractInfinispanTest {
             HotRodServer hotrodServer = HotRodClientTestingUtil.startHotRodServer(cm);
             try {
                org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-                     new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+                     HotRodClientTestingUtil.newRemoteConfigurationBuilder();
                clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
                withRemoteCacheManager(new RemoteCacheManagerCallable(
                      new RemoteCacheManager(clientBuilder.build())) {
@@ -57,7 +57,7 @@ public class ServerShutdownTest extends AbstractInfinispanTest {
             HotRodServer hotrodServer = HotRodClientTestingUtil.startHotRodServer(cm);
             try {
                org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-                     new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+                     HotRodClientTestingUtil.newRemoteConfigurationBuilder();
                clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
                withRemoteCacheManager(new RemoteCacheManagerCallable(
                      new RemoteCacheManager(clientBuilder.build())) {

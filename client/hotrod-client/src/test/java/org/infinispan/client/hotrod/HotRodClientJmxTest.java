@@ -51,7 +51,7 @@ public class HotRodClientJmxTest extends AbstractInfinispanTest {
       hotrodServer = HotRodClientTestingUtil.startHotRodServer((EmbeddedCacheManager) cacheContainer);
       startTime = System.currentTimeMillis();
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
       clientBuilder.statistics().enable().jmxEnable().jmxDomain(MethodHandles.lookup().lookupClass().getSimpleName()).mBeanServerLookup(new PerThreadMBeanServerLookup());
       rcm = new RemoteCacheManager(clientBuilder.build());

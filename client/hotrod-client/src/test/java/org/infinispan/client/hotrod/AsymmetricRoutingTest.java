@@ -64,7 +64,7 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
       blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host(server1.getHost()).port(server1.getPort())
             .addServer().host(server2.getHost()).port(server2.getPort());
       rcm = new RemoteCacheManager(clientBuilder.build());

@@ -31,7 +31,7 @@ public class ForceReturnValuesIdentityTest extends SingleCacheManagerTest {
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-         new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+         HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(hotRodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       return cacheManager;

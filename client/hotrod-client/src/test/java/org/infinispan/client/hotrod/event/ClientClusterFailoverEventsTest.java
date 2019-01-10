@@ -53,7 +53,7 @@ public class ClientClusterFailoverEventsTest extends MultiHotRodServersTest {
          final Integer key41 = HotRodClientTestingUtil.getIntKeyForServer(server(1));
 
          org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-               new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+               HotRodClientTestingUtil.newRemoteConfigurationBuilder();
          HotRodServer server = server(0);
          clientBuilder.addServers(server.getHost() + ":" + server.getPort());
          clientBuilder.balancingStrategy(StickyServerLoadBalancingStrategy.class);

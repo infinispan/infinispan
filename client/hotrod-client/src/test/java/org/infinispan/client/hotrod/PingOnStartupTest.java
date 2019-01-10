@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertFalse;
 
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
@@ -36,9 +37,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
    public void testTopologyFetched() {
       HotRodServer hotRodServer2 = server(1);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-      clientBuilder
-            .addServers("localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
+         HotRodClientTestingUtil.newRemoteConfigurationBuilder(hotRodServer2);
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new InternalRemoteCacheManager(clientBuilder.build())) {
          @Override
@@ -58,7 +57,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
 
    public void testBasicIntelligence() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(server(0).getPort());
       clientBuilder.clientIntelligence(ClientIntelligence.BASIC);
       withRemoteCacheManager(new RemoteCacheManagerCallable(
@@ -74,7 +73,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
 
    public void testTopologyAwareIntelligence() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(server(0).getPort());
       clientBuilder.clientIntelligence(ClientIntelligence.TOPOLOGY_AWARE);
       withRemoteCacheManager(new RemoteCacheManagerCallable(
@@ -90,7 +89,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
 
    public void testHashAwareIntelligence() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(server(0).getPort());
       clientBuilder.clientIntelligence(ClientIntelligence.HASH_DISTRIBUTION_AWARE);
       withRemoteCacheManager(new RemoteCacheManagerCallable(
@@ -107,7 +106,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
    public void testGetCacheWithPingOnStartupDisabledMultipleNodes() {
       HotRodServer hotRodServer2 = server(1);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
             .addServers("boomoo:12345;localhost:" + hotRodServer2.getPort());
       withRemoteCacheManager(new RemoteCacheManagerCallable(
@@ -123,7 +122,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
    public void testGetCacheWorksIfNodeDown() {
       HotRodServer hotRodServer2 = server(1);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
             .addServers("boomoo:12345;localhost:" + hotRodServer2.getPort());
       withRemoteCacheManager(new RemoteCacheManagerCallable(
@@ -138,7 +137,7 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
    public void testGetCacheWorksIfNodeNotDown() {
       HotRodServer hotRodServer2 = server(1);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
             .addServers("localhost:" + hotRodServer2.getPort());
       withRemoteCacheManager(new RemoteCacheManagerCallable(

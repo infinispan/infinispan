@@ -12,6 +12,7 @@ import javax.inject.Inject;
 import org.infinispan.cdi.remote.Remote;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -64,7 +65,7 @@ public class NamedCacheTest extends Arquillian {
    }
 
    @AfterClass(alwaysRun = true)
-   public void afterMethod() {
+   public void afterClass() {
       if (hotRodServer != null) hotRodServer.stop();
       if (embeddedCacheManager != null) embeddedCacheManager.stop();
    }
@@ -92,8 +93,7 @@ public class NamedCacheTest extends Arquillian {
    @ApplicationScoped
    public static RemoteCacheManager defaultRemoteCacheManager() {
       return new RemoteCacheManager(
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
-                  .addServers("127.0.0.1:" + hotRodServer.getPort()).build());
+         HotRodClientTestingUtil.newRemoteConfigurationBuilder(hotRodServer).build());
    }
 
 }

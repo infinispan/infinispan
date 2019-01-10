@@ -50,7 +50,7 @@ public class HotRodClientNearCacheJmxTest extends AbstractInfinispanTest {
 
    private RemoteCacheManager addRemoteCacheManager() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
       clientBuilder.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(100);
       clientBuilder.statistics().enable().jmxEnable().jmxDomain(MethodHandles.lookup().lookupClass().getSimpleName()).mBeanServerLookup(new PerThreadMBeanServerLookup());

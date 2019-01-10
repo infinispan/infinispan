@@ -55,7 +55,7 @@ public class ClientEventStressTest extends SingleCacheManagerTest {
    }
 
    RemoteCacheManager getRemoteCacheManager(int port) {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(port);
       return new InternalRemoteCacheManager(builder.build());
    }
