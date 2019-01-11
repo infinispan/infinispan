@@ -190,6 +190,10 @@ class AssertsNearCache<K, V> {
       assertTrue("Unexpected event: " + clear, clear instanceof MockClearEvent);
    }
 
+   void resetEvents() {
+      events.clear();
+   }
+
    void stop() {
       killRemoteCacheManager(manager);
    }

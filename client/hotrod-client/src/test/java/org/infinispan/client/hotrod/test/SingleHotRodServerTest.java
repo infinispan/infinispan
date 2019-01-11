@@ -10,7 +10,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 
 /**
  * @author Galder Zamarreño
@@ -43,12 +42,14 @@ public abstract class SingleHotRodServerTest extends SingleCacheManagerTest {
       return new InternalRemoteCacheManager(builder.build());
    }
 
-   @AfterClass(alwaysRun = true)
-   public void shutDownHotrod() {
+   @Override
+   protected void teardown() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);
       hotrodServer = null;
       remoteCacheManager = null;
+
+      super.teardown();
    }
 
 }

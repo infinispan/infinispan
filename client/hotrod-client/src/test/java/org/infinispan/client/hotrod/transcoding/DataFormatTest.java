@@ -28,7 +28,6 @@ import java.util.stream.IntStream;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.RawStaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
@@ -92,10 +91,6 @@ public class DataFormatTest extends SingleHotRodServerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-      clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
-      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache(CACHE_NAME);
    }
 

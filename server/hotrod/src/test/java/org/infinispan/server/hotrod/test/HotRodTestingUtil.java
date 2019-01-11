@@ -207,9 +207,13 @@ public class HotRodTestingUtil {
       }
       builder.host(host).port(port);
       builder.ioThreads(3);
-      server.start(builder.build(), manager);
-
-      return server;
+      try {
+         server.start(builder.build(), manager);
+         return server;
+      } catch (Throwable t) {
+         server.stop();
+         throw t;
+      }
    }
 
    public static HotRodServerConfigurationBuilder getDefaultHotRodConfiguration() {
