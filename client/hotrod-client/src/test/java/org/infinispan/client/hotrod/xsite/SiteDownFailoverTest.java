@@ -7,15 +7,19 @@ import java.util.Optional;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.xsite.SiteDownFailoverTest")
 public class SiteDownFailoverTest extends AbstractHotRodSiteFailoverTest {
 
+   private RemoteCacheManager clientA;
+   private RemoteCacheManager clientB;
+
    public void testFailoverAfterSiteShutdown() {
-      RemoteCacheManager clientA = client(SITE_A, Optional.of(SITE_B));
-      RemoteCacheManager clientB = client(SITE_B, Optional.empty());
+      clientA = client(SITE_A, Optional.of(SITE_B));
+      clientB = client(SITE_B, Optional.empty());
       RemoteCache<Integer, String> cacheA = clientA.getCache();
       RemoteCache<Integer, String> cacheB = clientB.getCache();
 
@@ -37,8 +41,6 @@ public class SiteDownFailoverTest extends AbstractHotRodSiteFailoverTest {
 
       killSite(SITE_B);
 
-      TestingUtil.sleepThread(10000);
-
       // Client that had details for site A should failover back
       // There is no data in original site since state transfer is not enabled
       assertNull(cacheA.get(1));
@@ -46,4 +48,11 @@ public class SiteDownFailoverTest extends AbstractHotRodSiteFailoverTest {
       assertEquals("v2", cacheA.get(2));
    }
 
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      HotRodClientTestingUtil.killRemoteCacheManagers(clientA, clientB);
+
+      super.destroy();
+   }
 }

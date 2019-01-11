@@ -63,7 +63,8 @@ public class RemoteCacheManagerExtendedTest extends SingleCacheManagerTest {
       builder.addServer().host("127.0.0.1").port(port);
       GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
       builder.marshaller(marshaller);
-      remoteCacheManager = new RemoteCacheManager(builder.build());
-      assertTrue(marshaller == remoteCacheManager.getMarshaller());
+      RemoteCacheManager newRemoteCacheManager = new RemoteCacheManager(builder.build());
+      assertTrue(marshaller == newRemoteCacheManager.getMarshaller());
+      HotRodClientTestingUtil.killRemoteCacheManager(newRemoteCacheManager);
    }
 }
