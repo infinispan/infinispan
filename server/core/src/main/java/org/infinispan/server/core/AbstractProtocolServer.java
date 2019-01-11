@@ -186,7 +186,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    public void stop() {
       boolean isDebug = log.isDebugEnabled();
       if (isDebug && configuration != null)
-         log.debugf("Stopping server listening in %s:%d", configuration.host(), configuration.port());
+         log.debugf("Stopping server %s listening at %s:%d", getQualifiedName(), configuration.host(), configuration.port());
 
       if (executor != null) executor.shutdownNow();
 

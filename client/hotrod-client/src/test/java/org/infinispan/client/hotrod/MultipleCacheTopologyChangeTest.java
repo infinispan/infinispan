@@ -39,7 +39,7 @@ public class MultipleCacheTopologyChangeTest extends MultipleCacheManagersTest {
 
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServers(getServerList(nodeA, nodeB));
-      RemoteCacheManager client = new RemoteCacheManager(clientBuilder.build());
+      client = new RemoteCacheManager(clientBuilder.build());
       RemoteCache<Integer, String> cache1 = client.getCache("cache1");
       RemoteCache<Integer, String> cache2 = client.getCache("cache2");
 
@@ -119,6 +119,7 @@ public class MultipleCacheTopologyChangeTest extends MultipleCacheManagersTest {
    @AfterClass
    @Override
    protected void destroy() {
+      HotRodClientTestingUtil.killRemoteCacheManager(client);
       nodes.forEach(Node::kill);
    }
 }
