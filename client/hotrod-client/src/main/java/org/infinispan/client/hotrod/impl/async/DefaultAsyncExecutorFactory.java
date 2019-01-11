@@ -22,20 +22,25 @@ import org.infinispan.commons.executors.ExecutorFactory;
  */
 public class DefaultAsyncExecutorFactory implements ExecutorFactory {
    public static final String THREAD_NAME = "HotRod-client-async-pool";
-   public static final AtomicInteger counter = new AtomicInteger(0);
    private static final Log log = LogFactory.getLog(DefaultAsyncExecutorFactory.class);
+
+   private static final AtomicInteger factoryCounter = new AtomicInteger(0);
+   private final AtomicInteger threadCounter = new AtomicInteger(0);
 
    @Override
    public ThreadPoolExecutor getExecutor(Properties p) {
       ConfigurationProperties cp = new ConfigurationProperties(p);
-      final String threadNamePrefix = cp.getDefaultExecutorFactoryThreadNamePrefix();
-      final String threadNameSuffix = cp.getDefaultExecutorFactoryThreadNameSuffix();
+      int factoryIndex = DefaultAsyncExecutorFactory.factoryCounter.incrementAndGet();
+      String threadNamePrefix = cp.getDefaultExecutorFactoryThreadNamePrefix();
+      String threadNameSuffix = cp.getDefaultExecutorFactoryThreadNameSuffix();
       ThreadFactory tf = r -> {
-         Thread th = new Thread(r, threadNamePrefix + "-" + counter.getAndIncrement() + threadNameSuffix);
+         int threadIndex = threadCounter.incrementAndGet();
+         Thread th = new Thread(r, threadNamePrefix + "-" + factoryIndex + "-" + threadIndex + threadNameSuffix);
          th.setDaemon(true);
          return th;
       };
 
+      log.debugf("Creating executor %s-%d", threadNamePrefix,  factoryIndex);
       return new ThreadPoolExecutor(cp.getDefaultExecutorFactoryPoolSize(), cp.getDefaultExecutorFactoryPoolSize(),
             0L, TimeUnit.MILLISECONDS, new SynchronousQueue<>(), tf, (r, executor) -> {
          int poolSize = cp.getDefaultExecutorFactoryPoolSize();

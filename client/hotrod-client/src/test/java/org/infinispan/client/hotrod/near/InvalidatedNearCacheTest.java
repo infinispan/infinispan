@@ -54,7 +54,6 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
    public void testGetNearCacheAfterConnect() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder(hotrodServer);
       builder.nearCache().mode(getNearCacheMode()).maxEntries(-1);
-      assertClient = AssertsNearCache.create(this.<byte[], Object>cache(), builder);
       RemoteCacheManager manager = new RemoteCacheManager(builder.build());
       try {
          RemoteCache cache = manager.getCache();
@@ -64,12 +63,18 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
          HotRodClientTestingUtil.killRemoteCacheManager(manager);
       }
 
-      assertEquals(2, assertClient.remote.size());
-      assertClient.expectNoNearEvents();
-      assertClient.get(1, "one").expectNearGetValue(1, null).expectNearPutIfAbsent(1, "one");
-      assertClient.get(2, "two").expectNearGetValue(2, null).expectNearPutIfAbsent(2, "two");
-      assertClient.remove(1).expectNearRemove(1);
-      assertClient.remove(2).expectNearRemove(2);
+      AssertsNearCache<Integer, String> newAssertClient = AssertsNearCache.create(cache(), builder);
+      try {
+         assertEquals(2, newAssertClient.remote.size());
+         newAssertClient.expectNoNearEvents();
+         newAssertClient.get(1, "one").expectNearGetValue(1, null).expectNearPutIfAbsent(1, "one");
+         newAssertClient.get(2, "two").expectNearGetValue(2, null).expectNearPutIfAbsent(2, "two");
+         newAssertClient.remove(1).expectNearRemove(1);
+         newAssertClient.remove(2).expectNearRemove(2);
+      } finally {
+         newAssertClient.stop();
+      }
+      assertClient.resetEvents();
    }
 
    public void testGetNearCache() {

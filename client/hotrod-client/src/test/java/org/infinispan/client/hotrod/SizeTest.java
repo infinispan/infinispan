@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -24,9 +25,14 @@ public class SizeTest extends MultiHotRodServersTest {
       defineInAll(cacheName, new ConfigurationBuilder());
       // Create a brand new client so that as a local cache it does not do load balancing
       // This is important for size assertions since there's data is not clustered
-      RemoteCache<Integer, Integer> remote = createClient(0).getCache(cacheName);
-      populateCache(remote);
-      assertEquals(SIZE, remote.size());
+      RemoteCacheManager newClient = createClient(0);
+      try {
+         RemoteCache<Integer, Integer> newRemoteCache = newClient.getCache(cacheName);
+         populateCache(newRemoteCache);
+         assertEquals(SIZE, newRemoteCache.size());
+      } finally {
+         HotRodClientTestingUtil.killRemoteCacheManager(newClient);
+      }
    }
 
    public void testReplicatedCacheSize() {
