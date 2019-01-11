@@ -14,10 +14,10 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.remote.client.BaseQueryResponse;
-import org.infinispan.query.remote.client.JsonClientQueryResponse;
-import org.infinispan.query.remote.client.QueryRequest;
-import org.infinispan.query.remote.client.QueryResponse;
+import org.infinispan.query.remote.client.impl.BaseQueryResponse;
+import org.infinispan.query.remote.client.impl.JsonClientQueryResponse;
+import org.infinispan.query.remote.client.impl.QueryRequest;
+import org.infinispan.query.remote.client.impl.QueryResponse;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

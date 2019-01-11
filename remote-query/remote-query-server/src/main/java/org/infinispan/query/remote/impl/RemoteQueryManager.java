@@ -12,7 +12,7 @@ import org.infinispan.objectfilter.Matcher;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.remote.client.FilterResult;
-import org.infinispan.query.remote.client.QueryRequest;
+import org.infinispan.query.remote.client.impl.QueryRequest;
 
 /**
  * Manages components used during indexed and index-less query.

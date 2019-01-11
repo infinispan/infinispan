@@ -1,4 +1,4 @@
-package org.infinispan.query.remote.client;
+package org.infinispan.query.remote.client.impl;
 
 import java.io.IOException;
 
@@ -10,7 +10,6 @@ import org.infinispan.protostream.SerializationContext;
  *
  * @author anistor@redhat.com
  * @since 6.0
- * @private
  */
 public final class MarshallerRegistration {
 
@@ -55,7 +54,7 @@ public final class MarshallerRegistration {
       ctx.registerMarshaller(new QueryRequest.NamedParameter.Marshaller());
       ctx.registerMarshaller(new QueryRequest.Marshaller());
       ctx.registerMarshaller(new QueryResponse.Marshaller());
-      ctx.registerMarshaller(new FilterResult.Marshaller());
+      ctx.registerMarshaller(new FilterResultMarshaller());
       ctx.registerMarshaller(new ContinuousQueryResult.ResultType.Marshaller());
       ctx.registerMarshaller(new ContinuousQueryResult.Marshaller());
    }

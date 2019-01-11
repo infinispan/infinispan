@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.query.remote.client.ContinuousQueryResult;
+import org.infinispan.query.remote.client.impl.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 
 /**

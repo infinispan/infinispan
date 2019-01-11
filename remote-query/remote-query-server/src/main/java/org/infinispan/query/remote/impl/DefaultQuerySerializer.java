@@ -12,8 +12,8 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.protostream.WrappedMessage;
-import org.infinispan.query.remote.client.QueryRequest;
-import org.infinispan.query.remote.client.QueryResponse;
+import org.infinispan.query.remote.client.impl.QueryRequest;
+import org.infinispan.query.remote.client.impl.QueryResponse;
 
 /**
  * Handles serialization of Query results in marshalled {@link QueryResponse} format.

@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
-import org.infinispan.query.remote.client.QueryRequest;
+import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.query.remote.json.Hit;
 import org.infinispan.query.remote.json.JsonQueryResponse;
 import org.infinispan.query.remote.json.JsonQueryResult;

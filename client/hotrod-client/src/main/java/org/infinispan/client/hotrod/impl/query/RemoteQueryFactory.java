@@ -9,8 +9,8 @@ import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
-import org.infinispan.query.remote.client.MarshallerRegistration;
-import org.infinispan.query.remote.client.QueryRequest;
+import org.infinispan.query.remote.client.impl.MarshallerRegistration;
+import org.infinispan.query.remote.client.impl.QueryRequest;
 
 /**
  * @author anistor@redhat.com

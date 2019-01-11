@@ -14,7 +14,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
-import org.infinispan.query.remote.client.BaseQueryResponse;
+import org.infinispan.query.remote.client.impl.BaseQueryResponse;
 
 /**
  * @author anistor@redhat.com

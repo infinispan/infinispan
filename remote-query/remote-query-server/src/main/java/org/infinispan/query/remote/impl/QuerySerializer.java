@@ -1,7 +1,7 @@
 package org.infinispan.query.remote.impl;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.query.remote.client.QueryRequest;
+import org.infinispan.query.remote.client.impl.QueryRequest;
 
 /**
  * Handles serialization of query results.

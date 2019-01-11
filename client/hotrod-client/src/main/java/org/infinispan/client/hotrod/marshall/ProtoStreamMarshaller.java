@@ -8,7 +8,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 
 /**
- * A marshaller that uses Protocol Buffers.
+ * A client-side marshaller that uses Protocol Buffers.
  *
  * @author anistor@redhat.com
  * @since 6.0
