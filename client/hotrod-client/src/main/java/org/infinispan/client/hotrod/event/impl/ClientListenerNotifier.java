@@ -12,8 +12,11 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -21,6 +24,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -30,24 +34,36 @@ import org.infinispan.commons.util.Util;
 public class ClientListenerNotifier {
    private static final Log log = LogFactory.getLog(ClientListenerNotifier.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
+   public static final AtomicInteger counter = new AtomicInteger(0);
 
    // Time for trying to reconnect listeners when all connections are down.
-   private static final int RECONNECT_PERIOD = 5000;
+   public static final int RECONNECT_PERIOD = 5000;
 
    private final ConcurrentMap<WrappedByteArray, EventDispatcher<?>> dispatchers = new ConcurrentHashMap<>();
-   private final ScheduledThreadPoolExecutor reconnectExecutor = new ScheduledThreadPoolExecutor(1);
+   private final ScheduledThreadPoolExecutor reconnectExecutor;
 
    private final Codec codec;
    private final Marshaller marshaller;
    private final ChannelFactory channelFactory;
    private final ClassWhiteList whitelist;
 
-   public ClientListenerNotifier(Codec codec, Marshaller marshaller, ChannelFactory channelFactory, ClassWhiteList whitelist) {
+   public ClientListenerNotifier(Codec codec, Marshaller marshaller, ChannelFactory channelFactory,
+                                 Configuration configuration) {
       this.codec = codec;
       this.marshaller = marshaller;
       this.channelFactory = channelFactory;
-      this.whitelist = whitelist;
+      this.whitelist = configuration.getClassWhiteList();
 
+      TypedProperties defaultAsyncExecutorProperties = configuration.asyncExecutorFactory().properties();
+      ConfigurationProperties cp = new ConfigurationProperties(defaultAsyncExecutorProperties);
+      final String threadNamePrefix = cp.getDefaultExecutorFactoryThreadNamePrefix();
+      final String threadNameSuffix = cp.getDefaultExecutorFactoryThreadNameSuffix();
+      reconnectExecutor = new ScheduledThreadPoolExecutor(1, r -> {
+         // Reuse the DefaultAsyncExecutorFactory thread name settings
+         Thread th = new Thread(r, threadNamePrefix + "-" + counter.getAndIncrement() + threadNameSuffix);
+         th.setDaemon(true);
+         return th;
+      });
       reconnectExecutor.setKeepAliveTime(2 * RECONNECT_PERIOD, TimeUnit.MILLISECONDS);
       reconnectExecutor.allowCoreThreadTimeOut(true);
    }
@@ -168,6 +184,7 @@ public class ClientListenerNotifier {
 
          removeClientListener(listenerId);
       }
+      reconnectExecutor.shutdownNow();
    }
 
    public <T> void invokeEvent(byte[] listenerId, T event) {

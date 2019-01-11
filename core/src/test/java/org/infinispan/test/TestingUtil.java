@@ -1845,17 +1845,6 @@ public class TestingUtil {
       }
    }
 
-   public static void detectThreadLeaks(String regexp) {
-      List<Thread> leakedThreads = new ArrayList<>();
-      for (Map.Entry<Thread, StackTraceElement[]> s : Thread.getAllStackTraces().entrySet()) {
-         Thread thread = s.getKey();
-         if (thread.getName().matches(regexp)) leakedThreads.add(thread);
-      }
-
-      if (!leakedThreads.isEmpty())
-         throw new AssertionError("Leaked threads: " + leakedThreads);
-   }
-
    public static boolean isTriangleAlgorithm(CacheMode cacheMode, boolean transactional) {
       return cacheMode.isDistributed() && !transactional;
    }
