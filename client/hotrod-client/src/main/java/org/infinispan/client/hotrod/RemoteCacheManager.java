@@ -302,7 +302,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
       codec = configuration.version().getCodec();
 
-      listenerNotifier = new ClientListenerNotifier(codec, marshaller, channelFactory, configuration.getClassWhiteList());
+      listenerNotifier = new ClientListenerNotifier(codec, marshaller, channelFactory, configuration);
       ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();
       if (executorFactory == null) {
          executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
