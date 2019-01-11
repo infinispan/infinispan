@@ -6,7 +6,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.query.continuous.impl.IckleContinuousQueryFilterIndexingServiceProvider;
-import org.infinispan.query.remote.client.ContinuousQueryResult;
+import org.infinispan.query.remote.client.impl.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 import org.kohsuke.MetaInfServices;
 

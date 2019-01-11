@@ -19,7 +19,7 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.continuous.impl.IckleContinuousQueryCacheEventFilterConverter;
-import org.infinispan.query.remote.client.ContinuousQueryResult;
+import org.infinispan.query.remote.client.impl.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 

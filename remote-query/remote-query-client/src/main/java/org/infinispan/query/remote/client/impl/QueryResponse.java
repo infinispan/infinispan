@@ -1,4 +1,4 @@
-package org.infinispan.query.remote.client;
+package org.infinispan.query.remote.client.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;

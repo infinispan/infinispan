@@ -5,7 +5,8 @@ import java.io.IOException;
 import org.infinispan.protostream.SerializationContext;
 
 /**
- * Support for custom initialization of the server cache manager's {@link SerializationContext}.
+ * Support for custom initialization of the server cache manager's {@link SerializationContext}. This is a hook for
+ * users to be able to add their own Protobuf definitions and register marshallers at startup.
  *
  * <p>
  * Implementations of this interface are discovered using the JDK's {@link java.util.ServiceLoader} utility, and should

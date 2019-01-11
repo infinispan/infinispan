@@ -32,8 +32,8 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.remote.ProtobufMetadataManager;
-import org.infinispan.query.remote.client.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.query.remote.client.impl.MarshallerRegistration;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
@@ -82,7 +82,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    }
 
    /**
-    * Starts the ___protobuf_metadata when needed. This method must be invoked for each cache that uses protobuf.
+    * Starts the ___protobuf_metadata cache when needed. This method must be invoked for each cache that uses protobuf.
     *
     * @param dependantCacheName the name of the cache depending on the protobuf metadata cache
     */

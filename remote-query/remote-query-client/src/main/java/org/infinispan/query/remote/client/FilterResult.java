@@ -1,15 +1,11 @@
 package org.infinispan.query.remote.client;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.WrappedMessage;
 
 /**
+ * When using Ickle based filters with client event listeners you will get the event data (see
+ * org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent.getEventData) wrapped by this FilterResult.
+ *
  * @author anistor@redhat.com
  * @since 7.2
  */
@@ -30,14 +26,27 @@ public final class FilterResult {
       this.sortProjection = sortProjection;
    }
 
+   /**
+    * Returns the matched object. This is non-null unless projections are present.
+    */
    public Object getInstance() {
       return instance;
    }
 
+   /**
+    * Returns the projection, if a projection was requested or {@code null} otherwise.
+    */
    public Object[] getProjection() {
       return projection;
    }
 
+   /**
+    * Returns the projection of fields that appear in the 'order by' clause, if any, or {@code null} otherwise.
+    * <p>
+    * Please note that no actual sorting is performed! The 'order by' clause is ignored but the fields listed there are
+    * still projected and returned so the caller can easily sort the results if needed. Do not use 'order by' with
+    * filters if this behaviour does not suit you.
+    */
    public Comparable[] getSortProjection() {
       return sortProjection;
    }
@@ -49,72 +58,5 @@ public final class FilterResult {
             ", projection=" + Arrays.toString(projection) +
             ", sortProjection=" + Arrays.toString(sortProjection) +
             '}';
-   }
-
-   static final class Marshaller implements MessageMarshaller<FilterResult> {
-
-      @Override
-      public FilterResult readFrom(ProtoStreamReader reader) throws IOException {
-         byte[] instance = reader.readBytes("instance");
-         List<WrappedMessage> projection = reader.readCollection("projection", new ArrayList<>(), WrappedMessage.class);
-         List<WrappedMessage> sortProjection = reader.readCollection("sortProjection", new ArrayList<>(), WrappedMessage.class);
-
-         Object i = null;
-         if (instance != null) {
-            i = ProtobufUtil.fromWrappedByteArray(reader.getSerializationContext(), instance);
-         }
-
-         Object[] p = null;
-         if (!projection.isEmpty()) {
-            p = new Object[projection.size()];
-            int j = 0;
-            for (WrappedMessage m : projection) {
-               p[j++] = m.getValue();
-            }
-         }
-
-         Comparable[] sp = null;
-         if (!sortProjection.isEmpty()) {
-            sp = new Comparable[sortProjection.size()];
-            int j = 0;
-            for (WrappedMessage m : sortProjection) {
-               sp[j++] = (Comparable) m.getValue();
-            }
-         }
-
-         return new FilterResult(i, p, sp);
-      }
-
-      @Override
-      public void writeTo(ProtoStreamWriter writer, FilterResult filterResult) throws IOException {
-         if (filterResult.getProjection() == null) {
-            // skip marshalling the instance if there is a projection
-            writer.writeBytes("instance", (byte[]) filterResult.getInstance());
-         } else {
-            WrappedMessage[] p = new WrappedMessage[filterResult.getProjection().length];
-            for (int i = 0; i < p.length; i++) {
-               p[i] = new WrappedMessage(filterResult.getProjection()[i]);
-            }
-            writer.writeArray("projection", p, WrappedMessage.class);
-         }
-
-         if (filterResult.getSortProjection() != null) {
-            WrappedMessage[] p = new WrappedMessage[filterResult.getSortProjection().length];
-            for (int i = 0; i < p.length; i++) {
-               p[i] = new WrappedMessage(filterResult.getSortProjection()[i]);
-            }
-            writer.writeArray("sortProjection", p, WrappedMessage.class);
-         }
-      }
-
-      @Override
-      public Class<FilterResult> getJavaClass() {
-         return FilterResult.class;
-      }
-
-      @Override
-      public String getTypeName() {
-         return "org.infinispan.query.remote.client.FilterResult";
-      }
    }
 }

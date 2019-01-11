@@ -1,4 +1,4 @@
-package org.infinispan.query.remote.client;
+package org.infinispan.query.remote.client.impl;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -10,7 +10,7 @@ import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.protostream.WrappedMessage;
 
 /**
- * JBMAR externalizers for QueryRequest/Response objects.
+ * jboss-marshalling externalizers for QueryRequest and QueryResponse objects.
  *
  * @author anistor@redhat.com
  * @since 9.1

@@ -1,4 +1,4 @@
-package org.infinispan.query.remote.client;
+package org.infinispan.query.remote.client.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,20 +23,20 @@ public final class ContinuousQueryResult {
       static final class Marshaller implements EnumMarshaller<ResultType> {
 
          @Override
-         public ResultType decode(int enumValue) {
+         public ContinuousQueryResult.ResultType decode(int enumValue) {
             switch (enumValue) {
                case 0:
-                  return ResultType.LEAVING;
+                  return ContinuousQueryResult.ResultType.LEAVING;
                case 1:
-                  return ResultType.JOINING;
+                  return ContinuousQueryResult.ResultType.JOINING;
                case 2:
-                  return ResultType.UPDATED;
+                  return ContinuousQueryResult.ResultType.UPDATED;
             }
             return null;
          }
 
          @Override
-         public int encode(ResultType resultType) throws IllegalArgumentException {
+         public int encode(ContinuousQueryResult.ResultType resultType) throws IllegalArgumentException {
             switch (resultType) {
                case LEAVING:
                   return 0;
@@ -50,8 +50,8 @@ public final class ContinuousQueryResult {
          }
 
          @Override
-         public Class<ResultType> getJavaClass() {
-            return ResultType.class;
+         public Class<ContinuousQueryResult.ResultType> getJavaClass() {
+            return ContinuousQueryResult.ResultType.class;
          }
 
          @Override
@@ -106,7 +106,7 @@ public final class ContinuousQueryResult {
 
       @Override
       public ContinuousQueryResult readFrom(ProtoStreamReader reader) throws IOException {
-         ResultType type = reader.readObject("resultType", ResultType.class);
+         ContinuousQueryResult.ResultType type = reader.readObject("resultType", ContinuousQueryResult.ResultType.class);
          byte[] key = reader.readBytes("key");
          byte[] value = reader.readBytes("value");
          List<WrappedMessage> projection = reader.readCollection("projection", new ArrayList<>(), WrappedMessage.class);
@@ -123,15 +123,15 @@ public final class ContinuousQueryResult {
 
       @Override
       public void writeTo(ProtoStreamWriter writer, ContinuousQueryResult continuousQueryResult) throws IOException {
-         writer.writeObject("resultType", continuousQueryResult.resultType, ResultType.class);
-         writer.writeBytes("key", continuousQueryResult.key);
-         if (continuousQueryResult.projection == null) {
-            // skip marshalling the instance if there is a projection
-            writer.writeBytes("value", continuousQueryResult.value);
+         writer.writeObject("resultType", continuousQueryResult.getResultType(), ContinuousQueryResult.ResultType.class);
+         writer.writeBytes("key", continuousQueryResult.getKey());
+         if (continuousQueryResult.getProjection() == null) {
+            // skip marshalling the instance if there is a projection (they are mutually exclusive)
+            writer.writeBytes("value", continuousQueryResult.getValue());
          } else {
-            WrappedMessage[] p = new WrappedMessage[continuousQueryResult.projection.length];
+            WrappedMessage[] p = new WrappedMessage[continuousQueryResult.getProjection().length];
             for (int i = 0; i < p.length; i++) {
-               p[i] = new WrappedMessage(continuousQueryResult.projection[i]);
+               p[i] = new WrappedMessage(continuousQueryResult.getProjection()[i]);
             }
             writer.writeArray("projection", p, WrappedMessage.class);
          }
