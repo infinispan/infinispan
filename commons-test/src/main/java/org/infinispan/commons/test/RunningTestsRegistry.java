@@ -31,12 +31,12 @@ class RunningTestsRegistry {
    private static final long MAX_TEST_SECONDS = MINUTES.toSeconds(5);
 
    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-         r -> new Thread(r, "LongTestsWatcher"));
+         r -> new Thread(r, "RunningTestsRegistry-Worker"));
    private static final Map<Thread, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
    static void unregisterThreadWithTest() {
       ScheduledFuture<?> killTask = scheduledTasks.remove(Thread.currentThread());
-      killTask.cancel(true);
+      killTask.cancel(false);
    }
 
    static void registerThreadWithTest(String testName, String simpleName) {
@@ -97,6 +97,7 @@ class RunningTestsRegistry {
          System.out.printf("Interrupted thread %s (%d).\n", testThread.getName(), testThread.getId());
 
          testThread.join(SECONDS.toMillis(MAX_TEST_SECONDS) / 10);
+
          if (testThread.isAlive()) {
             // Thread.interrupt() doesn't work if the thread is waiting to enter a synchronized block or in lock()
             // Thread.stop() works for lock(), but not if the thread is waiting to enter a synchronized block
