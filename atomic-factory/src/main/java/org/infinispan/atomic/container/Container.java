@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.atomic.Updatable;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -53,7 +54,9 @@ public class Container {
    private static Log log = LogFactory.getLog(Container.class);
    private static final int CALL_TTIMEOUT_TIME = 3000;
    private static final int RETRIEVE_TTIMEOUT_TIME = 3000;
-   private static Executor globalExecutors = Executors.newCachedThreadPool();
+   private static Executor globalExecutors = Executors.newCachedThreadPool(
+      new DefaultThreadFactory(null, Thread.NORM_PRIORITY, DefaultThreadFactory.DEFAULT_PATTERN, "global",
+                               "AtomicFactory"));
 
    //
    // OBJECT FIELDS

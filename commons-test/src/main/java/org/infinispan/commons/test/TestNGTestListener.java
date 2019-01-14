@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.jboss.logging.Logger;
@@ -31,9 +30,6 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
    private static final Logger log = Logger.getLogger(TestNGTestListener.class);
 
    private final TestSuiteProgress progressLogger;
-   private Set<Long> startupThreads;
-   private boolean suiteRunning;
-
 
    public TestNGTestListener() {
       progressLogger = new TestSuiteProgress();
@@ -66,7 +62,7 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onStart(ITestContext context) {
-      Thread.currentThread().setName("testng-" + context.getName());
+      Thread.currentThread().setName("unset-" + context.getName());
    }
 
    @Override
@@ -96,56 +92,10 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
       if (!errors.isEmpty()) {
          throw new TestNGException(String.join("\n", errors));
       }
-
-      saveInitialThreads();
-
-      suiteRunning = true;
    }
 
    @Override
    public void onFinish(ISuite suite) {
-      // TestNG invokes this method twice, ignore it the second time
-      boolean firstTime = suiteRunning;
-      suiteRunning = false;
-      if (!firstTime)
-         return;
-
-      logLeakedThreads();
-   }
-
-   private void saveInitialThreads() {
-      Set<Long> threads = new HashSet<>();
-      for (Map.Entry<Thread, StackTraceElement[]> s : Thread.getAllStackTraces().entrySet()) {
-         Thread thread = s.getKey();
-         if (!thread.getName().startsWith("TestNG")) {
-            threads.add(thread.getId());
-         }
-      }
-      startupThreads = threads;
-   }
-
-   private void logLeakedThreads() {
-      int count = 0;
-      for (Map.Entry<Thread, StackTraceElement[]> s : Thread.getAllStackTraces().entrySet()) {
-         Thread thread = s.getKey();
-         if (ignoreThread(thread))
-            continue;
-
-         if (count == 0) {
-            log.warn("Possible leaked threads at the end of the test suite:");
-         }
-         count++;
-         // "management I/O-2" #55 prio=5 os_prio=0 tid=0x00007fe6a8134000 nid=0x7f9d runnable
-         // [0x00007fe64e4db000]
-         //    java.lang.Thread.State:RUNNABLE
-         log.warnf("\"%s\" #%d %sprio=%d tid=0x%x nid=NA %s", thread.getName(), count,
-                   thread.isDaemon() ? "daemon " : "", thread.getPriority(), thread.getId(),
-                   thread.getState().toString().toLowerCase());
-         log.warnf("   java.lang.Thread.State: %s", thread.getState());
-         for (StackTraceElement ste : s.getValue()) {
-            log.warnf("\t%s", ste);
-         }
-      }
    }
 
    private void checkAnnotations(List<String> errors, Set<Class> classes, Collection<ITestNGMethod> methods) {
@@ -223,11 +173,6 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
       if (!annotation.testName().contains(testClass.getSimpleName())) {
          errors.add("Class " + testClass.getName() + " has an invalid testName: " + annotation.testName());
       }
-   }
-
-   private boolean ignoreThread(Thread thread) {
-      String threadName = thread.getName();
-      return threadName.startsWith("testng-") || threadName.startsWith("ForkJoinPool.commonPool-worker-") || startupThreads.contains(thread.getId());
    }
 
    @Override
