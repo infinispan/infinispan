@@ -62,7 +62,7 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onStart(ITestContext context) {
-      Thread.currentThread().setName("unset-" + context.getName());
+      Thread.currentThread().setName("testng-" + context.getName());
    }
 
    @Override
