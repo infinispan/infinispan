@@ -60,12 +60,15 @@ public class ClusteredLockImpl implements ClusteredLock {
 
    private final String name;
    private final ClusteredLockKey lockKey;
+   private final AdvancedCache<ClusteredLockKey, ClusteredLockValue> clusteredLockCache;
    private final EmbeddedClusteredLockManager clusteredLockManager;
    private final FunctionalMap.ReadWriteMap<ClusteredLockKey, ClusteredLockValue> readWriteMap;
    private final Queue<RequestHolder> pendingRequests;
    private final Object originator;
    private final AtomicInteger viewChangeUnlockHappening = new AtomicInteger(0);
    private final RequestExpirationScheduler requestExpirationScheduler;
+   private final ClusterChangeListener clusterChangeListener;
+   private final LockReleasedListener lockReleasedListener;
 
    public ClusteredLockImpl(String name,
                             ClusteredLockKey lockKey,
@@ -73,13 +76,22 @@ public class ClusteredLockImpl implements ClusteredLock {
                             EmbeddedClusteredLockManager clusteredLockManager) {
       this.name = name;
       this.lockKey = lockKey;
+      this.clusteredLockCache = clusteredLockCache;
       this.clusteredLockManager = clusteredLockManager;
       this.pendingRequests = new ConcurrentLinkedQueue<>();
       this.readWriteMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(clusteredLockCache));
       originator = clusteredLockCache.getCacheManager().getAddress();
       requestExpirationScheduler = new RequestExpirationScheduler(clusteredLockManager.getScheduledExecutorService());
-      clusteredLockCache.getCacheManager().addListener(new ClusterChangeListener());
-      clusteredLockCache.addListener(new LockReleasedListener(), new ClusteredLockFilter(lockKey));
+      clusterChangeListener = new ClusterChangeListener();
+      lockReleasedListener = new LockReleasedListener();
+      this.clusteredLockCache.getCacheManager().addListener(clusterChangeListener);
+      this.clusteredLockCache.addListener(lockReleasedListener, new ClusteredLockFilter(lockKey));
+   }
+
+   public void clear() {
+      clusteredLockCache.removeListener(clusterChangeListener);
+      clusteredLockCache.removeListener(lockReleasedListener);
+      requestExpirationScheduler.clearAll();
    }
 
    public abstract class RequestHolder<E> {
@@ -247,6 +259,7 @@ public class ClusteredLockImpl implements ClusteredLock {
             RequestHolder requestHolder = pendingRequests.poll();
             requestHolder.handleLockResult(null, log.lockDeleted());
             requestExpirationScheduler.abortScheduling(requestHolder.requestId);
+            clear();
          }
       }
    }

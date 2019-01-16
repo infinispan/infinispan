@@ -125,4 +125,11 @@ public class RequestExpirationScheduler {
    public ScheduledRequest get(String requestId) {
       return scheduledRequests.get(requestId);
    }
+
+   /**
+    * Clears all the scheduled requests
+    */
+   public void clearAll() {
+      scheduledRequests.clear();
+   }
 }
