@@ -9,7 +9,6 @@ import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -76,8 +75,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    @Override
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
       //noinspection unchecked
-      Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(DistributedExecuteCommand.class,
-               LockControlCommand.class,
+      Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(LockControlCommand.class,
                StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
                SingleRpcCommand.class, CommitCommand.class,
                PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,

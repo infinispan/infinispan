@@ -11,7 +11,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -101,14 +100,6 @@ public interface Visitor {
    Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable;
 
    Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
-
-   /**
-    * @deprecated since 10.0, DistributedExecutor is planned on being removed
-    */
-   @Deprecated
-   default <V> Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<V> command) throws Throwable {
-      return null;
-   }
 
    Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable;
 
