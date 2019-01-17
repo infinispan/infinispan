@@ -3,23 +3,25 @@ package org.infinispan.all.embedded;
 import static org.junit.Assert.assertEquals;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
@@ -176,23 +178,24 @@ public class EmbeddedAllTest {
    }
 
    @Test
-   public void testEmbeddedDistExec() throws Exception {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC)
-            .stateTransfer().fetchInMemoryState(true)
-            .clustering().hash().numOwners(2);
-
-      manager.defineConfiguration("distexec-cache", builder.build());
-      manager2.defineConfiguration("distexec-cache", builder.build());
-      DefaultExecutorService defaultExecutorService = new DefaultExecutorService(manager.getCache("distexec-cache"));
-      List<CompletableFuture<String>> results = defaultExecutorService.submitEverywhere(new TestCallable());
-      for(Future<String> result : results) {
-         assertEquals("OK", result.get());
+   public void testEmbeddedClusterExec() throws Exception {
+      ClusterExecutor clusterExecutor = manager.executor();
+      List<String> synchronizedList = Collections.synchronizedList(new ArrayList<>());
+      CompletableFuture<Void> future = clusterExecutor.submitConsumer(new TestCallable(), (a, v, t) -> {
+         if (t != null) {
+            throw new CacheException(t);
+         }
+         synchronizedList.add(v);
+      });
+      future.join();
+      for(String result : synchronizedList) {
+         assertEquals("OK", result);
       }
    }
 
-   static final class TestCallable implements Callable<String>, Serializable {
-      public String call() throws Exception {
+   static final class TestCallable implements Function<EmbeddedCacheManager, String>, Serializable {
+      @Override
+      public String apply(EmbeddedCacheManager embeddedCacheManager) {
          return "OK";
       }
    }

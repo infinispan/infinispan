@@ -1,13 +1,11 @@
 package org.infinispan.server.core.transport;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -17,13 +15,9 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import io.netty.channel.group.ChannelGroup;
@@ -75,42 +69,34 @@ class NettyTransportConnectionStats {
    }
 
    private int calculateGlobalConnections() {
-      Cache<Object, Object> cache = cacheManager.getCache();
-      DistributedExecutorService exec = new DefaultExecutorService(cache);
+      AtomicInteger connectionCount = new AtomicInteger();
+      // Submit calculation task
+      CompletableFuture<Void> results = cacheManager.executor().submitConsumer(
+            new ConnectionAdderTask(threadNamePrefix), (a, v, t) -> {
+               if (t != null) {
+                  throw new CacheException(t);
+               }
+               connectionCount.addAndGet(v);
+            });
+      // Take all results and add them up with a bit of functional programming magic :)
       try {
-         // Submit calculation task
-         List<CompletableFuture<Integer>> results = exec.submitEverywhere(
-               new ConnectionAdderTask(threadNamePrefix));
-         // Take all results and add them up with a bit of functional programming magic :)
-         return results.stream().mapToInt(f -> {
-            try {
-               return f.get(30, TimeUnit.SECONDS);
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-               throw new CacheException(e);
-            }
-         }).sum();
-      } finally {
-         exec.shutdown();
+         results.get();
+      } catch (InterruptedException | ExecutionException e) {
+         throw new CacheException(e);
       }
+      return connectionCount.get();
    }
 
-   static class ConnectionAdderTask implements Serializable, DistributedCallable<Object, Object, Integer> {
+   static class ConnectionAdderTask implements Serializable, Function<EmbeddedCacheManager, Integer> {
       private final String serverName;
-
-      Cache<Object, Object> cache;
 
       ConnectionAdderTask(String serverName) {
          this.serverName = serverName;
       }
 
       @Override
-      public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
-         this.cache = cache;
-      }
-
-      @Override
-      public Integer call() throws Exception {
-         GlobalJmxStatisticsConfiguration globalCfg = cache.getCacheManager().getCacheManagerConfiguration().globalJmxStatistics();
+      public Integer apply(EmbeddedCacheManager embeddedCacheManager) {
+         GlobalJmxStatisticsConfiguration globalCfg = embeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics();
          String jmxDomain = globalCfg.domain();
          MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg.mbeanServerLookup(), globalCfg.properties());
          try {

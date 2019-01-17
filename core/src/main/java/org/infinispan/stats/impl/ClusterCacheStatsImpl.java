@@ -28,24 +28,23 @@ import static org.infinispan.stats.impl.StatKeys.STORES;
 import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_START;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
@@ -55,9 +54,14 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Units;
+import org.infinispan.manager.ClusterExecutor;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -70,7 +74,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    private static final Log log = LogFactory.getLog(ClusterCacheStatsImpl.class);
 
-   private DefaultExecutorService des;
+   private ClusterExecutor clusterExecutor;
    private AdvancedCache cache;
    private double readWriteRatio;
    private double hitRatio;
@@ -87,22 +91,26 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @Start
    public void start() {
-      this.des = SecurityActions.getDefaultExecutorService(cache);
-   }
-
-   @Stop
-   public void stop() {
-      if (des != null && !des.isShutdown()) {
-         des.shutdownNow();
-      }
+      this.clusterExecutor = SecurityActions.getClusterExecutor(cache);
    }
 
    @Override
    void updateStats() throws Exception {
-      List<Map<String, Number>> responseList = new ArrayList<>();
-      List<CompletableFuture<Map<String, Number>>> responseFutures = des.submitEverywhere(new DistributedCacheStatsCallable());
-      for (CompletableFuture<Map<String, Number>> cf : responseFutures)
-         responseList.add(cf.get());
+      ConcurrentMap<Address, Map<String, Number>> resultMap = new ConcurrentHashMap<>();
+      TriConsumer<Address, Map<String, Number>, Throwable> triConsumer = (a, v, t) -> {
+         if (t != null) {
+            throw new CacheException(t);
+         }
+         if (a == null) {
+            // Local cache manager reports null for address
+            a = LocalModeAddress.INSTANCE;
+         }
+         resultMap.put(a, v);
+      };
+      CompletableFuture<Void> future = clusterExecutor.submitConsumer(new DistributedCacheStatsCallable(cache.getName()), triConsumer);
+      future.join();
+
+      Collection<Map<String, Number>> responseList = resultMap.values();
 
       for (String att : LONG_ATTRIBUTES)
          putLongAttributes(responseList, att);
@@ -411,7 +419,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       return getStatAsLong(CACHE_WRITER_STORES);
    }
 
-   private void updateTimeSinceStart(List<Map<String, Number>> responseList) {
+   private void updateTimeSinceStart(Collection<Map<String, Number>> responseList) {
       long timeSinceStartMax = 0;
       for (Map<String, Number> m : responseList) {
          Number timeSinceStart = m.get(TIME_SINCE_START);
@@ -422,7 +430,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       statsMap.put(TIME_SINCE_START, timeSinceStartMax);
    }
 
-   private void updateRatios(List<Map<String, Number>> responseList) {
+   private void updateRatios(Collection<Map<String, Number>> responseList) {
       long totalHits = 0;
       long totalRetrievals = 0;
       long sumOfAllReads = 0;
@@ -450,13 +458,20 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    }
 
    private static class DistributedCacheStatsCallable implements
-         DistributedCallable<Object, Object, Map<String, Number>>, Serializable {
+         Function<EmbeddedCacheManager, Map<String, Number>>, Serializable {
 
       private static final long serialVersionUID = -8400973931071456798L;
-      private transient AdvancedCache<Object, Object> remoteCache;
+
+      private final String cacheName;
+
+      private DistributedCacheStatsCallable(String cacheName) {
+         this.cacheName = cacheName;
+      }
 
       @Override
-      public Map<String, Number> call() throws Exception {
+      public Map<String, Number> apply(EmbeddedCacheManager embeddedCacheManager) {
+         AdvancedCache<Object, Object> remoteCache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
+
          Map<String, Number> map = new HashMap<>();
          Stats stats = remoteCache.getStats();
          map.put(AVERAGE_READ_TIME, stats.getAverageReadTime());
@@ -534,11 +549,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
             map.put(CACHE_WRITER_STORES, 0);
          }
          return map;
-      }
-
-      @Override
-      public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
-         remoteCache = cache.getAdvancedCache();
       }
    }
 }

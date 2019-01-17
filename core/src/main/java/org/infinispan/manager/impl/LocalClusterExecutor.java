@@ -32,7 +32,7 @@ class LocalClusterExecutor implements ClusterExecutor {
    LocalClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager, Executor localExecutor,
          long time, TimeUnit unit, ScheduledExecutorService timeoutExecutor) {
       this.predicate = predicate;
-      this.manager = Objects.requireNonNull(manager);
+      this.manager = new UnwrappingEmbeddedCacheManager(Objects.requireNonNull(manager));
       this.localExecutor = Objects.requireNonNull(localExecutor);
       if (time <= 0) {
          throw new IllegalArgumentException("time must be greater than 0");

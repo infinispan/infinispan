@@ -8,12 +8,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -36,17 +36,12 @@ import org.infinispan.util.logging.LogFactory;
  * @author wburns
  * @since 7.0
  */
-public class ClusterListenerReplicateCallable<K, V> implements DistributedCallable<K, V, Void> {
+public class ClusterListenerReplicateCallable<K, V> implements Function<EmbeddedCacheManager, Void>,
+      BiConsumer<EmbeddedCacheManager, Cache<K, V>> {
    private static final Log log = LogFactory.getLog(ClusterListenerReplicateCallable.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private transient EmbeddedCacheManager cacheManager;
-   private transient CacheNotifier cacheNotifier;
-   private transient CacheManagerNotifier cacheManagerNotifier;
-   private transient DistributedExecutorService distExecutor;
-   private transient Address ourAddress;
-   private transient ClusterEventManager<K, V> eventManager;
-
+   private final String cacheName;
    private final UUID identifier;
    private final CacheEventFilter<K, V> filter;
    private final CacheEventConverter<K, V, ?> converter;
@@ -57,10 +52,11 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
    private final DataConversion valueDataConversion;
    private final boolean useStorageFormat;
 
-   public ClusterListenerReplicateCallable(UUID identifier, Address origin, CacheEventFilter<K, V> filter,
+   public ClusterListenerReplicateCallable(String cacheName, UUID identifier, Address origin, CacheEventFilter<K, V> filter,
                                            CacheEventConverter<K, V, ?> converter, boolean sync,
                                            Set<Class<? extends Annotation>> filterAnnotations,
                                            DataConversion keyDataConversion, DataConversion valueDataConversion, boolean useStorageFormat) {
+      this.cacheName = cacheName;
       this.identifier = identifier;
       this.origin = origin;
       this.filter = filter;
@@ -76,27 +72,29 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
    }
 
    @Override
-   public void setEnvironment(Cache<K, V> cache, Set<K> inputKeys) {
-      cacheManager = cache.getCacheManager();
+   public Void apply(EmbeddedCacheManager cacheManager) {
+      Cache<K, V> cache = cacheManager.getCache(cacheName);
+      accept(cacheManager, cache);
 
+      return null;
+   }
+
+   @Override
+   public void accept(EmbeddedCacheManager cacheManager, Cache<K, V> cache) {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
 
-      cacheNotifier = componentRegistry.getComponent(CacheNotifier.class);
-      cacheManagerNotifier = cache.getCacheManager().getGlobalComponentRegistry().getComponent(
+      CacheNotifier<K, V> cacheNotifier = componentRegistry.getComponent(CacheNotifier.class);
+      CacheManagerNotifier cacheManagerNotifier = cache.getCacheManager().getGlobalComponentRegistry().getComponent(
             CacheManagerNotifier.class);
-      distExecutor = SecurityActions.getDefaultExecutorService(cache);
-      ourAddress = cache.getCacheManager().getAddress();
-      eventManager = componentRegistry.getComponent(ClusterEventManager.class);
+      Address ourAddress = cache.getCacheManager().getAddress();
+      ClusterEventManager<K, V> eventManager = componentRegistry.getComponent(ClusterEventManager.class);
       if (filter != null) {
          componentRegistry.wireDependencies(filter);
       }
       if (converter != null && converter != filter) {
          componentRegistry.wireDependencies(converter);
       }
-   }
 
-   @Override
-   public Void call() throws Exception {
       // Only register listeners if we aren't the ones that registered the cluster listener
       if (!ourAddress.equals(origin)) {
          // Make sure the origin is around otherwise don't register the listener - some way with identifier (CHM maybe?)
@@ -114,7 +112,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
                   }
                }
                if (!alreadyInstalled) {
-                  RemoteClusterListener listener = new RemoteClusterListener(identifier, origin, distExecutor, cacheNotifier,
+                  RemoteClusterListener listener = new RemoteClusterListener(identifier, origin, cacheNotifier,
                         cacheManagerNotifier, eventManager, sync);
                   ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, useStorageFormat);
                   cacheNotifier.addFilteredListener(listenerHolder, filter, converter, filterAnnotations);
@@ -142,7 +140,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
       } else if (trace) {
          log.trace("Not registering local cluster listener as we are the node who registered the cluster listener");
       }
-      return null;
+
    }
 
    public static class Externalizer extends AbstractExternalizer<ClusterListenerReplicateCallable> {
@@ -153,6 +151,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
 
       @Override
       public void writeObject(ObjectOutput output, ClusterListenerReplicateCallable object) throws IOException {
+         output.writeObject(object.cacheName);
          output.writeObject(object.identifier);
          output.writeObject(object.origin);
          output.writeObject(object.filter);
@@ -171,6 +170,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
 
       @Override
       public ClusterListenerReplicateCallable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         String cacheName = (String) input.readObject();
          UUID id = (UUID) input.readObject();
          Address address = (Address) input.readObject();
          CacheEventFilter filter = (CacheEventFilter) input.readObject();
@@ -186,7 +186,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
          DataConversion keyDataConversion = DataConversion.readFrom(input);
          DataConversion valueDataConversion = DataConversion.readFrom(input);
          boolean raw = input.readBoolean();
-         return new ClusterListenerReplicateCallable(id, address, filter, converter, sync, listenerAnnots,
+         return new ClusterListenerReplicateCallable(cacheName, id, address, filter, converter, sync, listenerAnnots,
                keyDataConversion, valueDataConversion, raw);
       }
 
@@ -194,5 +194,15 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
       public Integer getId() {
          return Ids.CLUSTER_LISTENER_REPLICATE_CALLABLE;
       }
+   }
+
+   @Override
+   public String toString() {
+      return "ClusterListenerReplicateCallable{" +
+            "cacheName='" + cacheName + '\'' +
+            ", identifier=" + identifier +
+            ", origin=" + origin +
+            ", sync=" + sync +
+            '}';
    }
 }

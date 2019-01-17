@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -43,7 +42,6 @@ public class RemoteClusterListener {
 
    private final UUID id;
    private final Address origin;
-   private final DistributedExecutorService distExecService;
    private final CacheNotifier cacheNotifier;
    private final CacheManagerNotifier cacheManagerNotifier;
    private final ClusterEventManager eventManager;
@@ -52,11 +50,10 @@ public class RemoteClusterListener {
    private final ConcurrentMap<GlobalTransaction, Queue<CacheEntryEvent>> transactionChanges =
          CollectionFactory.makeConcurrentMap();
 
-   public RemoteClusterListener(UUID id, Address origin, DistributedExecutorService distExecService, CacheNotifier cacheNotifier,
+   public RemoteClusterListener(UUID id, Address origin, CacheNotifier cacheNotifier,
                                 CacheManagerNotifier cacheManagerNotifier, ClusterEventManager eventManager, boolean sync) {
       this.id = id;
       this.origin = origin;
-      this.distExecService = distExecService;
       this.cacheNotifier = cacheNotifier;
       this.cacheManagerNotifier = cacheManagerNotifier;
       this.eventManager = eventManager;

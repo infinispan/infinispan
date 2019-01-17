@@ -23,7 +23,6 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -34,6 +33,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
+import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -173,7 +173,7 @@ public class StateProviderImpl implements StateProvider {
    }
 
    @Override
-   public Collection<DistributedCallable> getClusterListenersToInstall() {
+   public Collection<ClusterListenerReplicateCallable<Object, Object>> getClusterListenersToInstall() {
       return clusterCacheNotifier.retrieveClusterListenerCallablesToInstall();
    }
 

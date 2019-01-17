@@ -1,41 +1,46 @@
 package org.infinispan.notifications.cachelistener.cluster.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.distexec.DistributedExecutionCompletionService;
-import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCallable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.function.TriConsumer;
 
 public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManager<K, V> {
    @Inject private ComponentRef<Cache<K, V>> cache;
 
-   private DistributedExecutorService distExecService;
+   private ClusterExecutor clusterExecutor;
 
    private final ThreadLocal<EventContext<K, V>> localContext = new ThreadLocal<>();
 
    @Start
    public void start() {
-      distExecService = SecurityActions.getDefaultExecutorService(cache.wired());
+      clusterExecutor = SecurityActions.getClusterExecutor(cache.wired()).singleNodeSubmission();
    }
 
    @Override
    public void addEvents(Address target, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync) {
       EventContext<K, V> ctx = localContext.get();
       if (ctx == null) {
-         ctx = new UnicastEventContext<>();
+         ctx = new UnicastEventContext<>(cache.wired().getName());
          localContext.set(ctx);
       }
       ctx.addTargets(target, identifier, events, sync);
@@ -45,7 +50,7 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
    public void sendEvents() {
       EventContext<K, V> ctx = localContext.get();
       if (ctx != null) {
-         ctx.sendToTargets(distExecService);
+         ctx.sendToTargets(clusterExecutor);
          localContext.remove();
       }
    }
@@ -58,11 +63,16 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
    private interface EventContext<K, V> {
       void addTargets(Address address, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync);
 
-      void sendToTargets(DistributedExecutorService service);
+      void sendToTargets(ClusterExecutor executor);
    }
 
    protected static class UnicastEventContext<K, V> implements EventContext<K, V> {
+      protected final String cacheName;
       protected final Map<Address, TargetEvents<K, V>> targets = new HashMap<>();
+
+      public UnicastEventContext(String cacheName) {
+         this.cacheName = cacheName;
+      }
 
       @Override
       public void addTargets(Address address, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync) {
@@ -85,36 +95,38 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
       }
 
       @Override
-      public void sendToTargets(DistributedExecutorService service) {
-         DistributedExecutionCompletionService<Void> completion = new DistributedExecutionCompletionService<>(service);
-         int syncCount = 0;
+      public void sendToTargets(ClusterExecutor executor) {
+         List<CompletableFuture<Void>> futures = new ArrayList<>();
+         TriConsumer<Address, Void, Throwable> triConsumer = (a, v, t) -> {
+           if (t != null) {
+              throw new CacheException(t);
+           }
+         };
          for (Entry<Address, TargetEvents<K, V>> entry : targets.entrySet()) {
             TargetEvents<K, V> value = entry.getValue();
             if (value.events.size() > 1) {
+               CompletableFuture<Void> future = executor.filterTargets(Collections.singleton(entry.getKey()))
+                     .submitConsumer(new MultiClusterEventCallable<>(cacheName, value.events), triConsumer);
                if (value.sync) {
-                  completion.submit(entry.getKey(), new MultiClusterEventCallable<>(value.events));
-                  syncCount++;
-               } else {
-                  service.submit(entry.getKey(), new MultiClusterEventCallable<>(value.events));
+                  futures.add(future);
                }
             } else if (value.events.size() == 1) {
                Entry<UUID, Collection<ClusterEvent<K, V>>> entryValue = value.events.entrySet().iterator().next();
+               CompletableFuture<Void> future = executor.filterTargets(Collections.singleton(entry.getKey()))
+                     .submitConsumer(new ClusterEventCallable<>(cacheName, entryValue.getKey(), entryValue.getValue()), triConsumer);
                if (value.sync) {
-                  completion.submit(entry.getKey(), new ClusterEventCallable<>(entryValue.getKey(), entryValue.getValue()));
-                  syncCount++;
-               } else {
-                  service.submit(entry.getKey(), new ClusterEventCallable<>(entryValue.getKey(), entryValue.getValue()));
+                  futures.add(future);
                }
             }
          }
 
          try {
-            for (int i = 0; i < syncCount; ++i) {
-               completion.take();
-            }
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
          }
          catch (InterruptedException e) {
             throw new CacheException("Interrupted while waiting for event notifications to complete.", e);
+         } catch (ExecutionException e) {
+            throw new CacheException("Exception encountered while replicating events", e.getCause());
          }
       }
    }

@@ -9,36 +9,45 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * This DistributedCallable is used to invoke a raised notification on the cluster listener that registered to listen
+ * This Function is used to invoke a raised notification on the cluster listener that registered to listen
  * for this event.
  *
  * @author wburns
  * @since 7.0
  */
-public class MultiClusterEventCallable<K, V> implements DistributedCallable<K, V, Void> {
+public class MultiClusterEventCallable<K, V> implements Function<EmbeddedCacheManager, Void> {
 
    private static final Log log = LogFactory.getLog(MultiClusterEventCallable.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private transient ClusterCacheNotifier<K, V> clusterCacheNotifier;
-
+   private final String cacheName;
    private final Map<UUID, Collection<ClusterEvent<K, V>>> multiEvents;
 
-   public MultiClusterEventCallable(Map<UUID, Collection<ClusterEvent<K, V>>> events) {
+   public MultiClusterEventCallable(String cacheName, Map<UUID, Collection<ClusterEvent<K, V>>> events) {
+      this.cacheName = cacheName;
       this.multiEvents = events;
    }
 
    @Override
-   public Void call() throws Exception {
+   public Void apply(EmbeddedCacheManager embeddedCacheManager) {
+      Cache<K, V> cache = embeddedCacheManager.getCache(cacheName);
+      ClusterCacheNotifier<K, V> clusterCacheNotifier = cache.getAdvancedCache().getComponentRegistry().getComponent(ClusterCacheNotifier.class);
+      for (Collection<? extends ClusterEvent<K, V>> events : multiEvents.values()) {
+         for (ClusterEvent<K, V> event : events) {
+            event.cache = cache;
+         }
+      }
+
       if (trace) {
          log.tracef("Received multiple cluster event(s) %s", multiEvents);
       }
@@ -47,17 +56,8 @@ public class MultiClusterEventCallable<K, V> implements DistributedCallable<K, V
          Collection<ClusterEvent<K, V>> events = entry.getValue();
          clusterCacheNotifier.notifyClusterListeners(events, identifier);
       }
-      return null;
-   }
 
-   @Override
-   public void setEnvironment(Cache<K, V> cache, Set<K> inputKeys) {
-      this.clusterCacheNotifier = cache.getAdvancedCache().getComponentRegistry().getComponent(ClusterCacheNotifier.class);
-      for (Collection<? extends ClusterEvent<K, V>> events : multiEvents.values()) {
-         for (ClusterEvent<K, V> event : events) {
-            event.cache = cache;
-         }
-      }
+      return null;
    }
 
    public static class Externalizer extends AbstractExternalizer<MultiClusterEventCallable> {
@@ -68,12 +68,14 @@ public class MultiClusterEventCallable<K, V> implements DistributedCallable<K, V
 
       @Override
       public void writeObject(ObjectOutput output, MultiClusterEventCallable object) throws IOException {
+         output.writeObject(object.cacheName);
          output.writeObject(object.multiEvents);
       }
 
       @Override
       public MultiClusterEventCallable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new MultiClusterEventCallable((Map<UUID, Collection<? extends ClusterEvent>>)input.readObject());
+         return new MultiClusterEventCallable((String) input.readObject(),
+               (Map<UUID, Collection<? extends ClusterEvent>>)input.readObject());
       }
 
       @Override

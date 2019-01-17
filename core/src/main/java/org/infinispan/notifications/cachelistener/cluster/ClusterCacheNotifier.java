@@ -3,7 +3,6 @@ package org.infinispan.notifications.cachelistener.cluster;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 
@@ -29,5 +28,5 @@ public interface ClusterCacheNotifier<K, V> extends CacheNotifier<K, V> {
     * the existing cluster listeners that are already installed.
     * @return A collection of callables that should be invoked on the new node to properly install cluster listener information
     */
-   Collection<DistributedCallable> retrieveClusterListenerCallablesToInstall();
+   Collection<ClusterListenerReplicateCallable<K, V>> retrieveClusterListenerCallablesToInstall();
 }

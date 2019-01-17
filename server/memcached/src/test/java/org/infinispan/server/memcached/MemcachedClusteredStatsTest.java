@@ -8,6 +8,7 @@ import javax.management.MBeanException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -45,8 +46,16 @@ public class MemcachedClusteredStatsTest extends MemcachedMultiNodeTest {
    public void testSingleConnectionPerServer() throws MalformedObjectNameException, AttributeNotFoundException,
          MBeanException, ReflectionException, InstanceNotFoundException {
       MBeanServer mBeanServer = mbeanServerLookup.getMBeanServer(null);
-      ConnectionStatsTest.testGlobalConnections(jmxDomain + "-0", "Memcached-" + jmxDomain, 2,
-            mBeanServer);
+      ObjectName on = new ObjectName(String.format("%s:type=Server,name=%s,component=Transport", jmxDomain + "-0", "Memcached-" + jmxDomain));
+      // Now verify that via JMX as well, these stats are also as expected
+      eventuallyEquals(2, () -> {
+         try {
+            return mBeanServer.getAttribute(on, "NumberOfGlobalConnections");
+         } catch (MBeanException | AttributeNotFoundException | InstanceNotFoundException | ReflectionException e) {
+            log.debug("Exception encountered", e);
+         }
+         return 0;
+      });
    }
 
    class ProvidedMBeanServerLookup implements MBeanServerLookup {
