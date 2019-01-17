@@ -20,7 +20,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -116,7 +116,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
             .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
             .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
             .customInterceptors().addInterceptor()
-            .interceptor(new ProtobufMetadataManagerInterceptor()).after(PessimisticLockingInterceptor.class);
+            .interceptor(new ProtobufMetadataManagerInterceptor()).after(EntryWrappingInterceptor.class);
       if (globalConfiguration.security().authorization().enabled()) {
          globalConfiguration.security().authorization().roles().put(SCHEMA_MANAGER_ROLE, new CacheRoleImpl(SCHEMA_MANAGER_ROLE, AuthorizationPermission.ALL));
          cfg.security().authorization().enable().role(SCHEMA_MANAGER_ROLE);
