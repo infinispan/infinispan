@@ -98,7 +98,7 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
     * We usually know the size of the map ahead, and we want to return static empty map if we're not going to add anything.
     */
    protected <K, V> Map<K, V> allocMap(int size) {
-      return size == 0 ? Collections.emptyMap() : new HashMap<>(size);
+      return size == 0 ? Collections.emptyMap() : new HashMap<>(size * 4/3, 0.75f);
    }
 
    protected <T> List<T> allocList(int size) {
