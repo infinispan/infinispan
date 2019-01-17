@@ -45,6 +45,7 @@ import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.transaction.TransactionMode;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -55,10 +56,17 @@ import org.junit.Test;
  * @since 3.5
  */
 public class InfinispanRegionFactoryTestCase  {
-	@Rule
-	public InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
+   @Rule
+   public InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
 
-	@Test
+   private final ServiceRegistryTestingImpl serviceRegistry = ServiceRegistryTestingImpl.forUnitTesting();
+
+   @After
+   public void tearDown() {
+      serviceRegistry.destroy();
+   }
+
+   @Test
 	public void testConfigurationProcessing() {
 		final String person = "com.acme.Person";
 		final String addresses = "com.acme.Person.addresses";
@@ -302,7 +310,7 @@ public class InfinispanRegionFactoryTestCase  {
       DefaultCacheManager manager = new DefaultCacheManager(cbh, true);
 		try {
 			TestRegionFactory factory = createRegionFactory(manager, p, null);
-			factory.start(ServiceRegistryTestingImpl.forUnitTesting(), p);
+         factory.start(serviceRegistry, p);
 			// Should have failed saying that invalidation is not allowed for timestamp caches.
 			Exceptions.expectException(CacheException.class, () -> factory.buildTimestampsRegion(timestamps));
 		} finally {
@@ -581,7 +589,7 @@ public class InfinispanRegionFactoryTestCase  {
 			p.put(TestRegionFactory.AFTER_MANAGER_CREATED, hook);
 		}
 		final TestRegionFactory factory = TestRegionFactoryProvider.load().create(p);
-		factory.start(ServiceRegistryTestingImpl.forUnitTesting(), p);
+		factory.start(serviceRegistry, p);
 		return factory;
 	}
 

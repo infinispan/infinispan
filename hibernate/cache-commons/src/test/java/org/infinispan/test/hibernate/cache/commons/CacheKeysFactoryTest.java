@@ -1,5 +1,11 @@
 package org.infinispan.test.hibernate.cache.commons;
 
+import static org.infinispan.test.hibernate.cache.commons.util.TxUtil.withTxSession;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Iterator;
+
 import org.hibernate.SessionFactory;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.internal.SimpleCacheKeysFactory;
@@ -7,21 +13,15 @@ import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.CacheImplementor;
+import org.hibernate.testing.junit4.BaseUnitTestCase;
+import org.infinispan.Cache;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Name;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
-import org.hibernate.testing.junit4.BaseUnitTestCase;
-import org.infinispan.Cache;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.junit.Rule;
 import org.junit.Test;
-
-import java.util.Iterator;
-
-import static org.infinispan.test.hibernate.cache.commons.util.TxUtil.withTxSession;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class CacheKeysFactoryTest extends BaseUnitTestCase {
    @Rule
@@ -68,22 +68,26 @@ public class CacheKeysFactoryTest extends BaseUnitTestCase {
 
    private void test(String cacheKeysFactory, String keyClassName) throws Exception {
       SessionFactory sessionFactory = getSessionFactory(cacheKeysFactory);
-      withTxSession(false, sessionFactory, s -> {
-         Person person = new Person("John", "Black", 39);
-         s.persist(person);
-      });
+      try {
+         withTxSession(false, sessionFactory, s -> {
+            Person person = new Person("John", "Black", 39);
+            s.persist(person);
+         });
 
-      RegionFactory regionFactory = ((CacheImplementor) sessionFactory.getCache()).getRegionFactory();
-      TestRegionFactory factory = TestRegionFactoryProvider.load().wrap(regionFactory);
-      Cache<Object, Object> cache = factory.getCacheManager().getCache(Person.class.getName());
-      Iterator<Object> iterator = cache.getAdvancedCache().getDataContainer().keySet().iterator();
-      assertTrue(iterator.hasNext());
-      Object key = iterator.next();
-      assertEquals(keyClassName, key.getClass().getSimpleName());
+         RegionFactory regionFactory = ((CacheImplementor) sessionFactory.getCache()).getRegionFactory();
+         TestRegionFactory factory = TestRegionFactoryProvider.load().wrap(regionFactory);
+         Cache<Object, Object> cache = factory.getCacheManager().getCache(Person.class.getName());
+         Iterator<Object> iterator = cache.getAdvancedCache().getDataContainer().keySet().iterator();
+         assertTrue(iterator.hasNext());
+         Object key = iterator.next();
+         assertEquals(keyClassName, key.getClass().getSimpleName());
 
-      withTxSession(false, sessionFactory, s -> {
-         Person person = s.load(Person.class, new Name("John", "Black"));
-         assertEquals(39, person.getAge());
-      });
+         withTxSession(false, sessionFactory, s -> {
+            Person person = s.load(Person.class, new Name("John", "Black"));
+            assertEquals(39, person.getAge());
+         });
+      } finally {
+         sessionFactory.close();
+      }
    }
 }

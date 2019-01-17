@@ -7,15 +7,20 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 /**
- * Infinispan testing utilities take great care to verify isolation between concurrent tests
- * and resource teardown.
- * These utilities need to be integrated with the test lifecycle; use this as a Rule as one
- * way to achieve that integration.
+ * TestRule that sets the test name so that Infinispan test utilities can track the shutdown of cache managers and thread leaks.
+ *
+ * <p>Use as a {@link ClassRule} or {@link Rule}.</p>
+ *
+ * <p>Note: {@code BaseUnitTestCase} uses a {@code Timeout} rule that runs each method in a separate thread,
+ * so tests extending {@code BaseUnitTestCase} must use {@link Rule} or invoke {@link #joinContext()}
+ * in the test methods.</p>
  *
  * @author Sanne Grinovero
  */
@@ -43,7 +48,10 @@ public final class InfinispanTestingSetup implements TestRule {
         };
     }
 
-    public void joinContext() {
+   /**
+    * Make a new thread join the test context.
+    */
+   public void joinContext() {
         TestResourceTracker.setThreadTestName( runningTest );
     }
 
