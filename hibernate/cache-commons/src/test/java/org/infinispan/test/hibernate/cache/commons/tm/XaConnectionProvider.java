@@ -19,6 +19,9 @@ import org.hibernate.testing.env.ConnectionProviderBuilder;
 /**
  * XaConnectionProvider.
  *
+ * Note: Does not implement {@link Stoppable} because we don't want to stop the global provider
+ * cached in {@link #DEFAULT_CONNECTION_PROVIDER}.
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */

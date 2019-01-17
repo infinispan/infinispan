@@ -6,6 +6,13 @@
  */
 package org.infinispan.test.hibernate.cache.commons.access;
 
+import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.test.TestingUtil.withTx;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,37 +29,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.transaction.TransactionManager;
 
-import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
-import org.infinispan.hibernate.cache.spi.InfinispanProperties;
-import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-
-import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
-import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.TestForIssue;
-import org.infinispan.test.hibernate.cache.commons.functional.cluster.DualNodeJtaTransactionManagerImpl;
+import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
 import org.hibernate.testing.junit4.CustomRunner;
 import org.infinispan.AdvancedCache;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
+import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.test.hibernate.cache.commons.functional.cluster.DualNodeJtaTransactionManagerImpl;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.After;
 import org.junit.Test;
-
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.test.Exceptions.expectException;
-import static org.infinispan.test.TestingUtil.withTx;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Tests of {@link PutFromLoadValidator}.
@@ -69,7 +67,9 @@ public class PutFromLoadValidatorUnitTest {
 	private static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
    protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
-	private Object KEY1 = "KEY1";
+   private static ServiceRegistryTestingImpl serviceRegistry;
+
+   private Object KEY1 = "KEY1";
 
 	private TransactionManager tm;
 	private EmbeddedCacheManager cm;
@@ -77,9 +77,10 @@ public class PutFromLoadValidatorUnitTest {
 	private List<Runnable> cleanup = new ArrayList<>();
    private PutFromLoadValidator testee;
 
-	@BeforeClassOnce
+   @BeforeClassOnce
 	public void setUp() throws Exception {
 		TestResourceTracker.testStarted(getClass().getSimpleName());
+      serviceRegistry = ServiceRegistryTestingImpl.forUnitTesting();
 		tm = DualNodeJtaTransactionManagerImpl.getInstance("test");
 		cm = TestCacheManagerFactory.createCacheManager(true);
 		cache = cm.getCache().getAdvancedCache();
@@ -89,6 +90,7 @@ public class PutFromLoadValidatorUnitTest {
 	public void stop() {
 		tm = null;
 		cm.stop();
+      serviceRegistry.destroy();
 		TestResourceTracker.testFinished(getClass().getSimpleName());
 	}
 
@@ -113,7 +115,7 @@ public class PutFromLoadValidatorUnitTest {
 		properties.put(TestRegionFactory.TIME_SERVICE, TIME_SERVICE);
 		TestRegionFactory regionFactory = TestRegionFactoryProvider.load().create(properties);
 		regionFactory.setCacheManager(cm);
-		regionFactory.start(ServiceRegistryTestingImpl.forUnitTesting(), properties);
+      regionFactory.start(serviceRegistry, properties);
 		return regionFactory;
 	}
 
