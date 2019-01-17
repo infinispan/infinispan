@@ -183,4 +183,3 @@ public class PiAppx {
 
 include::streams.adoc[]
 include::locked_streams.adoc[]
-include::distributed_executor.adoc[]

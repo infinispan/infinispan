@@ -1,5 +1,9 @@
 == Upgrading from 9.4 to 10.0
 
+=== Removed DistributedExecutor
+
+The previously deprecated DistributedExecutor is now removed. References should be updated to use ClusterExecutor.
+
 === The JDBC PooledConnectionFactory now utilises Agroal
 Previously the JDBC PooledConnectionFactory provided c3p0 and HikariCP based connection pools.
 From 10.0 we only provide a PooledConnectionFactory based upon the link:https://agroal.github.io/[Agroal project].
