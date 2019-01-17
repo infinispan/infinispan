@@ -34,6 +34,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final Map<Class<?>, Builder<?>> modules;
    private final SiteConfigurationBuilder site;
    private Optional<String> defaultCacheName;
+   private boolean zeroCapacityNode;
    private Features features;
 
    public GlobalConfigurationBuilder() {
@@ -57,6 +58,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.asyncThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.modules = new LinkedHashMap();
       this.defaultCacheName = Optional.empty();
+      this.zeroCapacityNode = false;
    }
 
    /**
@@ -165,6 +167,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return (T)modules.get(moduleClass);
    }
 
+   public GlobalConfigurationBuilder zeroCapacityNode(boolean zeroCapacityNode) {
+      this.zeroCapacityNode = zeroCapacityNode;
+      return this;
+   }
+
    public GlobalConfigurationBuilder clearModules() {
       modules.clear();
       return this;
@@ -259,7 +266,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             site.create(),
             defaultCacheName,
             cl,
-            features);
+            features,
+            zeroCapacityNode);
    }
 
    public GlobalConfigurationBuilder read(GlobalConfiguration template) {
