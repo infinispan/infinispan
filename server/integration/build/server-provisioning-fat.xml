@@ -9,4 +9,8 @@
         </feature-pack>
         <feature-pack groupId="org.infinispan.server" artifactId="infinispan-server-feature-pack" version="${project.version}"/>
     </feature-packs>
+    <version-overrides>
+        <version-override groupId="org.hibernate.gson-jbossmodules" artifactId="gson-jbossmodules" version="${version.gson.featurepack}" extension="zip"/>
+        <version-override groupId="org.hibernate.lucene-jbossmodules" artifactId="lucene-jbossmodules" version="${version.lucene.featurepack}" extension="zip"/>
+    </version-overrides>
 </server-provisioning>
