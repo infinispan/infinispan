@@ -6,12 +6,15 @@ import javax.management.MBeanServer;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.jmx.JmxUtil;
+import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Parent class for top level JMX component registration.
@@ -20,6 +23,8 @@ import org.infinispan.factories.impl.ComponentRef;
  * @since 4.0
  */
 public abstract class AbstractJmxRegistration {
+   private static final Log log = LogFactory.getLog(AbstractJmxRegistration.class);
+
    protected ComponentsJmxRegistration registrar;
    @Inject GlobalConfiguration globalConfig;
    @Inject BasicComponentRegistry basicComponentRegistry;
@@ -32,10 +37,12 @@ public abstract class AbstractJmxRegistration {
 
    protected void initMBeanServer(GlobalConfiguration globalConfig) {
       try {
-         mBeanServer = JmxUtil.lookupMBeanServer(globalConfig.globalJmxStatistics().mbeanServerLookup(),
-                                                 globalConfig.globalJmxStatistics().properties());
+         MBeanServerLookup lookup = globalConfig.globalJmxStatistics().mbeanServerLookup();
+         if (lookup != null) {
+            mBeanServer = JmxUtil.lookupMBeanServer(lookup, globalConfig.globalJmxStatistics().properties());
+         }
       } catch (Exception e) {
-         mBeanServer = null;
+         log.debug("Ignoring exception in MBean server lookup", e);
       }
       if (mBeanServer != null) {
          registrar = buildRegistrar();
