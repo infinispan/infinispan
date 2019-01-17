@@ -80,6 +80,10 @@
                <dependenciesToScan>
                   <dependency>${project.groupId}:infinispan-hibernate-cache-commons</dependency>
                </dependenciesToScan>
+               <properties>
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
+               </properties>
                <systemPropertyVariables>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <jgroups.ping.timeout>500</jgroups.ping.timeout>
@@ -104,6 +108,7 @@
                        see https://issues.apache.org/jira/browse/LOG4J2-2052 -->
                   <AsyncLogger.ThreadNameStrategy>UNCACHED</AsyncLogger.ThreadNameStrategy>
                </systemPropertyVariables>
+               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
             </configuration>
             <dependencies>
                <dependency>

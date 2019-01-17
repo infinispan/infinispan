@@ -1,5 +1,12 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.hibernate.MultiTenancyStrategy;
 import org.hibernate.boot.SessionFactoryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -8,21 +15,14 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.engine.jdbc.connections.spi.AbstractMultiTenantConnectionProvider;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
-import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
-import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
-import org.infinispan.test.hibernate.cache.commons.tm.XaConnectionProvider;
 import org.hibernate.testing.env.ConnectionProviderBuilder;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.context.Flag;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
+import org.infinispan.test.hibernate.cache.commons.tm.XaConnectionProvider;
 import org.junit.Test;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -31,9 +31,9 @@ public class MultiTenancyTest extends SingleNodeTest {
 
 	 private static final String DB1 = "db1";
 	 private static final String DB2 = "db2";
-	 private final ConnectionProvider db1
+	 private final XaConnectionProvider db1
 			 = new XaConnectionProvider(ConnectionProviderBuilder.buildConnectionProvider(DB1));
-	 private final ConnectionProvider db2
+	 private final XaConnectionProvider db2
 			 = new XaConnectionProvider(ConnectionProviderBuilder.buildConnectionProvider(DB2));
 
 	 @Override
@@ -74,8 +74,8 @@ public class MultiTenancyTest extends SingleNodeTest {
 
 	 @Override
 	 protected void cleanupTest() throws Exception {
-		  db1.getConnection().close();
-		  db2.getConnection().close();
+		  db1.close();
+		  db2.close();
 	 }
 
 	 @Test
