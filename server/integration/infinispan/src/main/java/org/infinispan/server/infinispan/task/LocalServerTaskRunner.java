@@ -2,7 +2,6 @@ package org.infinispan.server.infinispan.task;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.Cache;
 import org.infinispan.tasks.TaskContext;
 
 /**
@@ -26,7 +25,6 @@ public class LocalServerTaskRunner implements ServerTaskRunner {
    }
 
    private ServerTaskRegistry getRegistry(TaskContext context) {
-      Cache<?, ?> cache = context.getCache().get();
-      return SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(ServerTaskRegistry.class);
+      return SecurityActions.getGlobalComponentRegistry(context.getCacheManager()).getComponent(ServerTaskRegistry.class);
    }
 }

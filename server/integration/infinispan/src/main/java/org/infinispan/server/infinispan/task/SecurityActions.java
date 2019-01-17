@@ -3,42 +3,36 @@ package org.infinispan.server.infinispan.task;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
-import org.infinispan.security.actions.GetCacheComponentRegistryAction;
-import org.infinispan.security.actions.GetCacheGlobalComponentRegistryAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 
 /**
- * SecurityActions for the org.infinispan.server.infinispan package
+ * SecurityActions for the org.infinispan.server.infinispan.task package.
+ * <p>
+ * Do not move. Do not change class and method visibility to avoid being called from other {@link
+ * java.security.CodeSource}s, thus granting privilege escalation to external code.
  *
- * @author Tristan Tarrant
- * @since 7.0
+ * @since 10.0
  */
-public final class SecurityActions {
-    private static <T> T doPrivileged(PrivilegedAction<T> action) {
-        if (System.getSecurityManager() != null) {
-            return AccessController.doPrivileged(action);
-        } else {
-            return Security.doPrivileged(action);
-        }
-    }
+final class SecurityActions {
 
-   static ComponentRegistry getComponentRegistry(final AdvancedCache<?, ?> cache) {
-        GetCacheComponentRegistryAction action = new GetCacheComponentRegistryAction(cache);
-        return doPrivileged(action);
-    }
+   private SecurityActions() {
+   }
 
-    static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
-        GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
-        return doPrivileged(action);
-    }
+   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+      return System.getSecurityManager() != null ?
+            AccessController.doPrivileged(action) : Security.doPrivileged(action);
+   }
 
-   public static GlobalComponentRegistry getGlobalComponentRegistry(Cache<Object, Object> cache) {
-      return doPrivileged(new GetCacheGlobalComponentRegistryAction(cache.getAdvancedCache()));
+   static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
+      GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
+      return doPrivileged(action);
+   }
+
+   static ClusterExecutor getClusterExecutor(EmbeddedCacheManager embeddedCacheManager) {
+      return doPrivileged(embeddedCacheManager::executor);
    }
 }
