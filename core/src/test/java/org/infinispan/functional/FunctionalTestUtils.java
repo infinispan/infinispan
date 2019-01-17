@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -18,6 +19,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 public final class FunctionalTestUtils {
 
@@ -46,6 +48,10 @@ public final class FunctionalTestUtils {
       } catch (TimeoutException | InterruptedException | ExecutionException e) {
          throw new Error(e);
       }
+   }
+
+   public static <T> List<T> await(List<CompletableFuture<T>> cf) {
+      return await(CompletableFutures.sequence(cf));
    }
 
    public static <K> void assertReadOnlyViewEmpty(K k, ReadEntryView<K, ?> ro) {

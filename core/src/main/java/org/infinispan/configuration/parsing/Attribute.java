@@ -165,6 +165,7 @@ public enum Attribute {
     WHEN_SPLIT("when-split"),
     WRITE_SKEW_CHECK("write-skew"),
     FRAGMENTATION_FACTOR("fragmentation-factor"),
+    ZERO_CAPACITY_NODE("zero-capacity-node")
     ;
 
     private final String name;

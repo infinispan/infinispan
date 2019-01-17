@@ -31,10 +31,11 @@ public abstract class ProtocolServerConfiguration {
    public static final AttributeDefinition<Integer> IO_THREADS = AttributeDefinition.builder("io-threads", 2 * ProcessorInfo.availableProcessors()).immutable().build();
    public static final AttributeDefinition<Integer> WORKER_THREADS = AttributeDefinition.builder("worker-threads", 160).immutable().build();
    public static final AttributeDefinition<AdminOperationsHandler> ADMIN_OPERATION_HANDLER = AttributeDefinition.builder("admin-operation-handler", null, AdminOperationsHandler.class).immutable().build();
+   public static final AttributeDefinition<Boolean> ZERO_CAPACITY_NODE = AttributeDefinition.builder("zero-capacity-node", false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ProtocolServerConfiguration.class,
-            DEFAULT_CACHE_NAME, NAME, HOST, PORT, IDLE_TIMEOUT, IGNORED_CACHES, RECV_BUF_SIZE, SEND_BUF_SIZE, START_TRANSPORT, TCP_NODELAY, TCP_KEEPALIVE, IO_THREADS, WORKER_THREADS, ADMIN_OPERATION_HANDLER);
+            DEFAULT_CACHE_NAME, NAME, HOST, PORT, IDLE_TIMEOUT, IGNORED_CACHES, RECV_BUF_SIZE, SEND_BUF_SIZE, START_TRANSPORT, TCP_NODELAY, TCP_KEEPALIVE, IO_THREADS, WORKER_THREADS, ADMIN_OPERATION_HANDLER, ZERO_CAPACITY_NODE);
    }
 
    private final Attribute<String> defaultCacheName;
@@ -51,6 +52,7 @@ public abstract class ProtocolServerConfiguration {
    private final Attribute<Set<String>> ignoredCaches;
    private final Attribute<Boolean> startTransport;
    private final Attribute<AdminOperationsHandler> adminOperationsHandler;
+   private final Attribute<Boolean> zeroCapacityNode;
 
    protected final AttributeSet attributes;
 
@@ -61,6 +63,7 @@ public abstract class ProtocolServerConfiguration {
       this.ssl = ssl;
 
       defaultCacheName = attributes.attribute(DEFAULT_CACHE_NAME);
+      zeroCapacityNode = attributes.attribute(ZERO_CAPACITY_NODE);
       name = attributes.attribute(NAME);
       host = attributes.attribute(HOST);
       port = attributes.attribute(PORT);
@@ -138,6 +141,10 @@ public abstract class ProtocolServerConfiguration {
 
    public AdminOperationsHandler adminOperationsHandler() {
       return adminOperationsHandler.get();
+   }
+
+   public boolean zeroCapacityNode() {
+      return zeroCapacityNode.get();
    }
 
    @Override

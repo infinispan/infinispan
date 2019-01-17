@@ -266,6 +266,11 @@
         <xs:documentation>Indicates the default cache for this cache container</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="zero-capacity-node" type="xs:boolean" default="false">
+      <xs:annotation>
+        <xs:documentation>If 'true' then no data is stored in this node. Defaults to 'false'.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute name="start">
       <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
     </xs:attribute>

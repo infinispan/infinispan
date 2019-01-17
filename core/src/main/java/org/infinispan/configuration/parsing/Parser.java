@@ -547,11 +547,15 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case STATISTICS: {
-               builder.globalJmxStatistics().enabled(Boolean.valueOf(value));
+               builder.globalJmxStatistics().enabled(Boolean.parseBoolean(value));
                break;
             }
             case SHUTDOWN_HOOK: {
                builder.shutdown().hookBehavior(ShutdownHookBehavior.valueOf(value));
+               break;
+            }
+            case ZERO_CAPACITY_NODE: {
+               builder.zeroCapacityNode(Boolean.parseBoolean(value));
                break;
             }
             default: {

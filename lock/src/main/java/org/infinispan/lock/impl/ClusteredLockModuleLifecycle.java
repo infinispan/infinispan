@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -25,6 +26,7 @@ import org.infinispan.lock.impl.functions.UnlockFunction;
 import org.infinispan.lock.impl.lock.ClusteredLockFilter;
 import org.infinispan.lock.impl.manager.CacheHolder;
 import org.infinispan.lock.impl.manager.EmbeddedClusteredLockManager;
+import org.infinispan.lock.logging.Log;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -39,6 +41,7 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices(value = ModuleLifecycle.class)
 public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
+   private static final Log log = LogFactory.getLog(ClusteredLockModuleLifecycle.class, Log.class);
 
    public static final String CLUSTERED_LOCK_CACHE_NAME = "org.infinispan.LOCKS";
 
@@ -61,8 +64,9 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       final InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
 
       ClusteredLockManagerConfiguration config = extractConfiguration(gcr);
+      GlobalConfiguration globalConfig = gcr.getGlobalConfiguration();
 
-      internalCacheRegistry.registerInternalCache(CLUSTERED_LOCK_CACHE_NAME, createClusteredLockCacheConfiguration(config),
+      internalCacheRegistry.registerInternalCache(CLUSTERED_LOCK_CACHE_NAME, createClusteredLockCacheConfiguration(config, globalConfig),
             EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
 
       CompletableFuture<CacheHolder> future = startCaches(cacheManager);
@@ -75,13 +79,15 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       return config == null ? ClusteredLockManagerConfigurationBuilder.defaultConfiguration() : config;
    }
 
-   private static Configuration createClusteredLockCacheConfiguration(ClusteredLockManagerConfiguration config) {
+   private static Configuration createClusteredLockCacheConfiguration(ClusteredLockManagerConfiguration config, GlobalConfiguration globalConfig) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
 
       if (config.numOwners() > 0) {
          builder.clustering().cacheMode(CacheMode.DIST_SYNC)
                .hash().numOwners(config.numOwners());
+      } else if (globalConfig.isZeroCapacityNode()) {
+         throw log.zeroCapacityNodeError();
       } else {
          builder.clustering().cacheMode(CacheMode.REPL_SYNC);
       }
