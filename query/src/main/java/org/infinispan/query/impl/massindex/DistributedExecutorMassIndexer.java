@@ -3,15 +3,17 @@ package org.infinispan.query.impl.massindex;
 import static org.infinispan.query.impl.massindex.MassIndexStrategyFactory.calculateStrategy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.hibernate.search.engine.spi.EntityIndexBinding;
@@ -19,16 +21,20 @@ import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedExecutorService;
-import org.infinispan.distexec.DistributedTask;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.CleanExecutionMode;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.FlushExecutionMode;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.IndexingExecutionMode;
 import org.infinispan.query.logging.Log;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -42,14 +48,14 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    private final AdvancedCache<?, ?> cache;
    private final SearchIntegrator searchIntegrator;
    private final IndexUpdater indexUpdater;
-   private final DistributedExecutorService executor;
+   private final ClusterExecutor executor;
 
    public DistributedExecutorMassIndexer(AdvancedCache cache, SearchIntegrator searchIntegrator,
                                          KeyTransformationHandler keyTransformationHandler, TimeService timeService) {
       this.cache = cache;
       this.searchIntegrator = searchIntegrator;
       this.indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
-      this.executor = new DefaultExecutorService(cache);
+      this.executor = cache.getCacheManager().executor();
    }
 
    @Override
@@ -79,7 +85,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
 
    @Override
    public CompletableFuture<Void> reindex(Object... keys) {
-      List<CompletableFuture<Void>> futures = new ArrayList<>();
+      CompletableFuture<Void> future = null;
       Set<Object> everywhereSet = new HashSet<>();
       Set<Object> primeownerSet = new HashSet<>();
       for (Object key : keys) {
@@ -100,37 +106,70 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
             LOG.warn("cache contains no mapping for the key");
          }
       }
+      TriConsumer<Address, Void, Throwable> triConsumer = (a, v, t) -> {
+         if (t != null) {
+            throw new CacheException(t);
+         }
+      };
       if (everywhereSet.size() > 0) {
          IndexWorker indexWorkEverywhere =
-               new IndexWorker(null, false, false, false, everywhereSet);
+               new IndexWorker(cache.getName(),null, false, false, false, everywhereSet);
 
-         DistributedTask<Void> taskEverywhere = executor
-               .createDistributedTaskBuilder(indexWorkEverywhere)
-               .timeout(0, TimeUnit.NANOSECONDS)
-               .build();
-
-         List<CompletableFuture<Void>> futureList = executor.submitEverywhere(taskEverywhere);
-         addFutureListToFutures(futures, futureList);
+         future = executor.submitConsumer(indexWorkEverywhere, triConsumer);
       }
       if (primeownerSet.size() > 0) {
-         IndexWorker indexWorkEverywhere =
-               new IndexWorker(null, false, false, false, null);
+         Map<Address, Set<Object>> targets = new HashMap<>();
+         DistributionManager distributionManager = cache.getDistributionManager();
+         if (distributionManager != null) {
+            LocalizedCacheTopology localizedCacheTopology = cache.getDistributionManager().getCacheTopology();
+            for (Object key : primeownerSet) {
+               Address primary = localizedCacheTopology.getDistribution(key).primary();
+               Set<Object> keysForAddress = targets.get(primary);
+               if (keysForAddress == null) {
+                  keysForAddress = new HashSet<>();
+                  targets.put(primary, keysForAddress);
+               }
+               keysForAddress.add(key);
+            }
+            List<CompletableFuture<Void>> futures;
+            if (future != null) {
+               futures = new ArrayList<>(targets.size() + 1);
+               futures.add(future);
+            } else {
+               futures = new ArrayList<>(targets.size());
+            }
+            for (Map.Entry<Address, Set<Object>> entry : targets.entrySet()) {
+               IndexWorker indexWorkEverywhere =
+                     new IndexWorker(cache.getName(),null, false, false, false, entry.getValue());
 
-         DistributedTask<Void> taskEverywhere = executor
-               .createDistributedTaskBuilder(indexWorkEverywhere)
-               .timeout(0, TimeUnit.NANOSECONDS)
-               .build();
-
-         List<CompletableFuture<Void>> futureList = executor.submitEverywhere(taskEverywhere, primeownerSet.toArray());
-         addFutureListToFutures(futures, futureList);
+               // TODO: need to change this to not index
+               futures.add(executor.filterTargets(Collections.singleton(entry.getKey())).submitConsumer(indexWorkEverywhere, triConsumer));
+            }
+            future = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+         } else {
+            // This is a local only cache with no distribution manager
+            IndexWorker indexWorkEverywhere =
+                  new IndexWorker(cache.getName(),null, false, false, false, primeownerSet);
+            CompletableFuture<Void> localFuture = executor.submitConsumer(indexWorkEverywhere, triConsumer);
+            if (future != null) {
+               future = CompletableFuture.allOf(future, localFuture);
+            } else {
+               future = localFuture;
+            }
+         }
       }
-      return CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
+      return future != null ? future : CompletableFutures.completedNull();
    }
 
    private CompletableFuture<Void> executeInternal(boolean asyncFlush) {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
       Deque<IndexedTypeIdentifier> toFlush = new LinkedList<>();
 
+      TriConsumer<Address, Void, Throwable> triConsumer = (a, v, t) -> {
+         if (t != null) {
+            throw new CacheException(t);
+         }
+      };
       for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
          EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(indexedType);
          MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
@@ -145,19 +184,13 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          }
 
          IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
-         IndexWorker indexWork =
-               new IndexWorker(indexedType, workerFlush, workerClean, indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER, null);
+         IndexWorker indexWork = new IndexWorker(cache.getName(), indexedType, workerFlush, workerClean,
+               indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER, null);
 
-         DistributedTask<Void> task = executor
-               .createDistributedTaskBuilder(indexWork)
-               .timeout(0, TimeUnit.NANOSECONDS)
-               .build();
-
-         List<CompletableFuture<Void>> futureList = executor.submitEverywhere(task);
-         addFutureListToFutures(futures, futureList);
+         futures.add(executor.submitConsumer(indexWork, triConsumer));
       }
       CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(
-            new CompletableFuture[futures.size()]));
+            new CompletableFuture[0]));
       BiConsumer<Void, Throwable> consumer = (v, t) -> {
          for (IndexedTypeIdentifier type : toFlush) {
             indexUpdater.flush(type);

@@ -7,13 +7,12 @@ import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.ran
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.split;
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.supportsIteration;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -27,16 +26,16 @@ import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedExecutorService;
-import org.infinispan.distexec.DistributedTask;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.manager.ClusterExecutor;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.upgrade.TargetMigrator;
+import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
@@ -64,8 +63,9 @@ public class HotRodTargetMigrator implements TargetMigrator {
       ClassWhiteList whiteList = cache.getCacheManager().getClassWhiteList();
       PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
       Set<RemoteStore> stores = loaderManager.getStores(RemoteStore.class);
+      String cacheName = cache.getName();
       if (stores.size() != 1) {
-         throw log.couldNotMigrateData(cache.getName());
+         throw log.couldNotMigrateData(cacheName);
       }
       Marshaller marshaller = new MigrationMarshaller(whiteList);
       byte[] knownKeys;
@@ -80,7 +80,7 @@ public class HotRodTargetMigrator implements TargetMigrator {
          if (remoteSourceCache.containsKey(knownKeys)) {
             RemoteStoreConfiguration storeConfig = store.getConfiguration();
             if (!storeConfig.hotRodWrapping()) {
-               throw log.remoteStoreNoHotRodWrapping(cache.getName());
+               throw log.remoteStoreNoHotRodWrapping(cacheName);
             }
 
             Set<Object> keys;
@@ -109,51 +109,47 @@ public class HotRodTargetMigrator implements TargetMigrator {
             awaitTermination(es);
             return count.longValue();
          }
-         throw log.missingMigrationData(cache.getName());
+         throw log.missingMigrationData(cacheName);
       } else {
-         DistributedExecutorService executor = new DefaultExecutorService(cache);
-         try {
-            CacheTopologyInfo sourceCacheTopologyInfo = remoteSourceCache.getCacheTopologyInfo();
-            if (sourceCacheTopologyInfo.getSegmentsPerServer().size() == 1) {
-               return migrateFromSingleServer(cache, readBatch, threads);
-            }
-            int sourceSegments = sourceCacheTopologyInfo.getNumSegments();
-            List<Address> targetServers = cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash().getMembers();
-
-            List<List<Integer>> partitions = split(range(sourceSegments), targetServers.size());
-            Iterator<Address> iterator = targetServers.iterator();
-            List<CompletableFuture<Integer>> futures = new ArrayList<>(targetServers.size());
-            for (List<Integer> partition : partitions) {
-               Set<Integer> segmentSet = new HashSet<>();
-               segmentSet.addAll(partition);
-               DistributedTask<Integer> task = executor
-                     .createDistributedTaskBuilder(new MigrationTask(segmentSet, readBatch, threads))
-                     .timeout(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
-                     .build();
-               futures.add(executor.submit(iterator.next(), task));
-            }
-            return futures.stream().mapToInt(f -> {
-               try {
-                  return f.get();
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                  throw log.couldNotMigrateData(cache.getName());
-               } catch (ExecutionException e) {
-                  throw new CacheException(e);
-               }
-            }).sum();
-
-         } finally {
-            executor.shutdownNow();
+         ClusterExecutor clusterExecutor = cache.getCacheManager().executor()
+               .timeout(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+               .singleNodeSubmission();
+         CacheTopologyInfo sourceCacheTopologyInfo = remoteSourceCache.getCacheTopologyInfo();
+         if (sourceCacheTopologyInfo.getSegmentsPerServer().size() == 1) {
+            return migrateFromSingleServer(cache.getCacheManager(), cacheName, readBatch, threads);
          }
+         int sourceSegments = sourceCacheTopologyInfo.getNumSegments();
+         List<Address> targetServers = cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash().getMembers();
+
+         List<List<Integer>> partitions = split(range(sourceSegments), targetServers.size());
+         Iterator<Address> iterator = targetServers.iterator();
+         AtomicInteger count = new AtomicInteger();
+         TriConsumer<Address, Integer, Throwable> consumer = (a, value, t) -> {
+            if (t != null) {
+               throw new CacheException(t);
+            }
+            count.addAndGet(value);
+         };
+
+         CompletableFuture<Void>[] futures = new CompletableFuture[partitions.size()];
+         int offset = 0;
+         for (List<Integer> partition : partitions) {
+            Set<Integer> segmentSet = new HashSet<>();
+            segmentSet.addAll(partition);
+
+            futures[offset++] = clusterExecutor
+                  .filterTargets(Collections.singleton(iterator.next()))
+                  .submitConsumer(new MigrationTask(cacheName, segmentSet, readBatch, threads), consumer);
+         }
+         CompletableFuture.allOf(futures).join();
+         return count.get();
       }
    }
 
-   private long migrateFromSingleServer(Cache<Object, Object> cache, int readBatch, int threads) {
-      MigrationTask migrationTask = new MigrationTask(null, readBatch, threads);
-      migrationTask.setEnvironment(cache, null);
+   private long migrateFromSingleServer(EmbeddedCacheManager embeddedCacheManager, String cacheName, int readBatch, int threads) {
+      MigrationTask migrationTask = new MigrationTask(cacheName, null, readBatch, threads);
       try {
-         return migrationTask.call();
+         return migrationTask.apply(embeddedCacheManager);
       } catch (Exception e) {
          throw new CacheException(e);
       }

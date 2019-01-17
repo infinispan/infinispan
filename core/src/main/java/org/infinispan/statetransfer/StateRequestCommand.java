@@ -12,7 +12,7 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredStateProvider;
@@ -106,7 +106,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
                return CompletableFutures.completedNull();
 
             case GET_CACHE_LISTENERS:
-               Collection<DistributedCallable> listeners = stateProvider.getClusterListenersToInstall();
+               Collection<ClusterListenerReplicateCallable<Object, Object>> listeners = stateProvider.getClusterListenersToInstall();
                return CompletableFuture.completedFuture(listeners);
 
             case CONFIRM_REVOKED_SEGMENTS:

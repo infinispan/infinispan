@@ -6,9 +6,9 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.conflict.impl.StateReceiver;
-import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 
@@ -42,7 +42,7 @@ public interface StateProvider {
     */
    List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, IntSet segments) throws InterruptedException;
 
-   Collection<DistributedCallable> getClusterListenersToInstall();
+   Collection<ClusterListenerReplicateCallable<Object, Object>> getClusterListenersToInstall();
 
    /**
     * Start to send cache entries that belong to the given set of segments. This is invoked in response to a

@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
@@ -31,9 +32,9 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
-import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
@@ -47,27 +48,65 @@ import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-public class MigrationTask implements DistributedCallable<Object, Object, Integer> {
+public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
 
    private static final Log log = LogFactory.getLog(MigrationTask.class, Log.class);
 
    private static final String THREAD_NAME = "RollingUpgrade-MigrationTask";
 
+   private final String cacheName;
    private final Set<Integer> segments;
    private final int readBatch;
    private final int threads;
    private final ConcurrentHashSet<WrappedByteArray> deletedKeys = new ConcurrentHashSet<>();
-   private byte[] ignoredKey;
 
-   private transient Set<RemoteStore> stores;
-   private transient Cache<Object, Object> cache;
-   private transient ExecutorService executorService;
-   private transient final RemoveListener listener = new RemoveListener();
-
-   public MigrationTask(Set<Integer> segments, int readBatch, int threads) {
+   public MigrationTask(String cacheName, Set<Integer> segments, int readBatch, int threads) {
+      this.cacheName = cacheName;
       this.segments = segments;
       this.readBatch = readBatch;
       this.threads = threads;
+   }
+
+   @Override
+   public Integer apply(EmbeddedCacheManager embeddedCacheManager) {
+      AtomicInteger counter = new AtomicInteger(0);
+      DefaultThreadFactory threadFactory = new DefaultThreadFactory(null, 1, THREAD_NAME + "-%t", null, null);
+      ExecutorService executorService = Executors.newFixedThreadPool(threads, threadFactory);
+      RemoveListener listener = null;
+      Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName);
+      try {
+         ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
+         PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
+         Set<RemoteStore<Object, Object>> stores = (Set) loaderManager.getStores(RemoteStore.class);
+         Marshaller marshaller = new MigrationMarshaller(cache.getCacheManager().getClassWhiteList());
+         listener = new RemoveListener();
+         cache.addFilteredListener(listener, new RemovedFilter<>(), null, Util.asSet(CacheEntryRemoved.class));
+         byte[] ignoredKey;
+         try {
+            ignoredKey = marshaller.objectToByteBuffer(MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS);
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+
+         Iterator<RemoteStore<Object, Object>> storeIterator = stores.iterator();
+         if (storeIterator.hasNext()) {
+            RemoteStore<Object, Object> store = storeIterator.next();
+            RemoteCache<Object, Object> storeCache = store.getRemoteCache();
+            RemoteStoreConfiguration storeConfig = store.getConfiguration();
+            if (!storeConfig.hotRodWrapping()) {
+               throw log.remoteStoreNoHotRodWrapping(cache.getName());
+            }
+            migrateEntriesWithMetadata(storeCache, counter, ignoredKey, executorService, cache);
+            awaitTermination(executorService);
+         }
+      } finally {
+         if (listener != null) {
+            cache.removeListener(listener);
+         }
+         executorService.shutdown();
+      }
+
+      return counter.get();
    }
 
    @Listener(clustered = true)
@@ -79,32 +118,8 @@ public class MigrationTask implements DistributedCallable<Object, Object, Intege
       }
    }
 
-   @Override
-   public Integer call() throws Exception {
-      try {
-         Iterator<RemoteStore> storeIterator = stores.iterator();
-         if (storeIterator.hasNext()) {
-            RemoteStore store = storeIterator.next();
-            RemoteCache<Object, Object> storeCache = store.getRemoteCache();
-            RemoteStoreConfiguration storeConfig = store.getConfiguration();
-            if (!storeConfig.hotRodWrapping()) {
-               throw log.remoteStoreNoHotRodWrapping(cache.getName());
-            }
-            AtomicInteger counter = new AtomicInteger(0);
-            migrateEntriesWithMetadata(storeCache, counter);
-            awaitTermination(executorService);
-            return counter.intValue();
-         }
-         return null;
-      } finally {
-         cache.removeListener(listener);
-         if (executorService != null) {
-            executorService.shutdownNow();
-         }
-      }
-   }
-
-   private void migrateEntriesWithMetadata(RemoteCache<Object, Object> sourceCache, AtomicInteger counter) {
+   private void migrateEntriesWithMetadata(RemoteCache<Object, Object> sourceCache, AtomicInteger counter,
+         byte[] ignoredKey, ExecutorService executorService, Cache<Object, Object> cache) {
       try (CloseableIterator<Map.Entry<Object, MetadataValue<Object>>> iterator = sourceCache.retrieveEntriesWithMetadata(segments, readBatch)) {
          while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
             Map.Entry<Object, MetadataValue<Object>> entry = iterator.next();
@@ -133,23 +148,6 @@ public class MigrationTask implements DistributedCallable<Object, Object, Intege
       }
    }
 
-   @Override
-   public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
-      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-      PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
-      this.stores = loaderManager.getStores(RemoteStore.class);
-      Marshaller marshaller = new MigrationMarshaller(cache.getCacheManager().getClassWhiteList());
-      this.cache = cache;
-      this.cache.addFilteredListener(listener, new RemovedFilter<>(), null, Util.asSet(CacheEntryRemoved.class));
-      DefaultThreadFactory threadFactory = new DefaultThreadFactory(null, 1, THREAD_NAME + "-%t", null, null);
-      this.executorService = Executors.newFixedThreadPool(threads, threadFactory);
-      try {
-         this.ignoredKey = marshaller.objectToByteBuffer(MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS);
-      } catch (Exception e) {
-         throw new CacheException(e);
-      }
-   }
-
    public static class Externalizer extends AbstractExternalizer<MigrationTask> {
 
       @Override
@@ -159,6 +157,7 @@ public class MigrationTask implements DistributedCallable<Object, Object, Intege
 
       @Override
       public void writeObject(ObjectOutput output, MigrationTask task) throws IOException {
+         output.writeObject(task.cacheName);
          UnsignedNumeric.writeUnsignedInt(output, task.readBatch);
          UnsignedNumeric.writeUnsignedInt(output, task.threads);
          BitSet bs = new BitSet();
@@ -172,6 +171,7 @@ public class MigrationTask implements DistributedCallable<Object, Object, Intege
 
       @Override
       public MigrationTask readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         String cacheName = (String) input.readObject();
          int readBatch = UnsignedNumeric.readUnsignedInt(input);
          int threads = UnsignedNumeric.readUnsignedInt(input);
          int segmentsSize = UnsignedNumeric.readUnsignedInt(input);
@@ -179,7 +179,7 @@ public class MigrationTask implements DistributedCallable<Object, Object, Intege
          input.read(bytes);
          BitSet bitSet = BitSet.valueOf(bytes);
          Set<Integer> segments = bitSet.stream().boxed().collect(Collectors.toSet());
-         return new MigrationTask(segments, readBatch, threads);
+         return new MigrationTask(cacheName, segments, readBatch, threads);
       }
    }
 

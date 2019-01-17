@@ -4,9 +4,9 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.Cache;
-import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.security.Security;
-import org.infinispan.security.actions.GetDefaultExecutorServiceAction;
+import org.infinispan.security.actions.GetClusterExecutorAction;
 
 /**
  * SecurityActions for the org.infinispan.notifications.cachelistener.cluster package.
@@ -26,8 +26,8 @@ final class SecurityActions {
       }
    }
 
-   static DefaultExecutorService getDefaultExecutorService(final Cache<?, ?> cache) {
-      GetDefaultExecutorServiceAction action = new GetDefaultExecutorServiceAction(cache);
+   static ClusterExecutor getClusterExecutor(final Cache<?, ?> cache) {
+      GetClusterExecutorAction action = new GetClusterExecutorAction(cache);
       return doPrivileged(action);
    }
 }

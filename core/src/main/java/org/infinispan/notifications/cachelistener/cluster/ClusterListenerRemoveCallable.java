@@ -6,10 +6,11 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -21,25 +22,21 @@ import org.infinispan.util.logging.LogFactory;
  * @author wburns
  * @since 7.0
  */
-public class ClusterListenerRemoveCallable<K, V> implements DistributedCallable<K, V, Void> {
+public class ClusterListenerRemoveCallable implements Function<EmbeddedCacheManager, Void> {
    private static final Log log = LogFactory.getLog(ClusterListenerRemoveCallable.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private transient Cache<K, V> cache;
-
+   private final String cacheName;
    private final UUID identifier;
 
-   public ClusterListenerRemoveCallable(UUID identifier) {
+   public ClusterListenerRemoveCallable(String cacheName, UUID identifier) {
+      this.cacheName = cacheName;
       this.identifier = identifier;
    }
 
    @Override
-   public void setEnvironment(Cache<K, V> cache, Set<K> inputKeys) {
-      this.cache = cache;
-   }
-
-   @Override
-   public Void call() throws Exception {
+   public Void apply(EmbeddedCacheManager embeddedCacheManager) {
+      Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName);
       // Remove the listener from the cache now
       Set<Object> listeners = cache.getListeners();
       for (Object listener : listeners) {
@@ -64,12 +61,13 @@ public class ClusterListenerRemoveCallable<K, V> implements DistributedCallable<
 
       @Override
       public void writeObject(ObjectOutput output, ClusterListenerRemoveCallable object) throws IOException {
+         output.writeObject(object.cacheName);
          output.writeObject(object.identifier);
       }
 
       @Override
       public ClusterListenerRemoveCallable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new ClusterListenerRemoveCallable((UUID)input.readObject());
+         return new ClusterListenerRemoveCallable((String) input.readObject(), (UUID)input.readObject());
       }
 
       @Override

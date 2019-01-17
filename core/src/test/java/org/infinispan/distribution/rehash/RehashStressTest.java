@@ -4,20 +4,20 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.Random;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.distexec.DistributedExecutorService;
+import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.group.Group;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -40,7 +40,7 @@ public class RehashStressTest extends AbstractInfinispanTest {
 
     private static Logger log = Logger.getLogger(RehashStressTest.class.getName());
    /*
-    * This test simulates concurrent threads submitting distributed executor
+    * This test simulates concurrent threads submitting executor
     * tasks to ISPN, at the same time a rehash occurs.. You should see that
     * during high contention for the same lock, on occasion, a rehash will
     * result in stale locks.
@@ -166,10 +166,15 @@ public class RehashStressTest extends AbstractInfinispanTest {
 
                 log.info("Submitting a task " + key);
                 EmbeddedCacheManager cacheManager = cacheManagers.get(random.nextInt(cacheManagers.size()));
-                DistributedExecutorService ispnExecutor = new DefaultExecutorService(cacheManager.getCache("serviceGroup"));
-
-                Future<String> z = ispnExecutor.submit(new TransactionTask(), key);
-                log.info("Task result=" + z.get());
+                ClusterExecutor executor = cacheManager.executor();
+                AtomicReference<String> value = new AtomicReference<>();
+                CompletableFuture<Void> future = executor.submitConsumer(new TransactionTask("serviceGroup", key), (a, v, t) -> {
+                    if (t != null) {
+                        throw new CacheException(t);
+                    }
+                    value.set(v);
+                });
+                log.info("Task result=" + future.thenApply(ignore -> value.get()).get());
             } catch (Exception ex) {
                 log.warn("error during executing task " + key, ex);
             }
@@ -177,46 +182,48 @@ public class RehashStressTest extends AbstractInfinispanTest {
     }
 
     static class TransactionTask
-            implements DistributedCallable<TestKey, Integer, String>, Serializable {
+            implements Function<EmbeddedCacheManager, String>, Serializable {
 
-        private Cache cache;
-        private TransactionManager tm;
-        private TestKey key;
+        private final String cacheName;
+        private final TestKey key;
 
-        @Override
-        public void setEnvironment(Cache cache, Set inputKeys) {
-            log.info("Setting env..." + cache.getAdvancedCache().getCacheManager().getAddress() + ", keys: " + inputKeys);
-            this.cache = cache;
-            this.key = (TestKey) inputKeys.iterator().next();
-            this.tm = cache.getAdvancedCache().getTransactionManager();
+        TransactionTask(String cacheName, TestKey key) {
+            this.cacheName = cacheName;
+            this.key = key;
         }
 
         @Override
-        public String call() throws Exception {
+        public String apply(EmbeddedCacheManager embeddedCacheManager) {
             try {
-                tm.begin();
-                return performWork();
-            } catch (Exception e) {
-                log.warn("error during perform work " + key, e);
-                tm.setRollbackOnly();
-                throw e;
-            } finally {
-
-                int status = -1;
+                Cache<TestKey, ?> cache = embeddedCacheManager.getCache(cacheName);
+                TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
                 try {
-                    status = tm.getStatus();
+                    tm.begin();
+                    return performWork(cache);
                 } catch (Exception e) {
-                }
+                    log.warn("error during perform work " + key, e);
+                    tm.setRollbackOnly();
+                    throw e;
+                } finally {
 
-                if (status == Status.STATUS_ACTIVE) {
-                    tm.commit();
-                } else {
-                    tm.rollback();
+                    int status = -1;
+                    try {
+                        status = tm.getStatus();
+                    } catch (Exception e) {
+                    }
+
+                    if (status == Status.STATUS_ACTIVE) {
+                        tm.commit();
+                    } else {
+                        tm.rollback();
+                    }
                 }
+            } catch (Exception e) {
+                throw new CacheException(e);
             }
         }
 
-        private String performWork() {
+        private String performWork(Cache<TestKey, ?> cache) {
             log.info( "Locking " + key);
             cache.getAdvancedCache().lock(key);
 

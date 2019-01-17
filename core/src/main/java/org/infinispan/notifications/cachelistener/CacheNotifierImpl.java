@@ -27,12 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -44,6 +43,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -56,9 +56,6 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.distexec.DistributedExecutionCompletionService;
-import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -70,6 +67,7 @@ import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -131,6 +129,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -205,7 +204,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Inject private ComponentRef<ClusteringDependentLogic> clusteringDependentLogic;
    @Inject private ComponentRef<AsyncInterceptorChain> interceptorChain;
 
-   private DistributedExecutorService distExecutorService;
+   private ClusterExecutor clusterExecutor;
    private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<>();
 
    private Collection<FilterIndexingServiceProvider> filterIndexingServiceProviders;
@@ -245,7 +244,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public void start() {
       super.start();
       if (!config.simpleCache()) {
-         this.distExecutorService = SecurityActions.getDefaultExecutorService(cache.wired());
+         clusterExecutor = SecurityActions.getClusterExecutor(cache.wired());
       }
 
       Collection<FilterIndexingServiceProvider> providers = ServiceFinder.load(FilterIndexingServiceProvider.class);
@@ -777,9 +776,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    @Override
-   public Collection<DistributedCallable> retrieveClusterListenerCallablesToInstall() {
+   public Collection<ClusterListenerReplicateCallable<K, V>> retrieveClusterListenerCallablesToInstall() {
       Set<Object> enlistedAlready = new HashSet<>();
-      Set<DistributedCallable> callables = new HashSet<>();
+      Set<ClusterListenerReplicateCallable<K, V>> callables = new HashSet<>();
 
       if (trace) {
          log.tracef("Request received to get cluster listeners currently registered");
@@ -797,23 +796,22 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    private void registerClusterListenerCallablesToInstall(Set<Object> enlistedAlready,
-                                                          Set<DistributedCallable> callables,
+                                                          Set<ClusterListenerReplicateCallable<K, V>> callables,
                                                           List<CacheEntryListenerInvocation<K, V>> listenerInvocations) {
       for (CacheEntryListenerInvocation<K, V> listener : listenerInvocations) {
          if (!enlistedAlready.contains(listener.getTarget())) {
             // If clustered means it is local - so use our address
             if (listener.isClustered()) {
                Set<Class<? extends Annotation>> filterAnnotations = listener.getFilterAnnotations();
-               callables.add(new ClusterListenerReplicateCallable(listener.getIdentifier(),
-                                                                  rpcManager.getAddress(), listener.getFilter(),
-                                                                  listener.getConverter(), listener.isSync(),
-                                                                  filterAnnotations, listener.getKeyDataConversion(), listener.getValueDataConversion(), listener.useStorageFormat()));
+               callables.add(new ClusterListenerReplicateCallable(cache.wired().getName(), listener.getIdentifier(),
+                     rpcManager.getAddress(), listener.getFilter(), listener.getConverter(), listener.isSync(),
+                     filterAnnotations, listener.getKeyDataConversion(), listener.getValueDataConversion(), listener.useStorageFormat()));
                enlistedAlready.add(listener.getTarget());
             } else if (listener.getTarget() instanceof RemoteClusterListener) {
                RemoteClusterListener lcl = (RemoteClusterListener) listener.getTarget();
                Set<Class<? extends Annotation>> filterAnnotations = listener.getFilterAnnotations();
-               callables.add(new ClusterListenerReplicateCallable(lcl.getId(), lcl.getOwnerAddress(), listener.getFilter(),
-                     listener.getConverter(), listener.isSync(),
+               callables.add(new ClusterListenerReplicateCallable(cache.wired().getName(), lcl.getId(), lcl.getOwnerAddress(),
+                     listener.getFilter(), listener.getConverter(), listener.isSync(),
                      filterAnnotations, listener.getKeyDataConversion(), listener.getValueDataConversion(), listener.useStorageFormat()));
                enlistedAlready.add(listener.getTarget());
             }
@@ -898,70 +896,20 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
          } else if (cacheMode.isDistributed() || cacheMode.isScattered()) {
             clusterListenerIDs.put(listener, generatedId);
-            Address ourAddress = null;
-            List<Address> members = null;
-
+            Address ourAddress;
+            List<Address> members;
             if (rpcManager != null) {
                ourAddress = rpcManager.getAddress();
                members = rpcManager.getMembers();
+            } else {
+               ourAddress = null;
+               members = null;
             }
 
             // If we are the only member don't even worry about sending listeners
             if (members != null && members.size() > 1) {
-               DistributedExecutionCompletionService decs = new DistributedExecutionCompletionService(distExecutorService);
-
-               if (trace) {
-                  log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
-                        members, generatedId);
-               }
-               Callable callable = new ClusterListenerReplicateCallable(
-                     generatedId, ourAddress, filter, converter, l.sync(),
-                     findListenerCallbacks(listener), keyDataConversion, valueDataConversion, useStorageFormat);
-               for (Address member : members) {
-                  if (!member.equals(ourAddress)) {
-                     decs.submit(member, callable);
-                  }
-               }
-
-               for (int i = 0; i < members.size() - 1; ++i) {
-                  try {
-                     decs.take().get();
-                  } catch (InterruptedException e) {
-                     throw new CacheListenerException(e);
-                  } catch (ExecutionException e) {
-                     Throwable cause = e.getCause();
-                     // If we got a SuspectException it means the remote node hasn't started this cache yet.
-                     // Just ignore, when it joins it will retrieve the listener
-                     if (!(cause instanceof SuspectException)) {
-                        throw new CacheListenerException(cause);
-                     }
-                  }
-               }
-
-               int extraCount = 0;
-               // If anyone else joined since we sent these we have to send the listeners again, since they may have queried
-               // before the other nodes got the new listener
-               List<Address> membersAfter = rpcManager.getMembers(); //at this point, the rpcManager is never null.
-               for (Address member : membersAfter) {
-                  if (!members.contains(member) && !member.equals(ourAddress)) {
-                     if (trace) {
-                        log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",
-                              member, generatedId);
-                     }
-                     extraCount++;
-                     decs.submit(member, callable);
-                  }
-               }
-
-               for (int i = 0; i < extraCount; ++i) {
-                  try {
-                     decs.take().get();
-                  } catch (InterruptedException e) {
-                     throw new CacheListenerException(e);
-                  } catch (ExecutionException e) {
-                     throw new CacheListenerException(e);
-                  }
-               }
+               registerClusterListeners(members, generatedId, ourAddress, filter, converter, l, listener,
+                     keyDataConversion, valueDataConversion, useStorageFormat);
             }
          }
       }
@@ -1013,7 +961,59 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             log.tracef("Listener %s initial state for cache completed", generatedId);
          }
       }
+   }
 
+   private <C> void registerClusterListeners(List<Address> members, UUID generatedId, Address ourAddress,
+         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+         Listener l, Object listener, DataConversion keyDataConversion, DataConversion valueDataConversion,
+         boolean useStorageFormat) {
+      if (trace) {
+         log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
+               members, generatedId);
+      }
+      ClusterListenerReplicateCallable<K, V> callable = new ClusterListenerReplicateCallable(cache.wired().getName(),
+            generatedId, ourAddress, filter, converter, l.sync(),
+            findListenerCallbacks(listener), keyDataConversion, valueDataConversion, useStorageFormat);
+      TriConsumer<Address, Void, Throwable> triConsumer = (a, ignore, t) -> {
+         if (t != null && !(t instanceof SuspectException)) {
+            log.debugf(t, "Address: %s encountered an exception while adding cluster listener", a);
+            throw new CacheListenerException(t);
+         }
+      };
+      // Send to all nodes but ours
+      CompletableFuture<Void> completableFuture = clusterExecutor.filterTargets(a -> !ourAddress.equals(a))
+            .submitConsumer(callable, triConsumer);
+
+      try {
+         completableFuture.get();
+      } catch (InterruptedException e) {
+         throw new CacheListenerException(e);
+      } catch (ExecutionException e) {
+         Throwable cause = e.getCause();
+         // If we got a SuspectException it means the remote node hasn't started this cache yet.
+         // Just ignore, when it joins it will retrieve the listener
+         if (!(cause instanceof SuspectException)) {
+            throw new CacheListenerException(cause);
+         }
+      }
+
+      // If anyone else joined since we sent these we have to send the listeners again, since they may have queried
+      // before the other nodes got the new listener
+      completableFuture = clusterExecutor.filterTargets(a -> !members.contains(a) && !a.equals(ourAddress))
+            .submitConsumer(callable, triConsumer);
+
+      try {
+         completableFuture.get();
+      } catch (InterruptedException e) {
+         throw new CacheListenerException(e);
+      } catch (ExecutionException e) {
+         Throwable cause = e.getCause();
+         // If we got a SuspectException it means the remote node hasn't started this cache yet.
+         // Just ignore, when it joins it will retrieve the listener
+         if (!(cause instanceof SuspectException)) {
+            throw new CacheListenerException(cause);
+         }
+      }
    }
 
    /**
@@ -1200,63 +1200,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             List<Address> members = rpcManager.getMembers();
             // If we are the only member don't even worry about sending listeners
             if (members != null && members.size() > 1) {
-               DistributedExecutionCompletionService decs = new DistributedExecutionCompletionService(distExecutorService);
-
-               if (trace) {
-                  log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
-                        members, generatedId);
-               }
-               Callable callable = new ClusterListenerReplicateCallable(
-                     generatedId, ourAddress, filter, converter, l.sync(),
-                     filterAnnotations, keyDataConversion, valueDataConversion, useStorageFormat);
-               for (Address member : members) {
-                  if (!member.equals(ourAddress)) {
-                     decs.submit(member, callable);
-                  }
-               }
-
-               for (int i = 0; i < members.size() - 1; ++i) {
-                  try {
-                     decs.take().get();
-                  } catch (InterruptedException e) {
-                     throw new CacheListenerException(e);
-                  } catch (ExecutionException e) {
-                     Throwable cause = e.getCause();
-                     // If we got a SuspectException it means the node was going away when we submitted
-                     if (!(cause instanceof SuspectException)) {
-                        throw new CacheListenerException(cause);
-                     }
-                  }
-               }
-
-               int extraCount = 0;
-               // If anyone else joined since we sent these we have to send the listeners again, since they may have queried
-               // before the other nodes got the new listener
-               List<Address> membersAfter = rpcManager.getMembers();
-               for (Address member : membersAfter) {
-                  if (!members.contains(member) && !member.equals(ourAddress)) {
-                     if (trace) {
-                        log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",
-                              member, generatedId);
-                     }
-                     extraCount++;
-                     decs.submit(member, callable);
-                  }
-               }
-
-               for (int i = 0; i < extraCount; ++i) {
-                  try {
-                     decs.take().get();
-                  } catch (InterruptedException e) {
-                     throw new CacheListenerException(e);
-                  } catch (ExecutionException e) {
-                     Throwable cause = e.getCause();
-                     // If we got a SuspectException it means the node was going away when we submitted
-                     if (!(cause instanceof SuspectException)) {
-                        throw new CacheListenerException(e);
-                     }
-                  }
-               }
+               registerClusterListeners(members, generatedId, ourAddress, filter, converter, l, listener,
+                     keyDataConversion, valueDataConversion, useStorageFormat);
             }
          }
       }
@@ -1874,16 +1819,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       super.removeListener(listener);
       UUID id = clusterListenerIDs.remove(listener);
       if (id != null) {
-         List<Future<?>> futures = distExecutorService.submitEverywhere(new ClusterListenerRemoveCallable(id));
-         for (Future<?> future : futures) {
-            try {
-               future.get();
-            } catch (InterruptedException e) {
-               throw new CacheListenerException(e);
-            } catch (ExecutionException e) {
-               throw new CacheListenerException(e);
+         CompletableFuture<Void> future = clusterExecutor.submitConsumer(new ClusterListenerRemoveCallable(
+               cache.wired().getName(), id), (a, ignore, t) -> {
+            if (t != null) {
+               throw new CacheException(t);
             }
-         }
+         });
+         future.join();
       }
    }
 

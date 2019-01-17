@@ -18,12 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import javax.security.auth.Subject;
 import javax.security.sasl.SaslServerFactory;
@@ -48,8 +46,6 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
@@ -57,6 +53,7 @@ import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.NamedFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -139,7 +136,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private Map<String, SaslServerFactory> saslMechFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private ClientListenerRegistry clientListenerRegistry;
    private Marshaller marshaller;
-   private DefaultExecutorService distributedExecutorService;
+   private ClusterExecutor clusterExecutor;
    private CrashedMemberDetectorListener viewChangeListener;
    private ReAddMyAddressListener topologyChangeListener;
    private IterationManager iterationManager;
@@ -323,7 +320,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       addressCache = cacheManager.getCache(configuration.topologyCacheName());
       clusterAddress = cacheManager.getAddress();
       address = new ServerAddress(configuration.publicHost(), configuration.publicPort());
-      distributedExecutorService = new DefaultExecutorService(addressCache);
+      clusterExecutor = cacheManager.executor();
 
       viewChangeListener = new CrashedMemberDetectorListener(addressCache, this);
       cacheManager.addListener(viewChangeListener);
@@ -587,9 +584,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          if (internalCacheRegistry != null)
             internalCacheRegistry.unregisterInternalCache(configuration.topologyCacheName());
       }
-      if (distributedExecutorService != null) {
-         distributedExecutorService.shutdownNow();
-      }
 
       if (clientListenerRegistry != null) clientListenerRegistry.stop();
       if (clientCounterNotificationManager != null) clientCounterNotificationManager.stop();
@@ -709,25 +703,20 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       @TopologyChanged
       public void topologyChanged(TopologyChangedEvent<Address, ServerAddress> event) {
          boolean success = false;
-         while (!success && !distributedExecutorService.isShutdown() && addressCache.getStatus().allowInvocations()) {
+         while (!success && addressCache.getStatus().allowInvocations()) {
             try {
-               List<CompletableFuture<Boolean>> futures = distributedExecutorService.submitEverywhere(
-                     new CheckAddressTask(clusterAddress));
-               // No need for a timeout here, the distributed executor has a default task timeout
-               AtomicBoolean result = new AtomicBoolean(true);
-               futures.forEach(f -> {
-                  try {
-                     if (!f.get()) {
-                        result.set(false);
-                     }
-                  } catch (InterruptedException | ExecutionException e) {
-                     throw new CacheException(e);
+               // No need for a timeout here, the cluster executor has a default timeout
+               CompletableFuture<Void> future = clusterExecutor.submitConsumer(new CheckAddressTask(addressCache.getName(),
+                     clusterAddress), (a, v, t) -> {
+                  if (t != null) {
+                     throw new CacheException(t);
+                  }
+                  if (!v) {
+                     log.debugf("Re-adding %s to the topology cache", clusterAddress);
+                     addressCache.putAsync(clusterAddress, address);
                   }
                });
-               if (!result.get()) {
-                  log.debugf("Re-adding %s to the topology cache", clusterAddress);
-                  addressCache.putAsync(clusterAddress, address);
-               }
+               future.get();
                success = true;
             } catch (Throwable e) {
                log.debug("Error re-adding address to topology cache, retrying", e);
@@ -747,22 +736,23 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 }
 
-class CheckAddressTask implements DistributedCallable<Address, ServerAddress, Boolean>, Serializable {
+class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean>, Serializable {
+   private final String cacheName;
    private final Address clusterAddress;
 
-   private volatile Cache<Address, ServerAddress> cache = null;
-
-   CheckAddressTask(Address clusterAddress) {
+   CheckAddressTask(String cacheName, Address clusterAddress) {
+      this.cacheName = cacheName;
       this.clusterAddress = clusterAddress;
    }
 
    @Override
-   public void setEnvironment(Cache<Address, ServerAddress> cache, Set<Address> inputKeys) {
-      this.cache = cache;
-   }
-
-   @Override
-   public Boolean call() throws Exception {
-      return cache.containsKey(clusterAddress);
+   public Boolean apply(EmbeddedCacheManager embeddedCacheManager) {
+      if (embeddedCacheManager.isRunning(cacheName)) {
+         Cache<Address, ServerAddress> cache = embeddedCacheManager.getCache(cacheName);
+         return cache.containsKey(clusterAddress);
+      }
+      // If the cache isn't started just play like this node has the address in the cache - it will be added as it
+      // joins, so no worries
+      return true;
    }
 }

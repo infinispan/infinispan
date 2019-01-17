@@ -28,11 +28,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
-import io.reactivex.Flowable;
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
@@ -51,7 +50,6 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.TriangleOrderManager;
@@ -67,6 +65,7 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -94,6 +93,9 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
+import io.reactivex.Flowable;
+import net.jcip.annotations.GuardedBy;
+
 /**
  * {@link StateConsumer} implementation.
  *
@@ -109,7 +111,7 @@ public class StateConsumerImpl implements StateConsumer {
                                                                       SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK,
                                                                       SKIP_XSITE_BACKUP);
 
-   @Inject protected ComponentRef<Cache> cache;
+   @Inject protected ComponentRef<Cache<Object, Object>> cache;
    @Inject protected LocalTopologyManager localTopologyManager;
    @Inject protected Configuration configuration;
    @Inject protected RpcManager rpcManager;
@@ -454,11 +456,13 @@ public class StateConsumerImpl implements StateConsumer {
 
    private void fetchClusterListeners(CacheTopology cacheTopology) {
       if (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isScattered()) {
-         Collection<DistributedCallable> callables = getClusterListeners(cacheTopology);
-         for (DistributedCallable callable : callables) {
-            callable.setEnvironment(cache.wired(), null);
+         Collection<ClusterListenerReplicateCallable<Object, Object>> callables = getClusterListeners(cacheTopology);
+         Cache<Object, Object> cache = this.cache.wired();
+         for (ClusterListenerReplicateCallable<Object, Object> callable : callables) {
             try {
-               callable.call();
+               // TODO: need security check?
+               // We have to invoke a separate method as we can't retrieve the cache as it is still starting
+               callable.accept(cache.getCacheManager(), cache);
             } catch (Exception e) {
                log.clusterListenerInstallationFailure(e);
             }
@@ -887,7 +891,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   private Collection<DistributedCallable> getClusterListeners(CacheTopology topology) {
+   private Collection<ClusterListenerReplicateCallable<Object, Object>> getClusterListeners(CacheTopology topology) {
       for (Address source : topology.getMembers()) {
          // Don't send to ourselves
          if (!source.equals(rpcManager.getAddress())) {
@@ -901,7 +905,7 @@ public class StateConsumerImpl implements StateConsumer {
                Response response = rpcManager.blocking(
                      rpcManager.invokeCommand(source, cmd, SingleResponseCollector.validOnly(), rpcOptions));
                if (response instanceof SuccessfulResponse) {
-                  return (Collection<DistributedCallable>) ((SuccessfulResponse) response).getResponseValue();
+                  return (Collection<ClusterListenerReplicateCallable<Object, Object>>) ((SuccessfulResponse) response).getResponseValue();
                } else {
                   log.unsuccessfulResponseForClusterListeners(source, response);
                }
