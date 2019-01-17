@@ -52,6 +52,9 @@ import org.infinispan.query.remote.impl.logging.Log;
 /**
  * Intercepts updates to the protobuf schema file caches and updates the SerializationContext accordingly.
  *
+ * <p>Must be in the interceptor chain after {@code EntryWrappingInterceptor} so that it can fail a write after
+ * {@code CallInterceptor} updates the context entry but before {@code EntryWrappingInterceptor} commits the entry.</p>
+ *
  * @author anistor@redhat.com
  * @since 7.0
  */
@@ -209,56 +212,60 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
       final Object key = command.getKey();
-      final Object value = command.getValue();
+      if (!(key instanceof String)) {
+         throw log.keyMustBeString(key.getClass());
+      }
 
-      if (ctx.isOriginLocal()) {
-         if (!(key instanceof String)) {
-            throw log.keyMustBeString(key.getClass());
+      if (!shouldIntercept(key)) {
+         return invokeNext(ctx, command);
+      }
+
+      if (ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_LOCKING)) {
+         if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
+            throw log.keyMustBeStringEndingWithProto(key);
          }
+
+         // lock .errors key
+         LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
+         invoker.running().invoke(ctx, cmd);
+      }
+
+      return invokeNextThenAccept(ctx, command, this::handlePutKeyValueResult);
+   }
+
+   private void handlePutKeyValueResult(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
+      PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
+      if (putKeyValueCommand.isSuccessful()) {
+         // StateConsumerImpl uses PutKeyValueCommands with InternalCacheEntry
+         // values in order to preserve timestamps, so read the value from the context
+         Object key = ((PutKeyValueCommand) rCommand).getKey();
+         Object value = rCtx.lookupEntry(key).getValue();
          if (!(value instanceof String)) {
             throw log.valueMustBeString(value.getClass());
          }
-         if (shouldIntercept(key)) {
-            if (!command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_LOCKING)) {
-               if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
-                  throw log.keyMustBeStringEndingWithProto(key);
-               }
 
-               // lock .errors key
-               LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-               invoker.running().invoke(ctx, cmd);
-            }
+         FileDescriptorSource source = new FileDescriptorSource()
+                                          .addProtoFile((String) key, (String) value);
+
+         long flagsBitSet = copyFlags(putKeyValueCommand);
+         ProgressCallback progressCallback = null;
+         if (rCtx.isOriginLocal() && !putKeyValueCommand.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+            progressCallback = new ProgressCallback(rCtx, flagsBitSet);
+            source.withProgressCallback(progressCallback);
          } else {
-            return invokeNext(ctx, command);
+            source.withProgressCallback(EMPTY_CALLBACK);
+         }
+
+         try {
+            serializationContext.registerProtoFiles(source);
+         } catch (IOException | DescriptorParserException e) {
+            throw log.failedToParseProtoFile((String) key, e);
+         }
+
+         if (progressCallback != null) {
+            updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), flagsBitSet);
          }
       }
-
-      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
-         if (putKeyValueCommand.isSuccessful()) {
-            FileDescriptorSource source = new FileDescriptorSource()
-                  .addProtoFile((String) key, (String) value);
-
-            long flagsBitSet = copyFlags(putKeyValueCommand);
-            ProgressCallback progressCallback = null;
-            if (rCtx.isOriginLocal() && !putKeyValueCommand.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-               progressCallback = new ProgressCallback(rCtx, flagsBitSet);
-               source.withProgressCallback(progressCallback);
-            } else {
-               source.withProgressCallback(EMPTY_CALLBACK);
-            }
-
-            try {
-               serializationContext.registerProtoFiles(source);
-            } catch (IOException | DescriptorParserException e) {
-               throw log.failedToParseProtoFile((String) key, e);
-            }
-
-            if (progressCallback != null) {
-               updateGlobalErrors(rCtx, progressCallback.getErrorFiles(), flagsBitSet);
-            }
-         }
-      });
    }
 
    /**
