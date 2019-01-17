@@ -21,7 +21,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
@@ -120,7 +119,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
       //noinspection unchecked
       Set<Class<? extends ReplicableCommand>> coreCommands = Util.asSet(
-            CacheTopologyControlCommand.class, DistributedExecuteCommand.class, GetKeyValueCommand.class,
+            CacheTopologyControlCommand.class, GetKeyValueCommand.class,
             ClearCommand.class, EvictCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
             PutKeyValueCommand.class,

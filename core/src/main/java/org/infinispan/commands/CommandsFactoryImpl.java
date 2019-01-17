@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -34,7 +33,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
-import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -441,10 +439,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             TxCompletionNotificationCommand ftx = (TxCompletionNotificationCommand) c;
             ftx.init(txTable.running(), lockManager, recoveryManager.running(), stateTransferManager.wired());
             break;
-         case DistributedExecuteCommand.COMMAND_ID:
-            DistributedExecuteCommand dec = (DistributedExecuteCommand)c;
-            dec.init(cache.wired());
-            break;
          case GetInDoubtTxInfoCommand.COMMAND_ID:
             GetInDoubtTxInfoCommand gidTxInfoCommand = (GetInDoubtTxInfoCommand)c;
             gidTxInfoCommand.init(recoveryManager.running());
@@ -622,11 +616,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public TxCompletionNotificationCommand buildTxCompletionNotificationCommand(long internalId) {
       return new TxCompletionNotificationCommand(internalId, cacheName);
-   }
-
-   @Override
-   public <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys) {
-      return  new DistributedExecuteCommand<>(cacheName, keys, callable);
    }
 
    @Override

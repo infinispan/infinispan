@@ -16,7 +16,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
-import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -283,9 +282,6 @@ public class RemoteCommandsFactory {
                break;
             case GetInDoubtTransactionsCommand.COMMAND_ID:
                command = new GetInDoubtTransactionsCommand(cacheName);
-               break;
-            case DistributedExecuteCommand.COMMAND_ID:
-               command = new DistributedExecuteCommand(cacheName);
                break;
             case GetInDoubtTxInfoCommand.COMMAND_ID:
                command = new GetInDoubtTxInfoCommand(cacheName);
