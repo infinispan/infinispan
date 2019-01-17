@@ -167,6 +167,7 @@ public enum Attribute {
     WAIT_TIME,
     WHEN_SPLIT,
     WRITE_SKEW_CHECK("write-skew"),
+    ZERO_CAPACITY_NODE("zero-capacity-node")
     ;
 
     private final String name;

@@ -31,6 +31,8 @@ import org.infinispan.factories.scopes.Scopes;
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
 public class GlobalConfiguration {
+   private static final String ZERO_CAPACITY_NODE_FEATURE = "zero-capacity-node";
+
 
    /**
     * Default replication version, from {@link org.infinispan.Version#getVersionShort}.
@@ -57,6 +59,7 @@ public class GlobalConfiguration {
    private final ThreadPoolConfiguration asyncThreadPool;
    private final Optional<String> defaultCacheName;
    private final Features features;
+   private final boolean zeroCapacityNode;
 
    GlobalConfiguration(ThreadPoolConfiguration expirationThreadPool,
                        ThreadPoolConfiguration listenerThreadPool,
@@ -68,7 +71,10 @@ public class GlobalConfiguration {
                        TransportConfiguration transport, GlobalSecurityConfiguration security,
                        SerializationConfiguration serialization, ShutdownConfiguration shutdown,
                        GlobalStateConfiguration globalState,
-                       List<?> modules, SiteConfiguration site, Optional<String> defaultCacheName, ClassLoader cl, Features features) {
+                       List<?> modules, SiteConfiguration site,
+                       Optional<String> defaultCacheName,
+                       ClassLoader cl, Features features,
+                       boolean zeroCapacityNode) {
       this.expirationThreadPool = expirationThreadPool;
       this.listenerThreadPool = listenerThreadPool;
       this.replicationQueueThreadPool = replicationQueueThreadPool;
@@ -82,7 +88,7 @@ public class GlobalConfiguration {
       this.shutdown = shutdown;
       this.globalState = globalState;
       Map<Class<?>, Object> moduleMap = new HashMap<>();
-      for(Object module : modules) {
+      for (Object module : modules) {
          moduleMap.put(module.getClass(), module);
       }
       this.modules = Collections.unmodifiableMap(moduleMap);
@@ -90,6 +96,7 @@ public class GlobalConfiguration {
       this.defaultCacheName = defaultCacheName;
       this.cl = cl;
       this.features = features;
+      this.zeroCapacityNode = features.isAvailable(ZERO_CAPACITY_NODE_FEATURE) ? zeroCapacityNode : false;
    }
 
    /**
@@ -201,7 +208,7 @@ public class GlobalConfiguration {
 
    @SuppressWarnings("unchecked")
    public <T> T module(Class<T> moduleClass) {
-      return (T)modules.get(moduleClass);
+      return (T) modules.get(moduleClass);
    }
 
    public Map<Class<?>, ?> modules() {
@@ -245,10 +252,15 @@ public class GlobalConfiguration {
             ", site=" + site +
             ", defaultCacheName=" + defaultCacheName +
             ", cl=" + cl +
+            ", zeroCapacityNode=" + zeroCapacityNode +
             '}';
    }
 
    public boolean isClustered() {
       return transport().transport() != null;
+   }
+
+   public boolean isZeroCapacityNode() {
+      return zeroCapacityNode;
    }
 }

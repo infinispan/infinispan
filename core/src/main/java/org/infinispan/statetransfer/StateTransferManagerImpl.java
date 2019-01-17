@@ -94,6 +94,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
          persistentStateChecksum = Optional.empty();
       }
 
+      float capacityFactor = globalConfiguration.isZeroCapacityNode() ? 0.0f : configuration.clustering().hash().capacityFactor();
+
       CacheJoinInfo joinInfo = new CacheJoinInfo(pickConsistentHashFactory(globalConfiguration, configuration),
             configuration.clustering().hash().hash(),
             configuration.clustering().hash().numSegments(),
@@ -101,7 +103,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             configuration.clustering().stateTransfer().timeout(),
             configuration.transaction().transactionProtocol().isTotalOrder(),
             configuration.clustering().cacheMode(),
-            configuration.clustering().hash().capacityFactor(),
+            capacityFactor,
             localTopologyManager.getPersistentUUID(),
             persistentStateChecksum);
 

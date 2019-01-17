@@ -97,7 +97,7 @@
 
    <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" async-executor="infinispan-async" expiration-executor="infinispan-expiration"
                     jndi-name="java:global/infinispan/maximal"  state-transfer-executor="infinispan-state-transfer" listener-executor="infinispan-listener"
-                    persistence-executor="infinispan-cached" module="org.infinispan" statistics="true" shutdown-hook="DONT_REGISTER">
+                    persistence-executor="infinispan-cached" module="org.infinispan" statistics="true" shutdown-hook="DONT_REGISTER" zero-capacity-node="false">
       <transport cluster="maximal-cluster" executor="infinispan-transport" remote-command-executor="infinispan-cached" lock-timeout="120000" stack="tcp" node-name="a-node" machine="a" rack="b" site="c"
                  initial-cluster-size="4" initial-cluster-timeout="30000" />
       <serialization marshaller="org.infinispan.marshall.TestObjectStreamMarshaller" version="1.0">

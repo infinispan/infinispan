@@ -9,8 +9,10 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.api.ClusteredLock;
@@ -211,66 +213,29 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
 
    @Test
    public void testTryLockWithCountersInParallel() throws Throwable {
-      AtomicInteger counter = new AtomicInteger();
-
       ClusteredLock lock0 = clusteredLockManager(0).get(LOCK_NAME);
       ClusteredLock lock1 = clusteredLockManager(1).get(LOCK_NAME);
       ClusteredLock lock2 = clusteredLockManager(2).get(LOCK_NAME);
 
-      CompletableFuture<Void> lockRes0 = lock0.tryLock()
-            .thenCompose(result -> {
-               if (result) {
-                  new Counter(counter, 1, 100).run();
-                  return lock0.unlock();
-               }
-               return CompletableFuture.completedFuture(null);
-            });
+      long successTryLocks = Stream.of(lock0, lock1, lock2)
+            .map(this::callTryLock)
+            .map(ClusteredLockTest::awaitTryLock)
+            .filter(Boolean::booleanValue)
+            .count();
 
-      CompletableFuture<Void> lockRes1 = lock1.tryLock()
-            .thenCompose(result -> {
-               if (result) {
-                  new Counter(counter, 1, 100).run();
-                  return lock1.unlock();
-               }
-               return CompletableFuture.completedFuture(null);
-            });
-
-      CompletableFuture<Void> lockRes2 = lock2.tryLock()
-            .thenCompose(result -> {
-               if (result) {
-                  new Counter(counter, 1, 100).run();
-                  return lock2.unlock();
-               }
-               return CompletableFuture.completedFuture(null);
-            });
-
-      await(lockRes0);
-      await(lockRes1);
-      await(lockRes2);
-
-      assertEquals(1, counter.get());
+      assertEquals(1, successTryLocks);
    }
 
-   class Counter implements Runnable {
-      private AtomicInteger counter;
-      private int delta;
-      private long millis;
+   private Future<Boolean> callTryLock(ClusteredLock lock) {
+      return fork(() -> await(lock.tryLock()));
+   }
 
-      Counter(AtomicInteger counter, int delta, long millis) {
-         this.counter = counter;
-         this.delta = delta;
-         this.millis = millis;
+   private static Boolean awaitTryLock(Future<Boolean> result) {
+      try {
+         return result.get();
+      } catch (Exception e) {
+         fail("tryLock call should work and return either TRUE ou FALSE");
       }
-
-      @Override
-      public void run() {
-         // Sleep a while
-         try {
-            TimeUnit.MILLISECONDS.sleep(millis);
-         } catch (InterruptedException e) {
-            fail("There was a problem in the Counter");
-         }
-         counter.addAndGet(delta);
-      }
+      return null;
    }
 }
