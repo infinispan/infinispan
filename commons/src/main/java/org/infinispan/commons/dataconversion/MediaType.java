@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -230,15 +229,16 @@ public final class MediaType {
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
+
       MediaType mediaType = (MediaType) o;
-      return Objects.equals(params, mediaType.params) &&
-            Objects.equals(type, mediaType.type) &&
-            Objects.equals(subType, mediaType.subType);
+      return params.equals(mediaType.params) && typeSubtype.equals(mediaType.typeSubtype);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(params, type, subType);
+      int result = params.hashCode();
+      result = 31 * result + typeSubtype.hashCode();
+      return result;
    }
 
    public String getType() {
