@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
 public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
    private static final String CACHE_NAME = "testCache";
 
-   private ExecutorService transportExecutor = Executors.newFixedThreadPool(2, getTestThreadFactory("Transport"));
+   private ExecutorService executor = Executors.newFixedThreadPool(2, getTestThreadFactory("Executor"));
 
    private static final Address A = new TestAddress(0, "A");
    private static final Address B = new TestAddress(1, "B");
@@ -75,7 +75,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       gbcr.replaceComponent(PersistentUUIDManager.class.getName(), persistentUUIDManager, false);
 
-      gbcr.replaceComponent(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR, transportExecutor, false);
+      gbcr.replaceComponent(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR, executor, false);
+      gbcr.replaceComponent(KnownComponentNames.STATE_TRANSFER_EXECUTOR, executor, false);
 
       MockLocalTopologyManager ltm = new MockLocalTopologyManager(CACHE_NAME);
       gbcr.replaceComponent(LocalTopologyManager.class.getName(), ltm, false);
@@ -150,7 +151,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       gbcr.replaceComponent(PersistentUUIDManager.class.getName(), persistentUUIDManager, false);
 
-      gbcr.replaceComponent(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR, transportExecutor, false);
+      gbcr.replaceComponent(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR, executor, false);
+      gbcr.replaceComponent(KnownComponentNames.STATE_TRANSFER_EXECUTOR, executor, false);
 
       MockLocalTopologyManager ltm = new MockLocalTopologyManager(CACHE_NAME);
       gbcr.replaceComponent(LocalTopologyManager.class.getName(), ltm, false);
@@ -312,7 +314,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
 
    @AfterClass(alwaysRun = true)
    public void shutdownExecutor() throws InterruptedException {
-      transportExecutor.shutdownNow();
-      assertTrue(transportExecutor.awaitTermination(10, TimeUnit.SECONDS));
+      executor.shutdownNow();
+      assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
    }
 }

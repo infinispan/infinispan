@@ -97,20 +97,24 @@ public class DependencyGraphTest extends AbstractInfinispanTest {
    public void testConcurrentAccess() throws Exception {
       DependencyGraph<String> graph = new DependencyGraph<>();
       ExecutorService service = Executors.newCachedThreadPool(getTestThreadFactory("Worker"));
-      CountDownLatch startLatch = new CountDownLatch(1);
-      int threads = 20;
-      ArrayList<Future<?>> futures = new ArrayList<>();
-      for (int i = 0; i < threads; i++) {
-         futures.add(submitTask("A", "B", startLatch, service, graph));
-         futures.add(submitTask("A", "C", startLatch, service, graph));
-         futures.add(submitTask("A", "D", startLatch, service, graph));
-         futures.add(submitTask("A", "B", startLatch, service, graph));
-         futures.add(submitTask("D", "B", startLatch, service, graph));
-         futures.add(submitTask("D", "C", startLatch, service, graph));
-         futures.add(submitTask("C", "B", startLatch, service, graph));
+      try {
+         CountDownLatch startLatch = new CountDownLatch(1);
+         int threads = 20;
+         ArrayList<Future<?>> futures = new ArrayList<>();
+         for (int i = 0; i < threads; i++) {
+            futures.add(submitTask("A", "B", startLatch, service, graph));
+            futures.add(submitTask("A", "C", startLatch, service, graph));
+            futures.add(submitTask("A", "D", startLatch, service, graph));
+            futures.add(submitTask("A", "B", startLatch, service, graph));
+            futures.add(submitTask("D", "B", startLatch, service, graph));
+            futures.add(submitTask("D", "C", startLatch, service, graph));
+            futures.add(submitTask("C", "B", startLatch, service, graph));
+         }
+         startLatch.countDown();
+         awaitAll(futures);
+      } finally {
+         service.shutdownNow();
       }
-      startLatch.countDown();
-      awaitAll(futures);
 
       assertEquals(graph.topologicalSort(), Arrays.asList("A", "D", "C", "B"));
    }
