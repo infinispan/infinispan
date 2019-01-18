@@ -37,6 +37,7 @@ import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -105,6 +106,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       excludedCommands.addAll(Arrays.asList(excluded));
    }
 
+   @Stop
    public void stopBlocking() {
       log.debug("Stopping intercepting RPC calls");
       stopped = true;

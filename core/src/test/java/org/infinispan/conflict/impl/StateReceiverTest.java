@@ -56,6 +56,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -64,6 +65,8 @@ public class StateReceiverTest extends AbstractInfinispanTest {
 
    private StateReceiverImpl<Object, Object> stateReceiver;
    private LocalizedCacheTopology localizedCacheTopology;
+   private ExecutorService stateTransferExecutor =
+      Executors.newSingleThreadExecutor(getTestThreadFactory("StateTransfer"));
 
    public void testGetReplicaException() {
       CompletableFuture<Void> taskFuture = new CompletableFuture<>();
@@ -134,7 +137,6 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       InternalDataContainer dataContainer = mock(InternalDataContainer.class);
       RpcManager rpcManager = mock(RpcManager.class);
       CacheNotifier cacheNotifier = mock(CacheNotifier.class);
-      ExecutorService stateTransferExecutor = Executors.newSingleThreadExecutor();
 
       when(rpcManager.invokeRemotely(any(Collection.class), any(StateRequestCommand.class), any(RpcOptions.class)))
             .thenAnswer(invocation -> {
@@ -160,6 +162,11 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       stateReceiver.onDataRehash(createEventImpl(2, 4, Event.Type.DATA_REHASHED));
       this.localizedCacheTopology = createLocalizedCacheTopology(4);
       this.stateReceiver = spy(stateReceiver);
+   }
+
+   @AfterClass(alwaysRun = true)
+   public void stopExecutor() {
+      stateTransferExecutor.shutdownNow();
    }
 
    private void initTransferTaskMock(CompletableFuture<Void> completableFuture) {

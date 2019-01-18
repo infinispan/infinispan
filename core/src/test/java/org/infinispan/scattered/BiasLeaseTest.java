@@ -58,7 +58,7 @@ public class BiasLeaseTest extends MultipleCacheManagersTest {
       TestingUtil.wrapInboundInvocationHandler(cache(0), handler -> handler0 = new RenewWaitingInvocationHandler(handler));
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void cleanup() {
       rpcManager0.excludeCommands(ClearCommand.class);
       IntStream.of(0, 1, 2).mapToObj(this::cache).forEach(Cache::clear);
