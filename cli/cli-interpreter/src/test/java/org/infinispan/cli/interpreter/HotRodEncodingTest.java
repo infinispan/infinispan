@@ -20,7 +20,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -70,11 +69,11 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
       interpreter = gcr.getComponent(Interpreter.class);
    }
 
-   @AfterClass(alwaysRun = true)
-   public void release() {
+   @Override
+   protected void teardown() {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
       HotRodClientTestingUtil.killServers(hotrodServer);
-      TestingUtil.killCacheManagers(cacheManager);
+      super.teardown();
    }
 
    public void testHotRodCodec() throws Exception {
