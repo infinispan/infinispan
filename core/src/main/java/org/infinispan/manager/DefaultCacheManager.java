@@ -746,7 +746,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          while (status == ComponentStatus.STOPPING) {
             lifecycleCondition.await();
          }
-         if (status != ComponentStatus.RUNNING) {
+         if (status != ComponentStatus.RUNNING && status != ComponentStatus.FAILED) {
             log.trace("Ignore call to stop as the cache manager is not running");
             return;
          }
