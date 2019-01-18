@@ -313,6 +313,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
 
          // Finally let the get to go to the owner
          ownerGetBarrier.await(10, TimeUnit.SECONDS);
+         ownerGetBarrier.await(10, TimeUnit.SECONDS);
 
          // This is async in the LastChance interceptor
          eventually(() -> !isInL1(nonOwnerCache, key));

@@ -8,11 +8,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.PersistenceAvailabilityChanged;
 import org.infinispan.notifications.cachelistener.event.PersistenceAvailabilityChangedEvent;
@@ -21,7 +19,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.StoreUnavailableException;
-import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -29,16 +27,16 @@ import org.testng.annotations.Test;
 
 @CleanupAfterMethod
 @Test(testName = "persistence.PersistenceManagerAvailabilityTest", groups = "functional")
-public class PersistenceManagerAvailabilityTest extends AbstractInfinispanTest {
+public class PersistenceManagerAvailabilityTest extends SingleCacheManagerTest {
 
    private Cache<Object, Object> createManagerAndGetCache(int startFailures) {
-      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build();
-      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      Configuration config = cb.persistence()
-            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-            .startFailures(startFailures)
-            .build();
-      return new DefaultCacheManager(globalConfiguration, config).getCache();
+      GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
+      globalConfiguration.globalJmxStatistics().allowDuplicateDomains(true);
+      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      config.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .startFailures(startFailures);
+      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, config);
+      return cacheManager.getCache();
    }
 
    @Test(expectedExceptions = StoreUnavailableException.class)
@@ -89,6 +87,17 @@ public class PersistenceManagerAvailabilityTest extends AbstractInfinispanTest {
 
       cache.put(1, 3);
       assertEquals(3, cache.get(1));
+   }
+
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      // Manager is created later
+      return null;
+   }
+
+   @Override
+   protected void setup() throws Exception {
+      // Manager is created later
    }
 
    @Listener
