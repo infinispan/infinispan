@@ -530,12 +530,13 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
             ReflectionUtil.invokeAccessibly(wrapper.instance, method.getMethod(), null);
          }
 
-         logStartedComponent(wrapper);
-
          commitWrapperStateChange(wrapper, WrapperState.STARTING, WrapperState.STARTED);
       } catch (Throwable t) {
          commitWrapperStateChange(wrapper, WrapperState.STARTING, WrapperState.FAILED);
          throw t;
+      } finally {
+         // Try to stop the component even if it failed, otherwise each component would have to catch exceptions
+         logStartedComponent(wrapper);
       }
    }
 
@@ -582,7 +583,8 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    }
 
    private void stopWrapper(ComponentWrapper wrapper) {
-      if (!prepareWrapperChange(wrapper, WrapperState.STARTED, WrapperState.STOPPING))
+      if (!prepareWrapperChange(wrapper, WrapperState.STARTED, WrapperState.STOPPING)
+          && !prepareWrapperChange(wrapper, WrapperState.FAILED, WrapperState.STOPPING))
          return;
 
       performStop(wrapper);
