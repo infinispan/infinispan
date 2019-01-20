@@ -143,17 +143,22 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
 
       EntityManagerFactory emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
       EntityManager em = emf.createEntityManager();
-      EntityTransaction txn = em.getTransaction();
-      txn.begin();
-      em.persist(obj1.getValue());
-      em.persist(obj2.getValue());
-      em.flush();
-      txn.commit();
-      em.close();
+      try {
+         EntityTransaction txn = em.getTransaction();
+         txn.begin();
+         em.persist(obj1.getValue());
+         em.persist(obj2.getValue());
+         em.flush();
+         txn.commit();
+         em.close();
 
-      assertEquals(cs.size(), 2);
-      assertTrue(cs.contains(obj1.getKey()));
-      assertTrue(cs.contains(obj1.getKey()));
+         assertEquals(cs.size(), 2);
+         assertTrue(cs.contains(obj1.getKey()));
+         assertTrue(cs.contains(obj1.getKey()));
+      } finally {
+         em.close();
+         emf.close();
+      }
    }
 
    public void testLoadValuesViaNonJpaCacheStore() {
@@ -168,10 +173,13 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
 
       EntityManagerFactory emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
       EntityManager em = emf.createEntityManager();
+      try {
+         assertEquals(em.find(obj1.getValue().getClass(), obj1.getKey()), obj1.getValue());
+         assertEquals(em.find(obj2.getValue().getClass(), obj2.getKey()), obj2.getValue());
 
-      assertEquals(em.find(obj1.getValue().getClass(), obj1.getKey()), obj1.getValue());
-      assertEquals(em.find(obj2.getValue().getClass(), obj2.getKey()), obj2.getValue());
-
-      em.close();
+      } finally {
+         em.close();
+         emf.close();
+      }
    }
 }

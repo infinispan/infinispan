@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -143,7 +144,13 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public void stop() {
-      workerGroup.shutdownGracefully();
+      try {
+         // Make the quiet period 100ms instead of 2s (Netty default)
+         workerGroup.shutdownGracefully(100, 15000, TimeUnit.MILLISECONDS).sync();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new IllegalLifecycleStateException(e);
+      }
    }
 
    @Override

@@ -9,6 +9,8 @@ import javax.transaction.Transaction;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -21,10 +23,12 @@ import org.reactivestreams.Publisher;
  */
 @SurvivesRestarts
 public class PersistenceManagerStub implements PersistenceManager {
+   @Start
    @Override
    public void start() {
    }
 
+   @Stop
    @Override
    public void stop() {
    }
