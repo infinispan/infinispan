@@ -2,13 +2,16 @@ package org.infinispan.query.distributed;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.jboss.byteman.agent.TransformListener;
 import org.jboss.byteman.contrib.bmunit.BMNGListener;
 import org.jboss.byteman.contrib.bmunit.BMRule;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -33,6 +36,17 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
          registerCacheManager(cacheManager);
       }
       waitForClusterToForm("default", "LuceneIndexesMetadata", "LuceneIndexesData", "LuceneIndexesLocking");
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      // DistributedExecutorMassIndexer leaks executor, see ISPN-7606
+      ThreadLeakChecker.ignoreThreadsContaining("DefaultExecutorService-");
+      // ByteMan thread stopped after our thread leak check
+      ThreadLeakChecker.ignoreThreadsMatching(thread -> thread instanceof TransformListener);
+
+      super.destroy();
    }
 
    @Test
