@@ -52,6 +52,13 @@ public class JCacheCreateCachePredefinedTest extends SingleHotRodServerTest {
       jcacheManager = provider.getCacheManager(name, cl, properties);
    }
 
+   @Override
+   protected void teardown() {
+      jcacheManager.close();
+
+      super.teardown();
+   }
+
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*ISPN021015:.*")
    public void testCreateCachePredefinedTouched() {
       jcacheManager.getCache(CACHE_NAME_TOUCHED); // touch it

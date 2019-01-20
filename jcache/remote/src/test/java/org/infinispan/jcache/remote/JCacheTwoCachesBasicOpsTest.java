@@ -3,6 +3,8 @@ package org.infinispan.jcache.remote;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.jcache.util.JCacheTestingUtil.createCacheManager;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertNotSame;
+import static org.testng.AssertJUnit.assertSame;
 
 import java.lang.reflect.Method;
 import java.util.Properties;
@@ -10,6 +12,7 @@ import java.util.Properties;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
+import javax.cache.spi.CachingProvider;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
@@ -39,19 +42,23 @@ public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
       hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(cacheManagers.get(0));
       hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(cacheManagers.get(1));
       testSpecificClassLoader = new JCacheTestingUtil.TestClassLoader(JCacheTwoCachesBasicOpsTest.class.getClassLoader());
+      CachingProvider cachingProvider = Caching.getCachingProvider(testSpecificClassLoader);
 
       Properties properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", hotRodServer1.getHost() + ":" + hotRodServer1.getPort());
-      cm1 = createCacheManager(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesBasicOpsTest.class, CACHE_NAME, properties);
+      cm1 = createCacheManager(cachingProvider, properties, "manager1", testSpecificClassLoader);
 
+      // Using the same URI + ClassLoader will give us the existing instance
+      assertSame(cm1, createCacheManager(cachingProvider, properties, "manager1", testSpecificClassLoader));
+
+      // Use a different URI to get a new cache manager instance
       properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", hotRodServer2.getHost() + ":" + hotRodServer2.getPort());
-      cm2 = createCacheManager(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesBasicOpsTest.class, CACHE_NAME, properties);
-
-      waitForClusterToForm(CACHE_NAME);
+      cm2 = createCacheManager(cachingProvider, properties, "manager2", testSpecificClassLoader);
+      assertNotSame(cm1, cm2);
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
       super.destroy();
