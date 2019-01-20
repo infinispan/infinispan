@@ -62,6 +62,8 @@ public class RestStoreTest extends BaseStoreTest {
    @Override
    @AfterMethod(alwaysRun = true)
    public void tearDown() {
+      super.tearDown();
+
       if (restServer != null) {
          restServer.stop();
       }
