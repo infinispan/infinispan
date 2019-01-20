@@ -63,13 +63,12 @@ public class JCacheTestingUtil {
       return entryCount;
    }
 
-   public static Cache createCacheWithProperties(CachingProvider provider, Class invoker, String cacheName, Properties properties) {
-      CacheManager manager = provider.getCacheManager(URI.create(invoker.getName()), new TestClassLoader(Thread.currentThread().getContextClassLoader()), properties);
+   public static Cache createCache(CacheManager manager, String cacheName) {
       return manager.createCache(cacheName, new MutableConfiguration());
    }
 
-   public static CacheManager createCacheManager(CachingProvider provider, Class invoker, String cacheName, Properties properties) {
-      return provider.getCacheManager(URI.create(invoker.getName()), new TestClassLoader(Thread.currentThread().getContextClassLoader()), properties);
+   public static CacheManager createCacheManager(CachingProvider provider, Properties properties,
+                                                 String name, ClassLoader classLoader) {
+      return provider.getCacheManager(URI.create("uri:" + name), classLoader, properties);
    }
-
 }
