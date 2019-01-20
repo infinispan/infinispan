@@ -278,7 +278,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
          local.administration().removeCache(cacheName);
          assertFalse(local.isRunning(cacheName));
          assertFalse(passivate.get());
-         assertEquals(0, actual.size());
+         assertEquals(-1, actual.size());
       } finally {
          TestingUtil.killCacheManagers(local);
       }
