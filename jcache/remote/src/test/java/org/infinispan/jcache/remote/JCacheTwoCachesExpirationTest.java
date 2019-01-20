@@ -1,16 +1,21 @@
 package org.infinispan.jcache.remote;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.jcache.util.JCacheTestingUtil.createCacheWithProperties;
+import static org.infinispan.jcache.util.JCacheTestingUtil.createCache;
+import static org.infinispan.jcache.util.JCacheTestingUtil.createCacheManager;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.testng.AssertJUnit.assertNotSame;
+import static org.testng.AssertJUnit.assertSame;
 
 import java.lang.reflect.Method;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import javax.cache.Cache;
+import javax.cache.CacheManager;
 import javax.cache.Caching;
+import javax.cache.spi.CachingProvider;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
@@ -34,6 +39,8 @@ public class JCacheTwoCachesExpirationTest extends AbstractTwoCachesExpirationTe
 
    private HotRodServer hotRodServer1;
    private HotRodServer hotRodServer2;
+   private CacheManager rcm1;
+   private CacheManager rcm2;
    private Cache cache1;
    private Cache cache2;
    private ClassLoader testSpecificClassLoader;
@@ -50,16 +57,21 @@ public class JCacheTwoCachesExpirationTest extends AbstractTwoCachesExpirationTe
             cacheManagers.get(1),
             new HotRodServerConfigurationBuilder().adminOperationsHandler(new EmbeddedServerAdminOperationHandler()));
       testSpecificClassLoader = new JCacheTestingUtil.TestClassLoader(JCacheTwoCachesExpirationTest.class.getClassLoader());
+      CachingProvider cachingProvider = Caching.getCachingProvider(testSpecificClassLoader);
 
       Properties properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", hotRodServer1.getHost() + ":" + hotRodServer1.getPort());
-      cache1 = createCacheWithProperties(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesExpirationTest.class, "expiry", properties);
+      rcm1 = createCacheManager(cachingProvider, properties, "manager1", testSpecificClassLoader);
+      cache1 = createCache(rcm1, "expiry");
+
+      // Using the same URI + ClassLoader will give us the existing instance
+      assertSame(rcm1, createCacheManager(cachingProvider, properties, "manager1", testSpecificClassLoader));
 
       properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", hotRodServer2.getHost() + ":" + hotRodServer2.getPort());
-      cache2 = createCacheWithProperties(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesExpirationTest.class, "expiry", properties);
-
-      waitForClusterToForm("expiry");
+      rcm2 = createCacheManager(cachingProvider, properties, "manager2", testSpecificClassLoader);
+      cache2 = createCache(rcm2, "expiry");
+      assertNotSame(cache1, cache2);
    }
 
    protected static org.infinispan.configuration.cache.ConfigurationBuilder getExpiryCacheConfig() {
@@ -72,6 +84,8 @@ public class JCacheTwoCachesExpirationTest extends AbstractTwoCachesExpirationTe
    @Override
    protected void destroy() {
       super.destroy();
+      rcm1.close();
+      rcm2.close();
       killServers(hotRodServer1, hotRodServer2);
       Caching.getCachingProvider(testSpecificClassLoader).close();
    }

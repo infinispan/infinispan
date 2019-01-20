@@ -12,18 +12,20 @@ import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
 
 import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 @Test(testName = "jcache.remote.JCacheConfigurationPropertiesFileTest", groups = "functional")
-public class JCacheConfigurationPropertiesFileTest {
+public class JCacheConfigurationPropertiesFileTest extends AbstractInfinispanTest {
 
    public void testPropertiesConfiguration() {
       Class<?> clazz = this.getClass();
       ClassLoader cl = clazz.getClassLoader();
       CachingProvider provider = Caching.getCachingProvider(cl);
       Properties testProperties = getProperties(cl);
-      CacheManager cm = provider.getCacheManager(URI.create(clazz.getName()), cl);
-      assertEquals(testProperties, cm.getProperties());
+      try (CacheManager cm = provider.getCacheManager(URI.create(clazz.getName()), cl)) {
+         assertEquals(testProperties, cm.getProperties());
+      }
    }
 
    public Properties getProperties(ClassLoader cl) {
@@ -36,5 +38,4 @@ public class JCacheConfigurationPropertiesFileTest {
          throw new AssertionError(e);
       }
    }
-
 }
