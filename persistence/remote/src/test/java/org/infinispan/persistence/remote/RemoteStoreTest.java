@@ -87,6 +87,7 @@ public class RemoteStoreTest extends BaseStoreTest {
    @Override
    @AfterMethod
    public void tearDown() {
+      super.tearDown();
       HotRodClientTestingUtil.killServers(hrServer);
       TestingUtil.killCacheManagers(localCacheManager);
    }
