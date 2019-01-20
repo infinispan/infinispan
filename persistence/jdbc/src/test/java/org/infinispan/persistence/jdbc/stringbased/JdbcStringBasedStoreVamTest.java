@@ -37,7 +37,7 @@ public class JdbcStringBasedStoreVamTest extends JdbcStringBasedStoreTest {
       marshaller = extractGlobalMarshaller(cm.getCache().getCacheManager());
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void tearDownClass() throws PersistenceException {
       cm.stop();
    }

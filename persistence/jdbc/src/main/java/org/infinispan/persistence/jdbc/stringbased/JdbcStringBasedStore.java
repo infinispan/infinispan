@@ -33,7 +33,6 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.impl.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
@@ -156,10 +155,8 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
 
       try {
-         if (configuration.connectionFactory() instanceof ManagedConnectionFactory) {
-            log.tracef("Stopping managed connection factory: %s", connectionFactory);
-            connectionFactory.stop();
-         }
+         log.tracef("Stopping connection factory: %s", connectionFactory);
+         connectionFactory.stop();
       } catch (Throwable t) {
          if (cause == null) {
             cause = t;
