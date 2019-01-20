@@ -8,6 +8,7 @@ import java.util.List;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -17,6 +18,7 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -33,6 +35,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
          "LuceneIndexesData",
          "LuceneIndexesLocking",
    };
+
    protected List<Cache> caches = new ArrayList<>(NUM_NODES);
 
    protected String getConfigurationFile() {
@@ -48,6 +51,15 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
          caches.add(cache);
       }
       waitForClusterToForm(neededCacheNames);
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      // DistributedExecutorMassIndexer leaks executor, see ISPN-7606
+      ThreadLeakChecker.ignoreThreadsContaining("DefaultExecutorService-");
+
+      super.destroy();
    }
 
    public void testReindexing() throws Exception {
