@@ -16,9 +16,9 @@ You can configure and use Hot Rod clients in JTA {tx}s.
 
 To participate in a transaction, the Hot Rod client requires the {tm} with which it interacts and whether it participates in the transaction through the {sync} or {xa} interface.
 
-[TIP]
+[IMPORTANT]
 ====
-Transactions are optimistic in that clients acquire write locks on entries during the prepare phase.
+Transactions are optimistic in that clients acquire write locks on entries during the prepare phase. To avoid data inconsistency, be sure to read about link:#hr_transactions_force_return_value[Detecting Conflicts with Transactions].
 ====
 
 [[hr_transactions_config_server]]
@@ -66,15 +66,15 @@ infinispan.client.hotrod.transaction.timeout = 60000
 ====== TransactionManagerLookup Interface
 `TransactionManagerLookup` provides an entry point to fetch a {tm}.
 
-[TIP]
-====
-You can implement this interface and add your own {tm}.
-====
-
-The following implementations of `TransactionManagerLookup` are available:
+Available implementations of `TransactionManagerLookup`:
 
 {gtml}::
 A lookup class that locates {tm}s running in Java EE application servers. Defaults to the {rtm} if it cannot find a {tm}.
+
+[TIP]
+====
+In most cases, {gtml} is suitable. However, you can implement the `TransactionManagerLookup` interface if you need to integrate a custom {tm}.
+====
 
 {rtml}::
 A basic, and volatile, {tm} if no other implementation is available. Note that this implementation has significant limitations when handling concurrent transactions and recovery.
@@ -83,7 +83,12 @@ A basic, and volatile, {tm} if no other implementation is available. Note that t
 ====== Transaction Modes
 {tx-mode} controls how a {rc} interacts with the {tm}.
 
-The following transaction modes are available:
+[IMPORTANT]
+====
+Configure transaction modes on both the {brandname} server and your client application. If clients attempt to perform transactional operations on non-transactional caches, runtime exceptions can occur.
+====
+
+Transaction modes are the same in both the {brandname} configuration and client settings. Use the following modes with your client, see the {brandname} configuration schema for the server:
 
 `NONE`::
 The {rc} does not interact with the {tm}. This is the default mode and is non-transactional.
