@@ -2,6 +2,7 @@ package org.infinispan.server.router.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 
 import org.infinispan.rest.RestServer;
@@ -9,13 +10,40 @@ import org.infinispan.server.router.Router;
 import org.infinispan.server.router.configuration.builder.RouterConfigurationBuilder;
 import org.infinispan.server.router.router.EndpointRouter;
 import org.infinispan.server.router.routes.Route;
-import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestRouteSource;
+import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.utils.RestClient;
 import org.infinispan.server.router.utils.RestTestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class RestEndpointRouterTest {
+
+    private RestServer restServer1;
+    private RestServer restServer2;
+    private Router router;
+
+    @BeforeClass
+    public static void beforeClass() {
+        TestResourceTracker.testStarted(MethodHandles.lookup().lookupClass().toString());
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        TestResourceTracker.testFinished(MethodHandles.lookup().lookupClass().toString());
+    }
+
+    @After
+    public void tearDown() {
+        router.stop();
+        restServer1.getCacheManager().stop();
+        restServer1.stop();
+        restServer2.getCacheManager().stop();
+        restServer2.stop();
+    }
 
     /**
      * In this scenario we create 2 REST servers, each one with different REST Path: <ul> <li>REST1 -
@@ -26,8 +54,8 @@ public class RestEndpointRouterTest {
     @Test
     public void shouldRouteToProperRestServerBasedOnPath() throws Exception {
         //given
-        RestServer restServer1 = RestTestingUtil.createDefaultRestServer();
-        RestServer restServer2 = RestTestingUtil.createDefaultRestServer();
+        restServer1 = RestTestingUtil.createDefaultRestServer();
+        restServer2 = RestTestingUtil.createDefaultRestServer();
 
         RestServerRouteDestination rest1Destination = new RestServerRouteDestination("rest1", restServer1);
         RestRouteSource rest1Source = new RestRouteSource("rest1");
@@ -46,7 +74,7 @@ public class RestEndpointRouterTest {
                 .add(routeToRest1)
                 .add(routeToRest2);
 
-        Router router = new Router(routerConfigurationBuilder.build());
+        router = new Router(routerConfigurationBuilder.build());
         router.start();
         int port = router.getRouter(EndpointRouter.Protocol.REST).get().getPort();
 
