@@ -309,26 +309,30 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       putStringValueInCache("default", "k", payload);
 
       HttpClient uncompressingClient = new HttpClient();
-      uncompressingClient.start();
-      uncompressingClient.getContentDecoderFactories().clear();
+      try {
+         uncompressingClient.start();
+         uncompressingClient.getContentDecoderFactories().clear();
 
-      ContentResponse response = uncompressingClient
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "k"))
-            .header(HttpHeader.ACCEPT, "text/plain")
-            .send();
+         ContentResponse response = uncompressingClient
+               .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "k"))
+               .header(HttpHeader.ACCEPT, "text/plain")
+               .send();
 
-      assertThat(response).hasNoContentEncoding();
-      assertThat(response).hasContentLength(payload.getBytes().length);
-      client.getContentDecoderFactories().clear();
+         assertThat(response).hasNoContentEncoding();
+         assertThat(response).hasContentLength(payload.getBytes().length);
+         client.getContentDecoderFactories().clear();
 
-      response = uncompressingClient
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "k"))
-            .header(HttpHeader.ACCEPT, "text/plain")
-            .header(ACCEPT_ENCODING, "gzip")
-            .send();
+         response = uncompressingClient
+               .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "k"))
+               .header(HttpHeader.ACCEPT, "text/plain")
+               .header(ACCEPT_ENCODING, "gzip")
+               .send();
 
-      assertThat(response).hasGzipContentEncoding();
-      assertEquals(decompress(response.getContent()), payload);
+         assertThat(response).hasGzipContentEncoding();
+         assertEquals(decompress(response.getContent()), payload);
+      } finally {
+         uncompressingClient.stop();
+      }
    }
 
    @Test
