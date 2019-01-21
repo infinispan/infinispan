@@ -1,6 +1,7 @@
 package org.infinispan.rest.http2;
 
 import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -12,6 +13,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContext;
+import org.infinispan.IllegalLifecycleStateException;
 
 /**
  * HTTP/2 client based on Netty.
@@ -71,7 +73,13 @@ public class NettyHttpClient {
    }
 
    public void stop() {
-      workerGroup.shutdownGracefully();
+      try {
+         // Make the quiet period 100ms instead of 2s (Netty default)
+         workerGroup.shutdownGracefully(100, 15000, TimeUnit.MILLISECONDS).sync();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new IllegalLifecycleStateException(e);
+      }
    }
 
    public Queue<FullHttpResponse> getResponses() {

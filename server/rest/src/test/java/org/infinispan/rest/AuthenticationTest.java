@@ -17,9 +17,9 @@ import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.AuthenticationTest")
@@ -28,19 +28,18 @@ public class AuthenticationTest extends AbstractInfinispanTest {
    private HttpClient client;
    private RestServerHelper restServer;
 
-   @BeforeSuite
+   @BeforeClass
    public void beforeSuite() throws Exception {
       client = new HttpClient();
       client.start();
    }
 
-   @AfterSuite
+   @AfterClass(alwaysRun = true)
    public void afterSuite() throws Exception {
-      restServer.stop();
       client.stop();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void afterMethod() throws Exception {
       restServer.clear();
       if (restServer != null) {
