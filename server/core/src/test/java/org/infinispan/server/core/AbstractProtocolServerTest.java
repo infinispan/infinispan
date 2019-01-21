@@ -50,11 +50,13 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
       MockServerConfigurationBuilder b = new MockServerConfigurationBuilder();
       b.startTransport(false);
       AbstractProtocolServer server = new MockProtocolServer();
+      DefaultCacheManager manager = new DefaultCacheManager(new ConfigurationBuilder().build());
       try {
-         server.start(b.build(), new DefaultCacheManager(new ConfigurationBuilder().build()));
+         server.start(b.build(), manager);
          Assert.assertFalse(server.isTransportEnabled());
       } finally {
          server.stop();
+         manager.stop();
       }
    }
 
