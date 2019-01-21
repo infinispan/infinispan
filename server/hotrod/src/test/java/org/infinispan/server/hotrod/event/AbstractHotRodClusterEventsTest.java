@@ -160,8 +160,8 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
          client2.remove(key);
          listener1.expectOnlyRemovedEvent(anyCache(), key);
          HotRodServer newServer = startClusteredServer(servers().get(2).getPort() + 50);
+         HotRodClient client4 = new HotRodClient("127.0.0.1", newServer.getPort(), cacheName(), 60, protocolVersion());
          try {
-            HotRodClient client4 = new HotRodClient("127.0.0.1", newServer.getPort(), cacheName(), 60, protocolVersion());
             withClientListener(client4, listener2, Optional.empty(), Optional.empty(), false, true, () -> {
                byte[] newKey = k(m, "k2-");
                client3.put(newKey, 0, 0, v(m));
@@ -175,6 +175,9 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
                listener2.expectOnlyRemovedEvent(anyCache(), newKey);
             });
          } finally {
+            if (client4 != null) {
+               client4.stop();
+            }
             stopClusteredServer(newServer);
             TestingUtil.waitForNoRebalance(
                   cache(0, cacheName()), cache(1, cacheName()), cache(2, cacheName()));

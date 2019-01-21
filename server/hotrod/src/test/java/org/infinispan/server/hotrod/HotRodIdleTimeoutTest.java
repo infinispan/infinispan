@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
@@ -43,7 +44,7 @@ public class HotRodIdleTimeoutTest extends HotRodSingleNodeTest {
       try {
          newClient.assertPut(m);
       } finally {
-         shutdownClient();
+         killClient(newClient);
       }
    }
 
