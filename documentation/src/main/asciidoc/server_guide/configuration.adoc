@@ -14,13 +14,27 @@ You can switch stacks from the command-line using the jboss.default.jgroups.stac
 
  bin/standalone.sh -c clustered.xml -Djboss.default.jgroups.stack=tcp
 
-A stack declaration is composed of a transport (UDP or TCP) followed by a list of protocols.
-For each of these elements you can tune specific properties adding child <property name="prop_name">prop_value</property> elements.
-Since the amount of protocols and their configuration options in JGroups is huge, please refer to the appropriate
-link:http://www.jgroups.org/manual/html/protlist.html[JGroups Protocol documentation] .
-The following are the default stacks:
+A stack declaration is composed of a transport, `UDP` or `TCP`, followed by a list of protocols. You can tune protocols by adding properties as child elements with this format:
+
+`<property name="prop_name">prop_value</property>`
+
+Default stacks for {brandname} are as follows:
 
 include::topics/jgroups/jgroups_default_stack.adoc[]
+
+[NOTE]
+====
+For some properties, {brandname} uses values other than the JGroups defaults to tune performance. You should examine the following files to review the JGroups configuration for {brandname}:
+
+* Remote Client/Server Mode:
+  - `jgroups-defaults.xml`
+  - `infinispan-jgroups.xml`
+* Library Mode:
+  - `default-jgroups-tcp.xml`
+  - `default-jgroups-udp.xml`
+
+See link:http://www.jgroups.org/manual/html/protlist.html[JGroups Protocol] documentation for more information about available properties and default values.
+====
 
 The default TCP stack uses the MPING protocol for discovery, which uses UDP multicast.
 If you need to use a different protocol, look at the
