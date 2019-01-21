@@ -183,11 +183,6 @@ public class IndexManagerPerfTest extends BaseAffinityTest {
       return cm;
    }
 
-   @AfterMethod
-   @Override
-   protected void clearContent() throws Throwable {
-   }
-
    @Override
    protected void createCacheManagers() throws Throwable {
    }
