@@ -1,47 +1,49 @@
 [[store_migrator]]
 === Store Migrator
-Infinispan 9.0 introduced non-backwards compatible changes to Infinispan internal marshalling. Consequently, cache stores
-created with prior versions of Infinispan can no longer be read by Infinispan 9.x. Furthermore, some previous store
-implementations, such as the JDBC Mixed and Binary stores, are no longer provided. Therefore, in order to assist users,
-we have created a migration tool `StoreMigrator.java`, that reads data from Infinispan 8.2.x stores and rewrites their
-content using the latest marshalling implementation.
+ifndef::productized[]
+{brandname} 9.0 introduced changes to internal marshalling functionality that are not backwardly compatible with previous versions of {brandname}. As a result, {brandname} 9.x and later cannot read cache stores created in earlier versions of {brandname}.
+endif::productized[]
+ifdef::productized[]
+{brandname} 7.3 introduced changes to internal marshalling functionality that are not backwardly compatible with previous versions of {brandname}. As a result, {brandname} 7.3.x and later cannot read cache stores created in earlier versions of {brandname}.
+endif::productized[]
+Additionally, {brandname} no longer provides some store implementations such as JDBC Mixed and Binary stores.
 
-==== Usage
-The`StoreMigrator` takes a single argument, the path to a
-`.properties` file which must contain the configuration properties for both the source and target stores. An example
-properties file containing all applicable configuration options can be found
-link:https://github.com/infinispan/infinispan/blob/master/tools/src/main/resources/migrator.properties[here].
+You can use `StoreMigrator.java` to migrate cache stores. This migration tool reads data from cache stores in previous versions and rewrites the content for compatibility with the current marshalling implementation.
 
-To use the migrator, you need the `infinispan-tools-{infinispanversion}.jar` as well as any dependencies (e.g. JDBC drivers)
-required by your source and target databases on your classpath. An example maven pom, that will execute the migrator
-via `mvn exec:java` is presented below:
+==== Migrating Cache Stores
+To perform a migration with `StoreMigrator`,
+
+. Put `infinispan-tools-{infinispanversion}.jar` and dependencies for your source and target databases, such as JDBC drivers, on your classpath.
+. Create a `.properties` file that contains configuration properties for the source and target cache stores.
++
+You can find an example properties file that contains all applicable configuration options in link:https://github.com/infinispan/infinispan/blob/master/tools/src/main/resources/migrator.properties[migrator.properties].
++
+. Specify `.properties` file as an argument for `StoreMigrator`.
+. Run `mvn exec:java` to execute the migrator.
+
+See the following example Maven `pom.xml` for `StoreMigrator`:
 
 include::topics/dependencies/persistence_storemigrator.adoc[]
 
-==== Properties
-All migrator properties are configured within the context of a source or target store and so each properties must start
-with either `source.` or `target.`.  All of the properties listed below are applicable to both source and target stores,
-with the exception of `table.binary.*` properties as it is not possible to migrate to a binary table.
+==== Store Migrator Properties
+All migrator properties are configured within the context of a source or target store. Each property must start with either `source.` or `target.`.
 
-The property `*.marshaller.type` denotes whether the marshaller from
-{brandname} 8.2x (LEGACY), 9.x (CURRENT) or a custom marshaller should be
-utilised. Note, that the LEGACY marshaller can only be specified for the source
-store.
+All properties in the following sections apply to both source and target stores,
+except for `table.binary.*` properties because it is not possible to migrate to a binary table.
 
 ===== Common Properties
 
 [options="header"]
-|===============
+|===
 |Property|Description|Example value|Required
 |type | JDBC_STRING \| JDBC_BINARY \| JDBC_MIXED \| LEVELDB \| ROCKSDB \| SINGLE_FILE_STORE \| SOFT_INDEX_FILE_STORE | JDBC_MIXED | TRUE
 |cache_name | The name of the cache associated with the store | persistentMixedCache | TRUE
 //Exclude segmentation support from productized docs.
 ifndef::productized[]
-|segment_count | How many segments this store will be created with. If not provided store will not be segmented. (supported as target only - JDBC not yet supported) | null
+|segment_count | How many segments this store will be created with. If not provided store will not be segmented. (supported as target only - JDBC not yet supported) | null |  FALSE
 endif::productized[]
-|===============
+|===
 
-//Exclude segmentation support from productized docs.
 ifndef::productized[]
 It should be noted that the *segment_count* property should match how many
 segments your cache will be using. That is that it should match the
@@ -54,7 +56,25 @@ endif::productized[]
 |===============
 |Property|Description|Example value|Required
 |dialect | The dialect of the underlying database | POSTGRES | TRUE
-|marshaller.type | [LEGACY,CURRENT,CUSTOM] | CURRENT | TRUE
+|marshaller.type | The marshaller to use for the store. Possible values are:
+
+ifndef::productized[]
+- `LEGACY` {brandname} 8.2.x marshaller. Valid for source stores only.
+endif::productized[]
+ifdef::productized[]
+- `LEGACY` {brandname} 7.2.x marshaller. Valid for source stores only.
+endif::productized[]
+
+ifndef::productized[]
+- `CURRENT` {brandname} 9.x marshaller.
+endif::productized[]
+ifdef::productized[]
+- `CURRENT` {brandname} 7.3.x marshaller.
+endif::productized[]
+
+- `CUSTOM` Custom marshaller.
+
+| CURRENT | TRUE
 |marshaller.class | The class of the marshaller if type=CUSTOM | org.example.CustomMarshaller |
 |marshaller.externalizers | A comma-separated list of custom AdvancedExternalizer implementations to load `[id]:<Externalizer class>` | `25:Externalizer1,org.example.Externalizer2` |
 |connection_pool.connection_url | The JDBC connection url | `jdbc:postgresql:postgres` | TRUE
