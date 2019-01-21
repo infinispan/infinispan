@@ -109,7 +109,7 @@ builder.versioning()
 
 * `isolation` - configures the isolation level. Check section link:#tx_isolation_levels[Isolation Levels] for more details.
 Default is `REPEATABLE_READ`.
-* `write-skew` - enables write skew checks. Check section link:#tx_write_skew[Write Skews] for more details. Default is `true`. Defaults to `false` automatically for the `READ_COMMITTED` isolation level. This attribute is deprecated.
+* `write-skew` - enables write skew checks (deprecated). {brandname} automatically sets this attribute in Library Mode. Default is `false` for `READ_COMMITTED`. Default is `true` for `REPEATABLE_READ`. See link:#tx_write_skew[Write Skews] for more details.
 * `locking` - configures whether the cache uses optimistic or pessimistic locking. Check section link:#tx_locking[Transaction Locking] for more details.
 Default is `OPTIMISTIC`.
 * `auto-commit` - if enable, the user does not need to start a transaction manually for a single operation. The transaction is automatically started and committed.
@@ -244,11 +244,11 @@ Pessimistic transactions are more costly by their nature: each write operation p
 
 Write skews occur when two transactions independently and simultaneously read and write to the same key. The result of a write skew is that both transactions successfully commit updates to the same key but with different values.
 
-The `write-skew` attribute automatically detects and rolls back one of the transactions. However, write skew checks apply only to `REPEATABLE_READ` isolation levels in optimistic transactions.
+In Library Mode, {brandname} automatically performs write skew checks to ensure data consistency for `REPEATABLE_READ` isolation levels in optimistic transactions. This allows {brandname} to detect and roll back one of the transactions.
 
 [NOTE]
 ====
-The `write-skew` attribute is deprecated.
+The `write-skew` attribute is deprecated for Library Mode. In Remote Client/Server Mode, this attribute is not a valid declaration.
 ====
 
 When operating in `LOCAL` mode, write skew checks rely on Java object references to compare differences, which provides a reliable technique for checking for write skews.
@@ -269,7 +269,7 @@ new ConfigurationBuilder().versioning().scheme(SIMPLE);
 
 ==== Forcing write locks on keys in pessimitic transactions
 
-Write-skews checks do not occur with pessimistic transactions. To avoid write-skews with pessimistic transactions, lock keys at read-time with `Flag.FORCE_WRITE_LOCK`.
+To avoid write-skews with pessimistic transactions, lock keys at read-time with `Flag.FORCE_WRITE_LOCK`.
 
 [NOTE]
 ====
