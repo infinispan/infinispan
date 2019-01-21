@@ -267,6 +267,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          } catch (IOException e) {
             log.debug("Couldn't clear index", e);
          }
+         index.stopOperations();
          index = null;
          try {
             fileProvider.clear();
