@@ -9,6 +9,14 @@ import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 import java.util.Queue;
 
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.ssl.OpenSsl;
+import io.netty.handler.ssl.SslContext;
+import io.netty.util.CharsetUtil;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.http2.NettyHttpClient;
 import org.infinispan.rest.http2.NettyTruststoreUtil;
@@ -27,18 +35,10 @@ import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
 import org.infinispan.server.router.utils.RestTestingUtil;
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.ssl.OpenSsl;
-import io.netty.handler.ssl.SslContext;
-import io.netty.util.CharsetUtil;
 
 public class SinglePortTest {
 
@@ -48,6 +48,10 @@ public class SinglePortTest {
     public static final String TRUST_STORE_PASSWORD = "secret";
 
     private Router router;
+    private RestServer restServer;
+    private HotRodServer hotrodServer;
+    private NettyHttpClient httpClient;
+    private HotRodClient hotRodClient;
 
     @BeforeClass
     public static void beforeClass() {
@@ -59,12 +63,33 @@ public class SinglePortTest {
         TestResourceTracker.testFinished(MethodHandles.lookup().lookupClass().toString());
     }
 
+    @After
+    public void afterMethod() {
+        if (router != null) {
+            router.stop();
+        }
+        if (restServer != null) {
+            restServer.stop();
+            restServer.getCacheManager().stop();
+        }
+        if (hotrodServer != null) {
+            hotrodServer.stop();
+            hotrodServer.getCacheManager().stop();
+        }
+        if (httpClient != null) {
+            httpClient.stop();
+        }
+        if (hotRodClient != null) {
+            hotRodClient.stop();
+        }
+    }
+
     @Test
     public void shouldUpgradeThroughHTTP11UpgradeHeaders() throws Exception {
         //given
-        RestServer restServer1 = RestTestingUtil.createDefaultRestServer("default");
+        restServer = RestTestingUtil.createDefaultRestServer("default");
 
-        RestServerRouteDestination restDestination = new RestServerRouteDestination("rest1", restServer1);
+        RestServerRouteDestination restDestination = new RestServerRouteDestination("rest1", restServer);
         SinglePortRouteSource singlePortSource = new SinglePortRouteSource();
         Route<SinglePortRouteSource, RestServerRouteDestination> routeToRest = new Route<>(singlePortSource, restDestination);
 
@@ -81,14 +106,14 @@ public class SinglePortTest {
         int port = router.getRouter(EndpointRouter.Protocol.SINGLE_PORT).get().getPort();
 
         //when
-        NettyHttpClient client = NettyHttpClient.newHttp2ClientWithHttp11Upgrade();
-        client.start("localhost", port);
+        httpClient = NettyHttpClient.newHttp2ClientWithHttp11Upgrade();
+        httpClient.start("localhost", port);
 
         FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/test",
               wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
 
-        client.sendRequest(putValueInCacheRequest);
-        Queue<FullHttpResponse> responses = client.getResponses();
+        httpClient.sendRequest(putValueInCacheRequest);
+        Queue<FullHttpResponse> responses = httpClient.getResponses();
 
         //then
         assertThat(responses).hasSize(1);
@@ -102,9 +127,9 @@ public class SinglePortTest {
         }
 
         //given
-        RestServer restServer1 = RestTestingUtil.createDefaultRestServer("default");
+        restServer = RestTestingUtil.createDefaultRestServer("default");
 
-        RestServerRouteDestination restDestination = new RestServerRouteDestination("rest1", restServer1);
+        RestServerRouteDestination restDestination = new RestServerRouteDestination("rest1", restServer);
         SinglePortRouteSource singlePortSource = new SinglePortRouteSource();
         Route<SinglePortRouteSource, RestServerRouteDestination> routeToRest = new Route<>(singlePortSource, restDestination);
 
@@ -117,19 +142,19 @@ public class SinglePortTest {
               .routing()
               .add(routeToRest);
 
-        Router router = new Router(routerConfigurationBuilder.build());
+        router = new Router(routerConfigurationBuilder.build());
         router.start();
         int port = router.getRouter(EndpointRouter.Protocol.SINGLE_PORT).get().getPort();
 
         //when
-        NettyHttpClient client = NettyHttpClient.newHttp2ClientWithALPN(TRUST_STORE_PATH, TRUST_STORE_PASSWORD);
-        client.start("localhost", port);
+        httpClient = NettyHttpClient.newHttp2ClientWithALPN(TRUST_STORE_PATH, TRUST_STORE_PASSWORD);
+        httpClient.start("localhost", port);
 
         FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/test",
               wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
 
-        client.sendRequest(putValueInCacheRequest);
-        Queue<FullHttpResponse> responses = client.getResponses();
+        httpClient.sendRequest(putValueInCacheRequest);
+        Queue<FullHttpResponse> responses = this.httpClient.getResponses();
 
         //then
         assertThat(responses).hasSize(1);
@@ -143,12 +168,12 @@ public class SinglePortTest {
         }
 
         //given
-        HotRodServer hotrodServer = HotRodTestingUtil.startHotRodServerWithoutTransport("default");
-        RestServer restServer1 = RestTestingUtil.createDefaultRestServer("default");
+        hotrodServer = HotRodTestingUtil.startHotRodServerWithoutTransport("default");
+        restServer = RestTestingUtil.createDefaultRestServer("default");
 
         HotRodServerRouteDestination hotrodDestination = new HotRodServerRouteDestination("hotrod", hotrodServer);
 
-        RestServerRouteDestination restDestination = new RestServerRouteDestination("rest", restServer1);
+        RestServerRouteDestination restDestination = new RestServerRouteDestination("rest", restServer);
 
         SinglePortRouteSource singlePortSource = new SinglePortRouteSource();
         Route<SinglePortRouteSource, RestServerRouteDestination> routeToRest = new Route<>(singlePortSource, restDestination);
@@ -164,14 +189,14 @@ public class SinglePortTest {
               .add(routeToRest)
               .add(routeToHotRod);
 
-        Router router = new Router(routerConfigurationBuilder.build());
+        router = new Router(routerConfigurationBuilder.build());
         router.start();
         int port = router.getRouter(EndpointRouter.Protocol.SINGLE_PORT).get().getPort();
 
         SslContext sslContext = NettyTruststoreUtil.createTruststoreContext(TRUST_STORE_PATH, TRUST_STORE_PASSWORD.toCharArray(), "HR");
 
         //when
-        HotRodClient hotRodClient = new HotRodClient("localhost", port, "default", 60, (byte) 20, sslContext.newEngine(ByteBufAllocator.DEFAULT));
+        hotRodClient = new HotRodClient("localhost", port, "default", 60, (byte) 20, sslContext.newEngine(ByteBufAllocator.DEFAULT));
         TestResponse response = hotRodClient.put("test", "test");
 
         //then
