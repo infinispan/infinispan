@@ -189,15 +189,19 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
       String newCacheName = "repl-size";
       defineCaches(newCacheName);
       List<HotRodClient> newClients = createClients(newCacheName);
-      TestSizeResponse sizeStart = newClients.get(0).size();
-      assertStatus(sizeStart, Success);
-      assertEquals(0, sizeStart.size);
-      for (int i = 0; i < 20; i++) {
-         newClients.get(1).assertPut(m, "k-" + i, "v-" + i);
+      try {
+         TestSizeResponse sizeStart = newClients.get(0).size();
+         assertStatus(sizeStart, Success);
+         assertEquals(0, sizeStart.size);
+         for (int i = 0; i < 20; i++) {
+            newClients.get(1).assertPut(m, "k-" + i, "v-" + i);
+         }
+         TestSizeResponse sizeEnd = newClients.get(1).size();
+         assertStatus(sizeEnd, Success);
+         assertEquals(20, sizeEnd.size);
+      } finally {
+         newClients.forEach(HotRodClient::stop);
       }
-      TestSizeResponse sizeEnd = newClients.get(1).size();
-      assertStatus(sizeEnd, Success);
-      assertEquals(20, sizeEnd.size);
    }
 
    protected void checkTopologyReceived(AbstractTestTopologyAwareResponse topoResp, List<HotRodServer> servers,
