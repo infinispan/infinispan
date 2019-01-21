@@ -51,6 +51,7 @@ import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -94,6 +95,14 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
             new ClusteredCacheTest().storageType(StorageType.BINARY),
             new ClusteredCacheTest().storageType(StorageType.OBJECT),
       };
+   }
+
+   @AfterMethod(alwaysRun = true)
+   @Override
+   protected void clearContent() throws Throwable {
+      // Update the indexes as well -- see ISPN-9890
+      cache(0).clear();
+      super.clearContent();
    }
 
    ClusteredCacheTest storageType(StorageType storageType) {

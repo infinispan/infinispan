@@ -9,7 +9,6 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.query.blackbox.ClusteredCacheTest;
 import org.infinispan.query.test.Person;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -44,12 +43,5 @@ public class ClusteredCacheWithElasticsearchIndexManagerIT extends ClusteredCach
         List<Cache<Object, Person>> caches = createClusteredCaches(2, cacheCfg);
         cache1 = caches.get(0);
         cache2 = caches.get(1);
-    }
-
-    @AfterMethod
-    @Override
-    protected void clearContent() throws Throwable {
-        cache(0).clear();
-        super.clearContent();
     }
 }
