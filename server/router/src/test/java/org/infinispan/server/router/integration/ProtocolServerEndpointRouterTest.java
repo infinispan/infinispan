@@ -16,6 +16,7 @@ import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
 import org.infinispan.server.router.routes.hotrod.SniNettyRouteSource;
 import org.infinispan.server.router.utils.HotRodClientTestingUtil;
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,6 +28,11 @@ public class ProtocolServerEndpointRouterTest {
 
     private final String KEYSTORE_LOCATION_FOR_HOTROD_2 = getClass().getClassLoader().getResource("default_server_keystore.jks").getPath();
     private final String TRUSTSTORE_LOCATION_FOR_HOTROD_2 = getClass().getClassLoader().getResource("default_client_truststore.jks").getPath();
+    private HotRodServer hotrodServer1;
+    private HotRodServer hotrodServer2;
+    private Router router;
+    private RemoteCacheManager hotrod1Client;
+    private RemoteCacheManager hotrod2Client;
 
     @BeforeClass
     public static void beforeClass() {
@@ -38,6 +44,27 @@ public class ProtocolServerEndpointRouterTest {
         TestResourceTracker.testFinished(ProtocolServerEndpointRouterTest.class.getName());
     }
 
+    @After
+    public void afterMethod() {
+        if (router != null) {
+            router.stop();
+        }
+        if (hotrodServer1 != null) {
+            hotrodServer1.stop();
+            hotrodServer1.getCacheManager().stop();
+        }
+        if (hotrodServer2 != null) {
+            hotrodServer2.stop();
+            hotrodServer2.getCacheManager().stop();
+        }
+        if (hotrod1Client != null) {
+            hotrod1Client.stop();
+        }
+        if (hotrod2Client != null) {
+            hotrod2Client.stop();
+        }
+    }
+
     /**
      * In this scenario we create 2 HotRod servers, each one with different credentials and SNI name. We also create a
      * new client for each server. The clients use proper TrustStores as well as SNI names.
@@ -47,8 +74,8 @@ public class ProtocolServerEndpointRouterTest {
     @Test
     public void shouldRouteToProperHotRodServerBasedOnSniHostName() throws Exception {
         //given
-        HotRodServer hotrodServer1 = HotRodTestingUtil.startHotRodServerWithoutTransport();
-        HotRodServer hotrodServer2 = HotRodTestingUtil.startHotRodServerWithoutTransport();
+        hotrodServer1 = HotRodTestingUtil.startHotRodServerWithoutTransport();
+        hotrodServer2 = HotRodTestingUtil.startHotRodServerWithoutTransport();
 
         HotRodServerRouteDestination hotrod1Destination = new HotRodServerRouteDestination("HotRod1", hotrodServer1);
         SniNettyRouteSource hotrod1Source = new SniNettyRouteSource("hotrod1", KEYSTORE_LOCATION_FOR_HOTROD_1, "secret".toCharArray());
@@ -68,15 +95,15 @@ public class ProtocolServerEndpointRouterTest {
                 .add(routeToHotrod1)
                 .add(routeToHotrod2);
 
-        Router router = new Router(routerConfigurationBuilder.build());
+        router = new Router(routerConfigurationBuilder.build());
         router.start();
 
         InetAddress routerIp = router.getRouter(EndpointRouter.Protocol.HOT_ROD).get().getIp();
         int routerPort = router.getRouter(EndpointRouter.Protocol.HOT_ROD).get().getPort();
 
         //when
-        RemoteCacheManager hotrod1Client = HotRodClientTestingUtil.createWithSni(routerIp, routerPort, "hotrod1", TRUSTSTORE_LOCATION_FOR_HOTROD_1, "secret".toCharArray());
-        RemoteCacheManager hotrod2Client = HotRodClientTestingUtil.createWithSni(routerIp, routerPort, "hotrod2", TRUSTSTORE_LOCATION_FOR_HOTROD_2, "secret".toCharArray());
+        hotrod1Client = HotRodClientTestingUtil.createWithSni(routerIp, routerPort, "hotrod1", TRUSTSTORE_LOCATION_FOR_HOTROD_1, "secret".toCharArray());
+        hotrod2Client = HotRodClientTestingUtil.createWithSni(routerIp, routerPort, "hotrod2", TRUSTSTORE_LOCATION_FOR_HOTROD_2, "secret".toCharArray());
 
         hotrod1Client.getCache().put("test", "hotrod1");
         hotrod2Client.getCache().put("test", "hotrod2");
