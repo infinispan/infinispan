@@ -25,17 +25,12 @@ public class AffinityTopologyChangeTest extends BaseAffinityTest {
       querying = new QueryingNode(getQueryThreadsPerNode(), globalCounter, QueryType.MATCH_ALL);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void after() {
       indexing3.kill();
       querying.kill();
       indexing2.kill();
       indexing1.kill();
-   }
-
-   @AfterMethod
-   @Override
-   protected void clearContent() throws Throwable {
    }
 
    @Override

@@ -42,6 +42,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TransportFlags;
+import org.testng.annotations.AfterMethod;
 
 public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
 
@@ -188,6 +189,12 @@ public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm = super.addClusterEnabledCacheManager(builder, flags);
       configureIndexCaches(Collections.singleton(cm));
       return cm;
+   }
+
+   @AfterMethod(alwaysRun = true)
+   @Override
+   protected void clearContent() throws Throwable {
+      cache(0).clear();
    }
 
    private void configureIndexCaches(Collection<EmbeddedCacheManager> managers) {
