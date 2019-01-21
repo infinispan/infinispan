@@ -114,9 +114,9 @@ The possible attributes for the locking element are:
 *  _concurrency-level_ concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with {brandname}.
 *  _concurrent-updates_ for non-transactional caches only: if set to true(default value) the cache keeps data consistent in the case of concurrent updates. For clustered caches this comes at the cost of an additional RPC, so if you don't expect your application to write data concurrently, disabling this flag increases performance.
 
-==== Transactions
+==== Transactional Operations with Hot Rod
 
-While it is possible to configure server caches to be transactional, none of the available protocols offer transaction capabilities.
+Hot Rod clients can take advantage of transactional capabilities when performing cache operations. No other protocols that {brandname} supports offer transactional capabilities.
 
 ==== Loaders and Stores
 Loaders and stores can be defined in server mode in almost the same way as in embedded mode.
