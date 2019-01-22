@@ -1,6 +1,7 @@
 package org.infinispan.spring.common;
 
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.support.AbstractTestExecutionListener;
 
@@ -18,6 +19,9 @@ public class InfinispanTestExecutionListener extends AbstractTestExecutionListen
 
    @Override
    public void afterTestClass(TestContext testContext) throws Exception {
+      // The Spring listener that stops the application context will run later
+      // So we stop it explicitly before running the thread leak check
+      ((ConfigurableApplicationContext)testContext.getApplicationContext()).close();
       TestResourceTracker.testFinished(testContext.getTestClass().getName());
    }
 }
