@@ -1,0 +1,11 @@
+## New API module
+
+This API module is under construction.
+
+The API here is experimental and may change significantly during version 10.
+
+However, feedback is appreciated.
+
+Please, join the conversation in Zulip, #reactive api topic
+
+https://infinispan.zulipchat.com/login/
