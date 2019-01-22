@@ -22,6 +22,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.cache.Cache;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -42,6 +43,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
    private RemoteCacheManager remoteCacheManager;
 
    private HotRodServer hotrodServer;
+   private SpringRemoteCacheManager objectUnderTest;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -62,15 +64,22 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
       remoteCacheManager = new RemoteCacheManager(builder.build());
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void destroyRemoteCacheFactory() {
       remoteCacheManager.stop();
       hotrodServer.stop();
    }
 
+   @AfterMethod(alwaysRun = true)
+   public void afterMethod() {
+      if (objectUnderTest != null) {
+         objectUnderTest.stop();
+      }
+   }
+
    /**
     * Test method for
-    * {@link org.infinispan.spring.provider.SpringRemoteCacheManager#SpringRemoteCacheManager(RemoteCacheManager)}
+    * {@link org.infinispan.spring.remote.provider.SpringRemoteCacheManager#SpringRemoteCacheManager(RemoteCacheManager)}
     * .
     */
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -80,12 +89,11 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
 
    /**
     * Test method for
-    * {@link org.infinispan.spring.provider.SpringRemoteCacheManager#getCache(String)}.
+    * {@link org.infinispan.spring.remote.provider.SpringRemoteCacheManager#getCache(String)}.
     */
    @Test
    public final void springRemoteCacheManagerShouldProperlyCreateCache() {
-      final SpringRemoteCacheManager objectUnderTest = new SpringRemoteCacheManager(
-            remoteCacheManager);
+      objectUnderTest = new SpringRemoteCacheManager(remoteCacheManager);
 
       final Cache defaultCache = objectUnderTest.getCache(TEST_CACHE_NAME);
 
@@ -98,7 +106,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
 
    /**
     * Test method for
-    * {@link org.infinispan.spring.provider.SpringRemoteCacheManager#getCacheNames()}.
+    * {@link org.infinispan.spring.remote.provider.SpringRemoteCacheManager#getCacheNames()}.
     */
    @Test
    public final void getCacheNamesShouldReturnAllCachesDefinedInConfigurationFile() {
@@ -112,15 +120,14 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
    }
 
    /**
-    * Test method for {@link org.infinispan.spring.provider.SpringRemoteCacheManager#start()}.
+    * Test method for {@link org.infinispan.spring.remote.provider.SpringRemoteCacheManager#start()}.
     *
     * @throws IOException
     */
    @Test
    public final void startShouldStartTheNativeRemoteCacheManager() throws IOException {
-      final RemoteCacheManager nativeCacheManager = new RemoteCacheManager(true);
-      final SpringRemoteCacheManager objectUnderTest = new SpringRemoteCacheManager(
-            nativeCacheManager);
+      final RemoteCacheManager nativeCacheManager = new RemoteCacheManager(false);
+      objectUnderTest = new SpringRemoteCacheManager(nativeCacheManager);
 
       objectUnderTest.start();
 
@@ -130,15 +137,14 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
    }
 
    /**
-    * Test method for {@link org.infinispan.spring.provider.SpringRemoteCacheManager#stop()}.
+    * Test method for {@link org.infinispan.spring.remote.provider.SpringRemoteCacheManager#stop()}.
     *
     * @throws IOException
     */
    @Test
    public final void stopShouldStopTheNativeRemoteCacheManager() throws IOException {
       final RemoteCacheManager nativeCacheManager = new RemoteCacheManager(true);
-      final SpringRemoteCacheManager objectUnderTest = new SpringRemoteCacheManager(
-            nativeCacheManager);
+      objectUnderTest = new SpringRemoteCacheManager(nativeCacheManager);
 
       objectUnderTest.stop();
 
@@ -149,16 +155,15 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
 
    /**
     * Test method for
-    * {@link org.infinispan.spring.provider.SpringRemoteCacheManager#getNativeCacheManager()}.
+    * {@link org.infinispan.spring.remote.provider.SpringRemoteCacheManager#getNativeCacheManager()}.
     *
     * @throws IOException
     */
    @Test
    public final void getNativeCacheShouldReturnTheRemoteCacheManagerSuppliedAtConstructionTime()
          throws IOException {
-      final RemoteCacheManager nativeCacheManager = new RemoteCacheManager(true);
-      final SpringRemoteCacheManager objectUnderTest = new SpringRemoteCacheManager(
-            nativeCacheManager);
+      final RemoteCacheManager nativeCacheManager = new RemoteCacheManager(false);
+      objectUnderTest = new SpringRemoteCacheManager(nativeCacheManager);
 
       final RemoteCacheManager nativeCacheManagerReturned = objectUnderTest.getNativeCacheManager();
 
