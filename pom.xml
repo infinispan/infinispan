@@ -117,6 +117,7 @@
       <module>server/router</module>
       <module>server/server</module>
       <module>client/hotrod-client</module>
+      <module>client/hotrod-client-reactive</module>
       <module>atomic-factory</module>
       <module>all</module>
       <module>all/remote</module>
@@ -158,6 +159,7 @@
       <module>integrationtests/spring-boot-it</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
+      <module>api</module>
    </modules>
    <properties>
       <!-- Semantic versioning defaults. -->
@@ -5596,14 +5598,17 @@
                         </goals>
                         <configuration>
                            <sources>
+                              <source>${dir.ispn}/api/src/main/java</source>
                               <source>${dir.ispn}/atomic-factory/src/main/java</source>
                               <source>${dir.ispn}/cdi/common/src/main/java</source>
-                              <source>${dir.ispn}/cdi/embedded/src/main/java</source>
+                              <source>${dir.ispn}/cdi/embedded
+                                 /src/main/java</source>
                               <source>${dir.ispn}/cdi/remote/src/main/java</source>
                               <source>${dir.ispn}/checkstyle/src/main/java</source>
                               <source>${dir.ispn}/cli/cli-client/src/main/java</source>
                               <source>${dir.ispn}/cli/cli-interpreter/src/main/java</source>
                               <source>${dir.ispn}/client/hotrod-client/src/main/java</source>
+                              <source>${dir.ispn}/client/hotrod-client-reactive/src/main/java</source>
                               <source>${dir.ispn}/commons/src/main/java</source>
                               <source>${dir.ispn}/commons-test/src/main/java</source>
                               <source>${dir.ispn}/core/src/main/java</source>
