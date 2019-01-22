@@ -118,6 +118,7 @@
       <module>server/router</module>
       <module>server/runtime</module>
       <module>client/hotrod-client</module>
+      <module>client/infinispan-key-value-store-hotrod</module>
       <module>atomic-factory</module>
       <module>all</module>
       <module>all/cli</module>
@@ -153,6 +154,7 @@
       <module>integrationtests/spring-boot-it</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
+      <module>api</module>
    </modules>
    <properties>
       <!-- Semantic versioning defaults. -->
@@ -3431,6 +3433,11 @@
             <version>${versionx.org.reactivestreams.reactive-streams}</version>
          </dependency>
          <dependency>
+            <groupId>org.reactivestreams</groupId>
+            <artifactId>reactive-streams-flow-adapters</artifactId>
+            <version>${versionx.org.reactivestreams.reactive-streams}</version>
+         </dependency>
+         <dependency>
             <groupId>org.rocksdb</groupId>
             <artifactId>rocksdbjni</artifactId>
             <version>${versionx.org.rocksdb.rocksdbjni}</version>
@@ -5518,6 +5525,7 @@
                         </goals>
                         <configuration>
                            <sources>
+                              <source>${dir.ispn}/api/src/main/java</source>
                               <source>${dir.ispn}/atomic-factory/src/main/java</source>
                               <source>${dir.ispn}/cdi/common/src/main/java</source>
                               <source>${dir.ispn}/cdi/embedded/src/main/java</source>
@@ -5526,6 +5534,7 @@
                               <source>${dir.ispn}/cli/cli-client/src/main/java</source>
                               <source>${dir.ispn}/cli/cli-interpreter/src/main/java</source>
                               <source>${dir.ispn}/client/hotrod-client/src/main/java</source>
+                              <source>${dir.ispn}/client/infinispan-key-value-store-hotrod/src/main/java</source>
                               <source>${dir.ispn}/commons/src/main/java</source>
                               <source>${dir.ispn}/commons-test/src/main/java</source>
                               <source>${dir.ispn}/core/src/main/java</source>
