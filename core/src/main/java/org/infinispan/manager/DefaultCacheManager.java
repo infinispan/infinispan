@@ -70,7 +70,6 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.AuthorizationHelper;
@@ -1066,7 +1065,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          throw new IllegalStateException("CacheManager must be started before retrieving a ClusterExecutor!");
       }
       // Have to make sure the transport is running before we retrieve it
-      JGroupsTransport transport = (JGroupsTransport) globalComponentRegistry.getComponent(BasicComponentRegistry.class).getComponent(Transport.class).running();
+      Transport transport = globalComponentRegistry.getComponent(BasicComponentRegistry.class).getComponent(Transport.class).running();
       if (transport != null) {
          long time = getCacheManagerConfiguration().transport().distributedSyncTimeout();
          return ClusterExecutors.allSubmissionExecutor(null, this, transport, time, TimeUnit.MILLISECONDS,

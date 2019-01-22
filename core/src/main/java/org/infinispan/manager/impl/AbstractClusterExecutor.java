@@ -20,7 +20,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -29,11 +29,11 @@ import org.infinispan.util.logging.Log;
  * @since 9.0
  */
 abstract class AbstractClusterExecutor<T extends ClusterExecutor> extends LocalClusterExecutor {
-   protected final JGroupsTransport transport;
+   protected final Transport transport;
    protected final Address me;
 
    AbstractClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager,
-         JGroupsTransport transport, long time, TimeUnit unit, Executor localExecutor,
+         Transport transport, long time, TimeUnit unit, Executor localExecutor,
          ScheduledExecutorService timeoutExecutor) {
       super(predicate, manager, localExecutor, time, unit, timeoutExecutor);
       this.transport = transport;
