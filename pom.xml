@@ -157,6 +157,7 @@
       <module>integrationtests/spring-boot-it</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
+      <module>api</module>
    </modules>
    <properties>
       <!-- Semantic versioning defaults. -->

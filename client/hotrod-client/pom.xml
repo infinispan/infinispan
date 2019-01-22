@@ -34,6 +34,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-api</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
       </dependency>
@@ -41,6 +46,11 @@
       <dependency>
          <groupId>io.netty</groupId>
          <artifactId>netty-handler</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>io.reactivex.rxjava2</groupId>
+         <artifactId>rxjava</artifactId>
       </dependency>
 
       <dependency>
@@ -179,6 +189,12 @@
             <artifactId>*</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-api</artifactId>
+         <version>10.0.0-SNAPSHOT</version>
+         <scope>compile</scope>
       </dependency>
 
    </dependencies>

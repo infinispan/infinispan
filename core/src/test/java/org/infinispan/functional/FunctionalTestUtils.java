@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.fail;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -45,6 +46,14 @@ public final class FunctionalTestUtils {
    public static <T> T await(CompletableFuture<T> cf) {
       try {
          return cf.get(MAX_WAIT_SECS, TimeUnit.SECONDS);
+      } catch (TimeoutException | InterruptedException | ExecutionException e) {
+         throw new Error(e);
+      }
+   }
+
+   public static <T> T await(CompletionStage<T> cf) {
+      try {
+         return cf.toCompletableFuture().get(MAX_WAIT_SECS, TimeUnit.SECONDS);
       } catch (TimeoutException | InterruptedException | ExecutionException e) {
          throw new Error(e);
       }

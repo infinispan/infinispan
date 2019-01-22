@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 
+import org.infinispan.ClientConfig;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -26,7 +27,7 @@ import org.infinispan.commons.util.TypedProperties;
  * @since 5.3
  */
 @BuiltBy(ConfigurationBuilder.class)
-public class Configuration {
+public class Configuration implements ClientConfig {
 
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
    private final Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory;
@@ -382,5 +383,9 @@ public class Configuration {
          properties.setProperty(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN, nearCache.cacheNamePattern().pattern());
 
       return properties;
+   }
+
+   public static ClientConfig defaultClientConfig() {
+      return new ConfigurationBuilder().build();
    }
 }
