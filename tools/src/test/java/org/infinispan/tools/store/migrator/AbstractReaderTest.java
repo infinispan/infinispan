@@ -82,13 +82,17 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
       // Create a new cache instance, with the required externalizers, to ensure that the new RocksDbStore can be
       // loaded and contains all of the expected values.
       EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig, config);
-      Cache cache = manager.getCache(TEST_CACHE_NAME);
-      for (String key : TestUtil.TEST_MAP.keySet()) {
-         Object stored = cache.get(key);
-         assertNotNull(String.format("Key=%s", key), stored);
-         Object expected = TestUtil.TEST_MAP.get(key);
-         assertNotNull(String.format("Key=%s", key), stored);
-         assertEquals(expected, stored);
+      try {
+         Cache cache = manager.getCache(TEST_CACHE_NAME);
+         for (String key : TestUtil.TEST_MAP.keySet()) {
+            Object stored = cache.get(key);
+            assertNotNull(String.format("Key=%s", key), stored);
+            Object expected = TestUtil.TEST_MAP.get(key);
+            assertNotNull(String.format("Key=%s", key), stored);
+            assertEquals(expected, stored);
+         }
+      } finally {
+         manager.stop();
       }
    }
 }
