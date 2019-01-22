@@ -17,8 +17,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -38,7 +38,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
    private static final boolean isTrace = log.isTraceEnabled();
 
    SingleClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager,
-         JGroupsTransport transport, long time, TimeUnit unit, Executor localExecutor,
+         Transport transport, long time, TimeUnit unit, Executor localExecutor,
          ScheduledExecutorService timeoutExecutor) {
       super(predicate, manager, transport, time, unit, localExecutor, timeoutExecutor);
    }
