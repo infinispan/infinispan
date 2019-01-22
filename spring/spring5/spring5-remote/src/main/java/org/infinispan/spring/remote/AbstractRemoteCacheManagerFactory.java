@@ -65,7 +65,12 @@ public abstract class AbstractRemoteCacheManagerFactory {
       } else {
          this.logger
                .debug("No configuration properties. RemoteCacheManager will use default configuration.");
-         answer = new RemoteCacheManager().getConfiguration().properties();
+         RemoteCacheManager remoteCacheManager = new RemoteCacheManager(false);
+         try {
+            answer = remoteCacheManager.getConfiguration().properties();
+         } finally {
+           remoteCacheManager.stop();
+         }
       }
       return answer;
    }
