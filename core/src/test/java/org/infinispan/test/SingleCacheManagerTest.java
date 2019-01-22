@@ -38,6 +38,10 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
       cacheManager = null;
    }
 
+   protected void clearCacheManager() {
+       TestingUtil.clearContent(cacheManager);
+   }
+
    @BeforeClass(alwaysRun = true)
    protected void createBeforeClass() throws Exception {
       try {
@@ -76,7 +80,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    @AfterMethod(alwaysRun=true)
    protected void clearContent() {
-      if (cleanupAfterTest()) TestingUtil.clearContent(cacheManager);
+      if (cleanupAfterTest()) clearCacheManager();
    }
 
    protected ConfigurationBuilder getDefaultStandaloneCacheConfig(boolean transactional) {
