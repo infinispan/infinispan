@@ -1,9 +1,7 @@
 package org.infinispan.persistence.jpa;
 
-import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertNotNull;
 
-import org.hibernate.jpa.HibernateEntityManagerFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -31,8 +29,6 @@ import org.testng.annotations.BeforeMethod;
 public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
 
    protected static final String PERSISTENCE_UNIT_NAME = "org.infinispan.persistence.jpa";
-
-   protected static final Double HIBERNATE_VERSION = Double.parseDouble(org.hibernate.Version.getVersionString().substring(0,3));
 
    protected EmbeddedCacheManager cm;
 
@@ -63,12 +59,6 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
       store.start();
 
       assertNotNull(store.getEntityManagerFactory());
-
-       if (HIBERNATE_VERSION < 5.2) {
-           assertTrue(store.getEntityManagerFactory() instanceof HibernateEntityManagerFactory);
-       } else {
-           assertTrue(store.getEntityManagerFactory() instanceof org.hibernate.internal.SessionFactoryImpl);
-       }
 
       return store;
    }
