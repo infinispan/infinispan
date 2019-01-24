@@ -11,7 +11,7 @@ In order to start using the clustered locks, you needs to add the dependency in 
 .pom.xml
 include::topics/dependencies/clustered_locks.adoc[]
 
-=== The ClusteredLockConfiguration
+=== ClusteredLock Configuration
 
 Currently there is a single type of `ClusteredLock` supported : non reentrant, NODE ownership lock.
 
@@ -46,7 +46,7 @@ times as it wants while holding the lock.
 Currently, only non reentrant locks are supported. This means that when two consecutive `lock` calls are sent for the same
 owner, the first call will acquire the lock if it's available, and the second call will block.
 
-=== The ClusteredLockManager interface.
+=== ClusteredLockManager Interface
 
 The `ClusteredLockManager` interface, *marked as experimental*, is the entry point to define, retrieve and remove a lock.
 It automatically listen to the creation of `EmbeddedCacheManager` and proceeds with the registration  of an
@@ -115,7 +115,7 @@ Releases - or unlocks - a `ClusteredLock`, if such exists, no matter who is hold
 Calling this method may cause concurrency issues and has to be used in *exceptional situations*.
 
 [[clustered_lock_interface]]
-=== The Clustered Lock
+=== ClusteredLock Interface
 
 `ClusteredLock` interface, *marked as experimental*, is the interface that implements the clustered locks.
 
@@ -188,48 +188,18 @@ Returns `true` when the lock is owned by the caller and `false` when the lock is
  }
 ----
 
-=== The ClusteredLockManager configuration
-The Clustered lock manager can be configured to follow different strategies for the locks. It can be configured either by code
-or by XML.
+=== ClusteredLockManager Configuration
+You can configure `ClusteredLockManager` to use different strategies for locks, either declaratively or programmatically, with the following attributes:
 
-There are two available attributes:
+`num-owners`::
+Defines the total number of nodes in each cluster that store the states of clustered locks. The default value is `-1`, which replicates the value to all nodes.
 
-* `num-owners` :
-Number of owners, default -1 (meaning locks are replicated to all the nodes in the cluster).
+`reliability`::
+Controls how clustered locks behave when clusters split into partitions or multiple nodes leave a cluster. You can set the following values:
 +
-Defines the total number of members in the cluster that will keep a copy of the clustered lock state value.
+* `AVAILABLE`: Nodes in any partition can concurrently operate on locks.
+* `CONSISTENT`: Only nodes that belong to the majority partition can operate on locks. This is the default value.
 
-* `reliability` :
-+
-Lock behaviour when the cluster splits into multiple partitions or a multiple nodes crash, default CONSISTENT.
+The following is an example declarative configuration for `ClusteredLockManager`:
 
-** AVAILABLE: It will let partitions operate at the same time with the lock, regardless they are in the majority partition.
-** CONSISTENT: Won't allow members to operate with the lock if they don't belong to the majority partition
-
-==== XML configuration example
-
-.configuration.xml
-[source,xml]
-----
-<?xml version="1.0" encoding="UTF-8"?>
-<infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} http://www.infinispan.org/schemas/infinispan-config-10.0.xsd"
-        xmlns="urn:infinispan:config:10.0">
-
-    <cache-container default-cache="default">
-        <transport/>
-        <local-cache name="default">
-            <locking concurrency-level="100" acquire-timeout="1000"/>
-        </local-cache>
-
-        <clustered-locks xmlns="urn:infinispan:config:clustered-locks:10.0"
-                         num-owners = "3"
-                         reliability="AVAILABLE">
-            <clustered-lock name="lock1" />
-            <clustered-lock name="lock2" />
-        </clustered-locks>
-    </cache-container>
-
-</infinispan>
-----
+include::topics/configuration/clustered_lock_manager.adoc[]
