@@ -133,6 +133,16 @@ public class SimpleRequest implements RestRequest {
    }
 
    @Override
+   public Long getCreatedHeader() {
+      return null;
+   }
+
+   @Override
+   public Long getLastUsedHeader() {
+      return null;
+   }
+
+   @Override
    public Principal getPrincipal() {
       return principal;
    }

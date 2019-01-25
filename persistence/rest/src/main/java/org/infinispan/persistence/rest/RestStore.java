@@ -73,6 +73,8 @@ import net.jcip.annotations.ThreadSafe;
 public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final String MAX_IDLE_TIME_SECONDS = "maxIdleTimeSeconds";
    private static final String TIME_TO_LIVE_SECONDS = "timeToLiveSeconds";
+   private static final String CREATED = "created";
+   private static final String LAST_USED = "lastUsed";
    private static final Log log = LogFactory.getLog(RestStore.class, Log.class);
    private volatile RestStoreConfiguration configuration;
    private Bootstrap bootstrap;
@@ -306,8 +308,8 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                   long ttl = timeHeaderToLong(response.headers().get(TIME_TO_LIVE_SECONDS));
                   long maxidle = timeHeaderToLong(response.headers().get(MAX_IDLE_TIME_SECONDS));
                   metadata = metadataHelper.buildMetadata(contentType, ttl, TimeUnit.SECONDS, maxidle, TimeUnit.SECONDS);
-                  created = ctx.getTimeService().wallClockTime();
-                  lastUsed = created;
+                  created = timeHeaderToLong(response.headers().get(CREATED));
+                  lastUsed = timeHeaderToLong(response.headers().get(LAST_USED));
                } else {
                   metadata = null;
                   created = -1;
