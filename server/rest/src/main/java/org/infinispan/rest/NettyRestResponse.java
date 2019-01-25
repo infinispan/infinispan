@@ -33,6 +33,8 @@ public class NettyRestResponse implements RestResponse {
    private final static DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneId.systemDefault());
    private final static String TIME_TO_LIVE_HEADER = "timeToLiveSeconds";
    private final static String MAX_IDLE_TIME_HEADER = "maxIdleTimeSeconds";
+   private static final String CREATED_HEADER = "created";
+   private static final String LAST_USED_HEADER = "lastUsed";
    private final static String CLUSTER_PRIMARY_OWNER_HEADER = "Cluster-Primary-Owner";
    private final static String CLUSTER_NODE_NAME_HEADER = "Cluster-Node-Name";
    private final static String CLUSTER_SERVER_ADDRESS_HEADER = "Cluster-Server-Address";
@@ -164,6 +166,16 @@ public class NettyRestResponse implements RestResponse {
 
       public Builder maxIdle(long maxIdle) {
          if (maxIdle > -1) response.headers().set(MAX_IDLE_TIME_HEADER, TimeUnit.MILLISECONDS.toSeconds(maxIdle));
+         return this;
+      }
+
+      public Builder created(long created) {
+         if (created > -1) response.headers().set(CREATED_HEADER, created);
+         return this;
+      }
+
+      public Builder lastUsed(long lastUsed) {
+         if (lastUsed > -1) response.headers().set(LAST_USED_HEADER, lastUsed);
          return this;
       }
 

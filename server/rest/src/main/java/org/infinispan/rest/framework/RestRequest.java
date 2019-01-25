@@ -49,6 +49,10 @@ public interface RestRequest {
 
    Long getTimeToLiveSecondsHeader();
 
+   Long getCreatedHeader();
+
+   Long getLastUsedHeader();
+
    Principal getPrincipal();
 
    void setPrincipal(Principal principal);

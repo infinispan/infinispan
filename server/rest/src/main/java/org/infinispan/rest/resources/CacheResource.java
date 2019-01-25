@@ -252,7 +252,9 @@ public class CacheResource implements ResourceHandler {
                      .cacheControl(CacheOperationsHelper.calcCacheControl(expires))
                      .expires(expires)
                      .timeToLive(meta.lifespan())
-                     .maxIdle(meta.maxIdle());
+                     .maxIdle(meta.maxIdle())
+                     .created(ice.getCreated())
+                     .lastUsed(ice.getLastUsed());
 
                List<String> extended = request.parameters().get(EXTENDED_HEADER);
                if (extended != null && extended.size() > 0 && CacheOperationsHelper.supportsExtendedHeaders(restServerConfiguration, extended.iterator().next())) {
