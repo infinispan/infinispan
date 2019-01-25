@@ -1059,6 +1059,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public ClusterExecutor executor() {
+      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       // Allow INITIALIZING state so ClusterExecutor can be used by components in a @Start method.
       if (globalComponentRegistry.getStatus() != ComponentStatus.RUNNING &&
             globalComponentRegistry.getStatus() != ComponentStatus.INITIALIZING) {

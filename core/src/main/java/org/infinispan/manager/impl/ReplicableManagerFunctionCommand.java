@@ -33,7 +33,7 @@ public class ReplicableManagerFunctionCommand implements ReplicableCommand {
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      return CompletableFuture.completedFuture(function.apply(manager));
+      return CompletableFuture.completedFuture(function.apply(new UnwrappingEmbeddedCacheManager(manager)));
    }
 
    @Override
