@@ -87,7 +87,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
     * @param dependantCacheName the name of the cache depending on the protobuf metadata cache
     */
    protected void addCacheDependency(String dependantCacheName) {
-      protobufSchemaCache = (Cache<String, String>) SecurityActions.getCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME).getAdvancedCache().withEncoding(IdentityEncoder.class);
+      protobufSchemaCache = (Cache<String, String>) SecurityActions.getUnwrappedCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME).getAdvancedCache().withEncoding(IdentityEncoder.class);
       // add stop dependency
       cacheManager.addCacheDependency(dependantCacheName, ProtobufMetadataManagerImpl.PROTOBUF_METADATA_CACHE_NAME);
    }
