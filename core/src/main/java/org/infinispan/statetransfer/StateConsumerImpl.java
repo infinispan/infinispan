@@ -65,6 +65,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -641,9 +642,10 @@ public class StateConsumerImpl implements StateConsumer {
                ctx = icf.createSingleKeyNonTxInvocationContext();
             }
 
-            // CallInterceptor knows PUT_FOR_STATE_TRANSFER values are actually InternalCacheEntries
-            PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e, segmentId,
-                  e.getMetadata(), STATE_TRANSFER_FLAGS);
+            // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
+            InternalMetadataImpl metadata = new InternalMetadataImpl(e);
+            PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), segmentId,
+                                                                             metadata, STATE_TRANSFER_FLAGS);
             ctx.setLockOwner(put.getKeyLockOwner());
             interceptorChain.invoke(ctx, put);
 
