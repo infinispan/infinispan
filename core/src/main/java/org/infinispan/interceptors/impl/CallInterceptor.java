@@ -97,6 +97,7 @@ import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.stream.impl.local.SegmentedEntryStreamSupplier;
@@ -175,15 +176,13 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          throw new IllegalStateException("Not wrapped");
       }
 
-      Object newValue;
-      if (!command.hasAllFlags(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.CACHE_MODE_LOCAL)) {
-         newValue = command.getValue();
-      } else {
-         // [Scattered]StateConsumerImpl guarantees the value is actually an entry
-         InternalCacheEntry ice = (InternalCacheEntry) command.getValue();
-         e.setCreated(ice.getCreated());
-         e.setLastUsed(ice.getLastUsed());
-         newValue = ice.getValue();
+      Object newValue = command.getValue();
+      Metadata metadata = command.getMetadata();
+      if (metadata instanceof InternalMetadataImpl) {
+         InternalMetadataImpl internalMetadata = (InternalMetadataImpl) metadata;
+         metadata = internalMetadata.actual();
+         e.setCreated(internalMetadata.created());
+         e.setLastUsed(internalMetadata.lastUsed());
       }
       Object prevValue = e.getValue();
       if (!valueMatcher.matches(prevValue, null, newValue)) {
@@ -191,8 +190,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return prevValue;
       }
 
-      return performPut(e, ctx, valueMatcher, key, newValue, command.getMetadata(), command,
-            command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER));
+      return performPut(e, ctx, valueMatcher, key, newValue, metadata, command,
+                        command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER));
    }
 
    private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx, ValueMatcher valueMatcher,

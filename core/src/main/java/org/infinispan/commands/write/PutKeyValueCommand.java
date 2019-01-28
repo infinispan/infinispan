@@ -19,7 +19,7 @@ import org.infinispan.metadata.Metadata;
  * Implements functionality defined by {@link org.infinispan.Cache#put(Object, Object)}
  *
  * <p>Note: Since 9.4, when the flag {@link org.infinispan.context.Flag#PUT_FOR_STATE_TRANSFER} is set,
- * the value is actually an {@code InternalCacheEntry} wrapping the value and the timestamps of the entry
+ * the metadata is actually an {@code InternalMetadata} that includes the timestamps of the entry
  * from the source node.</p>
  *
  * @author Mircea.Markus@jboss.com
