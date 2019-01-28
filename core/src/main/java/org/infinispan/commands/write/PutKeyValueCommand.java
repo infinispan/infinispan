@@ -11,19 +11,19 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#put(Object, Object)}
  *
  * <p>Note: Since 9.4, when the flag {@link org.infinispan.context.Flag#PUT_FOR_STATE_TRANSFER} is set,
- * the value is actually an {@code InternalCacheEntry} wrapping the value and the timestamps of the entry
+ * the metadata is actually an {@code InternalMetadata} that includes the timestamps of the entry
  * from the source node.</p>
  *
  * @author Mircea.Markus@jboss.com
@@ -96,24 +96,21 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          throw new IllegalStateException("Not wrapped");
       }
 
-      Object newValue;
-      if (!hasAllFlags(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.CACHE_MODE_LOCAL)) {
-         newValue = value;
-      } else {
-         // [Scattered]StateConsumerImpl guarantees the value is actually an entry
-         InternalCacheEntry ice = (InternalCacheEntry) value;
-         e.setCreated(ice.getCreated());
-         e.setLastUsed(ice.getLastUsed());
-         newValue = ice.getValue();
+      Object newValue = value;
+      Metadata newMetadata = metadata;
+      if (newMetadata instanceof InternalMetadataImpl) {
+         InternalMetadataImpl internalMetadata = (InternalMetadataImpl) newMetadata;
+         newMetadata = internalMetadata.actual();
+         e.setCreated(internalMetadata.created());
+         e.setLastUsed(internalMetadata.lastUsed());
       }
-
       Object prevValue = e.getValue();
       if (!valueMatcher.matches(prevValue, null, newValue)) {
-         successful = false;
+         fail();
          return prevValue;
       }
 
-      return performPut(e, ctx, newValue);
+      return performPut(e, ctx, newValue, newMetadata);
    }
 
    @Override
@@ -233,7 +230,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       return isConditional() || super.isReturnValueExpected();
    }
 
-   private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx, Object newValue) {
+   private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx, Object newValue,
+                             Metadata newMetadata) {
       Object entryValue = e.getValue();
       Object o;
 
@@ -247,7 +245,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       }
 
       o = e.setValue(newValue);
-      Metadatas.updateMetadata(e, metadata);
+      Metadatas.updateMetadata(e, newMetadata);
       if (e.isRemoved()) {
          e.setCreated(true);
          e.setExpired(false);
