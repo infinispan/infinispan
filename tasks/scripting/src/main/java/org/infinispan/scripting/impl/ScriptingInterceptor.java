@@ -4,9 +4,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.scripting.ScriptingManager;
@@ -30,12 +28,7 @@ public final class ScriptingInterceptor extends BaseCustomAsyncInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       String name = (String) command.getKey();
-      String script;
-      if (command.hasAllFlags(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.CACHE_MODE_LOCAL)) {
-         script = (String) ((InternalCacheEntry) command.getValue()).getValue();
-      } else {
-         script = (String) command.getValue();
-      }
+      String script = (String) command.getValue();
       command.setMetadata(scriptingManager.compileScript(name, script));
       return invokeNext(ctx, command);
    }

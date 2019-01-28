@@ -38,6 +38,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -507,8 +508,11 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             // the GetAllCommand. We'll just avoid NPEs here: data is lost as > 1 nodes have left.
             continue;
          }
-         PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(key, icv.toInternalCacheEntry(key),
-               keyPartitioner.getSegment(key), icv.getMetadata(), STATE_TRANSFER_FLAGS);
+         // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
+         InternalMetadataImpl metadata = new InternalMetadataImpl(icv);
+         PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(key, icv.getValue(),
+                                                                          keyPartitioner.getSegment(key), metadata,
+                                                                          STATE_TRANSFER_FLAGS);
          try {
             interceptorChain.invoke(icf.createSingleKeyNonTxInvocationContext(), put);
          } catch (Exception e) {

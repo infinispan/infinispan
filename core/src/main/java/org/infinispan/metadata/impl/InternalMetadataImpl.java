@@ -10,6 +10,7 @@ import java.util.Set;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
@@ -31,6 +32,10 @@ public class InternalMetadataImpl implements InternalMetadata {
 
    public InternalMetadataImpl(InternalCacheEntry ice) {
       this(ice.getMetadata(), ice.getCreated(), ice.getLastUsed());
+   }
+
+   public InternalMetadataImpl(InternalCacheValue icv) {
+      this(icv.getMetadata(), icv.getCreated(), icv.getLastUsed());
    }
 
    public InternalMetadataImpl(Metadata actual, long created, long lastUsed) {

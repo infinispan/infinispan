@@ -82,6 +82,7 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -282,7 +283,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       // from the main comman d correct.
       entryFactory.wrapExternalEntry(ctx, dataCommand.getKey(), maxValue.toInternalCacheEntry(dataCommand.getKey()), true, true);
       PutKeyValueCommand putKeyValueCommand = commandsFactory.buildPutKeyValueCommand(
-            dataCommand.getKey(), maxValue.toInternalCacheEntry(dataCommand.getKey()), dataCommand.getSegment(), maxValue.getMetadata(), STATE_TRANSFER_FLAGS);
+         dataCommand.getKey(), maxValue.getValue(), dataCommand.getSegment(), new InternalMetadataImpl(maxValue), STATE_TRANSFER_FLAGS);
       putKeyValueCommand.setTopologyId(dataCommand.getTopologyId());
       return invokeNext(ctx, putKeyValueCommand);
    }
