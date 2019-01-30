@@ -173,8 +173,12 @@
                   <DynamicImport-Package>*</DynamicImport-Package>
                   <Export-Package>
                      ${project.groupId}.commons.*;version=${project.version};-split-package:=error,
-                     ${project.groupId}.counter.*;version=${project.version};-split-package:=error,
-                     ${project.groupId}.multimap.*;version=${project.version};-split-package:=error
+                     ${project.groupId}.counter.api.*;version=${project.version};-split-package:=error,
+                     ${project.groupId}.counter.util.*;version=${project.version};-split-package:=error,
+                     ${project.groupId}.counter.exception.*;version=${project.version};-split-package:=error,
+                     ${project.groupId}.multimap.api.*;version=${project.version};-split-package:=error,
+                     ${project.groupId}.lock.api.*;version=${project.version};-split-package:=error,
+                     ${project.groupId}.lock.exception.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <!-- Relax the versioning rule for osgi packages as a specific version is provided by the container and
                        it might not match the one used to build. -->

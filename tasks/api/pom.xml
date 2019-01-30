@@ -11,6 +11,7 @@
 
    <artifactId>infinispan-tasks-api</artifactId>
    <name>Infinispan Tasks API</name>
+   <packaging>bundle</packaging>
 
    <dependencies>
       <dependency>

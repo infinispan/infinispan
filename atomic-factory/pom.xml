@@ -12,6 +12,7 @@
     <artifactId>infinispan-atomic-factory</artifactId>
     <name>Infinispan Atomic Factory</name>
     <description>Infinispan atomic object factory module</description>
+    <packaging>bundle</packaging>
 
    <properties>
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
