@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>infinispan-multimap</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <name>Infinispan Multimap</name>
     <description>Infinispan Multimap module</description>
 
@@ -31,6 +31,19 @@
         <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.karaf.features</groupId>
+            <artifactId>framework</artifactId>
+            <type>kar</type>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -56,19 +69,90 @@
         </dependency>
     </dependencies>
     <build>
-        <plugins>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>features.xml</include>
+                </includes>
+            </resource>
+           <resource>
+              <directory>${project.basedir}/src/main/resources</directory>
+              <filtering>false</filtering>
+              <includes>
+                 <include>**/*</include>
+              </includes>
+              <excludes>
+                 <exclude>features.xml</exclude>
+              </excludes>
+           </resource>
+        </resources>
+       <testResources>
+          <testResource>
+             <directory>${project.basedir}/src/test/resources</directory>
+             <filtering>true</filtering>
+          </testResource>
+       </testResources>
+       <plugins>
+          <plugin>
+             <groupId>org.apache.maven.plugins</groupId>
+             <artifactId>maven-antrun-plugin</artifactId>
+             <executions>
+                <execution>
+                   <id>generate-blueprint</id>
+                   <goals>
+                      <goal>run</goal>
+                   </goals>
+                   <phase>prepare-package</phase>
+                </execution>
+             </executions>
+          </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <configuration>
                     <instructions>
                         <Export-Package>
-                            ${project.groupId}.multimap.*;version=${project.version};-split-package:=error
+                            ${project.groupId}.multimap.*;version=${project.version};-split-package:=merge-last
                         </Export-Package>
-                        <Include-Resource>
-                            {maven-resources}
-                        </Include-Resource>
+                       <Include-Resource>
+                            {maven-resources},
+                            /META-INF/services=${project.basedir}/target/classes/META-INF/services,
+                            /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
+                       </Include-Resource>
                     </instructions>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-artifacts</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <file>target/classes/features.xml</file>
+                                    <type>xml</type>
+                                    <classifier>features</classifier>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.karaf.tooling</groupId>
+                <artifactId>karaf-maven-plugin</artifactId>
+                <configuration>
+                    <features>
+                        <feature>infinispan-multimap</feature>
+                    </features>
                 </configuration>
             </plugin>
            <plugin>

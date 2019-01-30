@@ -11,6 +11,7 @@
 
    <artifactId>infinispan-tasks-api</artifactId>
    <name>Infinispan Tasks API</name>
+   <packaging>jar</packaging>
 
    <dependencies>
       <dependency>
@@ -40,7 +41,7 @@
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.tasks.*;version=${project.version};-split-package:=error
+                     ${project.groupId}.tasks.*;version=${project.version};-split-package:=merge-last
                   </Export-Package>
                </instructions>
             </configuration>
