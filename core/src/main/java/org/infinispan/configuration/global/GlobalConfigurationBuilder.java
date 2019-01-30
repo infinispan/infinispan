@@ -167,6 +167,16 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return (T)modules.get(moduleClass);
    }
 
+   /**
+    * Set the zero capacity node to true to configure a global capacity factor 0.0f for every distributed cache.
+    * The node will join the cluster but won't keep data on it.
+    * However, this flag does not affect replicated caches.
+    * Replicated caches will continue to keep copies of the data in this node.
+    * Use only distributed caches to make the best use of this feature.
+    *
+    * @param zeroCapacityNode value, true or false
+    * @return GlobalConfigurationBuilder instance
+    */
    public GlobalConfigurationBuilder zeroCapacityNode(boolean zeroCapacityNode) {
       this.zeroCapacityNode = zeroCapacityNode;
       return this;
