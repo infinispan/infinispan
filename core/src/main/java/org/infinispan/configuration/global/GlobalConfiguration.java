@@ -260,6 +260,12 @@ public class GlobalConfiguration {
       return transport().transport() != null;
    }
 
+   /**
+    * Returns true if this node is configured as a zero-capacity node.
+    * If the node is zero-capacity node, it won't hold any data except for replicated caches
+    *
+    * @return true or false
+    */
    public boolean isZeroCapacityNode() {
       return zeroCapacityNode;
    }
