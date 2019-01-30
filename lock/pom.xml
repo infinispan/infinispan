@@ -9,9 +9,9 @@
     </parent>
 
     <artifactId>infinispan-clustered-lock</artifactId>
-    <packaging>jar</packaging>
     <name>Infinispan Clustered Lock</name>
     <description>Infinispan Clustered Lock module</description>
+    <packaging>bundle</packaging>
 
     <properties>
         <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
@@ -32,7 +32,9 @@
                 <configuration>
                     <instructions>
                         <Export-Package>
-                            ${project.groupId}.lock.*;version=${project.version};-split-package:=error
+                            ${project.groupId}.lock.EmbeddedClusteredLockManagerFactory;version=${project.version};-split-package:=error,
+                            ${project.groupId}.lock.configuration.*;version=${project.version};-split-package:=error
+                            ${project.groupId}.lock.logging.*;version=${project.version};-split-package:=error
                         </Export-Package>
                         <Include-Resources>
                             {maven-resources},

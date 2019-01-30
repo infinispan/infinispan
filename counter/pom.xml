@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>infinispan-clustered-counter</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <name>Infinispan Clustered Counter</name>
     <description>Infinispan Clustered Counter module</description>
 
@@ -31,7 +31,10 @@
                 <configuration>
                     <instructions>
                         <Export-Package>
-                            ${project.groupId}.counter.*;version=${project.version};-split-package:=error
+                            ${project.groupId}.counter.EmbeddedCounterManagerFactory;version=${project.version};-split-package:=error,
+                            ${project.groupId}.counter.configuration.*;version=${project.version};-split-package:=error,
+                            ${project.groupId}.counter.logging.*;version=${project.version};-split-package:=error,
+                            ${project.groupId}.counter.util.*;version=${project.version};-split-package:=merge-last
                         </Export-Package>
                         <Include-Resources>
                             {maven-resources},

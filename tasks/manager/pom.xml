@@ -11,6 +11,7 @@
 
    <artifactId>infinispan-tasks</artifactId>
    <name>Infinispan Task Manager</name>
+   <packaging>bundle</packaging>
 
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>

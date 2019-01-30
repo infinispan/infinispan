@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>infinispan-multimap</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <name>Infinispan Multimap</name>
     <description>Infinispan Multimap module</description>
 
@@ -55,13 +55,17 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
                 <configuration>
                     <instructions>
+                        <DynamicImport-Package>*</DynamicImport-Package>
                         <Export-Package>
-                            ${project.groupId}.multimap.*;version=${project.version};-split-package:=error
+                            ${project.groupId}.multimap.api.embedded.*;version=${project.version};-split-package:=error
                         </Export-Package>
                         <Include-Resources>
                             {maven-resources},
+                            /META-INF/services=${project.basedir}/target/classes/META-INF/services,
+                            /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml,
                             ${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
                         </Include-Resources>
                     </instructions>
