@@ -25,6 +25,23 @@
                 <filtering>true</filtering>
             </testResource>
         </testResources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <configuration>
+                    <instructions>
+                        <Export-Package>
+                            ${project.groupId}.lock.*;version=${project.version};-split-package:=error
+                        </Export-Package>
+                        <Include-Resources>
+                            {maven-resources},
+                            ${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
+                        </Include-Resources>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <dependencies>
