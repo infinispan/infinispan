@@ -518,9 +518,6 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
 
    private <P> Flowable<P> publish(IntSet segments, Function<ResultSet, Flowable<P>> function) {
       return Flowable.using(() -> {
-         Connection connection = connectionFactory.getConnection();
-         // Some JDBC drivers require auto commit disabled to do paging
-         connection.setAutoCommit(false);
          String sql;
          if (segments != null) {
             sql = tableManager.getLoadNonExpiredRowsSqlForSegments(segments.size());
@@ -530,10 +527,9 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          if (trace) {
             log.tracef("Running sql %s", sql);
          }
-         // Store both together so we can be sure they are both closed after the publisher is done
-         return new KeyValuePair<>(connection, connection.prepareStatement(sql));
-      }, kvp -> {
-         PreparedStatement ps = kvp.getValue();
+         return new FlowableConnection(connectionFactory, sql);
+      }, fc -> {
+         PreparedStatement ps = fc.statement;
          int offset = 1;
          ps.setLong(offset, timeService.wallClockTime());
          if (segments != null) {
@@ -544,10 +540,39 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          ps.setFetchSize(tableManager.getFetchSize());
          ResultSet rs = ps.executeQuery();
          return function.apply(rs);
-      }, kvp -> {
-         JdbcUtil.safeClose(kvp.getValue());
-         connectionFactory.releaseConnection(kvp.getKey());
-      });
+      }, FlowableConnection::close);
+   }
+
+   class FlowableConnection {
+      final boolean autoCommit;
+      final ConnectionFactory factory;
+      final Connection connection;
+      final PreparedStatement statement;
+
+      FlowableConnection(ConnectionFactory factory, String sql) throws SQLException {
+         this.factory = factory;
+         this.connection = factory.getConnection();
+         this.autoCommit = connection.getAutoCommit();
+         this.statement = connection.prepareStatement(sql);
+
+         // Some JDBC drivers require auto commit disabled to do paging, however before calling setAutoCommit(false)
+         // we must ensure that we're not running in a managed transaction by ensuring that getAutoCommit is true.
+         // Without this check an exception would be thrown when calling setAutoCommit(false) during a managed transaction.
+         if (autoCommit)
+            connection.setAutoCommit(false);
+      }
+
+      void close() {
+         JdbcUtil.safeClose(statement);
+         if (autoCommit) {
+            try {
+               connection.rollback();
+            } catch (SQLException e) {
+               log.sqlFailureTxRollback(e);
+            }
+         }
+         factory.releaseConnection(connection);
+      }
    }
 
    @Override
