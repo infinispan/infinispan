@@ -104,6 +104,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Error closing %s", id = 21031)
    void errorClosingCloseable(Closeable closeable, @Cause Exception e);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Exception while getting expiry duration. Fallback to default duration eternal.", id = 21032)
+   void getExpiryHasThrown(@Cause Throwable t);
+
    class LeakDescription extends Throwable {
 
       public LeakDescription() {
