@@ -539,7 +539,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          }
          ps.setFetchSize(tableManager.getFetchSize());
          ResultSet rs = ps.executeQuery();
-         return function.apply(rs);
+         return function.apply(rs).doOnComplete(() -> JdbcUtil.safeClose(rs));
       }, FlowableConnection::close);
    }
 
