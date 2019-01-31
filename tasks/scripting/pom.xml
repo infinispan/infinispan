@@ -11,7 +11,7 @@
 
    <artifactId>infinispan-scripting</artifactId>
    <name>Infinispan Scripting</name>
-   <packaging>bundle</packaging>
+   <packaging>jar</packaging>
 
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>

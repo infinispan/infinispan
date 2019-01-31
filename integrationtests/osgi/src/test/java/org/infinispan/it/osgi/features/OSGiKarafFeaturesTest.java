@@ -83,7 +83,7 @@ public class OSGiKarafFeaturesTest {
       checkInstall(service, "infinispan-embedded", "infinispan-embedded", version);
       checkInstall(service, "infinispan-remote", "infinispan-remote", version);
       checkInstall(service, "infinispan-multimap", "infinispan-multimap", version);
-      checkInstall(service, "infinispan-clustered-counter", "infinispan-clustered-counter", version);
+//      checkInstall(service, "infinispan-clustered-counter", "infinispan-clustered-counter", version);
       checkInstall(service, "infinispan-clustered-lock", "infinispan-clustered-lock", version);
    }
 
