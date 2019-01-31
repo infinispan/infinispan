@@ -82,6 +82,9 @@ public class OSGiKarafFeaturesTest {
       checkInstall(service, "infinispan-osgi", "infinispan-osgi", version);
       checkInstall(service, "infinispan-embedded", "infinispan-embedded", version);
       checkInstall(service, "infinispan-remote", "infinispan-remote", version);
+      checkInstall(service, "infinispan-multimap", "infinispan-multimap", version);
+      checkInstall(service, "infinispan-clustered-counter", "infinispan-clustered-counter", version);
+      checkInstall(service, "infinispan-clustered-lock", "infinispan-clustered-lock", version);
    }
 
    private void checkInstall(FeaturesService service, String artifactId, String feature, String version) throws Exception {
