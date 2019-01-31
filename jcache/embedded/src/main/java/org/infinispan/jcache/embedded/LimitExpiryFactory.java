@@ -38,6 +38,7 @@ public class LimitExpiryFactory implements Factory<ExpiryPolicy>, Serializable {
       @Override
       public Duration getExpiryForCreation() {
          Duration duration = expiryPolicy.getExpiryForCreation();
+         if (duration == null) return null;
          if (duration.isZero()) return duration;
          if (duration.isEternal()) return new Duration(TimeUnit.MILLISECONDS, min);
          long actualMin = Math.min(duration.getTimeUnit().toMillis(duration.getDurationAmount()), this.min);
@@ -47,6 +48,7 @@ public class LimitExpiryFactory implements Factory<ExpiryPolicy>, Serializable {
       @Override
       public Duration getExpiryForAccess() {
          Duration duration = expiryPolicy.getExpiryForAccess();
+         if (duration == null) return null;
          if (duration.isZero() || maxIdle < 0) return duration;
          if (duration.isEternal()) return new Duration(TimeUnit.MILLISECONDS, maxIdle);
          long actualMin = Math.min(duration.getTimeUnit().toMillis(duration.getDurationAmount()), this.maxIdle);
@@ -56,6 +58,7 @@ public class LimitExpiryFactory implements Factory<ExpiryPolicy>, Serializable {
       @Override
       public Duration getExpiryForUpdate() {
          Duration duration = expiryPolicy.getExpiryForUpdate();
+         if (duration == null) return null;
          if (duration.isZero()) return duration;
          if (duration.isEternal()) return new Duration(TimeUnit.MILLISECONDS, min);
          long actualMin = Math.min(duration.getTimeUnit().toMillis(duration.getDurationAmount()), this.min);

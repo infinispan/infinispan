@@ -35,19 +35,22 @@ public class Expiration {
             try {
                return policy.getExpiryForCreation();
             } catch (Throwable t) {
+               log.getExpiryHasThrown(t);
                return getDefaultDuration();
             }
          case ACCESS:
             try {
                return policy.getExpiryForAccess();
             } catch (Throwable t) {
+               log.getExpiryHasThrown(t);
                // If an exception is thrown, leave expiration untouched
                return null;
             }
          case UPDATE:
             try {
                return policy.getExpiryForUpdate();
-            } catch (Exception e) {
+            } catch (Throwable t) {
+               log.getExpiryHasThrown(t);
                // If an exception is thrown, leave expiration untouched
                return null;
             }
