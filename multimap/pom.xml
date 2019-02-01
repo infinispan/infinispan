@@ -81,7 +81,7 @@
                     <instructions>
                         <DynamicImport-Package>*</DynamicImport-Package>
                         <Export-Package>
-                            ${project.groupId}.multimap.api.embedded.*;version=${project.version};-split-package:=error
+                            ${project.groupId}.multimap.*;version=${project.version};-split-package:=merge-last
                         </Export-Package>
                         <Include-Resources>
                             {maven-resources},

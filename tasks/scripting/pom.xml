@@ -64,7 +64,7 @@
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.scripting.*;version=${project.version};-split-package:=error
+                     ${project.groupId}.scripting.*;version=${project.version};-split-package:=merge-last
                   </Export-Package>
                   <Include-Resources>
                      {maven-resources},
