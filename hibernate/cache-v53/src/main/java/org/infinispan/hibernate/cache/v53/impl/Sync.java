@@ -75,7 +75,8 @@ public class Sync implements CacheTransactionSynchronization {
             try {
                ((CompletableFuture) task).join();
             } catch (CompletionException e) {
-               log.failureBeforeTransactionCompletion(i, e);
+               log.debugf("Unable to complete task %08x before commit, rethrow exception", System.identityHashCode(task));
+               throw e;
             }
             tasks[i] = null;
             ++count;
