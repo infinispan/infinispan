@@ -93,3 +93,5 @@ $ JDG_HOME/bin/cli.sh --connect controller=127.0.0.1:9990 -c "/subsystem=datagri
 ----
 +
 . Decommission the source cluster.
+
+//-
