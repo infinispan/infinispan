@@ -1,4 +1,3 @@
-function addVersionsMenu()
 $(document).ready(function() {
     var prefix = "/docs/"
     var path = document.location.pathname;
