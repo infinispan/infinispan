@@ -730,6 +730,7 @@
                                     <property name="username.other" value="${username.other}" />
 
                                     <property name="new.server.schema.version" value="${new.server.schema.version}" />
+                                    <property name="jboss.modules.settings.xml.url" value="${jboss.modules.settings.xml.url}" />
                                 </ant>
                                 <!-- It happens when you do not specify namespaces in the XSLT templates for the newly added nodes
                                      then the IBM jdk transformation is adding empty namespace there - not possible to influence this

@@ -519,6 +519,7 @@
             <dirname property="vault.dir" file="@{keystore}"/>
             <mkdir dir="${vault.dir}" />
             <java jar="${server1.dist}/jboss-modules.jar" fork="true" failonerror="true">
+                <jvmarg value="-Djboss.modules.settings.xml.url=${jboss.modules.settings.xml.url}"/>
                 <arg value="-mp"/>
                 <arg value="${server1.dist}/modules"/>
                 <arg value="org.jboss.as.vault-tool"/>
