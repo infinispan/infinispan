@@ -555,7 +555,7 @@ The `stack.combine` attribute determines the type of the operation:
 * `INSERT_AFTER`: inserts a protocol after another protocol identified by the `stack.position` attribute.
 * `REMOVE`: removes the protocol.
 
-====== Tuning JGroups settings
+===== Tuning JGroups settings
 The settings above can be further tuned without editing the XML files themselves.
 Passing in certain system properties to your JVM at startup can affect the behaviour of some of these settings.  The table below shows you which settings can be configured in this way.  E.g.,
 
