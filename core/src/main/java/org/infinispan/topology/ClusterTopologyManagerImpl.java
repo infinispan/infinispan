@@ -525,8 +525,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          } else if (throwable instanceof SuspectException) {
             Address leaver = ((SuspectException) throwable).getSuspect();
             log.debugf("Skipping cache members update for view %d, node %s left", viewId, leaver);
-            return;
          }
+         return;
       } catch (Throwable t) {
          throwable = t;
       }
