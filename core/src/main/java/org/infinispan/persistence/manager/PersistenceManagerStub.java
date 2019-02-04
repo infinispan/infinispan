@@ -10,8 +10,8 @@ import javax.transaction.Transaction;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
 import org.reactivestreams.Publisher;
@@ -151,5 +151,10 @@ public class PersistenceManagerStub implements PersistenceManager {
    @Override
    public boolean isAvailable() {
       return true;
+   }
+
+   @Override
+   public boolean isReadOnly() {
+      return false;
    }
 }

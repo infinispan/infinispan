@@ -1,5 +1,14 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -22,6 +31,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -35,18 +45,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
 /**
  * Similar to {@link DistCacheWriterInterceptor} but as commands are not forwarded from primary owner
@@ -162,8 +162,6 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
 
    private void storeAndUpdateStats(InvocationContext ctx, Object key, WriteCommand command) {
       storeEntry(ctx, key, command);
-      if (getStatisticsEnabled())
-         cacheStores.incrementAndGet();
    }
 
    @Override
@@ -215,7 +213,7 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
                      waitFutures.add(cf);
                      return cf;
                   },
-                  k -> storeEntry(ctx, k, command));
+                  k -> storeEntry(ctx, k, command, false));
             if (future != null && !future.isDone()) {
                if (futures == null) {
                   futures = new ArrayList<>(); // let's assume little contention
@@ -223,7 +221,7 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
                futures.add(future);
             }
          } else {
-            storeEntry(ctx, cacheEntry.getKey(), command);
+            storeEntry(ctx, cacheEntry.getKey(), command, false);
          }
       }
       if (futures == null) {

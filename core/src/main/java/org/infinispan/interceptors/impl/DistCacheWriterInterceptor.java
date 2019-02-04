@@ -68,8 +68,6 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
             return rv;
 
          storeEntry(rCtx, key, putKeyValueCommand);
-         if (getStatisticsEnabled())
-            cacheStores.incrementAndGet();
          return rv;
       });
    }
@@ -133,9 +131,6 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
             return rv;
 
          storeEntry(rCtx, key, replaceCommand);
-         if (getStatisticsEnabled())
-            cacheStores.incrementAndGet();
-
          return rv;
       });
    }
@@ -157,8 +152,6 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
                log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
          } else if (command.isSuccessful()) {
             storeEntry(rCtx, key, computeCommand);
-            if (getStatisticsEnabled())
-               cacheStores.incrementAndGet();
          }
          return rv;
       });
@@ -175,9 +168,6 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
             return rv;
 
          storeEntry(rCtx, key, computeIfAbsentCommand);
-         if (getStatisticsEnabled())
-            cacheStores.incrementAndGet();
-
          return rv;
       });
    }

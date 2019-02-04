@@ -181,8 +181,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
          Object key = putKeyValueCommand.getKey();
          storeEntry(rCtx, key, putKeyValueCommand);
-         if (getStatisticsEnabled())
-            cacheStores.incrementAndGet();
       });
    }
 
@@ -197,8 +195,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
          Object key = replaceCommand.getKey();
          storeEntry(rCtx, key, replaceCommand);
-         if (getStatisticsEnabled())
-            cacheStores.incrementAndGet();
       });
    }
 
@@ -218,8 +214,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
          } else {
             storeEntry(rCtx, key, computeCommand);
-            if (getStatisticsEnabled())
-               cacheStores.incrementAndGet();
          }
       });
    }
@@ -236,8 +230,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          if (rv != null) {
             Object key = computeIfAbsentCommand.getKey();
             storeEntry(rCtx, key, computeIfAbsentCommand);
-            if (getStatisticsEnabled())
-               cacheStores.incrementAndGet();
          }
       });
    }
@@ -370,7 +362,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                         if (trace) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
                      } else {
                         if (entry.isChanged() && isProperWriter(rCtx, manyEntriesCommand, key)) {
-                           storeEntry(rCtx, key, manyEntriesCommand);
+                           storeEntry(rCtx, key, manyEntriesCommand, false);
                            storedCount++;
                         }
                      }
@@ -460,12 +452,23 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    void storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command) {
+      storeEntry(ctx, key, command, true);
+   }
+
+   void storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command, boolean incrementStats) {
+      if (persistenceManager.isReadOnly())
+         return;
+
       MarshallableEntry entry = marshalledEntry(ctx, key);
       if (entry != null) {
          persistenceManager.writeToAllNonTxStores(entry, SegmentSpecificCommand.extractSegment(command, key, keyPartitioner),
                skipSharedStores(ctx, key, command) ? PRIVATE : BOTH, command.getFlagsBitSet());
          if (trace) getLog().tracef("Stored entry %s under key %s", entry.getValue(), key);
+
+         if (incrementStats && getStatisticsEnabled())
+            cacheStores.incrementAndGet();
       }
+
    }
 
    MarshallableEntry marshalledEntry(InvocationContext ctx, Object key) {
