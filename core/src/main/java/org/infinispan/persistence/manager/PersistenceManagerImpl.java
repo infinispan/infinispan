@@ -146,6 +146,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     */
    private volatile boolean enabled;
    private volatile boolean clearOnStop;
+   private volatile boolean readOnly;
    private boolean preloaded;
    private Future availabilityFuture;
    private volatile StoreUnavailableException unavailableException;
@@ -170,6 +171,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             nonTxWriters.forEach(w -> startWriter(w, undelegated));
             txWriters.forEach(w -> startWriter(w, undelegated));
             loaders.forEach(l -> startLoader(l, undelegated));
+            readOnly = nonTxWriters.isEmpty() && txWriters.isEmpty();
 
             // Ensure that after writers and loaders have started, they are classified as available by their isAvailable impl
             pollStoreAvailability();
@@ -338,6 +340,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             removeCacheWriter(storeType, nonTxWriters);
             removeCacheWriter(storeType, txWriters);
             noMoreStores = loaders.isEmpty() && nonTxWriters.isEmpty() && txWriters.isEmpty();
+            readOnly = nonTxWriters.isEmpty() && txWriters.isEmpty();
 
             if (!noMoreStores) {
                // Immediately poll store availability as the disabled store may have been the cause of the unavailability
@@ -869,6 +872,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
          storesMutex.readLock().unlock();
       }
       return allSegmented;
+   }
+
+   @Override
+   public boolean isReadOnly() {
+      return readOnly;
    }
 
    public List<CacheLoader> getAllLoaders() {

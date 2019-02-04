@@ -49,7 +49,7 @@ public class PassivationManagerImpl implements PassivationManager {
 
    @Start(priority = 12)
    public void start() {
-      enabled = cfg.persistence().passivation() && cfg.persistence().usingStores();
+      enabled = !persistenceManager.isReadOnly() && cfg.persistence().passivation() && cfg.persistence().usingStores();
       if (enabled) {
          statsEnabled = cfg.jmxStatistics().enabled();
       }

@@ -339,4 +339,9 @@ public interface PersistenceManager extends Lifecycle {
    default boolean removeSegments(IntSet segments) {
       return true;
    }
+
+   /**
+    * @return true if no {@link org.infinispan.persistence.spi.CacheWriter} instances have been configured.
+    */
+   boolean isReadOnly();
 }
