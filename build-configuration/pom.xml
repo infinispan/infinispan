@@ -85,6 +85,7 @@
       <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
       <infinispan.brand.short-name>infinispan</infinispan.brand.short-name>
       <infinispan.brand.version>${project.version}</infinispan.brand.version>
+      <infinispan.brand.cli>ispn-cli</infinispan.brand.cli>
       <infinispan.codename>N/A</infinispan.codename>
       <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
       <infinispan.base.version>10.0</infinispan.base.version>
