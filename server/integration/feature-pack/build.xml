@@ -15,6 +15,8 @@
             <regexpmapper from="(.*)/product-slot/(.*)" to="\1/${infinispan.module.slot.prefix}/\2" />
         </move>
         <replace dir="${feature-pack.dir}" includes="**/main/**" token="@hibernate.search.module.slot@" value="${version.hibernate.search.module.slot}"/>
+        <move file="${feature-pack.dir}/content/bin/ispn-cli.sh" tofile="${feature-pack.dir}/content/bin/${infinispan.brand.cli}.sh" verbose="true"/>
+        <move file="${feature-pack.dir}/content/bin/ispn-cli.bat" tofile="${feature-pack.dir}/content/bin/${infinispan.brand.cli}.bat" verbose="true"/>
         <delete includeemptydirs="true">
             <fileset dir="${feature-pack.dir}">
                 <include name="**/slot" />
