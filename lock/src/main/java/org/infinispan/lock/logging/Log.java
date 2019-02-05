@@ -39,6 +39,4 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid scope for tag <clustered-lock>. Expected CACHE_CONTAINER but was %s", id = 29007)
    ClusteredLockException invalidScope(ParserScope scope);
 
-   @Message(value = "When the node is configured as a zero-capacity node, you need to specify the number of owners for the lock", id = 29008)
-   ClusteredLockException zeroCapacityNodeError();
 }
