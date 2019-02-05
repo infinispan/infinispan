@@ -86,10 +86,11 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       if (config.numOwners() > 0) {
          builder.clustering().cacheMode(CacheMode.DIST_SYNC)
                .hash().numOwners(config.numOwners());
-      } else if (globalConfig.isZeroCapacityNode()) {
-         throw log.zeroCapacityNodeError();
       } else {
          builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+         if (globalConfig.isZeroCapacityNode()) {
+            log.warn("When the node is configured as a zero-capacity node, you need to specify the number of owners for the lock");
+         }
       }
 
       if (config.reliability() == Reliability.CONSISTENT) {
