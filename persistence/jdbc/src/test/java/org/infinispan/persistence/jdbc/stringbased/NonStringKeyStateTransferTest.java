@@ -21,7 +21,8 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
    public void testReplicatedStateTransfer() {
       EmbeddedCacheManager cm1 = null, cm2 = null;
       try {
-         ConfigurationBuilder conf1 = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, true);
+         ConfigurationBuilder conf1 = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(),
+                                                                                     true);
          conf1.clustering().cacheMode(CacheMode.REPL_SYNC);
 
          cm1 = TestCacheManagerFactory.createClusteredCacheManager(conf1);
@@ -32,7 +33,8 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
          c1.put(mircea, "mircea");
          c1.put(mircea2, "mircea2");
 
-         ConfigurationBuilder conf2 = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, true);
+         ConfigurationBuilder conf2 = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(),
+                                                                                     true);
          conf2.clustering().cacheMode(CacheMode.REPL_SYNC);
 
          cm2 = TestCacheManagerFactory.createClusteredCacheManager(conf2);
@@ -48,7 +50,8 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
    public void testDistributedStateTransfer() {
       EmbeddedCacheManager cm1 = null, cm2 = null;
       try {
-         ConfigurationBuilder conf = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, false);
+         ConfigurationBuilder conf = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(),
+                                                                                    false);
          conf.clustering().cacheMode(CacheMode.DIST_SYNC);
 
          cm1 = TestCacheManagerFactory.createClusteredCacheManager(conf);
@@ -74,7 +77,8 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
    public void testDistributedAndNoTwoWay() {
       EmbeddedCacheManager cm1;
 
-      ConfigurationBuilder conf = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, false);
+      ConfigurationBuilder conf = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(),
+                                                                                 false);
       conf.clustering().cacheMode(CacheMode.DIST_SYNC);
 
       cm1 = TestCacheManagerFactory.createClusteredCacheManager(conf);
