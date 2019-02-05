@@ -155,10 +155,7 @@ Specifies the time, in milliseconds, to wait for read operations to complete. Th
 `infinispan.spring.operation.write.timeout`::
 Specifies the time, in milliseconds, to wait for write operations to complete. The default is `0` which means unlimited wait time.
 
-To configure timeouts for cache operations, set the properties in the context XML for your application on either of the following:
-
-* link:{javadocroot}/org/infinispan/spring/provider/SpringEmbeddedCacheManagerFactoryBean.html[SpringEmbeddedCacheManagerFactoryBean]
-* link:{javadocroot}/org/infinispan/spring/provider/SpringRemoteCacheManagerFactoryBean.html[SpringRemoteCacheManagerFactoryBean]
+To configure timeouts for cache operations, set the properties in the context XML for your application on either `SpringEmbeddedCacheManagerFactoryBean` or `SpringRemoteCacheManagerFactoryBean`.
 
 [TIP]
 ====
