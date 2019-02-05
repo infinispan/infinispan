@@ -641,9 +641,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          throw ((CacheException) ce.getCause());
       }
 
+      Cache<K, V> cache = null;
       try {
          log.tracef("About to wire and start cache %s", cacheName);
-         Cache<K, V> cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
+         cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
          ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
 
          if (cache.getAdvancedCache().getAuthorizationManager() != null) {
@@ -651,7 +652,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          }
 
          boolean notStartedYet =
-               cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;
+            cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;
          // start the cache-level components
          cache.start();
          cacheFuture.complete(cache);
@@ -663,9 +664,17 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          return cache;
       } catch (CacheException e) {
          cacheFuture.completeExceptionally(e);
+         // Must stop the failed cache now, we don't keep the reference
+         if (cache != null) {
+            cache.stop();
+         }
          throw e;
       } catch (Throwable t) {
          cacheFuture.completeExceptionally(new CacheException(t));
+         // Must stop the failed cache now, we don't keep the reference
+         if (cache != null) {
+            cache.stop();
+         }
          throw t;
       }
    }
