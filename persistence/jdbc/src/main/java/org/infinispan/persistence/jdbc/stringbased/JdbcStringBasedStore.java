@@ -146,27 +146,21 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    public void stop() {
       Throwable cause = null;
       try {
-         tableManager.stop();
-         tableManager = null;
+         if (tableManager != null) {
+            tableManager.stop();
+            tableManager = null;
+         }
       } catch (Throwable t) {
-         cause = t.getCause();
-         if (cause == null) cause = t;
          log.debug("Exception while stopping", t);
       }
 
       try {
          log.tracef("Stopping connection factory: %s", connectionFactory);
-         connectionFactory.stop();
-      } catch (Throwable t) {
-         if (cause == null) {
-            cause = t;
-         } else {
-            t.addSuppressed(cause);
+         if (connectionFactory != null) {
+            connectionFactory.stop();
          }
+      } catch (Throwable t) {
          log.debug("Exception while stopping", t);
-      }
-      if (cause != null) {
-         throw new PersistenceException("Exceptions occurred while stopping store", cause);
       }
    }
 
