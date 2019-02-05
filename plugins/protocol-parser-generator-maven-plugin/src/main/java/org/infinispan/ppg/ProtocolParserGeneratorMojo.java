@@ -1,5 +1,11 @@
 package org.infinispan.ppg;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -7,13 +13,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
-
 import org.infinispan.ppg.generator.GeneratorException;
 import org.infinispan.ppg.generator.Grammar;
 import org.infinispan.ppg.generator.Machine;
@@ -63,7 +62,7 @@ public class ProtocolParserGeneratorMojo extends AbstractMojo {
             } catch (ParserException | GeneratorException e) {
                 throw new MojoFailureException(String.format("Error in file %s", file), e);
             }
-            File output = new File(outputDirectory, grammar.getPackage().replaceAll("\\.", File.separator) + File.separator + grammar.getSimpleName() + ".java");
+            File output = new File(outputDirectory, grammar.getPackage().replace(".", File.separator) + File.separator + grammar.getSimpleName() + ".java");
             output.getParentFile().mkdirs();
             try {
                 Files.write(Paths.get(output.toURI()), machine.buildSource().getBytes());

@@ -176,7 +176,7 @@ public class Parser {
 
    private ClassOrInterfaceDeclaration loadClass(ParseContext ctx, String className) {
       Optional<File> classFile = sourceDirectories.stream()
-            .map(dir -> new File(dir, className.replaceAll("\\.", File.separator) + ".java"))
+            .map(dir -> new File(dir, className.replace(".", File.separator) + ".java"))
             .filter(file -> {
                debug.accept("Looking up file " + file);
                return file.exists() && file.isFile();
