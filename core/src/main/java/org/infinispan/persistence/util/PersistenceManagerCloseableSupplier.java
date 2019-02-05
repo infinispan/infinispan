@@ -150,7 +150,7 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
          Thread.currentThread().interrupt();
       }
       if (trace) {
-         log.tracef("Returning entry: " + entry);
+         log.tracef("Returning entry: %s", entry);
       }
       return entry;
    }
