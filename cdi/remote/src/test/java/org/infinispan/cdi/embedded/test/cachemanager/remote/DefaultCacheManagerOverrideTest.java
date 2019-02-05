@@ -5,15 +5,18 @@ import static org.testng.Assert.assertEquals;
 import java.util.Properties;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import org.infinispan.cdi.embedded.test.Deployments;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /**
@@ -21,6 +24,7 @@ import org.testng.annotations.Test;
  *
  * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
+@Listeners(TestResourceTrackingListener.class)
 @Test(groups = "functional", testName = "cdi.test.cachemanager.remote.DefaultCacheManagerOverrideTest")
 public class DefaultCacheManagerOverrideTest extends Arquillian {
 
@@ -53,5 +57,9 @@ public class DefaultCacheManagerOverrideTest extends Arquillian {
          HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServers(SERVER_LIST_VALUE);
       return new RemoteCacheManager(clientBuilder.build());
+   }
+
+   public void stopRemoteCacheManager(@Disposes RemoteCacheManager remoteCacheManager) {
+      remoteCacheManager.stop();
    }
 }
