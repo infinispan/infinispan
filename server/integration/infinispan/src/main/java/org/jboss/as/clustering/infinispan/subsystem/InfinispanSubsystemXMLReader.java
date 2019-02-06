@@ -655,16 +655,28 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
     }
 
     private void parseModule(XMLExtendedStreamReader reader, PathAddress modulesAddress, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
-        ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
-
-        String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
-        String slot = reader.getAttributeValue(null, Attribute.SLOT.getLocalName());
+        String name = ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName())[0];
 
         PathAddress moduleAddress = modulesAddress.append(ModelKeys.MODULE, name);
         ModelNode moduleNode = Util.createAddOperation(moduleAddress);
         CacheContainerModuleResource.NAME.parseAndSetParameter(name, moduleNode, reader);
-        if (slot != null) {
-            CacheContainerModuleResource.SLOT.parseAndSetParameter(slot, moduleNode, reader);
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+           ParseUtils.requireNoNamespaceAttribute(reader, i);
+           String value = reader.getAttributeValue(i);
+           Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+           switch (attribute) {
+              case NAME: {
+                 // Already handled
+                 break;
+              }
+              case SLOT: {
+                 CacheContainerModuleResource.SLOT.parseAndSetParameter(value, moduleNode, reader);
+                 break;
+              }
+              default:
+                 throw ParseUtils.unexpectedAttribute(reader, i);
+           }
         }
 
         ParseUtils.requireNoContent(reader);
