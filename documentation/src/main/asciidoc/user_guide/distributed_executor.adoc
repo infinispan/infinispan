@@ -24,7 +24,7 @@ public interface DistributedCallable<K, V, T> extends Callable<T> {
 
    /**
     * Invoked by execution environment after DistributedCallable
-    * has been migrated for execution to a specific {brandname} node.
+    * has been migrated for execution to a specific node.
     *
     * @param cache
     *           cache whose keys are used as input data for this
@@ -110,12 +110,12 @@ public interface DistributedTaskFailoverPolicy {
 
    /**
     * As parts of distributively executed task can fail due to the task itself throwing an exception
-    * or it can be an {brandname} system caused failure (e.g node failed or left cluster during task
+    * or it can be a system caused failure (e.g node failed or left cluster during task
     * execution etc).
     *
     * @param failoverContext
     *           the FailoverContext of the failed execution
-    * @return result the Address of the {brandname} node selected for fail over execution
+    * @return result the Address of the node selected for fail over execution
     */
    Address failover(FailoverContext context);
 
