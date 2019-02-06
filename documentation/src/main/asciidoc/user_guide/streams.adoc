@@ -471,15 +471,15 @@ public class WordCountExample {
       Cache<String, String> c2 = ...;
 
       c1.put("1", "Hello world here I am");
-      c2.put("2", "{brandname} rules the world");
+      c2.put("2", "Infinispan rules the world");
       c1.put("3", "JUDCon is in Boston");
       c2.put("4", "JBoss World is in Boston as well");
       c1.put("12","JBoss Application Server");
       c2.put("15", "Hello world");
-      c1.put("14", "{brandname} community");
+      c1.put("14", "Infinispan community");
       c2.put("15", "Hello world");
 
-      c1.put("111", "{brandname} open source");
+      c1.put("111", "Infinispan open source");
       c2.put("112", "Boston is close to Toronto");
       c1.put("113", "Toronto is a capital of Ontario");
       c2.put("114", "JUDCon is cool");
