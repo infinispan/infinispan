@@ -10,7 +10,6 @@ import java.util.Properties;
 
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.tools.store.migrator.marshaller.MarshallerType;
 
 public class StoreProperties{
 
@@ -33,10 +32,6 @@ public class StoreProperties{
       String version = get(VERSION);
       if (version != null)
          return Integer.parseInt(version);
-
-      String marshallerTypeProp = get(MARSHALLER, TYPE);
-      if (marshallerTypeProp != null)
-         return MarshallerType.valueOf(get(MARSHALLER, TYPE).toUpperCase()).getMajorVersion();
 
       return Integer.parseInt(Version.getMajor());
    }
@@ -96,5 +91,10 @@ public class StoreProperties{
    private void validate() {
       required(TYPE);
       required(CACHE_NAME);
+
+      if (get(MARSHALLER, TYPE) != null) {
+         throw new CacheConfigurationException(String.format("Property '%s' has been removed, please specify %s instead.",
+               key(MARSHALLER, TYPE), key(VERSION)));
+      }
    }
 }

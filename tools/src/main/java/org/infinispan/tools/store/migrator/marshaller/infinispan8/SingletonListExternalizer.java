@@ -1,4 +1,4 @@
-package org.infinispan.tools.store.migrator.marshaller.externalizers;
+package org.infinispan.tools.store.migrator.marshaller.infinispan8;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -17,7 +17,7 @@ import net.jcip.annotations.Immutable;
  * @since 9.0
  */
 @Immutable
-public class SingletonListExternalizer extends AbstractExternalizer<List<?>> {
+class SingletonListExternalizer extends AbstractExternalizer<List<?>> {
 
    @Override
    public void writeObject(ObjectOutput output, List<?> list) throws IOException {
@@ -31,7 +31,7 @@ public class SingletonListExternalizer extends AbstractExternalizer<List<?>> {
 
    @Override
    public Integer getId() {
-      return LegacyIds.SINGLETON_LIST;
+      return ExternalizerTable.SINGLETON_LIST;
    }
 
    @Override

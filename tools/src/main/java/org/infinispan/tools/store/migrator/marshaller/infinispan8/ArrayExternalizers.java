@@ -1,4 +1,4 @@
-package org.infinispan.tools.store.migrator.marshaller.externalizers;
+package org.infinispan.tools.store.migrator.marshaller.infinispan8;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -16,7 +16,7 @@ import org.infinispan.commons.util.Util;
  * @author Galder Zamarreño
  * @since 6.0
  */
-public class ArrayExternalizers {
+class ArrayExternalizers {
    public static class ListArray implements AdvancedExternalizer<List[]> {
       @Override
       public void writeObject(ObjectOutput output, List[] lists) throws IOException {
@@ -37,7 +37,7 @@ public class ArrayExternalizers {
 
       @Override
       public Integer getId() {
-         return LegacyIds.LIST_ARRAY;
+         return ExternalizerTable.LIST_ARRAY;
       }
 
       @Override

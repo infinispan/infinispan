@@ -18,14 +18,13 @@ import org.testng.annotations.Test;
 @Test(testName = "tools.store.migrator.file.SingleFileStoreReaderTest", groups = "functional")
 public class SingleFileStoreReaderTest extends AbstractReaderTest {
 
-   private static final String SOURCE_DIR = "target/test-classes/singlefilestore/";
-   private static final String TARGET_DIR = SOURCE_DIR + "/target-sfs/";
-
    @Factory
    public Object[] factory() {
       return new Object[] {
-            new SingleFileStoreReaderTest().segmented(59),
             new SingleFileStoreReaderTest(),
+            new SingleFileStoreReaderTest().segmented(59),
+            new SingleFileStoreReaderTest().majorVersion(9),
+            new SingleFileStoreReaderTest().majorVersion(9).segmented(59),
       };
    }
 
@@ -33,7 +32,7 @@ public class SingleFileStoreReaderTest extends AbstractReaderTest {
    public ConfigurationBuilder getTargetCacheConfig() {
       ConfigurationBuilder builder = super.getTargetCacheConfig();
       builder.persistence()
-            .addStore(SingleFileStoreConfigurationBuilder.class).location(TARGET_DIR)
+            .addStore(SingleFileStoreConfigurationBuilder.class).location(getTargetDir())
             .preload(true).ignoreModifications(true).segmented(segmentCount > 0);
       return builder;
    }
@@ -42,6 +41,14 @@ public class SingleFileStoreReaderTest extends AbstractReaderTest {
    protected void configureStoreProperties(Properties properties, Element type) {
       super.configureStoreProperties(properties, type);
       properties.put(propKey(type, TYPE), StoreType.SINGLE_FILE_STORE.toString());
-      properties.put(propKey(type, LOCATION), type == SOURCE ? SOURCE_DIR : TARGET_DIR);
+      properties.put(propKey(type, LOCATION), type == SOURCE ? getSourceDir() : getTargetDir());
+   }
+
+   private String getSourceDir() {
+      return String.format("target/test-classes/infinispan%d/singlefilestore/", majorVersion);
+   }
+
+   private String getTargetDir() {
+      return getSourceDir() + "/target-sfs";
    }
 }

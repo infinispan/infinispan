@@ -1,4 +1,4 @@
-package org.infinispan.tools.store.migrator.marshaller.externalizers;
+package org.infinispan.tools.store.migrator.marshaller.infinispan8;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -22,7 +22,7 @@ import net.jcip.annotations.Immutable;
  * @since 4.0
  */
 @Immutable
-public class SetExternalizer extends AbstractExternalizer<Set> {
+class SetExternalizer extends AbstractExternalizer<Set> {
    private static final int HASH_SET = 0;
    private static final int TREE_SET = 1;
    private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(2);
@@ -58,7 +58,7 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
 
    @Override
    public Integer getId() {
-      return LegacyIds.JDK_SETS;
+      return ExternalizerTable.JDK_SETS;
    }
 
    @Override

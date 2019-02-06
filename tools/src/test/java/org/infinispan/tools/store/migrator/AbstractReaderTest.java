@@ -6,7 +6,7 @@ import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
 import static org.infinispan.tools.store.migrator.Element.SEGMENT_COUNT;
 import static org.infinispan.tools.store.migrator.Element.SOURCE;
 import static org.infinispan.tools.store.migrator.Element.TARGET;
-import static org.infinispan.tools.store.migrator.Element.TYPE;
+import static org.infinispan.tools.store.migrator.Element.VERSION;
 import static org.infinispan.tools.store.migrator.TestUtil.propKey;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -14,6 +14,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.util.Properties;
 
 import org.infinispan.Cache;
+import org.infinispan.Version;
 import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.commons.util.Features;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -23,7 +24,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.JBossUserMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.tools.store.migrator.marshaller.MarshallerType;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -32,16 +32,22 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
 
    private static final String TEST_CACHE_NAME = "reader-test";
 
+   protected int majorVersion = 8;
    protected int segmentCount;
 
-   protected <T extends AbstractReaderTest> T segmented(int segmentCount) {
+   public <T extends AbstractReaderTest> T majorVersion(int majorVersion) {
+      this.majorVersion = majorVersion;
+      return (T) this;
+   }
+
+   public <T extends AbstractReaderTest> T segmented(int segmentCount) {
       this.segmentCount = segmentCount;
       return (T) this;
    }
 
    @Override
    protected String parameters() {
-      return "[" + segmentCount + "]";
+      return String.format("[version=%d,segments=%d]", majorVersion, segmentCount);
    }
 
    /**
@@ -58,12 +64,11 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
    }
 
    protected void configureStoreProperties(Properties properties, Element type) {
-      MarshallerType marshallerType = type == SOURCE ? MarshallerType.LEGACY : MarshallerType.CURRENT;
       // User externalizers must start at JBossUserMarshaller.USER_EXT_ID_MIN in Infinispan 10.x
       int externalizerId = type == TARGET ? JBossUserMarshaller.USER_EXT_ID_MIN : 256;
       properties.put(propKey(type, CACHE_NAME), TEST_CACHE_NAME);
-      properties.put(propKey(type, MARSHALLER, TYPE), marshallerType.toString());
       properties.put(propKey(type, MARSHALLER, EXTERNALIZERS), externalizerId + ":" + TestUtil.TestObjectExternalizer.class.getName());
+      properties.put(propKey(type, VERSION), type == SOURCE ? String.valueOf(majorVersion): Version.getMajor());
 
       if (type == TARGET && segmentCount > 0) {
          properties.put(propKey(type, SEGMENT_COUNT), String.valueOf(segmentCount));
@@ -78,12 +83,10 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
       Properties properties = new Properties();
       configureStoreProperties(properties, SOURCE);
       configureStoreProperties(properties, TARGET);
-      // Read from the legacy LevelDB store and populate the new RocksDBStore using latest marshaller
       new StoreMigrator(properties).run();
 
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
       globalConfig.serialization().addAdvancedExternalizer(JBossUserMarshaller.USER_EXT_ID_MIN, new TestUtil.TestObjectExternalizer());
-
 
       // Create a new cache instance, with the required externalizers, to ensure that the new RocksDbStore can be
       // loaded and contains all of the expected values.
