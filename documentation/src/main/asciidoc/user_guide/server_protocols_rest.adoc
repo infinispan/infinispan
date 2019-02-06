@@ -393,7 +393,7 @@ Part of the point of a RESTful service is that you don't need to have tightly co
 
 [source,ruby]
 ----
-# Shows how to interact with {brandname} REST api from ruby.
+# Shows how to interact with the REST api from ruby.
 # No special libraries, just standard net/http
 #
 # Author: Michael Neale
@@ -520,7 +520,7 @@ import java.net.URL;
 import java.util.Base64;
 
 /**
- * Rest example accessing {brandname} Cache.
+ * Rest example accessing a cache.
  *
  * @author Samuel Tauil (samuel@redhat.com)
  */
@@ -615,7 +615,7 @@ public class RestExample {
         RestExample restExample = new RestExample();
         String user = "user";
         String pass = "pass";
-        restExample.putMethod("http://localhost:8080/rest/default/1", "{brandname} REST Test", user, pass);
+        restExample.putMethod("http://localhost:8080/rest/default/1", "Infinispan REST Test", user, pass);
         restExample.getMethod("http://localhost:8080/rest/default/1", user, pass);
     }
 }

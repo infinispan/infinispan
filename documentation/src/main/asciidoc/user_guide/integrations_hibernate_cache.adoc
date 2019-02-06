@@ -106,7 +106,7 @@ Then, modify the persistence.xml to include these properties:
 
 [source, XML, indent=0]
 ----
-<!-- Use {brandname} second level cache provider -->
+<!-- Use Infinispan second level cache provider -->
 <property name="hibernate.cache.region.factory_class" value="infinispan"/>
 
 <!--
@@ -133,7 +133,7 @@ In this section you will learn what you need to do configure Hibernate within Sp
 As in the previous case, start by making sure that Hibernate {brandname} Cache provider is available in the classpath.
 Then, modify `application.properties` file to contain:
 
-    # Use {brandname} second level cache provider
+    # Use Infinispan second level cache provider
     spring.jpa.properties.hibernate.cache.region.factory_class=infinispan
     #
     # Force using local configuration when only using a single node.
@@ -174,7 +174,7 @@ When running a JPA/Hibernate in a multi-node environment and enabling {brandname
 Clustering the {brandname} second-level cache provider is as simple as adding the following property to the `persistence.xml` file:
 
 [source, XML, indent=0]
-<!-- Use {brandname} second level cache provider -->
+<!-- Use Infinispan second level cache provider -->
 <property name="hibernate.cache.region.factory_class" value="infinispan"/>
 
 The default {brandname} configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
@@ -185,7 +185,7 @@ You can find more about the configuration check the link:#default_cluster_config
 If interested in running a Spring application that uses Hibernate and {brandname} as second level cache, the cache needs to be clustered.
 Clustering the {brandname} second-level cache provider is as simple as adding the following property to the `application.properties` file:
 
-    # Use {brandname} second level cache provider
+    # Use Infinispan second level cache provider
     spring.jpa.properties.hibernate.cache.region.factory_class=infinispan
 
 The default {brandname} configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
