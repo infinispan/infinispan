@@ -705,7 +705,7 @@ class StaticCacheEventFilterFactory implements CacheEventFilterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with {brandname} Externalizers
+// Serializable, Externalizable or marshallable with Infinispan Externalizers
 // needed when running in a cluster
 class StaticCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
    @Override
@@ -771,7 +771,7 @@ class DynamicCacheEventFilterFactory implements CacheEventFilterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with {brandname} Externalizers
+// Serializable, Externalizable or marshallable with Infinispan Externalizers
 // needed when running in a cluster
 class DynamicCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
    final Object[] params;
@@ -830,7 +830,7 @@ class StaticConverterFactory implements CacheEventConverterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with {brandname} Externalizers
+// Serializable, Externalizable or marshallable with Infinispan Externalizers
 // needed when running in a cluster
 class StaticCacheEventConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
    public CustomEvent convert(Integer key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
@@ -838,7 +838,7 @@ class StaticCacheEventConverter implements CacheEventConverter<Integer, String, 
    }
 }
 
-// Needs to be Serializable, Externalizable or marshallable with {brandname} Externalizers
+// Needs to be Serializable, Externalizable or marshallable with Infinispan Externalizers
 // regardless of cluster or local caches
 static class CustomEvent implements Serializable {
    final Integer key;
@@ -936,7 +936,7 @@ class DynamicCacheEventConverterFactory implements CacheEventConverterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with {brandname} Externalizers needed when running in a cluster
+// Serializable, Externalizable or marshallable with Infinispan Externalizers needed when running in a cluster
 class DynamicCacheEventConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
    final Object[] params;
 
@@ -992,7 +992,7 @@ class DynamicCacheEventFilterConverterFactory implements CacheEventFilterConvert
    }
 }
 
-// Serializable, Externalizable or marshallable with {brandname} Externalizers needed when running in a cluster
+// Serializable, Externalizable or marshallable with Infinispan Externalizers needed when running in a cluster
 //
 class DynamicCacheEventFilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>, Serializable {
    final Object[] params;
