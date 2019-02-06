@@ -1,6 +1,7 @@
 package org.infinispan.tools.store.migrator.marshaller;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -10,29 +11,50 @@ import java.util.Map;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.tools.store.migrator.TestUtil;
+import org.infinispan.tools.store.migrator.marshaller.infinispan8.Infinispan8Marshaller;
+import org.infinispan.tools.store.migrator.marshaller.infinispan9.Infinispan9Marshaller;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
- * Tests to ensure that LegacyVersionAwareMarshaller can correctly unmarshall infinispan 8.x bytes. Note, instructions
- * on how to generate the bin file used in this test are found in the comments at the bottom of the test.
+ * Tests to ensure that the configured legacy marshaller can correctly unmarshall bytes from previous versions. Note,
+ * instructions on how to generate the bin file used in this test are found in the comments at the bottom of the test.
  */
-@Test(testName = "tools.Infinispan8MarshallerTest", groups = "functional")
-public class Infinispan8MarshallerTest {
+@Test(testName = "org.infinispan.tools.store.migrator.marshaller.LegacyMarshallerTest", groups = "functional")
+public class LegacyMarshallerTest extends AbstractInfinispanTest {
 
-   private final StreamingMarshaller marshaller;
+   private int majorVersion;
+   private StreamingMarshaller marshaller;
    private Map<String, byte[]> byteMap;
 
-   public Infinispan8MarshallerTest() {
-      Map<Integer, AdvancedExternalizer<?>> externalizerMap = new HashMap<>();
-      externalizerMap.put(256, new TestUtil.TestObjectExternalizer());
-      marshaller = new Infinispan8Marshaller(externalizerMap);
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new LegacyMarshallerTest().majorVersion(8),
+            new LegacyMarshallerTest().majorVersion(9)
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[" + majorVersion + "]";
+   }
+
+   private LegacyMarshallerTest majorVersion(int majorVersion) {
+      this.majorVersion = majorVersion;
+      return this;
    }
 
    @BeforeClass(alwaysRun = true)
    public void beforeTest() throws Exception {
-      Path path = new File("src/test/resources/marshalled_bytes_8.x.bin").toPath();
+      Map<Integer, AdvancedExternalizer> userExts = new HashMap<>();
+      userExts.put(256, new TestUtil.TestObjectExternalizer());
+      this.marshaller = majorVersion == 8 ? new Infinispan8Marshaller(userExts) : new Infinispan9Marshaller(userExts);
+      String filename = String.format("src/test/resources/infinispan%d/marshalled_bytes.bin", majorVersion);
+      Path path = new File(filename).toPath();
       byte[] bytes = Files.readAllBytes(path);
       byteMap = (Map<String, byte[]>) marshaller.objectFromByteBuffer(bytes);
    }
@@ -44,14 +66,14 @@ public class Infinispan8MarshallerTest {
 
    private void unmarshallAndAssertEquality(String key, Object expectedObj) throws Exception {
       byte[] bytes = byteMap.get(key);
-      assert bytes != null;
+      assertNotNull(bytes);
       Object readObj = marshaller.objectFromByteBuffer(bytes);
       assertEquals(readObj, expectedObj);
    }
 
    /**
-    * Below is the program to generate the marshalled_bytes_8.x.bin file. It requires infinispan-8.2.6.Final on the classpath
-    * and utilises the {@link TestObject} and {@link TestObjectExternalizer} classes defined above.
+    * Below is the program to generate the marshalled_bytes_<major-version></major-version>.x.bin file.
+    * It utilises the {@link TestObject} and {@link TestObjectExternalizer} classes defined above.
     */
 
    /*
@@ -77,7 +99,7 @@ public class ByteOutputGenerator {
       // Binary file
       ByteOutputMap outputMap = new ByteOutputMap(marshaller);
       generateOutput(outputMap);
-      Files.write(Paths.get("target/marshalled_bytes_8.x.bin"), outputMap.getBytes());
+      Files.write(Paths.get("target/marshalled_bytes.bin"), outputMap.getBytes());
    }
 
 

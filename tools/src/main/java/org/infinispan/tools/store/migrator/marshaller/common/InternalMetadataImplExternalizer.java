@@ -1,4 +1,4 @@
-package org.infinispan.tools.store.migrator.marshaller.externalizers;
+package org.infinispan.tools.store.migrator.marshaller.common;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 
@@ -20,6 +19,11 @@ import org.infinispan.metadata.impl.InternalMetadataImpl;
 public class InternalMetadataImplExternalizer implements AdvancedExternalizer<InternalMetadataImpl> {
 
    private static final long serialVersionUID = -5291318076267612501L;
+
+   private final int id;
+   public InternalMetadataImplExternalizer(int id) {
+      this.id = id;
+   }
 
    @Override
    public void writeObject(ObjectOutput output, InternalMetadataImpl b) throws IOException {
@@ -38,7 +42,7 @@ public class InternalMetadataImplExternalizer implements AdvancedExternalizer<In
 
    @Override
    public Integer getId() {
-      return Ids.INTERNAL_METADATA_ID;
+      return id;
    }
 
    @Override

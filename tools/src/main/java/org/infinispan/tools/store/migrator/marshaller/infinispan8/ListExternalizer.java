@@ -1,4 +1,4 @@
-package org.infinispan.tools.store.migrator.marshaller.externalizers;
+package org.infinispan.tools.store.migrator.marshaller.infinispan8;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -22,7 +22,7 @@ import net.jcip.annotations.Immutable;
  * @since 4.0
  */
 @Immutable
-public class ListExternalizer extends AbstractExternalizer<List> {
+class ListExternalizer extends AbstractExternalizer<List> {
 
    private static final int ARRAY_LIST = 0;
    private static final int LINKED_LIST = 1;
@@ -57,7 +57,7 @@ public class ListExternalizer extends AbstractExternalizer<List> {
 
    @Override
    public Integer getId() {
-      return LegacyIds.ARRAY_LIST;
+      return ExternalizerTable.ARRAY_LIST;
    }
 
    @Override

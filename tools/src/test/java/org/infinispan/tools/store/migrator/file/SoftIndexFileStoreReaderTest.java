@@ -19,21 +19,25 @@ import org.testng.annotations.Test;
 @Test(testName = "tools.store.migrator.file.SoftIndexFileStoreReaderTest", groups = "functional")
 public class SoftIndexFileStoreReaderTest extends AbstractReaderTest {
 
-   private static final String SOURCE_DIR = "target/test-classes/softindex/";
+   public String getSrcDirectory() {
+      return String.format("target/test-classes/infinispan%d/softindex/", majorVersion);
+   }
 
    public String getTargetDataDirectory() {
-      return SOURCE_DIR + "/target-softindex/data/" + segmentCount + "/";
+      return String.format("%s/target-softindex/data/%d/", getSrcDirectory(), segmentCount);
    }
 
    public String getTargetIndexDirectory() {
-      return SOURCE_DIR + "/target-softindex/index/" + segmentCount + "/";
+      return String.format("%s/target-softindex/index/%d/", getSrcDirectory(), segmentCount);
    }
 
    @Factory
    public Object[] factory() {
       return new Object[] {
-            new SoftIndexFileStoreReaderTest().segmented(37),
             new SoftIndexFileStoreReaderTest(),
+            new SoftIndexFileStoreReaderTest().segmented(59),
+            new SoftIndexFileStoreReaderTest().majorVersion(9),
+            new SoftIndexFileStoreReaderTest().majorVersion(9).segmented(59),
       };
    }
 
@@ -55,7 +59,7 @@ public class SoftIndexFileStoreReaderTest extends AbstractReaderTest {
       super.configureStoreProperties(properties, type);
       properties.put(propKey(type, TYPE), StoreType.SOFT_INDEX_FILE_STORE.toString());
       if (type == SOURCE) {
-         properties.put(propKey(type, LOCATION), SOURCE_DIR);
+         properties.put(propKey(type, LOCATION), getSrcDirectory());
       } else {
          properties.put(propKey(type, LOCATION), getTargetDataDirectory());
          properties.put(propKey(type, INDEX_LOCATION), getTargetIndexDirectory());

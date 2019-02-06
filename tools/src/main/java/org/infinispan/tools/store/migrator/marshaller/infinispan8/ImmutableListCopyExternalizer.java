@@ -1,4 +1,4 @@
-package org.infinispan.tools.store.migrator.marshaller.externalizers;
+package org.infinispan.tools.store.migrator.marshaller.infinispan8;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -11,7 +11,7 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Util;
 
-public class ImmutableListCopyExternalizer extends AbstractExternalizer<List> {
+class ImmutableListCopyExternalizer extends AbstractExternalizer<List> {
 
    @Override
    public void writeObject(ObjectOutput output, List list) throws IOException {
@@ -34,7 +34,7 @@ public class ImmutableListCopyExternalizer extends AbstractExternalizer<List> {
 
    @Override
    public Integer getId() {
-      return LegacyIds.IMMUTABLE_LIST;
+      return ExternalizerTable.IMMUTABLE_LIST;
    }
 
    @Override

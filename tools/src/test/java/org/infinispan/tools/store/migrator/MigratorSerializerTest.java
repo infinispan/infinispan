@@ -7,7 +7,6 @@ import static org.infinispan.tools.store.migrator.Element.DATA;
 import static org.infinispan.tools.store.migrator.Element.DIALECT;
 import static org.infinispan.tools.store.migrator.Element.DRIVER_CLASS;
 import static org.infinispan.tools.store.migrator.Element.ID;
-import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
 import static org.infinispan.tools.store.migrator.Element.NAME;
 import static org.infinispan.tools.store.migrator.Element.SOURCE;
 import static org.infinispan.tools.store.migrator.Element.STRING;
@@ -18,7 +17,6 @@ import static org.infinispan.tools.store.migrator.Element.TIMESTAMP;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
 import static org.infinispan.tools.store.migrator.Element.USERNAME;
 import static org.infinispan.tools.store.migrator.StoreType.JDBC_STRING;
-import static org.infinispan.tools.store.migrator.marshaller.MarshallerType.CURRENT;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -113,7 +111,6 @@ public class MigratorSerializerTest extends AbstractInfinispanTest {
       Element type = source ? SOURCE : TARGET;
       props.put(propKey(type, TYPE), JDBC_STRING.toString());
       props.put(propKey(type, CACHE_NAME), this.getClass().getName());
-      props.put(propKey(type, MARSHALLER), CURRENT);
       props.put(propKey(type, DIALECT), DB_DIALECT.toString());
 
       props.put(propKey(type, CONNECTION_POOL, USERNAME), USER);
