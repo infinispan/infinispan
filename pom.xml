@@ -4258,7 +4258,7 @@
                   <dependency>
                      <groupId>org.glassfish.jaxb</groupId>
                      <artifactId>jaxb-runtime</artifactId>
-                     <version>${version.jaxb}</version>
+                     <version>${versionx.org.glassfish.jaxb.jaxb-runtime}</version>
                   </dependency>
                </dependencies>
             </plugin>
