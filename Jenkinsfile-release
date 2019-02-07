@@ -71,6 +71,16 @@ pipeline {
                 sh "$MAVEN_HOME/bin/mvn -B -V scm:tag"
             }
         }
+
+        stage('Next version') {
+            when {
+                expression { params.nextVersion != '' }
+            }
+            steps {
+                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${nextVersion}"
+                sh "$MAVEN_HOME/bin/mvn -B -V -Dmessage='next version ${nextVersion}' -DscmVersion=${branch} -DscmVersionType=branch scm:checkin"
+            }
+        }
     }
 
     post {
