@@ -216,7 +216,7 @@
       <version.protostuff>1.6.0</version.protostuff>
       <version.reactivestreams>1.0.2</version.reactivestreams>
       <version.rocksdb>5.15.10</version.rocksdb>
-      <version.rxjava>2.2.4</version.rxjava>
+      <version.rxjava>2.2.5</version.rxjava>
       <version.slf4j>1.7.22</version.slf4j>
       <version.sonatype.plexus>1.4</version.sonatype.plexus>
       <version.spring.boot>2.1.1.RELEASE</version.spring.boot>
