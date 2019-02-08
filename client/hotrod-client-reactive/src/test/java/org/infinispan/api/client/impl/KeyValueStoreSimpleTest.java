@@ -14,7 +14,6 @@ import org.infinispan.api.Infinispan;
 import org.infinispan.api.InfinispanClient;
 import org.infinispan.api.collections.reactive.KeyValueEntry;
 import org.infinispan.api.collections.reactive.KeyValueStore;
-import org.infinispan.api.search.reactive.SearchableStore;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
@@ -155,9 +154,7 @@ public class KeyValueStoreSimpleTest extends SingleHotRodServerTest {
 
       await(store.putMany(Flowable.fromIterable(entries)));
 
-      SearchableStore<String> searchable = store.asSearchable();
-
-      assertNotNull(searchable);
+//      store.findContinuously();
    }
 
 }

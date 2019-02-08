@@ -5,7 +5,8 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.api.collections.reactive.KeyValueEntry;
 import org.infinispan.api.collections.reactive.KeyValueStore;
-import org.infinispan.api.search.reactive.SearchableStore;
+import org.infinispan.api.search.reactive.ReactiveContinuousQuery;
+import org.infinispan.api.search.reactive.ReactiveQuery;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.reactivestreams.Publisher;
 
@@ -76,7 +77,12 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    }
 
    @Override
-   public SearchableStore<V> asSearchable() {
-      return new SearchableKeyValueStoreImpl<K, V>(cache, cacheReturnValues);
+   public ReactiveQuery find(String ickleQuery) {
+      throw new UnsupportedOperationException("TBD");
+   }
+
+   @Override
+   public ReactiveContinuousQuery findContinuously(String ickleQuery) {
+      throw new UnsupportedOperationException("TBD");
    }
 }

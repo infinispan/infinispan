@@ -2,7 +2,8 @@ package org.infinispan.api.collections.reactive;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.api.search.reactive.SearchableStore;
+import org.infinispan.api.search.reactive.ReactiveContinuousQuery;
+import org.infinispan.api.search.reactive.ReactiveQuery;
 import org.reactivestreams.Publisher;
 
 /**
@@ -35,5 +36,7 @@ public interface KeyValueStore<K, V> {
 
    CompletionStage<Void> clear();
 
-   SearchableStore<V> asSearchable();
+   ReactiveQuery find(String ickleQuery);
+
+   ReactiveContinuousQuery findContinuously(String ickleQuery);
 }
