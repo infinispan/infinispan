@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,6 +64,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
 
       Builder builder = createBuilder(hashFunction, numOwners, numSegments, members, capacityFactors);
       builder.populateOwners(numSegments);
+      builder.populateExtraOwners(numSegments);
       builder.copyOwners();
 
       return new DefaultConsistentHash(hashFunction, numOwners, numSegments, members, capacityFactors, builder.segmentOwners);
@@ -272,23 +274,60 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
             }
             virtualNode++;
          } while (stats.sumPrimaryOwned() < numSegments);
+      }
+
+      protected void populateExtraOwners(int numSegments) {
+         // If there are too few segments, some members may not have any segments at this point
+         // Assign each of them one segment, if possible (topology awareness may prevent it)
+         List<Address> additionalOwners = new ArrayList<>();
+         for (Address node : sortedMembers) {
+            if (stats.getOwned(node) == 0 && capacityFactors.get(node) != 0f) {
+               additionalOwners.add(node);
+            }
+         }
+         for (int segment = 0; segment < numSegments; segment++) {
+            List<Address> owners = segmentOwners[segment];
+            while (canAddOwners(owners) && !additionalOwners.isEmpty()) {
+               for (Iterator<Address> itOwner = additionalOwners.iterator(); itOwner.hasNext(); ) {
+                  Address additionalOwner = itOwner.next();
+                  if (addBackupOwner(segment, additionalOwner)) {
+                     itOwner.remove();
+                  }
+                  if (!canAddOwners(owners))
+                     break;
+               }
+            }
+         }
 
          // If there are too few segments, some members may not have any segments at this point
-         // Loop until we have assigned at least one segment to each member
-         // or until we have assigned numOwners owners to all segments
-         virtualNode = 0;
-         boolean membersWithZeroSegments = false;
-         do {
-            for (Address member : sortedMembers) {
-               if (stats.getOwned(member) > 0)
-                  continue;
-
-               membersWithZeroSegments = true;
-               int segment = computeSegment(member, virtualNode);
-               addBackupOwner(segment, member);
+         // Assign each of them one segment, if possible (topology awareness may prevent it)
+         int virtualNode = 0;
+         boolean membersWithZeroSegments;
+         // Stop looping after a while in case there's a bug
+         while (virtualNode < 1000) {
+            boolean ownerSlotsAvailable = false;
+            for (int segment = 0; segment < numSegments; segment++) {
+               if (canAddOwners(segmentOwners[segment])) {
+                  ownerSlotsAvailable = true;
+                  break;
+               }
             }
+            if (!ownerSlotsAvailable)
+               break;
+
+            membersWithZeroSegments = false;
+            for (Address member : sortedMembers) {
+               if (stats.getOwned(member) == 0) {
+                  membersWithZeroSegments = true;
+                  int segment = computeSegment(member, virtualNode);
+                  addBackupOwner(segment, member);
+               }
+            }
+            if (!membersWithZeroSegments)
+               break;
+
             virtualNode++;
-         } while (membersWithZeroSegments && stats.sumOwned() < numSegments);
+         }
       }
 
       private int computeSegment(Address member, int virtualNode) {
@@ -301,13 +340,22 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          return virtualNodeHash / segmentSize;
       }
 
-      protected double computeExpectedSegmentsForNode(Address node, int numCopies) {
+      protected double getExpectedPrimarySegments(Address node) {
+         Float nodeCapacityFactor = capacityFactors.get(node);
+         if (nodeCapacityFactor == 0)
+            return 0;
+
+         double totalCapacity = computeTotalCapacity();
+         return numSegments * nodeCapacityFactor / totalCapacity;
+      }
+
+      protected double getExpectedOwnedSegments(Address node) {
          Float nodeCapacityFactor = capacityFactors.get(node);
          if (nodeCapacityFactor == 0)
             return 0;
 
          double remainingCapacity = computeTotalCapacity();
-         double remainingCopies = numCopies * numSegments;
+         double remainingCopies = actualNumOwners * numSegments;
          for (Address a : sortedMembers) {
             float capacityFactor = capacityFactors.get(a);
             double nodeSegments = capacityFactor / remainingCapacity * remainingCopies;
@@ -331,8 +379,8 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       protected boolean addPrimaryOwner(int segment, Address candidate) {
          List<Address> owners = segmentOwners[segment];
          if (owners.isEmpty()) {
-            double expectedSegments = computeExpectedSegmentsForNode(candidate, 1);
-            long maxSegments = Math.round(Math.ceil(expectedSegments) * PRIMARY_SEGMENTS_ALLOWED_VARIATION);
+            double expectedSegments = getExpectedPrimarySegments(candidate);
+            int maxSegments = (int) (Math.ceil(expectedSegments) * PRIMARY_SEGMENTS_ALLOWED_VARIATION);
             if (stats.getPrimaryOwned(candidate) < maxSegments) {
                addOwnerNoCheck(segment, candidate);
                return true;
@@ -345,10 +393,10 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          List<Address> owners = segmentOwners[segment];
          if (owners.size() < actualNumOwners && !owners.contains(candidate)) {
             if (!ignoreMaxSegments) {
-               double expectedSegments = computeExpectedSegmentsForNode(candidate, actualNumOwners);
-               long maxSegments = Math.round(Math.ceil(expectedSegments) * OWNED_SEGMENTS_ALLOWED_VARIATION);
+               double expectedSegments = getExpectedOwnedSegments(candidate);
+               long maxSegments = (int) Math.ceil(expectedSegments * OWNED_SEGMENTS_ALLOWED_VARIATION);
 
-               if (stats.getOwned(candidate) < maxSegments) {
+               if (stats.getOwned(candidate) + 1 <= maxSegments) {
                   addOwnerNoCheck(segment, candidate);
                   return true;
                }
