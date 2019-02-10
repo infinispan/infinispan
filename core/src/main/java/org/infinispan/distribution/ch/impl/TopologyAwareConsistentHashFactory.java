@@ -13,6 +13,7 @@ import org.infinispan.distribution.topologyaware.TopologyLevel;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
+import org.infinispan.util.KeyValuePair;
 
 /**
  * Default topology-aware consistent hash factory implementation.
@@ -24,7 +25,8 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
 
    @Override
    protected void addBackupOwners(Builder builder) {
-      TopologyInfo topologyInfo = new TopologyInfo(builder.getMembers(), builder.getCapacityFactors());
+      TopologyInfo topologyInfo = new TopologyInfo(builder.getNumSegments(), builder.getActualNumOwners(),
+                                                   builder.getMembers(), builder.getCapacityFactors());
 
       // 1. Remove extra owners (could be leftovers from addPrimaryOwners).
       // Don't worry about location information yet.
@@ -65,19 +67,18 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
          if (owners.size() >= builder.getActualNumOwners())
             continue;
 
-         int maxDistinctLocations = topologyInfo.getDistinctLocationsCount(level, builder.getActualNumOwners());
-         TopologyInfo ownersInfo = new TopologyInfo(owners, builder.getCapacityFactors());
-         int distinctLocations = ownersInfo.getDistinctLocationsCount(level, builder.getActualNumOwners());
+         int maxDistinctLocations = Math.min(topologyInfo.getDistinctLocationsCount(level),
+                                             builder.getActualNumOwners());
+         int distinctLocations = topologyInfo.getDistinctLocationsCount(level, owners);
          if (distinctLocations == maxDistinctLocations)
             continue;
 
          float totalCapacity = topologyInfo.computeTotalCapacity(builder.getMembers(), builder.getCapacityFactors());
          for (Address candidate : builder.getMembers()) {
-            int nodeExtraSegments = (int) (extraSegments * builder.getCapacityFactor(candidate) / totalCapacity);
-            int maxSegments = topologyInfo.computeExpectedSegments(builder.getNumSegments(),
-                  builder.getActualNumOwners(), candidate) + nodeExtraSegments;
+            float nodeExtraSegments = extraSegments * builder.getCapacityFactor(candidate) / totalCapacity;
+            int maxSegments = (int) (topologyInfo.getExpectedOwnedSegments(candidate) + nodeExtraSegments);
             if (builder.getOwned(candidate) < maxSegments) {
-               if (!owners.contains(candidate) && !locationIsDuplicate(owners, candidate, level)) {
+               if (!topologyInfo.duplicateLocation(level, owners, candidate, false)) {
                   builder.addOwner(segment, candidate);
                   distinctLocations++;
                   // The owners list is live, no need to query it again
@@ -108,23 +109,23 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       // At this point each segment already has actualNumOwners owners.
       for (int segment = 0; segment < builder.getNumSegments(); segment++) {
          List<Address> owners = builder.getOwners(segment);
-         int maxDistinctLocations = topologyInfo.getDistinctLocationsCount(level, builder.getActualNumOwners());
-         TopologyInfo ownersInfo = new TopologyInfo(owners, builder.getCapacityFactors());
-         int distinctLocations = ownersInfo.getDistinctLocationsCount(level, builder.getActualNumOwners());
+         int maxDistinctLocations = Math.min(topologyInfo.getDistinctLocationsCount(level),
+                                             builder.getActualNumOwners());
+         int distinctLocations = topologyInfo.getDistinctLocationsCount(level, owners);
          if (distinctLocations == maxDistinctLocations)
             continue;
 
          float totalCapacity = topologyInfo.computeTotalCapacity(builder.getMembers(), builder.getCapacityFactors());
          for (int i = owners.size() - 1; i >= 1; i--) {
             Address owner = owners.get(i);
-            if (locationIsDuplicate(owners, owner, level)) {
+            if (topologyInfo.duplicateLocation(level, owners, owner, true)) {
                // Got a duplicate site/rack/machine, we might have an alternative for it.
                for (Address candidate : builder.getMembers()) {
-                  int expectedSegments = topologyInfo.computeExpectedSegments(builder.getNumSegments(),
-                        builder.getActualNumOwners(), candidate);
-                  int nodeExtraSegments = (int) (extraSegments * builder.getCapacityFactor(candidate) / totalCapacity);
-                  if (builder.getOwned(candidate) < expectedSegments + nodeExtraSegments) {
-                     if (!owners.contains(candidate) && !locationIsDuplicate(owners, candidate, level)) {
+                  float expectedSegments = topologyInfo.getExpectedOwnedSegments(candidate);
+                  float nodeExtraSegments = extraSegments * builder.getCapacityFactor(candidate) / totalCapacity;
+                  int maxSegments = (int) (expectedSegments + nodeExtraSegments);
+                  if (builder.getOwned(candidate) < maxSegments) {
+                     if (!topologyInfo.duplicateLocation(level, owners, candidate, false)) {
                         builder.addOwner(segment, candidate);
                         builder.removeOwner(segment, owner);
                         distinctLocations++;
@@ -166,13 +167,11 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
          for (int segment = 0; segment < builder.getNumSegments(); segment++) {
             List<Address> owners = builder.getOwners(segment);
             Address owner = owners.get(ownerIdx);
-            int maxSegments = topologyInfo.computeExpectedSegments(builder.getNumSegments(),
-                  builder.getActualNumOwners(), owner) + maxSegmentsDiff;
+            int maxSegments = (int) (topologyInfo.getExpectedOwnedSegments(owner) + maxSegmentsDiff);
             if (builder.getOwned(owner) > maxSegments) {
                // Owner has too many segments. Find another node to replace it with.
                for (Address candidate : builder.getMembers()) {
-                  int minSegments = topologyInfo.computeExpectedSegments(builder.getNumSegments(),
-                        builder.getActualNumOwners(), candidate) + minSegmentsDiff;
+                  int minSegments = (int) (topologyInfo.getExpectedOwnedSegments(candidate) + minSegmentsDiff);
                   if (builder.getOwned(candidate) < minSegments) {
                      if (!owners.contains(candidate) && maintainsDiversity(owners, candidate, owner)) {
                         builder.addOwner(segment, candidate);
@@ -192,13 +191,13 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       Object locationId;
       switch (level) {
          case SITE:
-            locationId = "" + taa.getSiteId();
+            locationId = taa.getSiteId();
             break;
          case RACK:
-            locationId = taa.getSiteId() + "|" + taa.getRackId();
+            locationId = new KeyValuePair<>(taa.getSiteId(), taa.getRackId());
             break;
          case MACHINE:
-            locationId = taa.getSiteId() + "|" + taa.getRackId() + "|" + taa.getMachineId();
+            locationId = new KeyValuePair<>(taa.getSiteId(), new KeyValuePair<>(taa.getRackId(), taa.getMachineId()));
             break;
          case NODE:
             locationId = address;
@@ -209,34 +208,25 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       return locationId;
    }
 
-   private boolean locationIsDuplicate(List<Address> addresses, Address target, TopologyLevel level) {
-      Object targetLocationId = getLocationId(target, level);
-      for (Address address : addresses) {
-         if (address != target && getLocationId(address, level).equals(targetLocationId))
-            return true;
-      }
-      return false;
-   }
-
    private boolean maintainsDiversity(List<Address> owners, Address candidate, Address replaced) {
       return maintainsDiversity(owners, candidate, replaced, TopologyLevel.SITE)
             && maintainsDiversity(owners, candidate, replaced, TopologyLevel.RACK)
             && maintainsDiversity(owners, candidate, replaced, TopologyLevel.MACHINE);
    }
 
-   private boolean maintainsDiversity(List<Address> owners, Address candidate, Address replaced, TopologyLevel machine) {
-      Set<Object> oldMachines = new HashSet<Object>(owners.size());
-      Set<Object> newMachines = new HashSet<Object>(owners.size());
-      newMachines.add(getLocationId(candidate, machine));
+   private boolean maintainsDiversity(List<Address> owners, Address candidate, Address replaced, TopologyLevel level) {
+      Set<Object> oldLocations = new HashSet<>(owners.size());
+      Set<Object> newLocations = new HashSet<>(owners.size());
+      newLocations.add(getLocationId(candidate, level));
 
       for (Address node : owners) {
-         oldMachines.add(getLocationId(node, machine));
+         oldLocations.add(getLocationId(node, level));
          if (!node.equals(replaced)) {
-            newMachines.add(getLocationId(node, machine));
+            newLocations.add(getLocationId(node, level));
          }
       }
 
-      return newMachines.size() >= oldMachines.size();
+      return newLocations.size() >= oldLocations.size();
    }
 
    public static class Externalizer extends AbstractExternalizer<TopologyAwareConsistentHashFactory> {
