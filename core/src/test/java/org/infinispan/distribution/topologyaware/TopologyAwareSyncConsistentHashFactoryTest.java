@@ -34,16 +34,18 @@ public class TopologyAwareSyncConsistentHashFactoryTest extends TopologyAwareCon
    }
 
    @Override
-   protected void assertDistribution(int numOwners, List<Address> currentMembers) {
+   protected void assertDistribution(List<Address> currentMembers, int numOwners, int numSegments) {
       TopologyAwareOwnershipStatistics stats = new TopologyAwareOwnershipStatistics(ch);
       log.tracef("Ownership stats: " + stats);
       for (Address node : currentMembers) {
-         int maxPrimarySegments = stats.computeExpectedSegments(numSegments, 1, node);
-         int maxSegments = stats.computeExpectedSegments(numSegments, numOwners, node);
-         assertTrue(0.65 * maxPrimarySegments <= stats.getPrimaryOwned(node));
-         assertTrue(stats.getPrimaryOwned(node) <= 1.2 * maxPrimarySegments);
-         assertTrue(0.65 * maxSegments <= stats.getOwned(node));
-         assertTrue(stats.getOwned(node) <= 1.2 * maxSegments);
+         float expectedPrimarySegments = stats.computeExpectedPrimarySegments(node);
+         float expectedOwnedSegments = stats.computeExpectedOwnedSegments(node);
+         int primaryOwned = stats.getPrimaryOwned(node);
+         int owned = stats.getOwned(node);
+         assertTrue(Math.floor(0.7 * expectedPrimarySegments) <= primaryOwned);
+         assertTrue(primaryOwned <= Math.ceil(1.2 * expectedPrimarySegments));
+         assertTrue(Math.floor(0.7 * expectedOwnedSegments) <= owned);
+         assertTrue(owned <= Math.ceil(1.2 * expectedOwnedSegments));
       }
    }
 }

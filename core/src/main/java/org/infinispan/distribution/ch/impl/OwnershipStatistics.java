@@ -25,6 +25,9 @@ public class OwnershipStatistics {
       for (int i = 0; i < nodes.size(); i++) {
          this.nodes.put(nodes.get(i), i);
       }
+      if (this.nodes.size() != nodes.size()) {
+         throw new IllegalArgumentException("Nodes are not distinct: " + nodes);
+      }
       this.primaryOwned = new int[nodes.size()];
       this.owned = new int[nodes.size()];
    }
