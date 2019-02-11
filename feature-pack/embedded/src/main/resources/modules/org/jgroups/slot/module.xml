@@ -8,9 +8,10 @@
 
     <dependencies>
         <module name="javax.api"/>
+        <module name="jdk.unsupported" optional="true"/>
         <module name="org.jgroups.azure" optional="true" slot="@infinispan.module.slot@"/>
         <module name="org.jgroups.kubernetes" optional="true" slot="@infinispan.module.slot@"/>
         <module name="org.wildfly.security.elytron-private" optional="true" services="import"/>
-        <module name="sun.jdk"/>
+        <module name="sun.jdk" optional="true"/>
     </dependencies>
 </module>
