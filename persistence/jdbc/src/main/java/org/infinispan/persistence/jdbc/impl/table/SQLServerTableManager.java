@@ -1,4 +1,4 @@
-package org.infinispan.persistence.jdbc.table.management;
+package org.infinispan.persistence.jdbc.impl.table;
 
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;

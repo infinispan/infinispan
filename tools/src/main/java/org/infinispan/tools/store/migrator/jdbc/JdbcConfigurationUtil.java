@@ -28,7 +28,7 @@ import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
-import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
+import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
 import org.infinispan.tools.store.migrator.Element;
 import org.infinispan.tools.store.migrator.StoreProperties;
 import org.infinispan.tools.store.migrator.StoreType;

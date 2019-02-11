@@ -1,4 +1,4 @@
-package org.infinispan.persistence.jdbc.connectionfactory;
+package org.infinispan.persistence.jdbc.impl.connectionfactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -6,6 +6,10 @@ import java.sql.SQLException;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.connectionfactory.C3P0ConnectionPool;
+import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.connectionfactory.ConnectionPool;
+import org.infinispan.persistence.jdbc.connectionfactory.HikariConnectionPool;
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;

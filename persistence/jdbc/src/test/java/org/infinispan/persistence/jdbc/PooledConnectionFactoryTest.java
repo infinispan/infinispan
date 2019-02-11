@@ -11,7 +11,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.connectionfactory.C3P0ConnectionPool;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionPool;
 import org.infinispan.persistence.jdbc.connectionfactory.HikariConnectionPool;
-import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -20,7 +20,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Tester class for {@link org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory}.
+ * Tester class for {@link PooledConnectionFactory}.
  *
  * @author Mircea.Markus@jboss.com
  * @author Tristan Tarrant

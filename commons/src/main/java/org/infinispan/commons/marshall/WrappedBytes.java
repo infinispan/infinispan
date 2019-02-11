@@ -16,12 +16,12 @@ public interface WrappedBytes {
 
    /**
     * The offset of where data starts in the backed array.
-    * @return -1 if there is no backed array otherwise >=0 if there is backing array
+    * @return -1 if there is no backed array otherwise &ge; 0 if there is backing array
     */
    int backArrayOffset();
 
    /**
-    * The length of the underlying wrapped bytes.  This will always be >= 0.
+    * The length of the underlying wrapped bytes.  This will always be &ge; 0.
     * @return how many bytes are available from the underlying wrapped implementation
     */
    int getLength();

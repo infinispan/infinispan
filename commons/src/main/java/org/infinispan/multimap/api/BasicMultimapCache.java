@@ -14,8 +14,8 @@ import org.infinispan.commons.util.Experimental;
  * <p> MutimapCache is a type of Infinispan Cache that maps keys to values, similar to {@link
  * org.infinispan.commons.api.AsyncCache} in which each key can contain multiple values.
  * <pre>
- *    foo -> 1
- *    bar -> 3, 4, 5
+ *    foo &rarr; 1
+ *    bar &rarr; 3, 4, 5
  * </pre>
  * <p> <h2>Example</h2>
  * <pre>
@@ -39,13 +39,13 @@ import org.infinispan.commons.util.Experimental;
  * <p>
  * Example
  * <pre>
- *     multimapCache.put(null, "v1").join() -> fails
- *     multimapCache.put("k", null).join() -> fails
- *     multimapCache.put("k", "v1").join() -> works and add's v1
- *     multimapCache.containsKey("k").join() -> true
- *     multimapCache.remove("k", "v1").join() -> works, removes v1 and as the remaining collection is empty, the key is
+ *     multimapCache.put(null, "v1").join() &rarr; fails
+ *     multimapCache.put("k", null).join() &rarr; fails
+ *     multimapCache.put("k", "v1").join() &rarr; works and add's v1
+ *     multimapCache.containsKey("k").join() &rarr; true
+ *     multimapCache.remove("k", "v1").join() &rarr; works, removes v1 and as the remaining collection is empty, the key is
  * removed
- *     multimapCache.containsKey("k").join() -> false
+ *     multimapCache.containsKey("k").join() &rarr; false
  *  </pre>
  * <p>
  *
@@ -147,7 +147,7 @@ public interface BasicMultimapCache<K, V> {
    CompletableFuture<Long> size();
 
    /**
-    * Multimap can support duplicates on the same key k -> ['a', 'a', 'b'] or not k -> ['a', 'b'] depending on
+    * Multimap can support duplicates on the same key k &rarr; ['a', 'a', 'b'] or not k &rarr; ['a', 'b'] depending on
     * configuration.
     * <p>
     * Returns duplicates are supported or not in this multimap cache.

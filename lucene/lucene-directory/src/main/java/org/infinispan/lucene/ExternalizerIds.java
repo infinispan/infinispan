@@ -41,18 +41,9 @@ public interface ExternalizerIds {
     */
    Integer FILE_LIST_CACHE_VALUE = 1305;
 
-   /**
-    * @see org.infinispan.lucene.impl.FileListCacheValueDelta.Externalizer
-    */
    Integer FILE_LIST_VALUE_DELTA = 1306;
 
-   /**
-    * @see org.infinispan.lucene.impl.AddOperation.AddOperationExternalizer
-    */
    Integer FILE_LIST_DELTA_ADD = 1307;
 
-   /**
-    * @see org.infinispan.lucene.impl.DeleteOperation
-    */
    Integer FILE_LIST_DELTA_DEL = 1308;
 }

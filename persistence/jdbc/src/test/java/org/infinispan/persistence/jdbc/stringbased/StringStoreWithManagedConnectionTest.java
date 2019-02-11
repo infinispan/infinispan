@@ -9,7 +9,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.persistence.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;

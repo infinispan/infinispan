@@ -18,7 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
-import org.infinispan.persistence.jdbc.table.management.TableName;
+import org.infinispan.persistence.jdbc.impl.table.TableName;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.PersistenceException;

@@ -2,7 +2,7 @@ package org.infinispan.persistence.jdbc.configuration;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
 
 @BuiltBy(PooledConnectionFactoryConfigurationBuilder.class)
 public class PooledConnectionFactoryConfiguration implements ConnectionFactoryConfiguration {

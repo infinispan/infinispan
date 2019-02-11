@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.event;
+package org.infinispan.client.hotrod.event.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
@@ -27,7 +28,6 @@ import org.infinispan.query.remote.client.ContinuousQueryResult;
  *
  * @author anistor@redhat.com
  * @since 8.2
- * @private
  */
 public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
 

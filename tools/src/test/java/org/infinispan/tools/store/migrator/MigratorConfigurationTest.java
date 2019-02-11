@@ -37,7 +37,7 @@ import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
+import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
 import org.infinispan.test.data.Person;
 import org.infinispan.tools.store.migrator.jdbc.JdbcConfigurationUtil;
 import org.infinispan.tools.store.migrator.marshaller.LegacyVersionAwareMarshaller;

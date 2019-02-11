@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.event.ContinuousQueryImpl;
+import org.infinispan.client.hotrod.event.impl.ContinuousQueryImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.query.api.continuous.ContinuousQuery;

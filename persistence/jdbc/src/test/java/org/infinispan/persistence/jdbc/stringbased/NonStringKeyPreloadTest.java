@@ -20,7 +20,7 @@ import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurat
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;

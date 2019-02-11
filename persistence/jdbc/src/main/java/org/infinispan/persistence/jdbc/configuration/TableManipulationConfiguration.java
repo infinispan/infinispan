@@ -4,7 +4,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
-import org.infinispan.persistence.jdbc.table.management.TableManager;
+import org.infinispan.persistence.jdbc.impl.table.TableManager;
 
 public class TableManipulationConfiguration {
    public static final AttributeDefinition<String> ID_COLUMN_NAME = AttributeDefinition.builder("idColumnName", null, String.class).immutable().build();

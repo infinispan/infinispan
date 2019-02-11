@@ -23,7 +23,7 @@ import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * Static factory class that contains utility methods that can be used for performing proper transformations from
- * {@link KeyValueFilter}, {@link Converter} & {@link KeyValueFilterConverter} to appropriate distributed stream
+ * {@link KeyValueFilter}, {@link Converter} and {@link KeyValueFilterConverter} to appropriate distributed stream
  * instances.
  */
 public final class CacheFilters {
