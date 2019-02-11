@@ -13,9 +13,9 @@
                 <!-- Needed for JMS tests -->
                 <property name="serverConfig">standalone-full-testqueues.xml</property>
                 <!-- Here you can add debug arguments, e.g. -Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y -->
+                <property name="javaHome">${server.jvm}</property>
                 <property name="javaVmArguments">
-                    ${testjvm.jigsawArgs}
-                    -Xmx500m ${testjvm.commonArgs}
+                    ${server.jvm.args}
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1
                     -Djgroups.join_timeout=2000 -XX:+IgnoreUnrecognizedVMOptions
                     -Dee8.preview.mode=true
@@ -28,9 +28,9 @@
                 <property name="jbossHome">${basedir}/target/node2</property>
                 <!-- Needed for JMS tests -->
                 <property name="serverConfig">standalone-full-testqueues.xml</property>
+                <property name="javaHome">${server.jvm}</property>
                 <property name="javaVmArguments">
-                    ${testjvm.jigsawArgs}
-                    -Xmx500m ${testjvm.commonArgs}
+                    ${server.jvm.args}
                     -Djboss.socket.binding.port-offset=10000
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1
                     -Djgroups.join_timeout=2000 -XX:+IgnoreUnrecognizedVMOptions

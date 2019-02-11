@@ -121,6 +121,13 @@
          <optional>true</optional>
       </dependency>
 
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jdk-misc</artifactId>
+         <version>2.Final</version>
+         <scope>provided</scope>
+      </dependency>
+
       <!-- We need the Karaf distribution as a dependency for karaf-maven-plugin -->
       <!-- But we don't want to use its dependencies (e.g. pax-logging-api) in the core tests -->
       <dependency>

@@ -62,7 +62,17 @@ When you run tests, you can get TRACE logging via using the `traceTests` profile
 ecuting this will generate a GZIP file called `trace-infinispan.log.gz`.
 This file is not fully closed, so to extract the log file, execute: 
 
- $ gunzip -c trace-infinispan.log.gz > trace-infinsipan.log
+ $ gunzip -c trace-infinispan.log.gz > trace-infinispan.log
+
+==== Running tests with JDK 8
+While building requires at least JDK 11, the testsuite can be run with JDK 8. In order to do so, you should set the
+`JAVA8_HOME` environment variable to point to your JDK 8 installation, e.g.:
+
+ $ export JAVA8_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+
+And enable the `java8-test` maven profile:
+
+ $ mvn -Pjava8-test test
 
 ==== Enabling code coverage generation
 When you run tests, you can enable code coverage recorder for calculating and analysing the {brandname} code coverage.

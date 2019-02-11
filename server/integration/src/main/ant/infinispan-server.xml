@@ -27,7 +27,11 @@
     </target>
 
     <target name="start-server" depends="-check.skipped" unless="tests.skipped">
-        <echo>Starting Infinispan server from ${server.dist}</echo>
+        <echo>Starting Infinispan server:</echo>
+        <echo>  Server home: ${server.dist}</echo>
+        <echo>  Configuration: ${jboss.config.file}</echo>
+        <echo>  JVM: ${server.jvm}</echo>
+        <echo>  Args: ${server.jvm.args}</echo>
 
         <exec dir="${server.dist}/bin" executable="chmod" osfamily="unix">
             <arg value="+x"/>
@@ -38,11 +42,13 @@
             <arg line="-c ${jboss.config.file}"/>
             <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=${port.offset} -Djboss.node.name=${jboss.node.name}"/>
             <env key="JBOSS_HOME" value="${server.dist}"/>
+            <env key="JAVA" value="${server.jvm}/bin/java"/>
         </exec>
         <exec executable="${server.dist}/bin/standalone.bat" osfamily="windows" spawn="true">
             <arg line="-c ${jboss.config.file}"/>
             <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=${port.offset} -Djboss.node.name=${jboss.node.name}"/>
             <env key="JBOSS_HOME" value="${server.dist}"/>
+            <env key="JAVA" value="${server.jvm}/bin/java"/>
         </exec>
         <echo>Waiting for Infinispan server to start</echo>
         <waitfor maxwait="15" maxwaitunit="second" checkevery="1" checkeveryunit="second">

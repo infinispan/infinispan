@@ -13,12 +13,12 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
+            <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/testnode</property>
             <!--Needed for security domain configuration-->
             <property name="serverConfig">standalone.xml</property>
             <property name="javaVmArguments">
-                ${testjvm.jigsawArgs}
-               -Xmx500m ${testjvm.commonArgs}
+               ${server.jvm.args}
                -Djboss.node.name=testnode -Djgroups.join_timeout=2000
             </property>
             <property name="managementPort">9990</property>
@@ -30,12 +30,12 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
+            <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/node0</property>
             <!-- Needed for security domain configuration -->
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">
-               ${testjvm.jigsawArgs}
-               -Xmx500m ${testjvm.commonArgs}
+               ${server.jvm.args}
                -Djboss.node.name=node0
                -Djboss.socket.binding.port-offset=100
                -Djava.net.preferIPv4Stack=true
@@ -54,11 +54,11 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
+            <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/node1</property>
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">
-               ${testjvm.jigsawArgs}
-               -Xmx500m ${testjvm.commonArgs}
+               ${server.jvm.args}
                -Djboss.node.name=node1
                -Djboss.socket.binding.port-offset=200
                -Djava.net.preferIPv4Stack=true
@@ -76,11 +76,11 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
+            <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/node1</property>
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">
-               ${testjvm.jigsawArgs}
-               -Xmx500m ${testjvm.commonArgs}
+               ${server.jvm.args}
                -Djboss.node.name=node1
                -Djboss.socket.binding.port-offset=200
                -Djava.net.preferIPv4Stack=true
@@ -98,12 +98,12 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
+            <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/node0</property>
             <!-- Needed for security domain configuration -->
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">
-               ${testjvm.jigsawArgs}
-               -Xmx500m ${testjvm.commonArgs}
+               ${server.jvm.args}
                -Djboss.node.name=node0
                -Djboss.socket.binding.port-offset=100
                -Djava.net.preferIPv4Stack=true
@@ -121,11 +121,11 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
+            <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/node1</property>
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">
-               ${testjvm.jigsawArgs}
-               -Xmx500m ${testjvm.commonArgs}
+               ${server.jvm.args}
                -Djboss.node.name=node1
                -Djboss.socket.binding.port-offset=200
                -Djava.net.preferIPv4Stack=true
