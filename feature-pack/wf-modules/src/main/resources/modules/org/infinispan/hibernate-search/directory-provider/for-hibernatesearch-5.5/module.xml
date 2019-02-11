@@ -28,6 +28,6 @@ and obviously needs to avoid dependencies to different versions of Hibernate Sea
         <module name="javax.api"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@" export="true"/>
         <module name="org.infinispan.core" slot="@infinispan.module.slot@" export="true" services="export" />
-        <module name="org.jboss.logging"/>
+        <module name="org.jboss.logging" slot="@infinispan.module.slot@"/>
     </dependencies>
 </module>

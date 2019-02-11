@@ -33,7 +33,7 @@
       <module name="org.jboss.jandex"/>
       <module name="org.jboss.modules"/>
       <module name="org.jboss.msc" />
-      <module name="org.jboss.logging" />
+      <module name="org.jboss.logging" slot="@infinispan.module.slot@"/>
       <module name="org.jboss.marshalling" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.jboss.security.negotiation" />
       <module name="org.jgroups" slot="@infinispan.module.slot@"/>

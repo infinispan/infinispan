@@ -6,6 +6,6 @@
    </resources>
 
    <dependencies>
-      <module name="org.jboss.logging"/>
+      <module name="org.jboss.logging" slot="@infinispan.module.slot@"/>
    </dependencies>
 </module>
