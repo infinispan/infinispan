@@ -5,12 +5,15 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.api.collections.reactive.KeyValueEntry;
 import org.infinispan.api.collections.reactive.KeyValueStore;
-import org.infinispan.api.search.reactive.ReactiveContinuousQuery;
-import org.infinispan.api.search.reactive.ReactiveQuery;
+import org.infinispan.api.search.reactive.ContinuousQueryPublisher;
+import org.infinispan.api.search.reactive.QueryPublisher;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.Search;
+import org.infinispan.query.dsl.QueryFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 /**
  * @author Katia Aresti, karesti@redhat.com
@@ -52,11 +55,6 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    }
 
    @Override
-   public Publisher<KeyValueEntry<K, V>> entries() {
-      return Flowable.fromIterable((Iterable<? extends KeyValueEntry<K, V>>) cache.values());
-   }
-
-   @Override
    public CompletionStage<Long> estimateSize() {
       return CompletableFuture.supplyAsync(() -> Long.valueOf(cache.size()));
    }
@@ -68,6 +66,7 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
 
    @Override
    public CompletionStage<V> getAndPut(K key, V value) {
+      Single.just(cacheReturnValues.putAsync(key, value));
       return cacheReturnValues.putAsync(key, value);
    }
 
@@ -77,12 +76,15 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    }
 
    @Override
-   public ReactiveQuery find(String ickleQuery) {
-      throw new UnsupportedOperationException("TBD");
+   public QueryPublisher<V> find() {
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
+      QueryPublisherImpl queryPublisher = new QueryPublisherImpl(queryFactory);
+      return queryPublisher;
    }
 
    @Override
-   public ReactiveContinuousQuery findContinuously(String ickleQuery) {
-      throw new UnsupportedOperationException("TBD");
+   public ContinuousQueryPublisher<V> findContinuously() {
+      ContinuousQueryPublisherImpl continuousQueryPublisherImpl = new ContinuousQueryPublisherImpl();
+      return continuousQueryPublisherImpl;
    }
 }

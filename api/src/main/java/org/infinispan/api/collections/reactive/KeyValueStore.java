@@ -2,8 +2,8 @@ package org.infinispan.api.collections.reactive;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.api.search.reactive.ReactiveContinuousQuery;
-import org.infinispan.api.search.reactive.ReactiveQuery;
+import org.infinispan.api.search.reactive.ContinuousQueryPublisher;
+import org.infinispan.api.search.reactive.QueryPublisher;
 import org.reactivestreams.Publisher;
 
 /**
@@ -30,13 +30,11 @@ public interface KeyValueStore<K, V> {
 
    CompletionStage<Void> putMany(Publisher<KeyValueEntry<K, V>> pairs);
 
-   Publisher<KeyValueEntry<K, V>> entries();
-
    CompletionStage<Long> estimateSize();
 
    CompletionStage<Void> clear();
 
-   ReactiveQuery find(String ickleQuery);
+   QueryPublisher<V> find();
 
-   ReactiveContinuousQuery findContinuously(String ickleQuery);
+   ContinuousQueryPublisher<V> findContinuously();
 }

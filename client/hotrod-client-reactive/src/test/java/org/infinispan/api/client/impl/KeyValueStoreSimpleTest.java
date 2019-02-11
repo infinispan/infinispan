@@ -132,29 +132,4 @@ public class KeyValueStoreSimpleTest extends SingleHotRodServerTest {
       String getRemovedValue = await(store.get(0));
       assertNull(getRemovedValue);
    }
-
-   public void testEntries() {
-      await(store.put(1, "adios"));
-      await(store.put(2, "agur"));
-      await(store.put(3, "ciao"));
-
-      long count = Flowable.fromPublisher(store.entries()).count().blockingGet();
-
-      assertEquals(3, count);
-   }
-
-   @Test
-   public void search_api() {
-      // TODO: Task new API https://issues.jboss.org/browse/ISPN-9924
-      List<KeyValueEntry<Integer, String>> entries = Stream.of(
-            new KeyValueEntry<>(1, "bye"),
-            new KeyValueEntry<>(2, "adios"),
-            new KeyValueEntry<>(3, "agur"),
-            new KeyValueEntry<>(4, "ciao")).collect(Collectors.toList());
-
-      await(store.putMany(Flowable.fromIterable(entries)));
-
-//      store.findContinuously();
-   }
-
 }

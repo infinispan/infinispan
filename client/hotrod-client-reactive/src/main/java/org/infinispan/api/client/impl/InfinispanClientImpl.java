@@ -1,11 +1,19 @@
 package org.infinispan.api.client.impl;
 
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
+
+import java.io.IOException;
+
 import org.infinispan.api.ClientConfig;
 import org.infinispan.api.Infinispan;
 import org.infinispan.api.collections.reactive.KeyValueStore;
+import org.infinispan.api.collections.reactive.KeyValueStoreConfig;
 import org.infinispan.api.collections.reactive.client.impl.KeyValueStoreImpl;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 
 public class InfinispanClientImpl implements Infinispan {
 
@@ -25,8 +33,39 @@ public class InfinispanClientImpl implements Infinispan {
       return new KeyValueStoreImpl(cache, cacheWithReturnValues);
    }
 
+   @Override
+   public <K, V> KeyValueStore<K, V> getKeyValueStore(String name, KeyValueStoreConfig config) {
+      addProtobufSchema(config);
+      return getKeyValueStore(name);
+   }
+
+   private void addProtobufSchema(KeyValueStoreConfig config) {
+      String fileName = config.getSchemaFileName();
+      // Retrieve metadata cache
+      RemoteCache<String, String> metadataCache =
+            cacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
+
+      SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(cacheManager);
+      // Use ProtoSchemaBuilder to define
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      String protoFile;
+      try {
+         protoFile = protoSchemaBuilder
+               .fileName(fileName)
+               .addClass(config.getValueClazz())
+               .packageName(config.getPackageName())
+               .build(ctx);
+      } catch (IOException e) {
+         // TODO handle error
+         throw new RuntimeException(e);
+      }
+      // Store the configuration in the metadata cache
+      metadataCache.put(fileName, protoFile);
+   }
+
    /* TODO: Remove, visible for test now */
    public void setCacheManager(RemoteCacheManager cacheManager) {
       this.cacheManager = cacheManager;
    }
+
 }

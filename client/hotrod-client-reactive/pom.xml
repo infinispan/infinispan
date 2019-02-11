@@ -23,17 +23,14 @@
          <artifactId>infinispan-client-hotrod</artifactId>
       </dependency>
 
-      <!-- Search DSL optional - Reactive TBD -->
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-query-dsl</artifactId>
-         <optional>true</optional>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-remote-query-client</artifactId>
-         <optional>true</optional>
       </dependency>
 
       <!-- Test dependencies -->

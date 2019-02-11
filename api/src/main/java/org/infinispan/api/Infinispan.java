@@ -1,6 +1,7 @@
 package org.infinispan.api;
 
 import org.infinispan.api.collections.reactive.KeyValueStore;
+import org.infinispan.api.collections.reactive.KeyValueStoreConfig;
 
 /**
  * Each infinispan is a node instance. It can be embedded or client node, depending on the access point. {@link
@@ -18,5 +19,7 @@ public interface Infinispan {
     * @return, the reactive cache instance
     */
    <K, V> KeyValueStore<K, V> getKeyValueStore(String name);
+
+   <K, V> KeyValueStore<K, V> getKeyValueStore(String name, KeyValueStoreConfig config);
 
 }
