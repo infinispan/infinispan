@@ -10,6 +10,7 @@
 
     <dependencies>
         <module name="javax.api"/>
+        <module name="jdk.unsupported" optional="true"/>
         <module name="org.infinispan.server.commons" slot="@infinispan.module.slot@"/>
         <module name="org.jboss.as.controller"/>
         <module name="org.jboss.as.core-security"/>
@@ -31,6 +32,6 @@
         <module name="org.jgroups.kubernetes" slot="@infinispan.module.slot@"/>
         <module name="org.wildfly.security.elytron-private" services="import"/>
         <module name="org.wildfly.security.manager"/>
-        <module name="sun.jdk"/>
+        <module name="sun.jdk" optional="true"/>
     </dependencies>
 </module>

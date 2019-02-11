@@ -6,6 +6,7 @@
 
     <dependencies>
         <module name="jdk.scripting.nashorn" optional="true"/>
+        <module name="jdk.unsupported" optional="true"/>
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
         <module name="org.apache.xerces" services="import"/>
@@ -17,6 +18,7 @@
         <module name="org.jboss.logging"/>
         <module name="org.jboss.marshalling" services="import" slot="@infinispan.module.slot@"/>
         <module name="org.jgroups" slot="@infinispan.module.slot@"/>
+        <module name="sun.jdk" optional="true"/>
         <module name="sun.scripting" optional="true"/>
 
         <!-- The CacheStore modules are listed as dependencies so that people can use them even
