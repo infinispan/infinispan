@@ -36,7 +36,7 @@ public interface StreamingMarshaller extends Marshaller {
     * StreamingMarshaller implementation could potentially use some mechanisms to speed up this startObjectOutput call.
     *
     * <p>On the other hand, when a call is reentrant, i.e. startObjectOutput/startObjectOutput(reentrant)...finishObjectOutput/finishObjectOutput,
-    * the StreamingMarshaller implementation might treat it differently. An example of reentrancy would be marshalling of {@link MarshalledValue}.
+    * the StreamingMarshaller implementation might treat it differently. An example of reentrancy would be marshalling of MarshalledValue.
     * When sending or storing a MarshalledValue, a call to startObjectOutput() would occur so that the stream is open and
     * following, a 2nd call could occur so that MarshalledValue's raw byte array version is calculated and sent across.
     * This enables storing as binary on the receiver side which is performance gain. The StreamingMarshaller implementation could decide

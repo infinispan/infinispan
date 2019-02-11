@@ -2,7 +2,7 @@ package org.infinispan.persistence.jdbc;
 
 import static org.testng.Assert.assertEquals;
 
-import org.infinispan.persistence.jdbc.table.management.TableName;
+import org.infinispan.persistence.jdbc.impl.table.TableName;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 

@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod.jmx;
 
+/**
+ * RemoteCache client-side statistics (such as number of connections)
+ */
 public interface RemoteCacheClientStatisticsMXBean {
 
    /**

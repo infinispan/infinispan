@@ -13,11 +13,11 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
-import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
-import org.infinispan.persistence.jdbc.table.management.TableManager;
-import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
-import org.infinispan.persistence.jdbc.table.management.TableName;
+import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.connectionfactory.SimpleConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.table.TableManager;
+import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
+import org.infinispan.persistence.jdbc.impl.table.TableName;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;

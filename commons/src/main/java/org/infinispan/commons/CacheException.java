@@ -1,7 +1,7 @@
 package org.infinispan.commons;
 
 /**
- * Thrown when operations on {@link Cache} fail unexpectedly.
+ * Thrown when operations fail unexpectedly.
  * <p/>
  * Specific subclasses such as {@link org.infinispan.util.concurrent.TimeoutException} and {@link
  * org.infinispan.commons.CacheConfigurationException} have more specific uses.

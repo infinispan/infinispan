@@ -274,7 +274,7 @@ public class ComponentMetadata implements Serializable {
    }
 
    /**
-    * This class encapsulates metadata on a prioritized method, such as one annotated with {@link Start} or {@link @Stop}
+    * This class encapsulates metadata on a prioritized method, such as one annotated with {@link Start} or {@link Stop}
     */
    public static class PrioritizedMethodMetadata implements Serializable {
       private static final long serialVersionUID = 0x21210121712EDL;

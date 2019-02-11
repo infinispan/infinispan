@@ -13,7 +13,5 @@
  *
  *    All classes in this package can be removed once we are baselined on JDK9.
  * </p>
- *
- * @private
  */
 package io.netty.handler.ssl;

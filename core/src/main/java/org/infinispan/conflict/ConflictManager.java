@@ -38,7 +38,7 @@ public interface ConflictManager<K, V> {
     * by sequentially fetching cache segments from their respective owner nodes.  If a rebalance is initiated whilst the
     * stream is fetching a cache segment, then a CacheException is thrown when executing the stream.
     *
-    * @return a stream of Map<Address, CacheEntry>> for all conflicts detected throughout this cache.
+    * @return a stream of Map&lt;Address, CacheEntry&gt; for all conflicts detected throughout this cache.
     * @throws IllegalStateException if called whilst a previous conflicts stream is still executing or state transfer is in progress.
     */
    Stream<Map<Address, CacheEntry<K, V>>> getConflicts();

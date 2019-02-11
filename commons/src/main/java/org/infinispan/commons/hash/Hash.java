@@ -5,7 +5,6 @@ package org.infinispan.commons.hash;
  *
  * @author Manik Surtani
  * @author Patrick McFarland
- * @see MurmurHash2
  * @see MurmurHash3
  */
 

@@ -12,15 +12,6 @@ import org.infinispan.persistence.spi.PersistenceException;
  * @author Mircea.Markus@jboss.com
  */
 public abstract class ConnectionFactory {
-
-   /**
-    * Constructs a {@link ConnectionFactory} based on the supplied class
-    * name.
-    */
-   public static ConnectionFactory getConnectionFactory(String connectionFactoryClass, ClassLoader classLoader) throws PersistenceException {
-      return (ConnectionFactory) Util.getInstance(connectionFactoryClass, classLoader);
-   }
-
    /**
     * Constructs a {@link ConnectionFactory} based on the supplied class
     * name.

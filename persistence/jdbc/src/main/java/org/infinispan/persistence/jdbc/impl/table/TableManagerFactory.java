@@ -1,4 +1,4 @@
-package org.infinispan.persistence.jdbc.table.management;
+package org.infinispan.persistence.jdbc.impl.table;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;

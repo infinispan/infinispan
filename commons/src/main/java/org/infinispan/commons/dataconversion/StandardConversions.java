@@ -338,7 +338,7 @@ public final class StandardConversions {
 
    /**
     * Handle x-www-form-urlencoded as single values for now.
-    * Ideally it should generate a Map<String, String>
+    * Ideally it should generate a Map&lt;String, String&gt;
     */
    public static Object convertUrlEncodedToObject(Object content) {
       Object decoded = urlDecode(content);

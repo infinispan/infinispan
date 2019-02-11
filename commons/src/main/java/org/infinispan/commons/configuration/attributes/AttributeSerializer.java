@@ -55,8 +55,8 @@ public abstract class AttributeSerializer<T, U extends ConfigurationInfo, B exte
     *
     * @param enclosingElement The parent element where the attribute is located.
     * @param nesting In case the attributed is serialized as an element, the name of this element or null otherwise.
-    * @param name The serialized attribute name.
-    * @param value The serialize attribute value.
+    * @param attributeDefinition The serialized attribute definition.
+    * @param attrValue The serialize attribute value.
     * @param builderInfo the {@link ConfigurationBuilderInfo} where the attribute is defined.
     * @return The attribute value deserialized.
     */

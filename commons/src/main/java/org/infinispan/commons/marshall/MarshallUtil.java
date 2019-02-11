@@ -69,7 +69,7 @@ public class MarshallUtil {
    /**
     * Unmarshall the {@link Map}.
     * <p>
-    * If the marshalled map is {@link null}, then the {@link MapBuilder} is not invoked.
+    * If the marshalled map is {@code null}, then the {@link MapBuilder} is not invoked.
     *
     * @param in      {@link ObjectInput} to read.
     * @param builder {@link MapBuilder} to create the concrete {@link Map} implementation.
@@ -115,7 +115,7 @@ public class MarshallUtil {
    /**
     * Unmarshall the {@link Map}.
     * <p>
-    * If the marshalled map is {@link null}, then the {@link MapBuilder} is not invoked.
+    * If the marshalled map is {@code null}, then the {@link MapBuilder} is not invoked.
     *
     * @param in      {@link ObjectInput} to read.
     * @param builder {@link MapBuilder} to create the concrete {@link Map} implementation.
@@ -138,7 +138,7 @@ public class MarshallUtil {
    /**
     * Marshall the {@link UUID} by sending the most and lest significant bits.
     * <p>
-    * This method supports {@code null} if {@code checkNull} is set to {@link true}.
+    * This method supports {@code null} if {@code checkNull} is set to {@code true}.
     *
     * @param uuid      {@link UUID} to marshall.
     * @param out       {@link ObjectOutput} to write.
@@ -161,7 +161,7 @@ public class MarshallUtil {
     * Unmarshall {@link UUID}.
     *
     * @param in        {@link ObjectInput} to read.
-    * @param checkNull If {@code true}, it checks if the {@link UUID} marshalled was {@link null}.
+    * @param checkNull If {@code true}, it checks if the {@link UUID} marshalled was {@code null}.
     * @return {@link UUID} marshalled.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     * @see #marshallUUID(UUID, ObjectOutput, boolean).
