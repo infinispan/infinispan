@@ -1,10 +1,10 @@
 package org.infinispan.notifications.cachelistener;
 
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.cache.impl.EncoderCache;
@@ -17,6 +17,7 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -32,9 +33,13 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -57,18 +62,23 @@ public class OnlyPrimaryOwnerTest {
    @BeforeMethod
    public void setUp() {
       n = new CacheNotifierImpl();
-      mockCache = mock(EncoderCache.class, RETURNS_DEEP_STUBS);
+      mockCache = mock(EncoderCache.class);
+      EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
+      when(mockCache.getCacheManager()).thenReturn(cacheManager);
       when(mockCache.getAdvancedCache()).thenReturn(mockCache);
       when(mockCache.getKeyDataConversion()).thenReturn(DataConversion.DEFAULT_KEY);
       when(mockCache.getValueDataConversion()).thenReturn(DataConversion.DEFAULT_VALUE);
-      Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
-      when(config.memory().storageType()).thenReturn(StorageType.OBJECT);
       when(mockCache.getStatus()).thenReturn(ComponentStatus.INITIALIZING);
-
+      AsyncInterceptorChain asyncInterceptorChain = mock(AsyncInterceptorChain.class);
+      when(mockCache.getAsyncInterceptorChain()).thenReturn(asyncInterceptorChain);
+      when(asyncInterceptorChain.getInterceptors()).thenReturn(Collections.singletonList(mock(AsyncInterceptor.class)));
+      ComponentRegistry componentRegistry = mock(ComponentRegistry.class);
+      when(mockCache.getComponentRegistry()).thenReturn(componentRegistry);
       MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
-      when(mockCache.getComponentRegistry().getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
+      when(componentRegistry.getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
       mockRegistry.registerMocks(RpcManager.class, StreamingMarshaller.class, CancellationService.class,
                                  CommandsFactory.class, Encoder.class);
+      Configuration config = new ConfigurationBuilder().memory().storageType(StorageType.OBJECT).build();
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
                          mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(KeyPartitioner.class));
       cl = new PrimaryOwnerCacheListener();

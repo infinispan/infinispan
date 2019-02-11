@@ -82,7 +82,8 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
          getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", TIMEOUT_SCHEDULE_EXECUTOR);
       assertTrue(existsObject(objectName));
       assertEquals(Integer.MAX_VALUE, server.getAttribute(objectName, "MaximumPoolSize"));
-      assertEquals(0L, server.getAttribute(objectName, "KeepAliveTime"));
+      String javaVersion = System.getProperty("java.version");
+      assertEquals(javaVersion.startsWith("1.8.") ? 0l : 10l, server.getAttribute(objectName, "KeepAliveTime"));
 
       LazyInitializingBlockingTaskAwareExecutorService remoteExecutor =
          extractGlobalComponent(manager(0), LazyInitializingBlockingTaskAwareExecutorService.class,

@@ -2,8 +2,8 @@
 {brandname} uses link:http://maven.apache.org/[Maven] as a build system.
 
 === Requirements
-* Java 8 or above
-* Maven 3.2 or above
+* Java 11 or above
+* Maven 3.5 or above
 
 WARNING: Make sure you follow the steps outlined in link:http://community.jboss.org/docs/15169[Maven Getting Started - Users] to set up your JBoss repository correctly.
 This step is _crucial_ to ensure your Maven setup can locate JBoss artifacts!

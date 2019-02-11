@@ -10,10 +10,10 @@
         <container qualifier="container.active-1" default="true">
             <configuration>
                 <property name="jbossHome">${basedir}/target/node1</property>
+                <property name="javaHome">${server.jvm}</property>
                 <property name="javaVmArguments">
-                    ${testjvm.jigsawArgs}
-                    -Xmx500m ${testjvm.commonArgs}
-                    -Djboss.socket.binding.port-offset=100 -Xmx512m -Djava.net.preferIPv4Stack=true
+                    ${server.jvm.args}
+                    -Djboss.socket.binding.port-offset=100 -Djava.net.preferIPv4Stack=true
                     -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000
                 </property>
                 <!-- To debug the Arquillian managed application server: -->
@@ -28,9 +28,9 @@
         <container qualifier="container.active-2">
             <configuration>
                 <property name="jbossHome">${basedir}/target/node2</property>
+                <property name="javaHome">${server.jvm}</property>
                 <property name="javaVmArguments">
-                    ${testjvm.jigsawArgs}
-                    -Xmx500m ${testjvm.commonArgs}
+                    ${server.jvm.args}
                     -Djboss.socket.binding.port-offset=200
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000
                 </property>
@@ -41,9 +41,9 @@
         <container qualifier="container.no-ispn">
             <configuration>
                 <property name="jbossHome">${basedir}/target/node1</property>
+                <property name="javaHome">${server.jvm}</property>
                 <property name="javaVmArguments">
-                    ${testjvm.jigsawArgs}
-                    -Xmx500m ${testjvm.commonArgs}
+                    ${server.jvm.args}
                     -Djboss.socket.binding.port-offset=300
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000
                 </property>
