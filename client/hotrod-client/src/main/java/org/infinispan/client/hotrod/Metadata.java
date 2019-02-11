@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod;
 
 /**
  * Represents metadata about an entry, such as creation and access times and expiration information. Time values are server
- * time representations as returned by {@link org.infinispan.util.TimeService#wallClockTime}
+ * time representations as returned by {@link org.infinispan.commons.time.TimeService#wallClockTime}
  *
  * @author Tristan Tarrant
  * @since 9.0

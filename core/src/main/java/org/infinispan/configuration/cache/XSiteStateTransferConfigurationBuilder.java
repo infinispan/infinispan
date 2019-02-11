@@ -76,7 +76,7 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
    }
 
    /**
-    * The maximum number of retries when a push state command fails. A value <= 0 (zero) mean that the command will not
+    * The maximum number of retries when a push state command fails. A value &le; 0 (zero) mean that the command will not
     * retry. Default value is 30.
     */
    public final XSiteStateTransferConfigurationBuilder maxRetries(int maxRetries) {
@@ -85,7 +85,7 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
    }
 
    /**
-    * The waiting time (in milliseconds) between each retry. The value should be > 0 (zero). Default value is 2 seconds.
+    * The waiting time (in milliseconds) between each retry. The value should be &gt; 0 (zero). Default value is 2 seconds.
     */
    public final XSiteStateTransferConfigurationBuilder waitTime(long waitingTimeBetweenRetries) {
       attributes.attribute(WAIT_TIME).set(waitingTimeBetweenRetries);

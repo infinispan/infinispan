@@ -7,7 +7,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.connectionfactory.SimpleConnectionFactory;
 
 /**
  * SimpleConnectionFactoryConfiguration.

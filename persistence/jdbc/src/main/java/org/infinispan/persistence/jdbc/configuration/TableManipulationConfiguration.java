@@ -14,7 +14,7 @@ import org.infinispan.commons.configuration.attributes.NestingAttributeSerialize
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
-import org.infinispan.persistence.jdbc.table.management.TableManager;
+import org.infinispan.persistence.jdbc.impl.table.TableManager;
 
 public class TableManipulationConfiguration implements ConfigurationInfo {
 

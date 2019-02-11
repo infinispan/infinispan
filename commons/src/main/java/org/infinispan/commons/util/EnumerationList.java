@@ -6,7 +6,7 @@ import java.util.List;
 
 
 /**
- * An Enumeration -> List adaptor
+ * An Enumeration &rarr; List adaptor
  *
  * @author Pete Muir
  */

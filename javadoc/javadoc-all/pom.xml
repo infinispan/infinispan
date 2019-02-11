@@ -274,6 +274,10 @@
                            <packages>org.infinispan.distexec*</packages>
                         </group>
                         <group>
+                           <title>Remote Client API</title>
+                           <packages>org.infinispan.client*</packages>
+                        </group>
+                        <group>
                            <title>Server Connectors API</title>
                            <packages>org.infinispan.server*:org.infinispan.rest*</packages>
                         </group>
@@ -292,7 +296,7 @@
                         <dependencySourceInclude>org.infinispan:*</dependencySourceInclude>
                      </dependencySourceIncludes>
                      <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
-                     <excludePackageNames>org.infinispan.commons.jdkspecific*:*.impl.*:*.backend.*:io.netty*</excludePackageNames>
+                     <excludePackageNames>org.infinispan.commons.jdkspecific*:*.impl.*:*.backend.*:io.netty*:*.logging.*:org.infinispan.commands*:*.internal.*</excludePackageNames>
                      <excludedocfilessubdir>org/infinispan/commons/jdkspecific</excludedocfilessubdir>
                      <doclint>none</doclint>
                      <useStandardDocletOptions>true</useStandardDocletOptions>

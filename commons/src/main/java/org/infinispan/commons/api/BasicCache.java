@@ -33,8 +33,6 @@ import java.util.function.Function;
  * @author Galder Zamarreño
  * @author Tristan Tarrant
  *
- * @see org.infinispan.manager.CacheContainer
- * @see DefaultCacheManager
  * @see <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a>
  * @see <a href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a>
  *

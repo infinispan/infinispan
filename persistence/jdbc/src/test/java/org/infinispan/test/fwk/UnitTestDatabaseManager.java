@@ -13,9 +13,9 @@ import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurat
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
-import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
-import org.infinispan.persistence.jdbc.table.management.TableName;
+import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.connectionfactory.SimpleConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.table.TableName;
 
 /**
  * Class that assures concurrent access to the in memory database.

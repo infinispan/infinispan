@@ -17,7 +17,6 @@ import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.jdbc.DatabaseType;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
 
 public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJdbcStoreConfiguration, S extends AbstractJdbcStoreConfigurationBuilder<T, S>> extends
@@ -46,7 +45,7 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
    }
 
    /**
-    * Use the specified {@link ConnectionFactory} to handle connection to the database
+    * Use the specified ConnectionFactory to handle connection to the database
     */
    @Override
    public <C extends ConnectionFactoryConfigurationBuilder<?>> C connectionFactory(Class<C> klass) {

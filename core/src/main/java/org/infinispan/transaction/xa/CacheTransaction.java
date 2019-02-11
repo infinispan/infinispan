@@ -183,7 +183,7 @@ public interface CacheTransaction {
     * If the {@code key} is not locked by this transaction, it returns {@code null}.
     *
     * @param key the key.
-    * @return the {@link CompletableFuture} or {@link null} if the key is not locked by this transaction.
+    * @return the {@link CompletableFuture} or {@code null} if the key is not locked by this transaction.
     */
    CompletableFuture<Void> getReleaseFutureForKey(Object key);
 

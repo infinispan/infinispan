@@ -1,4 +1,4 @@
-package org.infinispan.persistence.jdbc.connectionfactory;
+package org.infinispan.persistence.jdbc.impl.connectionfactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.ManagedConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
