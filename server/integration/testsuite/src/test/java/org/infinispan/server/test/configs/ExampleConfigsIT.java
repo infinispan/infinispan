@@ -31,7 +31,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.apache.log4j.Logger;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
@@ -42,6 +41,8 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
@@ -76,7 +77,7 @@ public class ExampleConfigsIT {
           + "ca.jks";
     protected static final String KEYSTORE_PASSWORD = "secret";
 
-    private static final Logger log = Logger.getLogger(ExampleConfigsIT.class);
+    private static final Log log = LogFactory.getLog(ExampleConfigsIT.class);
 
     @InfinispanResource
     RemoteInfinispanServers serverManager;
@@ -688,7 +689,8 @@ public class ExampleConfigsIT {
     }
 
     private void startContainerWithTopology(String containerName, String nodeName, int portOffset, String site, String rack, String machine) {
-        controller.start(containerName, new Config().add("javaVmArguments", System.getProperty("server.jvm.args")
+        String serverJvmArgs = System.getProperty("server.jvm.args");
+        controller.start(containerName, new Config().add("javaVmArguments", serverJvmArgs
                 + " -Djboss.node.name=" + nodeName
                 + " -Djboss.socket.binding.port-offset=" + portOffset
                 + " -Djboss.jgroups.topology.site=" + site

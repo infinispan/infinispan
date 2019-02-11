@@ -168,6 +168,63 @@
          <artifactId>infinispan-tasks-api</artifactId>
       </dependency>
       <!-- /javadoc-remote dependencies -->
+
+      <!-- transitives -->
+      <dependency>
+         <groupId>org.hibernate.javax.persistence</groupId>
+         <artifactId>hibernate-jpa-2.1-api</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-core</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.osgi</groupId>
+         <artifactId>org.osgi.core</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.osgi</groupId>
+         <artifactId>org.osgi.compendium</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-beans</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-context</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-core</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-expression</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.springframework.session</groupId>
+         <artifactId>spring-session-core</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jdk-misc</artifactId>
+         <version>2.Final</version>
+      </dependency>
    </dependencies>
 
    <build>
@@ -183,13 +240,7 @@
                      <goal>jar</goal>
                   </goals>
                   <configuration>
-                     <doclet>org.infinispan.doclets.DocletMultiplexer</doclet>
-                     <docletArtifact>
-                        <groupId>org.infinispan.doclets</groupId>
-                        <artifactId>infinispan-doclets</artifactId>
-                        <version>${version.infinispan.doclets}</version>
-                     </docletArtifact>
-                     <doctitle>${infinispan.brand.name} ${infinispan.base.version} API</doctitle>
+                     <doctitle>${infinispan.brand.name} ${infinispan.base.version} Embedded API</doctitle>
                      <docfilessubdirs>true</docfilessubdirs>
                      <detectLinks>false</detectLinks>
                      <footer>${analytics.code}</footer>
@@ -211,20 +262,16 @@
                            <packages>org.infinispan.counter*</packages>
                         </group>
                         <group>
-                           <title>Clustered Lock API</title>
-                           <packages>org.infinispan.lock*</packages>
-                        </group>
-                        <group>
                            <title>Multimap API</title>
                            <packages>org.infinispan.multimap*</packages>
                         </group>
                         <group>
-                           <title>Distributed Executors (deprecated)</title>
-                           <packages>org.infinispan.distexec*</packages>
+                           <title>Clustered Lock API</title>
+                           <packages>org.infinispan.lock*</packages>
                         </group>
                         <group>
-                           <title>Hot Rod Client API</title>
-                           <packages>org.infinispan.client.hotrod*:org.infinispan.query.remote.client*</packages>
+                           <title>Distributed Executors (deprecated)</title>
+                           <packages>org.infinispan.distexec*</packages>
                         </group>
                         <group>
                            <title>Server Connectors API</title>
@@ -234,6 +281,10 @@
                            <title>Tree API</title>
                            <packages>org.infinispan.tree*</packages>
                         </group>
+                        <group>
+                           <title>Tasks API</title>
+                           <packages>org.infinispan.tasks*</packages>
+                        </group>
                      </groups>
                      <includeDependencySources>true</includeDependencySources>
                      <includeTransitiveDependencySources>false</includeTransitiveDependencySources>
@@ -241,22 +292,12 @@
                         <dependencySourceInclude>org.infinispan:*</dependencySourceInclude>
                      </dependencySourceIncludes>
                      <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
-                     <links>
-                        <link>http://docs.oracle.com/javase/8/docs/api/</link>
-                        <link>http://docs.oracle.com/javaee/7/api/</link>
-                        <link>http://docs.jboss.org/jbossmarshalling/1.3/</link>
-                        <link>http://docs.jboss.org/jbosslogging/latest/</link>
-                        <link>http://www.osgi.org/javadoc/r4v43/core/</link>
-                        <link>http://jgroups.org/javadoc/</link>
-                        <link>http://lucene.apache.org/core/5_5_4/core/</link>
-                        <link>http://docs.jboss.org/hibernate/search/5.8/api/</link>
-                     </links>
-                     <quiet>true</quiet>
-                     <stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile>
-                     <subpackages>org.infinispan</subpackages>
-                     <additionalparam>-Xdoclint:none</additionalparam>
-                     <useStandardDocletOptions>false</useStandardDocletOptions>
-
+                     <excludePackageNames>org.infinispan.commons.jdkspecific*:*.impl.*:*.backend.*:io.netty*</excludePackageNames>
+                     <excludedocfilessubdir>org/infinispan/commons/jdkspecific</excludedocfilessubdir>
+                     <doclint>none</doclint>
+                     <useStandardDocletOptions>true</useStandardDocletOptions>
+                     <additionalOptions>--allow-script-in-comments</additionalOptions>
+                     <source>8</source>
                      <additionalDependencies>
                         <additionalDependency>
                            <groupId>javax.enterprise</groupId>
@@ -274,33 +315,41 @@
                            <version>${version.javax.servlet}</version>
                         </additionalDependency>
                         <additionalDependency>
-                           <groupId>org.kohsuke.metainf-services</groupId>
-                           <artifactId>metainf-services</artifactId>
-                           <version>${version.metainf-services}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                           <groupId>org.osgi</groupId>
-                           <artifactId>org.osgi.core</artifactId>
-                           <scope>provided</scope>
-                           <version>${version.osgi}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                           <groupId>org.osgi</groupId>
-                           <artifactId>org.osgi.compendium</artifactId>
-                           <scope>provided</scope>
-                           <version>${version.osgi}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                           <groupId>org.hibernate</groupId>
-                           <artifactId>hibernate-core</artifactId>
-                           <version>${version.hibernate.core}</version>
-                        </additionalDependency>
-                        <additionalDependency>
                            <groupId>io.agroal</groupId>
                            <artifactId>agroal-api</artifactId>
                            <version>${version.io.agroal}</version>
                         </additionalDependency>
                      </additionalDependencies>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>jmx</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+                  <configuration>
+                     <doctitle>${infinispan.brand.name} ${infinispan.base.version} Remote API</doctitle>
+                     <doclet>org.infinispan.doclets.jmx.JmxDoclet</doclet>
+                     <docletArtifact>
+                        <groupId>org.infinispan.doclets</groupId>
+                        <artifactId>infinispan-doclets</artifactId>
+                        <version>${version.infinispan.doclets}</version>
+                     </docletArtifact>
+                     <docfilessubdirs>true</docfilessubdirs>
+                     <detectLinks>false</detectLinks>
+                     <includeDependencySources>true</includeDependencySources>
+                     <includeTransitiveDependencySources>false</includeTransitiveDependencySources>
+                     <dependencySourceIncludes>
+                        <dependencySourceInclude>org.infinispan:*</dependencySourceInclude>
+                     </dependencySourceIncludes>
+                     <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
+                     <excludePackageNames>org.infinispan.commons.jdkspecific*</excludePackageNames>
+                     <excludedocfilessubdir>org/infinispan/commons/jdkspecific</excludedocfilessubdir>
+                     <doclint>none</doclint>
+                     <useStandardDocletOptions>false</useStandardDocletOptions>
+                     <source>8</source>
+                     <!--additionalJOption>-J-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8787</additionalJOption-->
                   </configuration>
                </execution>
             </executions>

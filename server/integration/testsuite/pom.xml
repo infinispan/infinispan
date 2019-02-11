@@ -175,6 +175,16 @@
             <type>zip</type>
         </dependency>
         <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.karaf.features</groupId>
+            <artifactId>org.apache.karaf.features.core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.ops4j.pax.exam</groupId>
             <artifactId>pax-exam-container-karaf</artifactId>
         </dependency>
@@ -296,7 +306,6 @@
 
         <start.jboss.as.manually>false</start.jboss.as.manually>
 
-        <server.jvm>${env.JAVA_HOME}</server.jvm>
         <resources.dir>${project.build.testOutputDirectory}</resources.dir>
 
         <serverMemoryJvmArgs>-Xmx300m ${testjvm.commonArgs}</serverMemoryJvmArgs>
@@ -336,7 +345,7 @@
         <suite.manual.include>**/*.java</suite.manual.include>
         <suite.manual.exclude.groups>
             org.infinispan.server.test.category.ClientSingleNode,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.Osgi,
-            org.infinispan.server.test.category.Queries
+            org.infinispan.server.test.category.Queries,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.RollingUpgradesDist
         </suite.manual.exclude.groups>
         <suite.client.arq.domain>suite-client-domain</suite.client.arq.domain>
         <groups.client.local>
@@ -863,7 +872,6 @@
 
                         <server.jmx.domain>jboss.datagrid-infinispan</server.jmx.domain>
                     </systemPropertyVariables>
-                    <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                     <!--add jdbc driver to classpath-->
                     <additionalClasspathElements>
                         <element>${driver.dir}/${driver.jar}</element>
@@ -1224,6 +1232,12 @@
                 <!--don't use controller.start("any-jboss-as-old"); code in test -->
                 <start.jboss.as.manually>true</start.jboss.as.manually>
             </properties>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>server.old.jvm</name>
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
@@ -1242,6 +1256,7 @@
                                             <property name="hotrod.port" value="11322" />
                                         </ant>
                                         <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="start-server">
+                                            <property name="server.jvm" value="${server.old.jvm}" />
                                             <property name="server.dist" value="${server.old.dist}" />
                                             <property name="port.offset" value="100" />
                                             <property name="management.port" value="10090" />
@@ -1283,6 +1298,12 @@
                 <!--don't use controller.start("any-jboss-as-old"); code in test -->
                 <start.jboss.as.manually>true</start.jboss.as.manually>
             </properties>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>server.old.jvm</name>
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
@@ -1301,6 +1322,7 @@
                                             <property name="hotrod.port" value="11422" />
                                         </ant>
                                         <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="start-server">
+                                            <property name="server.jvm" value="${server.old.jvm}" />
                                             <property name="server.dist" value="${server2.old.dist}" />
                                             <property name="port.offset" value="200" />
                                             <property name="management.port" value="10190" />
