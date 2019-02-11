@@ -21,7 +21,7 @@ import org.infinispan.util.ByteString;
  * <p>
  * This is a base command with the {@link CommandInvocationId}, topology and flags.
  * <p>
- * Since the primary->backup operations are ordered by segment, it contains the segment to be updated and its sequence number.
+ * Since the primary &rarr; backup operations are ordered by segment, it contains the segment to be updated and its sequence number.
  *
  * @author Pedro Ruivo
  * @since 9.2

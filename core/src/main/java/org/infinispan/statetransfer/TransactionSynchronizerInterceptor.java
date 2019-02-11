@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  * </ul>
  * <p/>
  * This interceptor must placed after the logic that handles command forwarding ({@link StateTransferInterceptor}),
- * otherwise we can end up in deadlocks when a command is forwarded in a loop to the same cache: e.g. A->B->C->A. This
+ * otherwise we can end up in deadlocks when a command is forwarded in a loop to the same cache: e.g. A&rarr;B&rarr;C&rarr;A. This
  * scenario is possible when we have chained topology changes (see <a href="https://issues.jboss.org/browse/ISPN-2578">ISPN-2578</a>).
  *
  * @author Mircea Markus

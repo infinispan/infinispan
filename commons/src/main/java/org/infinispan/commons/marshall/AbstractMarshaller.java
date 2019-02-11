@@ -23,8 +23,8 @@ public abstract class AbstractMarshaller implements Marshaller {
    }
 
    /**
-    * This is a convenience method for converting an object into a {@link org.infinispan.io.ByteBuffer} which takes
-    * an estimated size as parameter. A {@link org.infinispan.io.ByteBuffer} allows direct access to the byte
+    * This is a convenience method for converting an object into a {@link org.infinispan.commons.io.ByteBuffer} which takes
+    * an estimated size as parameter. A {@link org.infinispan.commons.io.ByteBuffer} allows direct access to the byte
     * array with minimal array copying
     *
     * @param o object to marshall

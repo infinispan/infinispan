@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.infinispan.configuration.global.GlobalConfiguration;
+
 /**
  * Class-level annotation used to annotate an object as being a valid cache listener.  Used with the {@link
  * org.infinispan.Cache#addListener(Object)} and related APIs. <p/> Note that even if a class is annotated with this
@@ -33,8 +35,7 @@ import java.lang.annotation.Target;
  * The <tt>sync</tt> parameter on this annotation defaults to <tt>true</tt>
  * which provides the above semantics.  Alternatively, if you set <tt>sync</tt> to <tt>false</tt>, then invocations are
  * made in a <i>separate</i> thread, which will not cause any blocking on the caller or network thread.  The separate
- * thread is taken from a pool, which can be configured using {@link org.infinispan.config.GlobalConfiguration#setAsyncListenerExecutorProperties(java.util.Properties)}
- * and {@link org.infinispan.config.GlobalConfiguration#setAsyncListenerExecutorFactoryClass(String)}.
+ * thread is taken from a pool, which can be configured using {@link GlobalConfiguration#listenerThreadPool()}.
  * <p/>
  * <b>Summary of Notification Annotations</b> <table border="1" cellpadding="1" cellspacing="1" summary="Summary of
  * notification annotations"> <tr> <th bgcolor="#CCCCFF" align="left">Annotation</th> <th bgcolor="#CCCCFF"
@@ -64,12 +65,12 @@ import java.lang.annotation.Target;
  * passivated</td> </tr> <tr> <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged}</td>
  * <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent}</td> <td
  * valign="top">A view change event was detected</td> </tr> <tr> <td valign="top">{@link
- * org.infinispan.notifications.cachelistener.annotation.TransactionRegistered}</td> <td valign@="top">{@link
+ * org.infinispan.notifications.cachelistener.annotation.TransactionRegistered}</td> <td valign="top">{@link
  * org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent}</td> <td valign="top">The cache has started
  * to participate in a transaction</td> </tr> <tr> <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}</td>
- * <td valign=@"top">{@link org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent}</td> <td
+ * <td valign="top">{@link org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent}</td> <td
  * valign="top">The cache has completed its participation in a transaction</td> </tr> <tr> <td valign="top">{@link
- * org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated}</td> <td valign=@"top">{@link
+ * org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated}</td> <td valign="top">{@link
  * org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent}</td> <td valign="top">A cache entry was
  * invalidated by a remote cache.  Only if cache mode is INVALIDATION_SYNC or INVALIDATION_ASYNC.</td> </tr>
  * <p/>

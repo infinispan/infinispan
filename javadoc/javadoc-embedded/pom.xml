@@ -282,7 +282,7 @@
                         <dependencySourceInclude>org.infinispan:*</dependencySourceInclude>
                      </dependencySourceIncludes>
                      <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
-                     <excludePackageNames>org.infinispan.commons.jdkspecific*:*.impl.*:*.backend.*:io.netty*</excludePackageNames>
+                     <excludePackageNames>org.infinispan.commons.jdkspecific*:*.impl.*:*.backend.*:io.netty*:*.logging.*:org.infinispan.commands*</excludePackageNames>
                      <excludedocfilessubdir>org/infinispan/commons/jdkspecific</excludedocfilessubdir>
                      <doclint>none</doclint>
                      <useStandardDocletOptions>true</useStandardDocletOptions>

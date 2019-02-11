@@ -11,7 +11,6 @@
  *   <li>
  *     Provide implementations of Spring's {@link org.springframework.beans.factory.FactoryBean <code>FactoryBean</code>}
  *     interface for easing usage of JBoss Infinispan within the Spring programming model.<br/><br/>
- *     See package {@link org.infinispan.spring.support <code>org.infinispan.spring.support</code>}.
  *   </li>
  *   <li>
  *     Provide implementations of Spring's Session

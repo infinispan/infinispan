@@ -77,7 +77,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * While setting a total number of connections may seem convenient, it leads to port exhaustion
     * under heavy load: the pool keeps closing and opening connections in a fast succession and
     * since port is not freed by operating system immediately after closing that (it's in TIME_WAIT
-    * state), the client runs out of available ports (<64k) soon.
+    * state), the client runs out of available ports (&lt;64k) soon.
     */
    @Deprecated
    public ConnectionPoolConfigurationBuilder maxTotal(int maxTotal) {
@@ -111,7 +111,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    /**
     * Sets a target value for the minimum number of idle connections (per server) that should always
     * be available. If this parameter is set to a positive number and timeBetweenEvictionRunsMillis
-    * > 0, each time the idle connection eviction thread runs, it will try to create enough idle
+    * &gt; 0, each time the idle connection eviction thread runs, it will try to create enough idle
     * instances so that there will be minIdle idle instances available for each server. The default
     * setting for this parameter is 1.
     */
@@ -149,7 +149,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * Specifies the minimum amount of time that an connection may sit idle in the pool before it is
     * eligible for eviction due to idle time. When non-positive, no connection will be dropped from
     * the pool due to idle time alone. This setting has no effect unless
-    * timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is 1800000(30
+    * timeBetweenEvictionRunsMillis &gt; 0. The default setting for this parameter is 1800000(30
     * minutes).
     */
    public ConnectionPoolConfigurationBuilder minEvictableIdleTime(long minEvictableIdleTime) {
@@ -182,7 +182,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    /**
     * Indicates whether or not idle connections should be validated by sending an TCP packet to the
     * server, during idle connection eviction runs. Connections that fail to validate will be
-    * dropped from the pool. This setting has no effect unless timeBetweenEvictionRunsMillis > 0.
+    * dropped from the pool. This setting has no effect unless timeBetweenEvictionRunsMillis &gt; 0.
     * The default setting for this parameter is true.
     */
    @Deprecated
@@ -198,8 +198,8 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * cannot be created and the {@link #exhaustedAction(ExhaustedAction) exhausted action}
     * is set to {@link ExhaustedAction#WAIT} the pool will allow sending the request over one of the over-utilized
     * connections.
-    * The rule of thumb is that this should be set to higher values if the values are small (< 1kB) and to lower values
-    * if the entries are big (> 10kB).
+    * The rule of thumb is that this should be set to higher values if the values are small (&lt; 1kB) and to lower values
+    * if the entries are big (&gt; 10kB).
     * Default setting for this parameter is 5.
     */
    public ConnectionPoolConfigurationBuilder maxPendingRequests(int maxPendingRequests) {

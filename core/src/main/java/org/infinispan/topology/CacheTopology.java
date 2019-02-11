@@ -289,7 +289,7 @@ public class CacheTopology {
        */
       TRANSITORY(true),
       /**
-       * Interim state between NO_REBALANCE -> READ_OLD_WRITE_ALL
+       * Interim state between NO_REBALANCE &rarr; READ_OLD_WRITE_ALL
        * readCh is set locally using previous Topology (of said node) readCH, whilst writeCH contains all members after merge
        */
       CONFLICT_RESOLUTION(false),

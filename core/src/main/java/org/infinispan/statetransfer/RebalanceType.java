@@ -12,14 +12,14 @@ public enum RebalanceType {
    /**
     * Used by distributed and replicated caches. To guarantee consistent results and non-blocking reads,
     * cache must undergo a series of 4 topology changes:
-    * STABLE -> READ_OLD_WRITE_ALL -> READ_ALL_WRITE_ALL -> READ_NEW_WRITE_ALL -> STABLE
+    * STABLE &rarr; READ_OLD_WRITE_ALL &rarr; READ_ALL_WRITE_ALL &rarr; READ_NEW_WRITE_ALL &rarr; STABLE
     */
    FOUR_PHASE,
    /**
     * Used by scattered cache. In any topology, each segment has at most one owner and consistent results
     * are achieved using extra synchronization of versions in {@link org.infinispan.scattered.ScatteredVersionManager}.
     * State transfer consists of two changes:
-    * STABLE -> TRANSITORY -> STABLE
+    * STABLE &rarr; TRANSITORY &rarr; STABLE
     */
    TWO_PHASE;
 

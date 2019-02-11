@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.connectionfactory.SimpleConnectionFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
