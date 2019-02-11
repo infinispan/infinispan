@@ -12,7 +12,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.junit.Assert;
 
 /**
@@ -23,7 +24,7 @@ import org.junit.Assert;
  */
 public class MemcachedClient {
 
-    private static final Logger log = Logger.getLogger(MemcachedClient.class);
+    private static final Log log = LogFactory.getLog(MemcachedClient.class);
     public static final int DEFAULT_MEMCACHED_PORT = 11211;
     public static final int DEFAULT_TIMEOUT = 10000;
 

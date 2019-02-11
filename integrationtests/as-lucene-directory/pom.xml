@@ -154,7 +154,6 @@
                           <version.hibernate.search>${version.hibernate.search}</version.hibernate.search>
                           <version.hibernate.core>${version.hibernate.core}</version.hibernate.core>
                       </systemPropertyVariables>
-                     <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                   </configuration>
                </execution>
             </executions>
@@ -267,5 +266,4 @@
          </build>
       </profile>
    </profiles>
-
 </project>

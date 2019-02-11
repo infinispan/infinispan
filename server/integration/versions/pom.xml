@@ -17,12 +17,9 @@
    <description>Infinispan Server - BOM</description>
 
    <properties>
-      <maven.compiler.target>1.8</maven.compiler.target>
-      <maven.compiler.source>1.8</maven.compiler.source>
       <server.output.dir.prefix>${infinispan.brand.prefix}-server</server.output.dir.prefix>
       <forkJvmArgs>-Xmx500m ${testjvm.commonArgs}</forkJvmArgs>
       <testjvm.jigsawArgs/>
-
       <version.org.infinispan.server-build.old>8.2.8.Final</version.org.infinispan.server-build.old>
    </properties>
 
@@ -42,11 +39,6 @@
                   <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                </configuration>
             </plugin>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-enforcer-plugin</artifactId>
-               <version>3.0.0-M1</version>
-            </plugin>
          </plugins>
       </pluginManagement>
       <plugins>
@@ -57,28 +49,6 @@
             <configuration>
                <useIncrementalCompilation>false</useIncrementalCompilation>
             </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-enforcer-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>enforce-java</id>
-                  <goals>
-                     <goal>enforce</goal>
-                  </goals>
-                  <configuration>
-                     <rules>
-                        <requireJavaVersion>
-                           <version>[${version.java},)</version>
-                        </requireJavaVersion>
-                        <requireMavenVersion>
-                           <version>[3.2.1,)</version>
-                        </requireMavenVersion>
-                     </rules>
-                  </configuration>
-               </execution>
-            </executions>
          </plugin>
          <plugin>
             <groupId>org.apache.servicemix.tooling</groupId>
@@ -128,59 +98,6 @@
          <properties>
             <forkJvmArgs>${env.MAVEN_FORK_OPTS}</forkJvmArgs>
          </properties>
-      </profile>
-      <profile>
-         <id>jigsaw</id>
-         <activation>
-            <jdk>[9,)</jdk>
-         </activation>
-         <properties>
-            <!--
-              java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
-                core externalizers for JDK types
-              java.nio, jdk.internal.ref: Netty, server/hotrod
-              com.sun.security.sasl: CRAM-MD5 mechanism, server/hotrod
-              java.text, java.awt.font: XStream, server/rest
-              java.security: Wildfly, server/integration/*
-            -->
-            <testjvm.jigsawArgs>
-               -Dsun.reflect.debugModuleAccessChecks=true
-               --add-opens=java.base/java.lang=ALL-UNNAMED
-               --add-opens=java.base/java.util=ALL-UNNAMED
-               --add-opens=java.base/java.io=ALL-UNNAMED
-               --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
-               --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
-               --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
-               --add-opens=java.base/java.time=ALL-UNNAMED
-               --add-opens=java.base/java.nio=ALL-UNNAMED
-               --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
-               --add-opens=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
-               --add-opens=java.base/java.text=ALL-UNNAMED
-               --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
-               --add-opens=java.base/java.security=ALL-UNNAMED
-               --add-exports=jdk.security.jgss/com.sun.security.sasl.gsskerb=ALL-UNNAMED
-               --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
-               --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
-               --add-exports=java.security.sasl/com.sun.security.sasl.digest=ALL-UNNAMED
-               --add-exports=java.security.sasl/com.sun.security.sasl.ntlm=ALL-UNNAMED
-               --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED
-               --add-opens=java.management/javax.management=ALL-UNNAMED
-            </testjvm.jigsawArgs>
-         </properties>
-         <build>
-            <pluginManagement>
-               <plugins>
-                  <plugin>
-                     <groupId>org.apache.maven.plugins</groupId>
-                     <artifactId>maven-compiler-plugin</artifactId>
-                     <configuration>
-                        <!-- fork is needed so compiler args can be used -->
-                        <fork>true</fork>
-                     </configuration>
-                  </plugin>
-               </plugins>
-            </pluginManagement>
-         </build>
       </profile>
    </profiles>
 
