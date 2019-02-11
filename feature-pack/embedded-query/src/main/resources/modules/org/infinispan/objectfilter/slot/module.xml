@@ -10,6 +10,6 @@
       <!-- TODO [anistor] We still need antlr-runtime because RecognitionException is used by the logger -->
       <module name="org.antlr.antlr-runtime" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.protostream" slot="@infinispan.module.slot@"/>
-      <module name="org.jboss.logging" />
+      <module name="org.jboss.logging" slot="@infinispan.module.slot@"/>
    </dependencies>
 </module>

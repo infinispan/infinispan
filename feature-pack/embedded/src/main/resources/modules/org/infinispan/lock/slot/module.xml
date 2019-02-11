@@ -8,6 +8,6 @@
     <dependencies>
         <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
-        <module name="org.jboss.logging"/>
+        <module name="org.jboss.logging" slot="@infinispan.module.slot@"/>
     </dependencies>
 </module>

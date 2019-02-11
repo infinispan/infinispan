@@ -23,7 +23,7 @@
       <module name="org.infinispan.query" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.counter" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.multimap" services="import" slot="@infinispan.module.slot@"/>
-      <module name="org.jboss.logging"/>
+      <module name="org.jboss.logging" slot="@infinispan.module.slot@"/>
       <module name="org.jboss.marshalling" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.jgroups" slot="@infinispan.module.slot@"/>
       <module name="org.wildfly.security.elytron-private" services="import"/>

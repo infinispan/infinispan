@@ -18,6 +18,6 @@
         <module name="io.reactivex.rxjava2.rxjava" slot="@infinispan.module.slot@"/>
         <module name="org.reactivestreams.reactive-streams" slot="@infinispan.module.slot@"/>
         <module name="org.javassist"/>
-        <module name="org.jboss.logging"/>
+        <module name="org.jboss.logging" slot="@infinispan.module.slot@"/>
     </dependencies>
 </module>

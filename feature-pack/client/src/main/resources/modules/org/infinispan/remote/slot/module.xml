@@ -9,6 +9,6 @@
         <module name="org.infinispan.query.remote.client" slot="@infinispan.module.slot@" export="true"/>
         <module name="com.google.code.gson" slot="@gson.module.slot@" optional="true"/>
         <module name="org.infinispan.cdi.remote" slot="@infinispan.module.slot@" export="true"/>
-        <module name="org.jboss.logging"/>
+        <module name="org.jboss.logging" slot="@infinispan.module.slot@"/>
     </dependencies>
 </module>
