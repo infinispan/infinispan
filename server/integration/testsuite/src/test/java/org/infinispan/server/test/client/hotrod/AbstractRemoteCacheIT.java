@@ -1053,7 +1053,7 @@ public abstract class AbstractRemoteCacheIT {
               .withDataFormat(DataFormat.builder().valueType(APPLICATION_XML).valueMarshaller(new UTF8StringMarshaller()).build())
               .get(key);
 
-        assertEquals("<string>" + stringValue + "</string>", xmlValue);
+        assertEquals("<?xml version='1.0' encoding='UTF-8'?><string>" + stringValue + "</string>", xmlValue);
 
         // Read as JSON
         Object jsonValue = this.remoteCache
