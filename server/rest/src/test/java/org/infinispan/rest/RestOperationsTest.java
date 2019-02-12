@@ -15,7 +15,7 @@ import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.dataconversion.Gzip.decompress;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import org.assertj.core.api.Assertions;
 import org.eclipse.jetty.client.HttpClient;
@@ -111,9 +111,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       assertThat(response).isOk();
       assertThat(response).hasContentType("application/xml");
       assertThat(response).hasReturnedText(
-            "<org.infinispan.rest.TestClass>\n" +
-                  "  <name>test</name>\n" +
-                  "</org.infinispan.rest.TestClass>");
+            "<?xml version=\"1.0\" ?><org.infinispan.rest.TestClass><name>test</name></org.infinispan.rest.TestClass>");
    }
 
    @Test
