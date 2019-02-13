@@ -367,6 +367,33 @@
  *          <td>Relates to {@link org.infinispan.client.hotrod.configuration.ClusterConfigurationBuilder#addCluster(java.lang.String)} and
  *          {@link org.infinispan.client.hotrod.configuration.ClusterConfigurationBuilder#addClusterNode(java.lang.String, int)}</td>
  *       </tr>
+ *        <tr>
+ *           <th colspan="4">Statistics properties</th>
+ *        </tr>
+ *        <tr>
+ *           <td><b>infinispan.client.hotrod.statistics</b></td>
+ *           <td>Boolean</td>
+ *           <td>Default value {@link org.infinispan.client.hotrod.configuration.StatisticsConfiguration#ENABLED}</td>
+ *           <td>Relates to {@link org.infinispan.client.hotrod.configuration.StatisticsConfigurationBuilder#enabled(boolean)}</td>
+ *        </tr>
+ *        <tr>
+ *           <td><b>infinispan.client.hotrod.jmx</b></td>
+ *           <td>Boolean</td>
+ *           <td>Default value {@link org.infinispan.client.hotrod.configuration.StatisticsConfiguration#JMX_ENABLED}</td>
+ *           <td>Relates to {@link org.infinispan.client.hotrod.configuration.StatisticsConfigurationBuilder#jmxEnabled(boolean)}</td>
+ *        </tr>
+ *        <tr>
+ *           <td><b>infinispan.client.hotrod.jmx_name</b></td>
+ *           <td>String</td>
+ *           <td>Default value {@link org.infinispan.client.hotrod.configuration.StatisticsConfiguration#JMX_NAME}</td>
+ *           <td>Relates to {@link org.infinispan.client.hotrod.configuration.StatisticsConfigurationBuilder#jmxName(java.lang.String)}</td>
+ *        </tr>
+ *        <tr>
+ *           <td><b>infinispan.client.hotrod.jmx_domain</b></td>
+ *           <td>String</td>
+ *           <td>Default value {@link org.infinispan.client.hotrod.configuration.StatisticsConfiguration#JMX_DOMAIN}</td>
+ *           <td>Relates to {@link org.infinispan.client.hotrod.configuration.StatisticsConfigurationBuilder#jmxDomain(java.lang.String)}</td>
+ *        </tr>
  *    </tbody>
  * </table>
  *
