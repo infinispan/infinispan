@@ -178,7 +178,7 @@
       <version.jboss.shrinkwrap.resolver>2.2.4</version.jboss.shrinkwrap.resolver>
       <version.jboss.xnio>3.6.3.Final</version.jboss.xnio>
       <version.jetty>9.4.5.v20170502</version.jetty>
-      <version.jgroups>4.0.15.Final</version.jgroups>
+      <version.jgroups>4.0.17.Final</version.jgroups>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.12</version.junit>
       <version.karaf>4.2.0</version.karaf>
