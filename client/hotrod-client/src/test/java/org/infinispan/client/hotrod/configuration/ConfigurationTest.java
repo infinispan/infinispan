@@ -13,6 +13,9 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTI
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MIN_IDLE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECT_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_DOMAIN;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
@@ -31,6 +34,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SNI_HOST
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SO_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SSL_CONTEXT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SSL_PROTOCOL;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.STATISTICS;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRUST_STORE_FILE_NAME;
@@ -169,6 +173,7 @@ public class ConfigurationTest {
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
+            .statistics().enable().jmxEnable().jmxDomain("jmxInfinispanDomain").jmxName("jmxInfinispan")
             .addServer()
             .host("host1")
             .port(11222)
@@ -287,6 +292,10 @@ public class ConfigurationTest {
       p.setProperty(NEAR_CACHE_NAME_PATTERN, "near.*");
       p.setProperty(CLUSTER_PROPERTIES_PREFIX + ".siteA", "hostA1:11222; hostA2:11223");
       p.setProperty(CLUSTER_PROPERTIES_PREFIX + ".siteB", "hostB1:11222; hostB2:11223");
+      p.setProperty(STATISTICS, "true");
+      p.setProperty(JMX, "true");
+      p.setProperty(JMX_NAME, "jmxInfinispan");
+      p.setProperty(JMX_DOMAIN, "jmxInfinispanDomain");
 
       Configuration configuration = builder.withProperties(p).build();
       validateConfiguration(configuration);
@@ -572,6 +581,10 @@ public class ConfigurationTest {
       assertEquals(11222, configuration.clusters().get(1).getCluster().get(0).port());
       assertEquals("hostB2", configuration.clusters().get(1).getCluster().get(1).host());
       assertEquals(11223, configuration.clusters().get(1).getCluster().get(1).port());
+      assertTrue(configuration.statistics().enabled());
+      assertTrue(configuration.statistics().jmxEnabled());
+      assertEquals("jmxInfinispan", configuration.statistics().jmxName());
+      assertEquals("jmxInfinispanDomain", configuration.statistics().jmxDomain());
    }
 
    private void validateSSLContextConfiguration(Configuration configuration) {

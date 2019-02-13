@@ -79,7 +79,11 @@ public class ConfigurationProperties {
          Pattern.compile('^' + ConfigurationProperties.SASL_PROPERTIES_PREFIX + '.');
    public static final String JAVA_SERIAL_WHITELIST = ICH + "java_serial_whitelist";
    public static final String BATCH_SIZE = ICH + "batch_size";
+   // Statistics properties
    public static final String STATISTICS = ICH + "statistics";
+   public static final String JMX = ICH + "jmx";
+   public static final String JMX_NAME = ICH + "jmx_name";
+   public static final String JMX_DOMAIN = ICH + "jmx_domain";
    // Transaction properties
    public static final String TRANSACTION_MANAGER_LOOKUP = ICH + "transaction.transaction_manager_lookup";
    public static final String TRANSACTION_MODE = ICH + "transaction.transaction_mode";
@@ -407,6 +411,30 @@ public class ConfigurationProperties {
 
    public boolean isStatistics() {
       return props.getBooleanProperty(STATISTICS, StatisticsConfiguration.ENABLED.getDefaultValue());
+   }
+
+   public void setJmx(boolean jmx) {
+      props.setProperty(JMX, jmx);
+   }
+
+   public boolean isJmx() {
+      return props.getBooleanProperty(JMX, StatisticsConfiguration.JMX_ENABLED.getDefaultValue());
+   }
+
+   public void setJmxName(String jmxName) {
+      props.setProperty(JMX_NAME, jmxName);
+   }
+
+   public void getJmxName() {
+      props.getProperty(JMX_NAME);
+   }
+
+   public void setJmxDomain(String jmxDomain) {
+      props.setProperty(JMX_DOMAIN, jmxDomain);
+   }
+
+   public void getJmxDomain() {
+      props.getProperty(JMX_DOMAIN);
    }
 
    public String getTransactionManagerLookup() {
