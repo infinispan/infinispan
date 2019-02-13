@@ -5,10 +5,16 @@ import static org.infinispan.client.hotrod.configuration.StatisticsConfiguration
 import static org.infinispan.client.hotrod.configuration.StatisticsConfiguration.JMX_ENABLED;
 import static org.infinispan.client.hotrod.configuration.StatisticsConfiguration.JMX_NAME;
 import static org.infinispan.client.hotrod.configuration.StatisticsConfiguration.MBEAN_SERVER_LOOKUP;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.STATISTICS;
 
+import java.util.Properties;
+
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * Configures client-side statistics
@@ -62,7 +68,8 @@ public class StatisticsConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    /**
-    * Sets the instance of the {@link org.infinispan.commons.jmx.MBeanServerLookup} class to be used to bound JMX MBeans to.
+    * Sets the instance of the {@link org.infinispan.commons.jmx.MBeanServerLookup} class to be used to bound JMX MBeans
+    * to.
     *
     * @param mBeanServerLookupInstance An instance of {@link org.infinispan.commons.jmx.MBeanServerLookup}
     */
@@ -84,5 +91,15 @@ public class StatisticsConfigurationBuilder extends AbstractConfigurationChildBu
    public Builder<?> read(StatisticsConfiguration template) {
       this.attributes.read(template.attributes());
       return this;
+   }
+
+   @Override
+   public ConfigurationBuilder withProperties(Properties properties) {
+      TypedProperties typed = TypedProperties.toTypedProperties(properties);
+      enabled(typed.getBooleanProperty(STATISTICS, ENABLED.getDefaultValue()));
+      jmxEnabled(typed.getBooleanProperty(JMX, JMX_ENABLED.getDefaultValue()));
+      jmxDomain(typed.getProperty(ConfigurationProperties.JMX_DOMAIN, JMX_DOMAIN.getDefaultValue()));
+      jmxName(typed.getProperty(ConfigurationProperties.JMX_NAME, JMX_NAME.getDefaultValue()));
+      return builder;
    }
 }

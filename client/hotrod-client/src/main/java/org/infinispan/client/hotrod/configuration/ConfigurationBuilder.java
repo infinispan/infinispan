@@ -400,6 +400,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          ClusterConfigurationBuilder cluster = this.addCluster(entry.getKey());
          parseServers(entry.getValue(), (host, port) -> cluster.addClusterNode(host, port));
       });
+
+      statistics.withProperties(properties);
       return this;
    }
 
