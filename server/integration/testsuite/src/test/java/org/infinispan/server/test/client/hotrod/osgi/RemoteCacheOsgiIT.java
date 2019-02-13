@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
+import org.infinispan.Version;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -66,6 +67,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
    private final String DEFAULT_CACHE = "localnotindexed";
    private final String INDEXED_CACHE = "localtestcache";
    private final String KARAF_VERSION = System.getProperty("version.karaf", "2.3.3");
+   private final String PROTOSTREAM_VERSION = System.getProperty("version.protostream", "4.2.2.Final");
    private final String RESOURCES_DIR = System.getProperty("resources.dir", System.getProperty("java.io.tmpdir"));
    private ConfigurationBuilder builder;
    private RemoteCacheManager manager;
@@ -79,8 +81,11 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
                   .frameworkUrl(
                         maven().groupId("org.apache.karaf").artifactId("apache-karaf").type("tar.gz")
                               .version(KARAF_VERSION)).karafVersion(KARAF_VERSION),
-            KarafDistributionOption.features(maven().groupId("org.infinispan").artifactId("infinispan-remote")
-                                                   .type("xml").classifier("features").versionAsInProject(), "infinispan-remote"),
+            KarafDistributionOption.features(maven().groupId("org.infinispan").artifactId("infinispan-remote").version(Version.getVersion())
+                                                   .type("xml").classifier("features"), "infinispan-remote"),
+            mavenBundle("org.infinispan.protostream", "sample-domain-implementation", PROTOSTREAM_VERSION),
+            mavenBundle("org.infinispan.protostream", "sample-domain-definition", PROTOSTREAM_VERSION),
+
             KarafDistributionOption.features(new RawUrlReference("file:///" + RESOURCES_DIR.replace("\\", "/")
                   + "/test-features.xml"), "query-sample-domain"),
             KarafDistributionOption.editConfigurationFileExtend("etc/jre.properties", "jre-1.7", "sun.misc"),
