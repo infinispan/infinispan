@@ -119,11 +119,6 @@
             <artifactId>infinispan-scripting</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-remote</artifactId>
-            <scope>test</scope>
-        </dependency>
        <dependency>
           <groupId>org.infinispan.server</groupId>
           <artifactId>infinispan-server-build</artifactId>
