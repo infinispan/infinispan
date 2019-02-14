@@ -47,14 +47,19 @@ public class SslUtils {
       //If we won't, JdkSslContext will use common ciphers from DEFAULT and SUPPORTED, which gives us 5 out of ~50 available ciphers
       //Of course, we don't need to any specific engine configuration here... just a list of ciphers
       String[] ciphers = SslContextFactory.getEngine(sslContext, false, clientAuth == ClientAuth.REQUIRE).getSupportedCipherSuites();
-      if (alpnConfig != null) {
+      if (alpnConfig != null && !isJdkAlpn()) {
          //we want to minimize the impact of possibly bugs in hacked SSL Context.
          return new AlpnHackedJdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, alpnConfig, clientAuth);
+      } else {
+         return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, alpnConfig, clientAuth);
       }
-      return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, alpnConfig, clientAuth);
    }
 
    private static ClientAuth requireClientAuth(SslConfiguration sslConfig) {
       return sslConfig.requireClientAuth() ? ClientAuth.REQUIRE : ClientAuth.NONE;
+   }
+
+   private static boolean isJdkAlpn() {
+      return !SecurityActions.getSystemProperty("java.version").startsWith("1.8");
    }
 }
