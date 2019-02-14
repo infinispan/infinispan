@@ -4106,7 +4106,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-javadoc-plugin</artifactId>
-               <version>3.0.0-M1</version>
+               <version>3.0.1</version>
                <configuration>
                   <!--
                   The javadoc plugin only runs in the javadoc and rhq-plugin modules.

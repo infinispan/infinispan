@@ -193,26 +193,31 @@
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-beans</artifactId>
+         <version>${versionx.org.springframework.spring-beans}</version>
       </dependency>
 
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-context</artifactId>
+         <version>${versionx.org.springframework.spring-context}</version>
       </dependency>
 
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-core</artifactId>
+         <version>${versionx.org.springframework.spring-core}</version>
       </dependency>
 
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-expression</artifactId>
+         <version>${versionx.org.springframework.spring-expression}</version>
       </dependency>
 
       <dependency>
          <groupId>org.springframework.session</groupId>
          <artifactId>spring-session-core</artifactId>
+         <version>${version.spring5.session}</version>
       </dependency>
 
       <dependency>
@@ -319,10 +324,14 @@
                            <version>${version.javax.servlet}</version>
                         </additionalDependency>
                         <additionalDependency>
-                        <additionalDependency>
                            <groupId>com.zaxxer</groupId>
                            <artifactId>HikariCP</artifactId>
                            <version>${version.hikaricp}</version>
+                        </additionalDependency>
+                        <additionalDependency>
+                           <groupId>com.mchange</groupId>
+                           <artifactId>c3p0</artifactId>
+                           <version>${version.c3p0}</version>
                         </additionalDependency>
                      </additionalDependencies>
                   </configuration>
@@ -355,6 +364,13 @@
                      <useStandardDocletOptions>false</useStandardDocletOptions>
                      <source>8</source>
                      <!--additionalJOption>-J-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8787</additionalJOption-->
+                     <additionalDependencies>
+                        <additionalDependency>
+                           <groupId>com.mchange</groupId>
+                           <artifactId>c3p0</artifactId>
+                           <version>${version.c3p0}</version>
+                        </additionalDependency>
+                     </additionalDependencies>
                   </configuration>
                </execution>
             </executions>
