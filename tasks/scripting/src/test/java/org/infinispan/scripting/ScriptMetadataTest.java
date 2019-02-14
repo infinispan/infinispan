@@ -10,10 +10,11 @@ import java.util.Arrays;
 import org.infinispan.commons.CacheException;
 import org.infinispan.scripting.impl.ScriptMetadata;
 import org.infinispan.scripting.impl.ScriptMetadataParser;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 @Test(groups="functional", testName="scripting.ScriptMetadataTest")
-public class ScriptMetadataTest {
+public class ScriptMetadataTest extends AbstractInfinispanTest {
 
    public void testDoubleSlashComment() throws Exception {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.js", "// name=test");
