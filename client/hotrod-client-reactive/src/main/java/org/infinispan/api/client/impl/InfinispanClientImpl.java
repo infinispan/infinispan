@@ -9,9 +9,11 @@ import org.infinispan.api.Infinispan;
 import org.infinispan.api.collections.reactive.KeyValueStore;
 import org.infinispan.api.collections.reactive.KeyValueStoreConfig;
 import org.infinispan.api.collections.reactive.client.impl.KeyValueStoreImpl;
+import org.infinispan.api.marshalling.Marshaller;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 
@@ -46,6 +48,12 @@ public class InfinispanClientImpl implements Infinispan {
             cacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
 
       SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(cacheManager);
+
+      // TODO: Does not work https://issues.jboss.org/browse/ISPN-9973
+      for (Marshaller marshaller : config.getMarshallers()) {
+         ctx.registerMarshaller((BaseMarshaller) marshaller);
+      }
+
       // Use ProtoSchemaBuilder to define
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       String protoFile;

@@ -16,8 +16,9 @@ public class QueryParameters {
       return queryParameters;
    }
 
-   public void append(String name, Object value) {
+   public QueryParameters append(String name, Object value) {
       params.put(name, value);
+      return this;
    }
 
    public Map<String, Object> asMap() {

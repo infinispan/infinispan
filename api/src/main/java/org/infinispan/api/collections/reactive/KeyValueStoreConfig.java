@@ -1,11 +1,17 @@
 package org.infinispan.api.collections.reactive;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.infinispan.api.marshalling.Marshaller;
+
 public class KeyValueStoreConfig {
 
    private static final String SCHEMA_EXTENSION = ".proto";
    private Class valueClazz;
    private String packageName;
    private String schemaFileName;
+   private Set<Marshaller> marshallers;
 
    private KeyValueStoreConfig() {
 
@@ -16,7 +22,13 @@ public class KeyValueStoreConfig {
       keyValueStoreConfig.valueClazz = valueClazz;
       keyValueStoreConfig.schemaFileName = valueClazz.getName() + SCHEMA_EXTENSION;
       keyValueStoreConfig.packageName = valueClazz.getPackage().getName();
+      keyValueStoreConfig.marshallers = new HashSet<>();
       return keyValueStoreConfig;
+   }
+
+   public KeyValueStoreConfig withSchemaFileName(String fileName) {
+      this.schemaFileName = fileName + SCHEMA_EXTENSION;
+      return this;
    }
 
    public KeyValueStoreConfig withPackageName(String packageName) {
@@ -24,8 +36,8 @@ public class KeyValueStoreConfig {
       return this;
    }
 
-   public KeyValueStoreConfig withSchemaFileName(String fileName) {
-      this.schemaFileName = fileName + SCHEMA_EXTENSION;
+   public KeyValueStoreConfig addMarshaller(Marshaller marshaller) {
+      marshallers.add(marshaller);
       return this;
    }
 
@@ -39,5 +51,9 @@ public class KeyValueStoreConfig {
 
    public String getSchemaFileName() {
       return schemaFileName;
+   }
+
+   public Set<Marshaller> getMarshallers() {
+      return marshallers;
    }
 }

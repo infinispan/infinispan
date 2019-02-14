@@ -1,5 +1,7 @@
 package org.infinispan.api.client.impl;
 
+import java.util.Objects;
+
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 
@@ -22,6 +24,10 @@ public final class Person {
    @ProtoField(number = 4, required = true)
    String bornIn;
 
+   @ProtoDoc("@Field")
+   @ProtoField(number = 5, required = true)
+   Address address;
+
    public Person() {
 
    }
@@ -33,6 +39,10 @@ public final class Person {
       this.bornIn = bornIn;
    }
 
+   public void setAddress(Address address) {
+      this.address = address;
+   }
+
    @Override
    public String toString() {
       return "Person{" +
@@ -40,6 +50,24 @@ public final class Person {
             ", lastName='" + lastName + '\'' +
             ", bornYear='" + bornYear + '\'' +
             ", bornIn='" + bornIn + '\'' +
+            ", address='" + address + '\'' +
             '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Person person = (Person) o;
+      return bornYear == person.bornYear &&
+            Objects.equals(firstName, person.firstName) &&
+            Objects.equals(lastName, person.lastName) &&
+            Objects.equals(bornIn, person.bornIn) &&
+            Objects.equals(address, person.address);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(firstName, lastName, bornYear, bornIn, address);
    }
 }

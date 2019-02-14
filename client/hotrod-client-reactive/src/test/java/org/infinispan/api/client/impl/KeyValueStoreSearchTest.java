@@ -73,22 +73,38 @@ public class KeyValueStoreSearchTest extends SingleHotRodServerTest {
 
    @Test
    public void search_api() {
+      Person sare = new Person("Sare", "Bilbao", 1984, "Barakaldo");
+      Person daniela = new Person("Daniela", "Aketxa", 1986, "Donosti");
+      Person unai = new Person("Unai", "Bilbao", 1988, "Gazteiz");
+      Person gorka = new Person("Gorka", "Uriarte", 1990, "Paris");
+
+      sare.setAddress(new Address("12", "rue des marguettes", "75011", "Paris", "France"));
+      daniela.setAddress(new Address("187", "rue de charonne", "75011", "Paris", "France"));
+      unai.setAddress(new Address("16", "rue de la py", "75019", "Paris", "France"));
+      gorka.setAddress(new Address("26", "rue des marguettes", "75018", "Paris", "France"));
+
       List<KeyValueEntry<Integer, Person>> entries = Stream.of(
-            new KeyValueEntry<>(1, new Person("Sare", "Bilbao", 1984, "Barakaldo")),
-            new KeyValueEntry<>(2, new Person("Daniela", "Aketxa", 1986, "Donosti")),
-            new KeyValueEntry<>(3, new Person("Unai", "Bilbao", 1988, "Gazteiz")),
-            new KeyValueEntry<>(4, new Person("Gorka", "Uriarte", 1990, "Paris")))
+            new KeyValueEntry<>(1, sare),
+            new KeyValueEntry<>(2, daniela),
+            new KeyValueEntry<>(3, unai),
+            new KeyValueEntry<>(4, gorka))
             .collect(Collectors.toList());
 
       await(store.putMany(Flowable.fromIterable(entries)));
 
       QueryPublisher<Person> queryPublisher = store.find();
-      queryPublisher.query("FROM org.infinispan.Person p where p.lastName = :lastName",
-            QueryParameters.init("lastName", "Bilbao"));
+      queryPublisher.query(
+            "FROM org.infinispan.Person p where p.lastName = :lastName and p.address.number = :number",
+            QueryParameters.init("lastName", "Bilbao").append("number", "12")
+      );
 
       TestSubscriber<Person> personTestSubscriber = new TestSubscriber<>();
       queryPublisher.subscribe(personTestSubscriber);
 
-      assertEquals(2, personTestSubscriber.valueCount());
+      assertEquals(1, personTestSubscriber.valueCount());
+
+      Person person = personTestSubscriber.values().stream().findFirst().get();
+
+      assertEquals(sare, person);
    }
 }
