@@ -21,8 +21,9 @@ public final class ProtobufObjectReflectionMatcher extends ReflectionMatcher {
 
    private final SerializationContext serializationContext;
 
-   ProtobufObjectReflectionMatcher(EntityNameResolver entityNameResolver, SerializationContext serializationContext, SearchIntegrator searchFactory) {
-      super(new HibernateSearchPropertyHelper(searchFactory, entityNameResolver));
+   ProtobufObjectReflectionMatcher(EntityNameResolver entityNameResolver, SerializationContext serializationContext,
+                                   SearchIntegrator searchFactory, ClassLoader classLoader) {
+      super(new HibernateSearchPropertyHelper(searchFactory, entityNameResolver, classLoader));
       this.serializationContext = serializationContext;
    }
 
@@ -31,9 +32,10 @@ public final class ProtobufObjectReflectionMatcher extends ReflectionMatcher {
       this.serializationContext = serializationContext;
    }
 
-   static ProtobufObjectReflectionMatcher create(EntityNameResolver entityNameResolver, SerializationContext ctx, SearchIntegrator searchIntegrator) {
+   static ProtobufObjectReflectionMatcher create(EntityNameResolver entityNameResolver, SerializationContext ctx,
+                                                 SearchIntegrator searchIntegrator, ClassLoader classLoader) {
       if (searchIntegrator == null) return new ProtobufObjectReflectionMatcher(entityNameResolver, ctx);
-      return new ProtobufObjectReflectionMatcher(entityNameResolver, ctx, searchIntegrator);
+      return new ProtobufObjectReflectionMatcher(entityNameResolver, ctx, searchIntegrator, classLoader);
    }
 
    /**

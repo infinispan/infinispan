@@ -21,7 +21,6 @@ import org.hibernate.search.bridge.builtin.StringEncodingCalendarBridge;
 import org.hibernate.search.bridge.builtin.StringEncodingDateBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
 import org.hibernate.search.bridge.util.impl.TwoWayString2FieldBridgeAdaptor;
-import org.hibernate.search.elasticsearch.bridge.builtin.impl.ElasticsearchDateBridge;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.hibernate.search.engine.metadata.impl.EmbeddedTypeMetadata;
 import org.hibernate.search.engine.metadata.impl.PropertyMetadata;
@@ -56,10 +55,16 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    private static final Log log = Logger.getMessageLogger(Log.class, HibernateSearchPropertyHelper.class.getName());
 
    private final SearchIntegrator searchFactory;
+   private boolean elasticSearchAvailable = true;
 
-   public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNameResolver entityNameResolver) {
+   public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNameResolver entityNameResolver, ClassLoader classLoader) {
       super(entityNameResolver);
       this.searchFactory = searchFactory;
+      try {
+         Class.forName("org.hibernate.search.elasticsearch.bridge.builtin.impl.ElasticsearchDateBridge", false, classLoader);
+      } catch (ClassNotFoundException e) {
+         this.elasticSearchAvailable = false;
+      }
    }
 
    @Override
@@ -134,7 +139,8 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(DateTools.stringToDate(value));
             return calendar;
-         } else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge || bridge instanceof ElasticsearchDateBridge) {
+         } else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge ||
+               (elasticSearchAvailable && bridge instanceof org.hibernate.search.elasticsearch.bridge.builtin.impl.ElasticsearchDateBridge)) {
             return DateTools.stringToDate(value);
          } else {
             return value;
