@@ -58,11 +58,12 @@ class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
 
       SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
 
-      EntityNameResolver entityNameResolver = createEntityNamesResolver(mediaType);
+      ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
+      EntityNameResolver entityNameResolver = createEntityNamesResolver(mediaType, classLoader);
 
       ReflectionMatcher matcher = mediaType.match(APPLICATION_PROTOSTREAM) ?
-            ProtobufObjectReflectionMatcher.create(entityNameResolver, serCtx, searchIntegrator) :
-            ObjectReflectionMatcher.create(entityNameResolver, searchIntegrator);
+            ProtobufObjectReflectionMatcher.create(entityNameResolver, serCtx, searchIntegrator, classLoader) :
+            ObjectReflectionMatcher.create(entityNameResolver, searchIntegrator, classLoader);
 
       cr.registerComponent(matcher, matcher.getClass());
       ObjectRemoteQueryEngine engine = new ObjectRemoteQueryEngine(cache, matcher.getClass(), isIndexed);
@@ -70,12 +71,10 @@ class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
       return engine;
    }
 
-   private EntityNameResolver createEntityNamesResolver(MediaType mediaType) {
+   private EntityNameResolver createEntityNamesResolver(MediaType mediaType, ClassLoader classLoader) {
       if (mediaType.match(APPLICATION_PROTOSTREAM)) {
          return new ProtobufEntityNameResolver(serCtx);
       } else {
-         ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
-
          ReflectionEntityNamesResolver reflectionEntityNamesResolver = new ReflectionEntityNamesResolver(classLoader);
          if (isIndexed) {
             // If indexing is enabled, then use the known set of classes for lookup and the global classloader as a fallback.
