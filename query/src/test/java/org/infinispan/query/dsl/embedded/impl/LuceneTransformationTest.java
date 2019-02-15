@@ -11,8 +11,8 @@ import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.testsupport.junit.SearchFactoryHolder;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.dsl.embedded.impl.model.Employee;
 import org.junit.Rule;
@@ -746,7 +746,8 @@ public class LuceneTransformationTest {
 
    private LuceneQueryParsingResult<Class<?>> parseAndTransform(String queryString, Map<String, Object> namedParameters) {
       ExtendedSearchIntegrator searchFactory = factoryHolder.getSearchFactory();
-      HibernateSearchPropertyHelper propertyHelper = new HibernateSearchPropertyHelper(searchFactory, new ReflectionEntityNamesResolver(null));
+      HibernateSearchPropertyHelper propertyHelper = new HibernateSearchPropertyHelper(searchFactory,
+            new ReflectionEntityNamesResolver(null), LuceneTransformationTest.class.getClassLoader());
 
       IckleParsingResult<Class<?>> ickleParsingResult = IckleParser.parse(queryString, propertyHelper);
 

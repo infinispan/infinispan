@@ -153,7 +153,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
    private void registerMatcher(ComponentRegistry cr, SearchIntegrator searchFactory, ClassLoader classLoader) {
       ReflectionMatcher reflectionMatcher = searchFactory == null ? new ReflectionMatcher(classLoader) :
-            new ReflectionMatcher(new HibernateSearchPropertyHelper(searchFactory, new ReflectionEntityNamesResolver(classLoader)));
+            new ReflectionMatcher(new HibernateSearchPropertyHelper(searchFactory, new ReflectionEntityNamesResolver(classLoader), classLoader));
       cr.registerComponent(reflectionMatcher, ReflectionMatcher.class);
    }
 
