@@ -3,12 +3,15 @@ package org.infinispan.client.hotrod.tx;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
@@ -18,6 +21,7 @@ import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
 import org.infinispan.client.hotrod.transaction.manager.RemoteTransactionManager;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.tx.TransactionImpl;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.CacheMode;
@@ -28,7 +32,6 @@ import org.infinispan.test.ExceptionRunnable;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -88,56 +91,66 @@ public class RecoveryTest extends MultiHotRodServersTest {
    }
 
    public void testStartAndFinishScan() throws Exception {
-      XAResource xaResource = xaResource(0);
+      doStartAndFinishScanTest(this::xaResource);
+   }
 
-      assertInvalidException(() -> xaResource.recover(XAResource.TMENDRSCAN));
-
-      //2 start in a row should fail
-      xaResource.recover(XAResource.TMSTARTRSCAN);
-      assertInvalidException(() -> xaResource.recover(XAResource.TMSTARTRSCAN));
-      xaResource.recover(XAResource.TMENDRSCAN);
-
-      //start and end together is fine!
-      xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN);
-
-      //no iteration in progress
-      assertInvalidException(() -> xaResource.recover(XAResource.TMNOFLAGS));
+   public void testStartAndFinishScanWithRecoverableXaResource() throws Exception {
+      doStartAndFinishScanTest(this::recoverableXaResource);
    }
 
    public void testRecoveryIteration() throws Exception {
-      XAResource xaResource0 = xaResource(0);
-      XAResource xaResource1 = xaResource(1);
+      doRecoveryIterationTest(this::xaResource);
+   }
 
-      //2 prepared transactions
-      remoteTM(0).begin();
-      remoteCache(0).put("k0", "v");
-      Xid xid0 = xid(0);
-      prepare(0);
+   public void testRecoveryIterationWithRecoverableXaResource() throws Exception {
+      doRecoveryIterationTest(this::recoverableXaResource);
+   }
 
-      remoteTM(1).begin();
-      remoteCache(1).put("k1", "v");
-      Xid xid1 = xid(1);
-      prepare(1);
+   public void testXaResourceEnlistAfterRecoverable(Method method) throws Exception {
+      String key = method.getName();
+      RemoteCache<String, String> cache = remoteCache(0);
+      TransactionManager tm = remoteTM(0);
 
-      timeService.advance(9000); //9 seconds, below the 10 second configured
+      tm.begin();
+      TransactionImpl tx = (TransactionImpl) tm.getTransaction();
+      assertEquals(0, tx.getEnlistedResources().size());
 
-      assertBeforeTimeoutRecoveryIteration(xaResource0, xid0);
-      assertBeforeTimeoutRecoveryIteration(xaResource1, xid1);
+      tx.enlistResource(recoverableXaResource(0));
+      assertEquals(1, tx.getEnlistedResources().size());
 
-      timeService.advance(2000); //2 seconds, remote transaction will be include in recovery
+      cache.put(key, "value");
 
-      assertRecoveryIteration(xaResource0, xid0, xid1);
-      assertRecoveryIteration(xaResource1, xid1, xid0);
+      assertEquals(2, tx.getEnlistedResources().size());
 
-      //resource1 if finished and it should be able to commit the xid0 transaction
-      xaResource1.commit(xid0, false);
-      xaResource1.rollback(xid1);
+      tm.suspend();
 
-      assertEquals("v", remoteCache(0).get("k0"));
-      assertEquals(null, remoteCache(0).get("k1"));
+      //lets make sure the put is in the transaction. if it is, the key's value in server is null
+      assertNull(cache.get(key));
 
-      xaResource0.forget(xid0);
-      xaResource1.forget(xid1);
+      tm.resume(tx);
+      tm.commit(); //we should commit
+
+      assertEquals("value", cache.get(key));
+   }
+
+   public void testRecoverableAfterXaResource(Method method) throws Exception {
+      String key = method.getName();
+      RemoteCache<String, String> cache = remoteCache(0);
+      TransactionManager tm = remoteTM(0);
+
+      tm.begin();
+      TransactionImpl tx = (TransactionImpl) tm.getTransaction();
+      assertEquals(0, tx.getEnlistedResources().size());
+
+      cache.put(key, "value");
+
+      assertEquals(1, tx.getEnlistedResources().size());
+
+      tx.enlistResource(recoverableXaResource(0));
+      assertEquals(2, tx.getEnlistedResources().size());
+
+      tm.commit();
+      assertEquals("value", cache.get(key));
    }
 
    protected String cacheName() {
@@ -170,6 +183,59 @@ public class RecoveryTest extends MultiHotRodServersTest {
       clientBuilder.transaction().transactionMode(TransactionMode.FULL_XA);
       clientBuilder.transaction().timeout(10, TimeUnit.SECONDS);
       return clientBuilder;
+   }
+
+   private void doStartAndFinishScanTest(XaResourceSupplier xaResourceSupplier) throws Exception {
+      XAResource xaResource = xaResourceSupplier.get(0);
+
+      assertInvalidException(() -> xaResource.recover(XAResource.TMENDRSCAN));
+
+      //2 start in a row should fail
+      xaResource.recover(XAResource.TMSTARTRSCAN);
+      assertInvalidException(() -> xaResource.recover(XAResource.TMSTARTRSCAN));
+      xaResource.recover(XAResource.TMENDRSCAN);
+
+      //start and end together is fine!
+      xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN);
+
+      //no iteration in progress
+      assertInvalidException(() -> xaResource.recover(XAResource.TMNOFLAGS));
+   }
+
+   private void doRecoveryIterationTest(XaResourceSupplier xaResourceSupplier) throws Exception {
+      XAResource xaResource0 = xaResourceSupplier.get(0);
+      XAResource xaResource1 = xaResourceSupplier.get(1);
+
+      //2 prepared transactions
+      remoteTM(0).begin();
+      remoteCache(0).put("k0", "v");
+      Xid xid0 = xid(0);
+      prepare(0);
+
+      remoteTM(1).begin();
+      remoteCache(1).put("k1", "v");
+      Xid xid1 = xid(1);
+      prepare(1);
+
+      timeService.advance(9000); //9 seconds, below the 10 second configured
+
+      assertBeforeTimeoutRecoveryIteration(xaResource0, xid0);
+      assertBeforeTimeoutRecoveryIteration(xaResource1, xid1);
+
+      timeService.advance(2000); //2 seconds, remote transaction will be include in recovery
+
+      assertRecoveryIteration(xaResource0, xid0, xid1);
+      assertRecoveryIteration(xaResource1, xid1, xid0);
+
+      //resource1 if finished and it should be able to commit the xid0 transaction
+      xaResource1.commit(xid0, false);
+      xaResource1.rollback(xid1);
+
+      assertEquals("v", remoteCache(0).get("k0"));
+      assertNull(remoteCache(0).get("k1"));
+
+      xaResource0.forget(xid0);
+      xaResource1.forget(xid1);
    }
 
    private void assertRecoveryIteration(XAResource xaResource, Xid local, Xid remote) throws Exception {
@@ -222,6 +288,10 @@ public class RecoveryTest extends MultiHotRodServersTest {
       return xaResource;
    }
 
+   private XAResource recoverableXaResource(int index) {
+      return client(index).getXaResource();
+   }
+
    private <K, V> RemoteCache<K, V> remoteCache(int index) {
       return client(index).getCache(cacheName());
    }
@@ -232,6 +302,11 @@ public class RecoveryTest extends MultiHotRodServersTest {
 
    private int numberOfNodes() {
       return 3;
+   }
+
+   @FunctionalInterface
+   private interface XaResourceSupplier {
+      XAResource get(int index) throws Exception;
    }
 
    private static class DummyXid extends XidImpl {

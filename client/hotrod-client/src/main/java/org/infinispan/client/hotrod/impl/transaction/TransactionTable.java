@@ -12,4 +12,11 @@ import javax.transaction.Transaction;
 public interface TransactionTable {
 
    <K, V> TransactionContext<K, V> enlist(TransactionalRemoteCacheImpl<K, V> txRemoteCache, Transaction tx);
+
+   /**
+    * It initializes the {@link TransactionTable} with the {@link TransactionOperationFactory} to use.
+    *
+    * @param operationFactory The {@link TransactionOperationFactory} to use.
+    */
+   void start(TransactionOperationFactory operationFactory);
 }

@@ -18,7 +18,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.operations.PrepareTransactionOperation;
+import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.impl.transaction.entry.TransactionEntry;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;

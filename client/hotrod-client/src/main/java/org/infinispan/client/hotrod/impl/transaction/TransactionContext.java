@@ -18,12 +18,10 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.MetadataValue;
-import org.infinispan.client.hotrod.impl.operations.CompleteTransactionOperation;
-import org.infinispan.client.hotrod.impl.operations.ForgetTransactionOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transaction.entry.TransactionEntry;
+import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.ByRef;
@@ -146,13 +144,6 @@ public class TransactionContext<K, V> {
       return entries.values().stream().anyMatch(TransactionEntry::isModified);
    }
 
-   Collection<Modification> toModification() {
-      return entries.values().stream()
-            .filter(TransactionEntry::isModified)
-            .map(entry -> entry.toModification(keyMarshaller, valueMarshaller))
-            .collect(Collectors.toList());
-   }
-
    <T> T computeSync(K key, Function<TransactionEntry<K, V>, T> function,
          Function<K, MetadataValue<V>> remoteValueSupplier) {
       ByRef<T> ref = new ByRef<>(null);
@@ -211,42 +202,15 @@ public class TransactionContext<K, V> {
       }
    }
 
-   int complete(Xid xid, boolean commit) {
-      try {
-         if (trace) {
-            log.tracef("Complete (%s) transaction xid=%s, cache-name=%s", commit, xid, cacheName);
-         }
-         CompleteTransactionOperation operation = operationsFactory.newCompleteTransactionOperation(xid, commit);
-         return operation.execute().get();
-      } catch (Exception e) {
-         log.debug("Exception while commit/rollback.", e);
-         return XAException.XA_HEURRB; //heuristically rolled-back
-      }
-   }
-
-   void forget(Xid xid) {
-      try {
-         if (trace) {
-            log.tracef("Forgetting transaction xid=%s, remote-cache=%s", xid, cacheName);
-         }
-         ForgetTransactionOperation operation = operationsFactory.newForgetTransactionOperation(xid);
-         operation.execute().get();
-      } catch (Exception e) {
-         if (trace) {
-            log.tracef(e, "Exception in forget transaction xid=%s", xid);
-         }
-      }
-   }
-
-   CompletableFuture<Collection<Xid>> fetchPreparedTransactions() {
-      if (trace) {
-         log.trace("Fetch prepared transactions XID for recovery");
-      }
-      return operationsFactory.newRecoveryOperation().execute();
-   }
-
    void cleanupEntries() {
       entries.clear();
+   }
+
+   private Collection<Modification> toModification() {
+      return entries.values().stream()
+            .filter(TransactionEntry::isModified)
+            .map(entry -> entry.toModification(keyMarshaller, valueMarshaller))
+            .collect(Collectors.toList());
    }
 
    private TransactionEntry<K, V> createEntryFromRemote(K key, Function<K, MetadataValue<V>> remoteValueSupplier) {

@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.impl.operations;
+package org.infinispan.client.hotrod.impl.transaction.operations;
 
 import static java.util.Collections.emptyList;
 
@@ -10,6 +10,7 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -30,10 +31,9 @@ import io.netty.channel.Channel;
  */
 public class RecoveryOperation extends RetryOnFailureOperation<Collection<Xid>> {
 
-   RecoveryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
-         AtomicInteger topologyId, Configuration cfg) {
-      super(FETCH_TX_RECOVERY_REQUEST, FETCH_TX_RECOVERY_RESPONSE, codec, channelFactory, cacheName, topologyId, 0, cfg,
-            null);
+   public RecoveryOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg) {
+      super(FETCH_TX_RECOVERY_REQUEST, FETCH_TX_RECOVERY_RESPONSE, codec, channelFactory, DEFAULT_CACHE_NAME_BYTES,
+            topologyId, 0, cfg, null);
    }
 
    @Override

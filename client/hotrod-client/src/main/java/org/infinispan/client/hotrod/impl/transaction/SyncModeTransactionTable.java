@@ -36,22 +36,32 @@ import org.infinispan.commons.CacheException;
  * @author Pedro Ruivo
  * @since 9.3
  */
-public class SyncModeTransactionTable implements TransactionTable {
+public class SyncModeTransactionTable extends AbstractTransactionTable {
 
    private static final Log log = LogFactory.getLog(SyncModeTransactionTable.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
    private final Map<Transaction, SynchronizationAdapter> registeredTransactions = new ConcurrentHashMap<>();
    private final UUID uuid = UUID.randomUUID();
    private final Consumer<Transaction> cleanup = registeredTransactions::remove;
-   private final long timeout;
    private final Function<Transaction, SynchronizationAdapter> constructor = this::createSynchronizationAdapter;
 
    public SyncModeTransactionTable(long timeout) {
-      this.timeout = timeout;
+      super(timeout);
+   }
+
+   @Override
+   Log getLog() {
+      return log;
+   }
+
+   @Override
+   boolean isTraceLogEnabled() {
+      return trace;
    }
 
    @Override
    public <K, V> TransactionContext<K, V> enlist(TransactionalRemoteCacheImpl<K, V> txRemoteCache, Transaction tx) {
+      assertStartedAndReturnFactory();
       //registers a synchronization if it isn't done yet.
       SynchronizationAdapter adapter = registeredTransactions.computeIfAbsent(tx, constructor);
       //registers the cache.
@@ -66,8 +76,7 @@ public class SyncModeTransactionTable implements TransactionTable {
     * Creates and registers the {@link SynchronizationAdapter} in the {@link Transaction}.
     */
    private SynchronizationAdapter createSynchronizationAdapter(Transaction transaction) {
-      SynchronizationAdapter adapter = new SynchronizationAdapter(transaction, cleanup, RemoteXid.create(uuid),
-            timeout);
+      SynchronizationAdapter adapter = new SynchronizationAdapter(transaction, RemoteXid.create(uuid));
       try {
          transaction.registerSynchronization(adapter);
       } catch (RollbackException | SystemException e) {
@@ -79,20 +88,15 @@ public class SyncModeTransactionTable implements TransactionTable {
       return adapter;
    }
 
-   private static class SynchronizationAdapter implements Synchronization {
+   private class SynchronizationAdapter implements Synchronization {
 
       private final Map<String, TransactionContext<?, ?>> registeredCaches = new ConcurrentSkipListMap<>();
       private final Transaction transaction;
-      private final Consumer<Transaction> cleanupTask;
       private final RemoteXid xid;
-      private final long timeout;
 
-      private SynchronizationAdapter(Transaction transaction, Consumer<Transaction> cleanupTask, RemoteXid xid,
-            long timeout) {
+      private SynchronizationAdapter(Transaction transaction, RemoteXid xid) {
          this.transaction = transaction;
-         this.cleanupTask = cleanupTask;
          this.xid = xid;
-         this.timeout = timeout;
       }
 
       @Override
@@ -113,7 +117,7 @@ public class SyncModeTransactionTable implements TransactionTable {
             return;
          }
          for (TransactionContext<?, ?> txContext : registeredCaches.values()) {
-            switch (txContext.prepareContext(xid, false, timeout)) {
+            switch (txContext.prepareContext(xid, false, getTimeout())) {
                case XAResource.XA_OK:
                case XAResource.XA_RDONLY:
                   break; //read only tx.
@@ -134,14 +138,13 @@ public class SyncModeTransactionTable implements TransactionTable {
             log.tracef("AfterCompletion(xid=%s, status=%s, remote-caches=%s)", xid, transactionStatusToString(status),
                   registeredCaches.keySet());
          }
-         TransactionContext<?, ?> ctx = registeredCaches.values().iterator().next();
          //the server commits everything when the first request arrives.
          try {
             boolean commit = status == Status.STATUS_COMMITTED;
-            ctx.complete(xid, commit);
+            completeTransaction(xid, commit);
          } finally {
-            ctx.forget(xid); //no recovery sync
-            cleanupTask.accept(transaction);
+            forgetTransaction(xid);
+            cleanup.accept(transaction);
          }
       }
 

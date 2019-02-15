@@ -314,4 +314,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Transactions timeout must be positive", id = 4088)
    HotRodClientException invalidTransactionTimeout();
+
+   @Message(value = "TransactionTable is not started!", id = 4089)
+   HotRodClientException transactionTableNotStarted();
 }

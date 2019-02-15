@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.impl.operations;
+package org.infinispan.client.hotrod.impl.transaction.operations;
 
 import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.estimateVIntSize;
 import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.estimateXidSize;
@@ -12,6 +12,7 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -37,7 +38,7 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
    private final long timeoutMs;
    private boolean retry;
 
-   PrepareTransactionOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
+   public PrepareTransactionOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
          AtomicInteger topologyId, Configuration cfg, Xid xid, boolean onePhaseCommit,
          Collection<Modification> modifications, boolean recoverable, long timeoutMs) {
       super(PREPARE_TX_2_REQUEST, PREPARE_TX_2_RESPONSE, codec, channelFactory, cacheName, topologyId, 0, cfg, null);

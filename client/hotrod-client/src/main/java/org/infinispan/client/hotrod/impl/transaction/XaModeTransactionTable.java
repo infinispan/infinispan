@@ -1,7 +1,9 @@
 package org.infinispan.client.hotrod.impl.transaction;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +38,7 @@ import org.infinispan.commons.CacheException;
  * @author Pedro Ruivo
  * @since 9.3
  */
-public class XaModeTransactionTable implements TransactionTable {
+public class XaModeTransactionTable extends AbstractTransactionTable {
 
    private static final Log log = LogFactory.getLog(XaModeTransactionTable.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -44,10 +46,9 @@ public class XaModeTransactionTable implements TransactionTable {
    private final Map<Transaction, XaAdapter> registeredTransactions = new ConcurrentHashMap<>();
    private final RecoveryManager recoveryManager = new RecoveryManager();
    private final Function<Transaction, XaAdapter> constructor = this::createTransactionData;
-   private final long timeout;
 
    public XaModeTransactionTable(long timeout) {
-      this.timeout = timeout;
+      super(timeout);
    }
 
    @Override
@@ -56,8 +57,22 @@ public class XaModeTransactionTable implements TransactionTable {
       return xaAdapter.registerCache(txRemoteCache);
    }
 
+   public XAResource getXaResource() {
+      return new XaAdapter(null, getTimeout());
+   }
+
+   @Override
+   Log getLog() {
+      return log;
+   }
+
+   @Override
+   boolean isTraceLogEnabled() {
+      return trace;
+   }
+
    private XaAdapter createTransactionData(Transaction transaction) {
-      XaAdapter xaAdapter = new XaAdapter(transaction, timeout);
+      XaAdapter xaAdapter = new XaAdapter(transaction, getTimeout());
       try {
          transaction.enlistResource(xaAdapter);
       } catch (RollbackException | SystemException e) {
@@ -68,7 +83,7 @@ public class XaModeTransactionTable implements TransactionTable {
 
    private class XaAdapter implements XAResource {
       private final Transaction transaction;
-      private final Map<String, TransactionContext<?, ?>> registeredCaches = new ConcurrentSkipListMap<>();
+      private final Map<String, TransactionContext<?, ?>> registeredCaches;
       private volatile Xid currentXid;
       private volatile RecoveryIterator iterator;
       private long timeoutMs;
@@ -77,12 +92,15 @@ public class XaModeTransactionTable implements TransactionTable {
       private XaAdapter(Transaction transaction, long timeout) {
          this.transaction = transaction;
          this.timeoutMs = timeout;
+         this.registeredCaches = transaction == null ?
+                                 Collections.emptyMap() :
+                                 new ConcurrentSkipListMap<>();
       }
 
       @Override
       public String toString() {
-         return "TransactionData{" +
-                "xid=" + currentXid +
+         return "XaResource{" +
+                "transaction=" + transaction +
                 ", caches=" + registeredCaches.keySet() +
                 '}';
       }
@@ -142,14 +160,14 @@ public class XaModeTransactionTable implements TransactionTable {
             currentXid = xid;
          } else {
             assertSameXid(xid, XAException.XAER_INVAL);
-         }
+      }
 
          try {
             if (onePhaseCommit) {
                onePhaseCommit();
             } else {
                internalCommit();
-            }
+      }
          } finally {
             cleanup();
          }
@@ -180,7 +198,7 @@ public class XaModeTransactionTable implements TransactionTable {
          if (trace) {
             log.tracef("XaResource.isSameRM(%s)", xaResource);
          }
-         return xaResource == this;
+         return xaResource instanceof XaAdapter && Objects.equals(transaction, ((XaAdapter) xaResource).transaction);
       }
 
       @Override
@@ -189,7 +207,7 @@ public class XaModeTransactionTable implements TransactionTable {
             log.tracef("XaResource.forget(%s)", xid);
          }
          recoveryManager.forgetTransaction(xid);
-         getAnyTransactionContext().forget(xid);
+         forgetTransaction(xid);
       }
 
       @Override
@@ -200,7 +218,7 @@ public class XaModeTransactionTable implements TransactionTable {
          RecoveryIterator it = this.iterator;
          if ((flags & XAResource.TMSTARTRSCAN) != 0) {
             if (it == null) {
-               it = recoveryManager.startScan(getAnyTransactionContext().fetchPreparedTransactions());
+               it = recoveryManager.startScan(fetchPreparedTransactions());
                iterator = it;
             } else {
                //we have an iteration in progress.
@@ -249,7 +267,7 @@ public class XaModeTransactionTable implements TransactionTable {
       }
 
       private void internalRollback(boolean ignoreNoTx) throws XAException {
-         int xa_code = getAnyTransactionContext().complete(currentXid, false);
+         int xa_code = completeTransaction(currentXid, false);
          switch (xa_code) {
             case XAResource.XA_OK:       //no issues
             case XAResource.XA_RDONLY:   //no issues
@@ -264,12 +282,8 @@ public class XaModeTransactionTable implements TransactionTable {
          }
       }
 
-      private TransactionContext<?, ?> getAnyTransactionContext() {
-         return registeredCaches.values().iterator().next();
-      }
-
       private void internalCommit() throws XAException {
-         int xa_code = getAnyTransactionContext().complete(currentXid, true);
+         int xa_code = completeTransaction(currentXid, true);
          switch (xa_code) {
             case XAResource.XA_OK:       //no issues
             case XAResource.XA_RDONLY:   //no issues
@@ -361,10 +375,14 @@ public class XaModeTransactionTable implements TransactionTable {
       }
 
       private void cleanup() {
-         registeredTransactions.remove(transaction);
-         //this instance can be used for recovery. we need at least one cache registered in order to access
-         // the operation factory
-         registeredCaches.values().forEach(TransactionContext::cleanupEntries);
+         //if null, it was created by RemoteCacheManager.getXaResource()
+         if (transaction != null) {
+            //enlisted with a cache
+            registeredTransactions.remove(transaction);
+            //this instance can be used for recovery. we need at least one cache registered in order to access
+            // the operation factory
+            registeredCaches.values().forEach(TransactionContext::cleanupEntries);
+         }
          recoveryManager.forgetTransaction(currentXid); //transaction completed, we can remove it from recovery
          currentXid = null;
       }
