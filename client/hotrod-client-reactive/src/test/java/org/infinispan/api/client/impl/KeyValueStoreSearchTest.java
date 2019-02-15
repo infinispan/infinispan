@@ -4,6 +4,7 @@ import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -12,6 +13,7 @@ import org.infinispan.api.InfinispanClient;
 import org.infinispan.api.collections.reactive.KeyValueEntry;
 import org.infinispan.api.collections.reactive.KeyValueStore;
 import org.infinispan.api.collections.reactive.KeyValueStoreConfig;
+import org.infinispan.api.search.reactive.ContinuousQueryPublisher;
 import org.infinispan.api.search.reactive.QueryParameters;
 import org.infinispan.api.search.reactive.QueryPublisher;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -33,7 +35,12 @@ public class KeyValueStoreSearchTest extends SingleHotRodServerTest {
    private static final String PEOPLE = "people";
    private Infinispan infinispan;
 
-   private KeyValueStore<Integer, Person> store;
+   private KeyValueStore<String, Person> store;
+
+   private Person sare;
+   private Person daniela;
+   private Person unai;
+   private Person gorka;
 
    @Override
    protected HotRodServer createHotRodServer() {
@@ -67,31 +74,30 @@ public class KeyValueStoreSearchTest extends SingleHotRodServerTest {
    }
 
    @BeforeMethod
-   public void clearStoreBeforeEachTest() {
+   public void createData() {
       await(store.clear());
-   }
-
-   @Test
-   public void search_api() {
-      Person sare = new Person("Sare", "Bilbao", 1984, "Barakaldo");
-      Person daniela = new Person("Daniela", "Aketxa", 1986, "Donosti");
-      Person unai = new Person("Unai", "Bilbao", 1988, "Gazteiz");
-      Person gorka = new Person("Gorka", "Uriarte", 1990, "Paris");
+      sare = new Person("Sare", "Bilbao", 1984, "Barakaldo");
+      daniela = new Person("Daniela", "Aketxa", 1986, "Donosti");
+      unai = new Person("Unai", "Bilbao", 1988, "Gazteiz");
+      gorka = new Person("Gorka", "Uriarte", 1990, "Paris");
 
       sare.setAddress(new Address("12", "rue des marguettes", "75011", "Paris", "France"));
       daniela.setAddress(new Address("187", "rue de charonne", "75011", "Paris", "France"));
       unai.setAddress(new Address("16", "rue de la py", "75019", "Paris", "France"));
       gorka.setAddress(new Address("26", "rue des marguettes", "75018", "Paris", "France"));
 
-      List<KeyValueEntry<Integer, Person>> entries = Stream.of(
-            new KeyValueEntry<>(1, sare),
-            new KeyValueEntry<>(2, daniela),
-            new KeyValueEntry<>(3, unai),
-            new KeyValueEntry<>(4, gorka))
+      List<KeyValueEntry<String, Person>> entries = Stream.of(
+            new KeyValueEntry<>(id(), sare),
+            new KeyValueEntry<>(id(), daniela),
+            new KeyValueEntry<>(id(), unai),
+            new KeyValueEntry<>(id(), gorka))
             .collect(Collectors.toList());
 
       await(store.putMany(Flowable.fromIterable(entries)));
+   }
 
+   @Test
+   public void search_api() {
       QueryPublisher<Person> queryPublisher = store.find();
       queryPublisher.query(
             "FROM org.infinispan.Person p where p.lastName = :lastName and p.address.number = :number",
@@ -106,5 +112,38 @@ public class KeyValueStoreSearchTest extends SingleHotRodServerTest {
       Person person = personTestSubscriber.values().stream().findFirst().get();
 
       assertEquals(sare, person);
+   }
+
+   @Test
+   public void continuous_query_search() {
+      ContinuousQueryPublisher<String, Person> continuousQueryPublisher = store.findContinuously();
+
+      continuousQueryPublisher.query(
+            "FROM org.infinispan.Person p where p.address.number = :number",
+            QueryParameters.init("number", "12")
+      );
+
+      TestSubscriber<KeyValueEntry<String, Person>> personTestSubscriber = new TestSubscriber<>();
+      continuousQueryPublisher.subscribe(personTestSubscriber);
+
+      assertEquals(1, personTestSubscriber.values().size());
+
+      for (int i = 0; i < 10; i++) {
+         Person person = new Person(sare.firstName + i, sare.lastName, sare.bornYear, sare.bornIn);
+         person.address = sare.address;
+         await(store.put(id(), person));
+      }
+
+      // Filter all "sare"
+      List<String> personNames = personTestSubscriber.values().stream()
+            .map(KeyValueEntry::getValue)
+            .map(Person::getFirstName)
+            .filter(name -> name.contains(sare.firstName))
+            .collect(Collectors.toList());
+      assertEquals(11, personNames.size());
+   }
+
+   private String id() {
+      return UUID.randomUUID().toString();
    }
 }

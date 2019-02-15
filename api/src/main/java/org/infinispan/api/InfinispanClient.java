@@ -11,7 +11,6 @@ import java.lang.reflect.Method;
 public class InfinispanClient {
 
    //TODO: Decide how to test and how to make this work
-
    public static final Infinispan newInfinispan(ClientConfig config) {
       try {
          return (Infinispan) InfinispanClient.class.getClassLoader()
@@ -19,12 +18,11 @@ public class InfinispanClient {
                .getConstructor(ClientConfig.class)
                .newInstance(config);
       } catch (Exception e) {
-         e.printStackTrace();
       }
       return null;
    }
 
-   public static Infinispan newInfinispan() {
+   public static final Infinispan newInfinispan() {
       try {
          Method defaultClientConfig = InfinispanClient.class.getClassLoader()
                .loadClass("org.infinispan.api.client.impl.ClientConfigurationLoader")

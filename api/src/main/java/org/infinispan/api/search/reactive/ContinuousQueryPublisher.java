@@ -2,17 +2,14 @@ package org.infinispan.api.search.reactive;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.api.collections.reactive.KeyValueEntry;
 import org.reactivestreams.Publisher;
 
-public interface ContinuousQueryPublisher<T> extends Publisher<T> {
+public interface ContinuousQueryPublisher<K, V> extends Publisher<KeyValueEntry<K, V>> {
 
-   QueryPublisher<T> query(String query);
+   ContinuousQueryPublisher<K, V> query(String ickleQuery);
 
-   QueryPublisher<T> query(String query, QueryParameters params);
+   ContinuousQueryPublisher<K, V> query(String ickleQuery, QueryParameters params);
 
-   QueryPublisher<T> limit(int limit);
-
-   QueryPublisher<T> skip(int skip);
-
-   QueryPublisher<T> withTimeout(long timeout, TimeUnit timeUnit);
+   ContinuousQueryPublisher<K, V> withTimeout(long timeout, TimeUnit timeUnit);
 }

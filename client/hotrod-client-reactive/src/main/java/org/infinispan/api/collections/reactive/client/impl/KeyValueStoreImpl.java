@@ -9,6 +9,7 @@ import org.infinispan.api.search.reactive.ContinuousQueryPublisher;
 import org.infinispan.api.search.reactive.QueryPublisher;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.dsl.QueryFactory;
 import org.reactivestreams.Publisher;
 
@@ -83,8 +84,10 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    }
 
    @Override
-   public ContinuousQueryPublisher<V> findContinuously() {
-      ContinuousQueryPublisherImpl continuousQueryPublisherImpl = new ContinuousQueryPublisherImpl();
+   public ContinuousQueryPublisher<K, V> findContinuously() {
+      ContinuousQuery<K, V> continuousQuery = Search.getContinuousQuery(cache);
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
+      ContinuousQueryPublisherImpl continuousQueryPublisherImpl = new ContinuousQueryPublisherImpl(continuousQuery, queryFactory);
       return continuousQueryPublisherImpl;
    }
 }

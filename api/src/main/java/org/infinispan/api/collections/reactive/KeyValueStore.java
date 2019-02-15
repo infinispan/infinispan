@@ -36,5 +36,5 @@ public interface KeyValueStore<K, V> {
 
    QueryPublisher<V> find();
 
-   ContinuousQueryPublisher<V> findContinuously();
+   ContinuousQueryPublisher<K, V> findContinuously();
 }

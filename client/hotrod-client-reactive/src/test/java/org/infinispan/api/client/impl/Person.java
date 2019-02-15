@@ -70,4 +70,24 @@ public final class Person {
    public int hashCode() {
       return Objects.hash(firstName, lastName, bornYear, bornIn, address);
    }
+
+   public String getFirstName() {
+      return firstName;
+   }
+
+   public String getLastName() {
+      return lastName;
+   }
+
+   public int getBornYear() {
+      return bornYear;
+   }
+
+   public String getBornIn() {
+      return bornIn;
+   }
+
+   public Address getAddress() {
+      return address;
+   }
 }
