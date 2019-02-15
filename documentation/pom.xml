@@ -24,9 +24,10 @@
         <javaee.docroot>https://docs.oracle.com/javaee/7/api</javaee.docroot>
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
-        <asciidoctor.version>1.5.7</asciidoctor.version>
+        <asciidoctor.version>1.6.2</asciidoctor.version>
+        <asciidoctor.maven.plugin.version>1.5.7.1</asciidoctor.maven.plugin.version>
         <asciidoctorj.pdf.version>1.5.0-alpha.16</asciidoctorj.pdf.version>
-        <jruby.version>9.1.17.0</jruby.version>
+        <jruby.version>9.2.6.0</jruby.version>
     </properties>
 
     <dependencies>
@@ -125,7 +126,7 @@
             <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>${asciidoctor.version}</version>
+                <version>${asciidoctor.maven.plugin.version}</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.asciidoctor</groupId>
@@ -196,7 +197,7 @@
                     <plugin>
                         <groupId>org.asciidoctor</groupId>
                         <artifactId>asciidoctor-maven-plugin</artifactId>
-                        <version>${asciidoctor.version}</version>
+                        <version>${asciidoctor.maven.plugin.version}</version>
                         <dependencies>
                             <dependency>
                                 <groupId>org.asciidoctor</groupId>
