@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -41,6 +42,7 @@ import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.SyncModeTransactionTable;
+import org.infinispan.client.hotrod.impl.transaction.TransactionOperationFactory;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
 import org.infinispan.client.hotrod.impl.transaction.TransactionalRemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transaction.XaModeTransactionTable;
@@ -103,7 +105,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private final Runnable stop = this::stop;
    private final RemoteCounterManager counterManager;
    private final TransactionTable syncTransactionTable;
-   private final TransactionTable xaTransactionTable;
+   private final XaModeTransactionTable xaTransactionTable;
    private ObjectName mbeanObjectName;
    private TimeService timeService = DefaultTimeService.INSTANCE;
 
@@ -312,6 +314,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             listenerNotifier, Collections.singletonList(listenerNotifier::failoverListeners), marshallerRegistry);
       counterManager.start(channelFactory, codec, configuration, listenerNotifier);
 
+      TransactionOperationFactory txOperationFactory = new TransactionOperationFactory(configuration, channelFactory, codec);
+      syncTransactionTable.start(txOperationFactory);
+      xaTransactionTable.start(txOperationFactory);
+
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {
             startRemoteCache(rcc);
@@ -514,6 +520,15 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     */
    public ChannelFactory getChannelFactory() {
       return channelFactory;
+   }
+
+   /**
+    * Returns the {@link XAResource} which can be used to do transactional recovery.
+    *
+    * @return An instance of {@link XAResource}
+    */
+   public XAResource getXaResource() {
+      return xaTransactionTable.getXaResource();
    }
 
    private TransactionManager getTransactionManager(TransactionManager override) {
