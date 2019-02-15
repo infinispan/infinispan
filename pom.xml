@@ -5,13 +5,13 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-build-configuration-parent</artifactId>
-      <version>9.4.7-SNAPSHOT</version>
+      <version>9.4.7.Final</version>
       <relativePath>build-configuration/pom.xml</relativePath>
    </parent>
 
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
-   <version>9.4.7-SNAPSHOT</version>
+   <version>9.4.7.Final</version>
    <packaging>pom</packaging>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
