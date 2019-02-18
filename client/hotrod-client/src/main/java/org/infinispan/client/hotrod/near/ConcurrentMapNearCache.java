@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.near;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.client.hotrod.MetadataValue;
-import org.infinispan.commons.util.CollectionFactory;
 
 /**
  * A concurrent-map-based near cache implementation.
@@ -13,7 +13,7 @@ import org.infinispan.commons.util.CollectionFactory;
  */
 final class ConcurrentMapNearCache<K, V> implements NearCache<K, V> {
 
-   private final ConcurrentMap<K, MetadataValue<V>> cache = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<K, MetadataValue<V>> cache = new ConcurrentHashMap<>();
 
    @Override
    public void put(K key, MetadataValue<V> value) {

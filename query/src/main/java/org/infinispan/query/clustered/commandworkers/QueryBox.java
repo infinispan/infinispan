@@ -1,10 +1,10 @@
 package org.infinispan.query.clustered.commandworkers;
 
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
-import org.infinispan.commons.util.CollectionFactory;
 
 /**
  * Each indexed cache in the cluster has a QueryBox instance. The QueryBox keeps the active lazy iterators
@@ -23,7 +23,7 @@ public final class QueryBox {
 
    // TODO [anistor] see https://issues.jboss.org/browse/ISPN-9466
    // <query UUID, ISPNQuery>
-   private final ConcurrentMap<UUID, DocumentExtractor> queries = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<UUID, DocumentExtractor> queries = new ConcurrentHashMap<>();
 
    /**
     * Kill the query (DocumentExtractor).

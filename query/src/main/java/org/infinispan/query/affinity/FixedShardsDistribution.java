@@ -9,9 +9,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
@@ -26,9 +26,9 @@ import org.infinispan.util.logging.LogFactory;
 class FixedShardsDistribution implements ShardDistribution {
    private static final Log LOGGER = LogFactory.getLog(FixedShardsDistribution.class, Log.class);
 
-   private final Map<Integer, String> shardPerSegmentMap = CollectionFactory.makeConcurrentMap();
-   private final Map<Address, Set<String>> shardsPerAddressMap = CollectionFactory.makeConcurrentMap();
-   private final Map<String, Address> addressPerShardMap = CollectionFactory.makeConcurrentMap();
+   private final Map<Integer, String> shardPerSegmentMap = new ConcurrentHashMap<>();
+   private final Map<Address, Set<String>> shardsPerAddressMap = new ConcurrentHashMap<>();
+   private final Map<String, Address> addressPerShardMap = new ConcurrentHashMap<>();
    private final int numShards;
 
    FixedShardsDistribution(ConsistentHash consistentHash, int numShards) {

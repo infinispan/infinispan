@@ -8,9 +8,9 @@ import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.DistributionManager;
@@ -31,7 +31,7 @@ public class GroupManagerImpl implements GroupManager {
    private final List<Grouper<?>> groupers;
 
    public GroupManagerImpl(List<Grouper<?>> groupers) {
-      this.groupMetadataCache = CollectionFactory.makeConcurrentMap();
+      this.groupMetadataCache = new ConcurrentHashMap<>();
       if (groupers != null)
          this.groupers = groupers;
       else

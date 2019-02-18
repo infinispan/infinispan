@@ -4,10 +4,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.GlobUtils;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -35,7 +35,7 @@ public class ConfigurationManager {
 
    public ConfigurationManager(GlobalConfiguration globalConfiguration) {
       this.globalConfiguration = globalConfiguration;
-      this.namedConfiguration = CollectionFactory.makeConcurrentMap();
+      this.namedConfiguration = new ConcurrentHashMap<>();
    }
 
    public ConfigurationManager(ConfigurationBuilderHolder holder) {

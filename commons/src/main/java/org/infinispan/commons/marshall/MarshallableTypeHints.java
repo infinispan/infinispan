@@ -1,10 +1,10 @@
 package org.infinispan.commons.marshall;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.CollectionFactory;
 
 /**
  * Class providing hints about marshallable types, such as whether a particular
@@ -25,8 +25,7 @@ public final class MarshallableTypeHints {
     * requires attempting to marshalling them, a cache for the types that are
     * known to be marshallable or not is advantageous.
     */
-   private final ConcurrentMap<Class<?>, MarshallingType> typeHints =
-         CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<Class<?>, MarshallingType> typeHints = new ConcurrentHashMap<>();
 
    /**
     * Get the serialized form size predictor for a particular type.

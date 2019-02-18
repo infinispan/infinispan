@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -28,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.configuration.cache.CacheMode;
@@ -169,7 +169,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       when(rpcManager.getAddress()).thenReturn(addresses[0]);
       when(rpcManager.getTransport()).thenReturn(transport);
 
-      final Map<Address, Set<Integer>> requestedSegments = CollectionFactory.makeConcurrentMap();
+      final Map<Address, Set<Integer>> requestedSegments = new ConcurrentHashMap<>();
       final Set<Integer> flatRequestedSegments = new ConcurrentSkipListSet<>();
       when(rpcManager.invokeCommand(any(Address.class), any(StateRequestCommand.class), any(ResponseCollector.class),
                                     any(RpcOptions.class)))

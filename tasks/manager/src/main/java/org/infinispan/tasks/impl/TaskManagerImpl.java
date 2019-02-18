@@ -9,12 +9,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -30,7 +31,6 @@ import org.infinispan.tasks.TaskExecution;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.tasks.logging.Log;
 import org.infinispan.tasks.spi.TaskEngine;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
@@ -57,7 +57,7 @@ public class TaskManagerImpl implements TaskManager {
 
    public TaskManagerImpl() {
       engines = new ArrayList<>();
-      runningTasks = CollectionFactory.makeConcurrentMap();
+      runningTasks = new ConcurrentHashMap<>();
    }
 
    @Start

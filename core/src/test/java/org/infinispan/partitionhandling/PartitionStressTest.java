@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +16,6 @@ import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
@@ -66,7 +66,7 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
       }
 
       final List<Future<Object>> futures = new ArrayList<>(NUM_NODES);
-      final ConcurrentMap<String, Integer> insertedKeys = CollectionFactory.makeConcurrentMap();
+      final ConcurrentMap<String, Integer> insertedKeys = new ConcurrentHashMap<>();
       final AtomicBoolean stop = new AtomicBoolean(false);
       for (int i = 0; i < NUM_NODES; i++) {
          final int cacheIndex = i;

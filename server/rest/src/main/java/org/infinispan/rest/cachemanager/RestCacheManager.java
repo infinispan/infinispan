@@ -3,13 +3,13 @@ package org.infinispan.rest.cachemanager;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
@@ -37,8 +37,7 @@ public class RestCacheManager<V> {
    private final InternalCacheRegistry icr;
    private final Predicate<? super String> isCacheIgnored;
    private final boolean allowInternalCacheAccess;
-   private final Map<String, AdvancedCache<Object, V>> knownCaches =
-         CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
+   private final Map<String, AdvancedCache<Object, V>> knownCaches = new ConcurrentHashMap<>(4, 0.9f, 16);
    private final RemoveCacheListener removeCacheListener;
 
    public RestCacheManager(EmbeddedCacheManager instance, Predicate<? super String> isCacheIgnored) {

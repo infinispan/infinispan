@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.PrimitiveIterator;
 import java.util.Set;
@@ -126,7 +127,7 @@ public class SingletonIntSetTest {
    @Test
    public void testContainsAll1() throws Exception {
       IntSet sis = new SingletonIntSet(3);
-      Set<Integer> hashSet = CollectionFactory.makeSet(new Integer[]{3});
+      Set<Integer> hashSet = new HashSet<>(Arrays.asList(3));
 
       assertTrue(sis.containsAll(hashSet));
       assertTrue(hashSet.containsAll(sis));
@@ -155,7 +156,7 @@ public class SingletonIntSetTest {
 
    @Test(expected = UnsupportedOperationException.class)
    public void testAddAll2() throws Exception {
-      Set<Integer> hashSet = CollectionFactory.makeSet(1, 4);
+      Set<Integer> hashSet = Util.asSet(1, 4);
 
       IntSet sis = new SingletonIntSet(3);
       sis.addAll(hashSet);

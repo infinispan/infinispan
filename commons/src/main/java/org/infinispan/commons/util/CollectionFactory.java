@@ -20,7 +20,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 5.1
+ * @deprecated since 10.0, will be removed in future Infinispan versions
  */
+@Deprecated
 public class CollectionFactory {
    private static final float DEFAULT_LOAD_FACTOR = 0.75f;
 

@@ -1,7 +1,5 @@
 package org.infinispan.commons.marshall;
 
-import static org.infinispan.commons.util.CollectionFactory.computeCapacity;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -83,7 +81,7 @@ public class MarshallUtil {
       if (size == NULL_VALUE) {
          return null;
       }
-      final T map = Objects.requireNonNull(builder, "MapBuilder must be non-null").build(computeCapacity(size));
+      final T map = Objects.requireNonNull(builder, "MapBuilder must be non-null").build(size);
       for (int i = 0; i < size; i++) //noinspection unchecked
          map.put((K) in.readObject(), (V) in.readObject());
       return map;
@@ -129,7 +127,7 @@ public class MarshallUtil {
       if (size == NULL_VALUE) {
          return null;
       }
-      final T map = Objects.requireNonNull(builder, "MapBuilder must be non-null").build(computeCapacity(size));
+      final T map = Objects.requireNonNull(builder, "MapBuilder must be non-null").build(size);
       for (int i = 0; i < size; i++) //noinspection unchecked
          map.put(keyReader.readFrom(in), valueReader.readFrom(in));
       return map;

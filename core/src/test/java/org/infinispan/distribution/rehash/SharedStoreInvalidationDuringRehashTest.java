@@ -7,11 +7,11 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -77,7 +77,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
    }
 
    private void incrementCounter(ConcurrentMap<Integer, ConcurrentMap<Object, AtomicInteger>> counterMap, int index, Object[] keys) {
-      ConcurrentMap<Object, AtomicInteger> counters = counterMap.computeIfAbsent(index, ignored -> CollectionFactory.makeConcurrentMap());
+      ConcurrentMap<Object, AtomicInteger> counters = counterMap.computeIfAbsent(index, ignored -> new ConcurrentHashMap<>());
       for (Object key : keys) {
          counters.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();
       }

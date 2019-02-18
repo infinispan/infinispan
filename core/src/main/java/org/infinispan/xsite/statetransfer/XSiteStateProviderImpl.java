@@ -12,13 +12,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
@@ -68,7 +68,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    @Inject private StateTransferLock stateTransferLock;
 
    public XSiteStateProviderImpl() {
-      runningStateTransfer = CollectionFactory.makeConcurrentMap();
+      runningStateTransfer = new ConcurrentHashMap<>();
    }
 
    @Override

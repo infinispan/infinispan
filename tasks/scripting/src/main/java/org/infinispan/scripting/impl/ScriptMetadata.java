@@ -3,7 +3,6 @@ package org.infinispan.scripting.impl;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
-import static org.infinispan.commons.util.CollectionFactory.makeSet;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -15,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.Metadata;
 
@@ -37,7 +37,7 @@ public class ScriptMetadata implements Metadata {
    private final Optional<String> collator;
    private final Optional<String> combiner;
    private final MediaType dataType;
-   private final Set<String> textBasedMedia = makeSet(TEXT_PLAIN_TYPE, APPLICATION_JSON_TYPE, APPLICATION_XML_TYPE);
+   private final Set<String> textBasedMedia = Util.asSet(TEXT_PLAIN_TYPE, APPLICATION_JSON_TYPE, APPLICATION_XML_TYPE);
 
    ScriptMetadata(String name, Optional<String> language, String extension, ExecutionMode mode, Set<String> parameters,
                   Optional<String> role, Optional<String> reducer, Optional<String> collator, Optional<String> combiner,

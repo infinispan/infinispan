@@ -15,6 +15,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
@@ -33,7 +34,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.configuration.ClassWhiteList;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.ConfigurationManager;
@@ -132,7 +132,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    public static final String OBJECT_NAME = "CacheManager";
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
 
-   private final ConcurrentMap<String, CompletableFuture<Cache<?, ?>>> caches = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, CompletableFuture<Cache<?, ?>>> caches = new ConcurrentHashMap<>();
    private final GlobalComponentRegistry globalComponentRegistry;
    private final AuthorizationHelper authzHelper;
    private final DependencyGraph<String> cacheDependencyGraph = new DependencyGraph<>();

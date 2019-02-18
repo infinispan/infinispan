@@ -7,6 +7,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +23,6 @@ import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
@@ -249,7 +249,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
    }
 
    protected State newState(boolean clear, State next) {
-      ConcurrentMap<Object, Modification> map = CollectionFactory.makeConcurrentMap(64, concurrencyLevel);
+      ConcurrentMap<Object, Modification> map = new ConcurrentHashMap<>(64, 0.75f, concurrencyLevel);
       return new State(clear, map, next);
    }
 

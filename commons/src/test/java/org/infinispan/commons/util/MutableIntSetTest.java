@@ -171,7 +171,7 @@ public class MutableIntSetTest {
       intSet.add(1);
       intSet.add(4);
 
-      Set<Integer> set = CollectionFactory.makeSet(1, 4, 7);
+      Set<Integer> set = Util.asSet(1, 4, 7);
 
       assertFalse(intSet.containsAll(set));
       assertTrue(set.containsAll(intSet));
@@ -197,7 +197,7 @@ public class MutableIntSetTest {
 
    @Test
    public void testAddAll2() throws Exception {
-      intSet.addAll(CollectionFactory.makeSet(1, 4));
+      intSet.addAll(Util.asSet(1, 4));
       assertEquals(2, intSet.size());
    }
 
@@ -233,7 +233,7 @@ public class MutableIntSetTest {
 
       assertTrue(intSet.removeAll(rs));
 
-      assertEquals(CollectionFactory.makeSet((Object) 7), intSet);
+      assertEquals(Util.asSet((Object) 7), intSet);
    }
 
    @Test
@@ -244,9 +244,9 @@ public class MutableIntSetTest {
 
       assertEquals(3, intSet.size());
 
-      assertTrue(intSet.removeAll(CollectionFactory.makeSet(4, 5, 7)));
+      assertTrue(intSet.removeAll(Util.asSet(4, 5, 7)));
 
-      assertEquals(CollectionFactory.makeSet((Object) 1), intSet);
+      assertEquals(Util.asSet((Object) 1), intSet);
    }
 
    @Test
@@ -264,7 +264,7 @@ public class MutableIntSetTest {
 
       intSet.retainAll(intSet2);
 
-      assertEquals(CollectionFactory.makeSet(4, 7), intSet);
+      assertEquals(Util.asSet(4, 7), intSet);
    }
 
    @Test
@@ -280,7 +280,7 @@ public class MutableIntSetTest {
 
       assertTrue(intSet.retainAll(rs));
 
-      assertEquals(CollectionFactory.makeSet(1, 4), intSet);
+      assertEquals(Util.asSet(1, 4), intSet);
    }
 
    @Test
@@ -291,9 +291,9 @@ public class MutableIntSetTest {
 
       assertEquals(3, intSet.size());
 
-      assertTrue(intSet.retainAll(CollectionFactory.makeSet(4, 5, 7)));
+      assertTrue(intSet.retainAll(Util.asSet(4, 5, 7)));
 
-      assertEquals(CollectionFactory.makeSet(4, 7), intSet);
+      assertEquals(Util.asSet(4, 7), intSet);
    }
 
    @Test
@@ -380,7 +380,7 @@ public class MutableIntSetTest {
       intSet.add(4);
       intSet.add(7);
 
-      Set<Integer> hashSet = CollectionFactory.makeSet(1, 4);
+      Set<Integer> hashSet = Util.asSet(1, 4);
 
       // Verify equals both ways
       assertNotEquals(intSet, hashSet);
@@ -402,7 +402,7 @@ public class MutableIntSetTest {
 
       intSet.forEach((IntConsumer) results::add);
 
-      assertEquals(CollectionFactory.makeSet(0, 4, 7), results);
+      assertEquals(Util.asSet(0, 4, 7), results);
    }
 
    @Test
@@ -426,7 +426,7 @@ public class MutableIntSetTest {
 
       intSet.forEach((Consumer<? super Integer>) results::add);
 
-      assertEquals(CollectionFactory.makeSet(0, 4, 7), results);
+      assertEquals(Util.asSet(0, 4, 7), results);
    }
 
    @Test
@@ -462,7 +462,7 @@ public class MutableIntSetTest {
       assertFalse(intSet.removeIf((Integer i) -> i / 10 > 0));
       assertEquals(3, intSet.size());
       assertTrue(intSet.removeIf((Integer i) -> i > 3));
-      assertEquals(CollectionFactory.makeSet((Object) 1), intSet);
+      assertEquals(Util.asSet((Object) 1), intSet);
    }
 
    @Test
@@ -475,7 +475,7 @@ public class MutableIntSetTest {
 
       intSet.intSpliterator().forEachRemaining((IntConsumer) results::add);
 
-      assertEquals(CollectionFactory.makeSet(1, 4, 7), results);
+      assertEquals(Util.asSet(1, 4, 7), results);
    }
 
    @Test
@@ -497,6 +497,6 @@ public class MutableIntSetTest {
 
       while (split.tryAdvance(consumer)) { }
 
-      assertEquals(CollectionFactory.makeSet(1, 4, 7), results);
+      assertEquals(Util.asSet(1, 4, 7), results);
    }
 }

@@ -4,9 +4,8 @@ import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import org.infinispan.commons.util.CollectionFactory;
 
 /**
  * A simple Set implementation backed by a {@link java.util.concurrent.ConcurrentHashMap} to deal with the fact that the
@@ -30,7 +29,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
     protected final ConcurrentMap<E, Object> map;
 
     public ConcurrentHashSet() {
-        map = CollectionFactory.makeConcurrentMap();
+        map = new ConcurrentHashMap<>();
     }
 
     /**
@@ -38,7 +37,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
      *                         float, int)} javadocs for details.
      */
     public ConcurrentHashSet(int concurrencyLevel) {
-        map = CollectionFactory.makeConcurrentMap(16, concurrencyLevel);
+        map = new ConcurrentHashMap<>(16, 0.75f, concurrencyLevel);
     }
 
     /**
@@ -46,7 +45,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
      * float, int)} javadocs for details.
      */
     public ConcurrentHashSet(int initSize, float loadFactor, int concurrencyLevel) {
-        map = CollectionFactory.makeConcurrentMap(initSize, loadFactor, concurrencyLevel);
+        map = new ConcurrentHashMap<>(initSize, loadFactor, concurrencyLevel);
     }
 
 

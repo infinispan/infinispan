@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -26,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SitesConfiguration;
@@ -82,8 +82,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    private final ConcurrentMap<String, String> status;
 
    public XSiteStateTransferManagerImpl() {
-      siteCollector = CollectionFactory.makeConcurrentMap();
-      status = CollectionFactory.makeConcurrentMap();
+      siteCollector = new ConcurrentHashMap<>();
+      status = new ConcurrentHashMap<>();
    }
 
    @Start

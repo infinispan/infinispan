@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,7 +18,6 @@ import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyGenerator;
 import org.infinispan.affinity.ListenerRegistration;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -53,7 +53,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    private final Set<Address> filter;
 
    @GuardedBy("maxNumberInvariant")
-   private final Map<Address, BlockingQueue<K>> address2key = CollectionFactory.makeConcurrentMap();
+   private final Map<Address, BlockingQueue<K>> address2key = new ConcurrentHashMap<>();
    private final Executor executor;
    private final Cache<? extends K, ?> cache;
    private final KeyGenerator<? extends K> keyGenerator;

@@ -3,7 +3,6 @@ package org.infinispan.remoting.transport.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
@@ -18,7 +17,7 @@ public class PassthroughMapResponseCollector implements ResponseCollector<Map<Ad
    private Map<Address, Response> map;
 
    public PassthroughMapResponseCollector(int expectedSize) {
-      map = new HashMap<>(CollectionFactory.computeCapacity(expectedSize));
+      map = new HashMap<>(expectedSize);
    }
 
    @Override

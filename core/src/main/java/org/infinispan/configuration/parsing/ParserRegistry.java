@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.xml.namespace.QName;
@@ -32,7 +33,6 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.ServiceFinder;
@@ -72,7 +72,7 @@ public class ParserRegistry implements NamespaceMappingParser {
    }
 
    public ParserRegistry(ClassLoader classLoader, boolean defaultOnly, Properties properties) {
-      this.parserMappings = CollectionFactory.makeConcurrentMap();
+      this.parserMappings = new ConcurrentHashMap<>();
       this.cl = new WeakReference<>(classLoader);
       this.properties = properties;
       Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, cl.get(), ParserRegistry.class.getClassLoader());

@@ -26,7 +26,6 @@ import javax.cache.event.CacheEntryUpdatedListener;
 import javax.cache.event.EventType;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -60,7 +59,7 @@ public abstract class AbstractJCacheNotifier<K, V> implements Closeable {
          new CopyOnWriteArrayList<CacheEntryExpiredListener<K, V>>();
 
    private final ConcurrentMap<CacheEntryListener<? super K, ? super V>, CacheEntryListenerConfiguration<K, V>> listenerCfgs =
-         CollectionFactory.makeConcurrentMap();
+         new ConcurrentHashMap<>();
 
    private AbstractJCacheListenerAdapter<K,V> listenerAdapter;
 

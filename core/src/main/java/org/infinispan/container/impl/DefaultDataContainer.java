@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.EntrySizeCalculator;
 import org.infinispan.commons.util.FilterIterator;
 import org.infinispan.commons.util.FilterSpliterator;
@@ -54,7 +54,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
 
    public DefaultDataContainer(int concurrencyLevel) {
       // If no comparing implementations passed, could fallback on JDK CHM
-      entries = CollectionFactory.makeConcurrentParallelMap(128, concurrencyLevel);
+      entries = new ConcurrentHashMap<>(128);
       evictionCache = null;
    }
 
