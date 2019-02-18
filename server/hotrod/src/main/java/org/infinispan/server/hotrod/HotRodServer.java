@@ -29,10 +29,6 @@ import java.util.function.Function;
 import javax.security.auth.Subject;
 import javax.security.sasl.SaslServerFactory;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOutboundHandler;
-import io.netty.util.concurrent.DefaultThreadFactory;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -42,7 +38,6 @@ import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
@@ -100,6 +95,11 @@ import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.KeyValuePair;
 
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOutboundHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
+
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information on
  * startup and shutdown.
@@ -124,7 +124,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private Cache<Address, ServerAddress> addressCache;
    private final Map<String, CacheInfo> knownCaches = new ConcurrentHashMap<>();
    private QueryFacade queryFacade;
-   private Map<String, SaslServerFactory> saslMechFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
+   private Map<String, SaslServerFactory> saslMechFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
    private ClientListenerRegistry clientListenerRegistry;
    private Marshaller marshaller;
    private ClusterExecutor clusterExecutor;

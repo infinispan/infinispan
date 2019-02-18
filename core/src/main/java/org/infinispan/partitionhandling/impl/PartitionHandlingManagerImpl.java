@@ -8,13 +8,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.Configuration;
@@ -67,7 +67,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private PartitionHandling partitionHandling;
 
    public PartitionHandlingManagerImpl() {
-      partialTransactions = CollectionFactory.makeConcurrentMap();
+      partialTransactions = new ConcurrentHashMap<>();
    }
 
    @Start

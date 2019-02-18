@@ -6,6 +6,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -20,7 +21,6 @@ import javax.script.SimpleBindings;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
@@ -65,11 +65,11 @@ public class ScriptingManagerImpl implements ScriptingManager {
    private EncoderRegistry encoderRegistry;
 
    private ScriptEngineManager scriptEngineManager;
-   private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = CollectionFactory.makeConcurrentMap(2);
-   private ConcurrentMap<String, ScriptEngine> scriptEnginesByLanguage = CollectionFactory.makeConcurrentMap(2);
+   private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = new ConcurrentHashMap<>(2);
+   private ConcurrentMap<String, ScriptEngine> scriptEnginesByLanguage = new ConcurrentHashMap<>(2);
    private Cache<String, String> scriptCache;
    private ScriptConversions scriptConversions;
-   ConcurrentMap<String, CompiledScript> compiledScripts = CollectionFactory.makeConcurrentMap();
+   ConcurrentMap<String, CompiledScript> compiledScripts = new ConcurrentHashMap<>();
    private AuthorizationHelper globalAuthzHelper;
 
    private final Function<String, ScriptEngine> getEngineByName = this::getEngineByName;

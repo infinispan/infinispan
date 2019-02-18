@@ -22,20 +22,20 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
 import javax.transaction.xa.XAException;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -63,9 +63,10 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Repository for {@link RemoteTransaction} and {@link org.infinispan.transaction.xa.TransactionXaAdapter}s (locally
@@ -131,13 +132,13 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
       //use the IdentityEquivalence because some Transaction implementation does not have a stable hash code function
       //and it can cause some leaks in the concurrent map.
-      localTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
-      globalToLocalTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
+      localTransactions = new ConcurrentHashMap<>(concurrencyLevel, 0.75f, concurrencyLevel);
+      globalToLocalTransactions = new ConcurrentHashMap<>(concurrencyLevel, 0.75f, concurrencyLevel);
 
       boolean transactional = configuration.transaction().transactionMode().isTransactional();
       if (clustered && transactional) {
          minTopologyRecalculationLock = new ReentrantLock();
-         remoteTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
+         remoteTransactions = new ConcurrentHashMap<>(concurrencyLevel, 0.75f, concurrencyLevel);
 
          notifier.addListener(this);
          cacheManagerNotifier.addListener(this);

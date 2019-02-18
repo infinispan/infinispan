@@ -2,8 +2,8 @@ package org.infinispan.statetransfer;
 
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup;
@@ -17,7 +17,7 @@ import org.jgroups.JChannel;
  * @since 8.2
  */
 public class CustomChannelLookup implements JGroupsChannelLookup {
-   private static final Map<String, JChannel> channelMap = CollectionFactory.makeConcurrentMap();
+   private static final Map<String, JChannel> channelMap = new ConcurrentHashMap<>();
    private boolean connect;
 
    public static void configureTransportWithChannel(GlobalConfigurationBuilder gcb, JChannel channel, String nodeName,

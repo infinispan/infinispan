@@ -2,8 +2,8 @@ package org.infinispan.commands;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -16,7 +16,7 @@ import org.infinispan.util.logging.LogFactory;
 public class CancellationServiceImpl implements CancellationService {
 
    private static final Log log = LogFactory.getLog(CancellationServiceImpl.class);
-   private final Map<UUID, Thread> commandThreadMap = CollectionFactory.makeConcurrentMap();
+   private final Map<UUID, Thread> commandThreadMap = new ConcurrentHashMap<>();
 
    @Override
    public void register(Thread t, UUID id) {

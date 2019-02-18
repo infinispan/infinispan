@@ -1,11 +1,12 @@
 package org.infinispan.context.impl;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
 
@@ -26,12 +27,12 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
 
    public NonTxInvocationContext(int numEntries, Address origin) {
       super(origin);
-      lookedUpEntries = CollectionFactory.makeMap(CollectionFactory.computeCapacity(numEntries));
+      lookedUpEntries = new HashMap<>(numEntries);
    }
 
    public NonTxInvocationContext(Address origin) {
       super(origin);
-      lookedUpEntries = CollectionFactory.makeMap(INITIAL_CAPACITY);
+      lookedUpEntries = new HashMap<>(INITIAL_CAPACITY);
    }
 
    @Override
@@ -94,7 +95,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    @Override
    public void addLockedKey(Object key) {
       if (lockedKeys == null)
-         lockedKeys = CollectionFactory.makeSet(INITIAL_CAPACITY);
+         lockedKeys = new HashSet<>(INITIAL_CAPACITY);
 
       lockedKeys.add(key);
    }

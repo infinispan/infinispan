@@ -17,7 +17,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.entries.CacheEntry;
@@ -219,7 +218,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    public void registerLockedKey(Object key) {
       // we need a synchronized collection to be able to get a valid snapshot from another thread during state transfer
-      final Set<Object> keys = lockedKeys.updateAndGet((value) -> value == null ? Collections.synchronizedSet(CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY)) : value);
+      final Set<Object> keys = lockedKeys.updateAndGet((value) -> value == null ? Collections.synchronizedSet(new HashSet<>(INITIAL_LOCK_CAPACITY)) : value);
       if (trace) log.tracef("Registering locked key: %s", toStr(key));
       keys.add(key);
    }
@@ -277,7 +276,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    private void initAffectedKeys() {
-      if (affectedKeys == null) affectedKeys = CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY);
+      if (affectedKeys == null) affectedKeys = new HashSet<>(INITIAL_LOCK_CAPACITY);
    }
 
    @Override

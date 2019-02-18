@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.PrimitiveIterator;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -13,7 +14,6 @@ import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -81,7 +81,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final boolean pushTransfer;
 
-   private final Map<Integer, List<InternalCacheEntry>> entriesBySegment = CollectionFactory.makeConcurrentMap();
+   private final Map<Integer, List<InternalCacheEntry>> entriesBySegment = new ConcurrentHashMap<>();
 
    /**
     * The total number of entries from all segments accumulated in entriesBySegment.

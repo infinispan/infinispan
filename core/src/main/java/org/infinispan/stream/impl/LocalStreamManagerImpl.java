@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Stream;
@@ -16,7 +17,6 @@ import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
@@ -65,7 +65,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
 
    private Address localAddress;
 
-   private final ConcurrentMap<Object, SegmentListener> changeListener = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<Object, SegmentListener> changeListener = new ConcurrentHashMap<>();
    private ByteString cacheName;
 
    class SegmentListener {

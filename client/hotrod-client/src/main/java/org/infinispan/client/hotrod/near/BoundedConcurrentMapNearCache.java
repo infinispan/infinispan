@@ -4,7 +4,9 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
-import org.infinispan.commons.util.CollectionFactory;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * Near cache based on {@link BoundedConcurrentMapNearCache}
@@ -20,8 +22,8 @@ final class BoundedConcurrentMapNearCache<K, V> implements NearCache<K, V> {
    }
 
    public static <K, V> NearCache<K, V> create(final NearCacheConfiguration config) {
-      return new BoundedConcurrentMapNearCache<K, V>(
-         CollectionFactory.<K, MetadataValue<V>>makeBoundedConcurrentMap(config.maxEntries()));
+      Cache<K, MetadataValue<V>> cache = Caffeine.newBuilder().maximumSize(config.maxEntries()).build();
+      return new BoundedConcurrentMapNearCache<>(cache.asMap());
    }
 
    @Override

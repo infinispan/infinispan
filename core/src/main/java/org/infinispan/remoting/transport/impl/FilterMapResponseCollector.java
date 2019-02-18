@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -29,7 +28,7 @@ public class FilterMapResponseCollector extends ValidResponseCollector<Map<Addre
    private final boolean waitForAll;
 
    public FilterMapResponseCollector(ResponseFilter filter, boolean waitForAll, int expectedSize) {
-      this.map = new HashMap<>(CollectionFactory.computeCapacity(expectedSize));
+      this.map = new HashMap<>(expectedSize);
       this.filter = filter;
       this.waitForAll = waitForAll;
    }

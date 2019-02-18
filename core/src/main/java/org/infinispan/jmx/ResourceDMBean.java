@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -19,7 +20,6 @@ import javax.management.MBeanParameterInfo;
 import javax.management.ReflectionException;
 import javax.management.ServiceNotFoundException;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.factories.components.JmxAttributeMetadata;
 import org.infinispan.factories.components.JmxOperationMetadata;
@@ -57,8 +57,8 @@ public class ResourceDMBean implements DynamicMBean {
    private final ManageableComponentMetadata mBeanMetadata;
    private final String name;
 
-   private static final Map<String, Field> FIELD_CACHE = CollectionFactory.makeConcurrentMap(64);
-   private static final Map<String, Method> METHOD_CACHE = CollectionFactory.makeConcurrentMap(64);
+   private static final Map<String, Field> FIELD_CACHE = new ConcurrentHashMap<>(64);
+   private static final Map<String, Method> METHOD_CACHE = new ConcurrentHashMap<>(64);
 
    public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata) throws NoSuchFieldException, ClassNotFoundException {
       this(instance, mBeanMetadata, null);

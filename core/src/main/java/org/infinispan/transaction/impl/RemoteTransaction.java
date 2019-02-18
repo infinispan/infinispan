@@ -5,13 +5,13 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -53,13 +53,13 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       this.modifications = modifications == null || modifications.length == 0
             ? Collections.emptyList()
             : Arrays.asList(modifications);
-      lookedUpEntries = CollectionFactory.makeMap(CollectionFactory.computeCapacity(this.modifications.size()));
+      lookedUpEntries = new HashMap<>(this.modifications.size());
    }
 
    public RemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
       super(tx, topologyId, txCreationTime);
       this.modifications = new LinkedList<>();
-      lookedUpEntries = CollectionFactory.makeMap(4);
+      lookedUpEntries = new HashMap<>(4);
    }
 
    @Override
@@ -105,7 +105,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       try {
          RemoteTransaction dolly = (RemoteTransaction) super.clone();
          dolly.modifications = new ArrayList<>(modifications);
-         dolly.lookedUpEntries = CollectionFactory.makeMap(lookedUpEntries);
+         dolly.lookedUpEntries = new HashMap<>(lookedUpEntries);
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!!", e);

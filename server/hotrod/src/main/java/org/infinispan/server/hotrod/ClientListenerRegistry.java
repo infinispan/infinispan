@@ -27,7 +27,6 @@ import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.encoding.DataConversion;
@@ -72,9 +71,9 @@ class ClientListenerRegistry {
    private final static boolean isTrace = log.isTraceEnabled();
 
    private final ConcurrentMap<WrappedByteArray, Object> eventSenders = new ConcurrentHashMap<>();
-   private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
-   private final ConcurrentMap<String, CacheEventConverterFactory> cacheEventConverterFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
-   private final ConcurrentMap<String, CacheEventFilterConverterFactory> cacheEventFilterConverterFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
+   private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
+   private final ConcurrentMap<String, CacheEventConverterFactory> cacheEventConverterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
+   private final ConcurrentMap<String, CacheEventFilterConverterFactory> cacheEventFilterConverterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
 
    private final ExecutorService addListenerExecutor = new ThreadPoolExecutor(
          0, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(),

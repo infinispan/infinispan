@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadFactory;
 
@@ -21,7 +22,6 @@ import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
@@ -86,7 +86,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    private static final Map<String, Element> THREAD_POOL_FACTORIES;
 
    static {
-      THREAD_POOL_FACTORIES = CollectionFactory.makeConcurrentMap();
+      THREAD_POOL_FACTORIES = new ConcurrentHashMap<>();
       THREAD_POOL_FACTORIES.put(CachedThreadPoolExecutorFactory.class.getName(), Element.CACHED_THREAD_POOL);
       THREAD_POOL_FACTORIES.put(BlockingThreadPoolExecutorFactory.class.getName(), Element.BLOCKING_BOUNDED_QUEUE_THREAD_POOL);
       THREAD_POOL_FACTORIES.put(ScheduledThreadPoolExecutorFactory.class.getName(), Element.SCHEDULED_THREAD_POOL);
@@ -139,7 +139,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
 
    private void writeThreads(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration) throws XMLStreamException {
       writer.writeStartElement(Element.THREADS);
-      ConcurrentMap<String, DefaultThreadFactory> threadFactories = CollectionFactory.makeConcurrentMap();
+      ConcurrentMap<String, DefaultThreadFactory> threadFactories = new ConcurrentHashMap<>();
       for (ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.expirationThreadPool(), globalConfiguration.listenerThreadPool(),
             globalConfiguration.persistenceThreadPool(), globalConfiguration.stateTransferThreadPool(),
             globalConfiguration.transport().remoteCommandThreadPool(), globalConfiguration.transport().transportThreadPool())) {

@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -52,7 +52,7 @@ public class TotalOrderManager {
    private final AtomicReference<TotalOrderLatch> stateTransferInProgress;
 
    public TotalOrderManager() {
-      keysLocked = CollectionFactory.makeConcurrentMap();
+      keysLocked = new ConcurrentHashMap<>();
       stateTransferInProgress = new AtomicReference<>(null);
    }
 

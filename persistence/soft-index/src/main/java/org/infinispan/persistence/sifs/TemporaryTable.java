@@ -1,8 +1,8 @@
 package org.infinispan.persistence.sifs;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -16,7 +16,7 @@ public class TemporaryTable {
    private ConcurrentMap<Object, Entry> table;
 
    public TemporaryTable(int capacity) {
-      table = CollectionFactory.makeConcurrentMap(capacity);
+      table = new ConcurrentHashMap<>(capacity);
    }
 
    public void set(Object key, int file, int offset) {

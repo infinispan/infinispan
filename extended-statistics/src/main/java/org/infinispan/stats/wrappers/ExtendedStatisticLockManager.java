@@ -9,14 +9,14 @@ import static org.infinispan.stats.container.ExtendedStatistic.NUM_WAITED_FOR_LO
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.stats.CacheStatisticManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockState;
@@ -34,7 +34,7 @@ import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
 public class ExtendedStatisticLockManager implements LockManager {
    private final LockManager actual;
    private final CacheStatisticManager cacheStatisticManager;
-   private final ConcurrentMap<Object, LockInfo> lockInfoMap = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<Object, LockInfo> lockInfoMap = new ConcurrentHashMap<>();
    private final TimeService timeService;
 
    public ExtendedStatisticLockManager(LockManager actual, CacheStatisticManager cacheStatisticManager,

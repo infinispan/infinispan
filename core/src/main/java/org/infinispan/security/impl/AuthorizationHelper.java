@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalSecurityConfiguration;
@@ -23,6 +22,9 @@ import org.infinispan.security.Role;
 import org.infinispan.security.Security;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * AuthorizationHelper. Some utility methods for computing access masks and verifying them against
@@ -50,7 +52,12 @@ public class AuthorizationHelper {
    }
 
    public AuthorizationHelper(GlobalSecurityConfiguration security, AuditContext context, String name) {
-      this(security, context, name, security.authorization().enabled() ? CollectionFactory.makeBoundedConcurrentMap(10) : null);
+      this(security, context, name, security.authorization().enabled() ? createAclCache() : null);
+   }
+
+   private static <K, V> ConcurrentMap<K, V> createAclCache() {
+      Cache<K, V> cache = Caffeine.newBuilder().maximumSize(10).build();
+      return cache.asMap();
    }
 
    public void checkPermission(AuthorizationPermission perm) {

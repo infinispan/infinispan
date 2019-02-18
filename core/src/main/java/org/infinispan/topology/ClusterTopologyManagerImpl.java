@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -27,10 +28,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
@@ -78,6 +77,8 @@ import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
 
+import net.jcip.annotations.GuardedBy;
+
 /**
  * The {@code ClusterTopologyManager} implementation.
  *
@@ -111,7 +112,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private final Lock clusterManagerLock = new ReentrantLock();
    private final Condition clusterStateChanged = clusterManagerLock.newCondition();
 
-   private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = new ConcurrentHashMap<>();
    private ClusterViewListener viewListener;
    private LimitedExecutor viewHandlingExecutor;
 

@@ -4,10 +4,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.LocalModeAddress;
 
@@ -22,8 +22,8 @@ final class LocalModeShardDistribution implements ShardDistribution {
    private final Set<String> shardsIdentifiers;
    private final Address localAddress = LocalModeAddress.INSTANCE;
 
-   private final Map<Integer, String> shardPerSegmentMap = CollectionFactory.makeConcurrentMap();
-   private final Map<String, Set<Integer>> segmentPerShardMap = CollectionFactory.makeConcurrentMap();
+   private final Map<Integer, String> shardPerSegmentMap = new ConcurrentHashMap<>();
+   private final Map<String, Set<Integer>> segmentPerShardMap = new ConcurrentHashMap<>();
 
    LocalModeShardDistribution(int numSegments, int numShards) {
       this.segments = IntStream.range(0, numSegments).boxed().collect(Collectors.toSet());

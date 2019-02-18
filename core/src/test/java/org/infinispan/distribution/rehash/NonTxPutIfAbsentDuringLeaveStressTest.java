@@ -3,13 +3,13 @@ package org.infinispan.distribution.rehash;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -55,7 +55,7 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
 
    @Test(groups = "unstable", description = "ISPN-7682")
    public void testNodeLeavingDuringPutIfAbsent() throws Exception {
-      ConcurrentMap<String, String> insertedValues = CollectionFactory.makeConcurrentMap();
+      ConcurrentMap<String, String> insertedValues = new ConcurrentHashMap<>();
       AtomicBoolean stop = new AtomicBoolean(false);
 
       Future[] futures = new Future[NUM_WRITERS];

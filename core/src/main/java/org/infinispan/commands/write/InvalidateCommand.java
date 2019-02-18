@@ -7,12 +7,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -109,7 +109,7 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
 
    @Override
    public Collection<?> getAffectedKeys() {
-      return CollectionFactory.makeSet(keys);
+      return new HashSet<>(Arrays.asList(keys));
    }
 
    @Override

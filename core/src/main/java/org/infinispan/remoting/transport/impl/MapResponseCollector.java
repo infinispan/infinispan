@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -57,7 +56,7 @@ public abstract class MapResponseCollector extends ValidResponseCollector<Map<Ad
    }
 
    private MapResponseCollector(int expectedSize) {
-      this.map = new HashMap<>(CollectionFactory.computeCapacity(expectedSize));
+      this.map = new HashMap<>(expectedSize);
    }
 
    @Override

@@ -1,13 +1,14 @@
 package org.infinispan.transaction.xa;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -43,7 +44,7 @@ public class XaTransactionTable extends TransactionTable {
       this.onePhaseTotalOrder = Configurations.isOnePhaseTotalOrderCommit(configuration);
 
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
-      xid2LocalTx = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
+      xid2LocalTx = new ConcurrentHashMap<>(concurrencyLevel, 0.75f, concurrencyLevel);
    }
 
    @Override

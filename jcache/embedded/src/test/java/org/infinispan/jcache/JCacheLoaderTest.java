@@ -19,7 +19,8 @@ import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CompletionListenerFuture;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.jcache.embedded.JCacheManager;
@@ -32,7 +33,6 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
 /**
@@ -65,7 +65,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
             assertEquals(0, cacheLoader.getLoadCount());
 
             CompletionListenerFuture future = new CompletionListenerFuture();
-            cache.loadAll(CollectionFactory.makeSet(1, 2), true, future);
+            cache.loadAll(Util.asSet(1, 2), true, future);
 
             futureGet(future);
 

@@ -5,6 +5,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -36,13 +38,13 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollectionAdapter;
 import org.infinispan.commons.util.CloseableIteratorSetAdapter;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.commons.util.Util;
@@ -94,7 +96,6 @@ import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.DataContainerRemoveIterator;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -228,8 +229,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public Map<K, V> getAll(Set<?> keys) {
-      Map<K, V> map = CollectionFactory
-            .makeMap(CollectionFactory.computeCapacity(keys.size()));
+      Map<K, V> map = new HashMap<>(keys.size());
       for (Object k : keys) {
          Objects.requireNonNull(k, NULL_KEYS_NOT_SUPPORTED);
          InternalCacheEntry<K, V> entry = getDataContainer().get(k);
@@ -272,8 +272,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
-      Map<K, CacheEntry<K, V>> map = CollectionFactory
-            .makeMap(CollectionFactory.computeCapacity(keys.size()));
+      Map<K, CacheEntry<K, V>> map = new HashMap<>(keys.size());
       for (Object key : keys) {
          Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
          InternalCacheEntry<K, V> entry = getDataContainer().get(key);
@@ -1832,7 +1831,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public boolean retainAll(Collection<?> c) {
-         Set<Object> retained = CollectionFactory.makeSet(c.size());
+         Set<Object> retained = new HashSet<>(c.size());
          retained.addAll(c);
          boolean changed = false;
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {
@@ -1851,7 +1850,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          } else if (removeSize == 1) {
             return remove(c.iterator().next());
          }
-         Set<Object> removed = CollectionFactory.makeSet(removeSize);
+         Set<Object> removed = new HashSet<>(removeSize);
          removed.addAll(c);
          boolean changed = false;
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {
@@ -1922,7 +1921,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public boolean retainAll(Collection<?> c) {
-         Set<Object> retained = CollectionFactory.makeSet(c.size());
+         Set<Object> retained = new HashSet<>(c.size());
          retained.addAll(c);
          boolean changed = false;
          for (InternalCacheEntry<K, V> entry : getDataContainer()) {

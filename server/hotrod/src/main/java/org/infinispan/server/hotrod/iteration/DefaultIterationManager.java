@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,7 +25,6 @@ import org.infinispan.CacheStream;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
@@ -94,9 +94,9 @@ public class DefaultIterationManager implements IterationManager {
 
    private static final Log log = LogFactory.getLog(DefaultIterationManager.class, Log.class);
 
-   private final Map<String, IterationState> iterationStateMap = CollectionFactory.makeConcurrentMap();
+   private final Map<String, IterationState> iterationStateMap = new ConcurrentHashMap<>();
    private final Map<String, KeyValueFilterConverterFactory> filterConverterFactoryMap =
-         CollectionFactory.makeConcurrentMap();
+         new ConcurrentHashMap<>();
 
    @Override
    public String start(Cache cache, BitSet segments, String filterConverterFactory, List<byte[]> filterConverterParams, MediaType requestValueType, int batch, boolean metadata) {

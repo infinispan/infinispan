@@ -5,10 +5,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -48,7 +48,7 @@ public class RemoteClusterListener {
    private final boolean sync;
 
    private final ConcurrentMap<GlobalTransaction, Queue<CacheEntryEvent>> transactionChanges =
-         CollectionFactory.makeConcurrentMap();
+         new ConcurrentHashMap<>();
 
    public RemoteClusterListener(UUID id, Address origin, CacheNotifier cacheNotifier,
                                 CacheManagerNotifier cacheManagerNotifier, ClusterEventManager eventManager, boolean sync) {

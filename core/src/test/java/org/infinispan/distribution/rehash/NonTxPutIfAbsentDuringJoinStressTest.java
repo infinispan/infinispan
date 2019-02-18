@@ -4,12 +4,12 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -32,7 +32,7 @@ public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersT
    private static final int NUM_WRITERS = 4;
    private static final int NUM_ORIGINATORS = 2;
    private static final int NUM_KEYS = 100;
-   private final ConcurrentMap<String, String> insertedValues = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, String> insertedValues = new ConcurrentHashMap<>();
    private volatile boolean stop = false;
 
    @Override

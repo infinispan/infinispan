@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.cache.annotation.CacheDefaults;
@@ -27,7 +28,6 @@ import javax.inject.Inject;
 import javax.interceptor.InvocationContext;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -45,7 +45,7 @@ public class CacheKeyInvocationContextFactory {
    @Inject
    public CacheKeyInvocationContextFactory(BeanManager beanManager) {
       this.beanManager = beanManager;
-      this.methodMetaDataCache = CollectionFactory.makeConcurrentMap();
+      this.methodMetaDataCache = new ConcurrentHashMap<>();
    }
 
    // for proxy.

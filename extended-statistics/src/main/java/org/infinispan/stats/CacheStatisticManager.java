@@ -2,16 +2,16 @@ package org.infinispan.stats;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.logging.Log;
 import org.infinispan.stats.percentiles.PercentileStatistic;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -31,12 +31,12 @@ public final class CacheStatisticManager {
     * collects statistic for a remote transaction
     */
    private final ConcurrentMap<GlobalTransaction, RemoteTransactionStatistics> remoteTransactionStatistics =
-         CollectionFactory.makeConcurrentMap();
+         new ConcurrentHashMap<>();
    /**
     * collects statistic for a local transaction
     */
    private final ConcurrentMap<GlobalTransaction, LocalTransactionStatistics> localTransactionStatistics =
-         CollectionFactory.makeConcurrentMap();
+         new ConcurrentHashMap<>();
    /**
     * collects statistic for a cache
     */

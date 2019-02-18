@@ -3,9 +3,9 @@ package org.infinispan.query.backend;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
@@ -36,7 +36,7 @@ public final class KeyTransformationHandler {
 
    private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
 
-   private final Map<Class<?>, Class<? extends Transformer>> transformerTypes = CollectionFactory.makeConcurrentMap();
+   private final Map<Class<?>, Class<? extends Transformer>> transformerTypes = new ConcurrentHashMap<>();
 
    private final ClassLoader classLoader;
 

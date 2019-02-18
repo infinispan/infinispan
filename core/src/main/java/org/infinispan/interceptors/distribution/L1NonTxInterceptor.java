@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.EntryFactory;
@@ -98,7 +98,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
     * overridden methods.  Failure to wait for the update to occur could cause a L1 data inconsistency as the
     * invalidation may not invalidate the new value.
     */
-   private final ConcurrentMap<Object, L1WriteSynchronizer> concurrentWrites = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<Object, L1WriteSynchronizer> concurrentWrites = new ConcurrentHashMap<>();
 
    @Start
    public void start() {

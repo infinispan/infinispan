@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.LongConsumer;
 
@@ -40,7 +41,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
@@ -90,7 +90,7 @@ public class BackupSenderImpl implements BackupSender {
    @Inject private KeyPartitioner keyPartitioner;
 
    private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<>();
-   private final ConcurrentMap<String, OfflineStatus> offlineStatus = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, OfflineStatus> offlineStatus = new ConcurrentHashMap<>();
    private final String localSiteName;
    private String cacheName;
 

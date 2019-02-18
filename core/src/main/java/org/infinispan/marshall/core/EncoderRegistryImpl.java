@@ -3,12 +3,12 @@ package org.infinispan.marshall.core;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -24,10 +24,10 @@ public class EncoderRegistryImpl implements EncoderRegistry {
 
    private static final Log log = LogFactory.getLog(EncoderRegistryImpl.class);
 
-   private final Map<Class<? extends Encoder>, Encoder> encoderMap = CollectionFactory.makeConcurrentMap(10);
-   private final Map<Class<? extends Wrapper>, Wrapper> wrapperMap = CollectionFactory.makeConcurrentMap(2);
-   private final Map<Short, Class<? extends Encoder>> encoderById = CollectionFactory.makeConcurrentMap(10);
-   private final Map<Byte, Class<? extends Wrapper>> wrapperById = CollectionFactory.makeConcurrentMap(2);
+   private final Map<Class<? extends Encoder>, Encoder> encoderMap = new ConcurrentHashMap<>(10);
+   private final Map<Class<? extends Wrapper>, Wrapper> wrapperMap = new ConcurrentHashMap<>(2);
+   private final Map<Short, Class<? extends Encoder>> encoderById = new ConcurrentHashMap<>(10);
+   private final Map<Byte, Class<? extends Wrapper>> wrapperById = new ConcurrentHashMap<>(2);
    private final Set<Transcoder> transcoders = new ConcurrentHashSet<>();
 
    @Override
