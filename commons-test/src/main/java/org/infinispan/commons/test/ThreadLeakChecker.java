@@ -44,6 +44,8 @@ public class ThreadLeakChecker {
                       "|globalEventExecutor" +
                       // Narayana
                       "|Transaction Reaper" +
+                      // H2
+                      "|Generate Seed" +
                       // atomic-factory Container
                       "|AtomicFactory-global" +
                       // JDK HTTP client
