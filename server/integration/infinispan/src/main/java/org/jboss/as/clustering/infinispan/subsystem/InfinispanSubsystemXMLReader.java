@@ -998,7 +998,6 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
 
         // update the cache configuration address with the cache name
         PathAddress cacheConfigurationAddress = addNameToAddress(cacheConfiguration, containerAddress, ModelKeys.LOCAL_CACHE) ;
-        initPersistenceConfiguration(cacheConfigurationAddress, additionalConfigurationOperations);
 
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
@@ -1075,7 +1074,6 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         // update the cache address with the cache name
         PathAddress cacheConfigurationAddress = addNameToAddress(cacheConfiguration, containerAddress, ModelKeys.DISTRIBUTED_CACHE);
         Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
-        initPersistenceConfiguration(cacheConfigurationAddress, additionalConfigurationOperations);
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
@@ -1117,7 +1115,6 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         // update the cache address with the cache name
         PathAddress cacheConfigurationAddress = addNameToAddress(cacheConfiguration, containerAddress, ModelKeys.REPLICATED_CACHE);
         Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
-        initPersistenceConfiguration(cacheConfigurationAddress, additionalConfigurationOperations);
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
@@ -1155,7 +1152,6 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         // update the cache address with the cache name
         PathAddress cacheConfigurationAddress = addNameToAddress(cacheConfiguration, containerAddress, ModelKeys.INVALIDATION_CACHE);
         Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
-        initPersistenceConfiguration(cacheConfigurationAddress, additionalConfigurationOperations);
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
@@ -1248,7 +1244,12 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             default: {
                 // Default to parse store elements, if store not recognised then XMLStreamException will be thrown
                 PathAddress persistenceAddr = PathAddress.pathAddress(cache.get(OP_ADDR)).append(PersistenceConfigurationResource.PATH);
-                parseStoreElements(reader, element, cache, operations.get(persistenceAddr), operations, namespace.since(10, 0));
+                ModelNode persistence = operations.get(persistenceAddr);
+                if (persistence == null) {
+                    persistence = Util.createAddOperation(persistenceAddr);
+                    operations.put(persistenceAddr, persistence);
+                }
+                parseStoreElements(reader, element, cache, persistence, operations, namespace.since(10, 0));
             }
         }
     }
@@ -1313,6 +1314,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
     private void parsePersistenceElement(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
         PathAddress persistenceAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(PersistenceConfigurationResource.PATH);
         ModelNode persistence = Util.createAddOperation(persistenceAddress);
+        operations.put(persistenceAddress, persistence);
 
         for (int i = 0; i < reader.getAttributeCount(); i++) {
             String value = reader.getAttributeValue(i);
@@ -1339,14 +1341,6 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             Element element = Element.forName(reader.getLocalName());
             parseStoreElements(reader, element, cache, persistence, operations, false);
         }
-        operations.put(persistenceAddress, persistence);
-    }
-
-    private void initPersistenceConfiguration(PathAddress cacheConfigurationAddress, Map<PathAddress, ModelNode> operations) {
-        // Always create the PERSISTENCE/persistence element. Necessary to avoid ResourceNotFoundException on store creation
-        PathAddress persistenceAddress = cacheConfigurationAddress.append(PersistenceConfigurationResource.PATH);
-        ModelNode persistence = Util.createAddOperation(persistenceAddress);
-        operations.put(persistenceAddress, persistence);
     }
 
     private void parseStateTransfer(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
