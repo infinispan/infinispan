@@ -27,7 +27,7 @@ public class AvoidStaleNearCacheReadsTest extends SingleHotRodServerTest {
 
    @AfterMethod(alwaysRun=true)
    @Override
-   protected void clearContent() {
+   protected void clearContent() throws Exception {
       super.clearContent();
       remoteCacheManager.getCache().clear(); // Clear the near cache too
    }
