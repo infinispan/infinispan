@@ -1,0 +1,13 @@
+<subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
+    <cache-container name="local" default-cache="default">
+        <local-cache name="default"/>
+        <local-cache-configuration name="jdbc-cache-config">
+            <persistence>
+                <string-keyed-jdbc-store name="STRING_KEYED_JDBC_STORE" datasource="java:jboss/datasources/ExampleDS" dialect="H2">
+                    <string-keyed-table prefix="infinispan" create-on-start="true"/>
+                </string-keyed-jdbc-store>
+            </persistence>
+        </local-cache-configuration>
+        <local-cache name="jdbcCache" configuration="jdbc-cache-config"/>
+    </cache-container>
+</subsystem>
