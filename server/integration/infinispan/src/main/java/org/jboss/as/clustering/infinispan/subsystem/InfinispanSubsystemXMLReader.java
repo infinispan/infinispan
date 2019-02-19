@@ -1032,8 +1032,9 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             operations.put(cacheConfigurationAddress, cacheConfiguration);
             operations.putAll(additionalConfigurationOperations);
         } else {
-            if (cacheConfiguration.hasDefined(ModelKeys.CONFIGURATION) && additionalConfigurationOperations.size() == 0) {
-                // Pure instance
+            // If additionalConfigurationOperations only has one operation, then only persistence/PERSISTENCE op exists,
+            // so add as cache with reference to configuration
+            if (cacheConfiguration.hasDefined(ModelKeys.CONFIGURATION) && additionalConfigurationOperations.size() == 1) {
                 addCacheForConfiguration(cacheConfiguration, cacheConfiguration.get(ModelKeys.CONFIGURATION).asString(), containerAddress, cacheType, operations);
             } else {
                 operations.put(cacheConfigurationAddress, cacheConfiguration);
