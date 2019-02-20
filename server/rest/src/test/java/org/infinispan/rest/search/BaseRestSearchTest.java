@@ -131,8 +131,8 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       }
       assertEquals(response.getStatus(), HttpStatus.BAD_REQUEST_400);
       String contentAsString = response.getContentAsString();
-      assertTrue(contentAsString.contains("Message descriptor not found") ||
-            contentAsString.contains("Unknown entity"));
+      assertTrue(contentAsString.contains("Unknown entity name") ||
+            contentAsString.contains("Unknown type name"), contentAsString);
    }
 
    @Test(dataProvider = "HttpMethodProvider")
