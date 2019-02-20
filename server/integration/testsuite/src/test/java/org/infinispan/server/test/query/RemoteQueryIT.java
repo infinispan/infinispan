@@ -69,6 +69,10 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         return server;
     }
 
+    protected String getRestEndpointPort() {
+        return "8080";
+    }
+
     @Test
     public void testAttributeQuery() {
         remoteCache.put(1, createUser1());
@@ -192,7 +196,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
 
         String query = "from sample_bank_account.User where name='Adrian'";
 
-        String searchURI = "http://localhost:8080/rest/" + cacheName + "?action=search&query=" + URLEncoder.encode(query, "UTF-8");
+        String searchURI = "http://localhost:" + getRestEndpointPort() + "/rest/" + cacheName + "?action=search&query=" + URLEncoder.encode(query, "UTF-8");
         HttpGet httpget = new HttpGet(searchURI);
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault();
