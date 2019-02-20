@@ -18,7 +18,7 @@
        </dependency>
        <dependency>
            <groupId>org.infinispan</groupId>
-           <artifactId>infinispan-spring-boot-starter-2.1.1.Final-redhat-00001</artifactId>
+           <artifactId>infinispan-spring-boot-starter</artifactId>
            <version>${version.infinispan.starter}</version>
        </dependency>
     </dependencies>
@@ -29,4 +29,4 @@ Replace:
 
 * `${version.infinispan}` with the appropriate version of {brandname}.
 * `${version.spring.boot}` with the appropriate version of Spring Boot.
-* `${version.infinispan.starter}` with the appropriate version of the {brandname} Starter.
+* `${version.infinispan.starter}` with {sb_starter}.

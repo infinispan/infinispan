@@ -31,9 +31,9 @@ include::../dependencies/sb_bom.adoc[]
 
 ==== Running in Embedded Mode
 
-. Add `{sb_starter_embedded}` to your project's classpath to enable Embedded mode.
+. Add `infinispan-spring-boot-starter-embedded` to your project's classpath to enable Embedded mode.
 +
-This starter operates in Remote Client/Server mode with `{sb_starter_remote}` on the classpath by default.
+This starter operates in Remote Client/Server mode with `infinispan-spring-boot-starter-remote` on the classpath by default.
 +
 . Use the Spring `@Autowired` annotation to include an `EmbeddedCacheManager` bean in your Java configuration classes, as in the following example:
 +
