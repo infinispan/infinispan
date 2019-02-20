@@ -11,32 +11,22 @@ The {brandname} starter provides a set of managed transitive dependencies that i
 The {brandname} Spring Boot starter gives you a convenient way to get started with Spring Boot but is optional. To use {brandname} with Spring Boot you can simply add the dependencies you want.
 ====
 
-==== Setting Up Your Project
+==== Spring Boot Starter Versions
 
-[NOTE]
-====
 {brandname} supports Spring Boot 1.5.x and 2.0. For Spring Boot 1.5.x, use the Spring 4 dependencies. For Spring Boot 2.0, use the Spring 5 dependencies.
-====
+
+* Spring Boot 1.5.x: Replace `${version.infinispan.starter}` with {sb_starter}
+* Spring Boot 2.0: Replace `${version.infinispan.starter}` with {sb2_starter}
+
+==== Setting Up Your Project
 
 To set up your project, add one of the following to your `pom.xml` file:
 
-Spring Boot 1.5.x::
-* Embedded Mode:
-+
+Embedded Mode::
 include::../dependencies/sb_embedded.adoc[]
 
-* Remote Client/Server Mode:
-+
+Remote Client/Server Mode::
 include::../dependencies/sb_remote.adoc[]
-
-Spring Boot 2.0::
-* Embedded Mode:
-+
-include::../dependencies/sb2_embedded.adoc[]
-
-* Remote Client/Server Mode:
-+
-include::../dependencies/sb2_remote.adoc[]
 
 ==== Enforcing {brandname} Versions
 
@@ -44,24 +34,13 @@ This starter uses a high-level API to ensure compatibility between major version
 
 Add `infinispan-bom` to your `pom.xml` file before the starter dependencies, as follows:
 
-Spring Boot 1.5.x::
 include::../dependencies/sb_bom.adoc[]
-
-//-
-Spring Boot 2.0::
-include::../dependencies/sb2_bom.adoc[]
 
 ==== Running in Embedded Mode
 
-. Add one of the following to your project's classpath to enable Embedded mode:
+. Add `infinispan-spring-boot-starter-embedded` to your project's classpath to enable Embedded mode.
 +
-Spring Boot 1.5.x::
-+
-{sb_starter_embedded}
-+
-Spring Boot 2.0::
-+
-{sb2_starter_embedded}
+This starter operates in Remote Client/Server mode with `infinispan-spring-boot-starter-remote` on the classpath by default.
 +
 . Use the Spring `@Autowired` annotation to include an `EmbeddedCacheManager` bean in your Java configuration classes, as in the following example:
 +
