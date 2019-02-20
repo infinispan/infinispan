@@ -76,6 +76,7 @@
                     --add-opens=java.management/javax.management=ALL-UNNAMED
                     --add-exports=java.management/com.sun.jmx.mbeanserver=ALL-UNNAMED
                     --add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED
+                    --add-modules java.se
                 </testjvm.jigsawArgs>
             </properties>
         </profile>
