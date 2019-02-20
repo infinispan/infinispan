@@ -21,36 +21,61 @@ import org.infinispan.persistence.spi.PersistenceException;
  */
 public abstract class AbstractTableManager implements TableManager {
 
+   private static final String DEFAULT_IDENTIFIER_QUOTE_STRING = "\"";
+
    private final Log log;
    protected final ConnectionFactory connectionFactory;
    protected final TableManipulationConfiguration config;
    protected final String timestampIndexExt = "timestamp_index";
    protected final String segmentIndexExt = "segment_index";
 
-   protected String identifierQuoteString = "\"";
-   protected String cacheName;
-   protected DbMetaData metaData;
-   protected TableName tableName;
+   protected final String identifierQuoteString;
+   protected final DbMetaData metaData;
+   protected final TableName tableName;
 
-   protected String insertRowSql;
-   protected String updateRowSql;
-   protected String upsertRowSql;
-   protected String selectRowSql;
-   protected String selectMultipleRowSql;
-   protected String selectIdRowSql;
-   protected String deleteRowSql;
-   protected String loadAllRowsSql;
-   protected String countRowsSql;
-   protected String loadAllNonExpiredRowsSql;
-   protected String deleteAllRows;
-   protected String selectExpiredRowsSql;
-   protected String deleteExpiredRowsSql;
+   // the field order is important because we are reusing some sql
+   private final String insertRowSql;
+   private final String updateRowSql;
+   private final String upsertRowSql;
+   private final String selectRowSql;
+   private final String selectIdRowSql;
+   private final String deleteRowSql;
+   private final String loadAllRowsSql;
+   private final String countRowsSql;
+   private final String loadAllNonExpiredRowsSql;
+   private final String deleteAllRows;
+   private final String selectExpiredRowsSql;
+   private final String deleteExpiredRowsSql;
 
-   AbstractTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, Log log) {
+   AbstractTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName, Log log) {
+      this(connectionFactory, config, metaData, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING, log);
+   }
+
+   AbstractTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName, String identifierQuoteString, Log log) {
+      // cacheName is required
+      if (cacheName == null || cacheName.trim().length() == 0)
+         throw new PersistenceException("cacheName needed in order to create table");
+
       this.connectionFactory = connectionFactory;
       this.config = config;
       this.metaData = metaData;
+      this.tableName = new TableName(identifierQuoteString, config.tableNamePrefix(), cacheName);
+      this.identifierQuoteString = identifierQuoteString;
       this.log = log;
+
+      // init row sql
+      this.insertRowSql = initInsertRowSql();
+      this.updateRowSql = initUpdateRowSql();
+      this.upsertRowSql = initUpsertRowSql();
+      this.selectRowSql = initSelectRowSql();
+      this.selectIdRowSql = initSelectIdRowSql();
+      this.deleteRowSql = initDeleteRowSql();
+      this.loadAllRowsSql = initLoadAllRowsSql();
+      this.countRowsSql = initCountNonExpiredRowsSql();
+      this.loadAllNonExpiredRowsSql = initLoadNonExpiredAllRowsSql();
+      this.deleteAllRows = initDeleteAllRowsSql();
+      this.selectExpiredRowsSql = initSelectExpiredBucketsSql();
+      this.deleteExpiredRowsSql = initSelectOnlyExpiredRowsSql();
    }
 
    @Override
@@ -85,14 +110,8 @@ public abstract class AbstractTableManager implements TableManager {
       }
    }
 
-   @Override
-   public void setCacheName(String cacheName) {
-      this.cacheName = cacheName;
-      tableName = null;
-   }
-
    public boolean tableExists(Connection connection) throws PersistenceException {
-      return tableExists(connection, getTableName());
+      return tableExists(connection, tableName);
    }
 
    public boolean tableExists(Connection connection, TableName tableName) throws PersistenceException {
@@ -115,17 +134,14 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    public void createTable(Connection conn) throws PersistenceException {
-      if (cacheName == null || cacheName.trim().length() == 0)
-         throw new PersistenceException("cacheName needed in order to create table");
-
       String ddl;
       if (metaData.isSegmentedDisabled()) {
          ddl = String.format("CREATE TABLE %1$s (%2$s %3$s NOT NULL, %4$s %5$s NOT NULL, %6$s %7$s NOT NULL, PRIMARY KEY (%2$s))",
-               getTableName(), config.idColumnName(), config.idColumnType(), config.dataColumnName(),
+               tableName, config.idColumnName(), config.idColumnType(), config.dataColumnName(),
                config.dataColumnType(), config.timestampColumnName(), config.timestampColumnType());
       } else {
          ddl = String.format("CREATE TABLE %1$s (%2$s %3$s NOT NULL, %4$s %5$s NOT NULL, %6$s %7$s NOT NULL, %8$s %9$s NOT NULL, PRIMARY KEY (%2$s))",
-               getTableName(), config.idColumnName(), config.idColumnType(), config.dataColumnName(),
+               tableName, config.idColumnName(), config.idColumnType(), config.dataColumnName(),
                config.dataColumnType(), config.timestampColumnName(), config.timestampColumnType(),
                config.segmentColumnName(), config.segmentColumnType());
       }
@@ -141,7 +157,7 @@ public abstract class AbstractTableManager implements TableManager {
 
       boolean indexExists = indexExists(getIndexName(false, indexExt), conn);
       if (!indexExists) {
-         String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(true, indexExt), getTableName(), columnName);
+         String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(true, indexExt), tableName, columnName);
          if (log.isTraceEnabled()) {
             log.tracef("Adding index with following DDL: '%s'.", ddl);
          }
@@ -152,9 +168,8 @@ public abstract class AbstractTableManager implements TableManager {
    protected boolean indexExists(String indexName, Connection conn) throws PersistenceException {
       ResultSet rs = null;
       try {
-         TableName table = getTableName();
          DatabaseMetaData meta = conn.getMetaData();
-         rs = meta.getIndexInfo(null, table.getSchema(), table.getName(), false, false);
+         rs = meta.getIndexInfo(null, tableName.getSchema(), tableName.getName(), false, false);
 
          while (rs.next()) {
             if (indexName.equalsIgnoreCase(rs.getString("INDEX_NAME"))) {
@@ -186,10 +201,10 @@ public abstract class AbstractTableManager implements TableManager {
       dropIndex(conn, timestampIndexExt);
       dropIndex(conn, segmentIndexExt);
 
-      String clearTable = "DELETE FROM " + getTableName();
+      String clearTable = "DELETE FROM " + tableName;
       executeUpdateSql(conn, clearTable);
 
-      String dropTableDdl = "DROP TABLE " + getTableName();
+      String dropTableDdl = "DROP TABLE " + tableName;
       if (log.isTraceEnabled()) {
          log.tracef("Dropping table with following DDL '%s'", dropTableDdl);
       }
@@ -207,7 +222,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String getDropTimestampSql(String indexName) {
-      return String.format("DROP INDEX %s ON %s", getIndexName(true, indexName), getTableName());
+      return String.format("DROP INDEX %s ON %s", getIndexName(true, indexName), tableName);
    }
 
    public int getFetchSize() {
@@ -228,95 +243,76 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    public TableName getTableName() {
-      if (tableName == null) {
-         tableName = new TableName(identifierQuoteString, config.tableNamePrefix(), cacheName);
-      }
       return tableName;
    }
 
    public String getIndexName(boolean withIdentifier, String indexExt) {
-      TableName table = getTableName();
-      String tableName = table.toString().replace(identifierQuoteString, "");
-      String indexName = tableName + "_" + indexExt;
+      String plainTableName = tableName.toString().replace(identifierQuoteString, "");
+      String indexName = plainTableName + "_" + indexExt;
       if (withIdentifier) {
          return identifierQuoteString + indexName + identifierQuoteString;
       }
       return indexName;
    }
 
+   protected String initInsertRowSql() {
+      if (metaData.isSegmentedDisabled()) {
+         return String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", tableName,
+               config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+      } else {
+         return String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", tableName,
+               config.dataColumnName(), config.timestampColumnName(), config.idColumnName(), config.segmentColumnName());
+      }
+   }
+
    @Override
    public String getInsertRowSql() {
-      if (insertRowSql == null) {
-         if (metaData.isSegmentedDisabled()) {
-            insertRowSql = String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", getTableName(),
-                  config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
-         } else {
-            insertRowSql = String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", getTableName(),
-                  config.dataColumnName(), config.timestampColumnName(), config.idColumnName(), config.segmentColumnName());
-         }
-      }
       return insertRowSql;
+   }
+
+   protected String initUpdateRowSql() {
+      return String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = ?", tableName,
+            config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
    }
 
    @Override
    public String getUpdateRowSql() {
-      if (updateRowSql == null) {
-         updateRowSql = String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = ?", getTableName(),
-               config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
-      }
       return updateRowSql;
+   }
+
+   protected String initSelectRowSql() {
+      return String.format("SELECT %s, %s FROM %s WHERE %s = ?",
+            config.idColumnName(), config.dataColumnName(), tableName, config.idColumnName());
    }
 
    @Override
    public String getSelectRowSql() {
-      if (selectRowSql == null) {
-         selectRowSql = String.format("SELECT %s, %s FROM %s WHERE %s = ?",
-                                      config.idColumnName(), config.dataColumnName(), getTableName(), config.idColumnName());
-      }
       return selectRowSql;
    }
 
-   protected String getSelectMultipleRowSql(int numberOfParams, String selectCriteria) {
-      if (numberOfParams < 1)
-         return null;
-
-      if (numberOfParams == 1)
-         return getSelectRowSql();
-
-      StringBuilder sb = new StringBuilder(getSelectRowSql());
-      for (int i = 0; i < numberOfParams - 1; i++) {
-         sb.append(" OR ");
-         sb.append(selectCriteria);
-      }
-      return sb.toString();
-   }
-
-   @Override
-   public String getSelectMultipleRowSql(int numberOfParams) {
-      return getSelectMultipleRowSql(numberOfParams, config.idColumnName() + " = ?");
+   protected String initSelectIdRowSql() {
+      return String.format("SELECT %s FROM %s WHERE %s = ?", config.idColumnName(), tableName, config.idColumnName());
    }
 
    @Override
    public String getSelectIdRowSql() {
-      if (selectIdRowSql == null) {
-         selectIdRowSql = String.format("SELECT %s FROM %s WHERE %s = ?", config.idColumnName(), getTableName(), config.idColumnName());
-      }
       return selectIdRowSql;
+   }
+
+   protected String initCountNonExpiredRowsSql() {
+      return "SELECT COUNT(*) FROM " + tableName +
+            " WHERE " + config.timestampColumnName() + " < 0 OR " + config.timestampColumnName() + " > ?";
    }
 
    @Override
    public String getCountNonExpiredRowsSql() {
-      if (countRowsSql == null) {
-         countRowsSql = "SELECT COUNT(*) FROM " + getTableName() +
-         " WHERE " + config.timestampColumnName() + " < 0 OR " + config.timestampColumnName() + " > ?";
-      }
       return countRowsSql;
    }
 
    @Override
    public String getCountNonExpiredRowsSqlForSegments(int numSegments) {
       StringBuilder stringBuilder = new StringBuilder("SELECT COUNT(*) FROM ");
-      stringBuilder.append(getTableName());
+      stringBuilder.append(tableName);
       // Note the timestamp or is surrounded with parenthesis
       stringBuilder.append(" WHERE (");
       stringBuilder.append(config.timestampColumnName());
@@ -334,18 +330,19 @@ public abstract class AbstractTableManager implements TableManager {
       return stringBuilder.toString();
    }
 
+   protected String initDeleteRowSql() {
+      return String.format("DELETE FROM %s WHERE %s = ?", tableName, config.idColumnName());
+   }
+
    @Override
    public String getDeleteRowSql() {
-      if (deleteRowSql == null) {
-         deleteRowSql = String.format("DELETE FROM %s WHERE %s = ?", getTableName(), config.idColumnName());
-      }
       return deleteRowSql;
    }
 
    @Override
    public String getDeleteRowsSqlForSegments(int numSegments) {
       StringBuilder stringBuilder = new StringBuilder("DELETE FROM ");
-      stringBuilder.append(getTableName());
+      stringBuilder.append(tableName);
       // Note the timestamp or is surrounded with parenthesis
       stringBuilder.append(" WHERE ");
       stringBuilder.append(config.segmentColumnName());
@@ -359,13 +356,14 @@ public abstract class AbstractTableManager implements TableManager {
       return stringBuilder.toString();
    }
 
+   protected String initLoadNonExpiredAllRowsSql() {
+      return String.format("SELECT %1$s, %2$s, %3$s FROM %4$s WHERE %3$s > ? OR %3$s < 0",
+            config.dataColumnName(), config.idColumnName(),
+            config.timestampColumnName(), tableName);
+   }
+
    @Override
    public String getLoadNonExpiredAllRowsSql() {
-      if (loadAllNonExpiredRowsSql == null) {
-         loadAllNonExpiredRowsSql = String.format("SELECT %1$s, %2$s, %3$s FROM %4$s WHERE %3$s > ? OR %3$s < 0",
-                                                  config.dataColumnName(), config.idColumnName(),
-                                                  config.timestampColumnName(), getTableName());
-      }
       return loadAllNonExpiredRowsSql;
    }
 
@@ -376,7 +374,7 @@ public abstract class AbstractTableManager implements TableManager {
       stringBuilder.append(", ");
       stringBuilder.append(config.idColumnName());
       stringBuilder.append(" FROM ");
-      stringBuilder.append(getTableName());
+      stringBuilder.append(tableName);
       // Note the timestamp or is surrounded with parenthesis
       stringBuilder.append(" WHERE (");
       stringBuilder.append(config.timestampColumnName());
@@ -394,59 +392,58 @@ public abstract class AbstractTableManager implements TableManager {
       return stringBuilder.toString();
    }
 
+   protected String initLoadAllRowsSql() {
+      return String.format("SELECT %s, %s FROM %s", config.dataColumnName(),
+            config.idColumnName(), tableName);
+   }
+
    @Override
    public String getLoadAllRowsSql() {
-      if (loadAllRowsSql == null) {
-         loadAllRowsSql = String.format("SELECT %s, %s FROM %s", config.dataColumnName(),
-                                        config.idColumnName(), getTableName());
-      }
       return loadAllRowsSql;
+   }
+
+   protected String initDeleteAllRowsSql() {
+      return "DELETE FROM " + tableName;
    }
 
    @Override
    public String getDeleteAllRowsSql() {
-      if (deleteAllRows == null) {
-         deleteAllRows = "DELETE FROM " + getTableName();
-      }
       return deleteAllRows;
    }
 
-   @Override
-   public String getSelectExpiredBucketsSql() {
-      if (selectExpiredRowsSql == null) {
-         selectExpiredRowsSql = String.format("%s WHERE %s < ?", getLoadAllRowsSql(), config.timestampColumnName());
-      }
-      return selectExpiredRowsSql;
+   protected String initSelectExpiredBucketsSql() {
+      return String.format("%s WHERE %s < ?", loadAllRowsSql, config.timestampColumnName());
+   }
+
+   protected String initSelectOnlyExpiredRowsSql() {
+      return String.format("%1$s WHERE %2$s < ? AND %2$s > 0", getLoadAllRowsSql(), config.timestampColumnName());
    }
 
    @Override
    public String getSelectOnlyExpiredRowsSql() {
-      if (deleteExpiredRowsSql == null) {
-         deleteExpiredRowsSql = String.format("%1$s WHERE %2$s < ? AND %2$s > 0", getLoadAllRowsSql(), config.timestampColumnName());
-      }
       return deleteExpiredRowsSql;
+   }
+
+   protected String initUpsertRowSql() {
+      if (metaData.isSegmentedDisabled()) {
+         return String.format("MERGE INTO %1$s " +
+                     "USING (VALUES (?, ?, ?)) AS tmp (%2$s, %3$s, %4$s) " +
+                     "ON (%2$s = tmp.%2$s) " +
+                     "WHEN MATCHED THEN UPDATE SET %3$s = tmp.%3$s, %4$s = tmp.%4$s " +
+                     "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
+               tableName, config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+      } else {
+         return String.format("MERGE INTO %1$s " +
+                     "USING (VALUES (?, ?, ?, ?)) AS tmp (%2$s, %3$s, %4$s, %5$s) " +
+                     "ON (%2$s = tmp.%2$s) " +
+                     "WHEN MATCHED THEN UPDATE SET %3$s = tmp.%3$s, %4$s = tmp.%4$s, %5$s = tmp.%5$s " +
+                     "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, tmp.%5$s)",
+               tableName, config.dataColumnName(), config.timestampColumnName(), config.idColumnName(), config.segmentColumnName());
+      }
    }
 
    @Override
    public String getUpsertRowSql() {
-      if (upsertRowSql == null) {
-         if (metaData.isSegmentedDisabled()) {
-            upsertRowSql = String.format("MERGE INTO %1$s " +
-                        "USING (VALUES (?, ?, ?)) AS tmp (%2$s, %3$s, %4$s) " +
-                        "ON (%2$s = tmp.%2$s) " +
-                        "WHEN MATCHED THEN UPDATE SET %3$s = tmp.%3$s, %4$s = tmp.%4$s " +
-                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
-                  getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
-         } else {
-            upsertRowSql = String.format("MERGE INTO %1$s " +
-                        "USING (VALUES (?, ?, ?, ?)) AS tmp (%2$s, %3$s, %4$s, %5$s) " +
-                        "ON (%2$s = tmp.%2$s) " +
-                        "WHEN MATCHED THEN UPDATE SET %3$s = tmp.%3$s, %4$s = tmp.%4$s, %5$s = tmp.%5$s " +
-                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, tmp.%5$s)",
-                  getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName(), config.segmentColumnName());
-         }
-
-      }
       return upsertRowSql;
    }
 

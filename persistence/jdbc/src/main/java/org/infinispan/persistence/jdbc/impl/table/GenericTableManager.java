@@ -12,7 +12,7 @@ class GenericTableManager extends AbstractTableManager {
 
    private static final Log LOG = LogFactory.getLog(GenericTableManager.class, Log.class);
 
-   GenericTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData) {
-      super(connectionFactory, config, metaData, LOG);
+   GenericTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
+      super(connectionFactory, config, metaData, cacheName, LOG);
    }
 }

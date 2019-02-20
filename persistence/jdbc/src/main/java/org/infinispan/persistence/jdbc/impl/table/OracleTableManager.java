@@ -26,8 +26,8 @@ class OracleTableManager extends AbstractTableManager {
    private static final int MAX_INDEX_IDENTIFIER_SIZE = 30;
    private static final String INDEX_PREFIX = "IDX";
 
-   OracleTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData) {
-      super(connectionFactory, config, metaData, LOG);
+   OracleTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
+      super(connectionFactory, config, metaData, cacheName, LOG);
    }
 
    @Override
@@ -53,7 +53,7 @@ class OracleTableManager extends AbstractTableManager {
       ResultSet rs = null;
       try {
          DatabaseMetaData meta = conn.getMetaData();
-         rs = meta.getIndexInfo(null, null, getTableName().toString(), false, false);
+         rs = meta.getIndexInfo(null, null, tableName.toString(), false, false);
          while (rs.next()) {
             String index = rs.getString("INDEX_NAME");
             if (indexName.equalsIgnoreCase(index)) {
@@ -75,8 +75,8 @@ class OracleTableManager extends AbstractTableManager {
          indexExt = INDEX_PREFIX;
       }
       int maxNameSize = MAX_INDEX_IDENTIFIER_SIZE - indexExt.length() - 1;
-      String tableName = getTableName().toString().replace(identifierQuoteString, "");
-      String truncatedName = tableName.length() > maxNameSize ? tableName.substring(0, maxNameSize) : tableName;
+      String plainTableName = tableName.toString().replace(identifierQuoteString, "");
+      String truncatedName = plainTableName.length() > maxNameSize ? plainTableName.substring(0, maxNameSize) : plainTableName;
       String indexName = indexExt + "_" + truncatedName;
       if (withIdentifier) {
          return identifierQuoteString + indexName + identifierQuoteString;
@@ -89,47 +89,38 @@ class OracleTableManager extends AbstractTableManager {
    }
 
    @Override
-   public String getInsertRowSql() {
-      if (insertRowSql == null) {
-         if (metaData.isSegmentedDisabled()) {
-            insertRowSql = String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", getTableName(),
-                  config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
-         } else {
-            insertRowSql = String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", getTableName(),
-                  config.idColumnName(), config.timestampColumnName(), config.dataColumnName(), config.segmentColumnName());
-         }
+   protected String initInsertRowSql() {
+      if (metaData.isSegmentedDisabled()) {
+         return String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", tableName,
+               config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
+      } else {
+         return String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", tableName,
+               config.idColumnName(), config.timestampColumnName(), config.dataColumnName(), config.segmentColumnName());
       }
-      return insertRowSql;
    }
 
    @Override
-   public String getUpdateRowSql() {
-      if (updateRowSql == null) {
-         updateRowSql = String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = ?", getTableName(),
-               config.timestampColumnName(), config.dataColumnName(), config.idColumnName());
-      }
-      return updateRowSql;
+   protected String initUpdateRowSql() {
+      return String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = ?", tableName,
+            config.timestampColumnName(), config.dataColumnName(), config.idColumnName());
    }
 
    @Override
-   public String getUpsertRowSql() {
-      if (upsertRowSql == null) {
-         if (metaData.isSegmentedDisabled()) {
-            upsertRowSql = String.format("MERGE INTO %1$s t " +
-                        "USING (SELECT ? %2$s, ? %3$s, ? %4$s from dual) tmp ON (t.%2$s = tmp.%2$s) " +
-                        "WHEN MATCHED THEN UPDATE SET t.%3$s = tmp.%3$s, t.%4$s = tmp.%4$s " +
-                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
-                  this.getTableName(), config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
-         } else {
-            upsertRowSql = String.format("MERGE INTO %1$s t " +
-                        "USING (SELECT ? %2$s, ? %3$s, ? %4$s, ? %5$s from dual) tmp ON (t.%2$s = tmp.%2$s) " +
-                        "WHEN MATCHED THEN UPDATE SET t.%3$s = tmp.%3$s, t.%4$s = tmp.%4$s " +
-                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, tmp.%5$s)",
-                  this.getTableName(), config.idColumnName(), config.timestampColumnName(), config.dataColumnName(),
-                  config.segmentColumnName());
-         }
+   public String initUpsertRowSql() {
+      if (metaData.isSegmentedDisabled()) {
+         return String.format("MERGE INTO %1$s t " +
+                     "USING (SELECT ? %2$s, ? %3$s, ? %4$s from dual) tmp ON (t.%2$s = tmp.%2$s) " +
+                     "WHEN MATCHED THEN UPDATE SET t.%3$s = tmp.%3$s, t.%4$s = tmp.%4$s " +
+                     "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
+               tableName, config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
+      } else {
+         return String.format("MERGE INTO %1$s t " +
+                     "USING (SELECT ? %2$s, ? %3$s, ? %4$s, ? %5$s from dual) tmp ON (t.%2$s = tmp.%2$s) " +
+                     "WHEN MATCHED THEN UPDATE SET t.%3$s = tmp.%3$s, t.%4$s = tmp.%4$s " +
+                     "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, tmp.%5$s)",
+               tableName, config.idColumnName(), config.timestampColumnName(), config.dataColumnName(),
+               config.segmentColumnName());
       }
-      return upsertRowSql;
    }
 
    @Override

@@ -135,7 +135,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
 
    private void assertRowCount(int rowCount) {
       ConnectionFactory connectionFactory = store.getConnectionFactory();
-      TableName tableName = store.getTableManager().getTableName();
+      TableName tableName = store.getTableManager(cache.getName()).getTableName();
       int value = UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
       assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
    }

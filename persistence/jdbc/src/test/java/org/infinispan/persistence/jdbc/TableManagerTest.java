@@ -63,8 +63,7 @@ public class TableManagerTest extends AbstractInfinispanTest {
          connectionFactory.start(pooledConfiguration, connectionFactory.getClass().getClassLoader());
          connection = connectionFactory.getConnection();
       }
-      tableManager = TableManagerFactory.getManager(connectionFactory, storeBuilder.create());
-      tableManager.setCacheName("aName");
+      tableManager = TableManagerFactory.getManager(connectionFactory, storeBuilder.create(), "aName");
    }
 
    @AfterClass(alwaysRun = true)
@@ -86,8 +85,7 @@ public class TableManagerTest extends AbstractInfinispanTest {
       connectionFactory.start(config, Thread.currentThread().getContextClassLoader());
 
       // JdbcStringBasedStoreConfiguration defaults to null dialect, so dialect and versions must be guessed
-      TableManager tableManager = TableManagerFactory.getManager(connectionFactory, storeBuilder.create());
-      tableManager.setCacheName("GuessDialect");
+      TableManager tableManager = TableManagerFactory.getManager(connectionFactory, storeBuilder.create(), "GuessDialect");
       tableManager.start();
       UnitTestDatabaseManager.verifyConnectionLeaks(connectionFactory);
       tableManager.stop();
@@ -130,7 +128,7 @@ public class TableManagerTest extends AbstractInfinispanTest {
    }
 
    public void testTableQuoting() throws Exception {
-      tableManager.setCacheName("my.cache");
+      tableManager.dropTable(connection);
       assert !existsTable(connection, tableManager.getTableName());
       tableManager.createTable(connection);
       assert existsTable(connection, tableManager.getTableName());
