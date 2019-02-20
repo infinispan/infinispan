@@ -2,9 +2,11 @@
 ----
 <dependency>
     <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-spring-boot-starter-embedded-1.0.4.Final-redhat-00002</artifactId>
+    <artifactId>infinispan-spring-boot-starter-embedded</artifactId>
     <version>${version.infinispan.starter}</version>
 </dependency>
 ----
 
 Replace `${version.infinispan.starter}` with the appropriate version of the {brandname} Starter.
+
+//-
