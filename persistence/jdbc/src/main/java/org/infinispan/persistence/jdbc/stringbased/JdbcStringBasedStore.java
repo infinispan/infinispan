@@ -182,8 +182,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
 
    void initializeConnectionFactory(ConnectionFactory connectionFactory) throws PersistenceException {
       this.connectionFactory = connectionFactory;
-      tableManager = getTableManager();
-      tableManager.setCacheName(cacheName);
+      tableManager = getTableManager(cacheName);
       tableManager.start();
    }
 
@@ -738,9 +737,9 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       return tableManager.isStringEncodingRequired() ? tableManager.encodeString(keyStr) : keyStr;
    }
 
-   public TableManager getTableManager() {
+   public TableManager getTableManager(String cacheName) {
       if (tableManager == null)
-         tableManager = TableManagerFactory.getManager(connectionFactory, configuration);
+         tableManager = TableManagerFactory.getManager(connectionFactory, configuration, cacheName);
       return tableManager;
    }
 

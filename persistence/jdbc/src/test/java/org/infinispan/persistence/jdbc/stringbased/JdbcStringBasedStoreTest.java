@@ -69,7 +69,9 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
             .dbMajorVersion(1)
             .dbMinorVersion(4);
 
-      storeBuilder.table().createOnStart(false);
+      storeBuilder.table()
+            .createOnStart(false)
+            .tableNamePrefix("mock_table_name");
 
       JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
       stringBasedCacheStore.init(createContext(builder.build()));
@@ -81,7 +83,6 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
       TableManager tableManager = mock(TableManager.class);
 
       tableManager.start();
-      tableManager.setCacheName("otherName");
 
       stringBasedCacheStore.initializeConnectionFactory(connectionFactory);
 

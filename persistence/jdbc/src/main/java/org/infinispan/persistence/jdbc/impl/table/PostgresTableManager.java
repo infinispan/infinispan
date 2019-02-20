@@ -15,8 +15,8 @@ class PostgresTableManager extends AbstractTableManager {
 
    private static final Log LOG = LogFactory.getLog(PostgresTableManager.class, Log.class);
 
-   PostgresTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData) {
-      super(connectionFactory, config, metaData, LOG);
+   PostgresTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
+      super(connectionFactory, config, metaData, cacheName, LOG);
    }
 
    @Override
@@ -26,48 +26,30 @@ class PostgresTableManager extends AbstractTableManager {
    }
 
    @Override
-   public String getUpdateRowSql() {
-      if (updateRowSql == null) {
-         updateRowSql = String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = cast(? as %s)",
-               getTableName(), config.dataColumnName(), config.timestampColumnName(),
-               config.idColumnName(), config.idColumnType());
-      }
-      return updateRowSql;
+   public String initUpdateRowSql() {
+      return String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = cast(? as %s)",
+            tableName, config.dataColumnName(), config.timestampColumnName(),
+            config.idColumnName(), config.idColumnType());
    }
 
    @Override
-   public String getSelectRowSql() {
-      if (selectRowSql == null) {
-         selectRowSql = String.format("SELECT %s, %s FROM %s WHERE %s = cast(? as %s)",
-                                      config.idColumnName(), config.dataColumnName(), getTableName(),
-                                      config.idColumnName(), config.idColumnType());
-      }
-      return selectRowSql;
+   public String initSelectRowSql() {
+      return String.format("SELECT %s, %s FROM %s WHERE %s = cast(? as %s)",
+                                   config.idColumnName(), config.dataColumnName(), tableName,
+                                   config.idColumnName(), config.idColumnType());
    }
 
    @Override
-   public String getSelectMultipleRowSql(int numberOfParams) {
-      String selectCriteria = config.idColumnName() + " = cast(? as " + config.idColumnType() + ")";
-      return getSelectMultipleRowSql(numberOfParams, selectCriteria);
+   public String initSelectIdRowSql() {
+      return String.format("SELECT %s FROM %s WHERE %s = cast(? as %s)",
+                                     config.idColumnName(), tableName, config.idColumnName(),
+                                     config.idColumnType());
    }
 
    @Override
-   public String getSelectIdRowSql() {
-      if (selectIdRowSql == null) {
-         selectIdRowSql = String.format("SELECT %s FROM %s WHERE %s = cast(? as %s)",
-                                        config.idColumnName(), getTableName(), config.idColumnName(),
-                                        config.idColumnType());
-      }
-      return selectIdRowSql;
-   }
-
-   @Override
-   public String getDeleteRowSql() {
-      if (deleteRowSql == null) {
-         deleteRowSql = String.format("DELETE FROM %s WHERE %s = cast(? as %s)",
-                                      getTableName(), config.idColumnName(), config.idColumnType());
-      }
-      return deleteRowSql;
+   public String initDeleteRowSql() {
+      return String.format("DELETE FROM %s WHERE %s = cast(? as %s)",
+                                   tableName, config.idColumnName(), config.idColumnType());
    }
 
    @Override
@@ -78,12 +60,9 @@ class PostgresTableManager extends AbstractTableManager {
    }
 
    @Override
-   public String getUpsertRowSql() {
-      if (upsertRowSql == null) {
-         upsertRowSql = String.format("%1$s ON CONFLICT (%2$s) DO UPDATE SET %3$s = EXCLUDED.%3$s, %4$s = EXCLUDED.%4$s",
+   public String initUpsertRowSql() {
+      return String.format("%1$s ON CONFLICT (%2$s) DO UPDATE SET %3$s = EXCLUDED.%3$s, %4$s = EXCLUDED.%4$s",
                getInsertRowSql(), config.idColumnName(), config.dataColumnName(),
                config.timestampColumnName());
-      }
-      return upsertRowSql;
    }
 }

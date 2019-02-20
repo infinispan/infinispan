@@ -42,7 +42,7 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          JdbcStringBasedStore firstCs = (JdbcStringBasedStore) TestingUtil.getFirstLoader(first);
          JdbcStringBasedStore secondCs = (JdbcStringBasedStore) TestingUtil.getFirstLoader(second);
 
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManager().getIdentifierQuoteString(),
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManager(first.getName()).getIdentifierQuoteString(),
                               "second", "first", "ISPN_STRING_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);

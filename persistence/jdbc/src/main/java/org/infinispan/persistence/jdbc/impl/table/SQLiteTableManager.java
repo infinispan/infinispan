@@ -12,8 +12,8 @@ class SQLiteTableManager extends AbstractTableManager {
 
    private static final Log LOG = LogFactory.getLog(SQLiteTableManager.class, Log.class);
 
-   SQLiteTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData) {
-      super(connectionFactory, config, metaData, LOG);
+   SQLiteTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
+      super(connectionFactory, config, metaData, cacheName, LOG);
    }
 
    @Override
@@ -24,18 +24,15 @@ class SQLiteTableManager extends AbstractTableManager {
    }
 
    @Override
-   public String getUpsertRowSql() {
-      if (upsertRowSql == null) {
-         if (metaData.isSegmentedDisabled()) {
-            upsertRowSql = String.format("INSERT OR REPLACE INTO %s (%s, %s, %s) VALUES (?, ?, ?)",
-                  getTableName(), config.dataColumnName(), config.timestampColumnName(),
-                  config.idColumnName());
-         } else {
-            upsertRowSql = String.format("INSERT OR REPLACE INTO %s (%s, %s, %s, %s) VALUES (?, ?, ?, ?)",
-                  getTableName(), config.dataColumnName(), config.timestampColumnName(),
-                  config.idColumnName(), config.segmentColumnName());
-         }
+   public String initUpsertRowSql() {
+      if (metaData.isSegmentedDisabled()) {
+         return String.format("INSERT OR REPLACE INTO %s (%s, %s, %s) VALUES (?, ?, ?)",
+               tableName, config.dataColumnName(), config.timestampColumnName(),
+               config.idColumnName());
+      } else {
+         return String.format("INSERT OR REPLACE INTO %s (%s, %s, %s, %s) VALUES (?, ?, ?, ?)",
+               tableName, config.dataColumnName(), config.timestampColumnName(),
+               config.idColumnName(), config.segmentColumnName());
       }
-      return upsertRowSql;
    }
 }

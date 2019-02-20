@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.persistence.spi.PersistenceException;
 
 /**
@@ -13,7 +12,6 @@ import org.infinispan.persistence.spi.PersistenceException;
  */
 public interface TableManager {
    int DEFAULT_FETCH_SIZE = 100;
-   int DEFAULT_BATCH_SIZE = 128;
 
    void start() throws PersistenceException;
 
@@ -27,15 +25,7 @@ public interface TableManager {
 
    void dropTable(Connection conn) throws PersistenceException;
 
-   void setCacheName(String cacheName);
-
    int getFetchSize();
-
-   /**
-    * @deprecated Please use {@link AbstractStoreConfiguration#maxBatchSize()} instead.
-    */
-   @Deprecated
-   int getBatchSize();
 
    boolean isUpsertSupported();
 
@@ -50,8 +40,6 @@ public interface TableManager {
    String getUpsertRowSql();
 
    String getSelectRowSql();
-
-   String getSelectMultipleRowSql(int numberOfParams);
 
    String getSelectIdRowSql();
 
@@ -70,8 +58,6 @@ public interface TableManager {
    String getDeleteAllRowsSql();
 
    String getDeleteRowsSqlForSegments(int numSegments);
-
-   String getSelectExpiredBucketsSql();
 
    String getSelectOnlyExpiredRowsSql();
 

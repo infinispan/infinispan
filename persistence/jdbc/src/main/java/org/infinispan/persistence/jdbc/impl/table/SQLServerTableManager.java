@@ -13,33 +13,30 @@ class SQLServerTableManager extends AbstractTableManager {
 
    private static final Log LOG = LogFactory.getLog(MySQLTableManager.class, Log.class);
 
-   SQLServerTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData) {
-      super(connectionFactory, config, metaData, LOG);
+   SQLServerTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
+      super(connectionFactory, config, metaData, cacheName, LOG);
    }
 
    @Override
-   public String getUpsertRowSql() {
-      if (upsertRowSql == null) {
+   public String initUpsertRowSql() {
          // As SQL Server does not handle a merge atomically, we must acquire the table lock here otherwise it's possible
          // for deadlocks to occur.
-         if (metaData.isSegmentedDisabled()) {
-            upsertRowSql = String.format("MERGE %1$s WITH (TABLOCK) " +
-                        "USING (VALUES (?, ?, ?)) AS tmp (%2$s, %3$s, %4$s) " +
-                        "ON (%1$s.%4$s = tmp.%4$s) " +
-                        "WHEN MATCHED THEN UPDATE SET %2$s = tmp.%2$s, %3$s = tmp.%3$s " +
-                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s);",
-                  getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
-         } else {
-            upsertRowSql = String.format("MERGE %1$s WITH (TABLOCK) " +
-                        "USING (VALUES (?, ?, ?, ?)) AS tmp (%2$s, %3$s, %4$s, %5$s) " +
-                        "ON (%1$s.%4$s = tmp.%4$s) " +
-                        "WHEN MATCHED THEN UPDATE SET %2$s = tmp.%2$s, %3$s = tmp.%3$s " +
-                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, %5$s);",
-                  getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName(),
-                  config.segmentColumnName());
-         }
+      if (metaData.isSegmentedDisabled()) {
+         return String.format("MERGE %1$s WITH (TABLOCK) " +
+                     "USING (VALUES (?, ?, ?)) AS tmp (%2$s, %3$s, %4$s) " +
+                     "ON (%1$s.%4$s = tmp.%4$s) " +
+                     "WHEN MATCHED THEN UPDATE SET %2$s = tmp.%2$s, %3$s = tmp.%3$s " +
+                     "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s);",
+               tableName, config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+      } else {
+         return String.format("MERGE %1$s WITH (TABLOCK) " +
+                     "USING (VALUES (?, ?, ?, ?)) AS tmp (%2$s, %3$s, %4$s, %5$s) " +
+                     "ON (%1$s.%4$s = tmp.%4$s) " +
+                     "WHEN MATCHED THEN UPDATE SET %2$s = tmp.%2$s, %3$s = tmp.%3$s " +
+                     "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, %5$s);",
+               tableName, config.dataColumnName(), config.timestampColumnName(), config.idColumnName(),
+               config.segmentColumnName());
       }
-      return upsertRowSql;
    }
 
    @Override

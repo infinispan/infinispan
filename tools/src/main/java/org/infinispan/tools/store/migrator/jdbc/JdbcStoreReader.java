@@ -78,8 +78,7 @@ public class JdbcStoreReader implements StoreIterator {
 
    private TableManager getTableManager(boolean binary) {
       TableManipulationConfiguration tableConfig = binary ? binaryConfig : stringConfig;
-      TableManager tableManager = TableManagerFactory.getManager(metaData, connectionFactory, tableConfig);
-      tableManager.setCacheName(props.cacheName());
+      TableManager tableManager = TableManagerFactory.getManager(metaData, connectionFactory, tableConfig, props.cacheName());
       return tableManager;
    }
 
