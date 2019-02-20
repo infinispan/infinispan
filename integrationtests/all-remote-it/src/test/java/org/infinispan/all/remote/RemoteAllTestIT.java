@@ -3,7 +3,7 @@ package org.infinispan.all.remote;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.junit.Test;
 
-public class RemoteAllTest {
+public class RemoteAllTestIT {
 
    @Test
    public void testRemoteAll() {
