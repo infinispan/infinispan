@@ -68,8 +68,7 @@ class NettyTransportConnectionStats {
 
    private boolean needDistributedCalculation() {
       if (cacheManager != null) {
-         org.infinispan.remoting.transport.Transport transport = cacheManager.getTransport();
-         return transport != null && transport.getMembers().size() > 1;
+         return cacheManager.getMembers() != null && cacheManager.getMembers().size() > 1;
       }
       return false;
    }

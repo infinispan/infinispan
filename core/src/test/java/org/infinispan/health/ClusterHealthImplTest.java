@@ -156,7 +156,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
    public void testGetNumberOfNodesWithNullTransport() throws Exception {
       ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager);
 
-      assertEquals(1, clusterHealth.getNumberOfNodes());
+      assertEquals(0, clusterHealth.getNumberOfNodes());
    }
 
    public void testGetNodeNamesWithNullTransport() throws Exception {
