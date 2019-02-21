@@ -70,7 +70,7 @@ public abstract class AbstractCacheConfigurationService implements Service<Confi
 
         EmbeddedCacheManager container = this.getCacheContainer();
         CacheMode mode = this.config.clustering().cacheMode();
-        if (mode.isClustered() && (container.getTransport() == null)) {
+        if (mode.isClustered() && (container.getCacheManagerConfiguration().transport().transport() == null)) {
             throw InfinispanMessages.MESSAGES.transportRequired(mode, this.name, container.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName());
         }
 
