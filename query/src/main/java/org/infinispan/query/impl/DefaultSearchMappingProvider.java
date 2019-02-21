@@ -1,5 +1,9 @@
 package org.infinispan.query.impl;
 
+import java.util.Map;
+
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.KeywordTokenizer;
 import org.apache.lucene.analysis.core.KeywordTokenizerFactory;
 import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
 import org.apache.lucene.analysis.core.LowerCaseTokenizerFactory;
@@ -9,6 +13,8 @@ import org.apache.lucene.analysis.ngram.NGramFilterFactory;
 import org.apache.lucene.analysis.snowball.SnowballPorterFilterFactory;
 import org.apache.lucene.analysis.standard.StandardFilterFactory;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
+import org.apache.lucene.analysis.util.TokenizerFactory;
+import org.apache.lucene.util.AttributeFactory;
 import org.hibernate.search.cfg.SearchMapping;
 import org.infinispan.Cache;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
@@ -41,6 +47,32 @@ public class DefaultSearchMappingProvider implements ProgrammaticSearchMappingPr
               .filter(StopFilterFactory.class)
               .filter(NGramFilterFactory.class)
                 .param("minGramSize", "3")
-                .param("maxGramSize", "3");
+                .param("maxGramSize", "3")
+            .analyzerDef("filename", ConfigurableBufferSizeKeywordTokenizerFactory.class)
+               .tokenizerParam("bufferSize", "2048")
+               .filter(StandardFilterFactory.class)
+               .filter(LowerCaseFilterFactory.class);
+   }
+
+   /**
+    * Similar to {@link KeywordTokenizerFactory} but with a configurable buffer size. This tokenizer factory accepts an
+    * integer param named <code>"bufferSize"</code> that defaults to <code>256</code>.
+    */
+   public static final class ConfigurableBufferSizeKeywordTokenizerFactory extends TokenizerFactory {
+
+      private final int bufferSize;
+
+      public ConfigurableBufferSizeKeywordTokenizerFactory(Map<String, String> args) {
+         super(args);
+         bufferSize = getInt(args, "bufferSize", KeywordTokenizer.DEFAULT_BUFFER_SIZE);
+         if (!args.isEmpty()) {
+            throw new IllegalArgumentException("Unknown parameters: " + args);
+         }
+      }
+
+      @Override
+      public Tokenizer create(AttributeFactory factory) {
+         return new KeywordTokenizer(factory, bufferSize);
+      }
    }
 }
