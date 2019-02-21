@@ -49,14 +49,15 @@ public class ClusterHealthImpl implements ClusterHealth {
 
    @Override
    public int getNumberOfNodes() {
-      return Optional.ofNullable(cacheManager.getTransport()).map(t -> t.getMembers().size()).orElse(1);
+      return Optional.ofNullable(cacheManager.getMembers()).orElse(Collections.emptyList())
+                     .size();
    }
 
    @Override
    public List<String> getNodeNames() {
-      return Optional.ofNullable(cacheManager.getTransport()).map(t -> t.getMembers()).orElse(Collections.emptyList())
-            .stream()
-            .map(member -> member.toString())
-            .collect(Collectors.toList());
+      return Optional.ofNullable(cacheManager.getMembers()).orElse(Collections.emptyList())
+                     .stream()
+                     .map(Object::toString)
+                     .collect(Collectors.toList());
    }
 }

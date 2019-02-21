@@ -148,6 +148,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private final DefaultCacheManagerAdmin cacheManagerAdmin;
    private final ClassWhiteList classWhiteList = new ClassWhiteList();
 
+   // Keep the transport around so async view listeners can still see the address after stop
+   private volatile Transport transport;
+
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults. See
     * {@link org.infinispan.configuration.cache.Configuration} and {@link org.infinispan.configuration.global.GlobalConfiguration}
@@ -562,7 +565,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     */
    @Override
    public Address getAddress() {
-      // Don't throw an exception if the manager is stopped
       Transport t = getTransport();
       return t == null ? null : t.getAddress();
    }
@@ -1021,16 +1023,18 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public Transport getTransport() {
-      // Do not start the transport if the manager hasn't been started yet
-      if (status == ComponentStatus.INSTANTIATED)
-         return null;
-
-      try {
-         return globalComponentRegistry.getComponent(Transport.class);
-      } catch (IllegalLifecycleStateException e) {
-         // Hack to avoid exceptions in getAddress() and toString() during/after shutdown
-         return null;
+      if (transport == null) {
+         lifecycleLock.lock();
+         try {
+            // Do not start the transport if the manager hasn't been started yet or we are already stopping
+            if (transport == null && (status == ComponentStatus.RUNNING || status == ComponentStatus.INITIALIZING)) {
+               transport = globalComponentRegistry.getComponent(Transport.class);
+            }
+         } finally {
+            lifecycleLock.unlock();
+         }
       }
+      return transport;
    }
 
    @Override
