@@ -61,7 +61,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
          log.debugf("%s already has a cache %s with configuration %s", cacheManager.getAddress(), name, configuration);
       }
       // Ensure the cache is started
-      cacheManager.getCache(name);
+      SecurityActions.getCache(cacheManager, name);
    }
 
 

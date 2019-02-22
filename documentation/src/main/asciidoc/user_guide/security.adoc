@@ -97,18 +97,18 @@ There are two levels of configuration: global and per-cache. The global configur
         .authorization()
            .principalRoleMapper(new IdentityRoleMapper())
            .role("admin")
-              .permission(CachePermission.ALL)
+              .permission(AuthorizationPermission.ALL)
            .role("supervisor")
-              .permission(CachePermission.EXEC)
-              .permission(CachePermission.READ)
-              .permission(CachePermission.WRITE)
+              .permission(AuthorizationPermission.EXEC)
+              .permission(AuthorizationPermission.READ)
+              .permission(AuthorizationPermission.WRITE)
            .role("reader")
-              .permission(CachePermission.READ);
+              .permission(AuthorizationPermission.READ);
   ConfigurationBuilder config = new ConfigurationBuilder();
   config
      .security()
-        .enable()
         .authorization()
+           .enable()
            .role("admin")
            .role("supervisor")
            .role("reader");
