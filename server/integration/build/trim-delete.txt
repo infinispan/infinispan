@@ -5,7 +5,6 @@ bin/jboss-cli.bat
 bin/jboss-cli-logging.properties
 bin/jboss-cli.ps1
 bin/jboss-cli.sh
-bin/jboss-cli.xml
 bin/run.*
 bin/wsconsume.*
 bin/wsprovide.*
