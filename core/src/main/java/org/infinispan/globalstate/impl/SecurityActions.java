@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.DefineConfigurationAction;
+import org.infinispan.security.actions.GetCacheAction;
 
 /**
  * SecurityActions for the org.infinispan.globalstate.impl package.
@@ -28,6 +29,15 @@ final class SecurityActions {
 
    static void defineConfiguration(final EmbeddedCacheManager cacheManager, final String cacheName, final Configuration configurationOverride) {
       DefineConfigurationAction action = new DefineConfigurationAction(cacheManager, cacheName, configurationOverride);
+      if (System.getSecurityManager() != null) {
+         AccessController.doPrivileged(action);
+      } else {
+         Security.doPrivileged(action);
+      }
+   }
+
+   static void getCache(final EmbeddedCacheManager cacheManager, final String cacheName) {
+      GetCacheAction action = new GetCacheAction(cacheManager, cacheName);
       if (System.getSecurityManager() != null) {
          AccessController.doPrivileged(action);
       } else {

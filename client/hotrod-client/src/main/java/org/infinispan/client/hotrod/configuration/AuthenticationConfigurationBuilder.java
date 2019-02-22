@@ -217,9 +217,6 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
          if (callbackHandler != null && username != null) {
             throw log.callbackHandlerAndUsernameMutuallyExclusive();
          }
-         if (saslMechanism == null) {
-            throw log.invalidSaslMechanism(saslMechanism);
-         }
       }
    }
 

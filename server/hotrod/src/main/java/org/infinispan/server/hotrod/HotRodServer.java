@@ -580,7 +580,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       if (topologyChangeListener != null) {
          SecurityActions.removeListener(addressCache, topologyChangeListener);
       }
-      if (Configurations.isClustered(cacheManager.getCacheManagerConfiguration())) {
+      if (cacheManager != null && Configurations.isClustered(cacheManager.getCacheManagerConfiguration())) {
          InternalCacheRegistry internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
          if (internalCacheRegistry != null)
             internalCacheRegistry.unregisterInternalCache(configuration.topologyCacheName());
