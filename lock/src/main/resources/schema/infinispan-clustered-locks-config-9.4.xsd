@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0"
-           targetNamespace="urn:infinispan:config:clustered-locks:10.0"
-           xmlns:tns="urn:infinispan:config:clustered-locks:10.0"
+           targetNamespace="urn:infinispan:config:clustered-locks:9.4"
+           xmlns:tns="urn:infinispan:config:clustered-locks:9.4"
            xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
     <xs:element name="clustered-locks" type="tns:clustered-locks"/>
@@ -23,7 +23,7 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="reliability" type="tns:reliability" default="AVAILABLE">
+        <xs:attribute name="reliability" type="tns:reliability" default="CONSISTENT">
             <xs:annotation>
                 <xs:documentation>
                     Sets the reliability mode for the partitions when the cluster splits.

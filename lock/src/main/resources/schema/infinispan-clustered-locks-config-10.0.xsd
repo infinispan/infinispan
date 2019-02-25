@@ -23,7 +23,7 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="reliability" type="tns:reliability" default="AVAILABLE">
+        <xs:attribute name="reliability" type="tns:reliability" default="CONSISTENT">
             <xs:annotation>
                 <xs:documentation>
                     Sets the reliability mode for the partitions when the cluster splits.
