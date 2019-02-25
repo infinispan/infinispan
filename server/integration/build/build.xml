@@ -1,15 +1,17 @@
-<project name="dist-dir" basedir="." default="clean">
-    <!--
-       Allow to trim both thin and fat servers
-    -->
+<project name="dist-dir" basedir="." default="default">
 
-    <target name="trim-server" depends="trim-all"/>
+    <target name="rename-init">
+        <move file="${output.dir}/bin/init.d/jboss-eap.conf" tofile="${output.dir}/bin/init.d/${infinispan.brand.prefix}-server.conf"/>
+        <move file="${output.dir}/bin/init.d/jboss-eap-rhel.sh" tofile="${output.dir}/bin/init.d/${infinispan.brand.prefix}-server-rhel.sh"/>
+    </target>
 
-    <target name="trim-all">
+    <target name="trim-server">
         <delete includeemptydirs="true" verbose="true">
             <fileset dir="${output.dir}" includesfile="trim-delete.txt" excludesfile="trim-keep.txt"/>
         </delete>
     </target>
+
+    <target name="post-process-distribution" depends="trim-server, rename-init"/>
 
     <target name="default">
         <echo message="This script needs to be executed by the maven ant plugin"/>
