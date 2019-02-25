@@ -85,7 +85,7 @@
                                 <property name="output.dir"
                                           value="${project.build.directory}/server-distribution-thin/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                                 <ant antfile="build.xml" inheritRefs="true">
-                                    <target name="trim-server" />
+                                    <target name="post-process-distribution" />
                                 </ant>
                             </target>
                         </configuration>
@@ -157,7 +157,7 @@
                                         <property name="output.dir"
                                                   value="${project.build.directory}/server-distribution-fat/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                                         <ant antfile="build.xml" inheritRefs="true">
-                                            <target name="trim-server"/>
+                                            <target name="post-process-distribution"/>
                                         </ant>
                                     </target>
                                 </configuration>
