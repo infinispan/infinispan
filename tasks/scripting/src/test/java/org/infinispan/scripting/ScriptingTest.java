@@ -201,7 +201,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*Cannot find an appropriate script engine for script.*")
    public void testNonSupportedScript() {
-      scriptingManager.addScript("Test.java", "//mode=local,language=java\n" +
+      scriptingManager.addScript("Test.java", "//mode=local,language=nondescript\n" +
             "public class Test {\n" +
             "      public static void main(String[] args) {\n" +
             "         System.out.println(cache.get(\"test.js\"));\n" +
