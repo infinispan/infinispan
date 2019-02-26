@@ -107,11 +107,11 @@ There are two levels of configuration: global and per-cache. The global configur
   ConfigurationBuilder config = new ConfigurationBuilder();
   config
      .security()
-        .enable()
         .authorization()
            .role("admin")
            .role("supervisor")
-           .role("reader");
+           .role("reader")
+           .enable();
 ----
 
 .Declarative
