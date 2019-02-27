@@ -96,14 +96,14 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    }
 
    @Override
-   @BeforeClass
+   @BeforeClass(alwaysRun = true)
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
       if (cleanupAfterTest()) initMaps();
    }
 
    @Override
-   @BeforeMethod
+   @BeforeMethod(alwaysRun = true)
    public void createBeforeMethod() throws Throwable {
       super.createBeforeMethod();
       if (cleanupAfterMethod()) initMaps();
