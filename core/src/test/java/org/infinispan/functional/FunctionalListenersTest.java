@@ -1,12 +1,12 @@
 package org.infinispan.functional;
 
+import static org.infinispan.functional.FunctionalTestUtils.rw;
+import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
+import static org.infinispan.functional.FunctionalTestUtils.wo;
 import static org.infinispan.marshall.core.MarshallableFunctions.removeConsumer;
 import static org.infinispan.marshall.core.MarshallableFunctions.removeReturnPrevOrNull;
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueConsumer;
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueReturnPrevOrNull;
-import static org.infinispan.functional.FunctionalTestUtils.rw;
-import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
-import static org.infinispan.functional.FunctionalTestUtils.wo;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -27,6 +27,8 @@ import org.infinispan.functional.Listeners.ReadWriteListeners.ReadWriteListener;
 import org.infinispan.functional.Listeners.WriteListeners.WriteListener;
 import org.infinispan.functional.TestFunctionalInterfaces.SetConstantOnReadWrite;
 import org.infinispan.functional.TestFunctionalInterfaces.SetConstantOnWriteOnly;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -35,11 +37,24 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "functional.FunctionalListenersTest")
 public class FunctionalListenersTest extends AbstractFunctionalTest {
 
+   @Override
+   @BeforeClass
+   public void createBeforeClass() throws Throwable {
+      super.createBeforeClass();
+   }
 
+   @Override
+   @BeforeMethod
+   public void createBeforeMethod() throws Throwable {
+      super.createBeforeMethod();
+   }
+
+   @Test
    public void testLocalLambdaReadWriteListeners() throws Exception {
       doLambdaReadWriteListeners(supplyIntKey(), wo(fmapL1), rw(fmapL2), true);
    }
 
+   @Test
    public void testReplLambdaReadWriteListeners() throws Exception {
       doLambdaReadWriteListeners(supplyKeyForCache(0, REPL), wo(fmapR1), rw(fmapR2), true);
       doLambdaReadWriteListeners(supplyKeyForCache(1, REPL), wo(fmapR1), rw(fmapR2), true);
@@ -105,6 +120,7 @@ public class FunctionalListenersTest extends AbstractFunctionalTest {
       awaitNoEvent(rwMap.eval(key5, removeReturnPrevOrNull()), latches.get(2));
    }
 
+   @Test
    public void testLocalLambdaWriteListeners() throws Exception {
       doLambdaWriteListeners(supplyIntKey(), wo(fmapL1), true);
    }
