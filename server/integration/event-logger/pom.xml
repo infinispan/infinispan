@@ -77,6 +77,10 @@
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <useManifestOnlyJar>false</useManifestOnlyJar>
                     <parallel>none</parallel>
+                   <dependenciesToScan>
+                      <!-- TestNGSuiteChecksTest -->
+                      <dependency>org.infinispan:infinispan-commons-test</dependency>
+                   </dependenciesToScan>
                 </configuration>
             </plugin>
         </plugins>

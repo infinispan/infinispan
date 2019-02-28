@@ -54,7 +54,15 @@ public class ThreadLeakChecker {
                       "|Hibernate Search sync consumer thread for index" +
                       // Reader thread sometimes stays alive for 20s after stop (JGRP-2328)
                       "|NioConnection.Reader" +
+                      // java.lang.ProcessHandleImpl
+                      "|process reaper" +
+                      // Arquillian uses the static default XNIO worker
+                      "|XNIO-1 " +
+                      // org.apache.mina.transport.socket.nio.NioDatagramAcceptor.DEFAULT_RECYCLER
+                      "|ExpiringMapExpirer" +
                       ").*");
+   private static final String ARQUILLIAN_CONSOLE_CONSUMER =
+      "org.jboss.as.arquillian.container.managed.ManagedDeployableContainer$ConsoleConsumer";
 
    private static Logger log = Logger.getLogger(ThreadLeakChecker.class);
    private static volatile long lastUpdate = 0;
@@ -63,11 +71,24 @@ public class ThreadLeakChecker {
    private static final Map<Thread, LeakInfo> runningThreads = new ConcurrentHashMap<>();
    private static final Lock lock = new ReentrantLock();
 
+   /**
+    * A test class has started, and we should consider it as a potential owner for new threads.
+    */
    public static void testStarted(String testName) {
-      runningTests.add(testName);
+      lock.lock();
+      try {
+         runningTests.add(testName);
+      } finally {
+         lock.unlock();
+      }
+   }
 
-      // Save the system threads in order to ignore them
-      if (lastUpdate == 0) {
+   /**
+    * Save the system threads in order to ignore them
+    */
+   public static void saveInitialThreads() {
+      lock.lock();
+      try {
          Set<Thread> currentThreads = getThreadsSnapshot();
          for (Thread thread : currentThreads) {
             LeakInfo leakInfo = new LeakInfo(thread, Collections.emptyList());
@@ -75,43 +96,74 @@ public class ThreadLeakChecker {
             runningThreads.putIfAbsent(thread, leakInfo);
          }
          lastUpdate = System.nanoTime();
+      } finally {
+         lock.unlock();
       }
    }
 
+   /**
+    * A test class has finished, and we should not consider it a potential owner for new threads any more.
+    */
    public static void testFinished(String testName) {
-      finishedTests.add(testName);
-
       lock.lock();
       try {
-         // Available owners are tests that were running at any point since the last check
-         List<String> availableOwners = new ArrayList<>(runningTests);
-         List<String> testsJustFinished = drain(finishedTests);
+         finishedTests.add(testName);
 
          // Only update threads once per second, unless this is the last test
          // or the test suite runs on a single thread
-         boolean noTestsRunning = runningTests.size() == testsJustFinished.size();
-         if (noTestsRunning && (System.nanoTime() - lastUpdate < TimeUnit.SECONDS.toNanos(1)))
+         boolean noRunningTest = runningTests.size() <= finishedTests.size();
+         if (!noRunningTest && (System.nanoTime() - lastUpdate < TimeUnit.SECONDS.toNanos(1)))
             return;
 
          lastUpdate = System.nanoTime();
-         // Only update running tests once for each running threads update
-         runningTests.removeAll(testsJustFinished);
-         // Update the thread ownership information
-         Set<Thread> currentThreads = getThreadsSnapshot();
-         runningThreads.keySet().retainAll(currentThreads);
-         for (Thread thread : currentThreads) {
-            runningThreads.putIfAbsent(thread, new LeakInfo(thread, availableOwners));
-         }
 
-         if (runningTests.isEmpty()) {
-            performCheck();
+         // Available owners are tests that were running at any point since the last check
+         List<String> availableOwners = new ArrayList<>(runningTests);
+         runningTests.removeAll(finishedTests);
+         finishedTests.clear();
+         updateThreadOwnership(availableOwners);
+      } finally {
+         lock.unlock();
+      }
+   }
+
+   public static void updateThreadOwnership(List<String> availableOwners) {
+      // Update the thread ownership information
+      Set<Thread> currentThreads = getThreadsSnapshot();
+      runningThreads.keySet().retainAll(currentThreads);
+      for (Thread thread : currentThreads) {
+         runningThreads.putIfAbsent(thread, new LeakInfo(thread, availableOwners));
+      }
+   }
+
+   /**
+    * Check for leaked threads.
+    *
+    * <p>When running tests in parallel, this method will only perform the leak check if there are no running tests.</p>
+    *
+    * @param testName test that just ended, or {@code null} if running after all the tests (e.g. from {@code
+    * @AfterSuite} in TestNG)
+    */
+   public static void checkForLeaks(String testName) {
+      lock.lock();
+      try {
+         if (testName == null) {
+            assert runningTests.isEmpty() : "Tests are still running: " + runningTests;
+         } else if (runningTests.size() > 1) {
+            return;
+         } else if (runningTests.size() == 1) {
+            assert runningTests.contains(testName) :
+               "Test " + runningTests + " is running, should have been " + testName;
+            testFinished(testName);
          }
+         performCheck();
       } finally {
          lock.unlock();
       }
    }
 
    private static void performCheck() {
+      updateThreadOwnership(Collections.singletonList("UNKNOWN"));
       List<LeakInfo> leaks = computeLeaks();
 
       if (!leaks.isEmpty()) {
@@ -123,17 +175,13 @@ public class ThreadLeakChecker {
             Thread.currentThread().interrupt();
          }
          // Update the thread ownership information
-         Set<Thread> currentThreads = getThreadsSnapshot();
-         runningThreads.keySet().retainAll(currentThreads);
-         for (Thread thread : currentThreads) {
-            runningThreads.putIfAbsent(thread, new LeakInfo(thread, Collections.singletonList("ERROR")));
-         }
+         updateThreadOwnership(Collections.singletonList("UNKNOWN"));
          leaks = computeLeaks();
       }
 
       if (!leaks.isEmpty()) {
          for (LeakInfo leakInfo : leaks) {
-            logLeakedThread(leakInfo.thread);
+            log.warnf("Possible leaked thread:\n%s", prettyPringStacktrace(leakInfo.thread));
             leakInfo.reported = true;
          }
          // Strategies for debugging test suite thread leaks
@@ -160,15 +208,29 @@ public class ThreadLeakChecker {
    private static boolean ignore(LeakInfo leakInfo) {
       // System threads (running before the first test) have no potential owners
       String threadName = leakInfo.thread.getName();
-      return leakInfo.potentialOwnerTests.isEmpty() || IGNORED_THREADS_REGEX.matcher(threadName).matches();
+      if (leakInfo.potentialOwnerTests.isEmpty())
+         return true;
+      if (IGNORED_THREADS_REGEX.matcher(threadName).matches())
+         return true;
+
+      // Special check for Arquillian, because it uses an unnamed thread to read from the container console
+      if (leakInfo.thread.getName().startsWith("Thread-")) {
+         StackTraceElement[] s = leakInfo.thread.getStackTrace();
+         for (StackTraceElement ste : s) {
+            if (ste.getClassName().equals(ARQUILLIAN_CONSOLE_CONSUMER)) {
+               return true;
+            }
+         }
+   }
+         return false;
    }
 
-   private static void logLeakedThread(Thread thread) {
-      StringBuilder sb = new StringBuilder();
+   public static String prettyPringStacktrace(Thread thread) {
       // "management I/O-2" #55 prio=5 os_prio=0 tid=0x00007fe6a8134000 nid=0x7f9d runnable
       // [0x00007fe64e4db000]
       //    java.lang.Thread.State:RUNNABLE
-      sb.append(String.format("Possible leaked thread:\n\"%s\" %sprio=%d tid=0x%x nid=NA %s\n", thread.getName(),
+      StringBuilder sb = new StringBuilder();
+      sb.append(String.format("\"%s\" %sprio=%d tid=0x%x nid=NA %s\n", thread.getName(),
                               thread.isDaemon() ? "daemon " : "", thread.getPriority(), thread.getId(),
                               thread.getState().toString().toLowerCase()));
       sb.append("   java.lang.Thread.State: ").append(thread.getState()).append('\n');
@@ -176,7 +238,7 @@ public class ThreadLeakChecker {
       for (StackTraceElement ste : s) {
          sb.append("\t").append(ste).append('\n');
       }
-      log.warn(sb);
+      return sb.toString();
    }
 
    private static <T> List<T> drain(BlockingQueue<T> blockingQueue) {

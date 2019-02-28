@@ -19,6 +19,7 @@ import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableName;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterClass;
@@ -32,7 +33,7 @@ import org.testng.annotations.Test;
  * @author Ryan Emerson
  */
 @Test(groups = "functional", testName = "persistence.jdbc.TableManagerTest")
-public class TableManagerTest {
+public class TableManagerTest extends AbstractInfinispanTest {
    ConnectionFactory connectionFactory;
    Connection connection;
    TableManager tableManager;
@@ -66,9 +67,10 @@ public class TableManagerTest {
       tableManager.setCacheName("aName");
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void closeConnection() throws SQLException {
       connection.close();
+      connectionFactory.stop();
    }
 
    public void testConnectionLeakGuessDialect() throws Exception {

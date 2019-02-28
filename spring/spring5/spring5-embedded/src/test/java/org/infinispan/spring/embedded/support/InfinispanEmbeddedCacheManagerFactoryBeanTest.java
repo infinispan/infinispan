@@ -13,6 +13,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBean;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.transaction.TransactionMode;
 import org.springframework.core.io.ClassPathResource;
@@ -28,7 +29,7 @@ import org.testng.annotations.Test;
  *
  */
 @Test(testName = "spring.embedded.support.InfinispanEmbeddedCacheManagerFactoryBeanTest", groups = "unit")
-public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
+public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractInfinispanTest {
 
    private static final String CACHE_NAME_FROM_CONFIGURATION_FILE = "asyncCache";
 
@@ -164,24 +165,28 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void testAddConfigurations() throws Exception {
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
+      try {
+         GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
 
-      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+         // Now prepare a cache configuration.
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
 
-      // Now prepare a cache configuration.
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+         // Now add them to the object that we are testing.
+         objectUnderTest.addCustomGlobalConfiguration(gcb);
+         objectUnderTest.addCustomCacheConfiguration(builder);
+         objectUnderTest.afterPropertiesSet();
 
-      // Now add them to the object that we are testing.
-      objectUnderTest.addCustomGlobalConfiguration(gcb);
-      objectUnderTest.addCustomCacheConfiguration(builder);
-      objectUnderTest.afterPropertiesSet();
-
-      // Get the cache manager and make assertions.
-      final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject();
-      assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics()
-                         .allowDuplicateDomains(), gcb.build().globalJmxStatistics().allowDuplicateDomains());
-      assertEquals(infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction()
-                         .transactionMode().isTransactional(),
-                   builder.build().transaction().transactionMode().isTransactional());
+         // Get the cache manager and make assertions.
+         final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject();
+         assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics()
+                                                    .allowDuplicateDomains(),
+                      gcb.build().globalJmxStatistics().allowDuplicateDomains());
+         assertEquals(infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction()
+                                                    .transactionMode().isTransactional(),
+                      builder.build().transaction().transactionMode().isTransactional());
+      } finally {
+         objectUnderTest.destroy();
+      }
    }
 }

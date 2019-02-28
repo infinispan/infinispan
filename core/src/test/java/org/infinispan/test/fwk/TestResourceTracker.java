@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -95,7 +94,6 @@ public class TestResourceTracker {
       }
       setThreadTestName(testName);
       Thread.currentThread().setName(getNextTestThreadName());
-      ThreadLeakChecker.testStarted(testName);
    }
 
    /**
@@ -109,7 +107,6 @@ public class TestResourceTracker {
                ", should have been " + testName);
       }
       setThreadTestName(null);
-      ThreadLeakChecker.testFinished(testName);
    }
 
    /**

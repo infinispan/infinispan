@@ -81,6 +81,17 @@
                     </instructions>
                 </configuration>
             </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <dependenciesToScan>
+                  <!-- TestNGSuiteChecksTest -->
+                  <dependency>org.infinispan:infinispan-commons-test</dependency>
+               </dependenciesToScan>
+            </configuration>
+         </plugin>
         </plugins>
     </build>
 

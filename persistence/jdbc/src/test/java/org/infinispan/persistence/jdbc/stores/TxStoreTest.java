@@ -3,12 +3,13 @@ package org.infinispan.persistence.jdbc.stores;
 import static javax.transaction.Status.STATUS_ROLLEDBACK;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,12 +18,12 @@ import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
 import org.infinispan.persistence.jdbc.impl.table.TableName;
+import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -66,10 +67,12 @@ public class TxStoreTest extends AbstractInfinispanTest {
       store = TestingUtil.getFirstTxWriter(cache);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() throws PersistenceException {
-      store.clear();
-      assertRowCount(0);
+      if (store != null) {
+         store.clear();
+         assertRowCount(0);
+      }
       TestingUtil.killCacheManagers(cacheManager);
    }
 
@@ -106,30 +109,28 @@ public class TxStoreTest extends AbstractInfinispanTest {
 
    @Test
    public void testTxRollbackOnStoreException() throws Exception {
-      PersistenceManagerImpl pm = (PersistenceManagerImpl) TestingUtil.extractComponent(cache, PersistenceManager.class);
-      pm = spy(pm);
-      doThrow(new PersistenceException()).when(pm).prepareAllTxStores(any(), any(), any());
-      TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
-      TransactionManager tm = TestingUtil.getTransactionManager(cache);
-      Transaction tx = null;
+      PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
+      PersistenceManager mockPM = mock(PersistenceManager.class);
+      doThrow(new PersistenceException()).when(mockPM).prepareAllTxStores(any(), any(), any());
+      TestingUtil.replaceComponent(cache, PersistenceManager.class, mockPM, true);
+
       try {
+         TransactionManager tm = TestingUtil.getTransactionManager(cache);
          tm.begin();
-         tx = tm.getTransaction();
+         Transaction tx = tm.getTransaction();
          cache.put(KEY1, VAL1);
-         cache.put(KEY2, VAL2); // Throws PersistenceException, forcing the Tx to rollback
-         tm.commit();
-      } catch (RollbackException e) {
-         // Ensure PersistenceException was the cause of the rollback
-         boolean persistenceEx = false;
-         Throwable[] suppressed = e.getSuppressed();
-         for (Throwable ex : suppressed) {
-            persistenceEx = ex.getCause() instanceof PersistenceException;
-            if (persistenceEx) break;
-         }
-         assert persistenceEx;
+         cache.put(KEY2, VAL2);
+         // Throws PersistenceException, forcing the Tx to rollback
+         Throwable throwable = Exceptions.extractException(tm::commit);
+         Exceptions.assertException(RollbackException.class, throwable);
+         Exceptions.assertException(XAException.class, PersistenceException.class, throwable.getSuppressed()[0]);
+         assertEquals(STATUS_ROLLEDBACK, tx.getStatus());
+         assertRowCount(0);
+      } finally {
+         // The mock doesn't have any metadata, so its stop() method won't be invoked
+         pm.stop();
+         store = null;
       }
-      assert tx != null && tx.getStatus() == STATUS_ROLLEDBACK;
-      assertRowCount(0);
    }
 
    private void assertRowCount(int rowCount) {

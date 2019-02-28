@@ -4,6 +4,7 @@ import static org.infinispan.commons.test.RunningTestsRegistry.registerThreadWit
 import static org.infinispan.commons.test.RunningTestsRegistry.unregisterThreadWithTest;
 
 import org.junit.runner.Description;
+import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
@@ -17,6 +18,7 @@ public class JUnitTestListener extends RunListener {
    private ThreadLocal<Boolean> currentTestIsSuccessful = new ThreadLocal<>();
 
    private final TestSuiteProgress progressLogger;
+   private String currentTestName;
 
    public JUnitTestListener() {
       progressLogger = new TestSuiteProgress();
@@ -60,5 +62,20 @@ public class JUnitTestListener extends RunListener {
    private String testName(Description description) {
       String className = description.isSuite() ? "suite" : description.getTestClass().getSimpleName();
       return className + "." + description.getMethodName();
+   }
+
+   @Override
+   public void testRunStarted(Description description) throws Exception {
+      ThreadLeakChecker.saveInitialThreads();
+   }
+
+   @Override
+   public void testRunFinished(Result result) {
+      try {
+         // We don't use @RunWith(Suite.class) so we only have a single suite
+         ThreadLeakChecker.checkForLeaks(null);
+      } catch (Throwable e) {
+         progressLogger.configurationFailed("[ERROR]", e);
+      }
    }
 }

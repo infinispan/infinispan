@@ -6,6 +6,7 @@
  */
 package org.infinispan.test.hibernate.cache.commons.util;
 
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -39,10 +40,12 @@ public final class InfinispanTestingSetup implements TestRule {
             @Override
             public void evaluate() throws Throwable {
                 TestResourceTracker.testStarted( testName );
+                ThreadLeakChecker.testStarted( testName );
                 try {
                     base.evaluate();
                 } finally {
                     TestResourceTracker.testFinished( testName );
+                    ThreadLeakChecker.testFinished( testName );
                 }
             }
         };
