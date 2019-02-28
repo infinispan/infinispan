@@ -11,6 +11,12 @@ import javax.cache.expiry.ExpiryPolicy;
 import org.infinispan.jcache.embedded.LimitExpiryFactory;
 import org.testng.annotations.Test;
 
+/**
+ * Test preventing controlling the flow with NPE in LimitExpiryPolicy methods
+ *
+ * <p>See ISPN-9912</p>
+ */
+@Test(groups = "unit", testName = "jcache.LimitExpiryFactoryTest")
 public class LimitExpiryFactoryTest {
 
     @Test

@@ -238,6 +238,10 @@
                         <include>**/QueryDslConditionsTest.java</include>
                         <include>**/QueryStringTest.java</include>
                      </includes>
+                     <dependenciesToScan>
+                        <!-- TestNGSuiteChecksTest -->
+                        <dependency>org.infinispan:infinispan-commons-test</dependency>
+                     </dependenciesToScan>
                   </configuration>
                </plugin>
             </plugins>

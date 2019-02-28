@@ -1,5 +1,6 @@
 package org.infinispan.test.fwk;
 
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
@@ -43,5 +44,6 @@ public class TestResourceTrackingListener implements ITestListener {
    public void onFinish(ITestContext context) {
       Class testClass = context.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
       TestResourceTracker.testFinished(testClass.getName());
+      ThreadLeakChecker.checkForLeaks(getClass().getName());
    }
 }

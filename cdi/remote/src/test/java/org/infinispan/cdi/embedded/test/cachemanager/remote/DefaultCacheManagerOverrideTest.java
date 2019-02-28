@@ -59,7 +59,7 @@ public class DefaultCacheManagerOverrideTest extends Arquillian {
       return new RemoteCacheManager(clientBuilder.build());
    }
 
-   public void stopRemoteCacheManager(@Disposes RemoteCacheManager remoteCacheManager) {
+   static void stopRemoteCacheManager(@Disposes RemoteCacheManager remoteCacheManager) {
       remoteCacheManager.stop();
    }
 }

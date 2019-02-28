@@ -3,6 +3,7 @@ package org.infinispan.spring.embedded.provider.sample;
 import javax.sql.DataSource;
 
 import org.apache.commons.dbcp.BasicDataSource;
+import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.infinispan.spring.embedded.builders.SpringEmbeddedCacheManagerFactoryBeanBuilder;
 import org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManager;
 import org.infinispan.spring.embedded.provider.sample.service.CachedBookService;
@@ -18,7 +19,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.testng.annotations.Test;
@@ -30,6 +33,8 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "spring.embedded.provider.SampleJavaConfigurationTest", groups = "functional", sequential = true)
 @ContextConfiguration(classes = SampleJavaConfigurationTest.ContextConfiguration.class, loader = AnnotationConfigContextLoader.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@TestExecutionListeners(InfinispanTestExecutionListener.class)
 public class SampleJavaConfigurationTest extends AbstractTestTemplateJsr107 {
 
    @Autowired(required = true)
@@ -71,7 +76,7 @@ public class SampleJavaConfigurationTest extends AbstractTestTemplateJsr107 {
          return new CachedBookServiceImpl();
       }
 
-      @Bean
+      @Bean(destroyMethod = "stop")
       public SpringEmbeddedCacheManager cacheManager() throws Exception {
          return SpringEmbeddedCacheManagerFactoryBeanBuilder
                .defaultBuilder()

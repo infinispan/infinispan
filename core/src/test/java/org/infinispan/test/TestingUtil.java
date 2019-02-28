@@ -1246,7 +1246,7 @@ public class TestingUtil {
     * @param componentType        component type of which to replace
     * @param replacementComponent new instance
     * @param rewire               if true, ComponentRegistry.rewire() is called after replacing.
-    * @param stopBeforeWire       stops the lifecycle component before rewiring (this will cause it to be started
+    * @param stopBeforeWire       stops the new component before wiring (the registry will start it again)
     * @return the original component that was replaced
     */
    public static <T extends Lifecycle> T replaceComponent(Cache<?, ?> cache, Class<T> componentType, T replacementComponent, boolean rewire,

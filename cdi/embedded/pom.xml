@@ -122,6 +122,10 @@
                     <forkCount>1</forkCount>
                     <parallel>none</parallel>
                     <groups>${defaultTestGroup}</groups>
+                   <dependenciesToScan>
+                      <!-- TestNGSuiteChecksTest -->
+                      <dependency>org.infinispan:infinispan-commons-test</dependency>
+                   </dependenciesToScan>
                 </configuration>
             </plugin>
         </plugins>

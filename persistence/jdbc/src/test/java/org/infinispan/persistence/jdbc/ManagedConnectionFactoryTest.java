@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
 /**
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "persistence.jdbc.ManagedConnectionFactoryTest")
+@Test(groups = "functional")
 public abstract class ManagedConnectionFactoryTest extends BaseStoreTest {
 
    private DummyDataSource ds;
@@ -41,7 +41,7 @@ public abstract class ManagedConnectionFactoryTest extends BaseStoreTest {
 
    public abstract String getDatasourceLocation();
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void destroyDatasourceAndUnbind() throws NamingException {
       InitialContext ic = new InitialContext();
       ic.unbind(getDatasourceLocation());

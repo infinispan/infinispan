@@ -8,12 +8,15 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.infinispan.spring.embedded.provider.sample.entity.Book;
 import org.infinispan.spring.embedded.provider.sample.service.CachedTransactionBookService;
 import org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTransactionalTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -25,6 +28,8 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "spring.embedded.provider.SampleTransactionIntegrationTest", groups = "functional", sequential = true)
 @ContextConfiguration(locations = "classpath:/org/infinispan/spring/embedded/provider/sample/SampleTransactionIntegrationTestConfig.xml")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@TestExecutionListeners(InfinispanTestExecutionListener.class)
 public class SampleTransactionIntegrationTest extends AbstractTransactionalTestNGSpringContextTests {
 
    @Qualifier(value = "cachedTransactionBookServiceImpl")

@@ -147,6 +147,9 @@
                     <forkCount>1</forkCount>
                     <parallel>none</parallel>
                     <groups>${defaultTestGroup}</groups>
+                   <dependenciesToScan>
+                      <dependency>org.infinispan:infinispan-commons-test</dependency>
+                   </dependenciesToScan>
                 </configuration>
             </plugin>
         </plugins>
