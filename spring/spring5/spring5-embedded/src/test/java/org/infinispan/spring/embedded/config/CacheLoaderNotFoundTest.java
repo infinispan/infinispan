@@ -2,10 +2,13 @@ package org.infinispan.spring.embedded.config;
 
 import static org.testng.AssertJUnit.fail;
 
+import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -19,6 +22,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "spring.config.embedded.CacheLoaderNotFoundTest")
 @ContextConfiguration
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@TestExecutionListeners(InfinispanTestExecutionListener.class)
 public class CacheLoaderNotFoundTest extends AbstractTestNGSpringContextTests {
 
    @Autowired

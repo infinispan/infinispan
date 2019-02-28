@@ -28,6 +28,7 @@ import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory;
 import org.infinispan.spring.remote.AssertionUtils;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
@@ -41,7 +42,7 @@ import org.testng.annotations.Test;
  *
  */
 @Test(testName = "spring.remote.support.InfinispanRemoteCacheManagerFactoryBeanTest", groups = "unit")
-public class InfinispanRemoteCacheManagerFactoryBeanTest {
+public class InfinispanRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanTest {
 
    private static final Resource HOTROD_CLIENT_PROPERTIES_LOCATION = new ClassPathResource(
          "hotrod-client.properties", InfinispanRemoteCacheManagerFactoryBeanTest.class);
@@ -116,12 +117,14 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       objectUnderTest.afterPropertiesSet();
 
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
+      RemoteCacheManager remoteCacheManager2 = new RemoteCacheManager();
       AssertionUtils.assertPropertiesSubset(
               "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "
                       + "to RemoteCacheManager's default settings since neither property 'configurationProperties' "
                       + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
-              new RemoteCacheManager().getConfiguration().properties(), remoteCacheManager.getConfiguration().properties());
+              remoteCacheManager2.getConfiguration().properties(), remoteCacheManager.getConfiguration().properties());
       objectUnderTest.destroy();
+      remoteCacheManager2.stop();
    }
 
    /**

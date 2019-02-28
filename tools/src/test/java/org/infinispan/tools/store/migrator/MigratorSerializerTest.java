@@ -32,6 +32,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,6 +42,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -48,7 +50,7 @@ import org.testng.annotations.Test;
  * ISPN-7850: A test to ensure that Serializers are loaded correctly and a StackOverflowError does not occur.
  */
 @Test(testName = "org.infinispan.tools.store.migrator.MigratorSerializerTest", groups = "functional")
-public class MigratorSerializerTest {
+public class MigratorSerializerTest extends AbstractInfinispanTest {
 
    private static final String DB_URL = "jdbc:h2:mem:%s;DB_CLOSE_DELAY=-1";
    private static final String USER = "sa";
@@ -72,6 +74,7 @@ public class MigratorSerializerTest {
       EmbeddedCacheManager cacheManager = new DefaultCacheManager(GLOBAL_CONFIG, config);
       Cache<Object, Object> cache = cacheManager.getCache(this.getClass().getName());
       cache.put(1, new TestEntry("1234"));
+      cacheManager.stop();
 
       Properties props = new Properties();
       createDatabaseConfigProperties(props, true);
@@ -81,11 +84,14 @@ public class MigratorSerializerTest {
 
    public void testSerializerLoaded() throws Exception {
       migrator.run();
+      // Ignore all threads, SerializationConfigUtil.getMarshaller() starts a cache manager and doesn't stop it
+      ThreadLeakChecker.ignoreThreadsContaining("");
       Configuration config = createDatabaseConfig(false);
       EmbeddedCacheManager cm = new DefaultCacheManager(GLOBAL_CONFIG, config);
       Cache<Object, Object> cache = cm.getCache(this.getClass().getName());
       assertEquals(1, cache.size());
       assertNotNull(cache.get(1));
+      cm.stop();
    }
 
    private Configuration createDatabaseConfig(boolean source) {

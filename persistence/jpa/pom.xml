@@ -111,6 +111,10 @@
             <configuration>
                <!-- Tests against single database cannot be executed in paralllel -->
                <threadCount>1</threadCount>
+               <dependenciesToScan>
+                  <!-- TestNGSuiteChecksTest -->
+                  <dependency>org.infinispan:infinispan-commons-test</dependency>
+               </dependenciesToScan>
             </configuration>
          </plugin>
          <plugin>

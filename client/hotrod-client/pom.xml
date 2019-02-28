@@ -201,6 +201,10 @@
                <systemPropertyVariables combine.self="append">
                   <infinispan.server.hotrod.workerThreads>3</infinispan.server.hotrod.workerThreads>
                </systemPropertyVariables>
+               <dependenciesToScan>
+                  <!-- TestNGSuiteChecksTest -->
+                  <dependency>org.infinispan:infinispan-commons-test</dependency>
+               </dependenciesToScan>
             </configuration>
          </plugin>
          <plugin>
