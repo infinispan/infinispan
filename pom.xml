@@ -5218,24 +5218,6 @@
          </properties>
       </profile>
       <profile>
-         <id>fail-all-tests</id>
-         <properties>
-            <testNGListener>
-               org.infinispan.commons.test.TestNGTestListener,org.infinispan.test.fwk.FailAllTestNGHook
-            </testNGListener>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-         </properties>
-      </profile>
-      <profile>
-         <id>fail-all-tests-setup</id>
-         <properties>
-            <testNGListener>
-               org.infinispan.commons.test.TestNGTestListener,org.infinispan.test.fwk.FailAllSetupTestNGHook
-            </testNGListener>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-         </properties>
-      </profile>
-      <profile>
          <id>customForkJvmArgs</id>
          <activation>
             <activeByDefault>false</activeByDefault>

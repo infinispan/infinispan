@@ -34,6 +34,9 @@ public class Exceptions {
       }
    }
 
+   /**
+    * Expect an exception of class {@code exceptionClass} or its subclasses.
+    */
    public static void assertExceptionNonStrict(Class<? extends Throwable> exceptionClass, Throwable t) {
       if (t == null) {
          throw new AssertionError("Should have thrown an " + exceptionClass, null);
@@ -175,7 +178,7 @@ public class Exceptions {
       assertException(wrapperExceptionClass, exceptionClass, t.getCause().getCause());
    }
 
-   private static Throwable extractException(ExceptionRunnable runnable) {
+   public static Throwable extractException(ExceptionRunnable runnable) {
       Throwable exception = null;
       try {
          runnable.run();

@@ -141,17 +141,18 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
    public void testJCacheManagerWithWildcardCacheConfigurations() throws Exception {
       URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
       withCachingProvider(provider -> {
-         JCacheManager jCacheManager = new JCacheManager(
+         try (JCacheManager jCacheManager = new JCacheManager(
                uri,
                provider.getClass().getClassLoader(),
                provider,
-               null);
-         Cache<Object, Object> wildcache1 = jCacheManager.createCache("wildcache1", new MutableConfiguration<>());
-         org.infinispan.Cache unwrap = wildcache1.unwrap(org.infinispan.Cache.class);
-         Configuration configuration = unwrap.getCacheConfiguration();
-         assertEquals(10500, configuration.expiration().wakeUpInterval());
-         assertEquals(11, configuration.expiration().lifespan());
-         assertEquals(11, configuration.expiration().maxIdle());
+               null)) {
+            Cache<Object, Object> wildcache1 = jCacheManager.createCache("wildcache1", new MutableConfiguration<>());
+            org.infinispan.Cache unwrap = wildcache1.unwrap(org.infinispan.Cache.class);
+            Configuration configuration = unwrap.getCacheConfiguration();
+            assertEquals(10500, configuration.expiration().wakeUpInterval());
+            assertEquals(11, configuration.expiration().lifespan());
+            assertEquals(11, configuration.expiration().maxIdle());
+         }
       });
    }
 

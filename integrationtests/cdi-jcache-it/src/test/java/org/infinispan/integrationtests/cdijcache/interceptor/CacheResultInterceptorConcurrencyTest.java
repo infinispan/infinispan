@@ -10,15 +10,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.cache.Caching;
+import javax.cache.spi.CachingProvider;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.integrationtests.cdijcache.interceptor.config.Config;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CacheResultService;
+import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /**
@@ -27,6 +32,7 @@ import org.testng.annotations.Test;
  * @author Sebastian Laskawiec
  * @see javax.cache.annotation.CacheResult
  */
+@Listeners(TestResourceTrackingListener.class)
 @Test(groups = "functional", testName = "cdi.test.interceptor.CacheResultInterceptorConcurrencyTest", description = "https://issues.jboss.org/browse/ISPN-4563")
 public class CacheResultInterceptorConcurrencyTest extends Arquillian {
 
@@ -46,7 +52,13 @@ public class CacheResultInterceptorConcurrencyTest extends Arquillian {
    @Inject
    private BeanManager beanManager;
 
-   private static final int NUMBER_OF_THREADS = 100;
+   private static final int NUMBER_OF_THREADS = 10;
+
+   @AfterClass(alwaysRun = true)
+   public void stopDefaultCacheManager() {
+      CachingProvider provider = Caching.getCachingProvider();
+      provider.close(provider.getDefaultURI(), provider.getDefaultClassLoader());
+   }
 
    public void testConcurrentAccessToCache() throws Exception {
 

@@ -35,6 +35,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.test.TestNGLongTestsHook;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
@@ -140,6 +141,7 @@ public abstract class AbstractInfinispanTest {
       killSpawnedThreads();
       nullOutFields();
       TestResourceTracker.testFinished(getTestName());
+      ThreadLeakChecker.checkForLeaks(getClass().getName());
    }
 
    public String getTestName() {

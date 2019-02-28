@@ -70,6 +70,12 @@
                        see https://issues.apache.org/jira/browse/LOG4J2-2052 -->
                   <AsyncLogger.ThreadNameStrategy>UNCACHED</AsyncLogger.ThreadNameStrategy>
                </systemPropertyVariables>
+               <trimStackTrace>false</trimStackTrace>
+               <properties>
+                  <!-- Deactivate the default listeners which may cause OOME. Jenkins uses the surefire generated XML file. -->
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
+               </properties>
             </configuration>
             <dependencies>
                <dependency>

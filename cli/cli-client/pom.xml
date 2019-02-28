@@ -75,6 +75,9 @@
                 <reuseForks>false</reuseForks>
                 <forkCount>1</forkCount>
                 <parallel>none</parallel>
+               <dependenciesToScan>
+                  <dependency>org.infinispan:infinispan-commons-test</dependency>
+               </dependenciesToScan>
             </configuration>
          </plugin>
          <plugin>

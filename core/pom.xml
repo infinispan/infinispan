@@ -306,6 +306,10 @@
                         <exclude>**/DistSyncUnsafe*.java</exclude>
                         <exclude>**/TopologyAwareDist*.java</exclude>
                      </excludes>
+                     <dependenciesToScan>
+                        <!-- TestNGSuiteChecksTest -->
+                        <dependency>org.infinispan:infinispan-commons-test</dependency>
+                     </dependenciesToScan>
                   </configuration>
                </plugin>
             </plugins>

@@ -64,6 +64,10 @@
                   <listener>${testNGListeners}</listener>
                </properties>
                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+               <dependenciesToScan>
+                  <!-- TestNGSuiteChecksTest -->
+                  <dependency>org.infinispan:infinispan-commons-test</dependency>
+               </dependenciesToScan>
             </configuration>
          </plugin>
       </plugins>
