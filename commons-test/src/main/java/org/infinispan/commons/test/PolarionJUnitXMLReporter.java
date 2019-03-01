@@ -409,7 +409,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       String instanceName = tr.getInstanceName();
       String key = instanceName + "." + testName(tr);
       if (m_allTests.containsKey(key)) {
-         if (tr.getMethod().getCurrentInvocationCount() == 1) {
+         if (tr.getMethod().getCurrentInvocationCount() == 1 && tr.isSuccess()) {
             System.err.println("[" + this.getClass().getSimpleName() + "] Test case '" + key
                   + "' already exists in the results");
             tr.setStatus(ITestResult.FAILURE);
