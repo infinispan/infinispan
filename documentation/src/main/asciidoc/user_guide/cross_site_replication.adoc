@@ -244,35 +244,43 @@ lon.sites().addBackup()
 
 ----
 
-==== Taking a site back online
-In order to bring a site back online after being taken offline, one can use the JMX console and invoke the "bringSiteOnline(siteName)" operation on the _XSiteAdmin_ managed bean. At the moment this method would need to be invoked on all the nodes within the site(further releases will overcome this limitation).
+==== Bringing Sites Back Online
+After taking sites offline, invoke the `bringSiteOnline(siteName)` operation via the following JMX MBeans to bring sites back online:
 
-=== State Transfer between sites
+* `XSiteAdmin` enables replication on caches across clusters in a remote site.
+* `GlobalXSiteAdminOperations` enables replication on cache containers across clusters in a remote site.
 
-When a new site is bough back online, it is necessary to re-sync the site with the most recent updates. This feature
-allows state to be transferred from one site to another.
+The `bringSiteOnline(siteName)` operation enables replication only and does not do a full update. For this reason, when you bring sites back online, they only contain new entries. You should push transfer to sites after you bring them online to synchronize the most recent data.
 
-The state transfer is triggered manually by a system administrator (or other responsible entity) via JMX. The operation
-can be found over the +XSiteAdminOperations+ managed bean and it is named +pushState(String)+. The system
-administrator should invoke this operation in the provider site (i.e. the site that will send the state) and
-set the name of the consumer site (i.e. the site that will receive the state). The figure below shows where to find
-the +pushState(String)+ operation using JConsole:
+[TIP]
+====
+Pushing state transfer brings sites back online. You can do that instead of invoking `bringSiteOnline(siteName)`.
+====
+
+=== Pushing State Transfer to Sites
+Transferring state from one site to another synchronizes the data between the two sites.
+
+You should always transfer state from the currently active site, which contains the most up-to-date data, to another site. The site to which you push state transfer can be online or offline. If you push state transfer to an offline site, it brings that site back online.
+
+Caches on sites to which you transfer state from another site do not need to be empty. However, state transfer only overwrites existing keys on receiving sites and does not delete keys.
+
+For example, key +K+ exists on site A and site B. You transfer state from site A to site B. In this case, {brandname} overwrites key +K+. However, key +Y+ exists on site B but not site A. After you transfer state from site A to site B, key +Y+ still exists on site B.
+
+[NOTE]
+====
+You can receive state transfer from only one site at a time. Likewise, if you invoke a state transfer operation on a site, {brandname} ignores subsequent invocations on that site.
+====
+
+Invoke the `pushState(String)` operation via the following JMX MBeans to bring sites back online:
+
+* `XSiteAdminOperations` synchronizes state for caches between the site on which you invoke the operation and a remote site. Brings the site online if it is offline.
+* `GlobalXSiteAdminOperations` synchronizes state for cache containers between the site on which you invoke the operation and a remote site. Brings the site online if it is offline.
+
+When you invoke the `pushState(String)` operation on the site that transfers state, you specify the name of the site that receives the state.
+
+The following figure shows the +pushState(String)+ operation in JConsole:
 
 image::images/xsite-state-transfer.png[align="center", title="Pushing state via JConsole"]
-
-NOTE: The +pushState(siteName)+ operation will automatically bring the new site online. The system administrator does
-not need to bring the site online first.
-
-NOTE: The receiver site can only receive state from a single site.
-
-The consumer site can be in any state (online or offline) in respect to the provider site and the system administrator
-can trigger the push state at any time. The system will ignore multiple invocations if the provider site is already
-pushing state to the consumer site.
-
-It is worth to refer that it is not necessary to consumer site to be in an empty state. But be aware, the existing keys
-can be overwritten but they are never deleted. In other words, if a key +K+ does not exists in the provider site but it
-exists in consumer site, it will not be deleted. In other way, if a key +K+ exists in both sites, it will be overwritten
-in the consumer site.
 
 ==== Handling join/leave nodes
 
