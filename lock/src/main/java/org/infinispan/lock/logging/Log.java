@@ -1,7 +1,10 @@
 package org.infinispan.lock.logging;
 
+import static org.jboss.logging.Logger.Level.INFO;
+
 import org.infinispan.lock.exception.ClusteredLockException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
@@ -37,4 +40,11 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid scope for tag <clustered-lock>. Expected CACHE_CONTAINER but was %s", id = 29007)
    ClusteredLockException invalidScope(String scope);
+
+   @Message(value = "Cannot create clustered locks when clustering is not enabled", id = 29008)
+   ClusteredLockException requireClustered();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Configuration is not clustered, clustered locks are disabled", id = 29009)
+   void configurationNotClustered();
 }
