@@ -136,7 +136,7 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       InternalCacheRegistry internalCacheRegistry = bcr.getComponent(InternalCacheRegistry.class).running();
 
       CounterManagerConfiguration counterManagerConfiguration = extractConfiguration(gcr);
-      if (gcr.getGlobalConfiguration().transport().transport() != null) {
+      if (gcr.getGlobalConfiguration().isClustered()) {
          //only attempts to create the caches if the cache manager is clustered.
          registerCounterCache(internalCacheRegistry, counterManagerConfiguration);
       } else {

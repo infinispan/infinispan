@@ -66,11 +66,14 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       ClusteredLockManagerConfiguration config = extractConfiguration(gcr);
       GlobalConfiguration globalConfig = gcr.getGlobalConfiguration();
 
-      internalCacheRegistry.registerInternalCache(CLUSTERED_LOCK_CACHE_NAME, createClusteredLockCacheConfiguration(config, globalConfig),
-            EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
-
-      CompletableFuture<CacheHolder> future = startCaches(cacheManager);
-      registerClusteredLockManager(gcr, future, config);
+      if (globalConfig.isClustered()) {
+         internalCacheRegistry.registerInternalCache(CLUSTERED_LOCK_CACHE_NAME, createClusteredLockCacheConfiguration(config, globalConfig),
+               EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
+         CompletableFuture<CacheHolder> future = startCaches(cacheManager);
+         registerClusteredLockManager(gcr, future, config);
+      } else {
+         log.configurationNotClustered();
+      }
    }
 
    private static ClusteredLockManagerConfiguration extractConfiguration(GlobalComponentRegistry globalComponentRegistry) {
