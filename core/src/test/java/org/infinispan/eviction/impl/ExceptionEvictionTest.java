@@ -193,9 +193,9 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
       }
 
       for (Cache cache : caches()) {
-         long pendingTransactionCount = cache.getAdvancedCache().getAsyncInterceptorChain().findInterceptorWithClass(
-               TransactionalExceptionEvictionInterceptor.class).pendingTransactionCount();
-         assertEquals(0, pendingTransactionCount);
+         // Have to use eventually as depending on which node but the transaction completion can be fired async
+         eventually(() -> 0 == cache.getAdvancedCache().getAsyncInterceptorChain().findInterceptorWithClass(
+               TransactionalExceptionEvictionInterceptor.class).pendingTransactionCount());
       }
    }
 
