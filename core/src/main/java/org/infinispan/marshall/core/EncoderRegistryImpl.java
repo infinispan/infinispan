@@ -9,7 +9,6 @@ import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
@@ -28,7 +27,7 @@ public class EncoderRegistryImpl implements EncoderRegistry {
    private final Map<Class<? extends Wrapper>, Wrapper> wrapperMap = new ConcurrentHashMap<>(2);
    private final Map<Short, Class<? extends Encoder>> encoderById = new ConcurrentHashMap<>(10);
    private final Map<Byte, Class<? extends Wrapper>> wrapperById = new ConcurrentHashMap<>(2);
-   private final Set<Transcoder> transcoders = new ConcurrentHashSet<>();
+   private final Set<Transcoder> transcoders = ConcurrentHashMap.newKeySet();
 
    @Override
    public void registerEncoder(Encoder encoder) {

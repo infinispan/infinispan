@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +30,6 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
@@ -58,7 +58,7 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
    private final Set<Integer> segments;
    private final int readBatch;
    private final int threads;
-   private final ConcurrentHashSet<WrappedByteArray> deletedKeys = new ConcurrentHashSet<>();
+   private final Set<WrappedByteArray> deletedKeys = ConcurrentHashMap.newKeySet();
 
    public MigrationTask(String cacheName, Set<Integer> segments, int readBatch, int threads) {
       this.cacheName = cacheName;

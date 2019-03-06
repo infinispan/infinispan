@@ -15,7 +15,9 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @since 4.0
+ * @deprecated since 10.0, use {@link ConcurrentHashMap#newKeySet()} instead.
  */
+@Deprecated
 public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable {
 
     /**

@@ -18,7 +18,6 @@ import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyGenerator;
 import org.infinispan.affinity.ListenerRegistration;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -83,7 +82,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       this.keyGenerator = keyGenerator;
       this.bufferSize = bufferSize;
       if (filter != null) {
-         this.filter = new ConcurrentHashSet<>();
+         this.filter = ConcurrentHashMap.newKeySet();
          for (Address address : filter) {
             this.filter.add(address);
          }

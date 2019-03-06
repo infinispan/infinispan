@@ -1,6 +1,12 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.jgroups.Address;
 import org.jgroups.Event;
 import org.jgroups.protocols.FD_ALL;
@@ -10,19 +16,13 @@ import org.jgroups.protocols.FD_SOCK;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.Protocol;
 
-import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * Works around some issues slowing down cluster shutdown in testsuite.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class TestDisconnectHandler extends Protocol {
-	private static Set<Protocol> connected = new ConcurrentHashSet<>();
+	private static Set<Protocol> connected = ConcurrentHashMap.newKeySet();
 	private static Executor executor = Executors.newCachedThreadPool(new ThreadFactory() {
 		AtomicInteger counter = new AtomicInteger();
 		@Override

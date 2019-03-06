@@ -14,7 +14,6 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.testng.annotations.Test;
@@ -90,7 +89,7 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
       assertEquals(map.remove(obj3.getKey()), obj3.getValue());
       assertTrue(map.isEmpty());
 
-      final ConcurrentHashSet set = new ConcurrentHashSet();
+      final Set set = ConcurrentHashMap.newKeySet();
       Consumer<MarshallableEntry<Object, Object>> taskWithoutValues = me -> {
          if (me.getKey() != null) {
             set.add(me.getKey());

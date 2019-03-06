@@ -1,10 +1,11 @@
 package org.infinispan.util.concurrent;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
 import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 
 /**
  * A class that handles restarts of components via multiple threads.  Specifically, if a component needs to be restarted
@@ -27,7 +28,7 @@ import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
  */
 public class SynchronizedRestarter {
    private AtomicBoolean restartInProgress = new AtomicBoolean(false);
-   private ConcurrentHashSet<Thread> restartWaiters = new ConcurrentHashSet<Thread>();
+   private Set<Thread> restartWaiters = ConcurrentHashMap.newKeySet();
 
    public void restartComponent(Lifecycle component) throws Exception {
       // will only enter this block if no one else is restarting the socket

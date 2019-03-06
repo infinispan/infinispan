@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -35,7 +36,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -63,7 +63,7 @@ public class ClusterClientEventStressTest extends MultiHotRodServersTest {
 //   public static final int NUM_STORES_PER_SERVER = NUM_STORES / NUM_SERVERS;
 //   public static final int NUM_ENTRIES_PER_SERVER = (NUM_STORES * NUM_OWNERS) / NUM_SERVERS;
 
-   static Set<String> ALL_KEYS = new ConcurrentHashSet<>();
+   static Set<String> ALL_KEYS = ConcurrentHashMap.newKeySet();
 
    static ExecutorService EXEC = Executors.newCachedThreadPool();
 
