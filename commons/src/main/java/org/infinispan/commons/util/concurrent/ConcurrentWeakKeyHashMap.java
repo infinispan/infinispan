@@ -33,7 +33,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Jason T. Greene
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @version $Rev: 2371 $, $Date: 2010-10-19 15:00:42 +0900 (Tue, 19 Oct 2010) $
+ * @deprecated since 10.0
  */
+@Deprecated
 public final class ConcurrentWeakKeyHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V> {
 
    /*
