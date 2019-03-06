@@ -21,12 +21,14 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.concurrent.ConcurrentWeakKeyHashMap;
 import org.jboss.marshalling.ExceptionListener;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.TraceInformation;
 import org.jboss.marshalling.Unmarshaller;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * Common parent for both embedded and standalone JBoss Marshalling-based marshallers.
@@ -55,8 +57,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
     * urgent need to clear the thread local since it shouldn't be leaking.
     * It might take a long time to warmup and pre-initialize all needed instances!
     */
-   private final ConcurrentWeakKeyHashMap<Thread, PerThreadInstanceHolder> marshallerTL =
-         new ConcurrentWeakKeyHashMap<Thread, PerThreadInstanceHolder>();
+   private final Cache<Thread, PerThreadInstanceHolder> marshallerTL = Caffeine.newBuilder().weakKeys().build();
 
    public AbstractJBossMarshaller() {
       // Class resolver now set when marshaller/unmarshaller will be created
@@ -183,7 +184,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    public void stop() {
       // Clear class cache
       marshallableTypeHints.clear();
-      marshallerTL.clear();
+      marshallerTL.invalidateAll();
    }
 
    protected boolean isMarshallableCandidate(Object o) {
@@ -192,12 +193,10 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
 
    private PerThreadInstanceHolder getPerThreadInstanceHolder() {
       final Thread thread = Thread.currentThread();
-      PerThreadInstanceHolder holder = marshallerTL.get(thread);
+      PerThreadInstanceHolder holder = marshallerTL.getIfPresent(thread);
       if (holder == null) {
          holder = new PerThreadInstanceHolder(baseCfg.clone());
-         if (marshallerTL.put(thread, holder) != null) {
-            throw new IllegalStateException();
-         }
+         marshallerTL.put(thread, holder);
       }
       return holder;
    }
