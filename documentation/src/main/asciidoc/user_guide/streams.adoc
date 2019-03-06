@@ -10,8 +10,10 @@ iterate over the data yourself. Stream operations can be implemented in a fashio
 similar to MapReduce.  Streams, just like MapReduce allow you to perform processing
 upon the entirety of your cache, possibly a very large data set, but in an efficient way.
 
-NOTE: Streams are the preferred method when dealing with data that exists in the cache.
-This is because they will automatically changes in topology.
+[NOTE]
+====
+Streams are the preferred method when dealing with data that exists in the cache because streams automatically adjust to cluster topology changes.
+====
 
 Also since we can control how the entries are iterated upon we can more efficiently perform the operations in
 a cache that is distributed if you want it to perform all of the operations across the cluster
@@ -398,7 +400,7 @@ onto which keys it has processed and when a given segment is completed it will r
 memory.  This is why sequential processing is preferred for the iterator method, so only a subset of segment
 keys are held in memory at once, instead of from all nodes.
 
-The forEach method also returns batches, but it returns a batch of keys after it has finished processing
+The `forEach()` method also returns batches, but it returns a batch of keys after it has finished processing
 at least a batch worth of keys.  This way the originating node can know what keys have been processed
 already to reduce chances of processing the same entry again.  Unfortunately this means it is possible
 to have an at least once behavior when a node goes down unexpectedly.  In this case that node could have
@@ -412,12 +414,12 @@ method on the `CacheStream`.  This value will default to the `chunkSize` configu
 Unfortunately this value is a tradeoff with memory usage vs performance vs at least once and your
 mileage may vary.
 
-*Using `iterator` with a replication cache*
+*Using `iterator` with replicated and distributed caches*
 
-Currently if you are using a replicated cache the `iterator` or `spliterator`
-terminal operations will not perform any of the operations remotely
-and will instead perform everything on the local node. This is for performance as doing a
-remote iteration process is very costly.
+When a node is the primary or backup owner of all requested segments for a distributed stream, {brandname} performs the `iterator` or `spliterator` terminal operations locally, which optimizes performance as remote iterations are more resource intensive.
+
+This optimization applies to both replicated and distributed caches. However, {brandname} performs iterations remotely when using cache stores that are both `shared` and have `write-behind` enabled. In this case performing the iterations remotely ensures consistency.
+//Note `shared` and `write-behind` relates to ISPN-9332
 
 ==== Intermediate operation exceptions
 
