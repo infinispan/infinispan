@@ -305,35 +305,6 @@ try {
 // commit or rollback the transaction
 ----
 
-=== Deadlock detection
-Deadlocks can significantly (up to one order of magnitude) reduce the throughput of a system, especially when multiple transactions are operating against the same key set.
-Deadlock detection is disabled by default, but can be enabled/configured per cache (i.e. under `*-cache` config element) by adding the following:
-
-[source,xml]
-----
-<local-cache deadlock-detection-spin="1000"/>
-----
-
-or, programmatically
-
-[source,java]
-----
-new ConfigurationBuilder().deadlockDetection().enable().spinDuration(1000);
-//or
-new ConfigurationBuilder().deadlockDetection().enable().spinDuration(1, TimeUnit.SECONDS);
-----
-
-Some clues on when to enable deadlock detection.
-
-* A high number of transaction rolling back due to link:{javadocroot}/org/infinispan/util/concurrent/TimeoutException.html[TimeoutException] is an indicator that this functionality might help.
-* `TimeoutException` might be caused by other causes as well, but deadlocks will always result in this exception being thrown.
-
-Generally, when you have a high contention on a set of keys, deadlock detection may help.
-But the best way is not to guess the performance improvement but to benchmark and monitor it: you can have access to statistics (e.g. number of deadlocks detected) through JMX, as it is exposed via the `DeadlockDetectingLockManager` MBean.
-For more details on how deadlock detection works, benchmarks and design details refer to link:http://infinispan.blogspot.com/2009/07/increase-transactional-throughput-with.html[this] article.
-
-NOTE: deadlock detection only runs on an a per cache basis: deadlocks that spread over two or more caches won't be detected.
-
 === Dealing with exceptions
 If a link:{javadocroot}/org/infinispan/commons/CacheException.html[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
 
@@ -585,4 +556,4 @@ Also, you need to set the `protocol=TOTAL_ORDER` in the `<transaction>` element,
 
 ==== When to use it?
 
-Total order shows benefits when used in write intensive and high contented workloads. It mitigates the cost associated with deadlock detection and avoids contention in the lock keys.
+Total order shows benefits when used in write intensive and high contented workloads. It avoids contention in the lock keys.
