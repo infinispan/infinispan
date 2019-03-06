@@ -11,10 +11,11 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
@@ -33,7 +34,7 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
  */
 
 public class OverlayLocalConfigurationStorage extends VolatileLocalConfigurationStorage {
-   private ConcurrentHashSet<String> persistentCaches = new ConcurrentHashSet<>();
+   private Set<String> persistentCaches = ConcurrentHashMap.newKeySet();
 
    @Override
    public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {

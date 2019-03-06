@@ -2,10 +2,9 @@ package org.infinispan.client.hotrod.impl.transaction.recovery;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.transaction.xa.Xid;
-
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 
 /**
  * It keeps the local in-doubt transactions.
@@ -16,7 +15,7 @@ import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 //TODO merge with org.infinispan.client.hotrod.impl.transaction.XaModeTransactionTable ?
 public class RecoveryManager {
 
-   private final Collection<Xid> preparedTransactions = new ConcurrentHashSet<>();
+   private final Collection<Xid> preparedTransactions = ConcurrentHashMap.newKeySet();
 
    public void addTransaction(Xid xid) {
       preparedTransactions.add(xid);

@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -30,7 +29,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    @Inject private EmbeddedCacheManager cacheManager;
    @Inject private CacheManagerJmxRegistration cacheManagerJmxRegistration;
    private final ConcurrentMap<String, EnumSet<Flag>> internalCaches = new ConcurrentHashMap<>();
-   private final Set<String> privateCaches = new ConcurrentHashSet<>();
+   private final Set<String> privateCaches = ConcurrentHashMap.newKeySet();
 
    @Override
    public void registerInternalCache(String name, Configuration configuration) {

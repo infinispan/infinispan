@@ -1,8 +1,7 @@
 package org.infinispan.server.core;
 
 import java.util.Set;
-
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract class providing stock implementations for {@link CacheIgnoreAware} so all that is required is to extend
@@ -13,7 +12,7 @@ import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
  */
 public class AbstractCacheIgnoreAware implements CacheIgnoreAware {
 
-   private Set<String> ignoredCaches = new ConcurrentHashSet<>();
+   private Set<String> ignoredCaches = ConcurrentHashMap.newKeySet();
 
    public void setIgnoredCaches(Set<String> cacheNames) {
       ignoredCaches.clear();

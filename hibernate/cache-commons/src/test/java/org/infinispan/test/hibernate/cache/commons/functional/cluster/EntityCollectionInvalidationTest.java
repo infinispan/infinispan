@@ -6,12 +6,20 @@
  */
 package org.infinispan.test.hibernate.cache.commons.functional.cluster;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
@@ -21,42 +29,34 @@ import java.util.stream.Stream;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.infinispan.commands.functional.ReadWriteKeyCommand;
-import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
-import org.infinispan.hibernate.cache.spi.InfinispanProperties;
-import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
-import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.cache.spi.access.AccessType;
-import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
-import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
-import org.infinispan.test.hibernate.cache.commons.util.ExpectingInterceptor;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.testing.TestForIssue;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
+import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
+import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
+import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
+import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
+import org.infinispan.test.hibernate.cache.commons.util.ExpectingInterceptor;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
 
 /**
  * EntityCollectionInvalidationTestCase.
@@ -476,7 +476,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 	@Listener
 	public static class MyListener {
 		private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( MyListener.class );
-		private Set<String> visited = new ConcurrentHashSet<String>();
+		private Set<String> visited = ConcurrentHashMap.newKeySet();
 		private final String name;
 
 		public MyListener(String name) {

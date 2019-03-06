@@ -7,12 +7,18 @@
 
 package org.infinispan.test.hibernate.cache.commons.stress;
 
+import static org.infinispan.test.TestingUtil.withTx;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -22,6 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+
 import javax.transaction.TransactionManager;
 
 import org.hibernate.Query;
@@ -31,12 +38,11 @@ import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.hibernate.cfg.Environment;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.RootClass;
-
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Address;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Person;
@@ -46,13 +52,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
-
-import static org.infinispan.test.TestingUtil.withTx;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Stress test for second level cache.
@@ -78,7 +77,7 @@ public class SecondLevelCacheStressTestCase {
    static final Random RANDOM = new Random(12345);
 
    String provider;
-   ConcurrentHashSet<Integer> updatedIds;
+   Set<Integer> updatedIds;
    Queue<Integer> removeIds;
    SessionFactory sessionFactory;
    TransactionManager tm;
@@ -88,7 +87,7 @@ public class SecondLevelCacheStressTestCase {
    public void beforeClass() {
       provider = getProvider();
 
-      updatedIds = new ConcurrentHashSet<Integer>();
+      updatedIds = ConcurrentHashMap.newKeySet();
       removeIds = new ConcurrentLinkedQueue<Integer>();
 
       StandardServiceRegistryBuilder ssrb = new StandardServiceRegistryBuilder().enableAutoClose()

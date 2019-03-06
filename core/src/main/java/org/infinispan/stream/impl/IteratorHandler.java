@@ -14,7 +14,6 @@ import java.util.stream.Stream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -115,7 +114,7 @@ public class IteratorHandler {
       // This will be null if there have been no iterators for this node.
       // If the originating node died before we start this iterator this could be null as well. In this case the
       // iterator will be closed on the next view change.
-      Set<Object> ids = ownerRequests.computeIfAbsent(origin, k -> new ConcurrentHashSet<>());
+      Set<Object> ids = ownerRequests.computeIfAbsent(origin, k -> ConcurrentHashMap.newKeySet());
       ids.add(requestId);
       return iter;
    }

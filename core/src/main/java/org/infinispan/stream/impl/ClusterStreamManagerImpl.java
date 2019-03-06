@@ -29,7 +29,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -58,7 +57,7 @@ import io.reactivex.internal.subscriptions.EmptySubscription;
  */
 public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManager<Original, K> {
    protected final Map<String, RequestTracker> currentlyRunning = new ConcurrentHashMap<>();
-   protected final Set<Subscriber> iteratorsRunning = new ConcurrentHashSet<>();
+   protected final Set<Subscriber> iteratorsRunning = ConcurrentHashMap.newKeySet();
    protected final AtomicInteger requestId = new AtomicInteger();
    @Inject protected RpcManager rpc;
    @Inject protected CommandsFactory factory;

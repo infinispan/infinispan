@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -973,7 +973,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
 
       // Keys that we used to own, and need to be removed from the data container AND the cache stores
-      final ConcurrentHashSet<Object> keysToRemove = new ConcurrentHashSet<>();
+      final Set<Object> keysToRemove = ConcurrentHashMap.newKeySet();
 
       // This has to be invoked before removing the segments on the data container
       localPublisherManager.segmentsLost(removedSegments);
