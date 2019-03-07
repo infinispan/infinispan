@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.spring.AssertionUtils;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
@@ -38,7 +39,7 @@ import org.testng.annotations.Test;
  *
  */
 @Test(testName = "spring.provider.SpringRemoteCacheManagerFactoryBeanTest", groups = "unit")
-public class SpringRemoteCacheManagerFactoryBeanTest {
+public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanTest {
 
    private static final Resource HOTROD_CLIENT_PROPERTIES_LOCATION = new ClassPathResource(
          "hotrod-client.properties", SpringRemoteCacheManagerFactoryBeanTest.class);
@@ -111,13 +112,15 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
       objectUnderTest.afterPropertiesSet();
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
+      RemoteCacheManager remoteCacheManager2 = new RemoteCacheManager();
       AssertionUtils.assertPropertiesSubset(
               "The configuration properties used by the SpringRemoteCacheManager returned von getObject() should be equal "
                       + "to SpringRemoteCacheManager's default settings since neither property 'configurationProperties' "
                       + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
-              new RemoteCacheManager().getConfiguration().properties(), remoteCacheManager.getNativeCacheManager()
-                      .getConfiguration().properties());
+              remoteCacheManager2.getConfiguration().properties(), remoteCacheManager.getNativeCacheManager()
+                                                                                     .getConfiguration().properties());
       objectUnderTest.destroy();
+      remoteCacheManager2.stop();
    }
 
    /**

@@ -3,9 +3,11 @@ package org.infinispan.spring.provider;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import org.infinispan.spring.test.InfinispanTestExecutionListener;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.Test;
 
@@ -20,8 +22,8 @@ import org.testng.annotations.Test;
 @Test(testName = "spring.provider.SpringRemoteCacheManagerFactoryBeanContextTest", groups = "unit")
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @ContextConfiguration("classpath:/org/infinispan/spring/provider/SpringRemoteCacheManagerFactoryBeanContextTest.xml")
-public class SpringRemoteCacheManagerFactoryBeanContextTest extends
-                                                            AbstractTestNGSpringContextTests {
+@TestExecutionListeners(InfinispanTestExecutionListener.class)
+public class SpringRemoteCacheManagerFactoryBeanContextTest extends AbstractTestNGSpringContextTests {
 
    private static final String SPRING_REMOTE_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME = "springRemoteCacheManagerWithDefaultConfiguration";
 

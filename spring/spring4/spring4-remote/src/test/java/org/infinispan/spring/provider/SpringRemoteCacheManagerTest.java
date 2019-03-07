@@ -127,6 +127,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
       assertTrue("Calling start() on SpringRemoteCacheManager should start the enclosed "
                        + "Infinispan RemoteCacheManager. However, it is still not running.",
                  nativeCacheManager.isStarted());
+      nativeCacheManager.stop();
    }
 
    /**
@@ -165,5 +166,6 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
       assertSame(
             "getNativeCacheManager() should have returned the RemoteCacheManager supplied at construction time. However, it retuned a different one.",
             nativeCacheManager, nativeCacheManagerReturned);
+      nativeCacheManager.stop();
    }
 }

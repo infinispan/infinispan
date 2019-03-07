@@ -60,6 +60,8 @@ public class ThreadLeakChecker {
                       "|XNIO-1 " +
                       // org.apache.mina.transport.socket.nio.NioDatagramAcceptor.DEFAULT_RECYCLER
                       "|ExpiringMapExpirer" +
+                      // RMI connectionThreadPool threads
+                      "|RMI " +
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
       "org.jboss.as.arquillian.container.managed.ManagedDeployableContainer$ConsoleConsumer";
