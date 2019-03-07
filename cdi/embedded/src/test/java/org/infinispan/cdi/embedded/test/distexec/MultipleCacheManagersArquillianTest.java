@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.fail;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.ITestContext;
@@ -45,12 +46,14 @@ public abstract class MultipleCacheManagersArquillianTest extends Arquillian {
 
    @BeforeMethod(alwaysRun = true)
    public void createBeforeMethod(ITestContext ctx) throws Throwable {
+      ThreadLeakChecker.testStarted(getDelegate().getClass().getName());
       runAnnotatedDelegateMethods(BeforeMethod.class, ctx);
    }
 
    @AfterClass(alwaysRun = true)
    public void destroy(ITestContext ctx) throws Throwable {
       runAnnotatedDelegateMethods(AfterClass.class, ctx);
+      ThreadLeakChecker.testFinished(getDelegate().getClass().getName());
    }
 
    @AfterMethod(alwaysRun = true)

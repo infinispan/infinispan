@@ -10,8 +10,9 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.builders.SpringEmbeddedCacheManagerFactoryBeanBuilder;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -24,7 +25,7 @@ import org.testng.annotations.Test;
  *
  */
 @Test(testName = "spring.provider.SpringEmbeddedCacheManagerFactoryBeanTest", groups = "unit")
-public class SpringEmbeddedCacheManagerFactoryBeanTest {
+public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractInfinispanTest {
 
    private static final String CACHE_NAME_FROM_CONFIGURATION_FILE = "asyncCache";
 
@@ -32,7 +33,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
 
    private SpringEmbeddedCacheManagerFactoryBean objectUnderTest;
 
-   @AfterClass(alwaysRun = true)
+   @AfterMethod(alwaysRun = true)
    public void closeCacheManager() throws Exception {
       if(objectUnderTest != null) {
          objectUnderTest.destroy();
@@ -165,8 +166,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public void testIfSpringEmbeddedCacheManagerFactoryBeanAllowesOverridingConfigurationWithEmptyInputStream()
          throws Exception {
-      objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
-            .defaultBuilder().build();
+      objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
 
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
 

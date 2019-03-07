@@ -3,9 +3,11 @@ package org.infinispan.spring.support.remote;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.Cache;
+import org.infinispan.spring.test.InfinispanTestExecutionListener;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 
 /**
@@ -20,6 +22,7 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 @ContextConfiguration("classpath:/org/infinispan/spring/support/remote/InfinispanNamedRemoteCacheFactoryBeanContextTest.xml")
 // @Test(testName = "spring.support.remote.InfinispanNamedRemoteCacheFactoryBeanContextTest", groups
 // = "functional")
+@TestExecutionListeners(InfinispanTestExecutionListener.class)
 public class InfinispanNamedRemoteCacheFactoryBeanContextTest extends
                                                               AbstractTestNGSpringContextTests {
 
