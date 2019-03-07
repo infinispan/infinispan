@@ -50,9 +50,7 @@ import org.infinispan.query.dsl.Query;
  * org.infinispan.Cache} cache, which allows specifying time values with any granularity (as defined by {@link
  * TimeUnit}), HotRod only supports seconds as time units. If a different time unit is used instead, HotRod will
  * transparently convert it to seconds, using {@link java.util.concurrent.TimeUnit#toSeconds(long)} method. This might
- * result in loss of precision for values specified as nanos or milliseconds. <br/> Another fundamental difference is in
- * the case of lifespan (naturally does NOT apply for max idle): If number of seconds is bigger than 30 days, this
- * number of seconds is treated as UNIX time and so, represents the number of seconds since 1/1/1970. <br/>
+ * result in loss of precision for values specified as nanos or milliseconds. <br/>
  *
  * <b>Note on default expiration values:</b> Due to limitations on the first
  * version of the protocol, it's not possible for clients to rely on default
@@ -64,6 +62,7 @@ import org.infinispan.query.dsl.Query;
  * values in each remote cache operation.
  *
  * @author Mircea.Markus@jboss.com
+ * @author WolfDieter.Fink@gmail.com
  * @since 4.1
  */
 public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache {

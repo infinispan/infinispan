@@ -105,12 +105,11 @@ import org.infinispan.util.KeyValuePair;
  * startup and shutdown.
  *
  * @author Galder Zamarreño
+ * @author WolfDieter.Fink@gmail.com
  * @since 4.1
  */
 public class HotRodServer extends AbstractProtocolServer<HotRodServerConfiguration> {
    private static final Log log = LogFactory.getLog(HotRodServer.class, Log.class);
-
-   private static final long MILLISECONDS_IN_30_DAYS = TimeUnit.DAYS.toMillis(30);
 
    public static final int LISTENERS_CHECK_INTERVAL = 10;
 
@@ -597,22 +596,16 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    /**
-    * Transforms lifespan pass as seconds into milliseconds following this rule (inspired by Memcached):
-    * <p>
-    * If lifespan is bigger than number of seconds in 30 days, then it is considered unix time. After converting it to
-    * milliseconds, we subtract the current time in and the result is returned.
-    * <p>
-    * Otherwise it's just considered number of seconds from now and it's returned in milliseconds unit.
+    * Transforms lifespan pass with TimeUnit into milliseconds
+    *
+    * @param duration lifespan passed with unit
+    * @param unit TimeUnit for the lifespan duration parameter
+    * @return lifespan in milliseconds
     */
    private static long toMillis(long duration, TimeUnitValue unit) {
       if (duration > 0) {
          long milliseconds = unit.toTimeUnit().toMillis(duration);
-         if (milliseconds > MILLISECONDS_IN_30_DAYS) {
-            long unixTimeExpiry = milliseconds - System.currentTimeMillis();
-            return unixTimeExpiry < 0 ? 0 : unixTimeExpiry;
-         } else {
-            return milliseconds;
-         }
+         return milliseconds;
       } else {
          return duration;
       }
