@@ -257,9 +257,6 @@ configuration.
 * When using `maxIdle` expiration with exception-based eviction, entries that
 are expired but not removed from the cache count towards the size of the data
 container.
-* Entries that are transferred to the cache via state transfer are created on
-the new node with a last access time that is equal to the current time. As a
-result those entries are refreshed.
 ====
 
 [[eviction_expiration_config]]
