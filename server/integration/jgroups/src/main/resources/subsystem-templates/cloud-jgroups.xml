@@ -141,6 +141,26 @@
                 <protocol type="MFC" />
                 <protocol type="FRAG3" />
             </stack>
+            <stack name="dns-ping">
+                <transport type="TCP" socket-binding="jgroups-tcp">
+                    <property name="logical_addr_cache_expiration">360000</property>
+                </transport>
+                <protocol type="dns.DNS_PING">
+                    <property name="dns_query">${jgroups.dns_ping.dns_query:}</property>
+                </protocol>
+                <protocol type="MERGE3"/>
+                <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
+                <protocol type="FD_ALL"/>
+                <protocol type="VERIFY_SUSPECT"/>
+                <protocol type="pbcast.NAKACK2">
+                    <property name="use_mcast_xmit">false</property>
+                </protocol>
+                <protocol type="UNICAST3"/>
+                <protocol type="pbcast.STABLE"/>
+                <protocol type="pbcast.GMS"/>
+                <protocol type="MFC"/>
+                <protocol type="FRAG3"/>
+            </stack>
         </stacks>
     </subsystem>
 
