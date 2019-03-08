@@ -471,7 +471,7 @@
       <versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>1.0.0.Final</versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>
       <versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>${version.lucene.featurepack}</versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>
       <versionx.org.jacoco.org.jacoco.agent>${version.jacoco}</versionx.org.jacoco.org.jacoco.agent>
-      <versionx.org.javassist.javassist>3.23.1-GA</versionx.org.javassist.javassist>
+      <versionx.org.javassist.javassist>3.24.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.aesh.aesh>0.66.13</versionx.org.jboss.aesh.aesh>
       <versionx.org.jboss.arquillian.config.arquillian-config-api>${version.arquillian}</versionx.org.jboss.arquillian.config.arquillian-config-api>
       <versionx.org.jboss.arquillian.config.arquillian-config-impl-base>${version.arquillian}</versionx.org.jboss.arquillian.config.arquillian-config-impl-base>
