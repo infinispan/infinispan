@@ -38,7 +38,6 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachelistener.annotation.TransactionRegistered;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
@@ -108,12 +107,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
       if (trace)
          log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
-      CompletionStage<Void> stage = null;
-      if (notifier.hasListener(TransactionRegistered.class)) {
-         stage = notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);
-      }
+      CompletionStage<Void> stage = notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);
 
-      if (stage == null || CompletionStages.isCompleteSuccessfully(stage)) {
+      if (CompletionStages.isCompleteSuccessfully(stage)) {
          return invoker.invokeAsync(ctx, this);
       } else {
          return stage.thenCompose(v -> invoker.invokeAsync(ctx, this)).toCompletableFuture();

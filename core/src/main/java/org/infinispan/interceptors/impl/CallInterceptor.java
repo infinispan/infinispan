@@ -104,6 +104,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.stream.impl.local.SegmentedEntryStreamSupplier;
 import org.infinispan.stream.impl.local.SegmentedKeyStreamSupplier;
@@ -115,7 +116,6 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
-import org.infinispan.reactive.RxJavaInterop;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
@@ -209,9 +209,9 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       CompletionStage<Void> stage = null;
       // Non tx and tx both have this set if it was state transfer
       if (!skipNotification) {
-         if (e.isCreated() && cacheNotifier.hasListener(CacheEntryCreated.class)) {
+         if (e.isCreated()) {
             stage = cacheNotifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, command);
-         } else if (cacheNotifier.hasListener(CacheEntryModified.class)) {
+         } else {
             stage = cacheNotifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, command);
          }
       }
@@ -279,8 +279,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    protected Object performRemove(MVCCEntry e, InvocationContext ctx, ValueMatcher valueMatcher, Object key,
          Object prevValue, Object optionalValue, boolean notifyRemove, RemoveCommand command) {
 
-      CompletionStage<Void> stage = notifyRemove && cacheNotifier.hasListener(CacheEntryRemoved.class) ?
-         cacheNotifier.notifyCacheEntryRemoved(key, prevValue, e.getMetadata(), true, ctx, command) : null;
+      CompletionStage<Void> stage = notifyRemove ?
+            cacheNotifier.notifyCacheEntryRemoved(key, prevValue, e.getMetadata(), true, ctx, command) : null;
 
       e.setRemoved(true);
       e.setChanged(true);
@@ -323,9 +323,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          Metadata newMetadata = command.getMetadata();
          Metadata prevMetadata = e.getMetadata();
 
-         CompletionStage<Void> stage = cacheNotifier.hasListener(CacheEntryModified.class) ?
-               cacheNotifier.notifyCacheEntryModified(key, newValue, newMetadata,
-               expectedValue == null ? prevValue : expectedValue, prevMetadata, true, ctx, command) : null;
+         CompletionStage<Void> stage = cacheNotifier.notifyCacheEntryModified(key, newValue, newMetadata,
+               expectedValue == null ? prevValue : expectedValue, prevMetadata, true, ctx, command);
 
          Metadatas.updateMetadata(e, newMetadata);
 
@@ -370,23 +369,20 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          // The key already has a value
          if (newValue != null) {
             //replace with the new value if there is a modification on the value
-            stage = cacheNotifier.hasListener(CacheEntryModified.class) ?
-                  cacheNotifier.notifyCacheEntryModified(key, newValue, metadata, oldValue, e.getMetadata(), true, ctx, command) : null;
+            stage = cacheNotifier.notifyCacheEntryModified(key, newValue, metadata, oldValue, e.getMetadata(), true, ctx, command);
             e.setChanged(true);
             e.setValue(newValue);
             Metadatas.updateMetadata(e, metadata);
          } else {
             // remove when new value is null
-            stage = cacheNotifier.hasListener(CacheEntryRemoved.class) ?
-                  cacheNotifier.notifyCacheEntryRemoved(key, oldValue, e.getMetadata(), true, ctx, command) : null;
+            stage = cacheNotifier.notifyCacheEntryRemoved(key, oldValue, e.getMetadata(), true, ctx, command);
             e.setRemoved(true);
             e.setChanged(true);
             e.setValue(null);
          }
       } else {
          // put if not present
-         stage = cacheNotifier.hasListener(CacheEntryCreated.class) ?
-               cacheNotifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, command) : null;
+         stage = cacheNotifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, command);
          e.setValue(newValue);
          e.setChanged(true);
          Metadatas.updateMetadata(e, metadata);
@@ -425,8 +421,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             Metadatas.updateMetadata(e, metadata);
             // TODO: should this be below?
             if (e.isCreated()) {
-               stage = cacheNotifier.hasListener(CacheEntryCreated.class) ?
-                     cacheNotifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, command) : null;
+               stage = cacheNotifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, command);
             }
             if (e.isRemoved()) {
                e.setCreated(true);

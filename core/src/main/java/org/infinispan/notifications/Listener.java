@@ -32,45 +32,34 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * to record events and later process them once the transaction has been successfully committed. Example 4 demonstrates
  * this.
  * <h4>Listener Modes</h4>
- * A listener can be configured to run in three different modes: non-blocking, sync or async.
- * <p>The first, non-blocking, is a mode that should be used when either the listener operation is expected to complete
- * extremely fast or provides a CompletionStage given back to the notification system to delay the operation until the
- * stage is complete. The listener is notified in the calling thread. This mode is enabled on a per method basis when
- * a method declares that it returns a {@link java.util.concurrent.CompletionStage} or one of its subtypes. Note that the
- * stage can return a value, but it will not be utilized. The user <b>must</b> be very careful that no blocking or long
- * running operation is done while in a non-blocking listener as it can cause possible thread starvation, depending on
- * the calling thread.
- * <p>The second, sync, is a mode where the listener is notified in a different thread, from the notification pool,
- * which allows the calling thread to continue doing other things, continuing after the notification is complete. The
- * benefit of this mode is that the listener(s) can be notified in parallel, while still allowing the operation that
- * generated the event to not continue until the listener is complete. Due to this, blocking or other longer running
- * operations can be performed in this listener, however, care should be taken to not take too long as some operations
- * may have timeouts, such as the replication timeout.
- * <p>The third, async, is pretty much identical to sync except that the original operation can continue and complete
+ * A listener can be configured to run in two different modes: sync or async.
+ * <p>The first, non-blocking, is a mode where the listener is notified in the invoking thread. Operations in this mode
+ * should be used when either the listener operation is expected to complete extremely fast or when the operation can be
+ * performed in a non-blocking by optionally returning a CompletionStage given back to the notification system to delay
+ * the operation until the stage is complete. This mode is the default mode, overrided by the {@link Listener#sync()}
+ * property. A method is non blocking if it declares that it returns a {@link java.util.concurrent.CompletionStage} or
+ * one of its subtypes. Note that the stage can return a value, but it will not be utilized. The user <b>must</b> be very
+ * careful that no blocking or long running operation is done while in a sync listener as it can cause possible thread
+ * starvation, depending on the calling thread. It is entirely acceptable to use your own thread pool to execute a
+ * listener operation and return a {@link java.util.concurrent.CompletionStage} signifying when it is complete.
+ * <p>The second, async, is pretty much identical to sync except that the original operation can continue and complete
  * while the listener is notified in a different thread. Listeners that throw exceptions are always logged and are not
  * propagated to the user. This mode is enabled when the listener returns void and its annotation has specified
  * <code>sync</code> as <b>false</b>.
- * <p>The sync mode is default and probably the safest mode to use as operations are done without blocking the user
- * thread as well as guaranteeing ordering as described in the next section.
- * <p>If for some reason there are so many oustanding sync and/or async listener events that overwhelm the notification
- * pool and its queue, additional operations will fall back to being invoked in the calling thread. This could cause a
- * slow down in throughput, but should alleviate incoming pressure until it can pass, if possible.
  * <h4>Locking semantics</h4>
- * Both non-blocking and sync modes will guarantee that events generated on an entry are done sequentially, since
+ * The sync mode will guarantee that events generated on an entry are done sequentially, since
  * the lock for the key will be held when notifying the listener. Async however can have events notified in any order
  * so they should not be used when this ordering is required.
- * <p>Due to the lock being held during non-blocking and sync modes, care should be taken to not hold the lock longer
+ * <p>Due to the lock being held during sync mode, care should be taken to not hold the lock longer
  * than needed, otherwise this could cause delays in other operations or even deadlocks if additional locks are
  * acquired in the event notification.
  * <h4>Threading Semantics</h4>
  * A listener implementation must be capable of handling concurrent
- * invocations. Local non blocking notifications reuse the calling thread; remote non blocking notifications reuse the
- * network thread. If a listener is blocking or async, it will be invoked in the notification thread pool. The former
- * will block the current operation in a non blocking way, only continuing the actual operation after the operation
- * completes.
+ * invocations. Local sync notifications reuse the calling thread; remote sync notifications reuse the
+ * network thread. If a listener is async, it will be invoked in the notification thread pool.
  * <h4>Notification Pool</h4>
- * Sync and Async events are made in a <i>separate</i> notification thread, which will not cause any blocking on the
- * caller or network thread.  The separate thread for blocking or async listeners is taken from a pool, which can be
+ * Async events are made in a <i>separate</i> notification thread, which will not cause any blocking on the
+ * caller or network thread.  The separate thread for async listeners is taken from a pool, which can be
  * configured using {@link GlobalConfiguration#listenerThreadPool()}. The
  * default values can be found in the {@link org.infinispan.factories.KnownComponentNames} class.
  * <h4>Clustered Listeners</h4>
@@ -168,7 +157,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * <p/>
  * </table>
  * <p/>
- * <h4>Example 1 - Method receiving a single event, non blocking</h4>
+ * <h4>Example 1 - Method receiving a single event, sync</h4>
  * <pre>
  *    &#064;Listener
  *    public class SingleEventListener
@@ -223,7 +212,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * </pre>
  * <p/>
  * <p/>
- * <b>Example 4 - Processing only events with a committed transaction - non-blocking</b>
+ * <b>Example 4 - Processing only events with a committed transaction - sync/non-blocking</b>
  * <p/>
  * <pre>
  *    &#064;Listener
@@ -270,6 +259,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @author Jason T. Greene
+ * @author William Burns
  * @see org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted
  * @see org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryModified
@@ -296,9 +286,10 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 public @interface Listener {
    /**
     * Specifies whether callbacks on any class annotated with this annotation happens synchronously or asynchronously,
-    * both using a separate thread. This attribute is ignored if the listener method is defined to be non-blocking
-    * (ie. returns CompletionStage). If this method is blocking, doesn't return CompletionStage, then this method
-    * will wait for the method to complete before continuing with the operation if this value is true. Defaults to <tt>true</tt>.
+    * latter using a separate thread. Care should be used to ensure no sync operation blocks the caller. If the operation
+    * can be done in a non-blocking way, it is advisable to have your method return a
+    * {@link java.util.concurrent.CompletionStage} which will continue the event processing after the stage is completed.
+    * Defaults to <tt>true</tt>.
     *
     * @return true if the expectation is that the operation waits until the callbacks complete before continuing;
     * false if the operation can continue immediately.

@@ -69,7 +69,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
 
       @Override
       public ListenerInvocation<Event> build() {
-         return new ListenerInvocationImpl<>(target, method, sync, nonBlocking, classLoader, subject);
+         return new ListenerInvocationImpl<>(target, method, sync, classLoader, subject);
       }
    }
 

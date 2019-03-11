@@ -1649,8 +1649,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
       @Override
       public CacheEntryListenerInvocation<K, V> build() {
-         ListenerInvocation<Event<K, V>> invocation = new ListenerInvocationImpl(target, method, sync, nonBlocking,
-               classLoader, subject);
+         ListenerInvocation<Event<K, V>> invocation = new ListenerInvocationImpl(target, method, sync, classLoader, subject);
 
          wireDependencies(filter, converter);
 

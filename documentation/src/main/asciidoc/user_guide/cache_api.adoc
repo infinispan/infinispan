@@ -219,9 +219,9 @@ Cache manager-level events occur on a cache manager.  These too are global and  
 Please see the link:{javadocroot}/org/infinispan/notifications/cachemanagerlistener/annotation/package-summary.html[Javadocs  on the org.infinispan.notifications.cachemanagerlistener.annotation package] for a comprehensive list of all cache manager-level notifications,  and their respective method-level annotations.
 
 ==== Synchronicity of events
-By default, all blocking and async notifications are dispatched in the notification thread pool. Blocking and non blocking
-notifications will also delay the operation from continuing until the listner method completes or the CompletionStage
-completes. Alternatively, you could annotate your listener as _asynchronous_, but do not define it is a non blocking, in
+By default, all async notifications are dispatched in the notification thread pool. Sync
+notifications will delay the operation from continuing until the listner method completes or the CompletionStage
+completes (the former causing the thread to block). Alternatively, you could annotate your listener as _asynchronous_ in
 which case the operation will continue immediately, while the notification is completed asynchronously. To do this, simply
 annotate your listener such:
 
@@ -254,8 +254,6 @@ public class MyNonBlockingListener {
    CompletionStage<Void> listen(CacheEntryCreatedEvent event) { }
 }
 ----
-
-Note that if the method returns CompletionStage it will always treat it as non blocking, even if the Listener is annotated with `sync = false`.
 
 ===== Asynchronous thread pool
 To tune the thread pool used to dispatch such asynchronous notifications, use the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<listener-executor />`] XML element in your configuration file.

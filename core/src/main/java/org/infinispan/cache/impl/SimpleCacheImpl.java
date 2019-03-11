@@ -285,18 +285,24 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
       Map<K, CacheEntry<K, V>> map = new HashMap<>(keys.size());
-      boolean notify = hasListeners && cacheNotifier.hasListener(CacheEntryVisited.class);
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      if (hasListeners && cacheNotifier.hasListener(CacheEntryVisited.class)) {
+         aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+      }
       for (Object key : keys) {
          Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
          InternalCacheEntry<K, V> entry = getDataContainer().get(key);
          if (entry != null) {
             V value = entry.getValue();
-            if (notify) {
-               CompletionStages.join(cacheNotifier.notifyCacheEntryVisited((K) key, value, true, ImmutableContext.INSTANCE, null));
-               CompletionStages.join(cacheNotifier.notifyCacheEntryVisited((K) key, value, false, ImmutableContext.INSTANCE, null));
+            if (aggregateCompletionStage != null) {
+               aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryVisited((K) key, value, true, ImmutableContext.INSTANCE, null));
+               aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryVisited((K) key, value, false, ImmutableContext.INSTANCE, null));
             }
             map.put(entry.getKey(), entry);
          }
+      }
+      if (aggregateCompletionStage != null) {
+         CompletionStages.join(aggregateCompletionStage.freeze());
       }
       return map;
    }
@@ -1621,7 +1627,13 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
-      boolean hasListeners = this.hasListeners;
+
+      AggregateCompletionStage<Void> aggregateCompletionStage;
+      if (hasListeners && cacheNotifier.hasListener(CacheEntryModified.class)) {
+         aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+      } else {
+         aggregateCompletionStage = null;
+      }
       CacheEntryChange<K, V> ref = new CacheEntryChange<>();
       for (Iterator<InternalCacheEntry<K, V>> it = dataContainer.iterator(); it.hasNext(); ) {
          InternalCacheEntry<K, V> ice = it.next();
@@ -1630,8 +1642,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
             if (oldValue != null) {
                V newValue = function.apply(k, oldValue);
                Objects.requireNonNull(newValue, NULL_VALUES_NOT_SUPPORTED);
-               if (hasListeners) {
-                  CompletionStages.join(cacheNotifier.notifyCacheEntryModified(k, newValue, defaultMetadata, oldValue, oldEntry.getMetadata(),
+               if (aggregateCompletionStage != null) {
+                  aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryModified(k, newValue, defaultMetadata, oldValue, oldEntry.getMetadata(),
                         true, ImmutableContext.INSTANCE, null));
                }
                ref.set(k, newValue, oldValue, oldEntry.getMetadata());
@@ -1640,10 +1652,13 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
                return null;
             }
          });
-         if (hasListeners) {
-            CompletionStages.join(cacheNotifier.notifyCacheEntryModified(ref.getKey(), ref.getNewValue(), defaultMetadata, ref.getOldValue(),
+         if (aggregateCompletionStage != null) {
+            aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryModified(ref.getKey(), ref.getNewValue(), defaultMetadata, ref.getOldValue(),
                   ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null));
          }
+      }
+      if (aggregateCompletionStage != null) {
+         CompletionStages.join(aggregateCompletionStage.freeze());
       }
    }
 

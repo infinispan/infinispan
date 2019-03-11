@@ -38,11 +38,9 @@ If you are declaring your own stacks with the same names, an exception reporting
 your own configurations to avoid the conflict.
 
 === Cache and Cache Manager Listeners can now be configured to be non blocking
-Listeners in the past that were sync, always ran in the thread that caused the event. Now these sync listeners
-are performed in a separate notification thread as to not block the originating thread and will resume the operation
-when the listener completes. Thus we now allow a Listener method to be non-blocking in that it will still fire in the
-original thread, under the assumption that it will return immediately. Please read the Listener Javadoc for information
-and examples on this.
+Listeners in the past that were sync, always ran in the thread that caused the event. We now allow a Listener method to
+be non-blocking in that it will still fire in the original thread, under the assumption that it will return immediately.
+Please read the Listener Javadoc for information and examples on this.
 
 == Upgrading from 9.3 to 9.4
 

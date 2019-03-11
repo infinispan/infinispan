@@ -56,7 +56,6 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       protected Method method;
       protected Class<? extends Annotation> annotation;
       protected boolean sync;
-      protected boolean nonBlocking;
       protected ClassLoader classLoader;
       protected Subject subject;
 
@@ -90,8 +89,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
          return this;
       }
 
-      public AbstractInvocationBuilder setMethod(Method method, boolean nonBlocking) {
-         this.nonBlocking = nonBlocking;
+      public AbstractInvocationBuilder setMethod(Method method) {
          this.method = method;
          return this;
       }
@@ -220,7 +218,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                final Class<? extends Annotation> annotationClass = annotationEntry.getKey();
                if (m.isAnnotationPresent(annotationClass)) {
                   final Class<?> eventClass = annotationEntry.getValue();
-                  boolean nonBlocking = testListenerMethodValidity(m, eventClass, annotationClass.getName());
+                  testListenerMethodValidity(m, eventClass, annotationClass.getName());
 
                   if (System.getSecurityManager() == null) {
                      m.setAccessible(true);
@@ -231,7 +229,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                      });
                   }
 
-                  builder.setMethod(m, nonBlocking);
+                  builder.setMethod(m);
                   builder.setAnnotation(annotationClass);
                   L invocation = builder.build();
 
@@ -266,7 +264,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                final Class<? extends Annotation> annotationClass = annotationEntry.getKey();
                if (m.isAnnotationPresent(annotationClass) && canApply(filterAnnotations, annotationClass)) {
                   final Class<?> eventClass = annotationEntry.getValue();
-                  boolean nonBlocking = testListenerMethodValidity(m, eventClass, annotationClass.getName());
+                  testListenerMethodValidity(m, eventClass, annotationClass.getName());
 
                   if (System.getSecurityManager() == null) {
                      m.setAccessible(true);
@@ -277,7 +275,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                      });
                   }
 
-                  builder.setMethod(m, nonBlocking);
+                  builder.setMethod(m);
                   builder.setAnnotation(annotationClass);
                   L invocation = builder.build();
                   getLog().tracef("Add listener invocation %s for %s", invocation, annotationClass);
@@ -355,27 +353,20 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
     * @param m method to test
     * @param allowedParameter what parameter is allowed for the method argument
     * @param annotationName name of the annotation
-    * @return whether this method is blocking or not
     * @throws IncorrectListenerException if the listener is not a valid target
     */
-   protected static boolean testListenerMethodValidity(Method m, Class<?> allowedParameter, String annotationName) {
+   protected static void testListenerMethodValidity(Method m, Class<?> allowedParameter, String annotationName) {
       if (m.getParameterTypes().length != 1 || !m.getParameterTypes()[0].isAssignableFrom(allowedParameter))
          throw new IncorrectListenerException("Methods annotated with " + annotationName + " must accept exactly one parameter, of assignable from type " + allowedParameter.getName());
       Class<?> returnType = m.getReturnType();
-      if (returnType.equals(void.class)) {
-         return false;
+      if (!returnType.equals(void.class) && !CompletionStage.class.isAssignableFrom(returnType)) {
+         throw new IncorrectListenerException("Methods annotated with " + annotationName + " should have a return type of void or CompletionStage.");
       }
-      if (CompletionStage.class.isAssignableFrom(returnType)) {
-         return true;
-      }
-      throw new IncorrectListenerException("Methods annotated with " + annotationName + " should have a return type of void or CompletionStage.");
    }
 
    protected abstract Transaction suspendIfNeeded();
 
    protected abstract void resumeIfNeeded(Transaction transaction);
-
-   private final static ThreadLocal<Boolean> nested = new ThreadLocal<>();
 
    /**
     * Class that encapsulates a valid invocation for a given registered listener - containing a reference to the method
@@ -385,16 +376,13 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       final Object target;
       final Method method;
       final boolean sync;
-      final boolean nonBlocking;
       final WeakReference<ClassLoader> classLoader;
       final Subject subject;
 
-      public ListenerInvocationImpl(Object target, Method method, boolean sync, boolean nonBlocking,
-            ClassLoader classLoader, Subject subject) {
+      public ListenerInvocationImpl(Object target, Method method, boolean sync, ClassLoader classLoader, Subject subject) {
          this.target = target;
          this.method = method;
          this.sync = sync;
-         this.nonBlocking = nonBlocking;
          this.classLoader = new WeakReference<>(classLoader);
          this.subject = subject;
       }
@@ -454,21 +442,12 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
             return null;
          };
 
-         // If nonBlocking is true it can return null or CompletionStage<?>
-         // If it is nonblocking, we don't actually care if the listener is sync or not - since it already is complete
-         // from our perspective
-         if (nonBlocking) {
+         if (sync) {
+            // Sync can run in a blocking (null) or non blocking (CompletionStage) fashion
             Object result = r.get();
             if (result instanceof CompletionStage) {
                return (CompletionStage<Void>) result;
             }
-            throw new NullPointerException("Non blocking listener " + target.getClass() +
-                  " returned null CompletionStage!");
-         }
-
-         if (sync) {
-            // Sync we call inline and it has no return value
-            r.get();
          } else {
             asyncProcessor.execute(r::get);
          }
