@@ -16,6 +16,7 @@ import org.testng.ISuiteResult;
 import org.testng.ITestContext;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 import org.testng.collections.Maps;
 import org.testng.internal.IResultListener2;
@@ -91,12 +92,17 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
    }
 
    /**
+    * If it failed during the test configuration, it should me marked as failed
     * @see org.testng.ITestListener#onTestSkipped(ITestResult)
     */
    @Override
    public void onTestSkipped(ITestResult tr) {
       checkDuplicatesAndAdd(tr);
-      m_numSkipped.incrementAndGet();
+      if (skipTest(tr.getThrowable())) {
+         m_numSkipped.incrementAndGet();
+      } else {
+         m_numFailed.incrementAndGet();
+      }
    }
 
    /**
@@ -226,7 +232,8 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       if ((ITestResult.FAILURE == tr.getStatus()) || (ITestResult.SKIP == tr.getStatus())) {
          doc.push(XMLConstants.TESTCASE, attrs);
 
-         if (ITestResult.FAILURE == tr.getStatus()) {
+         // if it failed during the test configuration, it should me marked as failed
+         if (ITestResult.FAILURE == tr.getStatus() || (ITestResult.SKIP == tr.getStatus() && !skipTest(tr.getThrowable()))) {
             createFailureElement(doc, tr);
          } else if (ITestResult.SKIP == tr.getStatus()) {
             createSkipElement(doc, tr);
@@ -424,5 +431,9 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
          itrList.add(tr);
          m_allTests.put(key, itrList);
       }
+   }
+
+   private boolean skipTest(Throwable t) {
+      return t == null || t instanceof SkipException;
    }
 }
