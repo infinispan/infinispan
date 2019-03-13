@@ -1,6 +1,7 @@
 package org.infinispan.api.collections.reactive;
 
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Flow;
 
 import org.infinispan.api.search.reactive.ContinuousQueryPublisher;
 import org.infinispan.api.search.reactive.QueryPublisher;
@@ -27,6 +28,8 @@ public interface KeyValueStore<K, V> {
    CompletionStage<Void> remove(K key);
 
    CompletionStage<V> getAndRemove(K key);
+
+   CompletionStage<Void> putMany(Flow.Publisher<KeyValueEntry<K, V>> pairs);
 
    CompletionStage<Void> putMany(Publisher<KeyValueEntry<K, V>> pairs);
 

@@ -147,6 +147,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.reactivestreams</groupId>
+            <artifactId>reactive-streams-flow-adapters</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.rocksdb</groupId>
             <artifactId>rocksdbjni</artifactId>
             <exclusions>

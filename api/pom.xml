@@ -12,15 +12,25 @@
     <name>Infinispan Api</name>
     <description>Infinispan Api</description>
 
-    <properties>
-        <version.reactivestreams>1.0.1</version.reactivestreams>
-    </properties>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${version.maven-compiler-plugin}</version>
+                    <configuration>
+                        <release>11</release>
+                        <encoding>UTF-8</encoding>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
     <dependencies>
         <dependency>
             <groupId>org.reactivestreams</groupId>
             <artifactId>reactive-streams</artifactId>
-            <version>${version.reactivestreams}</version>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>

@@ -12,6 +12,21 @@
    <name>Infinispan Reactive Hot Rod Client</name>
    <description>Infinispan Reactive Hot Rod Client</description>
 
+   <build>
+      <pluginManagement>
+         <plugins>
+            <plugin>
+               <artifactId>maven-compiler-plugin</artifactId>
+               <version>${version.maven-compiler-plugin}</version>
+               <configuration>
+                  <release>11</release>
+                  <encoding>UTF-8</encoding>
+               </configuration>
+            </plugin>
+         </plugins>
+      </pluginManagement>
+   </build>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -31,6 +46,11 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-remote-query-client</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.reactivestreams</groupId>
+         <artifactId>reactive-streams-flow-adapters</artifactId>
       </dependency>
 
       <!-- Test dependencies -->
