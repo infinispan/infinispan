@@ -451,8 +451,6 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djgroups.join_timeout=2000
-                    -javaagent:${test.libs.dir}/agent-bond-agent.jar=${project.build.testOutputDirectory}/agent.conf
-                    -Djboss.modules.system.pkgs=
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>

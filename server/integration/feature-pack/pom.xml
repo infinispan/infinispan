@@ -121,11 +121,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.fabric8</groupId>
-            <artifactId>agent-bond-agent</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>io.prometheus.jmx</groupId>
             <artifactId>jmx_prometheus_javaagent</artifactId>
         </dependency>

@@ -460,12 +460,6 @@
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
                                 </artifactItem>
-                               <artifactItem>
-                                  <groupId>io.fabric8</groupId>
-                                  <artifactId>agent-bond-agent</artifactId>
-                                  <type>jar</type>
-                                  <overWrite>true</overWrite>
-                               </artifactItem>
                             </artifactItems>
                         </configuration>
                         <goals>

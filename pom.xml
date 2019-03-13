@@ -267,7 +267,6 @@
       <versionx.de.javakaffee.kryo-serializers>0.41</versionx.de.javakaffee.kryo-serializers>
       <versionx.dom4j.dom4j>1.6.1</versionx.dom4j.dom4j>
       <versionx.gnu.getopt.java-getopt>1.0.13</versionx.gnu.getopt.java-getopt>
-      <versionx.io.fabric8.agent-bond-agent>1.0.2</versionx.io.fabric8.agent-bond-agent>
       <versionx.io.netty.netty-buffer>${version.netty}</versionx.io.netty.netty-buffer>
       <versionx.io.netty.netty-codec>${version.netty}</versionx.io.netty.netty-codec>
       <versionx.io.netty.netty-codec-http>${version.netty}</versionx.io.netty.netty-codec-http>
@@ -1109,11 +1108,6 @@
             <groupId>io.agroal</groupId>
             <artifactId>agroal-pool</artifactId>
             <version>${version.io.agroal}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.fabric8</groupId>
-            <artifactId>agent-bond-agent</artifactId>
-            <version>${versionx.io.fabric8.agent-bond-agent}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
