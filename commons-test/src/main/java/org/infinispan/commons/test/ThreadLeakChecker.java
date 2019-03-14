@@ -183,7 +183,7 @@ public class ThreadLeakChecker {
 
       if (!leaks.isEmpty()) {
          for (LeakInfo leakInfo : leaks) {
-            log.warnf("Possible leaked thread:\n%s", prettyPringStacktrace(leakInfo.thread));
+            log.warnf("Possible leaked thread:\n%s", prettyPrintStacktrace(leakInfo.thread));
             leakInfo.reported = true;
          }
          // Strategies for debugging test suite thread leaks
@@ -227,7 +227,7 @@ public class ThreadLeakChecker {
          return false;
    }
 
-   public static String prettyPringStacktrace(Thread thread) {
+   public static String prettyPrintStacktrace(Thread thread) {
       // "management I/O-2" #55 prio=5 os_prio=0 tid=0x00007fe6a8134000 nid=0x7f9d runnable
       // [0x00007fe64e4db000]
       //    java.lang.Thread.State:RUNNABLE
@@ -238,7 +238,7 @@ public class ThreadLeakChecker {
       sb.append("   java.lang.Thread.State: ").append(thread.getState()).append('\n');
       StackTraceElement[] s = thread.getStackTrace();
       for (StackTraceElement ste : s) {
-         sb.append("\t").append(ste).append('\n');
+         sb.append("\tat ").append(ste).append('\n');
       }
       return sb.toString();
    }
