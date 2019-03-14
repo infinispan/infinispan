@@ -31,37 +31,65 @@ public class StatisticsConfigurationBuilder extends AbstractConfigurationChildBu
       super(builder);
    }
 
+   /**
+    * Enables or disables client-side statistics collection
+    *
+    * @param enabled whether to enable client-side statistics
+    */
    public StatisticsConfigurationBuilder enabled(boolean enabled) {
       attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
+   /**
+    * Enables client-side statistics collection
+    */
    public StatisticsConfigurationBuilder enable() {
       return enabled(true);
    }
 
+   /**
+    * Disables client-side statistics collection
+    */
    public StatisticsConfigurationBuilder disable() {
       return enabled(false);
    }
 
+   /**
+    * Enables or disables exposure of client-side statistics over JMX
+    */
    public StatisticsConfigurationBuilder jmxEnabled(boolean enabled) {
       attributes.attribute(JMX_ENABLED).set(enabled);
       return this;
    }
 
+   /**
+    * Enables exposure of client-side statistics over JMX
+    */
    public StatisticsConfigurationBuilder jmxEnable() {
       return jmxEnabled(true);
    }
 
+   /**
+    * Disables exposure of client-side statistics over JMX
+    */
    public StatisticsConfigurationBuilder jmxDisable() {
       return jmxEnabled(false);
    }
 
+   /**
+    * Sets the JMX domain name with which MBeans are exposed. Defaults to "org.infinispan" ({@link StatisticsConfiguration#JMX_DOMAIN})
+    * @param jmxDomain the JMX domain name
+    */
    public StatisticsConfigurationBuilder jmxDomain(String jmxDomain) {
       attributes.attribute(JMX_DOMAIN).set(jmxDomain);
       return this;
    }
 
+   /**
+    * Sets the name of the MBean. Defaults to "Default" ({@link StatisticsConfiguration#JMX_NAME})
+    * @param jmxName
+    */
    public StatisticsConfigurationBuilder jmxName(String jmxName) {
       attributes.attribute(JMX_NAME).set(jmxName);
       return this;
