@@ -254,7 +254,7 @@
       <versionx.com.mchange.c3p0>${version.c3p0}</versionx.com.mchange.c3p0>
       <versionx.com.mchange.mchange-commons-java>0.2.7</versionx.com.mchange.mchange-commons-java>
       <versionx.com.microsoft.azure.azure-storage>6.1.0</versionx.com.microsoft.azure.azure-storage>
-      <versionx.com.puppycrawl.tools.checkstyle>8.1</versionx.com.puppycrawl.tools.checkstyle>
+      <versionx.com.puppycrawl.tools.checkstyle>8.18</versionx.com.puppycrawl.tools.checkstyle>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
       <versionx.com.sun.istack.istack-commons-runtime>3.0.5</versionx.com.sun.istack.istack-commons-runtime>
       <versionx.com.sun.mail.javax.mail>1.5.5</versionx.com.sun.mail.javax.mail>
