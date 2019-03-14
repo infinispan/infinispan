@@ -8,6 +8,7 @@ import javax.inject.Inject;
 
 import org.infinispan.cdi.embedded.test.Deployments;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -37,6 +38,9 @@ public class DefaultCacheManagerTest extends Arquillian {
    private RemoteCacheManager remoteCacheManager;
 
    public void testDefaultRemoteCacheManagerInjection() {
+      // RemoteCacheProducer leaks thread, see ISPN-9935
+      ThreadLeakChecker.ignoreThreadsContaining("HotRod-client-async-pool-");
+
       final Properties properties = remoteCacheManager.getConfiguration().properties();
 
       assertEquals(properties.getProperty(SERVER_LIST_KEY), DEFAULT_SERVER_LIST_VALUE);
