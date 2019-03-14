@@ -44,6 +44,6 @@ public class TestResourceTrackingListener implements ITestListener {
    public void onFinish(ITestContext context) {
       Class testClass = context.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
       TestResourceTracker.testFinished(testClass.getName());
-      ThreadLeakChecker.checkForLeaks(getClass().getName());
+      ThreadLeakChecker.checkForLeaks(testClass.getName());
    }
 }
