@@ -4,6 +4,11 @@
 
 The previously deprecated DistributedExecutor is now removed. References should be updated to use ClusterExecutor.
 
+=== Removed the Tree module
+
+TreeCache has been unsupported for a long time and was only intended as a quick stopgap for JBossCache users. The module has now been removed
+completely.
+
 === The JDBC PooledConnectionFactory now utilises Agroal
 Previously the JDBC PooledConnectionFactory provided c3p0 and HikariCP based connection pools.
 From 10.0 we only provide a PooledConnectionFactory based upon the link:https://agroal.github.io/[Agroal project].

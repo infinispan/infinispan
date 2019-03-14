@@ -45,7 +45,6 @@
       <module dir="${output.dir}" target="modules/persistence/rest" module="persistence/rest" artifact="infinispan-cachestore-rest" />
       <module dir="${output.dir}" target="modules/spring" module="spring5" artifact="infinispan-spring5-embedded" />
       <module dir="${output.dir}" target="modules/tools" module="tools" artifact="infinispan-tools" />
-      <module dir="${output.dir}" target="modules/tree" module="tree" artifact="infinispan-tree" />
 
       <!-- Demos -->
       <mkdir dir="${output.dir}/demos" />

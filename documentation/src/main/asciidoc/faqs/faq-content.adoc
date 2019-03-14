@@ -122,10 +122,6 @@ Search to index your domain model while storing the indexes in {brandname} itsel
 {brandname}'s primary API - link:{javadocroot}/org/infinispan/Cache.html[`org.infinispan.Cache`] - extends `java.util.concurrent.ConcurrentMap` and closely resembles `javax.cache.Cache` from link:http://jcp.org/en/jsr/detail?id=107[JSR 107].
 This is the most performant API to use, and should be used for all new projects.
 
-link:{javadocroot}/org/infinispan/tree/TreeCache.html[`org.infinispan.tree.TreeCache`] is a tree structured API that looks a lot like link:http://www.jboss.org/jbosscache/[JBoss Cache's] API.  Note that the similarities end at the interface though, since internal implementation and representation of the tree is completely different, using a much more efficient flat structure.
-
-link:{javadocroot}/org/infinispan/tree/TreeCache.html[TreeCache] should be considered as a compatibility API, if you are migrating from JBoss Cache and cannot invest the time in rewriting your application, or your application specifically relies on a tree structure.
-
 ==== Which JVMs (JDKs) does {brandname} work with?
 {brandname} is developed and primarily tested against Oracle Java SE 8.
 It should work with most Java SE 8 implementations, including those from IBM, HP, Apple, Oracle, and OpenJDK.
