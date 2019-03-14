@@ -422,11 +422,6 @@
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-tree</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.infinispan.protostream</groupId>
                 <artifactId>protostream</artifactId>
                 <version>${version.protostream}</version>

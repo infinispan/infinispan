@@ -98,7 +98,6 @@
       <module>remote-query/remote-query-client</module>
       <module>remote-query/remote-query-server</module>
       <module>object-filter</module>
-      <module>tree</module>
       <module>lucene</module>
       <module>lucene/lucene-directory</module>
       <module>lucene/directory-provider</module>

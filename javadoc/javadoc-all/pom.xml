@@ -148,11 +148,6 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-tree</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-extended-statistics</artifactId>
       </dependency>
       <!-- /javadoc-embedded dependencies -->
@@ -280,10 +275,6 @@
                         <group>
                            <title>Server Connectors API</title>
                            <packages>org.infinispan.server*:org.infinispan.rest*</packages>
-                        </group>
-                        <group>
-                           <title>Tree API</title>
-                           <packages>org.infinispan.tree*</packages>
                         </group>
                         <group>
                            <title>Tasks API</title>
