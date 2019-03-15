@@ -1072,7 +1072,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public ClusterExecutor executor() {
-      if (globalComponentRegistry.getStatus() != ComponentStatus.RUNNING) {
+      // Allow INITIALIZING state so ClusterExecutor can be used by components in a @Start method.
+      if (globalComponentRegistry.getStatus() != ComponentStatus.RUNNING &&
+            globalComponentRegistry.getStatus() != ComponentStatus.INITIALIZING) {
          throw new IllegalStateException("CacheManager must be started before retrieving a ClusterExecutor!");
       }
       JGroupsTransport transport = (JGroupsTransport) globalComponentRegistry.getComponent(Transport.class);
