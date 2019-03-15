@@ -64,6 +64,8 @@ public class ThreadLeakChecker {
                       "|ExpiringMapExpirer" +
                       // RMI connectionThreadPool threads
                       "|RMI " +
+                      // jboss-modules
+                      "|Reference Reaper" +
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
       "org.jboss.as.arquillian.container.managed.ManagedDeployableContainer$ConsoleConsumer";
