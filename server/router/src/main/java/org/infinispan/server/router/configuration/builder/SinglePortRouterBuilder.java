@@ -50,13 +50,14 @@ public class SinglePortRouterBuilder extends AbstractRouterBuilder {
             else if (keystorePath != null) {
                 sslConfigurationBuilder.keyStoreFileName(keystorePath).keyStorePassword(keystorePassword).enable();
             }
-            AttributeSet attributes = ProtocolServerConfiguration.attributeDefinitionSet();
+            AttributeSet attributes = SinglePortRouterConfiguration.attributeDefinitionSet();
             attributes.attribute(ProtocolServerConfiguration.NAME).set(name);
             attributes.attribute(ProtocolServerConfiguration.HOST).set(ip.getHostName());
             attributes.attribute(ProtocolServerConfiguration.PORT).set(port);
             attributes.attribute(ProtocolServerConfiguration.IDLE_TIMEOUT).set(100);
             attributes.attribute(ProtocolServerConfiguration.RECV_BUF_SIZE).set(receiveBufferSize);
             attributes.attribute(ProtocolServerConfiguration.SEND_BUF_SIZE).set(sendBufferSize);
+            attributes.attribute(ProtocolServerConfiguration.WORKER_THREADS).set(1);
             return new SinglePortRouterConfiguration(attributes.protect(), sslConfigurationBuilder.create());
         }
         return null;

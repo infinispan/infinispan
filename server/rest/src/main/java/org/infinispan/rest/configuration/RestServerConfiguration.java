@@ -34,7 +34,7 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RestServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(),
-            EXTENDED_HEADERS, CONTEXT_PATH, MAX_CONTENT_LENGTH, CORS_RULES, COMPRESSION_LEVEL);
+            WORKER_THREADS, EXTENDED_HEADERS, CONTEXT_PATH, MAX_CONTENT_LENGTH, CORS_RULES, COMPRESSION_LEVEL);
    }
 
    RestServerConfiguration(AttributeSet attributes, SslConfiguration ssl, AuthenticationConfiguration authentication) {

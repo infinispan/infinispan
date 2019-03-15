@@ -81,17 +81,10 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
       scheduler.shutdown();
    }
 
-   @Override
-   public int getWorkerThreads() {
-      // Unused for now, so just return the smallest possible valid value
-      return 1;
-   }
-
    /**
     * Returns the cache being used by the Memcached server
     */
    public Cache<byte[], byte[]> getCache() {
       return memcachedCache;
    }
-
 }

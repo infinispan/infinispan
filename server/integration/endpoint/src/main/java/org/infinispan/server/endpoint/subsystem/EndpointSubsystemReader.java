@@ -105,7 +105,14 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         name = parseConnectorAttributes(reader, connector, name, i, value, attribute);
+         switch (attribute) {
+            case WORKER_THREADS:
+               HotRodConnectorResource.WORKER_THREADS.parseAndSetParameter(value, connector, reader);
+               break;
+            default:
+               name = parseConnectorAttributes(reader, connector, name, i, value, attribute);
+               break;
+         }
       }
 
       PathAddress connectorAddress = subsystemAddress.append(PathElement.pathElement(ModelKeys.HOTROD_CONNECTOR, name));
@@ -151,9 +158,9 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          case CACHE:
             MemcachedConnectorResource.CACHE.parseAndSetParameter(value, connector, reader);
             break;
-            case CLIENT_ENCODING:
-               MemcachedConnectorResource.CLIENT_ENCODING.parseAndSetParameter(value, connector, reader);
-               break;
+         case CLIENT_ENCODING:
+            MemcachedConnectorResource.CLIENT_ENCODING.parseAndSetParameter(value, connector, reader);
+            break;
          default:
             name = parseConnectorAttributes(reader, connector, name, i, value, attribute);
             break;

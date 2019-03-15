@@ -8,7 +8,7 @@ package org.infinispan.server.core.configuration;
 public class MockServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<MockServerConfiguration, MockServerConfigurationBuilder> {
 
    public MockServerConfigurationBuilder() {
-      super(12345);
+      super(12345, MockServerConfiguration.attributeDefinitionSet());
    }
 
    @Override

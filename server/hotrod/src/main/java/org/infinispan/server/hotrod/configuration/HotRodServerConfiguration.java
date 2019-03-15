@@ -21,6 +21,9 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    public static final AttributeDefinition<Long> TOPOLOGY_REPL_TIMEOUT = AttributeDefinition.builder("topology-repl-timeout", 10000L).immutable().build();
    public static final AttributeDefinition<Boolean> TOPOLOGY_STATE_TRANSFER = AttributeDefinition.builder("topology-state-transfer", true).immutable().build();
 
+   // The Hot Rod server has a different default
+   public static final AttributeDefinition<Integer> WORKER_THREADS = AttributeDefinition.builder("worker-threads", 160).immutable().build();
+
    private final Attribute<String> proxyHost;
    private final Attribute<Integer> proxyPort;
    private final Attribute<Long> topologyLockTimeout;
@@ -31,7 +34,7 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(HotRodServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(),
-            PROXY_HOST, PROXY_PORT, TOPOLOGY_STATE_TRANSFER, TOPOLOGY_AWAIT_INITIAL_TRANSFER, TOPOLOGY_LOCK_TIMEOUT, TOPOLOGY_REPL_TIMEOUT);
+            WORKER_THREADS, PROXY_HOST, PROXY_PORT, TOPOLOGY_STATE_TRANSFER, TOPOLOGY_AWAIT_INITIAL_TRANSFER, TOPOLOGY_LOCK_TIMEOUT, TOPOLOGY_REPL_TIMEOUT);
    }
 
    HotRodServerConfiguration(AttributeSet attributes, SslConfiguration ssl, AuthenticationConfiguration authentication) {

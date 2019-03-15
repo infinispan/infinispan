@@ -15,6 +15,13 @@ import org.infinispan.server.router.router.impl.singleport.SinglePortEndpointRou
 @ConfigurationFor(SinglePortEndpointRouter.class)
 public class SinglePortRouterConfiguration extends ProtocolServerConfiguration {
 
+    public static AttributeSet attributeDefinitionSet() {
+        return new AttributeSet(SinglePortRouterConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(), WORKER_THREADS);
+    }
+
+    /**
+     * Creates new configuration based on the IP address and port.
+     */
     public SinglePortRouterConfiguration(AttributeSet attributes, SslConfiguration ssl) {
         super(attributes, ssl);
     }
