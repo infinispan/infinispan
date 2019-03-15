@@ -215,8 +215,12 @@ public class ThreadLeakChecker {
       if (IGNORED_THREADS_REGEX.matcher(threadName).matches())
          return true;
 
-      // Special check for Arquillian, because it uses an unnamed thread to read from the container console
       if (leakInfo.thread.getName().startsWith("Thread-")) {
+         // Special check for ByteMan, because nobody calls TransformListener.terminate()
+         if (leakInfo.thread.getClass().getName().equals("org.jboss.byteman.agent.TransformListener"))
+            return true;
+
+         // Special check for Arquillian, because it uses an unnamed thread to read from the container console
          StackTraceElement[] s = leakInfo.thread.getStackTrace();
          for (StackTraceElement ste : s) {
             if (ste.getClassName().equals(ARQUILLIAN_CONSOLE_CONSUMER)) {

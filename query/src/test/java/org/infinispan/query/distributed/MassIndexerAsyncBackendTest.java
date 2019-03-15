@@ -8,7 +8,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.jboss.byteman.agent.TransformListener;
 import org.jboss.byteman.contrib.bmunit.BMNGListener;
 import org.jboss.byteman.contrib.bmunit.BMRule;
 import org.testng.annotations.AfterClass;
@@ -43,8 +42,6 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
    protected void destroy() {
       // DistributedExecutorMassIndexer leaks executor, see ISPN-7606
       ThreadLeakChecker.ignoreThreadsContaining("DefaultExecutorService-");
-      // ByteMan thread stopped after our thread leak check
-      ThreadLeakChecker.ignoreThreadsMatching(thread -> thread instanceof TransformListener);
 
       super.destroy();
    }
