@@ -103,7 +103,7 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
                  .build();
 
    static final SimpleAttributeDefinition[] PROTOCOL_SERVICE_ATTRIBUTES = {
-         SOCKET_BINDING, IDLE_TIMEOUT, TCP_NODELAY, TCP_KEEPALIVE, RECEIVE_BUFFER_SIZE, SEND_BUFFER_SIZE, IO_THREADS, WORKER_THREADS
+         SOCKET_BINDING, IDLE_TIMEOUT, TCP_NODELAY, TCP_KEEPALIVE, RECEIVE_BUFFER_SIZE, SEND_BUFFER_SIZE, IO_THREADS
    };
 
 

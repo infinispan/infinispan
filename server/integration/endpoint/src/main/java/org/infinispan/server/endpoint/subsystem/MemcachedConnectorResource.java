@@ -59,7 +59,7 @@ public class MemcachedConnectorResource extends ProtocolServerConnectorResource 
                .build();
 
 
-   static final SimpleAttributeDefinition[] MEMCACHED_CONNECTOR_ATTRIBUTES = {CACHE, CLIENT_ENCODING};
+   static final SimpleAttributeDefinition[] MEMCACHED_CONNECTOR_ATTRIBUTES = { ProtocolServerConnectorResource.WORKER_THREADS, CACHE, CLIENT_ENCODING};
 
    public MemcachedConnectorResource(boolean isRuntimeRegistration) {
       super(MEMCACHED_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.MEMCACHED_CONNECTOR), MemcachedSubsystemAdd.INSTANCE,

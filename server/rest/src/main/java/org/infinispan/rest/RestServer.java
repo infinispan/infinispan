@@ -96,9 +96,4 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(new CacheManagerResource(invocationHelper));
       this.restDispatcher = new RestDispatcherImpl(resourceManager);
    }
-
-   @Override
-   public int getWorkerThreads() {
-      return Integer.getInteger("infinispan.server.rest.workerThreads", configuration.workerThreads());
-   }
 }

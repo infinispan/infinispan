@@ -90,6 +90,9 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       writer.writeStartElement(Element.HOTROD_CONNECTOR.getLocalName());
       writeCommonConnector(writer, connector);
       writeProtocolServerConnector(writer, connector);
+      for (SimpleAttributeDefinition attribute : HotRodConnectorResource.HOTROD_ATTRIBUTES) {
+         attribute.marshallAsAttribute(connector, true, writer);
+      }
       writeTopologyStateTransfer(writer, connector);
       writeAuthentication(writer, connector);
       writeEncryption(writer, connector);

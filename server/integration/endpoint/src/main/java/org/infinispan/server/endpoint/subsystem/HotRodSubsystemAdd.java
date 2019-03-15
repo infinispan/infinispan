@@ -57,6 +57,9 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       for(AttributeDefinition attr : ProtocolServerConnectorResource.PROTOCOL_SERVICE_ATTRIBUTES) {
          attr.validateAndSet(source, target);
       }
+      for(AttributeDefinition attr : HotRodConnectorResource.HOTROD_ATTRIBUTES) {
+         attr.validateAndSet(source, target);
+      }
    }
 
    @Override
@@ -65,6 +68,7 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       ModelNode config = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
       // Create the builder
       HotRodServerConfigurationBuilder configurationBuilder = new HotRodServerConfigurationBuilder();
+      configurationBuilder.workerThreads(HotRodConnectorResource.WORKER_THREADS.resolveModelAttribute(context, config).asInt());
       configureProtocolServer(context, configurationBuilder, config);
       configureProtocolServerTopology(context, configurationBuilder, config);
       // Create the service

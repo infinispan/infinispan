@@ -96,11 +96,6 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
       public ChannelInitializer<Channel> getInitializer() {
          return null;
       }
-
-      @Override
-      public int getWorkerThreads() {
-         return configuration.workerThreads();
-      }
    }
 
 }

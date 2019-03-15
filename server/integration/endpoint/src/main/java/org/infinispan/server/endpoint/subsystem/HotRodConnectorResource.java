@@ -18,9 +18,17 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
+import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.ResourceDefinition;
+import org.jboss.as.controller.SimpleAttributeDefinition;
+import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
+import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.ModelType;
 
 /**
  * HotRodConnectorResource.
@@ -31,6 +39,16 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 public class HotRodConnectorResource extends ProtocolServerConnectorResource implements ResourceDefinition {
 
    public static final PathElement HOTROD_CONNECTOR_PATH = PathElement.pathElement(ModelKeys.HOTROD_CONNECTOR);
+
+   static final SimpleAttributeDefinition WORKER_THREADS =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.WORKER_THREADS, ModelType.INT, true)
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.WORKER_THREADS)
+               .setDefaultValue(new ModelNode().set(HotRodServerConfiguration.WORKER_THREADS.getDefaultValue()))
+               .setRestartAllServices()
+               .build();
+
+   static final SimpleAttributeDefinition[] HOTROD_ATTRIBUTES = {WORKER_THREADS};
 
    public HotRodConnectorResource(boolean isRuntimeRegistration) {
       super(HOTROD_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.HOTROD_CONNECTOR), HotRodSubsystemAdd.INSTANCE, HotRodSubsystemRemove.INSTANCE, isRuntimeRegistration);
@@ -46,6 +64,11 @@ public class HotRodConnectorResource extends ProtocolServerConnectorResource imp
    @Override
    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
       super.registerAttributes(resourceRegistration);
+
+      final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(HOTROD_ATTRIBUTES);
+      for (AttributeDefinition attr : HOTROD_ATTRIBUTES) {
+         resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
+      }
 
       if (isRuntimeRegistration()) {
          ProtocolServerMetricsHandler.registerMetrics(resourceRegistration, "hotrod");

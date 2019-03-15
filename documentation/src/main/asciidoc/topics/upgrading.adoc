@@ -9,6 +9,11 @@ Older versions of the Hot Rod protocol treated expiration values greater than th
 Total Order transaction protocol is going to be removed in a future release.
 Use the default protocol (2PC).
 
+=== Removed the infinispan.server.hotrod.workerThreads system property
+
+The `infinispan.server.hotrod.workerThreads` property was introduced as a hack to work around the fact that the configuration did not expose it.
+The property has been removed and endpoint worker threads must now be exclusively configured using the `worker-threads` attribute.
+
 === Removed AtomicMap and FineGrainedAtomicMap
 
 AtomicMapLookup, AtomicMap and FineGrainedAtomicMap have been removed. Please see FunctionalMaps or Cache#Merge for

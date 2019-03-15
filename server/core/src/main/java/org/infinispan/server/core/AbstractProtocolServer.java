@@ -116,7 +116,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    public ThreadPoolExecutor getExecutor() {
       if (this.executor == null || this.executor.isShutdown()) {
          DefaultThreadFactory factory = new DefaultThreadFactory(getQualifiedName() + "-ServerHandler");
-         int workerThreads = getWorkerThreads();
+         int workerThreads = configuration.workerThreads();
          this.executor = new ThreadPoolExecutor(
                workerThreads,
                workerThreads,
@@ -236,10 +236,4 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    public NettyTransport getTransport() {
       return transport;
    }
-
-   /**
-    * @deprecated Use the {@link #getExecutor()} to obtain information about the worker executor instead
-    */
-   @Deprecated
-   public abstract int getWorkerThreads();
 }

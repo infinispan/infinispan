@@ -601,11 +601,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       }
    }
 
-   @Override
-   public int getWorkerThreads() {
-      return Integer.getInteger("infinispan.server.hotrod.workerThreads", configuration.workerThreads());
-   }
-
    public String toString() {
       return "HotRodServer[" +
             "configuration=" + configuration +
