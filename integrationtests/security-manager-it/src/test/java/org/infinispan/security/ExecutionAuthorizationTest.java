@@ -8,6 +8,7 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
@@ -95,8 +96,13 @@ public class ExecutionAuthorizationTest extends MultipleCacheManagersTest {
 
    private void distExecTest() throws Exception {
       DefaultExecutorService des = new DefaultExecutorService(cache(0, EXECUTION_CACHE));
-      CompletableFuture<Integer> future = des.submit(new SimpleCallable());
-      assertEquals(Integer.valueOf(1), future.get());
+      try {
+         CompletableFuture<Integer> future = des.submit(new SimpleCallable());
+         assertEquals(Integer.valueOf(1), future.get());
+      } finally {
+         des.shutdownNow();
+         des.awaitTermination(1, TimeUnit.SECONDS);
+      }
    }
 
    public void testExecDistExec() throws Exception {
