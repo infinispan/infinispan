@@ -66,6 +66,8 @@ public class ThreadLeakChecker {
                       "|RMI " +
                       // jboss-modules
                       "|Reference Reaper" +
+                      // jboss-remoting
+                      "|remoting-jmx client" +
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
       "org.jboss.as.arquillian.container.managed.ManagedDeployableContainer$ConsoleConsumer";
