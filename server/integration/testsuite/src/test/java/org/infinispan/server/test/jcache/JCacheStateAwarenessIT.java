@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.lang.management.ManagementFactory;
 import java.util.stream.StreamSupport;
-
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
@@ -26,7 +25,10 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,30 +63,41 @@ public class JCacheStateAwarenessIT {
 
    private static final String cachingProvider = "org.infinispan.jcache.remote.JCachingProvider";
 
-   final int managementPort = 9999;
+   private static CachingProvider jcacheProvider;
+   private static MBeanServer mBeanServer;
 
    @InfinispanResource("cachecontainer")
    private RemoteInfinispanServer server1;
    private RemoteCacheManager rcm1;
-
-   private CachingProvider jcacheProvider;
    private CacheManager cacheManager;
-   private MBeanServer mBeanServer;
+
+   @BeforeClass
+   public static void setUpClass() {
+      mBeanServer = ManagementFactory.getPlatformMBeanServer();
+
+      jcacheProvider = Caching.getCachingProvider(cachingProvider);
+   }
+
+   @AfterClass
+   public static void tearDownClass() {
+      jcacheProvider.close();
+   }
 
    @Before
    public void setUp() {
-      if (rcm1 == null) {
-         Configuration conf = new ConfigurationBuilder().addServer()
-               .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
-               .port(server1.getHotrodEndpoint().getPort()).build();
+      Configuration conf = new ConfigurationBuilder().addServer()
+            .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
+            .port(server1.getHotrodEndpoint().getPort()).build();
 
-         rcm1 = new RemoteCacheManager(conf);
+      rcm1 = new RemoteCacheManager(conf);
 
-         jcacheProvider = Caching.getCachingProvider(cachingProvider);
-         cacheManager = jcacheProvider.getCacheManager();
+      cacheManager = jcacheProvider.getCacheManager();
+   }
 
-         mBeanServer = ManagementFactory.getPlatformMBeanServer();
-
+   @After
+   public void tearDown() {
+      if (rcm1 != null) {
+         rcm1.stop();
       }
    }
 
