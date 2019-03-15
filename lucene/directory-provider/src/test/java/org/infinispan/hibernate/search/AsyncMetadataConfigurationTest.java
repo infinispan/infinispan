@@ -2,6 +2,7 @@ package org.infinispan.hibernate.search;
 
 import static org.junit.Assert.assertEquals;
 
+import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.hibernate.search.test.util.HibernateManualConfiguration;
 import org.hibernate.search.testsupport.BytemanHelper;
@@ -81,7 +82,9 @@ public class AsyncMetadataConfigurationTest {
          configuration.addProperty("hibernate.search.default.write_metadata_async", async.toString());
       }
 
-      new SearchIntegratorBuilder().configuration(configuration).buildSearchIntegrator();
-      assertEquals("The directory provider was not started", 1, byteman.getAndResetInvocationCount());
+      try (SearchIntegrator ignored =
+              new SearchIntegratorBuilder().configuration(configuration).buildSearchIntegrator()) {
+         assertEquals("The directory provider was not started", 1, byteman.getAndResetInvocationCount());
+      }
    }
 }
