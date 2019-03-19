@@ -151,6 +151,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                if (i == 0 || !(e instanceof TimeoutException)) {
                   log.errorReadingRebalancingStatus(coordinator, e);
                   response = SuccessfulResponse.create(Boolean.TRUE);
+                  break;
                }
                log.debug("Timed out waiting for rebalancing status from coordinator, trying again");
             }
