@@ -269,7 +269,7 @@ public interface Log extends BasicLogger {
    @Message(value = "TransportFactory is deprecated, this setting is not used anymore.", id = 4073)
    void transportFactoryDeprecated();
 
-   @LogMessage(level = WARN)
+   @LogMessage(level = INFO)
    @Message(value = "Native Epoll transport not available, using NIO instead: %s", id = 4074)
    void epollNotAvailable(String cause);
 
