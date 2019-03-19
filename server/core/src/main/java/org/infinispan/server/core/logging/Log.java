@@ -1,6 +1,7 @@
 package org.infinispan.server.core.logging;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
+import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.net.SocketAddress;
@@ -79,7 +80,7 @@ public interface Log extends BasicLogger {
    @Message(value = "SSL Enabled but no SNI domain configured", id = 5027)
    CacheConfigurationException noSniDomainConfigured();
 
-   @LogMessage(level = WARN)
+   @LogMessage(level = INFO)
    @Message(value = "Native Epoll transport not available, using NIO instead: %s", id = 5028)
    void epollNotAvailable(String message);
 
