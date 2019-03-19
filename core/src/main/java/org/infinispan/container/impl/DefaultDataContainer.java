@@ -1,10 +1,8 @@
 package org.infinispan.container.impl;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
@@ -240,26 +238,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
 
    @Override
    public void removeSegments(IntSet segments) {
-      if (!segments.isEmpty()) {
-         List<InternalCacheEntry<K, V>> removedEntries;
-         if (!listeners.isEmpty()) {
-            removedEntries = new ArrayList<>(entries.size());
-         } else {
-            removedEntries = null;
-         }
-         Iterator<InternalCacheEntry<K, V>> iter = iteratorIncludingExpired(segments);
-         while (iter.hasNext()) {
-            InternalCacheEntry<K, V> ice = iter.next();
-            if (removedEntries != null) {
-               removedEntries.add(ice);
-            }
-            iter.remove();
-         }
-         if (removedEntries != null) {
-            List<InternalCacheEntry<K, V>> unmod = Collections.unmodifiableList(removedEntries);
-            listeners.forEach(c -> c.accept(unmod));
-         }
-      }
+      InternalDataContainerAdapter.removeSegmentEntries(this, segments, listeners, keyPartitioner);
    }
 
    @Override

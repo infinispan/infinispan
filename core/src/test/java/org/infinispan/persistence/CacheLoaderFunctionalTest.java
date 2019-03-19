@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -23,11 +22,14 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.skip.SkipTestNG;
+import org.infinispan.commons.util.Features;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.factories.DataContainerFactory;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
@@ -73,6 +75,9 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() {
+      boolean segmentationAvailable = new Features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE);
+      SkipTestNG.skipIf(segmented && !segmentationAvailable, "Segmentation is disabled");
+
       cfg = getConfiguration();
       configure(cfg);
       cm = TestCacheManagerFactory.createCacheManager(cfg);
@@ -122,7 +127,9 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    @AfterMethod(alwaysRun = true)
    public void tearDown() throws PersistenceException {
-      writer.clear();
+      if (writer != null) {
+         writer.clear();
+      }
       TestingUtil.killCacheManagers(cm);
       cache = null;
       cm = null;

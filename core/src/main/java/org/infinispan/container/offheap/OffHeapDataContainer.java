@@ -13,6 +13,7 @@ import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.AbstractInternalDataContainer;
+import org.infinispan.container.impl.InternalDataContainerAdapter;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -110,12 +111,12 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
 
    @Override
    public void addSegments(IntSet segments) {
-      throw new UnsupportedOperationException("Container is not segmented");
+      // Don't have to do anything here
    }
 
    @Override
    public void removeSegments(IntSet segments) {
-      throw new UnsupportedOperationException("Container is not segmented");
+      InternalDataContainerAdapter.removeSegmentEntries(this, segments, listeners, keyPartitioner);
    }
 
    @Override
