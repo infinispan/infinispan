@@ -151,7 +151,7 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
 
       // Block on about to send the remote command to node2
-      Mocks.blockingMock(checkPoint, RpcManager.class, cache0,
+      RpcManager original = Mocks.blockingMock(checkPoint, RpcManager.class, cache0,
             (stub, m) -> stub.when(m).invokeCommand(eq(cache2Address), isA(PublisherRequestCommand.class), any(), any()));
 
       int expectedAmount = caches().size();
@@ -165,13 +165,19 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
          expectedAmount--;
       }
 
-      runCommand(deliveryGuarantee, parallel, isEntry, expectedAmount, () -> {
-         assertTrue(checkPoint.await(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS));
+      try {
+         runCommand(deliveryGuarantee, parallel, isEntry, expectedAmount, () -> {
+            assertTrue(checkPoint.await(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS));
 
-         triggerRebalanceSegment2MovesToNode0();
+            triggerRebalanceSegment2MovesToNode0();
 
-         checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
-      }, toKeys(useKeys));
+            checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
+         }, toKeys(useKeys));
+      } finally {
+         if (original != null) {
+            TestingUtil.replaceComponent(cache0, RpcManager.class, original, true);
+         }
+      }
    }
 
    @Test(dataProvider = "GuaranteeParallelEntry")
