@@ -6,10 +6,12 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Features;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.DataContainerFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -33,7 +35,14 @@ public class DefaultSegmentedDataContainerTest extends MultipleCacheManagersTest
    public void ensureOldMapsRemoved() {
       for (Cache<Object, Object> cache : caches(CACHE_NAME)) {
          DataContainer dc = TestingUtil.extractComponent(cache, InternalDataContainer.class);
-         assertTrue(dc instanceof DefaultSegmentedDataContainer);
+
+         boolean segmentationAvailable = new Features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE);
+         if (!segmentationAvailable) {
+            assertEquals(DefaultDataContainer.class, dc.getClass());
+            return;
+         }
+
+         assertEquals(DefaultSegmentedDataContainer.class, dc.getClass());
 
          DefaultSegmentedDataContainer segmentedDataContainer = (DefaultSegmentedDataContainer) dc;
 

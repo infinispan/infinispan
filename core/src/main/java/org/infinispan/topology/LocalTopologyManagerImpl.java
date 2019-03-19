@@ -144,40 +144,44 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       try {
          while (true) {
             int viewId = transport.getViewId();
+            ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+                                                                        CacheTopologyControlCommand.Type.JOIN,
+                                                                        transport.getAddress(), joinInfo, viewId);
+            CacheStatusResponse initialStatus = null;
             try {
-               ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-                     CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo, viewId);
-               CacheStatusResponse initialStatus = (CacheStatusResponse) executeOnCoordinator(command, timeout);
-               if (initialStatus == null) {
-                  log.debug("Ignoring null join response, coordinator is probably shutting down");
-                  waitForView(viewId + 1, cacheStatus.getJoinInfo().getTimeout(), TimeUnit.MILLISECONDS);
-                  continue;
-               }
-
-               if (!doHandleTopologyUpdate(cacheName, initialStatus.getCacheTopology(),
-                                           initialStatus.getAvailabilityMode(), viewId, transport.getCoordinator(),
-                                           cacheStatus)) {
-                  throw new IllegalStateException(
-                        "We already had a newer topology by the time we received the join response");
-               }
-
-               doHandleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId,
-                                            transport.getCoordinator(), cacheStatus);
-               return initialStatus.getCacheTopology();
+               initialStatus = (CacheStatusResponse) executeOnCoordinator(command, timeout);
             } catch (NotSerializableException e) {
                // There's no point in retrying if the cache join info is not serializable
                throw new CacheJoinException(e);
             } catch (Exception e) {
                log.debugf(e, "Error sending join request for cache %s to coordinator", cacheName);
                if (e.getCause() != null && e.getCause() instanceof CacheJoinException) {
-                  throw (CacheJoinException)e.getCause();
+                  throw (CacheJoinException) e.getCause();
                }
                if (timeService.isTimeExpired(endTime)) {
                   throw e;
                }
                // TODO Add some configuration for this, or use a fraction of state transfer timeout
                Thread.sleep(100);
+               continue;
             }
+
+            if (initialStatus == null) {
+               log.debug("Ignoring null join response, coordinator is probably shutting down");
+               waitForView(viewId + 1, cacheStatus.getJoinInfo().getTimeout(), TimeUnit.MILLISECONDS);
+               continue;
+            }
+
+            if (!doHandleTopologyUpdate(cacheName, initialStatus.getCacheTopology(),
+                                        initialStatus.getAvailabilityMode(), viewId, transport.getCoordinator(),
+                                        cacheStatus)) {
+               throw new IllegalStateException(
+                  "We already had a newer topology by the time we received the join response");
+            }
+
+            doHandleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId,
+                                         transport.getCoordinator(), cacheStatus);
+            return initialStatus.getCacheTopology();
          }
       } finally {
          joinFuture.complete(null);

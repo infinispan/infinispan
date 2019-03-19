@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
@@ -27,6 +28,7 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       dcc.memory().storageType(StorageType.OFF_HEAP);
+      dcc.clustering().stateTransfer().timeout(10, TimeUnit.SECONDS);
       createCluster(dcc, 4);
       waitForClusterToForm();
    }

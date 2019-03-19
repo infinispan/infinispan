@@ -28,6 +28,8 @@ import org.infinispan.metadata.Metadata;
  */
 public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataContainer<K, V>
       implements InternalDataContainer<K, V> {
+   private static final int REMOTE_SEGMENT_BATCH_SIZE = 32;
+
    private final DataContainer<K, V> container;
 
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
@@ -113,8 +115,6 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
       iteratorIncludingExpired().forEachRemaining(ice -> action.accept(ice, keyPartitioner.getSegment(ice.getKey())));
    }
 
-   private static final int REMOTE_SEGMENT_BATCH_SIZE = 32;
-
    @Override
    public void addSegments(IntSet segments) {
       // Don't have to do anything here
@@ -122,6 +122,12 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
 
    @Override
    public void removeSegments(IntSet segments) {
+      removeSegmentEntries(container, segments, listeners, keyPartitioner);
+   }
+
+   public static <K, V> void removeSegmentEntries(DataContainer<K, V> dataContainer, IntSet segments,
+                                                  List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners,
+                                                  KeyPartitioner keyPartitioner) {
       if (!segments.isEmpty()) {
          List<InternalCacheEntry<K, V>> removedEntries;
          if (!listeners.isEmpty()) {
@@ -129,10 +135,13 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
          } else {
             removedEntries = null;
          }
-         Iterator<InternalCacheEntry<K, V>> iter = iteratorIncludingExpired(segments);
+         Iterator<InternalCacheEntry<K, V>> iter = dataContainer.iteratorIncludingExpired();
          while (iter.hasNext()) {
             InternalCacheEntry<K, V> ice = iter.next();
-            remove(ice.getKey());
+            if (!segments.contains(keyPartitioner.getSegment(ice.getKey())))
+               continue;
+
+            dataContainer.remove(ice.getKey());
 
             if (removedEntries != null) {
                removedEntries.add(ice);

@@ -5,8 +5,11 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.skip.SkipTestNG;
+import org.infinispan.commons.util.Features;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.factories.DataContainerFactory;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -51,6 +54,9 @@ public abstract class BaseDistStoreTest<K, V, C extends BaseDistStoreTest> exten
 
    @Override
    protected ConfigurationBuilder buildConfiguration() {
+      boolean segmentationAvailable = new Features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE);
+      SkipTestNG.skipIf(segmented && !segmentationAvailable, "Segmentation is disabled");
+
       ConfigurationBuilder cfg = super.buildConfiguration();
       StoreConfigurationBuilder<?, ?> storeConfigurationBuilder;
       if (shared) {
