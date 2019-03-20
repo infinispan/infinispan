@@ -24,5 +24,4 @@ reference the version of documentation that corresponds to your version of
  * A set of link:faqs/faqs.html[Frequently Asked Questions] (link:https://docs.jboss.org/infinispan/{infinispanversion}/pdf/faqs.pdf[PDF])
  * A guide to link:extending/extending.html[extending] {brandname} (link:https://docs.jboss.org/infinispan/{infinispanversion}/pdf/extending.pdf[PDF])
  * A guide to link:contributing/contributing.html[contributing] to {brandname} (link:https://docs.jboss.org/infinispan/{infinispanversion}/pdf/contributing.pdf[PDF])
- * ... and finally some link:videos/videos.html[videos]
 
