@@ -1919,10 +1919,26 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
                 case DIGEST: {
                     AuthenticationResource.MECHANISM.parseAndSetParameter("DIGEST-MD5", authentication, reader);
-                    String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName(), Attribute.REALM.getLocalName());
+                    String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName(),
+                          Attribute.REALM.getLocalName());
                     AuthenticationResource.USERNAME.parseAndSetParameter(attributes[0], authentication, reader);
                     AuthenticationResource.PASSWORD.parseAndSetParameter(attributes[1], authentication, reader);
                     AuthenticationResource.REALM.parseAndSetParameter(attributes[2], authentication, reader);
+                    for (int i = 0; i < reader.getAttributeCount(); i++) {
+                        String value = reader.getAttributeValue(i);
+                        Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+                        switch (attribute) {
+                            case SERVER_NAME:
+                                AuthenticationResource.SERVER_NAME.parseAndSetParameter(value, authentication, reader);
+                                break;
+                            case USERNAME:
+                            case PASSWORD:
+                            case REALM:
+                                break;
+                            default:
+                                throw ParseUtils.unexpectedAttribute(reader, i);
+                        }
+                    }
                     ParseUtils.requireNoContent(reader);
                     break;
                 }

@@ -254,6 +254,7 @@ public class ModelKeys {
     static final String SEGMENT_COLUMN = "segment-column";
     static final String CAPACITY_FACTOR = "capacity-factor";
     static final String SECURITY_REALM = "security-realm";
+    static final String SERVER_NAME = "server-name";
     static final String SHARED = "shared";
     static final String SHARED_PERSISTENT_LOCATION = "shared-persistent-location";
     static final String SHUTDOWN_TIMEOUT = "shutdown-timeout";
