@@ -1381,7 +1381,7 @@
     </xs:complexType>
 
     <xs:complexType name="remote-store-authentication">
-        <xs:choice minOccurs="1" maxOccurs="1">
+        <xs:choice>
             <xs:element name="plain" type="tns:remote-store-authentication-plain" />
             <xs:element name="digest" type="tns:remote-store-authentication-digest" />
             <xs:element name="external" type="tns:remote-store-authentication-external" />
@@ -1403,6 +1403,7 @@
         <xs:attribute name="username" type="xs:string" use="required" />
         <xs:attribute name="password" type="xs:string" use="required" />
         <xs:attribute name="realm" type="xs:string" use="required" />
+        <xs:attribute name="server-name" type="xs:string" />
     </xs:complexType>
 
     <xs:complexType name="remote-store-authentication-external">
