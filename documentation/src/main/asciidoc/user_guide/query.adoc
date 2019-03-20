@@ -16,7 +16,7 @@ between Java and non-Java clients.
 
 Apart from indexed queries, {brandname} can run queries over non-indexed data (link:#query_indexless[indexless queries]) and over partially indexed data (link:#query_hybrid[hybrid queries]).
 
-In terms of Search APIs, {brandname} has its own query language called _link:#query_ickle[Ickle]_, which is a subset of JP-QL providing extensions for full-text
+In terms of Search APIs, {brandname} has its own query language called _link:#query_ickle[Ickle]_, which is string-based and adds support for full-text
 querying. The link:#query_dsl[Query DSL] can be used for both embedded and remote java clients when full-text is not required; for Java embedded clients
 {brandname} offers the link:#query_hibernatesearch[Hibernate Search Query API] which supports running Lucene queries in the grid, apart from advanced search capabilities
 like Faceted and Spatial search.
@@ -804,13 +804,10 @@ assert cq.getResultSize() == 1;
 
 [[query_apis]]
 ==== Querying APIs
+You can query {brandname} using:
 
-{brandname} allows to query using Lucene queries directly and its own query language called Ickle, a subset of JP-QL with full-text extensions.
-
-In terms of DSL, {brandname} exposes the Hibernate Search DSL (which produces Lucene queries) and has its own DSL which internally generates an Ickle
-query.
-
-Finally, when using Lucene or Hibernate Search Query API, it is possible to query a single node or to broadcast a query to multiple nodes combining the results.
+* Lucene or Hibernate Search Queries. {brandname} exposes the Hibernate Search DSL, which produces Lucene queries. You can run Lucene queries on single nodes or broadcast queries to multiple nodes in an {brandname} cluster.
+* Ickle queries, a custom string-based query language with full-text extensions.
 
 [[query_hibernatesearch]]
 ===== Hibernate Search
@@ -1356,8 +1353,9 @@ is a fine example.
 
 [[query_ickle]]
 ===== Ickle
+Create relational and full-text queries in both Library and Remote Client-Server mode with the Ickle query language.
 
-Using Ickle, a light and small subset of JP-QL with full-text extensions, it is possible to create relational and full-text queries in both Library and Remote Client-Server mode. Ickle is a string-based querying language, and has the following characteristics:
+Ickle is string-based and has the following characteristics:
 
 * Query Java classes and supports Protocol Buffers.
 * Queries can target a single entity type.
@@ -1381,12 +1379,12 @@ Query q = qf.create("from sample_bank_account.Transaction where amount > 20");
 
 When using Ickle all fields used with full-text operators must be both `Indexed` and `Analysed`.
 
-====== Deviations from the Lucene Query Parser Syntax
+====== Ickle Query Language Parser Syntax
 
-While Ickle is a subset of JP-QL it does have the following deviations in its query syntax:
+The parser syntax for the Ickle query language has some notable rules:
 
 * Whitespace is not significant.
-* There is no support for wildcards in field names.
+* Wildcards are not supported in field names.
 * A field name or path must always be specified, as there is no default field.
 * `&&` and `||` are accepted instead of `AND` or `OR` in both full-text and JPA predicates.
 * `!` may be used instead of `NOT`.
