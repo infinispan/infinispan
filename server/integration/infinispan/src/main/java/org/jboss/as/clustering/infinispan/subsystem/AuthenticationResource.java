@@ -65,9 +65,15 @@ public class AuthenticationResource extends SimpleResourceDefinition {
                .setXmlName(ModelKeys.REALM)
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                .build();
+   static final SimpleAttributeDefinition SERVER_NAME =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.SERVER_NAME, ModelType.STRING, false)
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.SERVER_NAME)
+               .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+               .build();
 
 
-   static final SimpleAttributeDefinition[] AUTHENTICATION_ATTRIBUTES = { MECHANISM, USERNAME, PASSWORD, REALM };
+   static final SimpleAttributeDefinition[] AUTHENTICATION_ATTRIBUTES = { MECHANISM, USERNAME, PASSWORD, REALM, SERVER_NAME };
 
    public AuthenticationResource() {
       super(AUTHENTICATION_PATH, new InfinispanResourceDescriptionResolver(ModelKeys.REMOTE_STORE, ModelKeys.AUTHENTICATION),

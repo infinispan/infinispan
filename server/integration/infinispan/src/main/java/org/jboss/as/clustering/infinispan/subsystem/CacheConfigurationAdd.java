@@ -844,7 +844,8 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                       .saslMechanism(AuthenticationResource.MECHANISM.resolveModelAttribute(context, authentication).asString())
                       .username(AuthenticationResource.USERNAME.resolveModelAttribute(context, authentication).asString())
                       .password(AuthenticationResource.PASSWORD.resolveModelAttribute(context, authentication).asString())
-                      .realm(AuthenticationResource.REALM.resolveModelAttribute(context, authentication).asString());
+                      .realm(AuthenticationResource.REALM.resolveModelAttribute(context, authentication).asString())
+                      .serverName(AuthenticationResource.SERVER_NAME.resolveModelAttribute(context, authentication).asString());
             }
             return builder;
         } else if (storeKey.equals(ModelKeys.ROCKSDB_STORE)) {

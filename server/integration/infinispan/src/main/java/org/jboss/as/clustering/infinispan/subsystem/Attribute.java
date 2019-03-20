@@ -160,6 +160,7 @@ public enum Attribute {
     SECURITY_REALM(ModelKeys.SECURITY_REALM),
     SEGMENTS(ModelKeys.SEGMENTS),
     SEGMENTED(ModelKeys.SEGMENTED),
+    SERVER_NAME(ModelKeys.SERVER_NAME),
     SHARED(ModelKeys.SHARED),
     SHUTDOWN_TIMEOUT(ModelKeys.SHUTDOWN_TIMEOUT),
     SIMPLE_CACHE(ModelKeys.SIMPLE_CACHE),
@@ -199,7 +200,7 @@ public enum Attribute {
     private final String name;
     private final AttributeDefinition definition;
 
-    Attribute(final String name) {
+    Attribute(String name) {
         this.name = name;
         this.definition = null;
     }
