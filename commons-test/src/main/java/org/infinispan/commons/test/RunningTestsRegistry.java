@@ -36,7 +36,9 @@ class RunningTestsRegistry {
 
    static void unregisterThreadWithTest() {
       ScheduledFuture<?> killTask = scheduledTasks.remove(Thread.currentThread());
-      killTask.cancel(false);
+      if (killTask != null) {
+         killTask.cancel(false);
+      }
    }
 
    static void registerThreadWithTest(String testName, String simpleName) {
