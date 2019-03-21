@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.util.ProcessorInfo;
 
 /**
@@ -84,6 +85,18 @@ public class KnownComponentNames {
 
    public static int getDefaultQueueSize(String componentName) {
       return DEFAULT_QUEUE_SIZE.get(componentName);
+   }
+
+   public static int getDefaultMinThreads(String componentName) {
+      if (getDefaultQueueSize(componentName) == 0) {
+         return 1;
+      } else {
+         return getDefaultThreads(componentName);
+      }
+   }
+
+   public static long getDefaultKeepaliveMillis() {
+      return BlockingThreadPoolExecutorFactory.DEFAULT_KEEP_ALIVE_MILLIS;
    }
 
    public static String shortened(String cn) {
