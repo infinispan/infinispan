@@ -13,8 +13,6 @@
         <module name="javax.transaction.api"/>
         <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
-        <module name="io.reactivex.rxjava2.rxjava" slot="@infinispan.module.slot@"/>
-        <module name="org.reactivestreams.reactive-streams" slot="@infinispan.module.slot@"/>
         <module name="org.jboss.logging" slot="@infinispan.module.slot@"/>
     </dependencies>
 </module>
