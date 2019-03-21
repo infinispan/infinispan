@@ -16,8 +16,6 @@
         <module name="io.netty" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.server" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.server.rest" slot="@infinispan.module.slot@"/>
-        <module name="io.reactivex.rxjava2.rxjava" slot="@infinispan.module.slot@"/>
-        <module name="org.reactivestreams.reactive-streams" slot="@infinispan.module.slot@"/>
         <module name="org.jboss.logging"/>
         <module name="org.apache.commons.codec" slot="@infinispan.module.slot@"/>
     </dependencies>
