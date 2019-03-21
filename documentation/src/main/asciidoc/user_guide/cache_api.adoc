@@ -219,11 +219,11 @@ Cache manager-level events occur on a cache manager.  These too are global and  
 Please see the link:{javadocroot}/org/infinispan/notifications/cachemanagerlistener/annotation/package-summary.html[Javadocs  on the org.infinispan.notifications.cachemanagerlistener.annotation package] for a comprehensive list of all cache manager-level notifications,  and their respective method-level annotations.
 
 ==== Synchronicity of events
-By default, all async notifications are dispatched in the notification thread pool. Sync
-notifications will delay the operation from continuing until the listner method completes or the CompletionStage
+By default, all async notifications are dispatched in the notification thread pool.
+Sync notifications will delay the operation from continuing until the listener method completes or the CompletionStage
 completes (the former causing the thread to block). Alternatively, you could annotate your listener as _asynchronous_ in
-which case the operation will continue immediately, while the notification is completed asynchronously. To do this, simply
-annotate your listener such:
+which case the operation will continue immediately, while the notification is completed asynchronously on the notification thread pool.
+To do this, simply annotate your listener such:
 
 Asynchronous Listener
 [source,java]

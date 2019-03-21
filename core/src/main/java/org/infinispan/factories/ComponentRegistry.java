@@ -286,14 +286,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    /**
-    * Returns the cache configuration for this component registry
-    * @return config
-    */
-   public Configuration getConfiguration() {
-      return configuration;
-   }
-
-   /**
     * Invoked before any {@link ModuleCommandInitializer}.
     * This is a good place to register components that don't have any dependency.
     */

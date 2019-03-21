@@ -138,7 +138,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          Object value = dataCommand instanceof GetCacheEntryCommand ? ((CacheEntry) rv).getValue() : rv;
          CompletionStage<Void> stage = notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, true, rCtx, dataCommand);
          // If stage is already complete, we can avoid allocating lambda below
-         if (CompletionStages.isCompleteSuccessfully(stage)) {
+         if (CompletionStages.isCompletedSuccessfully(stage)) {
             stage = notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, false, rCtx, dataCommand);
          } else {
             // Make sure to fire the events serially
@@ -586,7 +586,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          Map<Object, CacheEntry> entries = ctx.getLookedUpEntries();
          for (Map.Entry<Object, CacheEntry> entry : entries.entrySet()) {
             CompletionStage<Void> stage = commitEntryIfNeeded(ctx, command, entry.getKey(), entry.getValue(), stateTransferFlag);
-            if (!CompletionStages.isCompleteSuccessfully(stage)) {
+            if (!CompletionStages.isCompletedSuccessfully(stage)) {
                if (aggregateCompletionStage == null) {
                   aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
                }

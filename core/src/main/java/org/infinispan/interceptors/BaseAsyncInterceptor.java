@@ -225,7 +225,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     */
    public final Object asyncInvokeNext(InvocationContext ctx, VisitableCommand command,
                                        CompletionStage<?> delay) {
-      if (delay == null || CompletionStages.isCompleteSuccessfully(delay)) {
+      if (delay == null || CompletionStages.isCompletedSuccessfully(delay)) {
          return invokeNext(ctx, command);
       }
       return asyncValue(delay).thenApply(ctx, command, invokeNextFunction);
@@ -345,7 +345,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     */
    public static Object delayedNull(CompletionStage<Void> stage) {
       // If stage was null - meant we didn't notify or if it already completed, no reason to create a stage instance
-      if (stage == null || CompletionStages.isCompleteSuccessfully(stage)) {
+      if (stage == null || CompletionStages.isCompletedSuccessfully(stage)) {
          return null;
       } else {
          return asyncValue(stage);

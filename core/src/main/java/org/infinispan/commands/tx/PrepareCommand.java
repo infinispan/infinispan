@@ -109,7 +109,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
          log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
       CompletionStage<Void> stage = notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);
 
-      if (CompletionStages.isCompleteSuccessfully(stage)) {
+      if (CompletionStages.isCompletedSuccessfully(stage)) {
          return invoker.invokeAsync(ctx, this);
       } else {
          return stage.thenCompose(v -> invoker.invokeAsync(ctx, this)).toCompletableFuture();

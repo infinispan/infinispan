@@ -1542,7 +1542,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
                   rpcManager.invokeCommand(backup, backupCommand, collector, rpcManager.getSyncRpcOptions());
 
             CompletionStage<Map<Address, Response>> combinedResponse;
-            if (CompletionStages.isCompleteSuccessfully(aggregatedStage)) {
+            if (CompletionStages.isCompletedSuccessfully(aggregatedStage)) {
                combinedResponse = rpcFuture;
             } else {
                combinedResponse = aggregatedStage.thenCombine(rpcFuture, (v, map) -> map);

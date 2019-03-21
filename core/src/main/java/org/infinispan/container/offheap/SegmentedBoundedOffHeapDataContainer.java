@@ -231,7 +231,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
                map.remove(ice.getKey(), addressToRemove);
                CompletionStage<Void> passivationStage = passivator.running().passivateAsync(ice);
                CompletionStage<Void> evictionStage = evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice));
-               CompletionStages.await(passivationStage, evictionStage);
+               CompletionStages.join(CompletionStages.allOf(passivationStage, evictionStage));
             } finally {
                entryWriteLock.unlock();
             }

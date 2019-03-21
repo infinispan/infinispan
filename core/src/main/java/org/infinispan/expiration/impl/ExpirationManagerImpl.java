@@ -195,14 +195,15 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    /**
     * Deletes the key from the store as well as notifies the cache listeners of the expiration of the given key,
     * value, metadata combination.
+    * <p>
+    * This method must be invoked while holding data container lock for the given key to ensure events are ordered
+    * properly.
     * @param key
     * @param value
     * @param metadata
     */
    private void deleteFromStoresAndNotify(K key, V value, Metadata metadata) {
       deleteFromStores(key);
-      // To guarantee ordering of events this must be done on the entry, so that another write cannot be
-      // done at the same time
       CompletionStages.join(cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null));
    }
 

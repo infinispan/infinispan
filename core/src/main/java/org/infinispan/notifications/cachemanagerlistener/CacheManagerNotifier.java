@@ -32,7 +32,7 @@ public interface CacheManagerNotifier extends Listenable {
    CompletionStage<Void> notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, List<List<Address>> subgroupsMerged);
 
    /**
-    * Returns whether there is at least one listener regitstered for the given annotation
+    * Returns whether there is at least one listener registered for the given annotation
     * @param annotationClass annotation to test for
     * @return true if there is a listener mapped to the annotation, otherwise false
     */

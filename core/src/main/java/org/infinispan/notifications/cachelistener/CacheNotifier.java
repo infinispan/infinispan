@@ -30,14 +30,12 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent}
     * event.
     */
-   // GOOD
    CompletionStage<Void> notifyCacheEntryCreated(K key, V value, Metadata metadata, boolean pre, InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent}
     * event.
     */
-   // GOOD
    CompletionStage<Void> notifyCacheEntryModified(K key, V value, Metadata metadata, V previousValue, Metadata previousMetadata, boolean pre,
                                  InvocationContext ctx, FlagAffectedCommand command);
 
@@ -45,7 +43,6 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent}
     * event.
     */
-   // GOOD
    CompletionStage<Void> notifyCacheEntryRemoved(K key, V previousValue, Metadata previousMetadata, boolean pre, InvocationContext ctx,
                                 FlagAffectedCommand command);
 
@@ -53,7 +50,6 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent}
     * event.
     */
-   // GOOD
    CompletionStage<Void> notifyCacheEntryVisited(K key, V value, boolean pre,
                                 InvocationContext ctx, FlagAffectedCommand command);
 
@@ -61,21 +57,19 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent}
     * event.
     */
-   // Automatic eviction is sync
+   // DataContainer eviction is sync
    CompletionStage<Void> notifyCacheEntriesEvicted(Collection<Map.Entry<K, V>> entries,
                                   InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryExpired event.
     */
-   // GOOD
    CompletionStage<Void> notifyCacheEntryExpired(K key, V value, Metadata metadata, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent}
     * event.
     */
-   // GOOD
    CompletionStage<Void> notifyCacheEntryInvalidated(K key, V value, Metadata metadata, boolean pre,
                                     InvocationContext ctx, FlagAffectedCommand command);
 
@@ -83,7 +77,6 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent}
     * event.
     */
-   // GOOD
    CompletionStage<Void> notifyCacheEntryLoaded(K key, V value, boolean pre,
                                InvocationContext ctx, FlagAffectedCommand command);
 
@@ -91,7 +84,6 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent}
     * event.
     */
-   // GOOD
    CompletionStage<Void> notifyCacheEntryActivated(K key, V value, boolean pre,
                                   InvocationContext ctx, FlagAffectedCommand command);
 
@@ -99,7 +91,7 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent}
     * event.
     */
-   // Internally sync
+   // Callers of passivation are sync
    CompletionStage<Void> notifyCacheEntryPassivated(K key, V value, boolean pre,
                                    InvocationContext ctx, FlagAffectedCommand command);
 
@@ -109,7 +101,6 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     * @param transaction the transaction that has just completed
     * @param successful  if true, the transaction committed.  If false, this is a rollback event
     */
-   // GOOD
    CompletionStage<Void> notifyTransactionCompleted(GlobalTransaction transaction, boolean successful, InvocationContext ctx);
 
    /**
@@ -120,16 +111,16 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
    // Sync local transaction registered
    CompletionStage<Void> notifyTransactionRegistered(GlobalTransaction globalTransaction, boolean isOriginLocal);
 
-   // Always sync - until additional parts of topology updates - not in user thread
+   // Callers sync - until additional parts of topology updates - not in user thread
    CompletionStage<Void> notifyDataRehashed(ConsistentHash oldCH, ConsistentHash newCH, ConsistentHash unionCH, int newTopologyId, boolean pre);
 
-   // Always sync - until additional parts of topology updates - not in user thread
+   // Callers sync - until additional parts of topology updates - not in user thread
    CompletionStage<Void> notifyTopologyChanged(CacheTopology oldTopology, CacheTopology newTopology, int newTopologyId, boolean pre);
 
-   // Always sync - until additional parts of topology updates - not in user thread
+   // Callers sync - until additional parts of topology updates - not in user thread
    CompletionStage<Void> notifyPartitionStatusChanged(AvailabilityMode mode, boolean pre);
 
-   // Always sync - done in period persistence thread
+   // Callers sync - done in periodic persistence thread - not in user thread
    CompletionStage<Void> notifyPersistenceAvailabilityChanged(boolean available);
 
    /**

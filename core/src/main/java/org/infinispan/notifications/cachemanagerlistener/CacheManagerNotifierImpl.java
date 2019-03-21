@@ -150,7 +150,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
    private CompletionStage<Void> invokeListener(ListenerInvocation<Event> listener, EventImpl e) {
       try {
          CompletionStage<Void> stage = listener.invoke(e);
-         if (stage != null && !CompletionStages.isCompleteSuccessfully(stage)) {
+         if (stage != null && !CompletionStages.isCompletedSuccessfully(stage)) {
             return stage.exceptionally(t -> {
                handleException(t);
                return null;

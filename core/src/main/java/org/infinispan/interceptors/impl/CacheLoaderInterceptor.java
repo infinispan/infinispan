@@ -374,7 +374,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             Object value = entry.getValue();
             // FIXME: There's no point to trigger the entryLoaded/Activated event twice.
             stage = sendNotification(key, value, true, ctx, cmd);
-            if (CompletionStages.isCompleteSuccessfully(stage)) {
+            if (CompletionStages.isCompletedSuccessfully(stage)) {
                stage = sendNotification(key, value, false, ctx, cmd);
             } else {
                stage = stage.thenCompose(v -> sendNotification(key, value, false, ctx, cmd));
@@ -449,7 +449,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          InvocationContext ctx, FlagAffectedCommand cmd) {
       CompletionStage<Void> stage = notifier.notifyCacheEntryLoaded(key, value, pre, ctx, cmd);
       if (activation) {
-         if (CompletionStages.isCompleteSuccessfully(stage)) {
+         if (CompletionStages.isCompletedSuccessfully(stage)) {
             stage = notifier.notifyCacheEntryActivated(key, value, pre, ctx, cmd);
          } else {
             stage = CompletionStages.allOf(stage, notifier.notifyCacheEntryActivated(key, value, pre, ctx, cmd));

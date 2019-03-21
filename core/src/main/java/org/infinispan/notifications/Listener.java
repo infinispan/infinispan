@@ -35,24 +35,24 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * A listener can be configured to run in two different modes: sync or async.
  * <p>The first, non-blocking, is a mode where the listener is notified in the invoking thread. Operations in this mode
  * should be used when either the listener operation is expected to complete extremely fast or when the operation can be
- * performed in a non-blocking by optionally returning a CompletionStage given back to the notification system to delay
+ * performed in a non-blocking manner by returning a CompletionStage to delay
  * the operation until the stage is complete. This mode is the default mode, overrided by the {@link Listener#sync()}
  * property. A method is non blocking if it declares that it returns a {@link java.util.concurrent.CompletionStage} or
- * one of its subtypes. Note that the stage can return a value, but it will not be utilized. The user <b>must</b> be very
- * careful that no blocking or long running operation is done while in a sync listener as it can cause possible thread
- * starvation, depending on the calling thread. It is entirely acceptable to use your own thread pool to execute a
- * listener operation and return a {@link java.util.concurrent.CompletionStage} signifying when it is complete.
+ * one of its subtypes. Note that the stage may return a value, but it will be ignored. The user <b>must</b> be very
+ * careful that no blocking or long running operation is done while in a sync listener as it can cause thread
+ * starvation. You should instead use your own thread pool to execute the blocking or long running operation and
+ * return a {@link java.util.concurrent.CompletionStage} signifying when it is complete.
  * <p>The second, async, is pretty much identical to sync except that the original operation can continue and complete
  * while the listener is notified in a different thread. Listeners that throw exceptions are always logged and are not
- * propagated to the user. This mode is enabled when the listener returns void and its annotation has specified
- * <code>sync</code> as <b>false</b>.
+ * propagated to the user. This mode is enabled when the listener has specified <code>sync</code> as <b>false</b> and
+ * the return value is always ignored.
  * <h4>Locking semantics</h4>
- * The sync mode will guarantee that events generated on an entry are done sequentially, since
+ * The sync mode will guarantee that listeners are notified for mutations on the same key sequentially, since
  * the lock for the key will be held when notifying the listener. Async however can have events notified in any order
- * so they should not be used when this ordering is required.
- * <p>Due to the lock being held during sync mode, care should be taken to not hold the lock longer
- * than needed, otherwise this could cause delays in other operations or even deadlocks if additional locks are
- * acquired in the event notification.
+ * so they should not be used when this ordering is required. If however the notification thread pool size is limited
+ * to one, this will provide ordering for async events, but the throughput of async events may be reduced.
+ * <p>Because the key lock is held for the entire execution of sync listeners (until the completion stage is done),
+ * sync listeners should be as short as possible. Acquiring additional locks is not recommended, as it could lead to deadlocks
  * <h4>Threading Semantics</h4>
  * A listener implementation must be capable of handling concurrent
  * invocations. Local sync notifications reuse the calling thread; remote sync notifications reuse the
@@ -65,13 +65,13 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * <h4>Clustered Listeners</h4>
  * Listeners by default are classified as a local listener. That is that they only receive events that are generated
  * on the node to which they were registered. They also receive pre and post notification events. A clustered listener,
- * the <code>cluster</code> value is configured as <b>true</b>, receives a subset of events but from any node that
- * generated the given event, not just the one they were registered on. The events that a cluster listener can receive are:
+ * configured with <code>clustered=true</code>, receives a subset of events but from any node that
+ * generated the given event, not just the one they were registered on. The events that a clustered listener can receive are:
  * {@link org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent},
  * {@link org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent},
  * {@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent} and
- * {@link org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent}. A clustered listener can only
- * receive post events, to improve performance, since some events may have to be sent from a different node.
+ * {@link org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent}.
+ * For performance reasons, a clustered listener only receives post events.
  * <h4>Summary of Notification Annotations</h4>
  * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of notification annotations">
  *    <tr>
@@ -285,10 +285,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 @Target(ElementType.TYPE)
 public @interface Listener {
    /**
-    * Specifies whether callbacks on any class annotated with this annotation happens synchronously or asynchronously,
-    * latter using a separate thread. Care should be used to ensure no sync operation blocks the caller. If the operation
-    * can be done in a non-blocking way, it is advisable to have your method return a
-    * {@link java.util.concurrent.CompletionStage} which will continue the event processing after the stage is completed.
+    * Specifies whether callbacks on any class annotated with this annotation happens synchronously or asynchronously.
+    * Please see the appropriate section on the {@link Listener} class for more details.
     * Defaults to <tt>true</tt>.
     *
     * @return true if the expectation is that the operation waits until the callbacks complete before continuing;
@@ -311,8 +309,11 @@ public @interface Listener {
 
    /**
     * Defines whether the annotated listener is clustered or not.
-    * Important: Clustered listener can only be notified for @CacheEntryRemoved, @CacheEntryCreated, @CacheEntryModified
-    * and @CacheEntryExpired events.
+    * Important: Clustered listener can only be notified for
+    * {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved},
+    * {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated},
+    * {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved}
+    * and {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired} events.
     * @return true if the expectation is that this listener is to be a cluster listener, as in it will receive
     *         all notifications for data modifications
     * @since 7.0

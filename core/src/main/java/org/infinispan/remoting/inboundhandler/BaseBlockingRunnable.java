@@ -107,7 +107,7 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
          onFinally();
          return;
       }
-      if (CompletionStages.isCompleteSuccessfully(commandFuture)) {
+      if (CompletionStages.isCompletedSuccessfully(commandFuture)) {
          invokedComplete(commandFuture.join(), null);
       } else {
          // Not worried about caching this method invocation, as this runnable is only used once

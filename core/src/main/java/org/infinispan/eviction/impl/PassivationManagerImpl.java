@@ -67,7 +67,7 @@ public class PassivationManagerImpl implements PassivationManager {
       return distributionManager != null && !distributionManager.getCacheTopology().isWriteOwner(key);
    }
 
-   private boolean passivate(Object key, InternalCacheEntry entry) {
+   private boolean doPassivate(Object key, InternalCacheEntry entry) {
       if (trace) log.tracef("Passivating entry %s", toStr(key));
       try {
          MarshallableEntry marshalledEntry = marshalledEntryFactory.create(key, entry.getValue(), entry.getMetadata(),
@@ -88,14 +88,14 @@ public class PassivationManagerImpl implements PassivationManager {
          if (notifier.hasListener(CacheEntryPassivated.class)) {
             return notifier.notifyCacheEntryPassivated(key, entry.getValue(), true, ImmutableContext.INSTANCE, null)
                   .thenCompose(v -> {
-                     if (passivate(key, entry)) {
+                     if (doPassivate(key, entry)) {
                         return notifier.notifyCacheEntryPassivated(key, null, false, ImmutableContext.INSTANCE, null);
                      }
                      return CompletableFutures.completedNull();
                   });
          } else {
             // Ignore result
-            passivate(key, entry);
+            doPassivate(key, entry);
          }
       }
       return CompletableFutures.completedNull();

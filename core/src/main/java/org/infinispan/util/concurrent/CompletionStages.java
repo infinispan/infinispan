@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.BiConsumer;
 
@@ -36,7 +37,7 @@ public class CompletionStages {
     * @param <R> the type of the value
     * @return composed completion stage that returns the value upon normal completion
     */
-   public static <R> AggregateCompletionStage<R> composedCompletionStage(R valueToReturn) {
+   public static <R> AggregateCompletionStage<R> aggregateCompletionStage(R valueToReturn) {
       return new ValueAggregateCompletionStage<>(valueToReturn);
    }
 
@@ -45,7 +46,7 @@ public class CompletionStages {
     * @param stage stage to check
     * @return if the stage is completed normally
     */
-   public static boolean isCompleteSuccessfully(CompletionStage<?> stage) {
+   public static boolean isCompletedSuccessfully(CompletionStage<?> stage) {
       CompletableFuture<?> future = stage.toCompletableFuture();
       return future.isDone() && !future.isCompletedExceptionally();
    }
@@ -61,26 +62,13 @@ public class CompletionStages {
     * @throws CompletionException if this stage completed exceptionally or a completion computation threw an exception
     */
    public static <R> R join(CompletionStage<R> stage) {
-      return stage.toCompletableFuture().join();
-   }
-
-   /**
-    * Shorthand for <code>CompletionStages.join(CompletionStages.allOf(stage1, stage2))</code> but doesn't return a value
-    * @param stage1
-    * @param stage2
-    * @throws CompletionException if either future completed exceptionally or a completion computation threw an exception
-    */
-   public static void await(CompletionStage<?> stage1, CompletionStage<?> stage2) {
-      join(allOf((CompletionStage<Void>) stage1, (CompletionStage<Void>) stage2));
-   }
-
-   /**
-    * Shorthand for <code>CompletionStages.join(CompletionStages.allOf(stages))</code> but doesn't return a value
-    * @param stages
-    * @throws CompletionException if this future completed exceptionally or a completion computation threw an exception
-    */
-   public static void await(CompletionStage<?>... stages) {
-      join(allOf(stages));
+      try {
+         return CompletableFutures.await(stage.toCompletableFuture());
+      } catch (ExecutionException e) {
+         throw new CompletionException(e.getCause());
+      } catch (InterruptedException e) {
+         throw new CompletionException(e);
+      }
    }
 
    /**
@@ -91,8 +79,8 @@ public class CompletionStages {
     * @return a CompletionStage that is complete when both of the given CompletionStages complete
     */
    public static CompletionStage<Void> allOf(CompletionStage<Void> first, CompletionStage<Void> second) {
-      if (!isCompleteSuccessfully(first)) {
-         if (isCompleteSuccessfully(second)) {
+      if (!isCompletedSuccessfully(first)) {
+         if (isCompletedSuccessfully(second)) {
             return first;
          } else {
             return CompletionStages.aggregateCompletionStage().dependsOn(first).dependsOn(second).freeze();
@@ -112,7 +100,7 @@ public class CompletionStages {
    public static CompletionStage<Void> allOf(CompletionStage<?>... stages) {
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (CompletionStage<?> stage : stages) {
-         if (!isCompleteSuccessfully(stage)) {
+         if (!isCompletedSuccessfully(stage)) {
             if (aggregateCompletionStage == null) {
                aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
             }
@@ -143,7 +131,14 @@ public class CompletionStages {
       }
    }
 
-   // This class implements BiConsumer to avoid additional object/lambda allocation per instance
+   /**
+    * Abstract {@link AggregateCompletionStage} that will keep a count of non completed stages it depends upon while
+    * only registering to be notified when each completes, decrementing the counter. The returned CompletionStage
+    * via {@link #freeze()} will be completed when the counter is zero, providing the value returned from
+    * {@link #getValue()} as the result.
+    * This class implements BiConsumer and extends CompletableFuture to avoid additional object/lambda allocation per instance
+    * @param <R>
+    */
    private static abstract class AbstractAggregateCompletionStage<R> extends CompletableFuture<R>
          implements AggregateCompletionStage<R>, BiConsumer<Object, Throwable> {
       private static final AtomicIntegerFieldUpdater<AbstractAggregateCompletionStage> remainingUpdater =
@@ -171,7 +166,7 @@ public class CompletionStages {
             throw new IllegalStateException();
          }
          // We only depend upon it if the stage wasn't complete
-         if (!isCompleteSuccessfully(stage)) {
+         if (!isCompletedSuccessfully(stage)) {
             remainingUpdater.incrementAndGet(this);
             stage.whenComplete(this);
          }

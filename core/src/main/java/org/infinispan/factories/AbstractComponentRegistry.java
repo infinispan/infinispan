@@ -207,16 +207,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    /**
-    * Retrieves the configuration component.
-    *
-    * @return a Configuration object
-    */
-   protected Configuration getConfiguration() {
-      // this is assumed to always be present as a part of the bootstrap/construction of a ComponentRegistry.
-      return getComponent(Configuration.class);
-   }
-
-   /**
     * Retrieves a component of a specified type from the registry, or null if it cannot be found.
     *
     * @param type type to find

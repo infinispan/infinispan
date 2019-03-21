@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -29,7 +30,7 @@ import org.infinispan.util.concurrent.AggregateCompletionStage;
 
 public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManager<K, V> {
    @Inject private EmbeddedCacheManager cacheManager;
-   @Inject private ComponentRegistry componentRegistry;
+   @Inject private Configuration configuration;
    @Inject private RpcManager rpcManager;
    @Inject private ComponentRef<CommandsFactory> commandsFactory;
 
@@ -39,7 +40,7 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
 
    @Start
    public void start() {
-      timeout = componentRegistry.getConfiguration().clustering().remoteTimeout();
+      timeout = configuration.clustering().remoteTimeout();
    }
 
    @Override

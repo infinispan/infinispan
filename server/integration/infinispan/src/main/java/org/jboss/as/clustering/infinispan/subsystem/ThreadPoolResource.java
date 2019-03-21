@@ -22,13 +22,6 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.getDefaultThreads;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -71,11 +64,11 @@ import org.jboss.msc.service.ServiceName;
  */
 public enum ThreadPoolResource implements ResourceDefinition, ThreadPoolDefinition {
 
-    ASYNC_OPERATIONS("async-operations", 1, getDefaultThreads(ASYNC_OPERATIONS_EXECUTOR), 1000, 60000),
-    LISTENER("listener", 1, getDefaultThreads(ASYNC_NOTIFICATION_EXECUTOR), 0, 60000),
-    REMOTE_COMMAND("remote-command", getDefaultThreads(REMOTE_COMMAND_EXECUTOR), getDefaultThreads(REMOTE_COMMAND_EXECUTOR), 100000, 60000),
-    STATE_TRANSFER("state-transfer", 1, getDefaultThreads(STATE_TRANSFER_EXECUTOR), 0, 60000),
-    TRANSPORT("transport", getDefaultThreads(ASYNC_TRANSPORT_EXECUTOR), getDefaultThreads(ASYNC_TRANSPORT_EXECUTOR), 100000, 60000),
+    ASYNC_OPERATIONS("async-operations", 25, 25, 1000, 60000),
+    LISTENER("listener", 1, 1, 100000, 60000),
+    REMOTE_COMMAND("remote-command", 25, 25, 100000, 60000),
+    STATE_TRANSFER("state-transfer", 1, 60, 0, 60000),
+    TRANSPORT("transport", 25, 25, 100000, 60000),
     ;
 
     static final PathElement WILDCARD_PATH = pathElement(PathElement.WILDCARD_VALUE);

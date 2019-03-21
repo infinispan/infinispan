@@ -116,7 +116,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
             cancellationService.register(Thread.currentThread(), ((CancellableCommand) cmd).getUUID());
          }
          CompletableFuture<Object> future = cmd.invokeAsync();
-         if (CompletionStages.isCompleteSuccessfully(future)) {
+         if (CompletionStages.isCompletedSuccessfully(future)) {
             Object obj = future.join();
             if (cmd instanceof CancellableCommand) {
                cancellationService.unregister(((CancellableCommand) cmd).getUUID());

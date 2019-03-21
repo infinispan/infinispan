@@ -43,7 +43,7 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
       this.command = command;
 
       queueAdd(function);
-      if (CompletionStages.isCompleteSuccessfully(valueFuture)) {
+      if (CompletionStages.isCompletedSuccessfully(valueFuture)) {
          accept(valueFuture.join(), null);
       } else {
          valueFuture.whenComplete(this);

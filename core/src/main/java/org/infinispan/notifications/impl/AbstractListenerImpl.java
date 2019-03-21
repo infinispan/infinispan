@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
@@ -113,8 +114,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
 
    }
 
-   // Processor used to handle both blocking sync and async listener notifications. The difference is that sync notifications
-   // can be waited upon by the caller if needed
+   // Processor used to handle async listener notifications.
    @Inject @ComponentName(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR)
    protected Executor asyncProcessor;
 
@@ -146,20 +146,17 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
    public abstract CompletionStage<Void> removeListenerAsync(Object listener);
 
    /**
-    * If the given <b>stage</b> is null or normally completed returns <b>aggregateCompletionStage</b> as is. Otherwise
-    * the <b>stage</b> is used as a dependant for the provided <b>aggregateCompletionStage</b> if provided or a new one is
-    * created that depends upon the provided <b>stage</b>. The existing or new <b>aggregateCompletionStage</b> is then
+    * If the given <b>stage</b> is null or normally completed returns the provided <b>aggregateCompletionStage</b> as is.
+    * Otherwise the <b>stage</b> is used as a dependant for the provided <b>aggregateCompletionStage</b> if provided or a
+    * new one is created that depends upon the provided <b>stage</b>. The existing or new <b>aggregateCompletionStage</b> is then
     * returned to the caller.
-    * <p>
-    * This allows for chaining of method calls and when all provided stages are null or complete will never allocate
-    * a AggregateCompletionStage always returning null.
     * @param aggregateCompletionStage the existing composed stage or null
     * @param stage the stage to rely upon
     * @return null or a composed stage that relies upon the provided stage
     */
    protected static AggregateCompletionStage<Void> composeStageIfNeeded(
          AggregateCompletionStage<Void> aggregateCompletionStage, CompletionStage<Void> stage) {
-      if (stage != null && !CompletionStages.isCompleteSuccessfully(stage)) {
+      if (stage != null && !CompletionStages.isCompletedSuccessfully(stage)) {
          if (aggregateCompletionStage == null) {
             aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
          }
@@ -348,7 +345,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
 
    /**
     * Tests that a method is a valid listener method, that is that it has a single argument that is assignable to
-    * <b>allowedParameter</b>. The method must also return either void or a CompletionStage, the latter meaning the
+    * <b>allowedParameter</b>. The method must also return either void or a CompletionStage, meaning the
     * method promises not block.
     * @param m method to test
     * @param allowedParameter what parameter is allowed for the method argument
