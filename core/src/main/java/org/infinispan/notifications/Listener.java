@@ -10,6 +10,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 /**
  * Class-level annotation used to annotate an object as being a valid cache listener.  Used with the {@link
  * org.infinispan.Cache#addListener(Object)} and related APIs.
+ *
  * <p/> Note that even if a class is annotated with this
  * annotation, it still needs method-level annotation (such as {@link org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted})
  * to actually receive notifications.
@@ -17,12 +18,14 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * running {@link org.infinispan.Cache} so users can be notified of {@link org.infinispan.Cache} events.
  * <p/> <p/> There can be multiple methods that are annotated to receive the same event, and a method may receive
  * multiple events by using a super type.
+ *
  * <h4>Delivery Semantics</h4>
  * An event is delivered immediately after the respective
  * operation, sometimes before as well, but must complete before the underlying cache call returns. For this reason it
  * is important to keep listener processing
  * logic short-lived. If a long running task needs to be performed, it's recommended to invoke this in a non blocking
  * way or to use an async listener.
+ *
  * <h4>Transactional Semantics</h4>
  * Since the event is delivered during the actual cache call, the transactional
  * outcome is not yet known. For this reason, <i>events are always delivered, even if the changes they represent are
@@ -31,6 +34,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * can be used, along with {@link org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent#isTransactionSuccessful()}
  * to record events and later process them once the transaction has been successfully committed. Example 4 demonstrates
  * this.
+ *
  * <h4>Listener Modes</h4>
  * A listener can be configured to run in two different modes: sync or async.
  * <p>The first, non-blocking, is a mode where the listener is notified in the invoking thread. Operations in this mode
@@ -46,13 +50,16 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * while the listener is notified in a different thread. Listeners that throw exceptions are always logged and are not
  * propagated to the user. This mode is enabled when the listener has specified <code>sync</code> as <b>false</b> and
  * the return value is always ignored.
+ *
  * <h4>Locking semantics</h4>
  * The sync mode will guarantee that listeners are notified for mutations on the same key sequentially, since
  * the lock for the key will be held when notifying the listener. Async however can have events notified in any order
  * so they should not be used when this ordering is required. If however the notification thread pool size is limited
  * to one, this will provide ordering for async events, but the throughput of async events may be reduced.
  * <p>Because the key lock is held for the entire execution of sync listeners (until the completion stage is done),
- * sync listeners should be as short as possible. Acquiring additional locks is not recommended, as it could lead to deadlocks
+ * sync listeners should be as short as possible.
+ * Acquiring additional locks is not recommended, as it could lead to deadlocks.
+ *
  * <h4>Threading Semantics</h4>
  * A listener implementation must be capable of handling concurrent
  * invocations. Local sync notifications reuse the calling thread; remote sync notifications reuse the
@@ -62,6 +69,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * caller or network thread.  The separate thread for async listeners is taken from a pool, which can be
  * configured using {@link GlobalConfiguration#listenerThreadPool()}. The
  * default values can be found in the {@link org.infinispan.factories.KnownComponentNames} class.
+ *
  * <h4>Clustered Listeners</h4>
  * Listeners by default are classified as a local listener. That is that they only receive events that are generated
  * on the node to which they were registered. They also receive pre and post notification events. A clustered listener,
@@ -72,6 +80,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * {@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent} and
  * {@link org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent}.
  * For performance reasons, a clustered listener only receives post events.
+ *
  * <h4>Summary of Notification Annotations</h4>
  * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of notification annotations">
  *    <tr>
@@ -157,6 +166,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * <p/>
  * </table>
  * <p/>
+ *
  * <h4>Example 1 - Method receiving a single event, sync</h4>
  * <pre>
  *    &#064;Listener
@@ -171,6 +181,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  *    }
  * </pre>
  * <p/>
+ *
  * <h4>Example 2 - Method receiving multiple events - sync</h4>
  * <pre>
  *    &#064;Listener
@@ -188,6 +199,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  *    }
  * </pre>
  * <p/>
+ *
  * <h4>Example 3 - Multiple methods receiving the same event - async</h4>
  * <pre>
  *    &#064;Listener(sync=false)
@@ -212,7 +224,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * </pre>
  * <p/>
  * <p/>
- * <b>Example 4 - Processing only events with a committed transaction - sync/non-blocking</b>
+ *
+ * <h4>Example 4 - Processing only events with a committed transaction - sync/non-blocking</h4>
  * <p/>
  * <pre>
  *    &#064;Listener
