@@ -521,7 +521,7 @@
       <versionx.org.jboss.metadata.jboss-metadata-common>${version.jboss.metadata}</versionx.org.jboss.metadata.jboss-metadata-common>
       <versionx.org.jboss.metadata.jboss-metadata-ear>${version.jboss.metadata}</versionx.org.jboss.metadata.jboss-metadata-ear>
       <versionx.org.jboss.metadata.jboss-metadata-ejb>${version.jboss.metadata}</versionx.org.jboss.metadata.jboss-metadata-ejb>
-      <versionx.org.jboss.modules.jboss-modules>1.8.5.Final</versionx.org.jboss.modules.jboss-modules>
+      <versionx.org.jboss.modules.jboss-modules>1.8.7.Final</versionx.org.jboss.modules.jboss-modules>
       <versionx.org.jboss.msc.jboss-msc>1.4.2.Final</versionx.org.jboss.msc.jboss-msc>
       <versionx.org.jboss.naming.jnp-client>${version.jboss.naming}</versionx.org.jboss.naming.jnp-client>
       <versionx.org.jboss.naming.jnpserver>${version.jboss.naming}</versionx.org.jboss.naming.jnpserver>
