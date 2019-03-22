@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
