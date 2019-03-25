@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
@@ -52,26 +54,16 @@ public class JGroupsConfigBuilder {
    /**
     * Holds unique mcast_addr for each thread used for JGroups channel construction.
     */
-   private static final ThreadLocal<String> threadMcastIP = new ThreadLocal<String>() {
-      private final AtomicInteger uniqueAddr = new AtomicInteger(11);
-
-      @Override
-      protected String initialValue() {
-         return "228.10.10." + uniqueAddr.getAndIncrement();
-      }
-   };
-
-   /**
-    * Holds unique mcast_port for each thread used for JGroups channel construction.
-    */
-   private static final ThreadLocal<Integer> threadMcastPort = new ThreadLocal<Integer>() {
-      private final AtomicInteger uniquePort = new AtomicInteger(45589);
+   private static final ThreadLocal<Integer> threadUdpIndex = new ThreadLocal<Integer>() {
+      private final AtomicInteger counter = new AtomicInteger(0);
 
       @Override
       protected Integer initialValue() {
-         return uniquePort.getAndIncrement();
+         return counter.getAndIncrement();
       }
    };
+
+   private static final ConcurrentMap<String, Integer> testUdpIndex = new ConcurrentHashMap<>();
 
    static {
       JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jgroups.protocol", "protocol.stack", "udp");
@@ -100,7 +92,7 @@ public class JGroupsConfigBuilder {
 
       configureTestPing(fullTestName, jgroupsCfg);
       replaceTcpStartPort(jgroupsCfg, flags);
-      replaceMCastAddressAndPort(jgroupsCfg);
+      replaceMCastAddressAndPort(jgroupsCfg, fullTestName);
       return jgroupsCfg.toString();
    }
 
@@ -141,13 +133,15 @@ public class JGroupsConfigBuilder {
       replaceProperties(jgroupsCfg, props, TEST_PING);
    }
 
-   private static void replaceMCastAddressAndPort(JGroupsProtocolCfg jgroupsCfg) {
+   private static void replaceMCastAddressAndPort(JGroupsProtocolCfg jgroupsCfg, String fullTestName) {
       ProtocolConfiguration udp = jgroupsCfg.getProtocol(UDP);
       if (udp == null) return;
 
+      Integer udpIndex = testUdpIndex.computeIfAbsent(fullTestName, k -> threadUdpIndex.get());
+
       Map<String, String> props = udp.getProperties();
-      props.put("mcast_addr", threadMcastIP.get());
-      props.put("mcast_port", threadMcastPort.get().toString());
+      props.put("mcast_addr", "228.10.10." + udpIndex);
+      props.put("mcast_port", String.valueOf(46000 + udpIndex));
       replaceProperties(jgroupsCfg, props, UDP);
    }
 
