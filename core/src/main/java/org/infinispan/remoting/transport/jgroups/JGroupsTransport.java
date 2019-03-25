@@ -93,6 +93,7 @@ import org.jgroups.Header;
 import org.jgroups.JChannel;
 import org.jgroups.MergeView;
 import org.jgroups.Message;
+import org.jgroups.PhysicalAddress;
 import org.jgroups.UpHandler;
 import org.jgroups.View;
 import org.jgroups.blocks.RequestCorrelator;
@@ -373,6 +374,22 @@ public class JGroupsTransport implements Transport {
    @Override
    public List<Address> getMembers() {
       return clusterView.getMembers();
+   }
+
+   @Override
+   public List<Address> getMembersPhysicalAddresses() {
+      if (channel != null) {
+         View v = channel.getView();
+         org.jgroups.Address[] rawMembers = v.getMembersRaw();
+         List<Address> addresses = new ArrayList<>(rawMembers.length);
+         for(org.jgroups.Address rawMember : rawMembers) {
+            PhysicalAddress physical_addr = (PhysicalAddress)channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, rawMember));
+            addresses.add(new JGroupsAddress(physical_addr));
+         }
+         return addresses;
+      } else {
+         return Collections.emptyList();
+      }
    }
 
    @Override

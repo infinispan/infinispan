@@ -227,6 +227,11 @@ public class MockTransport implements Transport {
    }
 
    @Override
+   public List<Address> getMembersPhysicalAddresses() {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public boolean isMulticastCapable() {
       return true;
    }
