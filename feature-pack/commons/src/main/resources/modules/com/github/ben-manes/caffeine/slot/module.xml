@@ -4,4 +4,9 @@
     <resources>
         <artifact name="${com.github.ben-manes.caffeine:caffeine}" />
     </resources>
+
+    <dependencies>
+        <module name="jdk.unsupported" optional="true"/>
+        <module name="sun.jdk" optional="true"/>
+    </dependencies>
 </module>
