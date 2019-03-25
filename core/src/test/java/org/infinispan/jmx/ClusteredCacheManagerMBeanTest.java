@@ -6,6 +6,7 @@ import static org.infinispan.test.TestingUtil.existsObject;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getJGroupsChannelObjectName;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -58,14 +59,16 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
    public void testAddressInformation() throws Exception {
       String cm1Address = manager(0).getAddress().toString();
       String cm2Address = manager(1).getAddress().toString();
-      assert server.getAttribute(name1, "NodeAddress").equals(cm1Address);
-      assert server.getAttribute(name1, "ClusterMembers").toString().contains(cm1Address);
-      assert !server.getAttribute(name1, "PhysicalAddresses").toString().equals("local");
-      assert server.getAttribute(name1, "ClusterSize").equals(2);
-      assert server.getAttribute(name2, "NodeAddress").equals(cm2Address);
-      assert server.getAttribute(name2, "ClusterMembers").toString().contains(cm2Address);
-      assert !server.getAttribute(name2, "PhysicalAddresses").toString().equals("local");
-      assert server.getAttribute(name2, "ClusterSize").equals(2);
+      assertEquals(cm1Address, server.getAttribute(name1, "NodeAddress"));
+      assertTrue(server.getAttribute(name1, "ClusterMembers").toString().contains(cm1Address));
+      assertNotEquals("local", server.getAttribute(name1, "PhysicalAddresses"));
+      assertEquals(2, server.getAttribute(name1, "ClusterSize"));
+      assertEquals(cm2Address, server.getAttribute(name2, "NodeAddress"));
+      assertTrue(server.getAttribute(name2, "ClusterMembers").toString().contains(cm2Address));
+      assertNotEquals("local", server.getAttribute(name2, "PhysicalAddresses"));
+      assertEquals(2, server.getAttribute(name2, "ClusterSize"));
+      String cm1members = (String) server.getAttribute(name1, "ClusterMembersPhysicalAddresses");
+      assertEquals(2,cm1members.substring(1, cm1members.length()-2).split(",\\s+").length);
    }
 
    public void testJGroupsInformation() throws Exception {
@@ -73,8 +76,8 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
       ObjectName jchannelName2 = getJGroupsChannelObjectName(JMX_DOMAIN2, manager(1).getClusterName());
       assertEquals(server.getAttribute(name1, "NodeAddress"), server.getAttribute(jchannelName1, "address"));
       assertEquals(server.getAttribute(name2, "NodeAddress"), server.getAttribute(jchannelName2, "address"));
-      assert (Boolean) server.getAttribute(jchannelName1, "connected");
-      assert (Boolean) server.getAttribute(jchannelName2, "connected");
+      assertTrue((Boolean) server.getAttribute(jchannelName1, "connected"));
+      assertTrue((Boolean) server.getAttribute(jchannelName2, "connected"));
    }
 
    public void testExecutorMBeans() throws Exception {

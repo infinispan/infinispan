@@ -107,6 +107,11 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
+   public List<Address> getMembersPhysicalAddresses() {
+      return actual.getMembersPhysicalAddresses();
+   }
+
+   @Override
    public boolean isMulticastCapable() {
       return actual.isMulticastCapable();
    }

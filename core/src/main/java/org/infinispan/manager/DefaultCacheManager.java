@@ -988,6 +988,14 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return addressList.toString();
    }
 
+   @ManagedAttribute(description = "List of members in the cluster", displayName = "Cluster members", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getClusterMembersPhysicalAddresses() {
+      Transport t = getTransport();
+      if (t == null) return "local";
+      List<Address> addressList = t.getMembersPhysicalAddresses();
+      return addressList.toString();
+   }
+
    @ManagedAttribute(description = "Size of the cluster in number of nodes", displayName = "Cluster size", displayType = DisplayType.SUMMARY)
    public int getClusterSize() {
       Transport t = getTransport();

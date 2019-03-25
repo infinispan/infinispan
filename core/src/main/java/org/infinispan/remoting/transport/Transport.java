@@ -213,6 +213,14 @@ public interface Transport extends Lifecycle {
     */
    List<Address> getMembers();
 
+
+   /**
+    * Returns physical addresses of members in the current cluster view.
+    *
+    * @return a list of physical addresses
+    */
+   List<Address> getMembersPhysicalAddresses();
+
    /**
     * Tests whether the transport supports true multicast
     *
