@@ -1881,6 +1881,9 @@ Analysis is a process that converts input data into one or more terms that you c
 | `ngram`
 | Generates n-gram tokens that are 3 grams in size by default.
 
+| `filename`
+| Splits text fields into larger size tokens than the `standard` analyzer, treating whitespace as a delimiter and converts all letters to lowercase characters.
+
 |===
 
 These analyzer definitions are based on Apache Lucene and are provided "as-is".
