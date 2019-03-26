@@ -43,7 +43,7 @@ class AuthHandler extends ActivationHandler {
    }
 
    @Override
-   public void channelActive(ChannelHandlerContext ctx) throws Exception {
+   public void channelActive(ChannelHandlerContext ctx) {
       Channel channel = ctx.channel();
       operationsFactory.newAuthMechListOperation(channel).execute().thenCompose(serverMechs -> {
          if (!serverMechs.contains(authentication.saslMechanism())) {
