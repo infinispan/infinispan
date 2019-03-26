@@ -40,7 +40,7 @@ init {
    protected HotRodHeader getHeader() {
       if (accessLogging && header != null) {
          // this causes two checks for subject but we don't mind
-         return new AccessLoggingHeader(header, auth.getSubject(false), key, requestBytes, requestStart);
+         return new AccessLoggingHeader(header, null, key, requestBytes, requestStart);
       } else {
          return header;
       }
