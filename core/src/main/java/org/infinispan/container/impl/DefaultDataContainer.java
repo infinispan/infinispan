@@ -249,10 +249,9 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
       if (action == null)
          throw new IllegalArgumentException("No action specified");
 
-      long now = timeService.wallClockTime();
-      entries.forEach((K key, InternalCacheEntry<K, V> value) -> {
-         if (filter.accept(key) && !value.isExpired(now)) {
-            action.accept(key, value);
+      forEach(e -> {
+         if (filter.accept(e.getKey())) {
+            action.accept(e.getKey(), e);
          }
       });
       //TODO figure out the way how to do interruption better (during iteration)
@@ -270,9 +269,9 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
          throw new IllegalArgumentException("No action specified");
 
       long now = timeService.wallClockTime();
-      entries.forEach((K key, InternalCacheEntry<K, V> value) -> {
-         if (filter.accept(key, value.getValue(), value.getMetadata()) && !value.isExpired(now)) {
-            action.accept(key, value);
+      forEach(e -> {
+         if (filter.accept(e.getKey(), e.getValue(), e.getMetadata())) {
+            action.accept(e.getKey(), e);
          }
       });
       //TODO figure out the way how to do interruption better (during iteration)

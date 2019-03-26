@@ -1,5 +1,6 @@
 package org.infinispan.expiration.impl;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.testng.annotations.Factory;
@@ -13,7 +14,7 @@ public class ExpirationStoreFunctionalTest extends ExpirationFunctionalTest {
    public Object[] factory() {
       return new Object[]{
             // Test is for dummy store and we don't care about memory storage types
-            new ExpirationStoreFunctionalTest(),
+            new ExpirationStoreFunctionalTest().cacheMode(CacheMode.LOCAL),
       };
    }
 

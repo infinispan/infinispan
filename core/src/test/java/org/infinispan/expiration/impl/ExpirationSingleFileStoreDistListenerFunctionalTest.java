@@ -25,7 +25,7 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
    public Object[] factory() {
       return new Object[]{
             // Test is for single file store with a listener in a dist cache and we don't care about memory storage types
-            new ExpirationSingleFileStoreDistListenerFunctionalTest(),
+            new ExpirationSingleFileStoreDistListenerFunctionalTest().cacheMode(CacheMode.DIST_SYNC),
       };
    }
 
@@ -39,7 +39,7 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
       config
               // Prevent the reaper from running, reaperEnabled(false) doesn't work when a store is present
               .expiration().wakeUpInterval(Long.MAX_VALUE)
-              .clustering().cacheMode(CacheMode.DIST_SYNC)
+              .clustering().cacheMode(cacheMode)
               .persistence().addSingleFileStore().location(TestingUtil.tmpDirectory(this.getClass()));
    }
 
