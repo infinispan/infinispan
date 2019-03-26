@@ -7,7 +7,7 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -20,14 +20,13 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "expiration.impl.ExpirationStoreListenerFunctionalTest")
 public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFunctionalTest {
    protected ExpiredCacheListener listener = new ExpiredCacheListener();
-   protected ExpirationManager manager;
 
    @Factory
    @Override
    public Object[] factory() {
       return new Object[]{
             // Test is for dummy store with a listener and we don't care about memory storage types
-            new ExpirationStoreListenerFunctionalTest(),
+            new ExpirationStoreListenerFunctionalTest().cacheMode(CacheMode.LOCAL),
       };
    }
 
@@ -39,7 +38,6 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
    @Override
    protected void afterCacheCreated(EmbeddedCacheManager cm) {
       cache.addListener(listener);
-      manager = cache.getAdvancedCache().getExpirationManager();
    }
 
    @AfterMethod
@@ -50,7 +48,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
    @Override
    public void testSimpleExpirationLifespan() throws Exception {
       super.testSimpleExpirationLifespan();
-      manager.processExpiration();
+      expirationManager.processExpiration();
       assertExpiredEvents(SIZE);
    }
 
@@ -61,7 +59,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
       }
       timeService.advance(2);
       // We have to process expiration for store and max idle
-      manager.processExpiration();
+      expirationManager.processExpiration();
       assertEquals(0, cache.size());
       assertExpiredEvents(SIZE);
    }
@@ -76,7 +74,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
       timeService.advance(11);
       assertNull(cache.get(key));
       // Stores do not expire entries on load, thus we need to purge them
-      manager.processExpiration();
+      expirationManager.processExpiration();
 
       assertEquals(1, listener.getInvocationCount());
 

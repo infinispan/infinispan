@@ -4,6 +4,9 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -11,8 +14,6 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
 
 @Test(groups = "functional", testName = "expiration.impl.ExpirationListenerFunctionalTest")
 public class ExpirationListenerFunctionalTest extends ExpirationFunctionalTest {
@@ -24,9 +25,12 @@ public class ExpirationListenerFunctionalTest extends ExpirationFunctionalTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new ExpirationListenerFunctionalTest().withStorage(StorageType.BINARY),
-            new ExpirationListenerFunctionalTest().withStorage(StorageType.OBJECT),
-            new ExpirationListenerFunctionalTest().withStorage(StorageType.OFF_HEAP)
+            new ExpirationListenerFunctionalTest().cacheMode(CacheMode.LOCAL).withStorage(StorageType.BINARY),
+            new ExpirationListenerFunctionalTest().cacheMode(CacheMode.LOCAL).withStorage(StorageType.OBJECT),
+            new ExpirationListenerFunctionalTest().cacheMode(CacheMode.LOCAL).withStorage(StorageType.OFF_HEAP),
+            new ExpirationListenerFunctionalTest().cacheMode(CacheMode.DIST_SYNC).withStorage(StorageType.BINARY),
+            new ExpirationListenerFunctionalTest().cacheMode(CacheMode.DIST_SYNC).withStorage(StorageType.OBJECT),
+            new ExpirationListenerFunctionalTest().cacheMode(CacheMode.DIST_SYNC).withStorage(StorageType.OFF_HEAP)
       };
    }
 

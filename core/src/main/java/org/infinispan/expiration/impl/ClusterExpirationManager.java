@@ -215,17 +215,17 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    public CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
       // We need to synchronize on the entry since {@link InternalCacheEntry} locks the entry when doing an update
       // so we can see both the new value and the metadata
-      boolean expiredTransient;
+      boolean expiredMortal;
       synchronized (entry) {
-         expiredTransient = ExpiryHelper.isExpiredTransient(entry.getMaxIdle(), entry.getLastUsed(), currentTime);
+         expiredMortal = ExpiryHelper.isExpiredMortal(entry.getLifespan(), entry.getCreated(), currentTime);
       }
-      if (expiredTransient) {
+      if (expiredMortal) {
+         // Lifespan was expired - but we don't want to take the hit of causing an expire command to be fired
+         return CompletableFutures.completedTrue();
+      } else {
          // Max idle expiration - we just return it (otherwise we would have to incur remote overhead)
          // This entry will be removed on next get or reaper running
          return CompletableFutures.completedFalse();
-      } else {
-         // Lifespan was expired - but we don't want to take the hit of causing an expire command to be fired
-         return CompletableFutures.completedTrue();
       }
    }
 
