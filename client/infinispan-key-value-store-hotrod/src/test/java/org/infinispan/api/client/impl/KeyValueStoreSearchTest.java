@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.api.Infinispan;
-import org.infinispan.api.InfinispanClient;
 import org.infinispan.api.collections.reactive.KeyValueEntry;
 import org.infinispan.api.collections.reactive.KeyValueStore;
 import org.infinispan.api.collections.reactive.KeyValueStoreConfig;
@@ -57,9 +56,7 @@ public class KeyValueStoreSearchTest extends SingleHotRodServerTest {
        * In real world example, we should only need to call this way
        * Infinispan infinispan = InfinispanClient.newInfinispan();
        */
-      InfinispanClientImpl infinispanClientImpl = (InfinispanClientImpl) InfinispanClient.newInfinispan();
-      infinispanClientImpl.setCacheManager(remoteCacheManager);
-      infinispan = infinispanClientImpl;
+      infinispan = new InfinispanClientImpl(remoteCacheManager);
       KeyValueStoreConfig storeConfig = KeyValueStoreConfig.init(Person.class)
             .withPackageName("org.infinispan")
             .withSchemaFileName("persons");
@@ -99,10 +96,8 @@ public class KeyValueStoreSearchTest extends SingleHotRodServerTest {
    @Test
    public void search_api() {
       QueryPublisher<Person> queryPublisher = store.find();
-      queryPublisher.query(
-            "FROM org.infinispan.Person p where p.lastName = :lastName and p.address.number = :number",
-            QueryParameters.init("lastName", "Bilbao").append("number", "12")
-      );
+      queryPublisher.query("FROM org.infinispan.Person p where p.lastName = :lastName and p.address.number = :number")
+            .withQueryParameters(QueryParameters.init("lastName", "Bilbao").append("number", "12"));
 
       TestSubscriber<Person> personTestSubscriber = new TestSubscriber<>();
       queryPublisher.subscribe(personTestSubscriber);
@@ -118,10 +113,8 @@ public class KeyValueStoreSearchTest extends SingleHotRodServerTest {
    public void continuous_query_search() {
       ContinuousQueryPublisher<String, Person> continuousQueryPublisher = store.findContinuously();
 
-      continuousQueryPublisher.query(
-            "FROM org.infinispan.Person p where p.address.number = :number",
-            QueryParameters.init("number", "12")
-      );
+      continuousQueryPublisher.query("FROM org.infinispan.Person p where p.address.number = :number")
+            .withQueryParameters(QueryParameters.init("number", "12"));
 
       TestSubscriber<KeyValueEntry<String, Person>> personTestSubscriber = new TestSubscriber<>();
       continuousQueryPublisher.subscribe(personTestSubscriber);
@@ -141,6 +134,9 @@ public class KeyValueStoreSearchTest extends SingleHotRodServerTest {
             .filter(name -> name.contains(sare.firstName))
             .collect(Collectors.toList());
       assertEquals(11, personNames.size());
+
+
+      continuousQueryPublisher.dispose(personTestSubscriber);
    }
 
    private String id() {

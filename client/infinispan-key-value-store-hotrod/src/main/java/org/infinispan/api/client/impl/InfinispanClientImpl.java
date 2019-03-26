@@ -3,6 +3,7 @@ package org.infinispan.api.client.impl;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
 import java.io.IOException;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.api.ClientConfig;
 import org.infinispan.api.Infinispan;
@@ -28,6 +29,15 @@ public class InfinispanClientImpl implements Infinispan {
       }
    }
 
+   /**
+    * Visible for testing
+    *
+    * @param remoteCacheManager
+    */
+   public InfinispanClientImpl(RemoteCacheManager remoteCacheManager) {
+      cacheManager = remoteCacheManager;
+   }
+
    @Override
    public <K, V> KeyValueStore<K, V> getKeyValueStore(String name) {
       RemoteCache<K, V> cache = cacheManager.getCache(name, false);
@@ -39,6 +49,11 @@ public class InfinispanClientImpl implements Infinispan {
    public <K, V> KeyValueStore<K, V> getKeyValueStore(String name, KeyValueStoreConfig config) {
       addProtobufSchema(config);
       return getKeyValueStore(name);
+   }
+
+   @Override
+   public CompletionStage<Void> stop() {
+      return cacheManager.stopAsync();
    }
 
    private void addProtobufSchema(KeyValueStoreConfig config) {
@@ -70,10 +85,4 @@ public class InfinispanClientImpl implements Infinispan {
       // Store the configuration in the metadata cache
       metadataCache.put(fileName, protoFile);
    }
-
-   /* TODO: Remove, visible for test now */
-   public void setCacheManager(RemoteCacheManager cacheManager) {
-      this.cacheManager = cacheManager;
-   }
-
 }

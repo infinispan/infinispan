@@ -12,6 +12,12 @@ import org.reactivestreams.Subscriber;
 
 import io.reactivex.Flowable;
 
+/**
+ *
+ *
+ * @author Katia Aresti, karesti@redhat.com
+ * @since 10.0
+ */
 public class QueryPublisherImpl<T> implements QueryPublisher<T> {
 
    private final QueryFactory queryFactory;
@@ -30,8 +36,7 @@ public class QueryPublisherImpl<T> implements QueryPublisher<T> {
    }
 
    @Override
-   public QueryPublisher<T> query(String ickleQuery, QueryParameters params) {
-      query = queryFactory.create(ickleQuery);
+   public QueryPublisher<T> withQueryParameters(QueryParameters params) {
       query.setParameters(params.asMap());
       return this;
    }

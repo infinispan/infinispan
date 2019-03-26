@@ -28,6 +28,7 @@ import io.reactivex.Flowable;
 @Test(groups = "functional", testName = "org.infinispan.api.client.impl.KeyyValueStoreSimpleTest")
 public class KeyValueStoreSimpleTest extends SingleHotRodServerTest {
 
+   public static final String CACHE_NAME = "test";
    private Infinispan infinispan;
 
    private KeyValueStore<Integer, String> store;
@@ -36,7 +37,7 @@ public class KeyValueStoreSimpleTest extends SingleHotRodServerTest {
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
-      cacheManager.administration().createCache("test", new org.infinispan.configuration.cache.ConfigurationBuilder().build());
+      cacheManager.administration().createCache(CACHE_NAME, new org.infinispan.configuration.cache.ConfigurationBuilder().build());
       return HotRodClientTestingUtil.startHotRodServer(cacheManager, serverBuilder);
    }
 
@@ -47,15 +48,13 @@ public class KeyValueStoreSimpleTest extends SingleHotRodServerTest {
        * In real world example, we should only need to call this way
        * Infinispan infinispan = InfinispanClient.newInfinispan();
        */
-      InfinispanClientImpl infinispanClientImpl = (InfinispanClientImpl) InfinispanClient.newInfinispan();
-      infinispanClientImpl.setCacheManager(remoteCacheManager);
-      infinispan = infinispanClientImpl;
-      store = infinispan.getKeyValueStore("test");
+      infinispan = new InfinispanClientImpl(remoteCacheManager);
+      store = infinispan.getKeyValueStore(CACHE_NAME);
    }
 
    @BeforeMethod
    public void clearStoreBeforeEachTest() {
-      KeyValueStore<Integer, String> store = infinispan.getKeyValueStore("test");
+      KeyValueStore<Integer, String> store = infinispan.getKeyValueStore(CACHE_NAME);
       await(store.clear());
    }
 
@@ -64,6 +63,7 @@ public class KeyValueStoreSimpleTest extends SingleHotRodServerTest {
       ClientConfig clientConfig = new ClientConfigurationLoader.ConfigurationWrapper(new ConfigurationBuilder().build());
       Infinispan client = InfinispanClient.newInfinispan(clientConfig);
       assertNotNull(client);
+      await(client.stop());
    }
 
    public void testGetNoValue() {

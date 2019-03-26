@@ -1,5 +1,7 @@
 package org.infinispan.api;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.api.collections.reactive.KeyValueStore;
 import org.infinispan.api.collections.reactive.KeyValueStoreConfig;
 
@@ -22,4 +24,5 @@ public interface Infinispan {
 
    <K, V> KeyValueStore<K, V> getKeyValueStore(String name, KeyValueStoreConfig config);
 
+   CompletionStage<Void> stop();
 }

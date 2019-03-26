@@ -3,6 +3,7 @@ package org.infinispan.api.collections.reactive.client.impl;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
+
 import org.infinispan.api.collections.reactive.KeyValueEntry;
 import org.infinispan.api.collections.reactive.KeyValueStore;
 import org.infinispan.api.search.reactive.ContinuousQueryPublisher;
@@ -15,7 +16,6 @@ import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
-import io.reactivex.Single;
 
 /**
  * @author Katia Aresti, karesti@redhat.com
@@ -78,7 +78,6 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
 
    @Override
    public CompletionStage<V> getAndPut(K key, V value) {
-      Single.just(cacheReturnValues.putAsync(key, value));
       return cacheReturnValues.putAsync(key, value);
    }
 

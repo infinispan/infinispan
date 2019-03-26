@@ -8,9 +8,9 @@
       <relativePath>../../pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-client-hotrod-reactive</artifactId>
-   <name>Infinispan Reactive Hot Rod Client</name>
-   <description>Infinispan Reactive Hot Rod Client</description>
+   <artifactId>infinispan-key-value-store-hotrod</artifactId>
+   <name>Infinispan Reactive Key-Value Store Hot Rod Client</name>
+   <description>Infinispan Reactive Key-Value Store Reactive</description>
 
    <build>
       <pluginManagement>

@@ -10,18 +10,18 @@ public class QueryParameters {
       params = new HashMap<>();
    }
 
-   public static QueryParameters init(String name, Object value) {
+   public static final QueryParameters init(String name, Object value) {
       QueryParameters queryParameters = new QueryParameters();
       queryParameters.params.put(name, value);
       return queryParameters;
    }
 
-   public QueryParameters append(String name, Object value) {
+   public final QueryParameters append(String name, Object value) {
       params.put(name, value);
       return this;
    }
 
-   public Map<String, Object> asMap() {
+   public final Map<String, Object> asMap() {
       return params;
    }
 }

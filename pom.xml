@@ -118,7 +118,7 @@
       <module>server/router</module>
       <module>server/runtime</module>
       <module>client/hotrod-client</module>
-      <module>client/hotrod-client-reactive</module>
+      <module>client/infinispan-key-value-store-hotrod</module>
       <module>atomic-factory</module>
       <module>all</module>
       <module>all/remote</module>
