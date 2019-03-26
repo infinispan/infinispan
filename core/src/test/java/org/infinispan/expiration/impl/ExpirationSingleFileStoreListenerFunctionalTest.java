@@ -1,6 +1,7 @@
 package org.infinispan.expiration.impl;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
@@ -15,7 +16,7 @@ public class ExpirationSingleFileStoreListenerFunctionalTest extends ExpirationS
    public Object[] factory() {
       return new Object[]{
             // Test is for single file store with a listener in a local cache and we don't care about memory storage types
-            new ExpirationSingleFileStoreListenerFunctionalTest(),
+            new ExpirationSingleFileStoreListenerFunctionalTest().cacheMode(CacheMode.LOCAL),
       };
    }
 
