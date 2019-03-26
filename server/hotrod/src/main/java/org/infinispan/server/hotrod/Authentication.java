@@ -6,6 +6,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.auth.Subject;
@@ -36,11 +37,8 @@ import io.netty.handler.ssl.SslHandler;
  * @author wburns
  * @since 9.0
  */
-public class Authentication {
+public class Authentication extends BaseRequestProcessor {
    private final static Log log = LogFactory.getLog(Authentication.class, Log.class);
-
-   private final Channel channel;
-   private final HotRodServer server;
 
    private final HotRodServerConfiguration serverConfig;
    private final AuthenticationConfiguration authenticationConfig;
@@ -53,9 +51,8 @@ public class Authentication {
 
    private final static Subject ANONYMOUS = new Subject();
 
-   public Authentication(Channel channel, HotRodServer server) {
-      this.channel = channel;
-      this.server = server;
+   public Authentication(Channel channel, Executor executor, HotRodServer server) {
+      super(channel, executor, server);
 
       serverConfig = server.getConfiguration();
       authenticationConfig = serverConfig.authentication();
@@ -64,19 +61,11 @@ public class Authentication {
             || authenticationConfig.mechProperties().get(Sasl.POLICY_NOANONYMOUS).equals("true");
    }
 
-   private void writeResponse(HotRodHeader header, ByteBuf response) {
-      int responseBytes = response.readableBytes();
-      ChannelFuture future = channel.writeAndFlush(response);
-      if (header instanceof AccessLoggingHeader) {
-         server.accessLogging().logOK(future, (AccessLoggingHeader) header, responseBytes);
-      }
-   }
-
    public void authMechList(HotRodHeader header) {
       writeResponse(header, header.encoder().authMechListResponse(header, server, channel.alloc(), authenticationConfig.allowedMechs()));
    }
 
-   public void auth(HotRodHeader header, String mech, byte[] response) throws PrivilegedActionException, SaslException {
+   public void auth(HotRodHeader header, String mech, byte[] response) {
       if (!enabled) {
          UnsupportedOperationException cause = log.invalidOperation();
          ByteBuf buf = header.encoder().errorResponse(header, server, channel.alloc(), cause.toString(), OperationStatus.ServerError);
@@ -86,59 +75,108 @@ public class Authentication {
             server.accessLogging().logException(future, (AccessLoggingHeader) header, cause.toString(), responseBytes);
          }
       } else {
-         if (saslServer == null) {
-            ServerAuthenticationProvider sap = authenticationConfig.serverAuthenticationProvider();
-            callbackHandler = sap.getCallbackHandler(mech, authenticationConfig.mechProperties());
-            final SaslServerFactory ssf;
-            if ("EXTERNAL".equals(mech)) {
-               SslHandler sslHandler = channel.pipeline().get(SslHandler.class);
-               try {
-                  if (sslHandler != null)
-                     ssf = new ExternalSaslServerFactory(sslHandler.engine().getSession().getPeerPrincipal());
-                  else
-                     throw log.externalMechNotAllowedWithoutSSLClientCert();
-               } catch (SSLPeerUnverifiedException e) {
-                  throw log.externalMechNotAllowedWithoutSSLClientCert();
-               }
-            } else {
-               ssf = server.getSaslServerFactory(mech);
+         executor.execute(() -> {
+            try {
+               authInternal(header, mech, response);
+            } catch (Throwable t) {
+               writeException(header, t);
             }
-            if (authenticationConfig.serverSubject() != null) {
+         });
+      }
+   }
+
+   private void authInternal(HotRodHeader header, String mech, byte[] response) {
+      if (saslServer == null) {
+         ServerAuthenticationProvider sap = authenticationConfig.serverAuthenticationProvider();
+         callbackHandler = sap.getCallbackHandler(mech, authenticationConfig.mechProperties());
+         final SaslServerFactory ssf;
+         if ("EXTERNAL".equals(mech)) {
+            SslHandler sslHandler = channel.pipeline().get(SslHandler.class);
+            try {
+               if (sslHandler != null)
+                  ssf = new ExternalSaslServerFactory(sslHandler.engine().getSession().getPeerPrincipal());
+               else {
+                  writeException(header, log.externalMechNotAllowedWithoutSSLClientCert());
+                  return;
+               }
+            } catch (SSLPeerUnverifiedException e) {
+               writeException(header, log.externalMechNotAllowedWithoutSSLClientCert());
+               return;
+            }
+         } else {
+            ssf = server.getSaslServerFactory(mech);
+         }
+         if (authenticationConfig.serverSubject() != null) {
+            try {
                saslServer = Subject.doAs(authenticationConfig.serverSubject(), (PrivilegedExceptionAction<SaslServer>) () ->
                      ssf.createSaslServer(mech, "hotrod", authenticationConfig.serverName(),
                            authenticationConfig.mechProperties(), callbackHandler));
-            } else {
+            } catch (PrivilegedActionException e) {
+               writeException(header, e.getCause());
+               return;
+            }
+         } else {
+            try {
                saslServer = ssf.createSaslServer(mech, "hotrod", authenticationConfig.serverName(),
                      authenticationConfig.mechProperties(), callbackHandler);
+            } catch (SaslException e) {
+               writeException(header, e);
+               return;
             }
          }
-         byte[] serverChallenge = saslServer.evaluateResponse(response);
+      }
+      byte[] serverChallenge;
+      try {
+         serverChallenge = saslServer.evaluateResponse(response);
+      } catch (SaslException e) {
+         dispose(saslServer);
+         writeException(header, e);
+         return;
+      }
 
-         writeResponse(header, header.encoder().authResponse(header, server, channel.alloc(), serverChallenge));
+      if (saslServer.isComplete()) {
+         // Obtaining the subject might be expensive, so do it before sending the final server response, otherwise the
+         // client might send another operation before this is complete
+         List<Principal> extraPrincipals = new ArrayList<>();
+         String id = normalizeAuthorizationId(saslServer.getAuthorizationID());
+         extraPrincipals.add(new SimpleUserPrincipal(id));
+         extraPrincipals.add(new InetAddressPrincipal(((InetSocketAddress) channel.remoteAddress()).getAddress()));
+         SslHandler sslHandler = (SslHandler) channel.pipeline().get("ssl");
+         try {
+            if (sslHandler != null)
+               extraPrincipals.add(sslHandler.engine().getSession().getPeerPrincipal());
+         } catch (SSLPeerUnverifiedException e) {
+            // Ignore any SSLPeerUnverifiedExceptions
+         }
+         subject = callbackHandler.getSubjectUserInfo(extraPrincipals).getSubject();
+      }
 
-         if (saslServer.isComplete()) {
-            List<Principal> extraPrincipals = new ArrayList<>();
-            String id = normalizeAuthorizationId(saslServer.getAuthorizationID());
-            extraPrincipals.add(new SimpleUserPrincipal(id));
-            extraPrincipals.add(new InetAddressPrincipal(((InetSocketAddress) channel.remoteAddress()).getAddress()));
-            SslHandler sslHandler = (SslHandler) channel.pipeline().get("ssl");
-            try {
-               if (sslHandler != null)
-                  extraPrincipals.add(sslHandler.engine().getSession().getPeerPrincipal());
-            } catch (SSLPeerUnverifiedException e) {
-               // Ignore any SSLPeerUnverifiedExceptions
-            }
-            subject = callbackHandler.getSubjectUserInfo(extraPrincipals).getSubject();
-            String qop = (String) saslServer.getNegotiatedProperty(Sasl.QOP);
-            if (qop != null && (qop.equalsIgnoreCase("auth-int") || qop.equalsIgnoreCase("auth-conf"))) {
+      if (saslServer.isComplete()) {
+         // Finally we setup the QOP handler if required
+         String qop = (String) saslServer.getNegotiatedProperty(Sasl.QOP);
+         if ("auth-int".equals(qop) || "auth-conf".equals(qop)) {
+            channel.eventLoop().submit(() -> {
+               writeResponse(header, header.encoder().authResponse(header, server, channel.alloc(), serverChallenge));
                SaslQopHandler qopHandler = new SaslQopHandler(saslServer);
                channel.pipeline().addBefore("decoder", "saslQop", qopHandler);
-            } else {
-               saslServer.dispose();
-               callbackHandler = null;
-               saslServer = null;
-            }
+            });
+         } else {
+            writeResponse(header, header.encoder().authResponse(header, server, channel.alloc(), serverChallenge));
+            dispose(saslServer);
+            callbackHandler = null;
+            saslServer = null;
          }
+      } else {
+         // Write the server challenge
+         writeResponse(header, header.encoder().authResponse(header, server, channel.alloc(), serverChallenge));
+      }
+   }
+
+   private void dispose(SaslServer server) {
+      try {
+         server.dispose();
+      } catch (SaslException e) {
+         log.debug("Exception while disposing SaslServer", e);
       }
    }
 
@@ -146,10 +184,11 @@ public class Authentication {
       if (!enabled) {
          return null;
       }
+
       // We haven't yet authenticated don't let them run other commands unless the command is fine
       // not being authenticated
       if (requireAuthentication && op.requiresAuthentication() && subject == ANONYMOUS) {
-         throw log.unauthorizedOperation();
+         throw log.unauthorizedOperation(op.name());
       }
       if (op.requiresAuthentication()) {
          return subject;
