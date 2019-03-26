@@ -1,21 +1,23 @@
-package org.infinispan.remoting.rpc;
+package org.infinispan.commands.module;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.module.ModuleCommandExtensions;
-import org.infinispan.commands.module.ModuleCommandFactory;
-import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.rpc.CustomCacheRpcCommand;
+import org.infinispan.remoting.rpc.CustomReplicableCommand;
+import org.infinispan.remoting.rpc.SleepingCacheRpcCommand;
 import org.infinispan.util.ByteString;
+import org.kohsuke.MetaInfServices;
 
 /**
  * @author anistor@redhat.com
  * @since 5.3
  */
+@MetaInfServices(ModuleCommandExtensions.class)
 public final class TestModuleCommandExtensions implements ModuleCommandExtensions {
 
    @Override

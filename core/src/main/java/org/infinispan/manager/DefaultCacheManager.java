@@ -666,17 +666,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          return cache;
       } catch (CacheException e) {
          cacheFuture.completeExceptionally(e);
-         // Must stop the failed cache now, we don't keep the reference
-         if (cache != null) {
-            cache.stop();
-         }
          throw e;
       } catch (Throwable t) {
          cacheFuture.completeExceptionally(new CacheException(t));
-         // Must stop the failed cache now, we don't keep the reference
-         if (cache != null) {
-            cache.stop();
-         }
          throw t;
       }
    }

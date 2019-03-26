@@ -309,9 +309,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          }
       }
 
-      preStart();
-
       try {
+         preStart();
+
          internalStart();
 
          synchronized (this) {
@@ -325,6 +325,13 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             state = ComponentStatus.FAILED;
             notifyAll();
          }
+
+         try {
+            stop();
+         } catch (Throwable t1) {
+            t.addSuppressed(t1);
+         }
+
          handleLifecycleTransitionFailure(t);
       }
    }
