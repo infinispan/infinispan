@@ -23,6 +23,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.BuiltBy;
@@ -42,10 +43,13 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.GlobalMarshaller;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
@@ -55,10 +59,12 @@ import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultiCacheManagerCallable;
+import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -361,6 +367,19 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
+   public void testCacheManagerStartFailure() {
+      FailingGlobalComponent failingGlobalComponent = new FailingGlobalComponent();
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
+      globalBuilder.addModule(TestGlobalConfigurationBuilder.class)
+                   .testComponent(FailingGlobalComponent.class.getName(), failingGlobalComponent);
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+
+      Exceptions.expectException(EmbeddedCacheManagerStartupException.class, () -> createCacheManager(globalBuilder, builder));
+
+      assertTrue(failingGlobalComponent.started);
+      assertTrue(failingGlobalComponent.stopped);
+   }
+
    public void testCacheManagerRestartReusingConfigurations() {
       withCacheManagers(new MultiCacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
@@ -578,6 +597,23 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       @CacheStopped
       public void cacheStopped(CacheStoppedEvent event) {
          log.tracef("Cache stopped: %s", event.getCacheName());
+      }
+   }
+
+   @Scope(Scopes.GLOBAL)
+   public static class FailingGlobalComponent {
+      private boolean started;
+      private boolean stopped;
+
+      @Start
+      public void start() {
+         started = true;
+         throw new TestException();
+      }
+
+      @Stop
+      public void stop() {
+         stopped = true;
       }
    }
 }
