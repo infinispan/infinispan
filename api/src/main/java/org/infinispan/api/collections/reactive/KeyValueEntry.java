@@ -12,12 +12,16 @@ public class KeyValueEntry<K, V> {
       this.value = value;
    }
 
-   public K getKey() {
+   public K key() {
       return key;
    }
 
-   public V getValue() {
+   public V value() {
       return value;
+   }
+
+   public EntryStatus status() {
+      return EntryStatus.CREATED;
    }
 
    @Override
@@ -39,6 +43,7 @@ public class KeyValueEntry<K, V> {
       return "KeyValueEntry{" +
             "key=" + key +
             ", value=" + value +
+            ", status=" + status() +
             '}';
    }
 }

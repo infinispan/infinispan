@@ -6,6 +6,7 @@ import java.util.concurrent.Flow;
 
 import org.infinispan.api.collections.reactive.KeyValueEntry;
 import org.infinispan.api.collections.reactive.KeyValueStore;
+import org.infinispan.api.exception.InfinispanException;
 import org.infinispan.api.search.reactive.ContinuousQueryPublisher;
 import org.infinispan.api.search.reactive.QueryPublisher;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -18,6 +19,8 @@ import org.reactivestreams.Publisher;
 import io.reactivex.Flowable;
 
 /**
+ * Implements the {@link KeyValueStore} interface
+ *
  * @author Katia Aresti, karesti@redhat.com
  * @since 10.0
  */
@@ -60,10 +63,10 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    private CompletionStage<Void> putManyAdapted(Publisher<KeyValueEntry<K, V>> pairs) {
       return CompletableFuture.runAsync(() -> {
          Flowable<KeyValueEntry<K, V>> entryFlowable = Flowable.fromPublisher(pairs);
-         entryFlowable.subscribe(e -> cache.putAsync(e.getKey(), e.getValue()),
-               err -> new RuntimeException("Error in put many")
+         entryFlowable.subscribe(e -> cache.putAsync(e.key(), e.value()),
+               err -> new InfinispanException("KeyValueStore - Error in put many", err)
          );
-      });
+      }, cache.getRemoteCacheManager().getAsyncExecutorService());
    }
 
    @Override
@@ -89,7 +92,7 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    @Override
    public QueryPublisher<V> find() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
-      QueryPublisherImpl queryPublisher = new QueryPublisherImpl(queryFactory);
+      QueryPublisherImpl queryPublisher = new QueryPublisherImpl(queryFactory, cache.getRemoteCacheManager().getAsyncExecutorService());
       return queryPublisher;
    }
 

@@ -4,28 +4,33 @@ import java.util.Objects;
 
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.query.Search;
 
 @ProtoDoc("@Indexed")
 public final class Person {
 
    @ProtoDoc("@Field")
    @ProtoField(number = 1, required = true)
-   String firstName;
+   String id;
 
    @ProtoDoc("@Field")
    @ProtoField(number = 2, required = true)
-   String lastName;
+   String firstName;
 
    @ProtoDoc("@Field")
    @ProtoField(number = 3, required = true)
-   int bornYear;
+   String lastName;
 
    @ProtoDoc("@Field")
    @ProtoField(number = 4, required = true)
-   String bornIn;
+   int bornYear;
 
    @ProtoDoc("@Field")
    @ProtoField(number = 5, required = true)
+   String bornIn;
+
+   @ProtoDoc("@Field")
+   @ProtoField(number = 6, required = true)
    Address address;
 
    public Person() {
@@ -33,6 +38,7 @@ public final class Person {
    }
 
    public Person(String firstName, String lastName, int bornYear, String bornIn) {
+      this.id = SearchUtil.id();
       this.firstName = firstName;
       this.lastName = lastName;
       this.bornYear = bornYear;
@@ -46,6 +52,7 @@ public final class Person {
    @Override
    public String toString() {
       return "Person{" +
+            "id='" + id + '\'' +
             "firstName='" + firstName + '\'' +
             ", lastName='" + lastName + '\'' +
             ", bornYear='" + bornYear + '\'' +
@@ -60,6 +67,7 @@ public final class Person {
       if (o == null || getClass() != o.getClass()) return false;
       Person person = (Person) o;
       return bornYear == person.bornYear &&
+            Objects.equals(id, person.id) &&
             Objects.equals(firstName, person.firstName) &&
             Objects.equals(lastName, person.lastName) &&
             Objects.equals(bornIn, person.bornIn) &&
@@ -69,6 +77,14 @@ public final class Person {
    @Override
    public int hashCode() {
       return Objects.hash(firstName, lastName, bornYear, bornIn, address);
+   }
+
+   public String getId() {
+      return id;
+   }
+
+   public void setId(String id) {
+      this.id = id;
    }
 
    public String getFirstName() {
@@ -89,5 +105,12 @@ public final class Person {
 
    public Address getAddress() {
       return address;
+   }
+
+   public Person copy() {
+      Person person = new Person(this.firstName, this.lastName, this.bornYear, this.bornIn);
+      person.id = this.id;
+      person.address = this.address;
+      return person;
    }
 }

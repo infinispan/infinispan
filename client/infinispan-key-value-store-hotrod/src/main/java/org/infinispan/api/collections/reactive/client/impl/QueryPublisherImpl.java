@@ -1,7 +1,9 @@
 package org.infinispan.api.collections.reactive.client.impl;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Flow;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.api.search.reactive.QueryParameters;
 import org.infinispan.api.search.reactive.QueryPublisher;
@@ -13,7 +15,7 @@ import org.reactivestreams.Subscriber;
 import io.reactivex.Flowable;
 
 /**
- *
+ * Implements {@link QueryPublisher} interface for client/server mode.
  *
  * @author Katia Aresti, karesti@redhat.com
  * @since 10.0
@@ -21,17 +23,23 @@ import io.reactivex.Flowable;
 public class QueryPublisherImpl<T> implements QueryPublisher<T> {
 
    private final QueryFactory queryFactory;
+   private ExecutorService executorService;
    private Query query;
-   private long timeout;
-   private TimeUnit timeUnit;
 
-   public QueryPublisherImpl(QueryFactory queryFactory) {
+   public QueryPublisherImpl(QueryFactory queryFactory, ExecutorService executorService) {
       this.queryFactory = queryFactory;
+      this.executorService = executorService;
    }
 
    @Override
    public QueryPublisher<T> query(String ickleQuery) {
       query = queryFactory.create(ickleQuery);
+      return this;
+   }
+
+   @Override
+   public QueryPublisher<T> withQueryParameter(String name, Object value) {
+      query.setParameter(name, value);
       return this;
    }
 
@@ -43,20 +51,13 @@ public class QueryPublisherImpl<T> implements QueryPublisher<T> {
 
    @Override
    public QueryPublisher<T> limit(int limit) {
-      query = query.maxResults(limit);
+      query.maxResults(limit);
       return this;
    }
 
    @Override
    public QueryPublisher<T> skip(int skip) {
-      query = query.startOffset(skip);
-      return this;
-   }
-
-   @Override
-   public QueryPublisher<T> withTimeout(long timeout, TimeUnit timeUnit) {
-      this.timeout = timeout;
-      this.timeUnit = timeUnit;
+      query.startOffset(skip);
       return this;
    }
 
@@ -72,10 +73,11 @@ public class QueryPublisherImpl<T> implements QueryPublisher<T> {
    }
 
    private void queryPublisherSubscriber(Subscriber<? super T> rsSubscriber) {
-      Flowable<T> flowable = Flowable.fromIterable(query.list());
-      if (timeout > 0) {
-         flowable.take(timeout, timeUnit);
-      }
-      flowable.subscribe(rsSubscriber);
+      CompletableFuture.supplyAsync(() ->
+                  (List<T>) query.list()
+            , executorService).thenAccept(r -> {
+         Flowable<T> flowable = Flowable.fromIterable(r);
+         flowable.subscribe(rsSubscriber);
+      });
    }
 }

@@ -24,8 +24,8 @@ import org.infinispan.util.concurrent.CompletableFutures;
 
 public final class FunctionalTestUtils {
 
+   public static final int MAX_WAIT_SECS = 30;
    static final Random R = new Random();
-   static final int MAX_WAIT_SECS = 30;
 
    static <K> FunctionalMap.ReadOnlyMap<K, String> ro(FunctionalMapImpl<K, String> fmap) {
       return ReadOnlyMapImpl.create(fmap);

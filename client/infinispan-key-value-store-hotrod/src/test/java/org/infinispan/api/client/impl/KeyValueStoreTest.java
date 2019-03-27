@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 import io.reactivex.Flowable;
 
 @Test(groups = "functional", testName = "org.infinispan.api.client.impl.KeyyValueStoreSimpleTest")
-public class KeyValueStoreSimpleTest extends SingleHotRodServerTest {
+public class KeyValueStoreTest extends SingleHotRodServerTest {
 
    public static final String CACHE_NAME = "test";
    private Infinispan infinispan;
