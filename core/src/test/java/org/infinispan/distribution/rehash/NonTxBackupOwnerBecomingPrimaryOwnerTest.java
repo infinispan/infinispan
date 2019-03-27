@@ -8,7 +8,6 @@ import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -250,8 +249,8 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
          // Ignore the first topology update on the joiner, which is with the topology before the join
          if (topology.getTopologyId() != currentTopologyId) {
             checkPoint.trigger("pre_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress());
-            assertTrue(checkPoint.await("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
-                  10, TimeUnit.SECONDS));
+            checkPoint.awaitStrict("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
+                  10, TimeUnit.SECONDS);
          }
          return invocation.callRealMethod();
       }).when(spyLtm).handleTopologyUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
