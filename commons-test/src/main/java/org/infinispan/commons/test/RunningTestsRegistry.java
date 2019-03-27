@@ -66,7 +66,7 @@ class RunningTestsRegistry {
    private static List<String> collectChildProcesses(String testName) {
       try {
          System.err.printf(
-            "Test %s has been running for more than %d seconds. Interrupting the test thread and dumping " +
+            "[ERROR] Test %s has been running for more than %d seconds. Interrupting the test thread and dumping " +
             "threads of the test suite process and its children.\n",
             testName, MAX_TEST_SECONDS);
 
@@ -107,9 +107,10 @@ class RunningTestsRegistry {
 
    private static void dumpThreads(String safeTestName, List<String> pids) {
       try {
-         File jstackFile = new File(System.getProperty("java.home") + "/../bin/jstack");
+         String javaHome = System.getProperty("java.home");
+         File jstackFile = new File(javaHome, "bin/jstack");
          if (!jstackFile.canExecute()) {
-            jstackFile = new File(System.getProperty("java.home") + "/bin/jstack");
+            jstackFile = new File(javaHome, "../bin/jstack");
          }
          LocalDateTime now = LocalDateTime.now();
          if (jstackFile.canExecute() && !pids.isEmpty()) {
@@ -126,6 +127,7 @@ class RunningTestsRegistry {
          } else {
             File dumpFile = new File(String.format("threaddump-%1$s-%2$tY-%2$tm-%2$td.log",
                                                    safeTestName, now));
+            System.out.printf("Cannot find jstack in %s, programmatically dumping thread stacks of testsuite process to %s\n", javaHome, dumpFile.getAbsolutePath());
             ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
             try (PrintWriter writer = new PrintWriter(new FileWriter(dumpFile))) {
                // 2019-02-05 14:03:11
