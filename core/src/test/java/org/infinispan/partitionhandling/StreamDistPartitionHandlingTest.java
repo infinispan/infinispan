@@ -6,7 +6,6 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.Map;
@@ -72,7 +71,7 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
       // Repl only checks for partition when first retrieving the entrySet, keySet or values
    }
 
-   public void testUsingIteratorButPartitionOccursBeforeRetrievingRemoteValues() throws InterruptedException {
+   public void testUsingIteratorButPartitionOccursBeforeRetrievingRemoteValues() throws Exception {
       Cache<MagicKey, String> cache0 = cache(0);
       // Make sure we have 1 entry in each - since onEach will then be invoked once on each node
       cache0.put(new MagicKey(cache(1), cache(2)), "not-local");
@@ -96,7 +95,7 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
          splitCluster(new int[]{0, 1}, new int[]{2, 3});
 
          // Wait until we have been notified before letting remote responses to arrive
-         assertTrue(partitionCP.await(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS));
+         partitionCP.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
 
          // Afterwards let all the responses come in
          iteratorCP.triggerForever(Mocks.BEFORE_RELEASE);
@@ -137,7 +136,7 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
          });
 
          // Wait for all the responses to come back - we have to do this before splitting
-         assertTrue(iteratorCP.await(Mocks.AFTER_INVOCATION, numMembersInCluster - 1, 10, TimeUnit.SECONDS));
+         iteratorCP.awaitStrict(Mocks.AFTER_INVOCATION, numMembersInCluster - 1, 10, TimeUnit.SECONDS);
 
          CheckPoint partitionCP = new CheckPoint();
          // Now we replace the notifier so we know when the notifier was told of the partition change so we know

@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;
 import java.util.Map;
@@ -115,7 +114,7 @@ public class DistributedStreamRehashTest extends MultipleCacheManagersTest {
             originator.entrySet().stream().collect(() -> Collectors.toList()));
 
       // Make sure we are up to sync
-      assertTrue(checkPoint.await(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS));
+      checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
 
       // Note that segment 2 doesn't map to the node1 anymore
       consistentHashFactory.setOwnerIndexes(new int[][]{{0, 1}, {0, 2}, {2, 1}, {1, 0}});

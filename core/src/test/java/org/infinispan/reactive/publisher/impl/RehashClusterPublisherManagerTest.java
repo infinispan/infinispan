@@ -6,7 +6,6 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -121,7 +120,7 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       }
 
       runCommand(deliveryGuarantee, parallel, isEntry, expectedAmount, () -> {
-         assertTrue(checkPoint.await(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS));
+         checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
 
          triggerRebalanceSegment2MovesToNode0();
 
@@ -167,7 +166,7 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
 
       try {
          runCommand(deliveryGuarantee, parallel, isEntry, expectedAmount, () -> {
-            assertTrue(checkPoint.await(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS));
+            checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
 
             triggerRebalanceSegment2MovesToNode0();
 
@@ -208,7 +207,7 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
 
       runCommand(deliveryGuarantee, parallel, isEntry, expectedAmount, () -> {
          // Wait until after the publisher completes - but don't let it just yet
-         assertTrue(checkPoint.await(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS));
+         checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
 
          triggerRebalanceSegment2MovesToNode0();
 
