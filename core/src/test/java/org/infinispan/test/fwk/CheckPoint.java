@@ -38,7 +38,7 @@ public class CheckPoint {
       awaitStrict(event, 1, timeout, unit);
    }
 
-   public boolean await(String event, long timeout, TimeUnit unit) throws InterruptedException {
+   private boolean await(String event, long timeout, TimeUnit unit) throws InterruptedException {
       return await(event, 1, timeout, unit);
    }
 
@@ -49,7 +49,7 @@ public class CheckPoint {
       }
    }
 
-   public boolean await(String event, int count, long timeout, TimeUnit unit) throws InterruptedException {
+   private boolean await(String event, int count, long timeout, TimeUnit unit) throws InterruptedException {
       log.tracef("Waiting for event %s * %d", event, count);
       lock.lock();
       try {

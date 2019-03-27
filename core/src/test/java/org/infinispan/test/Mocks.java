@@ -3,12 +3,12 @@ package org.infinispan.test;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -128,12 +128,12 @@ public class Mocks {
    public static <T> Answer<T> blockingAnswer(Answer<T> answer, CheckPoint checkPoint) {
       return invocation -> {
          checkPoint.trigger(BEFORE_INVOCATION);
-         assertTrue(checkPoint.await(BEFORE_RELEASE, 20, TimeUnit.SECONDS));
+         checkPoint.awaitStrict(BEFORE_RELEASE, 20, TimeUnit.SECONDS);
          try {
             return answer.answer(invocation);
          } finally {
             checkPoint.trigger(AFTER_INVOCATION);
-            assertTrue(checkPoint.await(AFTER_RELEASE, 20, TimeUnit.SECONDS));
+            checkPoint.awaitStrict(AFTER_RELEASE, 20, TimeUnit.SECONDS);
          }
       };
    }
@@ -152,7 +152,7 @@ public class Mocks {
       return () -> {
          checkPoint.trigger(BEFORE_INVOCATION);
          try {
-            assertTrue(checkPoint.await(BEFORE_RELEASE, 20, TimeUnit.SECONDS));
+            checkPoint.awaitStrict(BEFORE_RELEASE, 20, TimeUnit.SECONDS);
          } catch (InterruptedException e) {
             throw new AssertionError(e);
          }
@@ -160,8 +160,8 @@ public class Mocks {
          return completableFuture.whenComplete((v, t) -> {
             checkPoint.trigger(AFTER_INVOCATION);
             try {
-               assertTrue(checkPoint.await(AFTER_RELEASE, 20, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
+               checkPoint.awaitStrict(AFTER_RELEASE, 20, TimeUnit.SECONDS);
+            } catch (InterruptedException | TimeoutException e) {
                throw new AssertionError(e);
             }
          });

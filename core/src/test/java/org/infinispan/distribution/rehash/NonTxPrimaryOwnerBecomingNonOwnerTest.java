@@ -211,7 +211,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
          // Ignore the first topology update on the joiner, which is with the topology before the join
          if (topology.getTopologyId() != currentTopologyId) {
             checkPoint.trigger("pre_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress());
-            checkPoint.await("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
+            checkPoint.awaitStrict("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
                   10, TimeUnit.SECONDS);
          }
          return invocation.callRealMethod();
