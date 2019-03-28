@@ -56,6 +56,14 @@ Similarly, when using Google's Cloud Platform, use the +google+ stack:
 
 include::topics/jgroups/google_ping.adoc[]
 
+If running on a Kubernetes environment (i.e. OKD, OpenShift), use the +dns-ping+ stack:
+
+include::topics/jgroups/dns_ping.adoc[]
+
+The `jgroups.dns_ping.dns_query` must contain the DNS query that matches the cluster members. On how things get named in a Kubernetes DNS refere to:
+link:https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+
+
 ==== Cluster authentication and authorization
 
 The JGroups subsystem can be configured so that nodes need to authenticate each other when joining / merging. The authentication uses SASL and integrates with the security realms.

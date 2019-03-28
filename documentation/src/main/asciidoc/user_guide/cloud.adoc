@@ -116,7 +116,10 @@ GOOGLE_PING uses Google Cloud Storage (GCS) to store information about the clust
 
 === Kubernetes and OpenShift
 
-Since OpenShift uses Kubernetes underneath both of them can use the same discovery protocol - link:https://github.com/jgroups-extras/jgroups-kubernetes[Kube_PING]. The configuration is very straightforward:
+Since OpenShift uses Kubernetes underneath both of them can use either - link:https://github.com/jgroups-extras/jgroups-kubernetes[Kube_PING] or DNS_PING.
+
+==== Kube_PING
+The configuration is very straightforward:
 
 .Sample KUBE_PING configuration
 [source,xml]
@@ -146,6 +149,22 @@ oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default -
 ----
 
 After performing all above steps, the clustering should be enabled and all Pods should automatically form a cluster within a single namespace.
+
+==== DNS_PING
+The configuration is the following:
+
+.Sample DNS_PING configuration
+[source, xml]
+----
+<stack name="dns-ping">
+...
+    <dns.DNS_PING
+      dns_query="myservice.myproject.svc.cluster.local" />
+...
+</stack>
+----
+
+DNS_PING runs the specified query against the DNS server to get the cluster members list. See link:https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[here] on how enlist the cluster nodes into DNS
 
 ==== Using Kubernetes and OpenShift Rolling Updates
 
