@@ -73,9 +73,10 @@ public class JUnitTestListener extends RunListener {
    public void testRunFinished(Result result) {
       try {
          // We don't use @RunWith(Suite.class) so we only have a single suite
-         ThreadLeakChecker.checkForLeaks(null);
+         ThreadLeakChecker.checkForLeaks();
       } catch (Throwable e) {
          progressLogger.configurationFailed("[ERROR]", e);
+         throw e;
       }
    }
 }
