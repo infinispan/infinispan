@@ -19,7 +19,5 @@ public class InfinispanTestExecutionListener extends AbstractTestExecutionListen
    @Override
    public void afterTestClass(TestContext testContext) throws Exception {
       TestResourceTracker.testFinished(testContext.getTestClass().getName());
-      // Don't check for thread leaks here, the Spring listener that stops the application context will run later
-      // ThreadLeakChecker.checkForLeaks(testContext.getTestClass().getName());
    }
 }
