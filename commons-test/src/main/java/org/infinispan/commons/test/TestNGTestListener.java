@@ -58,7 +58,9 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onFinish(ITestContext context) {
-      ThreadLeakChecker.testFinished(context.getCurrentXmlTest().getXmlClasses().get(0).getName());
+      String testName = context.getCurrentXmlTest().getXmlClasses().get(0).getName();
+      // Mark the test as finished. The actual leak check is in TestNGSuiteChecksTest
+      ThreadLeakChecker.testFinished(testName);
    }
 
    private String testName(ITestResult res) {
@@ -82,6 +84,7 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onFinish(ISuite suite) {
+      ThreadLeakChecker.checkForLeaks();
    }
 
    @Override

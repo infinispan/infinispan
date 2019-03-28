@@ -2,11 +2,7 @@
 Tests are written using the link:http://testng.org/[TestNG] framework. 
 
 === Running the tests
-Before running the actual tests it is highly recommended to configure adjust suite's memory setting by updating the `MAVEN_OPTS` variables. E.g.
-
- $ export MAVEN_OPTS="-Xms512m -Xmx2048m"
-
-The default run executes all tests in the functional and unit groups. To just run the tests with txt and xml output the command is:
+The default run executes all tests in the functional, unit, xsite, and arquillian groups. To just run the tests with txt and xml output the command is:
 
  $ mvn test
 
@@ -25,6 +21,13 @@ Open up `/etc/security/limits.conf` and add the following lines replacing the us
  rhusar    soft    nproc     16384
  rhusar    hard    nproc     16384
 ----
+
+We recommend running the tests on a machine with at least 4GB of RAM.
+Tests run in a forked JVM, so `MAVEN_OPTS` does not affect them.
+However, you may need to reduce the Maven JVM's heap to run in 4GB of RAM
+by updating the `MAVEN_OPTS` environment variable, e.g.
+
+ $ export MAVEN_OPTS="-Xmx800m"
 
 ==== Specifying which tests to run
 A single test can be executed using the test property. 
@@ -49,7 +52,25 @@ To do this, simply use the `skipTests` property:
 
  $ mvn -DskipTests install
 
-Note that you should _never_ use `-Dmaven.test.skip=true` since modules' test classes depend on other module test classes, and this will cause compilation errors. 
+Note that you should _never_ use `-Dmaven.test.skip=true` since modules' test classes depend on other module test classes, and this will cause compilation errors.
+
+==== Debugging thread leaks
+The Infinispan test suite uses TestNG/JUnit test listeners to find and report thread leaks.
+In order to debug thread leaks in the IDE, please add this listener to your default TestNG run configuration:
+
+  org.infinispan.commons.test.TestNGTestListener
+
+If your IDE supports listeners in the JUnit run configuration (IntelliJ IDEA does not), add this listener:
+
+  org.infinispan.commons.test.JUnitTestListener
+
+If your IDE does not support listeners in the JUnit run configuration, you can always add the listener to your class:
+
+  @Listeners(org.infinispan.commons.test.JUnitTestListener.class)
+
+In order to make the leak report look like a test failure,
+modules using TestNG duplicate the check in a test, `TestNGSuiteChecksTest`.
+Including the test is not required to see the leak, but without it the failure looks more like a crash.
 
 ==== Running tests using `@Parameters`
 If you want to execute tests relying on TestNG's `@Parameters` from an IDE (such as Eclipse or IntelliJ IDEA), please read link:http://infinispan.blogspot.com/2009/06/executing-testng-tests-relying-on.html[this blog entry] . 
