@@ -39,7 +39,7 @@ import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.ControlledRpcManager;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "scattered.statetransfer.CoordinatorStopTest")
+@Test(groups = "unstable", testName = "scattered.statetransfer.CoordinatorStopTest", description = "ISPN-9940")
 @CleanupAfterMethod
 public class CoordinatorStopTest extends MultipleCacheManagersTest {
    private CountDownLatch viewLatch;
