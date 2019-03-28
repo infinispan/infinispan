@@ -147,23 +147,12 @@ public class ThreadLeakChecker {
    /**
     * Check for leaked threads.
     *
-    * <p>When running tests in parallel, this method will only perform the leak check if there are no running tests.</p>
-    *
-    * @param testName test that just ended, or {@code null} if running after all the tests (e.g. from {@code
-    * @AfterSuite} in TestNG)
+    * Assumes that no tests are running.
     */
-   public static void checkForLeaks(String testName) {
+   public static void checkForLeaks() {
       lock.lock();
       try {
-         if (testName == null) {
-            assert runningTests.isEmpty() : "Tests are still running: " + runningTests;
-         } else if (runningTests.size() > 1) {
-            return;
-         } else if (runningTests.size() == 1) {
-            assert runningTests.contains(testName) :
-               "Test " + runningTests + " is running, should have been " + testName;
-            testFinished(testName);
-         }
+         assert runningTests.isEmpty() : "Tests are still running: " + runningTests;
          performCheck();
       } finally {
          lock.unlock();
@@ -196,8 +185,8 @@ public class ThreadLeakChecker {
          // Use -Dinfinispan.test.parallel.threads=3 (or even less) to narrow down source tests
          // Set a conditional breakpoint in Thread.start with the name of the leaked thread
          // If the thread has the pattern of a particular component, set a conditional breakpoint in that component
-         throw new AssertionError("Leaked threads: \n  " +
-                                  leaks.stream()
+         throw new RuntimeException("Leaked threads: \n  " +
+                                    leaks.stream()
                                        .map(Object::toString)
                                        .collect(Collectors.joining(",\n  ")));
       }
