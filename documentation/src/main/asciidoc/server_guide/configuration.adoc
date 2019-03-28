@@ -1,6 +1,8 @@
+[[server_config]]
 == Configuration
 Since the server is based on the WildFly codebase, refer to the WildFly documentation, apart from the JGroups, {brandname} and Endpoint subsytems.
 
+[[server_config_jgroups]]
 === JGroups subsystem configuration
 The JGroups subsystem configures the network transport and is only required when clustering multiple {brandname} Server nodes together.
 
@@ -55,6 +57,12 @@ include::topics/jgroups/s3_ping.adoc[]
 Similarly, when using Google's Cloud Platform, use the +google+ stack:
 
 include::topics/jgroups/google_ping.adoc[]
+
+Use the +dns-ping+ stack to run {brandname} on Kubernetes environments such as OKD or OpenShift:
+
+include::topics/jgroups/dns_ping.adoc[]
+
+The value of the `dns_query` property is the DNS query that returns the cluster members. See link:https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[DNS for Services and Pods] for information about Kubernetes DNS naming.
 
 ==== Cluster authentication and authorization
 
