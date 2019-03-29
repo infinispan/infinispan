@@ -19,4 +19,5 @@ public interface InternalConflictManager<K, V> extends ConflictManager<K, V> {
    void restartVersionRequests();
    void cancelConflictResolution();
    CompletableFuture<Void> resolveConflicts(CacheTopology cacheTopology, Set<Address> preferredNodes);
+   StateReceiver getStateReceiver();
 }

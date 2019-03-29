@@ -96,4 +96,8 @@ public interface XSiteStateTransferManager {
     * @param siteName the site name.
     */
    void becomeCoordinator(String siteName);
+
+   XSiteStateProvider getStateProvider();
+
+   XSiteStateConsumer getStateConsumer();
 }

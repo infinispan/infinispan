@@ -17,12 +17,15 @@ import java.util.function.Function;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.Mutation;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
+import org.infinispan.commands.functional.TxReadOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
@@ -73,6 +76,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.EntryView.ReadEntryView;
@@ -104,8 +108,18 @@ import org.reactivestreams.Publisher;
 
 /**
  * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
- * named cache instance cannot be reused on a different cache instance since most commands contain the cache name it
- * was built for along with references to other named-cache scoped components.
+ * named cache instance cannot be reused on a different cache instance since most commands contain the cache name it was
+ * built for along with references to other named-cache scoped components.
+ * <p>
+ * Commands returned by the various build*Command methods should be initialised sufficiently for local execution via the
+ * interceptor chain, with no calls to  {@link #initializeReplicableCommand(ReplicableCommand, boolean)} required.
+ * However, for remote execution, it's assumed that a command will be initialized via {@link
+ * #initializeReplicableCommand(ReplicableCommand, boolean)} before being invoked.
+ * <p>
+ * Note, {@link InitializableCommand} implementations should not rely on access to the {@link
+ * org.infinispan.factories.ComponentRegistry} in their constructors for local execution initialization as this leads to
+ * duplicated code. Instead implementations of this interface should call {@link InitializableCommand#init(ComponentRegistry,
+ * boolean)} before returning the created command.
  *
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
@@ -561,6 +575,15 @@ public interface CommandsFactory {
          Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V, T, R> ReadWriteManyEntriesCommand<K, V, T, R> buildReadWriteManyEntriesCommand(Map<?, ?> entries, BiFunction<T, ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
+
+   <K, V, R> TxReadOnlyKeyCommand<K, V, R> buildTxReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f,
+                                                                    List<Mutation<K, V, ?>> mutations, int segment,
+                                                                    Params params, DataConversion keyDataConversion,
+                                                                    DataConversion valueDataConversion);
+
+   <K, V, R> TxReadOnlyManyCommand<K, V, R> buildTxReadOnlyManyCommand(Collection<?> keys, List<List<Mutation<K,V,?>>> mutations,
+                                                                       Params params, DataConversion keyDataConversion,
+                                                                       DataConversion valueDataConversion);
 
    BackupAckCommand buildBackupAckCommand(long id, int topologyId);
 

@@ -33,6 +33,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
@@ -67,7 +68,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -138,6 +138,11 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
       if (isConflictResolutionInProgress() && conflictSpliterator != null)
          conflictSpliterator.stop();
+   }
+
+   @Override
+   public StateReceiver getStateReceiver() {
+      return stateReceiver;
    }
 
    @Override

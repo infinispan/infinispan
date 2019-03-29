@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -57,7 +58,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.EntryViews;
@@ -89,7 +89,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private static final long SKIP_REMOTE_FLAGS = FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP;
 
    @Inject PartitionHandlingManager partitionHandlingManager;
-   @Inject ComponentRegistry componentRegistry;
+   @Inject CommandsFactory commandsFactory;
 
    private boolean forceRemoteReadForFunctionalCommands;
 
@@ -150,7 +150,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             }
             // If max was returned update our time with it, so we don't query again
             UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, command.getSegment(), (long) max);
-            ulac.inject(dataContainer);
             // This command doesn't block
             ulac.invokeAsync().join();
             // Make sure to notify other interceptors the command failed
@@ -500,11 +499,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                return asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, key, true));
             }
 
-            List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, command, key);
+            List<Mutation<Object, Object, ?>> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, command, key);
             mutationsOnKey.add(command.toMutation(key));
-            TxReadOnlyKeyCommand remoteRead = new TxReadOnlyKeyCommand(key, mutationsOnKey, segment,
-                  command.getParams(), command.getKeyDataConversion(), command.getValueDataConversion(),
-                  componentRegistry);
+            TxReadOnlyKeyCommand remoteRead = commandsFactory.buildTxReadOnlyKeyCommand(key, null, mutationsOnKey, segment,
+                  command.getParams(), command.getKeyDataConversion(), command.getValueDataConversion());
             remoteRead.setTopologyId(command.getTopologyId());
 
             CompletionStage<SuccessfulResponse> remoteGet =
@@ -559,9 +557,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!ctx.isInTxScope()) {
          return command;
       }
-      return new TxReadOnlyKeyCommand(command, getMutationsOnKey((TxInvocationContext) ctx, null, command.getKey()),
-            command.getSegment(), command.getParams(), command.getKeyDataConversion(), command.getValueDataConversion(),
-            componentRegistry);
+      List<Mutation<Object, Object, ?>> mutations = getMutationsOnKey((TxInvocationContext) ctx, null, command.getKey());
+      return commandsFactory.buildTxReadOnlyKeyCommand(command.getKey(), command.getFunction(), mutations, command.getSegment(),
+            command.getParams(), command.getKeyDataConversion(), command.getValueDataConversion());
    }
 
    @Override
@@ -573,7 +571,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!ctx.isOriginLocal() || !ctx.isInTxScope()) {
          return cf;
       }
-      List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, command instanceof WriteCommand ? (WriteCommand) command : null, key);
+      List<Mutation<Object, Object, ?>> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, command instanceof WriteCommand ? (WriteCommand) command : null, key);
       if (mutationsOnKey.isEmpty()) {
          return cf;
       }
@@ -596,12 +594,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!ctx.isInTxScope()) {
          return;
       }
-      List<List<Mutation>> mutations = getMutations(ctx, appliedCommand, remoteKeys);
+      List<List<Mutation<Object, Object, ?>>> mutations = getMutations(ctx, appliedCommand, remoteKeys);
       if (mutations == null || mutations.isEmpty()) {
          return;
       }
       Iterator<?> keysIterator = remoteKeys.iterator();
-      Iterator<List<Mutation>> mutationsIterator = mutations.iterator();
+      Iterator<List<Mutation<Object, Object, ?>>> mutationsIterator = mutations.iterator();
       for (; keysIterator.hasNext() && mutationsIterator.hasNext(); ) {
          Object key = keysIterator.next();
          entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), false, true);
@@ -616,8 +614,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       assert !mutationsIterator.hasNext();
    }
 
-   private static List<Mutation> getMutationsOnKey(TxInvocationContext ctx, WriteCommand untilCommand, Object key) {
-      List<Mutation> mutations = new ArrayList<>();
+   private static List<Mutation<Object, Object, ?>> getMutationsOnKey(TxInvocationContext ctx, WriteCommand untilCommand, Object key) {
+      List<Mutation<Object, Object, ?>> mutations = new ArrayList<>();
       // We don't use getAllModifications() because this goes remote and local mods should not affect it
       for (WriteCommand write : ctx.getCacheTransaction().getModifications()) {
          if (write == untilCommand) {
@@ -639,13 +637,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return mutations;
    }
 
-   private static List<List<Mutation>> getMutations(InvocationContext ctx, WriteCommand untilCommand, List<?> keys) {
+   private static List<List<Mutation<Object, Object,?>>> getMutations(InvocationContext ctx, WriteCommand untilCommand, List<?> keys) {
       if (!ctx.isInTxScope()) {
          return null;
       }
       log.tracef("Looking up mutations for %s", keys);
       TxInvocationContext txCtx = (TxInvocationContext) ctx;
-      List<List<Mutation>> mutations = new ArrayList<>(keys.size());
+      List<List<Mutation<Object, Object,?>>> mutations = new ArrayList<>(keys.size());
       for (int i = keys.size(); i > 0; --i) mutations.add(Collections.emptyList());
 
       for (WriteCommand write : txCtx.getCacheTransaction().getModifications()) {
@@ -658,7 +656,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             Object key = keys.get(i);
             if (write.getAffectedKeys().contains(key)) {
                if (write instanceof FunctionalCommand) {
-                  List<Mutation> list = mutations.get(i);
+                  List<Mutation<Object, Object,?>> list = mutations.get(i);
                   if (list.isEmpty()) {
                      list = new ArrayList<>();
                      mutations.set(i, list);
@@ -679,7 +677,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private class TxReadOnlyManyHelper extends ReadOnlyManyHelper {
       @Override
       public ReadOnlyManyCommand copyForRemote(ReadOnlyManyCommand command, List<Object> keys, InvocationContext ctx) {
-         List<List<Mutation>> mutations = getMutations(ctx, null, keys);
+         List<List<Mutation<Object, Object,?>>> mutations = getMutations(ctx, null, keys);
          if (mutations == null) {
             return new ReadOnlyManyCommand<>(command).withKeys(keys);
          } else {
@@ -695,22 +693,21 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       @Override
-      public ReadOnlyManyCommand<?, ?, ?> copyForRemote(C command, List<Object> keys, InvocationContext ctx) {
-         List<List<Mutation>> mutations = getMutations(ctx, command, keys);
+      public ReadOnlyManyCommand<?, ?, ?> copyForRemote(C cmd, List<Object> keys, InvocationContext ctx) {
+         List<List<Mutation<Object, Object,?>>> mutations = getMutations(ctx, cmd, keys);
          // write command is always executed in transactional scope
          assert mutations != null;
 
          for (int i = 0; i < keys.size(); ++i) {
-            List<Mutation> list = mutations.get(i);
-            Mutation mutation = command.toMutation(keys.get(i));
+            List<Mutation<Object, Object,?>> list = mutations.get(i);
+            Mutation mutation = cmd.toMutation(keys.get(i));
             if (list.isEmpty()) {
                mutations.set(i, Collections.singletonList(mutation));
             } else {
                list.add(mutation);
             }
          }
-         return new TxReadOnlyManyCommand(keys, mutations, command.getParams(),
-               command.getKeyDataConversion(), command.getValueDataConversion(), componentRegistry);
+         return commandsFactory.buildTxReadOnlyManyCommand(keys, mutations, cmd.getParams(), cmd.getKeyDataConversion(), cmd.getValueDataConversion());
       }
 
       @Override

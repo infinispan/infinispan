@@ -9,20 +9,21 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -34,7 +35,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
+public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand implements InitializableCommand {
    public static final byte COMMAND_ID = 46;
    private static final Log log = LogFactory.getLog(ClusteredGetAllCommand.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -45,7 +46,6 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    private InvocationContextFactory icf;
    private CommandsFactory commandsFactory;
    private AsyncInterceptorChain invoker;
-   private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
 
    ClusteredGetAllCommand() {
@@ -62,13 +62,12 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
       this.gtx = gtx;
    }
 
-   public void init(InvocationContextFactory icf, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
-                    AsyncInterceptorChain interceptorChain, TransactionTable txTable) {
-      this.icf = icf;
-      this.commandsFactory = commandsFactory;
-      this.invoker = interceptorChain;
-      this.txTable = txTable;
-      this.entryFactory = entryFactory;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.commandsFactory = componentRegistry.getCommandsFactory();
+      this.entryFactory = componentRegistry.getInternalEntryFactory().running();
+      this.icf = componentRegistry.getInvocationContextFactory().running();
+      this.invoker = componentRegistry.getInterceptorChain().running();
    }
 
    @Override
@@ -114,7 +113,7 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
 
    private CompletableFuture<Object> acquireLocks() throws Throwable {
       LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(keys, getFlagsBitSet(), gtx);
-      lockControlCommand.init(invoker, icf, txTable);
+      commandsFactory.initializeReplicableCommand(lockControlCommand, false);
       return lockControlCommand.invokeAsync();
    }
 

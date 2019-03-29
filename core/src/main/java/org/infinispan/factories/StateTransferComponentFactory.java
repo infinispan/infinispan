@@ -49,7 +49,7 @@ public class StateTransferComponentFactory extends AbstractNamedCacheComponentFa
          }
       } else if (componentName.equals(StateReceiver.class.getName())) {
          return new StateReceiverImpl<>();
-      } else if (componentName.equals(InternalConflictManager.class.getName())) {
+      } else if (componentName.equals(ConflictManager.class.getName()) || componentName.equals(InternalConflictManager.class.getName())) {
          return new DefaultConflictManager<>();
       }
 

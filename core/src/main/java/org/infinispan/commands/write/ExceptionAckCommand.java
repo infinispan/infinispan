@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CommandAckCollector;
@@ -20,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class ExceptionAckCommand extends BaseRpcCommand {
+public class ExceptionAckCommand extends BaseRpcCommand implements InitializableCommand {
    private static final Log log = LogFactory.getLog(ExceptionAckCommand.class);
 
    public static final byte COMMAND_ID = 42;
@@ -42,6 +44,11 @@ public class ExceptionAckCommand extends BaseRpcCommand {
       this.id = id;
       this.throwable = throwable;
       this.topologyId = topologyId;
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.commandAckCollector = componentRegistry.getCommandAckCollector().running();
    }
 
    public void ack() {
@@ -76,10 +83,6 @@ public class ExceptionAckCommand extends BaseRpcCommand {
       id = input.readLong();
       throwable = (Throwable) input.readObject();
       topologyId = input.readInt();
-   }
-
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
    }
 
    @Override

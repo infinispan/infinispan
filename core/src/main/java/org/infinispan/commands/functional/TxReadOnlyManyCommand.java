@@ -23,11 +23,9 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
 
    public TxReadOnlyManyCommand(Collection<?> keys, List<List<Mutation<K, V, ?>>> mutations,
                                 Params params, DataConversion keyDataConversion,
-                                DataConversion valueDataConversion,
-                                ComponentRegistry componentRegistry) {
-      super(keys, null, params, keyDataConversion, valueDataConversion, componentRegistry);
+                                DataConversion valueDataConversion) {
+      super(keys, null, params, keyDataConversion, valueDataConversion);
       this.mutations = mutations;
-      init(componentRegistry);
    }
 
    public TxReadOnlyManyCommand(ReadOnlyManyCommand c, List<List<Mutation<K, V, ?>>> mutations) {
@@ -36,8 +34,8 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry) {
-      super.init(componentRegistry);
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      super.init(componentRegistry, isRemote);
       if (mutations != null) {
          for (List<Mutation<K, V, ?>> list : mutations) {
             for (Mutation<K, V, ?> m : list) {

@@ -73,4 +73,8 @@ public interface StateTransferManager {
    int getFirstTopologyAsMember();
 
    String getRebalancingStatus() throws Exception;
+
+   StateConsumer getStateConsumer();
+
+   StateProvider getStateProvider();
 }

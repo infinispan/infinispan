@@ -881,7 +881,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                      ulac.setTopologyId(cacheTopology.getTopologyId());
                      CompletionStage<?> updateState = rpcManager.invokeCommand(info.readOwners(), ulac,
                            VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
-                     ulac.inject(dataContainer);
                      // We update locally as well
                      ulac.invokeAsync();
                      return asyncValue(updateState).thenApply(rCtx, rCommand, (rCtx2, rCommand2, ignore) -> Boolean.FALSE);

@@ -5,8 +5,6 @@ import java.util.Map;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.CustomCacheRpcCommand;
 import org.infinispan.remoting.rpc.CustomReplicableCommand;
 import org.infinispan.remoting.rpc.SleepingCacheRpcCommand;
@@ -59,18 +57,6 @@ public final class TestModuleCommandExtensions implements ModuleCommandExtension
                   throw new IllegalArgumentException("Not registered to handle command id " + commandId);
             }
             return c;
-         }
-      };
-   }
-
-   @Override
-   public ModuleCommandInitializer getModuleCommandInitializer() {
-      return new ModuleCommandInitializer() {
-         @Inject EmbeddedCacheManager cacheManager;
-
-         @Override
-         public void initializeReplicableCommand(ReplicableCommand c, boolean isRemote) {
-            // nothing to do here
          }
       };
    }

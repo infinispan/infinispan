@@ -11,5 +11,12 @@ public interface ModuleCommandExtensions {
 
    ModuleCommandFactory getModuleCommandFactory();
 
-   ModuleCommandInitializer getModuleCommandInitializer();
+   /**
+    * @deprecated Since 10.0, Commands which require initialization should implement {@link
+    * org.infinispan.commands.InitializableCommand}.
+    */
+   @Deprecated
+   default ModuleCommandInitializer getModuleCommandInitializer() {
+      return null;
+   }
 }

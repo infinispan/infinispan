@@ -11,11 +11,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -25,7 +27,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author wburns
  * @since 10.0
  */
-public class MultiClusterEventCommand<K, V> extends BaseRpcCommand {
+public class MultiClusterEventCommand<K, V> extends BaseRpcCommand implements InitializableCommand {
 
    public static final int COMMAND_ID = 19;
 
@@ -49,9 +51,10 @@ public class MultiClusterEventCommand<K, V> extends BaseRpcCommand {
       this.multiEvents = events;
    }
 
-   public void init(Cache<K, V> cache, ClusterCacheNotifier<K, V> clusterCacheNotifier) {
-      this.cache = cache;
-      this.clusterCacheNotifier = clusterCacheNotifier;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.cache = componentRegistry.getCache().wired();
+      this.clusterCacheNotifier = componentRegistry.getClusterCacheNotifier().running();
    }
 
    @Override

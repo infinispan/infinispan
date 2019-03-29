@@ -54,9 +54,9 @@ final class Mutations {
       DataConversion valueDataConversion = DataConversion.readFrom(input);
       switch (input.readByte()) {
          case ReadWrite.TYPE:
-            return new ReadWrite<>(keyDataConversion, valueDataConversion, (Function<EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
+            return new ReadWrite<>(keyDataConversion, valueDataConversion, (Function<EntryView.ReadWriteEntryView<K, V>, T>) input.readObject());
          case ReadWriteWithValue.TYPE:
-            return new ReadWriteWithValue<>(keyDataConversion, valueDataConversion, input.readObject(), (BiFunction<V, EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
+            return new ReadWriteWithValue<>(keyDataConversion, valueDataConversion, input.readObject(), (BiFunction<V, EntryView.ReadWriteEntryView<K, V>, T>) input.readObject());
          case Write.TYPE:
             return new Write<>(keyDataConversion, valueDataConversion, (Consumer<EntryView.WriteEntryView<K, V>>) input.readObject());
          case WriteWithValue.TYPE:

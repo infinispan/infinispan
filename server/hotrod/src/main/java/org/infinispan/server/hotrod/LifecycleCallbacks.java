@@ -18,7 +18,6 @@ import static org.infinispan.server.core.ExternalizerIds.XID_PREDICATE;
 import java.util.EnumSet;
 import java.util.Map;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.CacheMode;
@@ -49,6 +48,8 @@ import org.infinispan.server.hotrod.tx.table.functions.SetPreparedFunction;
 import org.infinispan.server.hotrod.tx.table.functions.XidPredicate;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific {@link AdvancedExternalizer} implementations
@@ -115,7 +116,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       BasicComponentRegistry basicComponentRegistry = componentRegistry.getComponent(BasicComponentRegistry.class);
       basicComponentRegistry.replaceComponent(PerCacheTxTable.class.getName(), new PerCacheTxTable(cacheManager.getAddress()), true);
       basicComponentRegistry.replaceComponent(TransactionOriginatorChecker.class.getName(), new ServerTransactionOriginatorChecker(), true);
-      basicComponentRegistry.rewire();
+      componentRegistry.rewire();
    }
 
    /**

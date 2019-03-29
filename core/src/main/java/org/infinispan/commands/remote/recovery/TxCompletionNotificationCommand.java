@@ -11,11 +11,11 @@ import java.util.concurrent.CompletableFuture;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -28,7 +28,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class TxCompletionNotificationCommand  extends RecoveryCommand implements TopologyAffectedCommand {
+public class TxCompletionNotificationCommand extends RecoveryCommand implements TopologyAffectedCommand {
    private static final Log log = LogFactory.getLog(TxCompletionNotificationCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -52,14 +52,6 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
       this.gtx = gtx;
    }
 
-   public void init(TransactionTable tt, LockManager lockManager, RecoveryManager rm, StateTransferManager stm) {
-      super.init(rm);
-      this.txTable = tt;
-      this.lockManager = lockManager;
-      this.stateTransferManager = stm;
-   }
-
-
    public TxCompletionNotificationCommand(long internalId, ByteString cacheName) {
       super(cacheName);
       this.internalId = internalId;
@@ -67,6 +59,14 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
 
    public TxCompletionNotificationCommand(ByteString cacheName) {
       super(cacheName);
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      super.init(componentRegistry, isRemote);
+      this.txTable = componentRegistry.getTransactionTableRef().running();
+      this.lockManager = componentRegistry.getLockManager().running();
+      this.stateTransferManager = componentRegistry.getStateTransferManager();
    }
 
    @Override

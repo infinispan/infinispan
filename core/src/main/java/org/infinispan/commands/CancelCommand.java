@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -19,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Vladimir Blagojevic
  * @since 5.2
  */
-public class CancelCommand extends BaseRpcCommand {
+public class CancelCommand extends BaseRpcCommand implements InitializableCommand {
 
    private static final Log log = LogFactory.getLog(CancelCommand.class);
    public static final byte COMMAND_ID = 34;
@@ -40,8 +41,9 @@ public class CancelCommand extends BaseRpcCommand {
       this.commandToCancel = commandToCancel;
    }
 
-   public void init(CancellationService service) {
-      this.service = service;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.service = componentRegistry.getCancellationService().running();
    }
 
    @Override

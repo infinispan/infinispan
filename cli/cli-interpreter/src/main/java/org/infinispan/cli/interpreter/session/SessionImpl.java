@@ -20,6 +20,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.logging.LogFactory;
@@ -108,12 +109,13 @@ public class SessionImpl implements Session {
       if (configuration.clustering().cacheMode().isClustered()) {
          AdvancedCache<?, ?> clusteredCache = cacheManager.getCache(baseCacheName).getAdvancedCache();
          RpcManager rpc = clusteredCache.getRpcManager();
-         CommandsFactory factory = clusteredCache.getComponentRegistry().getComponent(CommandsFactory.class);
+         ComponentRegistry componentRegistry = clusteredCache.getComponentRegistry();
+         CommandsFactory factory = componentRegistry.getComponent(CommandsFactory.class);
 
          CreateCacheCommand ccc = factory.buildCreateCacheCommand(cacheName, baseCacheName);
          try {
             rpc.invokeRemotely(null, ccc, rpc.getSyncRpcOptions());
-            ccc.init(cacheManager);
+            ccc.init(componentRegistry, false);
             ccc.invoke();
          } catch (Throwable e) {
             throw log.cannotCreateClusteredCaches(e, cacheName);

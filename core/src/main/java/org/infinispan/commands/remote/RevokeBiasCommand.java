@@ -6,9 +6,10 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -20,15 +21,15 @@ import org.infinispan.util.ByteString;
  * After local bias is revoked a {@link BackupAckCommand} is sent to the originator, and this confirms all keys.
  */
 //TODO: consolidate this with InvalidateVersionsCommand
-public class RevokeBiasCommand extends BaseRpcCommand {
+public class RevokeBiasCommand extends BaseRpcCommand implements InitializableCommand {
    public static final byte COMMAND_ID = 74;
 
    private Address ackTarget;
    private long id;
    private int topologyId;
    private Collection<Object> keys;
+   private transient ByteString cacheName;
    private transient BiasManager biasManager;
-   private transient CommandsFactory commandsFactory;
    private transient RpcManager rpcManager;
 
    public RevokeBiasCommand() {
@@ -47,10 +48,11 @@ public class RevokeBiasCommand extends BaseRpcCommand {
       this.keys = keys;
    }
 
-   public void init(BiasManager biasManager, CommandsFactory commandsFactory, RpcManager rpcManager) {
-      this.biasManager = biasManager;
-      this.commandsFactory = commandsFactory;
-      this.rpcManager = rpcManager;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.biasManager = componentRegistry.getBiasManager().running();
+      this.cacheName = componentRegistry.getCacheByteString();
+      this.rpcManager = componentRegistry.getRpcManager().running();
    }
 
    @Override
@@ -59,10 +61,8 @@ public class RevokeBiasCommand extends BaseRpcCommand {
          biasManager.revokeLocalBias(key);
       }
       // ackTarget null means that this message is sent synchronously by primary owner == originator
-      if (ackTarget != null) {
-         BackupAckCommand backupAckCommand = commandsFactory.buildBackupAckCommand(id, topologyId);
-         rpcManager.sendTo(ackTarget, backupAckCommand, DeliverOrder.NONE);
-      }
+      if (ackTarget != null)
+         rpcManager.sendTo(ackTarget, new BackupAckCommand(cacheName, id, topologyId), DeliverOrder.NONE);
       return null;
    }
 

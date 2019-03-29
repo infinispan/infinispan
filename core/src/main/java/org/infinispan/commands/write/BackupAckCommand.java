@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CommandAckCollector;
 
@@ -16,7 +18,7 @@ import org.infinispan.util.concurrent.CommandAckCollector;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class BackupAckCommand extends BaseRpcCommand {
+public class BackupAckCommand extends BaseRpcCommand implements InitializableCommand {
 
    public static final byte COMMAND_ID = 2;
    private CommandAckCollector commandAckCollector;
@@ -35,6 +37,11 @@ public class BackupAckCommand extends BaseRpcCommand {
       super(cacheName);
       this.id = id;
       this.topologyId = topologyId;
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.commandAckCollector = componentRegistry.getCommandAckCollector().running();
    }
 
    public void ack() {
@@ -66,10 +73,6 @@ public class BackupAckCommand extends BaseRpcCommand {
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       id = input.readLong();
       topologyId = input.readInt();
-   }
-
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
    }
 
    @Override

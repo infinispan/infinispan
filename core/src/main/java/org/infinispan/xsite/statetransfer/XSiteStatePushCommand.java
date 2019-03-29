@@ -5,7 +5,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
@@ -17,7 +19,7 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class XSiteStatePushCommand extends XSiteReplicateCommand {
+public class XSiteStatePushCommand extends XSiteReplicateCommand implements InitializableCommand {
 
    public static final byte COMMAND_ID = 33;
    private XSiteState[] chunk;
@@ -44,8 +46,9 @@ public class XSiteStatePushCommand extends XSiteReplicateCommand {
       super(null);
    }
 
-   public void initialize(XSiteStateConsumer consumer) {
-      this.consumer = consumer;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.consumer = componentRegistry.getXSiteStateTransferManager().running().getStateConsumer();
    }
 
    public XSiteState[] getChunk() {

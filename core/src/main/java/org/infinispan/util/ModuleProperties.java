@@ -53,7 +53,6 @@ public final class ModuleProperties {
             ModuleCommandFactory cmdFactory = extension.getModuleCommandFactory();
             Objects.requireNonNull(cmdFactory);
             ModuleCommandInitializer cmdInitializer = extension.getModuleCommandInitializer();
-            Objects.requireNonNull(cmdInitializer);
             for (Map.Entry<Byte, Class<? extends ReplicableCommand>> command : cmdFactory.getModuleCommands().entrySet()) {
                byte id = command.getKey();
                if (commandFactories.containsKey(id))
@@ -63,7 +62,10 @@ public final class ModuleProperties {
 
                commandFactories.put(id, cmdFactory);
                moduleCommands.add(command.getValue());
-               commandInitializers.put(id, cmdInitializer);
+               if (cmdInitializer != null) {
+                  log.warnModuleCommandInitializerDeprecated(extension.getClass().getName());
+                  commandInitializers.put(id, cmdInitializer);
+               }
             }
          }
       } else {

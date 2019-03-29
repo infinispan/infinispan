@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.remote.BaseRpcCommand;
@@ -22,7 +23,7 @@ import org.infinispan.util.ByteString;
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
  * @param <K> the key type
  */
-public class PublisherRequestCommand<K> extends BaseRpcCommand implements TopologyAffectedCommand {
+public class PublisherRequestCommand<K> extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
    public static final byte COMMAND_ID = 31;
 
    private LocalPublisherManager lpm;
@@ -71,9 +72,10 @@ public class PublisherRequestCommand<K> extends BaseRpcCommand implements Topolo
       this.finalizer = finalizer;
    }
 
-   public void inject(LocalPublisherManager lpm, ComponentRegistry componentRegistry) {
-      this.lpm = lpm;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
       this.componentRegistry = componentRegistry;
+      this.lpm = componentRegistry.getLocalPublisherManager().running();
    }
 
    @Override

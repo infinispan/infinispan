@@ -145,7 +145,7 @@ public class IteratorHandler {
     * returns false, that invocation will also close resources related to the iterator.
     * @param requestId the id of the iterator
     */
-   public void closeIterator(Address origin, Object requestId) {
+   void closeIterator(Address origin, Object requestId) {
       Set<Object> ids = ownerRequests.get(origin);
       if (ids != null) {
          ids.remove(requestId);

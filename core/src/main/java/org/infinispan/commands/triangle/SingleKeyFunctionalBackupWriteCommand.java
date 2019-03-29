@@ -17,9 +17,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.ByteString;
 
@@ -52,12 +49,6 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
 
    private static Operation valueOf(int index) {
       return CACHED_OPERATION[index];
-   }
-
-   public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         ComponentRegistry componentRegistry) {
-      injectDependencies(factory, chain);
-      this.componentRegistry = componentRegistry;
    }
 
    @Override
@@ -135,17 +126,21 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
          case READ_WRITE:
             //noinspection unchecked
             return new ReadWriteKeyCommand(key, (Function) function, segmentId, getCommandInvocationId(), MATCH_ALWAYS,
-                  params, keyDataConversion, valueDataConversion, componentRegistry);
+                  params, keyDataConversion, valueDataConversion);
          case READ_WRITE_KEY_VALUE:
-            return createReadWriteKeyValueCommand();
+            //noinspection unchecked
+            ReadWriteKeyValueCommand cmd = new ReadWriteKeyValueCommand(key, value, (BiFunction) function, segmentId,
+                  getCommandInvocationId(), MATCH_ALWAYS, params, keyDataConversion, valueDataConversion);
+            cmd.setPrevValueAndMetadata(prevValue, prevMetadata);
+            return cmd;
          case WRITE_ONLY:
             //noinspection unchecked
             return new WriteOnlyKeyCommand(key, (Consumer) function, segmentId, getCommandInvocationId(), MATCH_ALWAYS,
-                  params, keyDataConversion, valueDataConversion, componentRegistry);
+                  params, keyDataConversion, valueDataConversion);
          case WRITE_ONLY_KEY_VALUE:
             //noinspection unchecked
             return new WriteOnlyKeyValueCommand(key, value, (BiConsumer) function, segmentId, getCommandInvocationId(),
-                  MATCH_ALWAYS, params, keyDataConversion, valueDataConversion, componentRegistry);
+                  MATCH_ALWAYS, params, keyDataConversion, valueDataConversion);
          default:
             throw new IllegalStateException("Unknown operation " + operation);
       }
@@ -155,14 +150,6 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       setCommonAttributesFromCommand(command);
       setFunctionalCommand(command);
       this.key = command.getKey();
-   }
-
-   private ReadWriteKeyValueCommand createReadWriteKeyValueCommand() {
-      //noinspection unchecked
-      ReadWriteKeyValueCommand cmd = new ReadWriteKeyValueCommand(key, value, (BiFunction) function, segmentId,
-            getCommandInvocationId(), MATCH_ALWAYS, params, keyDataConversion, valueDataConversion, componentRegistry);
-      cmd.setPrevValueAndMetadata(prevValue, prevMetadata);
-      return cmd;
    }
 
    private enum Operation {

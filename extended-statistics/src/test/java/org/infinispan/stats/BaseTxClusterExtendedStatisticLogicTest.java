@@ -93,6 +93,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionTestHelper;
@@ -105,9 +106,9 @@ import org.infinispan.stats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.stats.wrappers.ExtendedStatisticLockManager;
 import org.infinispan.stats.wrappers.ExtendedStatisticRpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.EmbeddedTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -273,6 +274,7 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
       }
       waitForClusterToForm();
       for (int i = 0; i < NUM_NODES; ++i) {
+         TestingUtil.replaceComponent(cacheManagers.get(i), TimeService.class, TEST_TIME_SERVICE, true);
          lockManagers[i] = extractLockManager(cache(i));
          ExtendedStatisticInterceptor interceptor = extendedStatisticInterceptors[i];
          CacheStatisticManager manager = extractField(interceptor, "cacheStatisticManager");

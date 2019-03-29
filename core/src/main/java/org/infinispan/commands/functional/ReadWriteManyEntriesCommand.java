@@ -34,12 +34,10 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
                                       Params params,
                                       CommandInvocationId commandInvocationId,
                                       DataConversion keyDataConversion,
-                                      DataConversion valueDataConversion,
-                                      ComponentRegistry componentRegistry) {
+                                      DataConversion valueDataConversion) {
       super(commandInvocationId, params, keyDataConversion, valueDataConversion);
       this.arguments = arguments;
       this.f = f;
-      init(componentRegistry);
    }
 
    public ReadWriteManyEntriesCommand(ReadWriteManyEntriesCommand command) {
@@ -51,6 +49,13 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
    }
 
    public ReadWriteManyEntriesCommand() {
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      super.init(componentRegistry, isRemote);
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 
    public BiFunction<T, ReadWriteEntryView<K, V>, R> getBiFunction() {
@@ -160,14 +165,4 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
    public Mutation<K, V, ?> toMutation(Object key) {
       return new Mutations.ReadWriteWithValue(keyDataConversion, valueDataConversion, arguments.get(key), f);
    }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry) {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
-
-      if (f instanceof InjectableComponent)
-         ((InjectableComponent) f).inject(componentRegistry);
-   }
-
 }

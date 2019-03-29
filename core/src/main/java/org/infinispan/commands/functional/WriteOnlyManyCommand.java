@@ -29,12 +29,10 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
                                Params params,
                                CommandInvocationId commandInvocationId,
                                DataConversion keyDataConversion,
-                               DataConversion valueDataConversion,
-                               ComponentRegistry componentRegistry) {
+                               DataConversion valueDataConversion) {
       super(commandInvocationId, params, keyDataConversion, valueDataConversion);
       this.keys = keys;
       this.f = f;
-      init(componentRegistry);
    }
 
    public WriteOnlyManyCommand(WriteOnlyManyCommand<K, V> command) {
@@ -46,6 +44,13 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    }
 
    public WriteOnlyManyCommand() {
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      super.init(componentRegistry, isRemote);
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 
    public Consumer<WriteEntryView<K, V>> getConsumer() {
@@ -139,13 +144,4 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    public Mutation<K, V, ?> toMutation(Object key) {
       return new Mutations.Write<>(keyDataConversion, valueDataConversion, f);
    }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry) {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
-      if (f instanceof InjectableComponent)
-         ((InjectableComponent) f).inject(componentRegistry);
-   }
-
 }
