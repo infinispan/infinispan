@@ -12,8 +12,8 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
@@ -53,6 +53,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
    public void beforeClass() {
       ConfigurationBuilder cc = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = cc
+            .clustering().cacheMode(CacheMode.DIST_SYNC)
             .persistence()
                .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
                .shared(true)
@@ -62,7 +63,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
       UnitTestDatabaseManager.setDialect(storeBuilder);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
 
-      cacheManager = TestCacheManagerFactory.createCacheManager(new GlobalConfigurationBuilder().defaultCacheName("Test"), cc);
+      cacheManager = TestCacheManagerFactory.createClusteredCacheManager(cc);
       cache = cacheManager.getCache("Test");
       store = TestingUtil.getFirstTxWriter(cache);
    }

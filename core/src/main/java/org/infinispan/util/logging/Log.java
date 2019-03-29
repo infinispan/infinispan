@@ -1862,4 +1862,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "JGroups stack '%s' has a RELAY2 protocol without remote sites", id = 548)
    CacheConfigurationException jgroupsRelayWithoutRemoteSites(String name);
+
+   @Message(value = "A store cannot be shared when utilised with a local cache.", id = 549)
+   CacheConfigurationException sharedStoreWithLocalCache();
 }
