@@ -239,9 +239,14 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
          throw log.attributeNotAllowedInInvalidationMode(FETCH_PERSISTENT_STATE.name());
       }
 
-      if (shared && !preload && builder.indexing().enabled()
-            && builder.indexing().indexLocalOnly() && !getBuilder().template())
-         log.localIndexingWithSharedCacheLoaderRequiresPreload();
+      if (shared) {
+         if (!builder.clustering().cacheMode().isClustered())
+            throw log.sharedStoreWithLocalCache();
+
+         if (!preload && builder.indexing().enabled()
+               && builder.indexing().indexLocalOnly() && !getBuilder().template())
+            log.localIndexingWithSharedCacheLoaderRequiresPreload();
+      }
 
       if (transactional && !builder.transaction().transactionMode().isTransactional())
          throw log.transactionalStoreInNonTransactionalCache();

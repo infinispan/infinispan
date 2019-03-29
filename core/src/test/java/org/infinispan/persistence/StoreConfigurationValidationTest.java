@@ -70,6 +70,18 @@ public class StoreConfigurationValidationTest {
             .validate();
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = ".* A store cannot be shared when utilised with a local cache.")
+   public void testSharedStoreWithLocalCache() {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      builder.clustering()
+            .cacheMode(CacheMode.LOCAL)
+            .persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .shared(true)
+            .validate();
+   }
+
    @Store
    @ConfiguredBy(NonSharedDummyStoreConfiguration.class)
    static class NonSharedDummyInMemoryStore extends DummyInMemoryStore {

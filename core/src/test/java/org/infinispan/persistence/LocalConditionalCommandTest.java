@@ -49,7 +49,7 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
    }
 
    private static ConfigurationBuilder createConfiguration(String storeName, boolean shared, boolean transactional, boolean passivation) {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, transactional);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional);
       builder.jmxStatistics().enable();
       builder.persistence()
             .passivation(passivation)
@@ -160,7 +160,7 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.createCacheManager();
+      EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.createClusteredCacheManager();
       embeddedCacheManager.defineConfiguration(PRIVATE_STORE_CACHE_NAME, createConfiguration(getClass().getSimpleName(), false, transactional, passivation).build());
       if (!passivation) {
          embeddedCacheManager.defineConfiguration(SHARED_STORE_CACHE_NAME, createConfiguration(getClass().getSimpleName(), true, transactional, false).build());
