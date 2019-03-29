@@ -100,4 +100,11 @@ public interface LocalStreamManager<Original, K> {
     * @return the response containing iterator
     */
    IteratorResponse continueIterator(Object requestId, long batchSize);
+
+   /**
+    * Closes a iterator associated with the specified origin and requestId if it exists.
+    * @param origin the node this request came from
+    * @param requestId the originating request id
+    */
+   void closeIterator(Address origin, Object requestId);
 }

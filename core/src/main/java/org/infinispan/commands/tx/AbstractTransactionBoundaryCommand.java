@@ -5,8 +5,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -23,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public abstract class AbstractTransactionBoundaryCommand implements TransactionBoundaryCommand {
+public abstract class AbstractTransactionBoundaryCommand implements InitializableCommand, TransactionBoundaryCommand {
 
    private static final Log log = LogFactory.getLog(AbstractTransactionBoundaryCommand.class);
    private static boolean trace = log.isTraceEnabled();
@@ -40,10 +42,12 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       this.cacheName = cacheName;
    }
 
-   public void init(AsyncInterceptorChain chain, InvocationContextFactory icf, TransactionTable txTable) {
-      this.invoker = chain;
-      this.icf = icf;
-      this.txTable = txTable;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.invoker = componentRegistry.getInterceptorChain().running();
+      this.icf = componentRegistry.getInvocationContextFactory().running();
+      this.txTable = componentRegistry.getTransactionTableRef().running();
+      markTransactionAsRemote(isRemote);
    }
 
    @Override

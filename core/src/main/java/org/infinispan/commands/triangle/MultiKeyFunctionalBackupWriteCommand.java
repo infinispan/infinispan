@@ -13,9 +13,6 @@ import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.ByteString;
 
 /**
@@ -39,12 +36,6 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
 
    public MultiKeyFunctionalBackupWriteCommand(ByteString cacheName) {
       super(cacheName);
-   }
-
-   public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         ComponentRegistry componentRegistry) {
-      injectDependencies(factory, chain);
-      this.componentRegistry = componentRegistry;
    }
 
    @Override
@@ -89,9 +80,9 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
       //noinspection unchecked
       AbstractWriteManyCommand cmd = writeOnly ?
             new WriteOnlyManyCommand(keys, (Consumer) function, params, getCommandInvocationId(),
-                  keyDataConversion, valueDataConversion, componentRegistry) :
+                  keyDataConversion, valueDataConversion) :
             new ReadWriteManyCommand(keys, (Function) function, params, getCommandInvocationId(),
-                  keyDataConversion, valueDataConversion, componentRegistry);
+                  keyDataConversion, valueDataConversion);
       cmd.setForwarded(true);
       return cmd;
    }

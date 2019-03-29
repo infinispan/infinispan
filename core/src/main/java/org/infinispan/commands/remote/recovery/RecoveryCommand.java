@@ -1,6 +1,8 @@
 package org.infinispan.commands.remote.recovery;
 
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
 
@@ -10,7 +12,7 @@ import org.infinispan.util.ByteString;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public abstract class RecoveryCommand extends BaseRpcCommand {
+public abstract class RecoveryCommand extends BaseRpcCommand implements InitializableCommand {
 
    protected RecoveryManager recoveryManager;
 
@@ -22,8 +24,9 @@ public abstract class RecoveryCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public void init(RecoveryManager rm) {
-      this.recoveryManager = rm;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.recoveryManager = componentRegistry.getRecoveryManager().running();
    }
 
    @Override

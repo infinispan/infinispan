@@ -235,6 +235,16 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       }
    }
 
+   @Override
+   public XSiteStateProvider getStateProvider() {
+      return provider;
+   }
+
+   @Override
+   public XSiteStateConsumer getStateConsumer() {
+      return consumer;
+   }
+
    @TopologyChanged
    public <K, V> CompletionStage<Void> handleTopology(TopologyChangedEvent<K, V> topologyChangedEvent) {
       if (debug) {

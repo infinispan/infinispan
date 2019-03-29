@@ -31,15 +31,20 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    public ReadWriteKeyCommand(Object key, Function<ReadWriteEntryView<K, V>, R> f, int segment,
                               CommandInvocationId id, ValueMatcher valueMatcher, Params params,
                               DataConversion keyDataConversion,
-                              DataConversion valueDataConversion,
-                              ComponentRegistry componentRegistry) {
+                              DataConversion valueDataConversion) {
       super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
-      init(componentRegistry);
    }
 
    public ReadWriteKeyCommand() {
       // No-op, for marshalling
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      super.init(componentRegistry, isRemote);
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 
    @Override
@@ -113,13 +118,4 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       sb.append('}');
       return sb.toString();
    }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry) {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
-      if (f instanceof InjectableComponent)
-         ((InjectableComponent) f).inject(componentRegistry);
-   }
-
 }

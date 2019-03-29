@@ -9,6 +9,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -16,7 +17,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Vladimir Blagojevic
  * @since 5.2
  */
-public class CreateCacheCommand extends BaseRpcCommand {
+public class CreateCacheCommand extends BaseRpcCommand implements InitializableCommand {
 
    private static final Log log = LogFactory.getLog(CreateCacheCommand.class);
    public static final byte COMMAND_ID = 29;
@@ -56,8 +56,9 @@ public class CreateCacheCommand extends BaseRpcCommand {
       this.expectedMembers = expectedMembers;
    }
 
-   public void init(EmbeddedCacheManager cacheManager) {
-      this.cacheManager = cacheManager;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.cacheManager = componentRegistry.getGlobalComponentRegistry().getCacheManager();
    }
 
    @Override

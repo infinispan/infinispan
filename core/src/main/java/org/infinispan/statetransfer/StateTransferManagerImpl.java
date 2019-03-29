@@ -349,7 +349,16 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
+   public StateConsumer getStateConsumer() {
+      return stateConsumer;
+   }
 
+   @Override
+   public StateProvider getStateProvider() {
+      return stateProvider;
+   }
+
+   @Override
    public String toString() {
       return "StateTransferManagerImpl [" + cacheName + "@" + rpcManager.getAddress() + "]";
    }

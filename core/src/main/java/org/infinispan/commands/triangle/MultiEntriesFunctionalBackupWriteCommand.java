@@ -14,9 +14,6 @@ import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
 
@@ -41,12 +38,6 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
 
    public MultiEntriesFunctionalBackupWriteCommand(ByteString cacheName) {
       super(cacheName);
-   }
-
-   public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         ComponentRegistry componentRegistry) {
-      injectDependencies(factory, chain);
-      this.componentRegistry = componentRegistry;
    }
 
    public <K, V, T> void setWriteOnly(WriteOnlyManyEntriesCommand<K, V, T> command, Collection<Object> keys) {
@@ -91,9 +82,9 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       //noinspection unchecked
       AbstractWriteManyCommand cmd = writeOnly ?
             new WriteOnlyManyEntriesCommand(entries, (BiConsumer) function, params, getCommandInvocationId(),
-                  keyDataConversion, valueDataConversion, componentRegistry) :
+                  keyDataConversion, valueDataConversion) :
             new ReadWriteManyEntriesCommand(entries, (BiFunction) function, params, getCommandInvocationId(),
-                  keyDataConversion, valueDataConversion, componentRegistry);
+                  keyDataConversion, valueDataConversion);
       cmd.setForwarded(true);
       return cmd;
    }

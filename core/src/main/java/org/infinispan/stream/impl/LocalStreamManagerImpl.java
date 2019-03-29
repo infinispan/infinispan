@@ -494,6 +494,11 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
       return new IteratorResponses.RemoteResponse(iterator, changeListener.get(requestId).segmentsLost, batchSize);
    }
 
+   @Override
+   public void closeIterator(Address origin, Object requestId) {
+      iteratorHandler.closeIterator(origin, requestId);
+   }
+
    class NonRehashIntermediateCollector<R> implements KeyTrackingTerminalOperation.IntermediateCollector<R> {
       private final Address origin;
       private final Object requestId;

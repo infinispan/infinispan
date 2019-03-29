@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -17,7 +18,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 
-public class ComputeCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
+public class ComputeCommand extends AbstractDataWriteCommand implements InitializableCommand, MetadataAwareCommand {
 
    public static final int COMMAND_ID = 68;
 
@@ -34,14 +35,12 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
                          boolean computeIfPresent,
                          int segment, long flagsBitSet,
                          CommandInvocationId commandInvocationId,
-                         Metadata metadata,
-                         ComponentRegistry componentRegistry) {
+                         Metadata metadata) {
 
       super(key, segment, flagsBitSet, commandInvocationId);
       this.remappingBiFunction = remappingBiFunction;
       this.computeIfPresent = computeIfPresent;
       this.metadata = metadata;
-      componentRegistry.wireDependencies(this.remappingBiFunction);
    }
 
    public boolean isComputeIfPresent() {
@@ -52,8 +51,8 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
       this.computeIfPresent = computeIfPresent;
    }
 
-   public void init(ComponentRegistry componentRegistry) {
-      //noinspection unchecked
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
       componentRegistry.wireDependencies(remappingBiFunction);
    }
 

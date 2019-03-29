@@ -11,10 +11,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
@@ -52,6 +52,8 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 
+import net.jcip.annotations.ThreadSafe;
+
 /**
  * A global component registry where shared components are stored.
  *
@@ -77,6 +79,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private final GlobalConfiguration globalConfiguration;
 
+   private final EmbeddedCacheManager cacheManager;
    /**
     * Tracking set of created caches in order to make it easy to remove a cache on remote nodes.
     */
@@ -145,6 +148,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
 
          this.createdCaches = createdCaches;
+         this.cacheManager = cacheManager;
 
          // Initialize components that do not have strong references from the cache manager
          basicComponentRegistry.getComponent(EventLogManager.class);
@@ -334,5 +338,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    public ModuleProperties getModuleProperties() {
       return moduleProperties;
+   }
+
+   public EmbeddedCacheManager getCacheManager() {
+      return cacheManager;
    }
 }

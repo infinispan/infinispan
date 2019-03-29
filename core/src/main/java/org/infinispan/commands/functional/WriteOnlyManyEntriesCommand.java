@@ -30,12 +30,10 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
                                       Params params,
                                       CommandInvocationId commandInvocationId,
                                       DataConversion keyDataConversion,
-                                      DataConversion valueDataConversion,
-                                      ComponentRegistry componentRegistry) {
+                                      DataConversion valueDataConversion) {
       super(commandInvocationId, params, keyDataConversion, valueDataConversion);
       this.arguments = arguments;
       this.f = f;
-      init(componentRegistry);
    }
 
    public WriteOnlyManyEntriesCommand(WriteOnlyManyEntriesCommand<K, V, T> command) {
@@ -47,6 +45,13 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
    }
 
    public WriteOnlyManyEntriesCommand() {
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      super.init(componentRegistry, isRemote);
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 
    public BiConsumer<T, WriteEntryView<K, V>> getBiConsumer() {
@@ -145,13 +150,4 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
    public Mutation<K, V, ?> toMutation(Object key) {
       return new Mutations.WriteWithValue<>(keyDataConversion, valueDataConversion, arguments.get(key), f);
    }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry) {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
-      if (f instanceof InjectableComponent)
-         ((InjectableComponent) f).inject(componentRegistry);
-   }
-
 }

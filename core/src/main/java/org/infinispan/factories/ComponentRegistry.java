@@ -2,6 +2,7 @@ package org.infinispan.factories;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
+import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheConfigurationException;
@@ -11,9 +12,11 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.InternalConflictManager;
-import org.infinispan.conflict.impl.StateReceiver;
+import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersionGenerator;
 import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -23,21 +26,32 @@ import org.infinispan.factories.impl.ComponentAccessor;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.ResponseGenerator;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.LocalStreamManager;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
@@ -53,24 +67,45 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 @SurvivesRestarts
 public class ComponentRegistry extends AbstractComponentRegistry {
    private static final Log log = LogFactory.getLog(ComponentRegistry.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    private final String cacheName;
+   private final ByteString cacheByteString;
    private final Configuration configuration;
    private final GlobalComponentRegistry globalComponents;
 
    @Inject CacheManagerNotifier cacheManagerNotifier;
 
    //Cached fields:
-   private StateTransferManager stateTransferManager;
-   private ResponseGenerator responseGenerator;
-   private CommandsFactory commandsFactory;
-   private StateTransferLock stateTransferLock;
-   private PerCacheInboundInvocationHandler inboundInvocationHandler;
-   private VersionGenerator versionGenerator;
-   private DistributionManager distributionManager;
-   private PersistenceMarshaller persistenceMarshaller;
-   private StreamingMarshaller internalMarshaller;
+   private ComponentRef<AdvancedCache> cache;
+   private ComponentRef<AsyncInterceptorChain> asyncInterceptorChain;
+   private ComponentRef<BackupSender> backupSender;
+   private ComponentRef<BiasManager> biasManager;
+   private ComponentRef<CacheNotifier> cacheNotifier;
+   private ComponentRef<CancellationService> cancellationService;
+   private ComponentRef<ClusterCacheNotifier> clusterCacheNotifier;
+   private ComponentRef<ClusterStreamManager> clusterStreamManager;
+   private ComponentRef<CommandAckCollector> commandAckCollector;
+   private ComponentRef<CommandsFactory> commandsFactory;
+   private ComponentRef<InternalConflictManager> conflictManager;
+   private ComponentRef<DistributionManager> distributionManager;
+   private ComponentRef<InternalDataContainer> internalDataContainer;
+   private ComponentRef<InternalEntryFactory> internalEntryFactory;
+   private ComponentRef<InvocationContextFactory> invocationContextFactory;
+   private ComponentRef<LocalPublisherManager> localPublisherManager;
+   private ComponentRef<LocalStreamManager> localStreamManager;
+   private ComponentRef<LockManager> lockManager;
+   private ComponentRef<OrderedUpdatesManager> orderedUpdatesManager;
+   private ComponentRef<PerCacheInboundInvocationHandler> inboundInvocationHandler;
+   private ComponentRef<PersistenceMarshaller> persistenceMarshaller;
+   private ComponentRef<RecoveryManager> recoveryManager;
+   private ComponentRef<ResponseGenerator> responseGenerator;
+   private ComponentRef<RpcManager> rpcManager;
+   private ComponentRef<StateTransferLock> stateTransferLock;
+   private ComponentRef<StateTransferManager> stateTransferManager;
+   private ComponentRef<StreamingMarshaller> internalMarshaller;
+   private ComponentRef<TransactionTable> transactionTable;
+   private ComponentRef<VersionGenerator> versionGenerator;
+   private ComponentRef<XSiteStateTransferManager> xSiteStateTransferManager;
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
@@ -88,6 +123,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
       try {
          this.cacheName = cacheName;
+         this.cacheByteString = ByteString.fromString(cacheName);
          this.configuration = configuration;
          this.globalComponents = globalComponents;
 
@@ -226,6 +262,12 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
+   public void rewire() {
+      super.rewire();
+      cacheComponents();
+   }
+
+   @Override
    public TimeService getTimeService() {
       return globalComponents.getTimeService();
    }
@@ -236,70 +278,70 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    @Deprecated
    public StreamingMarshaller getCacheMarshaller() {
-      return internalMarshaller;
+      return internalMarshaller.wired();
    }
 
    /**
     * Caching shortcut for #getComponent(StreamingMarshaller.class, INTERNAL_MARSHALLER);
     */
    public StreamingMarshaller getInternalMarshaller() {
-      return internalMarshaller;
+      return internalMarshaller.wired();
    }
 
    /**
     * Caching shortcut for #getComponent(PersistenceMarshaller.class, PERSISTENCE_MARSHALLER);
     */
    public PersistenceMarshaller getPersistenceMarshaller() {
-      return persistenceMarshaller;
+      return persistenceMarshaller.wired();
    }
 
    /**
     * Caching shortcut for #getComponent(StateTransferManager.class);
     */
    public StateTransferManager getStateTransferManager() {
-      return stateTransferManager;
+      return stateTransferManager.wired();
    }
 
    /**
     * Caching shortcut for #getComponent(DistributionManager.class);
     */
    public DistributionManager getDistributionManager() {
-      return distributionManager;
+      return distributionManager == null ? null : distributionManager.wired();
    }
 
    /**
     * Caching shortcut for #getComponent(ResponseGenerator.class);
     */
    public ResponseGenerator getResponseGenerator() {
-      return responseGenerator;
+      return responseGenerator.wired();
    }
 
    /**
     * Caching shortcut for #getLocalComponent(CommandsFactory.class);
     */
    public CommandsFactory getCommandsFactory() {
-      return commandsFactory;
+      return commandsFactory.wired();
    }
 
    /**
     * Caching shortcut for #getComponent(StateTransferManager.class);
     */
    public StateTransferLock getStateTransferLock() {
-      return stateTransferLock;
+      return stateTransferLock.wired();
    }
 
    /**
     * Caching shortcut for #getLocalComponent(VersionGenerator.class)
     */
    public VersionGenerator getVersionGenerator() {
-      return versionGenerator;
+      return versionGenerator == null ? null : versionGenerator.wired();
    }
 
    /**
     * Caching shortcut for #getComponent(PerCacheInboundInvocationHandler.class);
     */
    public PerCacheInboundInvocationHandler getPerCacheInboundInvocationHandler() {
-      return inboundInvocationHandler;
+      return inboundInvocationHandler.wired();
    }
 
    /**
@@ -313,27 +355,42 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     * Invoked last after all services are wired
     */
    public void cacheComponents() {
-      stateTransferManager = basicComponentRegistry.getComponent(StateTransferManager.class).wired();
-      responseGenerator = basicComponentRegistry.getComponent(ResponseGenerator.class).wired();
-      commandsFactory = basicComponentRegistry.getComponent(CommandsFactory.class).wired();
-      stateTransferLock = basicComponentRegistry.getComponent(StateTransferLock.class).wired();
-      inboundInvocationHandler = basicComponentRegistry.getComponent(PerCacheInboundInvocationHandler.class).wired();
-      versionGenerator = basicComponentRegistry.getComponent(VersionGenerator.class).wired();
-      distributionManager = basicComponentRegistry.getComponent(DistributionManager.class).wired();
-      persistenceMarshaller = basicComponentRegistry.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class).wired();
-      internalMarshaller = basicComponentRegistry.getComponent(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class).wired();
+      asyncInterceptorChain = basicComponentRegistry.getComponent(AsyncInterceptorChain.class);
+      biasManager = basicComponentRegistry.getComponent(BiasManager.class);
+      backupSender = basicComponentRegistry.getComponent(BackupSender.class);
+      cache = basicComponentRegistry.getComponent(AdvancedCache.class);
+      cacheNotifier = basicComponentRegistry.getComponent(CacheNotifier.class);
+      cancellationService = basicComponentRegistry.getComponent(CancellationService.class);
+      conflictManager = basicComponentRegistry.getComponent(InternalConflictManager.class);
+      commandsFactory = basicComponentRegistry.getComponent(CommandsFactory.class);
+      clusterCacheNotifier = basicComponentRegistry.getComponent(ClusterCacheNotifier.class);
+      clusterStreamManager = basicComponentRegistry.getComponent(ClusterStreamManager.class);
+      commandAckCollector = basicComponentRegistry.getComponent(CommandAckCollector.class);
+      distributionManager = basicComponentRegistry.getComponent(DistributionManager.class);
+      inboundInvocationHandler = basicComponentRegistry.getComponent(PerCacheInboundInvocationHandler.class);
+      internalDataContainer = basicComponentRegistry.getComponent(InternalDataContainer.class);
+      internalEntryFactory = basicComponentRegistry.getComponent(InternalEntryFactory.class);
+      internalMarshaller = basicComponentRegistry.getComponent(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
+      invocationContextFactory = basicComponentRegistry.getComponent(InvocationContextFactory.class);
+      localPublisherManager = basicComponentRegistry.getComponent(LocalPublisherManager.class);
+      localStreamManager = basicComponentRegistry.getComponent(LocalStreamManager.class);
+      lockManager = basicComponentRegistry.getComponent(LockManager.class);
+      orderedUpdatesManager = basicComponentRegistry.getComponent(OrderedUpdatesManager.class);
+      persistenceMarshaller = basicComponentRegistry.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class);
+      recoveryManager = basicComponentRegistry.getComponent(RecoveryManager.class);
+      responseGenerator = basicComponentRegistry.getComponent(ResponseGenerator.class);
+      rpcManager = basicComponentRegistry.getComponent(RpcManager.class);
+      stateTransferLock = basicComponentRegistry.getComponent(StateTransferLock.class);
+      stateTransferManager = basicComponentRegistry.getComponent(StateTransferManager.class);
+      transactionTable = basicComponentRegistry.getComponent(org.infinispan.transaction.impl.TransactionTable.class);
+      versionGenerator = basicComponentRegistry.getComponent(VersionGenerator.class);
+      xSiteStateTransferManager = basicComponentRegistry.getComponent(XSiteStateTransferManager.class);
 
       // Initialize components that don't have any strong references from the cache
       basicComponentRegistry.getComponent(ClusterCacheStats.class);
       basicComponentRegistry.getComponent(CacheConfigurationMBean.class);
       basicComponentRegistry.getComponent(InternalConflictManager.class);
-      basicComponentRegistry.getComponent(LocalStreamManager.class);
-      basicComponentRegistry.getComponent(ClusterStreamManager.class);
       basicComponentRegistry.getComponent(ClusterPublisherManager.class);
-      basicComponentRegistry.getComponent(XSiteStateTransferManager.class);
-      basicComponentRegistry.getComponent(BackupSender.class);
-      basicComponentRegistry.getComponent(StateTransferManager.class);
-      basicComponentRegistry.getComponent(StateReceiver.class);
       basicComponentRegistry.getComponent(PreloadManager.class);
    }
 
@@ -343,11 +400,102 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    public final TransactionTable getTransactionTable() {
-      return getComponent(org.infinispan.transaction.impl.TransactionTable.class);
+      return transactionTable.wired();
    }
 
-   public final synchronized void registerVersionGenerator(NumericVersionGenerator newVersionGenerator) {
-      versionGenerator = newVersionGenerator;
-      registerComponent(newVersionGenerator, VersionGenerator.class);
+   public final ComponentRef<TransactionTable> getTransactionTableRef() {
+      return transactionTable;
    }
+
+
+   public final synchronized void registerVersionGenerator(NumericVersionGenerator newVersionGenerator) {
+      registerComponent(newVersionGenerator, VersionGenerator.class);
+      versionGenerator = basicComponentRegistry.getComponent(VersionGenerator.class);
+   }
+
+   public ComponentRef<AdvancedCache> getCache() {
+      return cache;
+   }
+
+   public ComponentRef<AsyncInterceptorChain> getInterceptorChain() {
+      return asyncInterceptorChain;
+   }
+
+   public ComponentRef<BackupSender> getBackupSender() {
+      return backupSender;
+   }
+
+   public ComponentRef<BiasManager> getBiasManager() {
+      return biasManager;
+   }
+
+   public ByteString getCacheByteString() {
+      return cacheByteString;
+   }
+
+   public ComponentRef<CacheNotifier> getCacheNotifier() {
+      return cacheNotifier;
+   }
+
+   public ComponentRef<CancellationService> getCancellationService() {
+      return cancellationService;
+   }
+
+   public ComponentRef<InternalConflictManager> getConflictManager() {
+      return conflictManager;
+   }
+
+   public ComponentRef<ClusterCacheNotifier> getClusterCacheNotifier() {
+      return clusterCacheNotifier;
+   }
+
+   public ComponentRef<ClusterStreamManager> getClusterStreamManager() {
+      return clusterStreamManager;
+   }
+
+   public ComponentRef<CommandAckCollector> getCommandAckCollector() {
+      return commandAckCollector;
+   }
+
+   public ComponentRef<InternalDataContainer> getInternalDataContainer() {
+      return internalDataContainer;
+   }
+
+   public ComponentRef<InternalEntryFactory> getInternalEntryFactory() {
+      return internalEntryFactory;
+   }
+
+   public ComponentRef<InvocationContextFactory> getInvocationContextFactory() {
+      return invocationContextFactory;
+   }
+
+   public ComponentRef<LocalPublisherManager> getLocalPublisherManager() {
+      return localPublisherManager;
+   }
+
+   @SuppressWarnings("unchecked")
+   public ComponentRef<LocalStreamManager> getLocalStreamManager() {
+      return localStreamManager;
+   }
+
+   public ComponentRef<LockManager> getLockManager() {
+      return lockManager;
+   }
+
+   public ComponentRef<OrderedUpdatesManager> getOrderedUpdatesManager() {
+      return orderedUpdatesManager;
+   }
+
+   public ComponentRef<RecoveryManager> getRecoveryManager() {
+      return recoveryManager;
+   }
+
+   public ComponentRef<RpcManager> getRpcManager() {
+      return rpcManager;
+   }
+
+   public ComponentRef<XSiteStateTransferManager> getXSiteStateTransferManager() {
+      return xSiteStateTransferManager;
+   }
+
 }

@@ -20,11 +20,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKeyCommand<K, V> {
-   private static final Log log = LogFactory.getLog(ReadWriteKeyValueCommand.class);
 
    public static final byte COMMAND_ID = 51;
 
@@ -38,16 +35,21 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
                                    ValueMatcher valueMatcher,
                                    Params params,
                                    DataConversion keyDataConversion,
-                                   DataConversion valueDataConversion,
-                                   ComponentRegistry componentRegistry) {
+                                   DataConversion valueDataConversion) {
       super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.argument = argument;
       this.f = f;
-      init(componentRegistry);
    }
 
    public ReadWriteKeyValueCommand() {
       // No-op, for marshalling
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      super.init(componentRegistry, isRemote);
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 
    @Override
@@ -124,15 +126,6 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
    @Override
    public Mutation toMutation(Object key) {
       return new Mutations.ReadWriteWithValue<>(keyDataConversion, valueDataConversion, argument, f);
-   }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry) {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
-
-      if (f instanceof InjectableComponent)
-         ((InjectableComponent) f).inject(componentRegistry);
    }
 
    public void setPrevValueAndMetadata(Object prevValue, Metadata prevMetadata) {

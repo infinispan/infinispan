@@ -5,10 +5,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.Params;
 
 public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
@@ -19,21 +21,10 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    public TxReadOnlyKeyCommand() {
    }
 
-   public TxReadOnlyKeyCommand(Object key, List<Mutation<K, V, ?>> mutations, int segment,
-                               Params params, DataConversion keyDataConversion,
-                               DataConversion valueDataConversion,
-                               ComponentRegistry componentRegistry) {
-      super(key, null, segment, params, keyDataConversion, valueDataConversion, componentRegistry);
+   public TxReadOnlyKeyCommand(Object key, Function<EntryView.ReadEntryView<K, V>, R> f, List<Mutation<K, V, ?>> mutations,
+                               int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      super(key, f, segment, params, keyDataConversion, valueDataConversion);
       this.mutations = mutations;
-      init(componentRegistry);
-   }
-
-   public TxReadOnlyKeyCommand(ReadOnlyKeyCommand other, List<Mutation<K, V, ?>> mutations, int segment, Params params,
-                               DataConversion keyDataConversion, DataConversion valueDataConversion,
-                               ComponentRegistry componentRegistry) {
-      super(other.getKey(), other.f, segment, params, keyDataConversion, valueDataConversion, componentRegistry);
-      this.mutations = mutations;
-      init(componentRegistry);
    }
 
    @Override
@@ -54,8 +45,8 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry) {
-      super.init(componentRegistry);
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      super.init(componentRegistry, isRemote);
       // This may be called from parent's constructor when mutations are not initialized yet
       if (mutations != null) {
          for (Mutation<?, ?, ?> m : mutations) {

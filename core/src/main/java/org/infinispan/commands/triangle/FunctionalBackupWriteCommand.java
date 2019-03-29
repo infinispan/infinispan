@@ -6,7 +6,6 @@ import java.io.ObjectOutput;
 
 import org.infinispan.commands.functional.FunctionalCommand;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.util.ByteString;
 
@@ -22,8 +21,6 @@ abstract class FunctionalBackupWriteCommand extends BackupWriteCommand {
    Params params;
    DataConversion keyDataConversion;
    DataConversion valueDataConversion;
-
-   ComponentRegistry componentRegistry;
 
    FunctionalBackupWriteCommand(ByteString cacheName) {
       super(cacheName);

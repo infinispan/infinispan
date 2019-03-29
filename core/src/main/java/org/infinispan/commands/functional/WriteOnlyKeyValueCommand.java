@@ -31,16 +31,21 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
                                    ValueMatcher valueMatcher,
                                    Params params,
                                    DataConversion keyDataConversion,
-                                   DataConversion valueDataConversion,
-                                   ComponentRegistry componentRegistry) {
+                                   DataConversion valueDataConversion) {
       super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
       this.argument = argument;
-      init(componentRegistry);
    }
 
    public WriteOnlyKeyValueCommand() {
       // No-op, for marshalling
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      super.init(componentRegistry, isRemote);
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 
    @Override
@@ -99,14 +104,6 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
    @Override
    public Mutation<K, V, ?> toMutation(Object key) {
       return new Mutations.WriteWithValue<>(keyDataConversion, valueDataConversion, argument, f);
-   }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry) {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
-      if (f instanceof InjectableComponent)
-         ((InjectableComponent) f).inject(componentRegistry);
    }
 
    public BiConsumer<T, WriteEntryView<K, V>> getBiConsumer() {

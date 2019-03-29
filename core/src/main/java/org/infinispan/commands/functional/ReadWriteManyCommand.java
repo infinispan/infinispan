@@ -32,12 +32,10 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
                                Function<ReadWriteEntryView<K, V>, R> f, Params params,
                                CommandInvocationId commandInvocationId,
                                DataConversion keyDataConversion,
-                               DataConversion valueDataConversion,
-                               ComponentRegistry componentRegistry) {
+                               DataConversion valueDataConversion) {
       super(commandInvocationId, params, keyDataConversion, valueDataConversion);
       this.keys = keys;
       this.f = f;
-      init(componentRegistry);
    }
 
    public ReadWriteManyCommand(ReadWriteManyCommand command) {
@@ -49,6 +47,13 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    }
 
    public ReadWriteManyCommand() {
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      super.init(componentRegistry, isRemote);
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 
    public Function<ReadWriteEntryView<K, V>, R> getFunction() {
@@ -143,14 +148,4 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    public Mutation toMutation(Object key) {
       return new Mutations.ReadWrite<>(keyDataConversion, valueDataConversion, f);
    }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry) {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
-      if (f instanceof InjectableComponent) {
-         ((InjectableComponent) f).inject(componentRegistry);
-      }
-   }
-
 }

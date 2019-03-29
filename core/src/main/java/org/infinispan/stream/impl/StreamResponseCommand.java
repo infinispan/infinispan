@@ -5,13 +5,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.IntSetsExternalization;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -20,11 +19,10 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * Stream response command used to handle returning intermediate or final responses from the remote node
  * @param <R> the response type
  */
-@Scope(Scopes.NONE)
-public class StreamResponseCommand<R> extends BaseRpcCommand {
+public class StreamResponseCommand<R> extends BaseRpcCommand implements InitializableCommand {
    public static final byte COMMAND_ID = 48;
 
-   @Inject protected ClusterStreamManager csm;
+   protected ClusterStreamManager csm;
 
    protected Object id;
    protected boolean complete;
@@ -51,8 +49,9 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
       this.missedSegments = missedSegments;
    }
 
-   public void inject(ClusterStreamManager csm) {
-      this.csm = csm;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.csm = componentRegistry.getClusterStreamManager().running();
    }
 
    @Override

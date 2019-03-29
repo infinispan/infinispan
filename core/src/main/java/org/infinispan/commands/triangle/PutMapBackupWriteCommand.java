@@ -10,8 +10,6 @@ import java.util.Map;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
@@ -37,10 +35,6 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
 
    public PutMapBackupWriteCommand(ByteString cacheName) {
       super(cacheName);
-   }
-
-   public void init(InvocationContextFactory factory, AsyncInterceptorChain chain) {
-      injectDependencies(factory, chain);
    }
 
    @Override

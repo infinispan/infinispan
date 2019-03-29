@@ -26,12 +26,15 @@ import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.Mutation;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
+import org.infinispan.commands.functional.TxReadOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
@@ -504,6 +507,16 @@ public class ControlledCommandFactory implements CommandsFactory {
    public <K, V, T> WriteOnlyManyEntriesCommand<K, V, T> buildWriteOnlyManyEntriesCommand(
          Map<?, ?> arguments, BiConsumer<T, EntryView.WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return actual.buildWriteOnlyManyEntriesCommand(arguments, f, params, keyDataConversion, valueDataConversion);
+   }
+
+   @Override
+   public <K, V, R> TxReadOnlyKeyCommand<K, V, R> buildTxReadOnlyKeyCommand(Object key, Function<EntryView.ReadEntryView<K, V>, R> f, List<Mutation<K, V, ?>> mutations, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return actual.buildTxReadOnlyKeyCommand(key, f, mutations, segment, params, keyDataConversion, valueDataConversion);
+   }
+
+   @Override
+   public <K, V, R> TxReadOnlyManyCommand<K, V, R> buildTxReadOnlyManyCommand(Collection<?> keys, List<List<Mutation<K, V, ?>>> mutations, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return actual.buildTxReadOnlyManyCommand(keys, mutations, params, keyDataConversion, valueDataConversion);
    }
 
    @Override

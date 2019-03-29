@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -17,7 +18,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 
-public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
+public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements InitializableCommand, MetadataAwareCommand {
 
    public static final int COMMAND_ID = 69;
 
@@ -32,16 +33,15 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
                                  Function mappingFunction,
                                  int segment, long flagsBitSet,
                                  CommandInvocationId commandInvocationId,
-                                 Metadata metadata,
-                                 ComponentRegistry componentRegistry) {
+                                 Metadata metadata) {
 
       super(key, segment, flagsBitSet, commandInvocationId);
       this.mappingFunction = mappingFunction;
       this.metadata = metadata;
-      componentRegistry.wireDependencies(this.mappingFunction);
    }
 
-   public void init(ComponentRegistry componentRegistry) {
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
       componentRegistry.wireDependencies(mappingFunction);
    }
 

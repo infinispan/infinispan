@@ -5,10 +5,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -16,11 +15,10 @@ import org.infinispan.util.concurrent.CompletableFutures;
 /**
  * Stream iterator command that unregisters an iterator so it doesn't consume memory unnecessarily
  */
-@Scope(Scopes.NONE)
-public class StreamIteratorCloseCommand extends BaseRpcCommand {
+public class StreamIteratorCloseCommand extends BaseRpcCommand implements InitializableCommand {
    public static final byte COMMAND_ID = 72;
 
-   @Inject protected IteratorHandler handler;
+   protected LocalStreamManager lsm;
 
    protected Object id;
 
@@ -41,13 +39,14 @@ public class StreamIteratorCloseCommand extends BaseRpcCommand {
       this.id = id;
    }
 
-   public void inject(IteratorHandler handler) {
-      this.handler = handler;
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.lsm = componentRegistry.getLocalStreamManager().running();
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      handler.closeIterator(getOrigin(), id);
+      lsm.closeIterator(getOrigin(), id);
       return CompletableFutures.completedNull();
    }
 
