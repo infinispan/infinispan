@@ -729,7 +729,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
                 case TOTAL_ORDER_EXECUTOR: {
                     if (!namespace.since(8, 0)) {
-                        log.warn("The xml element total-order-executor has been removed and has no effect, please update your configuration file.");
+                        ROOT_LOGGER.deprecatedAttribute(attribute.getLocalName());
                         break;
                     }
                 }
@@ -923,7 +923,9 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case MODULE: {
-                CacheConfigurationResource.CACHE_MODULE.parseAndSetParameter(value, cache, reader);
+                if (namespace.since(10, 0)) {
+                    throw ParseUtils.unexpectedAttribute(reader, index);
+                }
                 Location location = reader.getLocation();
                 ROOT_LOGGER.cacheModuleDeprecated(location.getLineNumber(), location.getColumnNumber());
                 break;
@@ -952,7 +954,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                  if (namespace.since(8, 0)) {
                      throw ParseUtils.unexpectedAttribute(reader, index);
                  } else {
-                     log.warn("The async-marshalling attribute has been deprecated and has no effect, please update your configuration file.");
+                     ROOT_LOGGER.deprecatedAttribute(attribute.getLocalName());
                      break;
                  }
              }
@@ -964,7 +966,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 if (namespace.since(9, 0)) {
                     throw ParseUtils.unexpectedAttribute(reader, index);
                 } else {
-                    log.warn("The queue-size attribute has been deprecated and has no effect, please update your configuration file.");
+                    ROOT_LOGGER.deprecatedAttribute(attribute.getLocalName());
                     break;
                 }
             }
@@ -972,7 +974,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 if (namespace.since(9, 0)) {
                     throw ParseUtils.unexpectedAttribute(reader, index);
                 } else {
-                    log.warn("The queue-flush-interval attribute has been deprecated and has no effect, please update your configuration file.");
+                    ROOT_LOGGER.deprecatedAttribute(attribute.getLocalName());
                     break;
                 }
             }
