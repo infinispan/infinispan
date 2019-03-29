@@ -29,7 +29,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testStringKeyedJdbcStore() throws Exception {
       String config = TestingUtil.wrapXMLWithSchema(
             "   <cache-container default-cache=\"default\">\n" +
-            "      <local-cache name=\"default\">\n" +
+            "     <transport/>\n" +
+            "      <distributed-cache name=\"default\">\n" +
             "     <persistence>\n" +
             "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:"+ Version.getSchemaVersion() + "\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
             "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" purge=\"true\" singleton=\"false\" dialect=\"H2\">\n" +
@@ -42,7 +43,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "         <write-behind />\n" +
             "       </string-keyed-jdbc-store>\n" +
             "     </persistence>\n" +
-            "   </local-cache></cache-container>\n"
+            "   </distributed-cache></cache-container>\n"
       );
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
