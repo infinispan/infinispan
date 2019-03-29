@@ -12,7 +12,7 @@
         </replicated-cache-configuration>
 
         <!-- Uses NRT index manager with explicitly configured indexing caches -->
-        <replicated-cache name="nrt_custom_index_caches" start="EAGER">
+        <replicated-cache name="nrt_custom_index_caches">
             <transaction mode="NONE"/>
             <persistence>
                 <file-store preload="true" purge="false" shared="false" fetch-state="false"
@@ -31,21 +31,21 @@
             </indexing>
         </replicated-cache>
         <!-- Indexing caches for 'nrt_custom_index_caches' -->
-        <local-cache name="myindex_metadata" start="EAGER">
+        <local-cache name="myindex_metadata">
             <persistence>
                 <file-store preload="true" purge="false" shared="false" fetch-state="false"
                             path="myindex_persistence"/>
             </persistence>
             <indexing index="NONE"/>
         </local-cache>
-        <local-cache name="myindex_data" start="EAGER">
+        <local-cache name="myindex_data">
             <persistence>
                 <file-store preload="true" purge="false" shared="false" fetch-state="false"
                             path="myindex_persistence"/>
             </persistence>
             <indexing index="NONE"/>
         </local-cache>
-        <local-cache name="myindex_lock" start="EAGER">
+        <local-cache name="myindex_lock">
             <persistence>
                 <file-store preload="true" purge="false" shared="false" fetch-state="false"
                             path="myindex_persistence"/>

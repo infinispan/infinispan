@@ -2,7 +2,7 @@
     <cache-container name="indexing" default-cache="local">
         <transport channel="maximal-channel" lock-timeout="120000" strict-peer-to-peer="false" initial-cluster-size="4"
                    initial-cluster-timeout="20000"/>
-        <replicated-cache-configuration name="indexed-cache" mode="SYNC" start="EAGER" remote-timeout="20000"/>
+        <replicated-cache-configuration name="indexed-cache" mode="SYNC" remote-timeout="20000"/>
         <replicated-cache name="booksCache" configuration="indexed-cache">
             <indexing index="LOCAL">
                 <property name="default.metadata_cachename">indexMetadataBooksCache</property>

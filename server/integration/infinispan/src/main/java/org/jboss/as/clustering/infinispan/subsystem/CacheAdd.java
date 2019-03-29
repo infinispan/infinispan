@@ -163,21 +163,12 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
 
         // get model attributes
         final String configuration = CacheResource.CONFIGURATION.resolveModelAttribute(context, cacheModel).asString();
-        StartMode startMode = StartMode.valueOf(CacheConfigurationResource.START.resolveModelAttribute(context, cacheModel).asString());
-        if (startMode != StartMode.EAGER) {
-           log.warnf("Ignoring start mode [%s] of cache service [%s], as EAGER is the only supported mode", startMode, cacheName);
-           startMode = StartMode.EAGER;
-        }
-
         Properties indexingProperties = extractIndexingProperties(context, operation, configuration);
-
-        final ServiceController.Mode initialMode = startMode.getMode();
-
         ServiceTarget target = context.getServiceTarget();
 
         Collection<ServiceController<?>> controllers = new ArrayList<>(2);
         // now install the corresponding cache service (starts a configured cache)
-        controllers.add(this.installCacheService(target, containerName, cacheName, initialMode, configuration, indexingProperties));
+        controllers.add(this.installCacheService(target, containerName, cacheName, configuration, indexingProperties));
 
         // install a name service entry for the cache
         ModelNode resolvedValue = CacheConfigurationResource.JNDI_NAME.resolveModelAttribute(context, cacheModel);
@@ -219,7 +210,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         return containerAddress ;
     }
 
-    ServiceController<?> installCacheService(ServiceTarget target, String containerName, String cacheName, ServiceController.Mode initialMode,
+    ServiceController<?> installCacheService(ServiceTarget target, String containerName, String cacheName,
                                              String configurationName, Properties indexingProperties) {
 
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<>();
@@ -228,8 +219,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         final ServiceBuilder<?> builder = target.addService(CacheServiceName.CACHE.getServiceName(containerName, cacheName), service)
                 .addDependency(CacheServiceName.CONFIGURATION.getServiceName(containerName, configurationName))
                 .addDependency(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName), EmbeddedCacheManager.class, container)
-                .setInitialMode(initialMode)
-        ;
+                .setInitialMode(ServiceController.Mode.ACTIVE);
 
         builder.addDependency(DeployedCacheStoreFactoryService.SERVICE_NAME, DeployedCacheStoreFactory.class, cacheDependencies.getDeployedCacheStoreFactoryInjector());
         builder.addDependency(ServerTaskRegistryService.SERVICE_NAME, ServerTaskRegistry.class, cacheDependencies.getDeployedTaskRegistryInjector());
