@@ -1838,6 +1838,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Error stopping module %s", id = 538)
    void moduleStopError(String module, @Cause Throwable t);
 
+   @Message(value = "A store cannot be shared when utilised with a local cache.", id = 549)
+   CacheConfigurationException sharedStoreWithLocalCache();
+
    @Message(value = "Invalidation mode only supports when-split=ALLOW_READ_WRITES", id = 550)
    CacheConfigurationException invalidationPartitionHandlingNotSuported();
 }
