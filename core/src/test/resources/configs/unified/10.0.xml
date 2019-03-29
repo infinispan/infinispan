@@ -113,7 +113,7 @@
          <temporary-location path="tmpPath" relative-to="jboss.server.temp.dir" />
          <overlay-configuration-storage />
       </global-state>
-      <local-cache name="local" start="EAGER" module="org.infinispan" statistics="true">
+      <local-cache name="local" module="org.infinispan" statistics="true">
          <encoding>
             <key media-type="application/x-java-object"/>
             <value media-type="application/x-java-object"/>
@@ -130,7 +130,7 @@
             <object size="20000"/>
          </memory>
       </local-cache>
-      <invalidation-cache name="invalid" mode="SYNC" start="EAGER" statistics="true">
+      <invalidation-cache name="invalid" mode="SYNC" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
          <expiration interval="10500" lifespan="11" max-idle="11"/>
@@ -138,7 +138,7 @@
             <binary size="20500"/>
          </memory>
       </invalidation-cache>
-      <replicated-cache name="repl" mode="SYNC" start="EAGER" statistics="true">
+      <replicated-cache name="repl" mode="SYNC" statistics="true">
          <encoding>
             <key media-type="application/x-java-object"/>
             <value media-type="application/x-java-object"/>
@@ -155,7 +155,7 @@
          <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
       </replicated-cache>
       <distributed-cache name="dist" mode="SYNC" l1-lifespan="1200000" owners="4"
-                         remote-timeout="35000" start="EAGER" segments="2" statistics="true"
+                         remote-timeout="35000" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <backups>
@@ -299,7 +299,7 @@
       </local-cache>
 
       <!-- template configurations -->
-      <local-cache-configuration name="local-template" start="EAGER" module="org.infinispan" statistics="true">
+      <local-cache-configuration name="local-template" module="org.infinispan" statistics="true">
          <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="60000" locking="OPTIMISTIC" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" complete-timeout="34000" reaper-interval="35000" auto-commit="true" />
          <expiration interval="10000" lifespan="10" max-idle="10"/>
@@ -316,7 +316,7 @@
          <expiration interval="11000"/>
       </local-cache>
 
-      <invalidation-cache-configuration name="invalidation-template" mode="SYNC" start="LAZY" statistics="true">
+      <invalidation-cache-configuration name="invalidation-template" mode="SYNC" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
          <expiration interval="10500" lifespan="11" max-idle="11"/>
@@ -326,7 +326,7 @@
       </invalidation-cache-configuration>
       <invalidation-cache name="invalidation-instance" configuration="invalidation-template" />
 
-      <replicated-cache-configuration name="repl-template" mode="SYNC" start="EAGER" statistics="true"
+      <replicated-cache-configuration name="repl-template" mode="SYNC" statistics="true"
             segments="200" consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
             key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
@@ -345,7 +345,7 @@
       </replicated-cache>
 
       <distributed-cache-configuration name="dist-template" mode="SYNC" l1-lifespan="1200000" owners="4"
-                         remote-timeout="35000" start="EAGER" segments="2" statistics="true"
+                         remote-timeout="35000" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <backups>

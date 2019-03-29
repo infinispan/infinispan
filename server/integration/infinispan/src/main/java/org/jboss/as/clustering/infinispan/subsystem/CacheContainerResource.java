@@ -100,15 +100,6 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
-    static final SimpleAttributeDefinition START =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.START, ModelType.STRING, true)
-                    .setXmlName(Attribute.START.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setValidator(new EnumValidator<>(StartMode.class, true, false))
-                    .setDefaultValue(new ModelNode().set(StartMode.LAZY.name()))
-                    .build();
-
     static final SimpleAttributeDefinition STATISTICS =
             new SimpleAttributeDefinitionBuilder(ModelKeys.STATISTICS, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.STATISTICS.getLocalName())
@@ -125,7 +116,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                .setStorageRuntime()
                .build();
 
-    static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, START, CACHE_CONTAINER_MODULE, STATISTICS};
+    static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, CACHE_CONTAINER_MODULE, STATISTICS};
 
     // operations
     static final OperationDefinition ALIAS_ADD = new SimpleOperationDefinitionBuilder("add-alias", new InfinispanResourceDescriptionResolver("cache-container.alias"))

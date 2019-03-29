@@ -150,11 +150,6 @@
                 <xs:documentation>Indicates the default cache for this cache container.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="start" type="tns:controller-mode" default="${Server.CacheContainer.start}">
-            <xs:annotation>
-                <xs:documentation>Should this cache container be started on server startup, or lazily when requested by a service or deployment.</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="listener-executor" type="xs:string">
             <xs:annotation>
                 <xs:documentation>Defines the executor used for asynchronous cache listener notifications. Deprecated: please use the listener-thread-pool element instead.</xs:documentation>
@@ -725,11 +720,6 @@
         <xs:attribute name="configuration" type="xs:string">
             <xs:annotation>
                 <xs:documentation>The name of the cache configuration which this configuration inherits from.</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="start" type="tns:controller-mode" default="${Server.CacheContainer.start}">
-            <xs:annotation>
-                <xs:documentation>Should this cache be started on server startup, or lazily when requested by a service or deployment.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="batching" type="xs:boolean" default="${Server.Cache.batching}">
@@ -2240,21 +2230,6 @@
             <xs:enumeration value="PESSIMISTIC">
                 <xs:annotation>
                     <xs:documentation>Enables Pessimistic locking.</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-        </xs:restriction>
-    </xs:simpleType>
-
-    <xs:simpleType name="controller-mode">
-        <xs:restriction base="xs:token">
-            <xs:enumeration value="EAGER">
-                <xs:annotation>
-                    <xs:documentation>Whether to start the component on initialization.</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="LAZY">
-                <xs:annotation>
-                    <xs:documentation>Whether to start the component on-demand.</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
         </xs:restriction>

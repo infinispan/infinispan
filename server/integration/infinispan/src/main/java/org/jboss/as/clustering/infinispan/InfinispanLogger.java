@@ -201,7 +201,7 @@ public interface InfinispanLogger extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(id = 22, value = "The '%s' attribute has been deprecated and is now ignored.")
-   void deprecatedExecutorAttribute(String executorAttribute);
+   void deprecatedAttribute(String attribute);
 
    /**
     * Logs an informational message indicating that a cache is being started.
@@ -221,4 +221,6 @@ public interface InfinispanLogger extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(id = 24, value = "Stopped %s cache container")
    void cacheContainerStopped(String containerName);
+
+
 }

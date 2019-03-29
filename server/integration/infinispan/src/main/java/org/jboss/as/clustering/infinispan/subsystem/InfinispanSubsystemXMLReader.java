@@ -144,7 +144,11 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case START: {
-                    CacheContainerResource.START.parseAndSetParameter(value, container, reader);
+                    if (namespace.since(10, 0)) {
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                    } else {
+                        ROOT_LOGGER.deprecatedAttribute(attribute.getLocalName());
+                    }
                     break;
                 }
                 case LISTENER_EXECUTOR: {
@@ -899,12 +903,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case START: {
-                CacheConfigurationResource.START.parseAndSetParameter(value, cache, reader);
-                if (!value.equalsIgnoreCase("EAGER")) {
-                   Location location = reader.getLocation();
-                   log.warnf("Ignoring start mode [%s] at [row,col] [%s, %s], as EAGER is the only supported mode", value,
-                         location.getLineNumber(), location.getColumnNumber());
-                   cache.get(CacheConfigurationResource.START.getName()).set("EAGER");
+                if (namespace.since(10, 0)) {
+                    throw ParseUtils.unexpectedAttribute(reader, index);
+                } else {
+                    ROOT_LOGGER.deprecatedAttribute(attribute.getLocalName());
                 }
                 break;
             }
@@ -3205,7 +3207,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                    if (ScheduledThreadPoolResource.PERSISTENCE != pool || namespace.since(9, 3)) {
                        throw ParseUtils.unexpectedAttribute(reader, i);
                    }
-                   ROOT_LOGGER.deprecatedExecutorAttribute(attribute.getLocalName());
+                   ROOT_LOGGER.deprecatedAttribute(attribute.getLocalName());
                    break;
                }
                case MAX_THREADS: {

@@ -31,7 +31,6 @@ import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
-import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
@@ -86,15 +85,6 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 
-    static final SimpleAttributeDefinition START =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.START, ModelType.STRING, true)
-                    .setXmlName(Attribute.START.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setValidator(new EnumValidator<>(StartMode.class, true, false))
-                    .setDefaultValue(new ModelNode().set(StartMode.EAGER.name()))
-                    .build();
-
     static final SimpleAttributeDefinition STATISTICS =
             new SimpleAttributeDefinitionBuilder(ModelKeys.STATISTICS, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.STATISTICS.getLocalName())
@@ -131,7 +121,7 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                    .build();
 
-    static final AttributeDefinition[] ATTRIBUTES = {BATCHING, CACHE_MODULE, CONFIGURATION, JNDI_NAME, SIMPLE_CACHE, START, STATISTICS, STATISTICS_AVAILABLE, REMOTE_CACHE, REMOTE_SITE, TEMPLATE};
+    static final AttributeDefinition[] ATTRIBUTES = {BATCHING, CACHE_MODULE, CONFIGURATION, JNDI_NAME, SIMPLE_CACHE, STATISTICS, STATISTICS_AVAILABLE, REMOTE_CACHE, REMOTE_SITE, TEMPLATE};
 
     // here for legacy purposes only
     static final SimpleAttributeDefinition NAME =

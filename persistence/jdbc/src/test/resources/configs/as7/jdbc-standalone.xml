@@ -104,7 +104,7 @@
         <subsystem xmlns="urn:jboss:domain:infinispan:1.3" default-cache-container="clustered">
             <cache-container name="clustered" default-cache="stringCache">
                 <transport executor="infinispan-transport" lock-timeout="60000"/>
-                <distributed-cache name="stringCache" mode="SYNC" virtual-nodes="1" owners="2" remote-timeout="30000" start="EAGER">
+                <distributed-cache name="stringCache" mode="SYNC" virtual-nodes="1" owners="2" remote-timeout="30000">
                     <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false"/>
                     <transaction mode="NONE"/>
                     <eviction strategy="LRU" max-entries="1000"/>
