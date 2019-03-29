@@ -53,15 +53,6 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
                     .setDefaultValue(new ModelNode().set(InvocationBatchingConfiguration.ENABLED.getDefaultValue()))
                     .build();
 
-    @Deprecated
-    static final SimpleAttributeDefinition CACHE_MODULE =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.MODULE, ModelType.STRING, true)
-                    .setXmlName(Attribute.MODULE.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setValidator(new ModuleIdentifierValidator(true))
-                    .build();
-
     static final SimpleAttributeDefinition CONFIGURATION =
             new SimpleAttributeDefinitionBuilder(ModelKeys.CONFIGURATION, ModelType.STRING, true)
                     .setXmlName(Attribute.CONFIGURATION.getLocalName())
@@ -121,7 +112,7 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                    .build();
 
-    static final AttributeDefinition[] ATTRIBUTES = {BATCHING, CACHE_MODULE, CONFIGURATION, JNDI_NAME, SIMPLE_CACHE, STATISTICS, STATISTICS_AVAILABLE, REMOTE_CACHE, REMOTE_SITE, TEMPLATE};
+    static final AttributeDefinition[] ATTRIBUTES = {BATCHING, CONFIGURATION, JNDI_NAME, SIMPLE_CACHE, STATISTICS, STATISTICS_AVAILABLE, REMOTE_CACHE, REMOTE_SITE, TEMPLATE};
 
     // here for legacy purposes only
     static final SimpleAttributeDefinition NAME =

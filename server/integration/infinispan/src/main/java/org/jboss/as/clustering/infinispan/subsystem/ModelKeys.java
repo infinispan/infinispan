@@ -109,7 +109,6 @@ public class ModelKeys {
     static final String ENCRYPTION_NAME = "ENCRYPTION";
     static final String ENABLED = "enabled";
     static final String EVICTION = "eviction";
-    static final String EVICTION_NAME = "EVICTION";
     @Deprecated
     static final String EVICTION_EXECUTOR = "eviction-executor";
     static final String EXPIRATION_EXECUTOR = "expiration-executor";
@@ -129,7 +128,6 @@ public class ModelKeys {
     static final String IDENTITY_ROLE_MAPPER = "identity-role-mapper";
     static final String IMMUTABLE_CONFIGURATION_STORAGE = "immutable-configuration-storage";
     static final String IMPLEMENTATION = "implementation";
-    static final String IMPLEMENTATION_NAME = "IMPLEMENTATION";
     static final String INDEX = "index";
     static final String INDEX_NAME = "INDEX";
     static final String INDEXED_ENTITIES = "indexed-entities";
@@ -145,7 +143,6 @@ public class ModelKeys {
     static final String INVALIDATION_CACHE_CONFIGURATION = INVALIDATION_CACHE + CONFIGURATION_SUFFIX;
     static final String ISOLATION = "isolation";
     static final String JDBC_STORE = "jdbc-store";
-    static final String JDBC_STORE_NAME = "JDBC_STORE";
     static final String KEEPALIVE_TIME = "keepalive-time";
     static final String KEY = "key";
     static final String KEY_TRANSFORMERS = "key-transformers";
@@ -308,7 +305,6 @@ public class ModelKeys {
     static final String UPPER_BOUND = "upper-bound";
     static final String VALUE = "value";
     static final String VOLATILE_CONFIGURATION_STORAGE = "volatile-configuration-storage";
-    static final String WAIT = "wait";
     static final String WAIT_TIME = "wait-time";
     static final String WHEN_SPLIT = "when-split";
     static final String WRITE_BEHIND = "write-behind";
