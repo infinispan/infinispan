@@ -475,7 +475,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
       @Override
       public Map<String, Number> apply(EmbeddedCacheManager embeddedCacheManager) {
-         AdvancedCache<Object, Object> remoteCache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
+         AdvancedCache remoteCache = SecurityActions.getUnwrappedCache(embeddedCacheManager.getCache(cacheName)).getAdvancedCache();
 
          Map<String, Number> map = new HashMap<>();
          Stats stats = remoteCache.getStats();
