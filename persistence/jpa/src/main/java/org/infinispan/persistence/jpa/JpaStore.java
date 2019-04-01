@@ -37,6 +37,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -50,7 +51,6 @@ import org.infinispan.persistence.jpa.impl.Stats;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -78,6 +78,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private ExecutorService executorService;
    private Stats stats = new Stats();
    private boolean setFetchSizeMinInteger = false;
+   private boolean criteriaDeleteSupported = org.hibernate.Version.getVersionString().startsWith("5");
 
    @Override
    public void init(InitializationContext ctx) {
@@ -326,6 +327,11 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public void deleteBatch(Iterable<Object> keys) {
+      if (!criteriaDeleteSupported) {
+         keys.forEach(this::delete);
+         return;
+      }
+
       EntityManager em = emf.createEntityManager();
       try {
          EntityTransaction txn = em.getTransaction();
