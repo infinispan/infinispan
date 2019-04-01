@@ -26,7 +26,7 @@ class OffHeapMemory {
    private OffHeapMemory() { }
 
    byte getByte(long srcAddress, long offset) {
-      checkAddress(srcAddress, offset + 4);
+      checkAddress(srcAddress, offset + 1);
       byte value = UNSAFE.getByte(srcAddress + offset);
       if (trace) {
          log.tracef("Read byte value 0x%02x from address 0x%016x+%d", value, srcAddress, offset);
@@ -35,7 +35,7 @@ class OffHeapMemory {
    }
 
    void putByte(long destAddress, long offset, byte value) {
-      checkAddress(destAddress, offset + 4);
+      checkAddress(destAddress, offset + 1);
       if (trace) {
          log.tracef("Wrote byte value 0x%02x to address 0x%016x+%d", value, destAddress, offset);
       }
