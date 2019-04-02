@@ -13,7 +13,7 @@
             <replacefilter token="@infinispan.brand.version@" value="${infinispan.brand.version}"/>
             <replacefilter token="@infinispan.module.slot@" value="${infinispan.module.slot}"/>
             <replacefilter token="@infinispan.module.slot.prefix@" value="${infinispan.module.slot.prefix}"/>
-            <replacefilter token="@hibernate.search.module.slot@" value="${version.hibernate.search.module.slot}"/>
+            <replacefilter token="@hibernate.search.module.slot@" value="${version.hibernate.search}"/>
         </replace>
         <move file="${feature-pack.dir}/content/bin/ispn-cli.sh" tofile="${feature-pack.dir}/content/bin/${infinispan.brand.cli}.sh" verbose="true"/>
         <move file="${feature-pack.dir}/content/bin/ispn-cli.bat" tofile="${feature-pack.dir}/content/bin/${infinispan.brand.cli}.bat" verbose="true"/>
