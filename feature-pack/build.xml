@@ -4,18 +4,23 @@
             <fileset dir="${feature-pack.modules}"/>
             <regexpmapper from="(.*)[/\\]slot[/\\](.*)" to="\1/${infinispan.module.slot}/\2" />
         </move>
+        <move todir="${feature-pack.modules}" filtering="true">
+            <fileset dir="${feature-pack.modules}"/>
+            <regexpmapper from="(.*)/hibernate-slot/(.*)" to="\1/${version.hibernate.search}/\2" />
+        </move>
         <replace dir="${feature-pack.modules}" includes="**/module.xml">
             <replacefilter token="@infinispan.brand.name@" value="${infinispan.brand.name}"/>
             <replacefilter token="@infinispan.brand.version@" value="${infinispan.brand.version}"/>
             <replacefilter token="@infinispan.module.slot@" value="${infinispan.module.slot}"/>
             <replacefilter token="@infinispan.module.slot.prefix@" value="${infinispan.module.slot.prefix}"/>
             <replacefilter token="@gson.module.slot@" value="${version.gson.module.slot}"/>
-            <replacefilter token="@hibernate.search.module.slot@" value="${version.hibernate.search.module.slot}"/>
+            <replacefilter token="@hibernate.search.module.slot@" value="${version.hibernate.search}"/>
             <replacefilter token="@lucene.module.slot@" value="${version.lucene.module.slot}"/>
         </replace>
         <delete includeemptydirs="true">
             <fileset dir="${feature-pack.modules}">
                 <include name="**/slot" />
+                <include name="**/hibernate-slot" />
             </fileset>
         </delete>
     </target>
