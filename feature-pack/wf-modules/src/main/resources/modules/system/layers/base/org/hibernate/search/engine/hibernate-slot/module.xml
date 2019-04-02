@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ ~ Hibernate Search, full-text search for your domain model
+ ~
+ ~ License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ ~ See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
+  -->
+<module xmlns="urn:jboss:module:1.3" name="org.hibernate.search.engine" slot="@hibernate.search.module.slot@">
+    <resources>
+        <artifact name="${org.hibernate:hibernate-search-engine}" />
+    </resources>
+    <dependencies>
+        <module name="javax.transaction.api" />
+        <!-- Must add commons-annotations slot for EAP6 -->
+        <module name="org.hibernate.commons-annotations" slot="@infinispan.module.slot@"/>
+        <module name="org.apache.lucene" export="true" slot="@lucene.module.slot@" />
+        <module name="org.apache.lucene.internal" slot="@lucene.module.slot@" />
+        <module name="org.jboss.logging" />
+
+        <!-- Elasticsearch support -->
+        <module name="org.hibernate.search.elasticsearch" export="true" services="import" optional="true" slot="@hibernate.search.module.slot@" />
+
+        <!-- JMS backend support -->
+        <module name="org.hibernate.search.backend-jms" export="true" optional="true" slot="@hibernate.search.module.slot@" />
+
+        <!-- JGroups backend support -->
+        <module name="org.hibernate.search.backend-jgroups" services="import" optional="true" slot="@hibernate.search.module.slot@" />
+
+        <!-- Infinispan extensions - provided by the Infinispan project -->
+        <module name="org.infinispan.hibernate-search.directory-provider" slot="for-hibernatesearch-5.10" services="import" optional="true" />
+
+        <!-- optional Apache Avro serialization -->
+        <module name="org.hibernate.search.serialization-avro" slot="@hibernate.search.module.slot@" services="import" optional="true" />
+
+        <!-- optional Apache Tika integration -->
+        <module name="org.apache.tika" slot="1.4" optional="true" />
+
+        <!-- For naming -->
+        <module name="javax.api" />
+        <module name="org.jboss.as.naming" />
+    </dependencies>
+</module>

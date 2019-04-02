@@ -20,6 +20,11 @@
             <type>zip</type>
         </dependency>
 
+        <dependency>
+            <groupId>org.hibernate.common</groupId>
+            <artifactId>hibernate-commons-annotations</artifactId>
+        </dependency>
+
         <!-- Main module dependencies -->
         <dependency>
             <groupId>org.infinispan</groupId>
