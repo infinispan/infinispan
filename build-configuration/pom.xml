@@ -155,7 +155,6 @@
       <version.hibernate_dep.javassist>3.23.1-GA</version.hibernate_dep.javassist>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
       <version.hibernate.search>5.10.3.Final</version.hibernate.search>
-      <version.hibernate.search.module.slot>5.10</version.hibernate.search.module.slot>
       <version.hikaricp>2.4.6</version.hikaricp>
       <version.infinispan>${version.component.infinispan}</version.infinispan>
       <version.infinispan.doclets>1.1.0.Final</version.infinispan.doclets>
