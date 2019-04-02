@@ -59,7 +59,7 @@ pipeline {
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
                 // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
-                junit testResults: '**/target/*-reports*/*.xml',
+                junit testResults: '**/*-reports/**/TEST-*.xml',
                     testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
                     healthScaleFactor: 100, allowEmptyResults: true
 
@@ -127,7 +127,7 @@ pipeline {
         cleanup {
             // Archive logs and dump files
             sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" -o -name "*.hprof" \\) -exec xz {} \\;'
-            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**,**/surefire-reports/TEST-*.xml'
+            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**,**/*-reports/**/TEST-*.xml'
 
             // Remove all untracked files, ignoring .gitignore
             sh 'git clean -qfdx || echo "git clean failed, exit code $?"'
