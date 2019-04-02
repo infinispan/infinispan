@@ -22,16 +22,6 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.getDefaultKeepaliveMillis;
-import static org.infinispan.factories.KnownComponentNames.getDefaultMinThreads;
-import static org.infinispan.factories.KnownComponentNames.getDefaultQueueSize;
-import static org.infinispan.factories.KnownComponentNames.getDefaultThreads;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -74,20 +64,11 @@ import org.jboss.msc.service.ServiceName;
  */
 public enum ThreadPoolResource implements ResourceDefinition, ThreadPoolDefinition {
 
-   ASYNC_OPERATIONS("async-operations", getDefaultMinThreads(ASYNC_OPERATIONS_EXECUTOR),
-                    getDefaultThreads(ASYNC_OPERATIONS_EXECUTOR), getDefaultQueueSize(ASYNC_OPERATIONS_EXECUTOR),
-                    getDefaultKeepaliveMillis()),
-   LISTENER("listener", getDefaultMinThreads(ASYNC_NOTIFICATION_EXECUTOR),
-            getDefaultThreads(ASYNC_NOTIFICATION_EXECUTOR), getDefaultQueueSize(ASYNC_NOTIFICATION_EXECUTOR),
-            getDefaultKeepaliveMillis()),
-   REMOTE_COMMAND("remote-command", getDefaultMinThreads(REMOTE_COMMAND_EXECUTOR),
-                  getDefaultThreads(REMOTE_COMMAND_EXECUTOR), getDefaultQueueSize(REMOTE_COMMAND_EXECUTOR),
-                  getDefaultKeepaliveMillis()),
-   STATE_TRANSFER("state-transfer", getDefaultMinThreads(STATE_TRANSFER_EXECUTOR),
-                  getDefaultThreads(STATE_TRANSFER_EXECUTOR), getDefaultQueueSize(STATE_TRANSFER_EXECUTOR),
-                  getDefaultKeepaliveMillis()),
-   TRANSPORT("transport", getDefaultMinThreads(ASYNC_TRANSPORT_EXECUTOR), getDefaultThreads(ASYNC_TRANSPORT_EXECUTOR),
-             getDefaultQueueSize(ASYNC_TRANSPORT_EXECUTOR), getDefaultKeepaliveMillis()),
+    ASYNC_OPERATIONS("async-operations", 25, 25, 1000, 60000),
+    LISTENER("listener", 1, 1, 100000, 60000),
+    REMOTE_COMMAND("remote-command", 25, 25, 100000, 60000),
+    STATE_TRANSFER("state-transfer", 1, 60, 0, 60000),
+    TRANSPORT("transport", 25, 25, 100000, 60000),
     ;
 
     static final PathElement WILDCARD_PATH = pathElement(PathElement.WILDCARD_VALUE);
