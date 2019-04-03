@@ -5070,27 +5070,16 @@
             <plugins>
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <!-- Run the tests with JDK8 -->
+                     <jvm>${env.JAVA8_HOME}/bin/java</jvm>
+                     <argLine>${forkJvmArgs}</argLine>
+                  </configuration>
                   <executions>
                      <execution>
-                        <!-- Do not run tests with the main JDK -->
-                        <id>default-test</id>
-                        <phase>none</phase>
-                     </execution>
-                     <execution>
-                        <!-- Do not run the JDK10+-specific tests with the main JDK -->
+                        <!-- Do not run the JDK10+-specific tests with JDK8 -->
                         <id>java10-test</id>
                         <phase>none</phase>
-                     </execution>
-                     <execution>
-                        <id>java8-test</id>
-                        <phase>test</phase>
-                        <goals>
-                           <goal>test</goal>
-                        </goals>
-                        <configuration>
-                           <jvm>${env.JAVA8_HOME}/bin/java</jvm>
-                           <argLine>${forkJvmArgs}</argLine>
-                        </configuration>
                      </execution>
                   </executions>
                </plugin>
