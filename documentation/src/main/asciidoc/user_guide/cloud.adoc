@@ -114,14 +114,15 @@ GOOGLE_PING uses Google Cloud Storage (GCS) to store information about the clust
 
 ----
 
-=== Kubernetes and OpenShift
+[[cloud_services_k8s]]
+=== Kubernetes
+{brandname} in Kubernetes environments, such as OKD or OpenShift, can use link:#cloud_services_kube_ping[Kube_PING] or [DNS_PING] for cluster discovery.
 
-Since OpenShift uses Kubernetes underneath both of them can use either - link:https://github.com/jgroups-extras/jgroups-kubernetes[Kube_PING] or DNS_PING.
-
+[[cloud_services_kube_ping]]
 ==== Kube_PING
-The configuration is very straightforward:
+The JGroups link:http://www.jgroups.org/manual4/index.html#_kube_ping[Kube_PING] protocol uses the following configuration:
 
-.Sample KUBE_PING configuration
+.Example KUBE_PING configuration
 [source,xml]
 ----
 
@@ -150,10 +151,11 @@ oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default -
 
 After performing all above steps, the clustering should be enabled and all Pods should automatically form a cluster within a single namespace.
 
+[[cloud_services_dns_ping]]
 ==== DNS_PING
-The configuration is the following:
+The JGroups link:http://www.jgroups.org/manual4/index.html#_dns_ping[DNS_PING] protocol uses the following configuration:
 
-.Sample DNS_PING configuration
+.Example DNS_PING configuration
 [source, xml]
 ----
 <stack name="dns-ping">
@@ -164,7 +166,9 @@ The configuration is the following:
 </stack>
 ----
 
-DNS_PING runs the specified query against the DNS server to get the cluster members list. See link:https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[here] on how enlist the cluster nodes into DNS
+DNS_PING runs the specified query against the DNS server to get the list of cluster members.
+
+For information about creating DNS entries for nodes in a cluster, see link:https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[DNS for Services and Pods].
 
 ==== Using Kubernetes and OpenShift Rolling Updates
 
