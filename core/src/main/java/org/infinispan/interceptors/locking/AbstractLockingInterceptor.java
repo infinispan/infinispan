@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -39,6 +37,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -55,16 +54,17 @@ import org.infinispan.util.logging.Log;
 public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 
+   final InvocationFinallyAction unlockAllReturnHandler = this::handleUnlockAll;
+
    @Inject protected LockManager lockManager;
    @Inject protected ClusteringDependentLogic cdl;
 
-   final InvocationFinallyAction unlockAllReturnHandler = new InvocationFinallyAction() {
-      @Override
-      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-            Throwable throwable) throws Throwable {
-         lockManager.unlockAll(rCtx);
-      }
-   };
+   protected boolean invalidationMode;
+
+   @Start
+   public void start() {
+      invalidationMode = cacheConfiguration.clustering().cacheMode().isInvalidation();
+   }
 
    protected abstract Log getLog();
 
@@ -118,7 +118,9 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    // We need this method in here because of putForExternalRead
    final Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
-      if (hasSkipLocking(command) || !shouldLockKey(command)) {
+      // Non-tx invalidation mode ignores the primary owner, always locks on the originator
+      boolean shouldLockKey = invalidationMode ? ctx.isOriginLocal() : shouldLockKey(command);
+      if (hasSkipLocking(command) || !shouldLockKey) {
          return invokeNext(ctx, command);
       }
 
@@ -273,10 +275,6 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
       return lockManager.lock(key, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS);
    }
 
-   final KeyAwareLockPromise lockAllAndRecord(InvocationContext context, Stream<?> keys, long timeout) {
-      return lockAllAndRecord(context, keys.collect(Collectors.toList()), timeout);
-   }
-
    final KeyAwareLockPromise lockAllAndRecord(InvocationContext context, Collection<?> keys, long timeout) {
       keys.forEach(context::addLockedKey);
       return lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS);
@@ -289,8 +287,8 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    /**
     * Locks and invoke the next interceptor for non-transactional commands.
     */
-   protected final Object nonTxLockAndInvokeNext(InvocationContext ctx, VisitableCommand command,
-         LockPromise lockPromise, InvocationFinallyAction finallyFunction) {
+   final Object nonTxLockAndInvokeNext(InvocationContext ctx, VisitableCommand command,
+                                       LockPromise lockPromise, InvocationFinallyAction finallyFunction) {
       return lockPromise.toInvocationStage().andHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
          if (throwable != null) {
             lockManager.unlockAll(rCtx);
@@ -299,5 +297,9 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
             return invokeNextAndFinally(rCtx, rCommand, finallyFunction);
          }
       });
+   }
+
+   private void handleUnlockAll(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) {
+      lockManager.unlockAll(rCtx);
    }
 }

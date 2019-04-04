@@ -79,7 +79,7 @@ public class LocalizedCacheTopology extends CacheTopology {
       this.isDistributed = cacheMode.isDistributed();
       isScattered = cacheMode.isScattered();
       boolean isReplicated = cacheMode.isReplicated();
-
+      boolean isInvalidation = cacheMode.isInvalidation();
 
       if (isDistributed || isScattered) {
          this.numSegments = readCH.getNumSegments();
@@ -101,9 +101,9 @@ public class LocalizedCacheTopology extends CacheTopology {
          this.maxOwners = maxOwners;
          this.allLocal = false;
          this.localReadSegments = IntSets.immutableSet(localReadSegments);
-      } else if (isReplicated) {
+      } else if (isReplicated || isInvalidation) {
          this.numSegments = readCH.getNumSegments();
-         // Writes must be broadcast to the entire cluster
+         // Writes/invalidations must be broadcast to the entire cluster
          Map<Address, List<Address>> readOwnersMap = new HashMap<>();
          Map<Address, List<Address>> writeOwnersMap = new HashMap<>();
          this.distributionInfos = new DistributionInfo[numSegments];
@@ -116,15 +116,14 @@ public class LocalizedCacheTopology extends CacheTopology {
                   Immutables.immutableListCopy(writeCH.locateOwnersForSegment(segmentCopy)));
             List<Address> writeBackups = writeOwners.subList(1, writeOwners.size());
             this.distributionInfos[segmentId] =
-                  new DistributionInfo(segmentId, primary, readOwners, writeOwners, writeBackups, localAddress);
+               new DistributionInfo(segmentId, primary, readOwners, writeOwners, writeBackups, localAddress);
          }
          this.maxOwners = cacheTopology.getMembers().size();
          this.allLocal = readOwnersMap.containsKey(localAddress);
          this.localReadSegments = IntSets.immutableRangeSet(allLocal ? numSegments : 0);
-      } else { // Invalidation/Local
-         assert cacheMode.isInvalidation() || cacheMode == CacheMode.LOCAL;
+      } else {
+         assert cacheMode == CacheMode.LOCAL;
          this.numSegments = 1;
-         // Reads and writes are local, only the invalidation is replicated
          List<Address> owners = Collections.singletonList(localAddress);
          List<Address> writeBackups = Collections.emptyList();
          this.distributionInfos = new DistributionInfo[]{

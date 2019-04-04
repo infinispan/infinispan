@@ -30,6 +30,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.JmxStatisticsExposer;
@@ -65,7 +66,10 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    private static final Log log = LogFactory.getLog(InvalidationInterceptor.class);
 
    private final AtomicLong invalidations = new AtomicLong(0);
+
    @Inject private CommandsFactory commandsFactory;
+   @Inject private DistributionManager distributionManager;
+
    private boolean statisticsEnabled;
 
    @Override
@@ -132,11 +136,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (!command.isOnePhaseCommit()) {
-         return invokeNext(ctx, command);
-      }
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty");
          // fetch the modifications before the transaction is committed (and thus removed from the txTable)
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
          if (!shouldInvokeRemoteTxCommand(txInvocationContext)) {
@@ -152,13 +152,15 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          if (remoteKeys == null) {
             return rv;
          }
+
          CompletionStage<Void> remoteInvocation =
-               invalidateAcrossCluster(defaultSynchronous, remoteKeys.toArray(), txInvocationContext);
+               invalidateAcrossCluster(txInvocationContext, remoteKeys.toArray(), defaultSynchronous,
+                                       prepareCommand.isOnePhaseCommit(), prepareCommand.getTopologyId());
          return asyncValue(remoteInvocation.handle((responses, t) -> {
             if (t == null) {
                return null;
             }
-            log.unableToRollbackEvictionsDuringPrepare(t);
+            log.unableToRollbackInvalidationsDuringPrepare(t);
             if (t instanceof RuntimeException)
                throw ((RuntimeException) t);
             else
@@ -169,12 +171,15 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      if (!ctx.isOriginLocal()) {
+         return invokeNext(ctx, command);
+      }
+
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         Set<Object> affectedKeys = ctx.getAffectedKeys();
-         log.tracef("On commit, send invalidate for keys: %s", affectedKeys);
-         CompletionStage<Void> remoteInvocation = null;
          try {
-            remoteInvocation = invalidateAcrossCluster(defaultSynchronous, affectedKeys.toArray(), rCtx);
+            CompletionStage<Void> remoteInvocation =
+               rpcManager.invokeCommandOnAll(command, VoidResponseCollector.ignoreLeavers(),
+                                             rpcManager.getSyncRpcOptions());
             return asyncValue(remoteInvocation.handle((responses, t) -> {
                if (t != null) throw wrapException(t);
 
@@ -227,7 +232,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
             if (keys != null && keys.length != 0) {
                if (!isLocalModeForced(writeCommand)) {
                   CompletionStage<Void> remoteInvocation =
-                        invalidateAcrossCluster(isSynchronous(writeCommand), keys, rCtx);
+                        invalidateAcrossCluster(rCtx, keys, isSynchronous(writeCommand), true,
+                                                writeCommand.getTopologyId());
                   return asyncValue(remoteInvocation.thenApply(responses -> rv));
                }
             }
@@ -292,12 +298,12 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       }
    }
 
-   private CompletionStage<Void> invalidateAcrossCluster(boolean synchronous, Object[] keys,
-                                                         InvocationContext ctx) throws Throwable {
+   private CompletionStage<Void> invalidateAcrossCluster(InvocationContext ctx, Object[] keys, boolean synchronous,
+                                                         boolean onePhaseCommit, int topologyId) throws Throwable {
       // increment invalidations counter if statistics maintained
       incrementInvalidations();
       final InvalidateCommand invalidateCommand = commandsFactory.buildInvalidateCommand(EnumUtil.EMPTY_BIT_SET, keys);
-      invalidateCommand.setTopologyId(rpcManager.getTopologyId());
+      invalidateCommand.setTopologyId(topologyId);
       if (log.isDebugEnabled())
          log.debug("Cache [" + rpcManager.getAddress() + "] replicating " + invalidateCommand);
 
@@ -306,10 +312,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          TxInvocationContext txCtx = (TxInvocationContext) ctx;
          // A Prepare command containing the invalidation command in its 'modifications' list is sent to the remote nodes
          // so that the invalidation is executed in the same transaction and locks can be acquired and released properly.
-         // This is 1PC on purpose, as an optimisation, even if the current TX is 2PC.
-         // If the cache uses 2PC it's possible that the remotes will commit the invalidation and the originator rolls back,
-         // but this does not impact consistency and the speed benefit is worth it.
-         command = commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(), Collections.singletonList(invalidateCommand), true);
+         command = commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(),
+                                                       Collections.singletonList(invalidateCommand), onePhaseCommit);
          command.setTopologyId(invalidateCommand.getTopologyId());
       }
       if (synchronous) {
