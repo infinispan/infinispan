@@ -238,7 +238,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          }
       } else {
          if (trace)
-            log.tracef("Don't need backup locks %s", needBackupLocks);
+            log.tracef("Don't need backup locks for key %s", key);
       }
       return needRemoteLock;
    }

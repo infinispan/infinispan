@@ -979,8 +979,8 @@ public interface Log extends BasicLogger {
    void unableToCreateInterceptor(Class type, @Cause Exception e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to broadcast evicts as a part of the prepare phase. Rolling back.", id = 268)
-   void unableToRollbackEvictionsDuringPrepare(@Cause Throwable e);
+   @Message(value = "Unable to broadcast invalidations as a part of the prepare phase. Rolling back.", id = 268)
+   void unableToRollbackInvalidationsDuringPrepare(@Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Cache used for Grid metadata should be synchronous.", id = 269)
@@ -1810,4 +1810,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Content '%s (MediaType: '%s') cannot be converted to '%s'", id = 533)
    EncodingException cannotConvertContent(Object content, MediaType contentType, MediaType destination);
+
+   @Message(value = "Invalidation mode only supports when-split=ALLOW_READ_WRITES", id = 550)
+   CacheConfigurationException invalidationPartitionHandlingNotSuported();
 }
