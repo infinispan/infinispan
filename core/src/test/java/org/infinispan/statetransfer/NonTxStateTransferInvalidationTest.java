@@ -26,7 +26,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
 /**
- * Test if state transfer happens properly on a non-tx invalidation cache.
+ * Test that state transfer does not transfer anything on a non-tx invalidation cache.
  *
  * @since 7.0
  */
