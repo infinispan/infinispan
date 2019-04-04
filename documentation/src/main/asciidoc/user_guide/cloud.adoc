@@ -262,7 +262,12 @@ For both Kubernetes and OpenShift, the Rolling Upgrade procedure is almost the s
 
 .Key differences when upgrading using OpenShift/Kubernetes are:
 * Depending on configuration, it is a good practice to use link:https://docs.openshift.org/latest/architecture/core_concepts/routes.html[OpenShift Routes] or link:http://kubernetes.io/docs/user-guide/ingress[Kubernetes Ingress API] to expose services to the clients. During the upgrade the Route (or Ingress) used by the clients can be altered to point to the new cluster.
+ifndef::productized[]
 * Invoking CLI commands can be done by using Kubernetes (`kubectl exec`) or OpenShift clients (`oc exec`). Here is an example: `oc exec <POD_NAME> -- '/opt/jboss/infinispan-server/bin/ispn-cli.sh' '-c' '--controller=$(hostname -i):9990' '/subsystem=datagrid-infinispan/cache-container=clustered/distributed-cache=default:disconnect-source(migrator-name=hotrod)'`
+endif::productized[]
+ifdef::productized[]
+* Invoking CLI commands can be done by using Kubernetes (`kubectl exec`) or OpenShift clients (`oc exec`). Here is an example: `oc exec <POD_NAME> -- '/opt/datagrid/bin/cli.sh' '-c' '--controller=$(hostname -i):9990' '/subsystem=datagrid-infinispan/cache-container=clustered/distributed-cache=default:disconnect-source(migrator-name=hotrod)'`
+endif::productized[]
 
 .Key differences when upgrading using the library mode:
 * Client application needs to expose JMX. It usually depends on application and environment type but the easiest way to do it is to add the following switches into the Java boostrap script `-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=<PORT>`.

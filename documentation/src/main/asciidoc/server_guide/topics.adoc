@@ -22,7 +22,8 @@ Next, navigate to object name `jboss.datagrid-infinispan:type=CacheManager,name=
 
 The Health API can be also accessed using CLI interface. An example invocation and result is presented below:
 
-[source,bash]
+ifndef::productized[]
+[source,options=nowrap]
 ----
 $ ispn-cli.sh -c "/subsystem=datagrid-infinispan/cache-container=clustered/health=HEALTH:read-resource(include-runtime=true)"
 
@@ -50,8 +51,40 @@ $ ispn-cli.sh -c "/subsystem=datagrid-infinispan/cache-container=clustered/healt
         "total-memory" => 235520L
     }
 }
-
 ----
+endif::productized[]
+
+ifdef::productized[]
+[source,options=nowrap]
+----
+$ RHDG_HOME/cli.sh -c "/subsystem=datagrid-infinispan/cache-container=clustered/health=HEALTH:read-resource(include-runtime=true)"
+
+{
+    "outcome" => "success",
+    "result" => {
+        "cache-health" => "HEALTHY",
+        "cluster-health" => ["test"],
+        "cluster-name" => "clustered",
+        "free-memory" => 99958L,
+        "log-tail" => [
+            "2016-08-10 11:54:14,706 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-5) DGENDPT10001: HotRodServer listening on 127.0.0.1:11222",
+            "2016-08-10 11:54:14,706 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-1) DGENDPT10001: MemcachedServer listening on 127.0.0.1:11211",
+            "2016-08-10 11:54:14,785 INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-6) DGISPN0001: Started ___protobuf_metadata cache from clustered container",
+            "2016-08-10 11:54:14,800 INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-6) DGISPN0001: Started ___script_cache cache from clustered container",
+            "2016-08-10 11:54:15,159 INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-5) DGISPN0001: Started ___hotRodTopologyCache cache from clustered container",
+            "2016-08-10 11:54:15,210 INFO  [org.infinispan.rest.NettyRestServer] (MSC service thread 1-6) ISPN012003: REST server starting, listening on 127.0.0.1:8080",
+            "2016-08-10 11:54:15,210 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-6) DGENDPT10002: REST mapped to /rest",
+            "2016-08-10 11:54:15,306 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0060: Http management interface listening on http://127.0.0.1:9990/management",
+            "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0051: Admin console listening on http://127.0.0.1:9990",
+            "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: {brandname} Server 9.0.0-SNAPSHOT (WildFly Core 2.2.0.CR9) started in 8681ms - Started 196 of 237 services (121 services are lazy, passive or on-demand)"
+        ],
+        "number-of-cpus" => 8,
+        "number-of-nodes" => 1,
+        "total-memory" => 235520L
+    }
+}
+----
+endif::productized[]
 
 === Accessing Health API using REST
 
