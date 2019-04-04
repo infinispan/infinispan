@@ -979,8 +979,8 @@ public interface Log extends BasicLogger {
    void unableToCreateInterceptor(Class type, @Cause Exception e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to broadcast evicts as a part of the prepare phase. Rolling back.", id = 268)
-   void unableToRollbackEvictionsDuringPrepare(@Cause Throwable e);
+   @Message(value = "Unable to broadcast invalidations as a part of the prepare phase. Rolling back.", id = 268)
+   void unableToRollbackInvalidationsDuringPrepare(@Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Cache used for Grid metadata should be synchronous.", id = 269)
@@ -1837,4 +1837,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error stopping module %s", id = 538)
    void moduleStopError(String module, @Cause Throwable t);
+
+   @Message(value = "Invalidation mode only supports when-split=ALLOW_READ_WRITES", id = 550)
+   CacheConfigurationException invalidationPartitionHandlingNotSuported();
 }
