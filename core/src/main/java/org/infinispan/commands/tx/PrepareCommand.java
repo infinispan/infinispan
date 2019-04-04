@@ -26,6 +26,7 @@ import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -159,6 +160,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
                set.add(((DataWriteCommand) writeCommand).getKey());
                break;
             case PutMapCommand.COMMAND_ID:
+            case InvalidateCommand.COMMAND_ID:
             case ReadWriteManyCommand.COMMAND_ID:
             case ReadWriteManyEntriesCommand.COMMAND_ID:
             case WriteOnlyManyCommand.COMMAND_ID:

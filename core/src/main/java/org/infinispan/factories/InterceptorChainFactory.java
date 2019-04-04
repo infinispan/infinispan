@@ -144,16 +144,20 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(), CacheMgmtInterceptor.class), false);
       }
 
-      // load the state transfer lock interceptor
-      // the state transfer lock ensures that the cache member list is up-to-date
-      // so it's necessary even if state transfer is disabled
-      if (cacheMode.needsStateTransfer()) {
+      // the state transfer interceptor sets the topology id and retries on topology changes
+      // so it's necessary even if there is no state transfer
+      // the only exception is non-tx invalidation mode, which ignores lock owners
+      if (cacheMode.needsStateTransfer() || cacheMode.isInvalidation() && transactionMode.isTransactional()) {
          if (isTotalOrder) {
             interceptorChain.appendInterceptor(createInterceptor(new TotalOrderStateTransferInterceptor(),
                                                                  TotalOrderStateTransferInterceptor.class), false);
          } else {
-            interceptorChain.appendInterceptor(createInterceptor(new StateTransferInterceptor(), StateTransferInterceptor.class), false);
+            interceptorChain.appendInterceptor(
+               createInterceptor(new StateTransferInterceptor(), StateTransferInterceptor.class), false);
          }
+      }
+
+      if (cacheMode.needsStateTransfer()) {
          if (transactionMode.isTransactional()) {
             interceptorChain.appendInterceptor(createInterceptor(new TransactionSynchronizerInterceptor(), TransactionSynchronizerInterceptor.class), false);
          }
