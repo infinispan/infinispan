@@ -3,16 +3,29 @@
 === CLI
 You can use the +CLI+ to perform management operations on a standalone node or a domain controller.
 
+ifndef::productized[]
+[source,options=nowrap]
 ----
-
-bin/ispn-cli.sh
+$ bin/ispn-cli.sh
 [disconnected /] connect
 [standalone@localhost:9990 /] cd subsystem=datagrid-infinispan
 [standalone@localhost:9990 subsystem=datagrid-infinispan] cd cache-container=local
 [standalone@localhost:9990 cache-container=local] cd local-cache=default
 [standalone@localhost:9990 local-cache=default]
-
 ----
+endif::productized[]
+
+ifdef::productized[]
+[source,options=nowrap]
+----
+$ RHDG_HOME/bin/cli.sh
+[disconnected /] connect
+[standalone@localhost:9990 /] cd subsystem=datagrid-infinispan
+[standalone@localhost:9990 subsystem=datagrid-infinispan] cd cache-container=local
+[standalone@localhost:9990 cache-container=local] cd local-cache=default
+[standalone@localhost:9990 local-cache=default]
+----
+endif::productized[]
 
 The +CLI+ is extremely powerful and supports a number of useful features to navigate the management resource tree
 as well as inspecting single resources or entire subtrees. It is also possible to batch multiple commands together so that
