@@ -55,6 +55,7 @@
       <module name="org.jboss.msc"/>
       <module name="org.jboss.staxmapper"/>
       <module name="org.jboss.threads"/>
+      <module name="org.wildfly.transaction.client"/>
    </dependencies>
 </module>
 

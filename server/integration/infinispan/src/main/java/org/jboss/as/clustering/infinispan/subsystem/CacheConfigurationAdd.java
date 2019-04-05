@@ -84,7 +84,6 @@ import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
 import org.jboss.as.clustering.infinispan.cs.configuration.DeployedStoreConfigurationBuilder;
@@ -277,9 +276,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                     Configuration.class,
                     cacheConfigurationDependencies.getTemplateConfigurationInjector());
         }
-        if (config.invocationBatching().enabled()) {
-            cacheConfigurationDependencies.getTransactionManagerInjector().inject(BatchModeTransactionManager.getInstance());
-        } else if (config.transaction().transactionMode() == org.infinispan.transaction.TransactionMode.TRANSACTIONAL) {
+        if (!config.invocationBatching().enabled() && config.transaction().transactionMode() == org.infinispan.transaction.TransactionMode.TRANSACTIONAL) {
             configBuilder.addDependency(
                     TxnServices.JBOSS_TXN_TRANSACTION_MANAGER,
                     TransactionManager.class,
