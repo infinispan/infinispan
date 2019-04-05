@@ -25,24 +25,15 @@ package org.jboss.as.clustering.infinispan;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+import org.wildfly.transaction.client.ContextTransactionManager;
 
 /**
  * @author Paul Ferraro
  */
 public class TransactionManagerProvider implements TransactionManagerLookup {
 
-    private final TransactionManager tm;
-
-    public TransactionManagerProvider(TransactionManager tm) {
-        this.tm = tm;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see TransactionManagerLookup#getTransactionManager()
-     */
     @Override
     public TransactionManager getTransactionManager() {
-        return this.tm;
+        return ContextTransactionManager.getInstance();
     }
 }
