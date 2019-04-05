@@ -74,7 +74,7 @@ public class CacheConfigurationService extends AbstractCacheConfigurationService
         builder.jmxStatistics().enabled(this.dependencies.getCacheContainer().getCacheManagerConfiguration().globalJmxStatistics().enabled());
         TransactionManager tm = this.dependencies.getTransactionManager();
         if (tm != null) {
-            builder.transaction().transactionManagerLookup(new TransactionManagerProvider(tm));
+            builder.transaction().transactionManagerLookup(new TransactionManagerProvider());
         }
         TransactionSynchronizationRegistry tsr = this.dependencies.getTransactionSynchronizationRegistry();
         if (tsr != null) {
