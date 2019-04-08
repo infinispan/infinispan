@@ -62,7 +62,7 @@ as shown in the example below:
 EmbeddedCacheManager manager = ...;
 
 // retrieve the ClusteredLockManager
-ClusteredLockManager clusteredLockManager = ClusteredLockManagerFactory.from(manager);
+ClusteredLockManager clusteredLockManager = EmbeddedClusteredLockManagerFactory.from(manager);
 ----
 
 [source,java]
@@ -171,7 +171,7 @@ Returns `true` when the lock is owned by the caller and `false` when the lock is
 [source,java]
 ----
   EmbeddedCache cm = ...;
-  ClusteredLockManager cclm = ClusteredLockManagerFactory.from(cm);
+  ClusteredLockManager cclm = EmbeddedClusteredLockManagerFactory.from(cm);
 
   lock.tryLock()
     .thenCompose(result -> {

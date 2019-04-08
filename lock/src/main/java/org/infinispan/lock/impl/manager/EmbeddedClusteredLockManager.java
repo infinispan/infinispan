@@ -105,7 +105,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    private ClusteredLockImpl createLock(String lockName) {
       ClusteredLockConfiguration configuration = getConfiguration(lockName);
       if (configuration == null) {
-         throw new ClusteredLockException(String.format("Lock does %s not exist", lockName));
+         throw new ClusteredLockException(String.format("Lock %s does not exist", lockName));
       }
       ClusteredLockKey key = new ClusteredLockKey(ByteString.fromString(lockName));
       cache.putIfAbsent(key, ClusteredLockValue.INITIAL_STATE);
