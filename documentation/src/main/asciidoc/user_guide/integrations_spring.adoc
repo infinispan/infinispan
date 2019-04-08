@@ -89,21 +89,6 @@ public class Config {
 }
 ----
 
-[[spring_disable_jmx_autoconfig]]
-====== Avoiding Duplicate MBean Registration
-When using Remote client-server mode, you can collect statistics for your Hot Rod client implementation with the `HotRodClient` JMX MBean.
-
-If you enable JMX statistics with the `HotRodClient` MBean, you should configure your Spring application so that it does not automatically register MBeans. Otherwise, both your Spring application and your Hot Rod client implementation attempt to register the MBean and the following exception occurs:
-
-[source,options=nowrap]
-----
-org.springframework.jmx.export.UnableToRegisterMBeanException: Unable to register MBean
-...
-InstanceAlreadyExistsException: MXBean already registered with name org.infinispan:type=HotRodClient,name=Default
-----
-
-Disable the Spring JMX autoconfig with `spring.jmx.enabled=false`.
-
 [[spring_add_caching]]
 ==== Adding Caching to Your Application
 Add the `@Cacheable` and `@CacheEvict` annotations to your application code.
