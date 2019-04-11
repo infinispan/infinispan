@@ -167,6 +167,7 @@
                                 <experimental>true</experimental>
                                 <infinispanversion>${infinispan.base.version}</infinispanversion>
                                 <brandname>${infinispan.brand.name}</brandname>
+                                <wildflybrandname>${wildfly.brand.name}</wildflybrandname>
                                 <moduleprefix>${infinispan.module.slot.prefix}</moduleprefix>
                                 <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
                                 <defaults>${defaults.file}</defaults>
