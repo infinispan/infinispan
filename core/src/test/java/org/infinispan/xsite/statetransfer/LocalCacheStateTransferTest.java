@@ -26,9 +26,8 @@ import org.testng.annotations.Test;
 @Test(groups = "xsite", testName = "xsite.statetransfer.LocalCacheStateTransferTest")
 public class LocalCacheStateTransferTest extends AbstractXSiteTest {
 
-
-   private static final String LON = "LON";
-   private static final String NYC = "NYC";
+   private static final String LON = "LON-1";
+   private static final String NYC = "NYC-2";
 
    public void testStateTransferWithClusterIdle() throws InterruptedException {
       takeSiteOffline(LON, NYC);

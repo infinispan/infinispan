@@ -28,7 +28,7 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
    protected void createSites() {
       super.createSites();
       failureInterceptor = new FailureInterceptor();
-      backup("LON").getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
+      backup(LON).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
    }
 
    @BeforeMethod
