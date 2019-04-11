@@ -8,6 +8,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 
 public abstract class BaseSiteUnreachableTest extends AbstractXSiteTest {
 
+   public static final String LON = "LON-1";
+   public static final String NYC = "NYC-2";
    protected BackupFailurePolicy lonBackupFailurePolicy = BackupFailurePolicy.WARN;
    protected BackupConfiguration.BackupStrategy lonBackupStrategy = BackupConfiguration.BackupStrategy.SYNC;
    protected String lonCustomFailurePolicyClass = null;
@@ -19,19 +21,19 @@ public abstract class BaseSiteUnreachableTest extends AbstractXSiteTest {
 
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       lonGc
-            .site().localSite("LON");
+            .site().localSite(LON);
       ConfigurationBuilder lon = getLonActiveConfig();
       lon.sites().addBackup()
-               .site("NYC")
+               .site(NYC)
                .backupFailurePolicy(lonBackupFailurePolicy)
                .replicationTimeout(100) //keep it small so that the test doesn't take long to run
                .takeOffline().afterFailures(failures).
             backup()
                .strategy(lonBackupStrategy)
                .failurePolicyClass(lonCustomFailurePolicyClass);
-      lon.sites().addInUseBackupSite("NYC");
+      lon.sites().addInUseBackupSite(NYC);
 
-      createSite("LON", 2, lonGc, lon);
+      createSite(LON, 2, lonGc, lon);
    }
 
    protected ConfigurationBuilder getLonActiveConfig() {

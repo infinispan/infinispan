@@ -13,6 +13,7 @@ import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteAsyncAckListener;
 import org.infinispan.util.logging.Log;
+import org.infinispan.xsite.BaseSiteUnreachableTest;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -55,7 +56,7 @@ public class DelegatingTransport extends AbstractDelegatingTransport {
          @Override
          public Set<String> getCommunicationErrors() {
             if (fail) {
-               return Collections.singleton("NYC");
+               return Collections.singleton(BaseSiteUnreachableTest.NYC);
             } else {
                return Collections.emptySet();
             }

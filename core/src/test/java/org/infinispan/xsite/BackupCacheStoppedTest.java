@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 public class BackupCacheStoppedTest extends AbstractTwoSitesTest {
 
    public void testCacheStopped() {
-      final String site = "LON";
+      final String site = LON;
       String key = key(site);
       String val = val(site);
 

@@ -24,13 +24,13 @@ public class SinglePhaseCommitFailureTest extends AbstractTwoSitesTest {
    protected void createSites() {
       super.createSites();
       failureInterceptor = new BaseBackupFailureTest.FailureInterceptor();
-      backup("LON").getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
+      backup(LON).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
    }
 
    public void testPrepareFailure() {
       failureInterceptor.enable();
       try {
-         expectException(CacheException.class, () -> cache("LON", 0).put("k", "v"));
+         expectException(CacheException.class, () -> cache(LON, 0).put("k", "v"));
       } finally {
          failureInterceptor.disable();
       }

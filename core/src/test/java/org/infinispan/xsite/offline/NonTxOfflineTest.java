@@ -32,14 +32,14 @@ public class NonTxOfflineTest extends BaseSiteUnreachableTest {
    }
 
    public void testPutWithFailures() {
-      populateKeys(cache("LON", 0));
-      BackupSenderImpl bs = (BackupSenderImpl) cache("LON", 0).getAdvancedCache().getComponentRegistry().getComponent(BackupSender.class);
-      OfflineStatus nycStatus = bs.getOfflineStatus("NYC");
+      populateKeys(cache(LON, 0));
+      BackupSenderImpl bs = (BackupSenderImpl) cache(LON, 0).getAdvancedCache().getComponentRegistry().getComponent(BackupSender.class);
+      OfflineStatus nycStatus = bs.getOfflineStatus(NYC);
 
       for (int i = 0; i < FAILURES / nrRpcPerPut; i++) {
          try {
-            assertEquals(BackupSender.BringSiteOnlineResponse.ALREADY_ONLINE, bs.bringSiteOnline("NYC"));
-            cache("LON", 0).put(keys[i], "v" + i);
+            assertEquals(BackupSender.BringSiteOnlineResponse.ALREADY_ONLINE, bs.bringSiteOnline(NYC));
+            cache(LON, 0).put(keys[i], "v" + i);
             fail("This should have failed");
          } catch (Exception e) {
             assertEquals(i + 1, nycStatus.getFailureCount());
@@ -49,20 +49,20 @@ public class NonTxOfflineTest extends BaseSiteUnreachableTest {
       assertTrue(nycStatus.isOffline());
 
       for (int i = 0; i < FAILURES; i++) {
-         cache("LON", 0).put(keys[i], "v" + i);
+         cache(LON, 0).put(keys[i], "v" + i);
       }
 
       for (int i = 0; i < FAILURES; i++) {
-         assertEquals("v" + i, cache("LON", 0).get(keys[i]));
+         assertEquals("v" + i, cache(LON, 0).get(keys[i]));
       }
 
       assertEquals(BackupSender.BringSiteOnlineResponse.NO_SUCH_SITE, bs.bringSiteOnline("NO_SITE"));
 
-      assertEquals(BackupSender.BringSiteOnlineResponse.BROUGHT_ONLINE, bs.bringSiteOnline("NYC"));
+      assertEquals(BackupSender.BringSiteOnlineResponse.BROUGHT_ONLINE, bs.bringSiteOnline(NYC));
 
       for (int i = 0; i < FAILURES / nrRpcPerPut; i++) {
          try {
-            cache("LON", 0).put(keys[i], "v" + i);
+            cache(LON, 0).put(keys[i], "v" + i);
             fail("This should have failed");
          } catch (Exception e) {
             //expected

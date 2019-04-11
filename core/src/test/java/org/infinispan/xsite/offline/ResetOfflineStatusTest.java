@@ -35,20 +35,20 @@ public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
    }
 
    public void testPutWithFailures() {
-      populateKeys(cache("LON", 0));
-      EmbeddedCacheManager manager = cache("LON", 0).getCacheManager();
+      populateKeys(cache(LON, 0));
+      EmbeddedCacheManager manager = cache(LON, 0).getCacheManager();
       Transport transport = manager.getGlobalComponentRegistry().getComponent(Transport.class);
       DelegatingTransport delegatingTransport = new DelegatingTransport(transport);
       TestingUtil.replaceComponent(manager, Transport.class, delegatingTransport, true);
 
-      ComponentRegistry registry = cache("LON", 0).getAdvancedCache().getComponentRegistry();
+      ComponentRegistry registry = cache(LON, 0).getAdvancedCache().getComponentRegistry();
       BackupSenderImpl bs = (BackupSenderImpl) registry.getComponent(BackupSender.class);
-      OfflineStatus offlineStatus = bs.getOfflineStatus("NYC");
+      OfflineStatus offlineStatus = bs.getOfflineStatus(NYC);
 
       delegatingTransport.fail = true;
       for (int i = 0; i < FAILURES; i++) {
          try {
-            cache("LON", 0).put(KEYS[i], "v" + i);
+            cache(LON, 0).put(KEYS[i], "v" + i);
             fail("This should have failed");
          } catch (Exception e) {
             //expected
@@ -56,35 +56,35 @@ public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
       }
 
       for (int i = 0; i < FAILURES; i++) {
-         cache("LON", 0).put(KEYS[i], "v" + i);
+         cache(LON, 0).put(KEYS[i], "v" + i);
       }
 
       for (int i = 0; i < FAILURES; i++) {
-         assertEquals("v" + i, cache("LON", 0).get(KEYS[i]));
+         assertEquals("v" + i, cache(LON, 0).get(KEYS[i]));
       }
 
-      assertEquals(BackupSender.BringSiteOnlineResponse.BROUGHT_ONLINE, bs.bringSiteOnline("NYC"));
+      assertEquals(BackupSender.BringSiteOnlineResponse.BROUGHT_ONLINE, bs.bringSiteOnline(NYC));
 
       for (int i = 0; i < FAILURES - 1; i++) {
          try {
-            cache("LON", 0).put(KEYS[i], "v" + i);
+            cache(LON, 0).put(KEYS[i], "v" + i);
             fail("This should have failed");
          } catch (Exception e) {
-            //expected
+            //expectedorigin/origin/
          }
       }
 
       delegatingTransport.fail = false;
       assertEquals(FAILURES - 1, offlineStatus.getFailureCount());
-      cache("LON", 0).put(KEYS[FAILURES], "vi"); //this should reset the offline status
+      cache(LON, 0).put(KEYS[FAILURES], "vi"); //this should reset the offline status
       assertEquals(0, offlineStatus.getFailureCount());
 
       for (int i = 0; i < FAILURES * 10; i++) {
-         cache("LON", 0).put(KEYS[i], "v" + i);
+         cache(LON, 0).put(KEYS[i], "v" + i);
       }
 
       for (int i = 0; i < FAILURES * 10; i++) {
-         assertEquals("v" + i, cache("LON", 0).get(KEYS[i]));
+         assertEquals("v" + i, cache(LON, 0).get(KEYS[i]));
       }
    }
 

@@ -33,8 +33,8 @@ import org.testng.annotations.AfterClass;
 
 abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
 
-   static String SITE_A = "LON";
-   static String SITE_B = "NYC";
+   static String SITE_A = "LON-1";
+   static String SITE_B = "NYC-2";
    static int NODES_PER_SITE = 2;
 
    Map<String, List<HotRodServer>> siteServers = new HashMap<>();
