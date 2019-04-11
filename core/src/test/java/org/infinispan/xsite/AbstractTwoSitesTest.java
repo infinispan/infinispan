@@ -19,8 +19,8 @@ import org.infinispan.transaction.LockingMode;
  */
 public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
 
-   protected static final String LON = "LON";
-   protected static final String NYC = "NYC";
+   protected static final String LON = "LON-1";
+   protected static final String NYC = "NYC-2";
    protected BackupFailurePolicy lonBackupFailurePolicy = BackupFailurePolicy.WARN;
    protected boolean isLonBackupTransactional = false;
    protected BackupConfiguration.BackupStrategy lonBackupStrategy = BackupConfiguration.BackupStrategy.SYNC;

@@ -31,21 +31,21 @@ public abstract class BaseBackupTxFailureTest extends AbstractTwoSitesTest {
    protected void createSites() {
       super.createSites();
       failureInterceptor = new BaseBackupFailureTest.FailureInterceptor();
-      backup("LON").getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
+      backup(LON).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
    }
 
    public void testPrepareFailure() {
       failureInterceptor.enable();
       try {
-         Exceptions.expectException(CacheException.class, RollbackException.class, () -> cache("LON", 0).put("k", "v"));
+         Exceptions.expectException(CacheException.class, RollbackException.class, () -> cache(LON, 0).put("k", "v"));
       } finally {
          failureInterceptor.disable();
       }
-      assertNull(cache("LON",0).get("k"));
-      assertNull(cache("LON",1).get("k"));
-      assertNull(backup("LON").get("k"));
-      assertEquals(0, txTable(cache("LON", 0)).getLocalTransactions().size());
-      assertEquals(0, txTable(cache("LON", 1)).getLocalTransactions().size());
-      assertEquals(0, txTable(backup("LON")).getLocalTransactions().size());
+      assertNull(cache(LON,0).get("k"));
+      assertNull(cache(LON,1).get("k"));
+      assertNull(backup(LON).get("k"));
+      assertEquals(0, txTable(cache(LON, 0)).getLocalTransactions().size());
+      assertEquals(0, txTable(cache(LON, 1)).getLocalTransactions().size());
+      assertEquals(0, txTable(backup(LON)).getLocalTransactions().size());
    }
 }

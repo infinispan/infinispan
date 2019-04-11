@@ -17,41 +17,45 @@ import org.testng.annotations.Test;
 @Test(groups = {"functional", "xsite"}, testName = "xsite.XSiteCacheConfigurationTest")
 public class XSiteCacheConfigurationTest {
 
+   public static final String LON = "LON-1";
+   public static final String NYC = "NYC-2";
+   public static final String SFO = "SFO-3";
+
    public void testApi() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.
          sites().addBackup()
-            .site("LON")
+            .site(LON)
             .strategy(BackupConfiguration.BackupStrategy.SYNC)
          .sites().addBackup()
-            .site("SFO")
+            .site(SFO)
          .sites().addBackup()
-            .site("NYC");
+            .site(NYC);
       assertEquals(cb.sites().backups().size(), 3);
       BackupConfigurationBuilder backup0 = cb.sites().backups().get(0);
-      assertEquals(backup0.site(), "LON");
+      assertEquals(backup0.site(), LON);
       assertEquals(backup0.strategy(), BackupConfiguration.BackupStrategy.SYNC);
 
       BackupConfigurationBuilder backup1 = cb.sites().backups().get(1);
-      assertEquals(backup1.site(), "SFO");
+      assertEquals(backup1.site(), SFO);
       assertEquals(backup1.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
 
       BackupConfigurationBuilder backup2 = cb.sites().backups().get(2);
-      assertEquals(backup2.site(), "NYC");
+      assertEquals(backup2.site(), NYC);
       assertEquals(backup2.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
 
       Configuration b = cb.build();
       assertEquals(b.sites().allBackups().size(), 3);
       BackupConfiguration b0 = b.sites().allBackups().get(0);
-      assertEquals(b0.site(), "LON");
+      assertEquals(b0.site(), LON);
       assertEquals(b0.strategy(), BackupConfiguration.BackupStrategy.SYNC);
 
       BackupConfiguration b1 = b.sites().allBackups().get(1);
-      assertEquals(b1.site(), "SFO");
+      assertEquals(b1.site(), SFO);
       assertEquals(b1.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
 
       BackupConfigurationBuilder b2 = cb.sites().backups().get(2);
-      assertEquals(b2.site(), "NYC");
+      assertEquals(b2.site(), NYC);
       assertEquals(b2.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
    }
 
@@ -60,12 +64,12 @@ public class XSiteCacheConfigurationTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.
             sites().addBackup()
-               .site("LON")
+               .site(LON)
                .strategy(BackupConfiguration.BackupStrategy.SYNC)
             .sites().addBackup()
-               .site("LON")
+               .site(LON)
             .sites().addBackup()
-               .site("NYC");
+               .site(NYC);
       cb.build();
    }
 
@@ -83,7 +87,7 @@ public class XSiteCacheConfigurationTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.
             sites().addBackup()
-               .site("LON")
+               .site(LON)
                .backupFailurePolicy(BackupFailurePolicy.CUSTOM)
                .failurePolicyClass();
       cb.build();
@@ -94,7 +98,7 @@ public class XSiteCacheConfigurationTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.
             sites().addBackup()
-               .site("LON")
+               .site(LON)
                .strategy(BackupConfiguration.BackupStrategy.ASYNC)
                .useTwoPhaseCommit(true);
       cb.build();
@@ -104,12 +108,12 @@ public class XSiteCacheConfigurationTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.
             sites().addBackup()
-               .site("LON")
+               .site(LON)
                .strategy(BackupConfiguration.BackupStrategy.SYNC)
             .sites().addBackup()
-               .site("SFO")
+               .site(SFO)
                .sites().addBackup()
-            .site("NYC");
+            .site(NYC);
       cb.build();
    }
 }

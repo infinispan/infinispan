@@ -42,10 +42,14 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
    private static final int NUM_NODES = 3;
    private static final int NUM_FAILURES = 6;
 
+   private static final String LON = "LON-1";
+   private static final String NYC = "NYC-2";
+   private static final String SFO = "SFO-3";
+
    public void testSFOOffline(Method method) {
       String cacheName = method.getName();
-      defineCache("LON", cacheName, getLONConfiguration());
-      defineCache("NYC", cacheName, getNYCOrSFOConfiguration());
+      defineCache(LON, cacheName, getLONConfiguration());
+      defineCache(NYC, cacheName, getNYCOrSFOConfiguration());
 
       String key = method.getName() + "-key";
       int primaryOwner = primaryOwnerIndex(cacheName, key);
@@ -56,20 +60,20 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
    }
 
    public void testSlowSFO(Method method) {
-      createTestSite("SFO");
+      createTestSite(SFO);
 
       String cacheName = method.getName();
-      defineCache("LON", cacheName, getLONConfiguration());
-      defineCache("NYC", cacheName, getNYCOrSFOConfiguration());
-      defineCache("SFO", cacheName, getNYCOrSFOConfiguration());
+      defineCache(LON, cacheName, getLONConfiguration());
+      defineCache(NYC, cacheName, getNYCOrSFOConfiguration());
+      defineCache(SFO, cacheName, getNYCOrSFOConfiguration());
 
       String key = method.getName() + "-key";
       int primaryOwner = primaryOwnerIndex(cacheName, key);
 
-      cache("LON", cacheName, 0).put("key", "value");
-      eventuallyEquals("value", () -> cache("SFO", cacheName, 0).get("key"));
+      cache(LON, cacheName, 0).put("key", "value");
+      eventuallyEquals("value", () -> cache(SFO, cacheName, 0).get("key"));
 
-      assertEquals(0, backupSender(cacheName, primaryOwner).getOfflineStatus("SFO").getFailureCount());
+      assertEquals(0, backupSender(cacheName, primaryOwner).getOfflineStatus(SFO).getFailureCount());
 
       List<DiscardInboundHandler> handlers = replaceSFOInboundHandler();
       handlers.forEach(h -> h.discard = true);
@@ -82,19 +86,19 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
    }
 
    public void testReset(Method method) {
-      createTestSite("SFO");
+      createTestSite(SFO);
 
       String cacheName = method.getName();
-      defineCache("LON", cacheName, getLONConfiguration());
-      defineCache("NYC", cacheName, getNYCOrSFOConfiguration());
-      defineCache("SFO", cacheName, getNYCOrSFOConfiguration());
+      defineCache(LON, cacheName, getLONConfiguration());
+      defineCache(NYC, cacheName, getNYCOrSFOConfiguration());
+      defineCache(SFO, cacheName, getNYCOrSFOConfiguration());
 
       String key = method.getName() + "-key";
       int primaryOwner = primaryOwnerIndex(cacheName, key);
 
-      Cache<String, String> lonCache = cache("LON", cacheName, 0);
-      Cache<String, String> sfoCache = cache("SFO", cacheName, 0);
-      OfflineStatus lonStatus = backupSender(cacheName, primaryOwner).getOfflineStatus("SFO");
+      Cache<String, String> lonCache = cache(LON, cacheName, 0);
+      Cache<String, String> sfoCache = cache(SFO, cacheName, 0);
+      OfflineStatus lonStatus = backupSender(cacheName, primaryOwner).getOfflineStatus(SFO);
 
       lonCache.put(key, "value");
       eventuallyEquals("value", () -> sfoCache.get(key));
@@ -119,26 +123,26 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
    @AfterMethod(alwaysRun = true)
    public void killSFO() {
-      killSite("SFO");
+      killSite(SFO);
    }
 
    @Override
    protected void createSites() {
       //we have 3 sites: LON, NYC and SFO. SFO is offline.
-      createTestSite("LON");
-      createTestSite("NYC");
-      waitForSites("LON", "NYC");
+      createTestSite(LON);
+      createTestSite(NYC);
+      waitForSites(LON, NYC);
    }
 
    private void doTestInNode(String cacheName, int index, int primaryOwnerIndex, String key) {
-      Cache<String, String> cache = this.cache("LON", cacheName, index);
+      Cache<String, String> cache = this.cache(LON, cacheName, index);
 
-      assertOnline(cacheName, index, "NYC");
-      assertOnline(cacheName, index, "SFO");
+      assertOnline(cacheName, index, NYC);
+      assertOnline(cacheName, index, SFO);
 
       if (index != primaryOwnerIndex) {
-         assertOnline(cacheName, primaryOwnerIndex, "NYC");
-         assertOnline(cacheName, primaryOwnerIndex, "SFO");
+         assertOnline(cacheName, primaryOwnerIndex, NYC);
+         assertOnline(cacheName, primaryOwnerIndex, SFO);
       }
 
       for (int i = 0; i < NUM_FAILURES; ++i) {
@@ -146,13 +150,13 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       }
 
       if (index == primaryOwnerIndex) {
-         assertOnline(cacheName, index, "NYC");
+         assertOnline(cacheName, index, NYC);
          assertEventuallyOffline(cacheName, index);
       } else {
-         assertOnline(cacheName, index, "NYC");
-         assertOnline(cacheName, index, "SFO");
+         assertOnline(cacheName, index, NYC);
+         assertOnline(cacheName, index, SFO);
 
-         assertOnline(cacheName, primaryOwnerIndex, "NYC");
+         assertOnline(cacheName, primaryOwnerIndex, NYC);
          assertEventuallyOffline(cacheName, primaryOwnerIndex);
       }
 
@@ -166,25 +170,25 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
    }
 
    private void assertEventuallyOffline(String cacheName, int index) {
-      OfflineStatus status = backupSender(cacheName, index).getOfflineStatus("SFO");
+      OfflineStatus status = backupSender(cacheName, index).getOfflineStatus(SFO);
       assertTrue(status.isEnabled());
-      eventually(() -> "Site " + "SFO" + " is online. status=" + status, status::isOffline);
+      eventually(() -> "Site " + SFO + " is online. status=" + status, status::isOffline);
    }
 
    private void assertBringSiteOnline(String cacheName, int index) {
-      OfflineStatus status = backupSender(cacheName, index).getOfflineStatus("SFO");
-      assertTrue("Unable to bring " + "SFO" + " online. status=" + status, status.bringOnline());
+      OfflineStatus status = backupSender(cacheName, index).getOfflineStatus(SFO);
+      assertTrue("Unable to bring " + SFO + " online. status=" + status, status.bringOnline());
    }
 
    private BackupSenderImpl backupSender(String cacheName, int index) {
-      return (BackupSenderImpl) cache("LON", cacheName, index).getAdvancedCache()
+      return (BackupSenderImpl) cache(LON, cacheName, index).getAdvancedCache()
             .getComponentRegistry()
             .getComponent(BackupSender.class);
    }
 
    private int primaryOwnerIndex(String cacheName, String key) {
       for (int i = 0; i < NUM_NODES; ++i) {
-         boolean isPrimary = cache("LON", cacheName, i).getAdvancedCache().getComponentRegistry()
+         boolean isPrimary = cache(LON, cacheName, i).getAdvancedCache().getComponentRegistry()
                .getDistributionManager()
                .getCacheTopology()
                .getDistribution(key)
@@ -200,24 +204,24 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       builder.clustering().hash().numSegments(4);
       builder.sites().addBackup()
-            .site("NYC")
+            .site(NYC)
             .backupFailurePolicy(BackupFailurePolicy.FAIL)
             .replicationTimeout(1000) //keep it small so that the test doesn't take long to run
             .takeOffline()
             .afterFailures(NUM_FAILURES)
             .backup()
             .strategy(BackupConfiguration.BackupStrategy.SYNC);
-      builder.sites().addInUseBackupSite("NYC");
+      builder.sites().addInUseBackupSite(NYC);
 
       builder.sites().addBackup()
-            .site("SFO")
+            .site(SFO)
             .backupFailurePolicy(BackupFailurePolicy.FAIL)
             .replicationTimeout(1000) //keep it small so that the test doesn't take long to run
             .takeOffline()
             .afterFailures(NUM_FAILURES)
             .backup()
             .strategy(BackupConfiguration.BackupStrategy.ASYNC);
-      builder.sites().addInUseBackupSite("SFO");
+      builder.sites().addInUseBackupSite(SFO);
 
       return builder.build();
    }
@@ -240,7 +244,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
    private List<DiscardInboundHandler> replaceSFOInboundHandler() {
       List<DiscardInboundHandler> handlers = new ArrayList<>(NUM_NODES);
-      for (EmbeddedCacheManager manager : site("SFO").cacheManagers()) {
+      for (EmbeddedCacheManager manager : site(SFO).cacheManagers()) {
          handlers.add(wrapGlobalComponent(manager, InboundInvocationHandler.class, DiscardInboundHandler::new, true));
       }
       return handlers;

@@ -65,23 +65,23 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
    }
 
    public void testRemove() {
-      testRemove("LON");
-      testRemove("NYC");
+      testRemove(LON);
+      testRemove(NYC);
    }
 
    public void testPutAndClear() {
-      testPutAndClear("LON");
-      testPutAndClear("NYC");
+      testPutAndClear(LON);
+      testPutAndClear(NYC);
    }
 
    public void testReplace() {
-      testReplace("LON");
-      testReplace("NYC");
+      testReplace(LON);
+      testReplace(NYC);
    }
 
    public void testPutAll() {
-      testPutAll("LON");
-      testPutAll("NYC");
+      testPutAll(LON);
+      testPutAll(NYC);
    }
 
    private void testRemove(String site) {
@@ -148,39 +148,39 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
    }
 
    public void testDataGetsReplicated() {
-      cache("LON", 0).put("k_lon", "v_lon");
-      assertNull(cache("NYC", 0).get("k_lon"));
-      assertEquals(cache("LON", 1).get("k_lon"), "v_lon");
-      assertEquals(cache("NYC", "lonBackup", 0).get("k_lon"), "v_lon");
-      assertEquals(cache("NYC", "lonBackup", 1).get("k_lon"), "v_lon");
+      cache(LON, 0).put("k_lon", "v_lon");
+      assertNull(cache(NYC, 0).get("k_lon"));
+      assertEquals(cache(LON, 1).get("k_lon"), "v_lon");
+      assertEquals(cache(NYC, "lonBackup", 0).get("k_lon"), "v_lon");
+      assertEquals(cache(NYC, "lonBackup", 1).get("k_lon"), "v_lon");
 
-      cache("NYC",1).put("k_nyc", "v_nyc");
-      assertEquals(cache("LON", 1).get("k_lon"), "v_lon");
-      assertEquals(cache("LON", "nycBackup", 0).get("k_nyc"), "v_nyc");
-      assertEquals(cache("LON", "nycBackup", 1).get("k_nyc"), "v_nyc");
-      assertNull(cache("LON", 0).get("k_nyc"));
+      cache(NYC,1).put("k_nyc", "v_nyc");
+      assertEquals(cache(LON, 1).get("k_lon"), "v_lon");
+      assertEquals(cache(LON, "nycBackup", 0).get("k_nyc"), "v_nyc");
+      assertEquals(cache(LON, "nycBackup", 1).get("k_nyc"), "v_nyc");
+      assertNull(cache(LON, 0).get("k_nyc"));
 
-      cache("LON", 1).remove("k_lon");
-      assertNull(cache("LON", 1).get("k_lon"));
-      assertNull(cache("NYC", "lonBackup", 0).get("k_lon"));
-      assertNull(cache("NYC", "lonBackup", 1).get("k_lon"));
+      cache(LON, 1).remove("k_lon");
+      assertNull(cache(LON, 1).get("k_lon"));
+      assertNull(cache(NYC, "lonBackup", 0).get("k_lon"));
+      assertNull(cache(NYC, "lonBackup", 1).get("k_lon"));
    }
 
    public void testPutWithLocality() {
-      MagicKey remoteOwnedKey = new MagicKey(cache("LON", 1));
-      cache("LON", 0).put(remoteOwnedKey, "v_LON");
-      assertEquals(cache("NYC", "lonBackup", 0).get(remoteOwnedKey), "v_LON");
-      assertEquals(cache("NYC", "lonBackup", 1).get(remoteOwnedKey), "v_LON");
+      MagicKey remoteOwnedKey = new MagicKey(cache(LON, 1));
+      cache(LON, 0).put(remoteOwnedKey, "v_LON");
+      assertEquals(cache(NYC, "lonBackup", 0).get(remoteOwnedKey), "v_LON");
+      assertEquals(cache(NYC, "lonBackup", 1).get(remoteOwnedKey), "v_LON");
 
-      MagicKey localOwnedKey = new MagicKey(cache("LON", 0));
-      cache("LON", 0).put(localOwnedKey, "v_LON");
-      assertEquals(cache("NYC", "lonBackup", 0).get(remoteOwnedKey), "v_LON");
-      assertEquals(cache("NYC", "lonBackup", 1).get(remoteOwnedKey), "v_LON");
+      MagicKey localOwnedKey = new MagicKey(cache(LON, 0));
+      cache(LON, 0).put(localOwnedKey, "v_LON");
+      assertEquals(cache(NYC, "lonBackup", 0).get(remoteOwnedKey), "v_LON");
+      assertEquals(cache(NYC, "lonBackup", 1).get(remoteOwnedKey), "v_LON");
    }
 
    public void testFunctional() throws Exception {
-      testFunctional("LON");
-      testFunctional("NYC");
+      testFunctional(LON);
+      testFunctional(NYC);
    }
 
    private void testFunctional(String site) throws Exception {

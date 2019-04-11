@@ -23,18 +23,18 @@ public abstract class BaseLocalClusterTxFailureTest extends AbstractTwoSitesTest
    protected void createSites() {
       super.createSites();
       failureInterceptor = new BaseBackupFailureTest.FailureInterceptor();
-      cache("LON", 1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
+      cache(LON, 1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
    }
 
    public void testPrepareFailure() {
       failureInterceptor.enable();
       try {
-         Exceptions.expectException(CacheException.class, RollbackException.class, () -> cache("LON", 0).put("k", "v"));
+         Exceptions.expectException(CacheException.class, RollbackException.class, () -> cache(LON, 0).put("k", "v"));
       } finally {
          failureInterceptor.disable();
       }
-      assertNull(cache("LON",0).get("k"));
-      assertNull(cache("LON",1).get("k"));
-      assertNull(backup("LON").get("k"));
+      assertNull(cache(LON,0).get("k"));
+      assertNull(cache(LON,1).get("k"));
+      assertNull(backup(LON).get("k"));
    }
 }

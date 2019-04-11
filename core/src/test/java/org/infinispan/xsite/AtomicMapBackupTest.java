@@ -21,13 +21,13 @@ public class AtomicMapBackupTest extends AbstractTwoSitesTest {
    }
 
    public void testAtomicMapBackup() {
-      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache("LON", 0), "amKey");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache(LON, 0), "amKey");
       assert map.isEmpty();
       log.trace("Update is here");
       map.put("a", "fancyValue");
       assertEquals("fancyValue", map.get("a"));
 
-      assertEquals("fancyValue", AtomicMapLookup.getAtomicMap(backup("LON"), "amKey").get("a"));
+      assertEquals("fancyValue", AtomicMapLookup.getAtomicMap(backup(LON), "amKey").get("a"));
    }
 
    @Override

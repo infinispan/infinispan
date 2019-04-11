@@ -46,7 +46,7 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
    protected void createSites() {
       super.createSites();
       blockingInterceptor = new BlockingInterceptor();
-      backup("LON").getAdvancedCache().addInterceptor(blockingInterceptor, 1);
+      backup(LON).getAdvancedCache().addInterceptor(blockingInterceptor, 1);
    }
 
    @Override
@@ -75,66 +75,66 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
    }
 
    public void testPut() throws Exception {
-      cache("LON", 0).put("k", "v");
+      cache(LON, 0).put("k", "v");
       blockingInterceptor.invocationReceivedLatch.await(20000, TimeUnit.MILLISECONDS);
-      assertEquals("v", cache("LON", 0).get("k"));
-      assertEquals("v", cache("LON", 1).get("k"));
-      assertNull(backup("LON").get("k"));
+      assertEquals("v", cache(LON, 0).get("k"));
+      assertEquals("v", cache(LON, 1).get("k"));
+      assertNull(backup(LON).get("k"));
       blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals("v", () -> backup("LON").get("k"));
+      eventuallyEquals("v", () -> backup(LON).get("k"));
    }
 
    public void testRemove() throws Exception {
       doPutWithDisabledBlockingInterceptor();
 
-      cache("LON", 1).remove("k");
+      cache(LON, 1).remove("k");
       blockingInterceptor.invocationReceivedLatch.await(20000, TimeUnit.MILLISECONDS);
-      assertNull(cache("LON", 0).get("k"));
-      assertNull(cache("LON", 1).get("k"));
-      assertEquals("v", backup("LON").get("k"));
+      assertNull(cache(LON, 0).get("k"));
+      assertNull(cache(LON, 1).get("k"));
+      assertEquals("v", backup(LON).get("k"));
       blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals(null, () -> backup("LON").get("k"));
+      eventuallyEquals(null, () -> backup(LON).get("k"));
    }
 
    public void testClear() throws Exception {
       doPutWithDisabledBlockingInterceptor();
 
-      cache("LON", 1).clear();
+      cache(LON, 1).clear();
       blockingInterceptor.invocationReceivedLatch.await(20000, TimeUnit.MILLISECONDS);
-      assertNull(cache("LON", 0).get("k"));
-      assertNull(cache("LON", 1).get("k"));
-      assertEquals("v", backup("LON").get("k"));
+      assertNull(cache(LON, 0).get("k"));
+      assertNull(cache(LON, 1).get("k"));
+      assertEquals("v", backup(LON).get("k"));
       blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals(null, () -> backup("LON").get("k"));
+      eventuallyEquals(null, () -> backup(LON).get("k"));
    }
 
    public void testReplace() throws Exception {
       doPutWithDisabledBlockingInterceptor();
 
-      cache("LON", 1).replace("k", "v2");
+      cache(LON, 1).replace("k", "v2");
       blockingInterceptor.invocationReceivedLatch.await(20000, TimeUnit.MILLISECONDS);
-      assertEquals("v2", cache("LON", 0).get("k"));
-      assertEquals("v2", cache("LON", 1).get("k"));
-      assertEquals("v", backup("LON").get("k"));
+      assertEquals("v2", cache(LON, 0).get("k"));
+      assertEquals("v2", cache(LON, 1).get("k"));
+      assertEquals("v", backup(LON).get("k"));
       blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals("v2", () -> backup("LON").get("k"));
+      eventuallyEquals("v2", () -> backup(LON).get("k"));
    }
 
    public void testPutAll() throws Exception {
-      cache("LON", 0).putAll(Collections.singletonMap("k", "v"));
+      cache(LON, 0).putAll(Collections.singletonMap("k", "v"));
       blockingInterceptor.invocationReceivedLatch.await(20000, TimeUnit.MILLISECONDS);
-      assertEquals("v", cache("LON", 0).get("k"));
-      assertEquals("v", cache("LON", 1).get("k"));
-      assertNull(backup("LON").get("k"));
+      assertEquals("v", cache(LON, 0).get("k"));
+      assertEquals("v", cache(LON, 1).get("k"));
+      assertNull(backup(LON).get("k"));
       blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals("v", () -> backup("LON").get("k"));
+      eventuallyEquals("v", () -> backup(LON).get("k"));
    }
 
    private void doPutWithDisabledBlockingInterceptor() {
       blockingInterceptor.isActive = false;
-      cache("LON", 0).put("k", "v");
+      cache(LON, 0).put("k", "v");
 
-      eventuallyEquals("v", () -> backup("LON").get("k"));
+      eventuallyEquals("v", () -> backup(LON).get("k"));
       blockingInterceptor.isActive = true;
    }
 
