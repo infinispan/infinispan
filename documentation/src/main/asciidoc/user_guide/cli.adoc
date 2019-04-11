@@ -6,7 +6,15 @@ The CLI is built out of two elements: a server-side module and the  client comma
 
 Currently the server (and the  client) use the JMX protocol to communicate, but in a future release we  plan to support other communication protocols (in particular our own Hot Rod).
 
-The CLI offers both an interactive and a batch mode. To invoke the client, just run the provided _bin/ispn-cli.[sh|bat]_ script. The following is a list of command-line switches which affect how the CLI can be started:
+The CLI offers both an interactive and a batch mode. To invoke the client, run the
+ifndef::productized[]
+_bin/ispn-cli.[sh|bat]_ script.
+endif::productized[]
+ifdef::productized[]
+_bin/cli.[sh|bat]_ script.
+endif::productized[]
+
+The following is a list of command-line switches which affect how the CLI can be started:
 
 ----
 -c, --connect=URL       connects to a running instance of Infinispan.
