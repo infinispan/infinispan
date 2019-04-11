@@ -1,3 +1,4 @@
+ifndef::productized[]
 [source,xml,options="nowrap",subs=attributes+]
 ----
 <extensions>
@@ -8,3 +9,15 @@
   <!--Other wildfly extensions-->
 </extensions>
 ----
+endif::productized[]
+ifdef::productized[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+<extensions>
+  <extension module="org.infinispan.extension:{infinispanslot}"/>
+  <extension module="org.jgroups.extension:{infinispanslot}"/>
+
+  <!--Other EAP extensions-->
+</extensions>
+----
+endif::productized[]

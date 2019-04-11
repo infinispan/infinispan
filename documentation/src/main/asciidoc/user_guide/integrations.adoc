@@ -418,55 +418,73 @@ Dependencies: org.infinispan.lucene-directory:{infinispanslot}
 The Hibernate Search directory provider for {brandname} is also contained within the {brandname} modules zip. It is not necessary to add an entry to the manifest file since the Hibernate Search module already has an optional dependency to it.
 When choosing the {brandname} module zip to use, start by checking which Hibernate Search is in use, more details below.
 
-====== Usage with Wildfy's internal Hibernate Search modules
+====== Usage with {wildflybrandname} Internal Hibernate Search Modules
 
-The Hibernate Search module present in Wildfly 10.x has slot "5.5", which in turn has an optional dependency to `org.infinispan.hibernate-search.directory-provider:for-hibernatesearch-5.5`.
+The Hibernate Search module present in {wildflybrandname}
+ifndef::productized[]
+10.x
+endif::productized[]
+ifdef::productized[]
+7.2
+endif::productized[]
+has slot "5.5", which in turn has an optional dependency to `org.infinispan.hibernate-search.directory-provider:for-hibernatesearch-5.5`.
 This dependency will be available once the {brandname} modules are link:#modules_installation_section[installed].
-
 
 ====== Usage with other Hibernate Search modules
 
 The module `org.hibernate.search:{infinispanslot}` distributed with {brandname} is to be used together with {brandname} Query only (querying data from caches), and should not be used by Hibernate ORM applications.
-To use a Hibernate Search with a different version that is present in Wildfly, please consult the link:https://docs.jboss.org/hibernate/search/5.6/reference/en-US/html_single/#search-configuration-deploy-on-wildfly[Hibernate Search documentation].
+To use a Hibernate Search with a different version that is present in {wildflybrandname}, please consult the link:https://docs.jboss.org/hibernate/search/5.6/reference/en-US/html_single/#search-configuration-deploy-on-wildfly[Hibernate Search documentation].
 
 Make sure that the chosen Hibernate Search optional slot for `org.infinispan.hibernate-search.directory-provider` matches the one distributed with {brandname}.
 
 ==== Usage
-There are two possible ways for your application to utilize {brandname} within Wildfly, embedded mode and server mode.
+There are two possible ways for your application to utilize {brandname} within {wildflybrandname}, embedded mode and server mode.
 
 ===== Embedded Mode
 All CacheManagers and cache instances are created in your application logic.  The lifecycle of your EmbeddedCacheManager
 is tightly coupled with your application's lifecycle, resulting in any manager instances created by your application being destroyed with your application.
 
 ===== Server Mode
-In server mode, it is possible for cache containers and caches to be created before runtime as part of Wildfly's
+In server mode, it is possible for cache containers and caches to be created before runtime as part of {wildflybrandname}'s
 standalone/domain.xml configuration. This allows cache instances to be shared across multiple applications, with the
 lifecycle of the underlying cache container being independent of the deployed application.
 
 ====== Configuration
-To enable server mode, it is necessary to make the following additions to your wildfly configuration in `standalone/domain.xml`.
-Note, that only steps 1-4 are required for local cache instances:
+To enable server mode, make the following additions to your {wildflybrandname} configuration in `standalone/domain.xml`:
 
 . Add the {brandname} extensions to your `<extensions>` section.
-
++
 include::topics/configuration/wfly_extensions.adoc[]
-
-[start=2]
-. Configure the {brandname} subsystem, along with your required containers and caches, in the server profile which requires {brandname}.
-Note, it's important that the module attribute is defined so that correct {brandname} classes are loaded.
-
++
+. Configure the {brandname} subsystem and your required containers and caches in the server profile that requires {brandname}.
++
+[IMPORTANT]
+====
+Be sure that you define the `module` attribute to load the correct {brandname} classes.
+====
++
 include::topics/configuration/wfly_subsystem.adoc[]
-
-[start=3]
-. Define the Wildfly https://docs.jboss.org/author/display/WFLY10/Interfaces+and+ports[socket-bindings] required by the endpoint and/or JGroup subsystems
-
++
+ifndef::productized[]
+. Define the {wildflybrandname} https://docs.jboss.org/author/display/WFLY10/Interfaces+and+ports[socket-bindings] required by the endpoint and/or JGroup subsystems
+endif::productized[]
+ifdef::productized[]
+. Define the required {wildflybrandname} socket-bindings for JGroup subsystems.
+endif::productized[]
++
+ifndef::productized[]
 . Configure any endpoints that you require via the endpoint subsystem:
-
++
 include::topics/configuration/wfly_endpoints.adoc[]
-
-[start=5]
-. Define JGroups transport, ensuring that you define the model attribute for all protocols specified.
-
+endif::productized[]
++
+. Define the JGroups transport, ensuring that you define the `model` attribute for each protocol.
++
+[NOTE]
+====
+You do not neet to define a JGroups transport for local cache configurations. The JGroups transport is required for clustered cache configurations only.
+====
++
 include::topics/jgroups/wfly_jgroups.adoc[]
 
 ====== Accessing Containers and Caches
@@ -494,7 +512,7 @@ public class ExampleApplication {
 ===== Enable logging
 
 Enabling trace on `org.jboss.modules` can be useful to debug issues like `LinkageError` and `ClassNotFoundException`.
-To enable it at runtime using the Wildfly CLI:
+To enable it at runtime using the {wildflybrandname} CLI:
 
 ----
 bin/jboss-cli.sh -c '/subsystem=logging/logger=org.jboss.modules:add'
