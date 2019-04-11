@@ -33,7 +33,7 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
    public void testPutFailure() {
       failureInterceptor.enable();
       try {
-         cache("LON", 0).put("k", "v");
+         cache(LON, 0).put("k", "v");
          checkFailOnBackupFailure();
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
@@ -43,19 +43,19 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
 
       //in triangle, if an exception is received, the originator doesn't wait for the ack from backup
       //it is possible to check the value before the backup handles the BackupWriteCommand.
-      eventuallyEquals("v", () -> cache("LON", 1).get("k"));
+      eventuallyEquals("v", () -> cache(LON, 1).get("k"));
       assertTrue(failureInterceptor.putFailed);
-      assertNull(backup("LON").get("k"));
+      assertNull(backup(LON).get("k"));
    }
 
    public void testRemoveFailure() {
-      cache("LON", 0).put("k", "v");
-      assertEquals("v", cache("LON", 1).get("k"));
-      assertEquals("v", backup("LON").get("k"));
+      cache(LON, 0).put("k", "v");
+      assertEquals("v", cache(LON, 1).get("k"));
+      assertEquals("v", backup(LON).get("k"));
 
       failureInterceptor.enable();
       try {
-         cache("LON", 0).remove("k");
+         cache(LON, 0).remove("k");
          checkFailOnBackupFailure();
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
@@ -63,22 +63,22 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          failureInterceptor.disable();
       }
 
-      eventuallyEquals(null, () -> cache("LON", 0).get("k"));
-      eventuallyEquals(null, () -> cache("LON", 1).get("k"));
+      eventuallyEquals(null, () -> cache(LON, 0).get("k"));
+      eventuallyEquals(null, () -> cache(LON, 1).get("k"));
 
       assertTrue(failureInterceptor.removeFailed);
-      assertEquals("v", backup("LON").get("k"));
+      assertEquals("v", backup(LON).get("k"));
    }
 
    public void testReplaceFailure() {
       failureInterceptor.disable();
-      cache("LON", 0).put("k", "v");
-      assertEquals("v", cache("LON", 1).get("k"));
-      assertEquals("v", backup("LON").get("k"));
+      cache(LON, 0).put("k", "v");
+      assertEquals("v", cache(LON, 1).get("k"));
+      assertEquals("v", backup(LON).get("k"));
 
       failureInterceptor.enable();
       try {
-         cache("LON", 0).replace("k", "v2");
+         cache(LON, 0).replace("k", "v2");
          checkFailOnBackupFailure();
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
@@ -86,21 +86,21 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          failureInterceptor.disable();
       }
 
-      eventuallyEquals("v2", () -> cache("LON", 0).get("k"));
-      eventuallyEquals("v2", () -> cache("LON", 1).get("k"));
+      eventuallyEquals("v2", () -> cache(LON, 0).get("k"));
+      eventuallyEquals("v2", () -> cache(LON, 1).get("k"));
       //the ReplaceCommand is transformed in a PutKeyValueCommand when it succeeds in the originator site!
       assertTrue(failureInterceptor.putFailed);
-      assertEquals("v", backup("LON").get("k"));
+      assertEquals("v", backup(LON).get("k"));
    }
 
    public void testClearFailure() {
-      cache("LON", 0).put("k1", "v1");
-      cache("LON", 0).put("k2", "v2");
-      cache("LON", 0).put("k3", "v3");
+      cache(LON, 0).put("k1", "v1");
+      cache(LON, 0).put("k2", "v2");
+      cache(LON, 0).put("k3", "v3");
 
       failureInterceptor.enable();
       try {
-         cache("LON", 1).clear();
+         cache(LON, 1).clear();
          checkFailOnBackupFailure();
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
@@ -108,18 +108,18 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          failureInterceptor.disable();
       }
 
-      eventuallyEquals(null, () -> cache("LON", 0).get("k1"));
-      eventuallyEquals(null, () -> cache("LON", 0).get("k2"));
-      eventuallyEquals(null, () -> cache("LON", 0).get("k3"));
+      eventuallyEquals(null, () -> cache(LON, 0).get("k1"));
+      eventuallyEquals(null, () -> cache(LON, 0).get("k2"));
+      eventuallyEquals(null, () -> cache(LON, 0).get("k3"));
 
-      eventuallyEquals(null, () -> cache("LON", 1).get("k1"));
-      eventuallyEquals(null, () -> cache("LON", 1).get("k2"));
-      eventuallyEquals(null, () -> cache("LON", 1).get("k3"));
+      eventuallyEquals(null, () -> cache(LON, 1).get("k1"));
+      eventuallyEquals(null, () -> cache(LON, 1).get("k2"));
+      eventuallyEquals(null, () -> cache(LON, 1).get("k3"));
 
       assertTrue(failureInterceptor.clearFailed);
-      assertEquals("v1", backup("LON").get("k1"));
-      assertEquals("v2", backup("LON").get("k2"));
-      assertEquals("v3", backup("LON").get("k3"));
+      assertEquals("v1", backup(LON).get("k1"));
+      assertEquals("v2", backup(LON).get("k2"));
+      assertEquals("v3", backup(LON).get("k3"));
    }
 
    public void testPutMapFailure() {
@@ -129,7 +129,7 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
       }
       failureInterceptor.enable();
       try {
-         cache("LON", 0).putAll(toAdd);
+         cache(LON, 0).putAll(toAdd);
          checkFailOnBackupFailure();
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
@@ -141,23 +141,22 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
       for (int i = 0; i < 100; i++) {
          final int keyIndex = i;
          // In the past, data was xsite-backed up from origin only after all entries were committed locally.
-         // Now that the xsite-backup runs always on primary owner, the failure on remote node propagates
          // back to the origin and this causes the triangle's collector future to fail with exception.
          // Entries that are not owned locally are not committed then (as the failure comes in distribution interceptor)
          // which is below entry-wrapping, though those entries that could not be xsite-backed up are committed.
          if (lonBackupFailurePolicy != BackupFailurePolicy.FAIL) {
-            eventuallyEquals("v" + keyIndex, () -> cache("LON", keyIndex % 2).get("k" + keyIndex));
+            eventuallyEquals("v" + keyIndex, () -> cache(LON, keyIndex % 2).get("k" + keyIndex));
          }
-         assertNull(backup("LON").get("k" + i));
+         assertNull(backup(LON).get("k" + i));
       }
    }
 
 
    private void checkNonFailOnBackupFailure() {
-      if (!failOnBackupFailure("LON", 0)) throw new AssertionError("Should fail silently!");
+      if (!failOnBackupFailure(LON, 0)) throw new AssertionError("Should fail silently!");
    }
 
    private void checkFailOnBackupFailure() {
-      if (failOnBackupFailure("LON", 0)) throw new AssertionError("Exception expected!");
+      if (failOnBackupFailure(LON, 0)) throw new AssertionError("Exception expected!");
    }
 }

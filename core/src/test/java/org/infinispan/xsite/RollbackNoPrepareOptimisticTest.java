@@ -22,28 +22,28 @@ public class RollbackNoPrepareOptimisticTest extends AbstractTwoSitesTest {
    }
 
    public void testRollbackNoCommit() throws Throwable {
-      String key = key("LON");
-      String val = val("LON");
+      String key = key(LON);
+      String val = val(LON);
 
-      ComponentRegistry cr = backup("LON").getAdvancedCache().getComponentRegistry();
+      ComponentRegistry cr = backup(LON).getAdvancedCache().getComponentRegistry();
       GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
       BackupReceiverRepositoryImpl brr = (BackupReceiverRepositoryImpl) gcr.getComponent(BackupReceiverRepository.class);
-      BackupReceiver backupCacheManager = brr.getBackupReceiver("LON", CacheContainer.DEFAULT_CACHE_NAME);
+      BackupReceiver backupCacheManager = brr.getBackupReceiver(LON, CacheContainer.DEFAULT_CACHE_NAME);
       BackupReceiverWrapper brWrapper = new BackupReceiverWrapper(backupCacheManager);
-      brr.replace("LON", CacheContainer.DEFAULT_CACHE_NAME, brWrapper);
+      brr.replace(LON, CacheContainer.DEFAULT_CACHE_NAME, brWrapper);
 
       assertNull(brWrapper.received);
-      cache("LON", 0).put(key, val);
+      cache(LON, 0).put(key, val);
       assertNotNull(brWrapper.received);
-      assertEquals(backup("LON").get(key), val);
+      assertEquals(backup(LON).get(key), val);
 
       brWrapper.received = null;
 
-      TransactionManager tmLon0 = cache("LON", 0).getAdvancedCache().getTransactionManager();
+      TransactionManager tmLon0 = cache(LON, 0).getAdvancedCache().getTransactionManager();
 
       assertNull(brWrapper.received);
       tmLon0.begin();
-      cache("LON", 0).put(key, val);
+      cache(LON, 0).put(key, val);
       log.trace("Before rollback!");
       tmLon0.rollback();
       assertNull(brWrapper.received);

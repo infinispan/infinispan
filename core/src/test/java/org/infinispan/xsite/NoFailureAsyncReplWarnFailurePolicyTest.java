@@ -20,17 +20,17 @@ public class NoFailureAsyncReplWarnFailurePolicyTest extends BaseSiteUnreachable
    }
 
    public void testNoFailures() {
-      cache("LON", 0).put("k", "v");
-      assertEquals(cache("LON", 0).get("k"), "v");
-      assertEquals(cache("LON", 1).get("k"), "v");
+      cache(LON, 0).put("k", "v");
+      assertEquals(cache(LON, 0).get("k"), "v");
+      assertEquals(cache(LON, 1).get("k"), "v");
 
-      cache("LON", 1).remove("k");
-      assertNull(cache("LON", 0).get("k"));
-      assertNull(cache("LON", 1).get("k"));
+      cache(LON, 1).remove("k");
+      assertNull(cache(LON, 0).get("k"));
+      assertNull(cache(LON, 1).get("k"));
 
-      cache("LON", 0).putAll(Collections.singletonMap("k", "v"));
-      assertEquals(cache("LON", 0).get("k"), "v");
-      assertEquals(cache("LON", 1).get("k"), "v");
+      cache(LON, 0).putAll(Collections.singletonMap("k", "v"));
+      assertEquals(cache(LON, 0).get("k"), "v");
+      assertEquals(cache(LON, 1).get("k"), "v");
    }
 
    protected ConfigurationBuilder getLonActiveConfig() {

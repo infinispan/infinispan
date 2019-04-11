@@ -197,8 +197,8 @@ keyIdentifier returns [KeyData key]
    ;
 
 siteIdentifier returns [SiteData site]
-   : cacheName = STRINGLITERAL '.' siteName = STRINGLITERAL { $site = new SiteData(unquote($cacheName.text), $siteName.text); }
-   | siteName = STRINGLITERAL { $site = new SiteData($siteName.text); }
+   : cacheName = STRINGLITERAL '.' siteName = STRINGLITERAL { $site = new SiteData(unquote($cacheName.text), unquote($siteName.text)); }
+   | siteName = STRINGLITERAL { $site = new SiteData(unquote($siteName.text)); }
    ;
 
 statementOptions returns [List<Option> options]
@@ -765,6 +765,7 @@ UnquotedStringCharacter
    : '\u0000'..'\u0008'
    | '\u000e'..'\u001b'
    | '\u0024'
+   | '\u002d'
    | '\u0030'..'\u0039'
    | '\u0041'..'\u005a'
    | '\u005f'
