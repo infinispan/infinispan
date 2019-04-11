@@ -29,9 +29,10 @@
 // ISPN Attributes
 //
 :brandname: Red Hat Data Grid
+:wildflybrandname: EAP
 :infinispanversion: 9.4.0
-:moduleprefix: ispn
-:infinispanslot: ispn-9.4
+:moduleprefix: jdg
+:infinispanslot: jdg-7.3
 :javadocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/api
 :configdocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/Configuration/
 :wildflydocroot: https://docs.jboss.org/author/display/WFLY11
