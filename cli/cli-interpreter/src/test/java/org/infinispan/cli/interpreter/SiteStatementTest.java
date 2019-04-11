@@ -62,7 +62,7 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
       String nycCache = cache("NYC", 0).getName();
       String nycSessionId = nycInterpreter.createSessionId(nycCache);
 
-      assertInterpreterOutput(lonInterpreter, lonSessionId, "site --status NYC;", "online");
+      assertInterpreterOutput(lonInterpreter, lonSessionId, "site --status \"NYC\";", "online");
 
       assertInterpreterOutput(nycInterpreter, nycSessionId, format("site --status %s.LON;", lonCache), "online");
 
