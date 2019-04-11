@@ -82,7 +82,7 @@ The names of the site (case sensitive) should match the name of a site as define
 The "users" cache backups its data to the "NYC" and "SFO" sites. Even though the "LON" appears as a backup site, it has the "enabled" attribute set to _false_ so it will be ignored . For each site backup, the following configuration attributes can be specified:
 
 
-* _strategy_ - the strategy used for backing up data, either "SYNC" or "ASYNC". Defaults to "ASYNC"
+* _strategy_ - the strategy used for backing up data, either "SYNC" or "ASYNC". Defaults to "ASYNC".
 * _failure-policy_ - Decides what the system would do in case of failure during backup. Possible values are:
 ** _IGNORE_ - allow the local operation/transaction to succeed
 ** _WARN_ - same as IGNORE but also logs a warning message. Default.
@@ -205,7 +205,13 @@ In the case of asynchronous local clusters, the backup data is sent during the c
 If backing up to a site fails for a certain number of times during a time interval, then it is possible to automatically mark that site as offline. When a site is marked as offline the local site won't try to backup data to it anymore. In order to be taken online a system administrator intervention being required.
 
 ==== Configuration
-The taking offline of a site can be configured as follows:
+
+[IMPORTANT]
+====
+You can take sites offline automatically with the `SYNC` backup strategy only. If the backup strategy is `ASYNC` then you must take sites offline manually.
+====
+
+The following configuration provides an example for taking sites offline:
 
 .infinispan.xml
 [source,xml]
