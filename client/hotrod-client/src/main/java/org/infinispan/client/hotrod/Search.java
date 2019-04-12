@@ -24,6 +24,6 @@ public final class Search {
    }
 
    public static <K, V> ContinuousQuery<K, V> getContinuousQuery(RemoteCache<K, V> cache) {
-      return new ContinuousQueryImpl<K, V>(cache);
+      return new ContinuousQueryImpl<>(cache);
    }
 }
