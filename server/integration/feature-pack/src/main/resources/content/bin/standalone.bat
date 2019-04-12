@@ -8,14 +8,18 @@ rem Usage : standalone.bat --debug
 rem         standalone.bat --debug 9797
 
 @if not "%ECHO%" == ""  echo %ECHO%
-@if "%OS%" == "Windows_NT" setlocal
+setlocal
 
 rem By default debug mode is disable.
 set DEBUG_MODE=false
-set DEBUG_PORT=8787
-set USE_JMX_COLLECTORS=false
+set DEBUG_PORT_VAR=8787
 rem Set to all parameters by default
 set "SERVER_OPTS=%*"
+
+
+if NOT "x%DEBUG%" == "x" (
+  set "DEBUG_MODE=%DEBUG%
+)
 
 rem Get the program name before using shift as the command modify the variable ~nx0
 if "%OS%" == "Windows_NT" (
@@ -44,8 +48,6 @@ if "%~1" == "" (
    goto MAIN
 ) else if "%~1" == "--debug" (
    goto READ-DEBUG-PORT
-) else if "%~1" == "--jmx" (
-   goto READ-JMX-CONFIG
 ) else if "%~1" == "-secmgr" (
    set SECMGR=true
 )
@@ -58,19 +60,7 @@ set DEBUG_ARG="%2"
 if not %DEBUG_ARG% == "" (
    if x%DEBUG_ARG:-=%==x%DEBUG_ARG% (
       shift
-      set DEBUG_PORT=%DEBUG_ARG%
-   )
-   shift
-   goto READ-ARGS
-)
-
-:READ-JMX-CONFIG
-set "USE_JMX_CONNECTORS=true"
-set JMX_ARG="%2"
-if not %JMX_ARG% == "" (
-   if x%JMX_ARG:-=%==x%JMX_ARG% (
-      shift
-      set JMX_CONF=%JMX_ARG%
+      set DEBUG_PORT_VAR=%DEBUG_ARG%
    )
    shift
    goto READ-ARGS
@@ -111,29 +101,23 @@ if exist "%STANDALONE_CONF%" (
    echo Config file not found "%STANDALONE_CONF%"
 )
 
+if NOT "x%DEBUG_PORT%" == "x" (
+  set DEBUG_PORT_VAR=%DEBUG_PORT%
+)
+
+if NOT "x%GC_LOG%" == "x" (
+  set "GC_LOG=%GC_LOG%
+)
+
 rem Set debug settings if not already set
 if "%DEBUG_MODE%" == "true" (
    echo "%JAVA_OPTS%" | findstr /I "\-agentlib:jdwp" > nul
   if errorlevel == 1 (
-     set "JAVA_OPTS=%JAVA_OPTS% -agentlib:jdwp=transport=dt_socket,address=%DEBUG_PORT%,server=y,suspend=n"
+     set "JAVA_OPTS=%JAVA_OPTS% -agentlib:jdwp=transport=dt_socket,address=%DEBUG_PORT_VAR%,server=y,suspend=n"
   ) else (
      echo Debug already enabled in JAVA_OPTS, ignoring --debug argument
   )
 )
-
-setlocal EnableDelayedExpansion
-if "x%JMX_CONF%" == "x" (
-   set JMX_CONF="9779:%~p0%prometheus_config.yaml"
-)
-if "%USE_JMX_CONNECTORS%" == "true" (
-   set SERVER_OPTS=!SERVER_OPTS:%JMX_CONF:"=%=!
-   set SERVER_OPTS=!SERVER_OPTS:--jmx=!
-   echo Calling "%DIRNAME%prometheus.bat %JMX_CONF%"
-   call %DIRNAME%prometheus.bat %JMX_CONF%
-)
-setlocal DisableDelayedExpansion
-
-set DIRNAME=
 
 rem Setup JBoss specific properties
 set "JAVA_OPTS=-Dprogram.name=%PROGNAME% %JAVA_OPTS%"
@@ -146,11 +130,17 @@ if "x%JAVA_HOME%" == "x" (
   if not exist "%JAVA_HOME%" (
     echo JAVA_HOME "%JAVA_HOME%" path doesn't exist
     goto END
-  ) else (
-    echo Setting JAVA property to "%JAVA_HOME%\bin\java"
+   ) else (
+     if not exist "%JAVA_HOME%\bin\java.exe" (
+       echo "%JAVA_HOME%\bin\java.exe" does not exist
+       goto END_NO_PAUSE
+     )
+      echo Setting JAVA property to "%JAVA_HOME%\bin\java"
     set "JAVA=%JAVA_HOME%\bin\java"
   )
 )
+
+"%JAVA%" --add-modules=java.se -version >nul 2>&1 && (set MODULAR_JDK=true) || (set MODULAR_JDK=false)
 
 if not "%PRESERVE_JAVA_OPTS%" == "true" (
   rem Add -client to the JVM options, if supported (32 bit VM), and not overriden
@@ -162,29 +152,6 @@ if not "%PRESERVE_JAVA_OPTS%" == "true" (
     )
   )
 )
-
-rem EAP6-121 feature disabled
-rem if not "%PRESERVE_JAVA_OPTS%" == "true" (
-  rem Add rotating GC logs, if supported, and not already defined
-  rem echo "%JAVA_OPTS%" | findstr /I "\-verbose:gc" > nul
-  rem if errorlevel == 1 (
-    rem Back up any prior logs
-    rem move /y "%JBOSS_LOG_DIR%\gc.log.0" "%JBOSS_LOG_DIR%\backupgc.log.0" > nul 2>&1
-    rem move /y "%JBOSS_LOG_DIR%\gc.log.1" "%JBOSS_LOG_DIR%\backupgc.log.1" > nul 2>&1
-    rem move /y "%JBOSS_LOG_DIR%\gc.log.2" "%JBOSS_LOG_DIR%\backupgc.log.2" > nul 2>&1
-    rem move /y "%JBOSS_LOG_DIR%\gc.log.3" "%JBOSS_LOG_DIR%\backupgc.log.3" > nul 2>&1
-    rem move /y "%JBOSS_LOG_DIR%\gc.log.4" "%JBOSS_LOG_DIR%\backupgc.log.4" > nul 2>&1
-    rem move /y "%JBOSS_LOG_DIR%\gc.log.*.current" "%JBOSS_LOG_DIR%\backupgc.log.current" > nul 2>&1
-    rem "%JAVA%" -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -Xloggc:%XLOGGC% -XX:-TraceClassUnloading -version > nul 2>&1
-    rem if not errorlevel == 1 (
-      rem if not exist "%JBOSS_LOG_DIR" > nul 2>&1 (
-        rem mkdir "%JBOSS_LOG_DIR%"
-      rem )
-     rem set XLOGGC="%JBOSS_LOG_DIR%\gc.log"
-     rem set "JAVA_OPTS=-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -XX:-TraceClassUnloading %JAVA_OPTS%"
-    rem )
-  rem )
-rem )
 
 rem Find jboss-modules.jar, or we can't continue
 if exist "%JBOSS_HOME%\jboss-modules.jar" (
@@ -252,6 +219,39 @@ if "x%JBOSS_CONFIG_DIR%" == "x" (
   set  "JBOSS_CONFIG_DIR=%JBOSS_BASE_DIR%\configuration"
 )
 
+if not "%PRESERVE_JAVA_OPTS%" == "true" (
+    if "%GC_LOG%" == "true" (
+      rem Add rotating GC logs, if supported, and not already defined
+      echo "%JAVA_OPTS%" | findstr /I "\-verbose:gc" > nul
+      if errorlevel == 1 (
+        rem Back up any prior logs
+        move /y "%JBOSS_LOG_DIR%\gc.log.1" "%JBOSS_LOG_DIR%\backupgc.log.1" > nul 2>&1
+        move /y "%JBOSS_LOG_DIR%\gc.log.0" "%JBOSS_LOG_DIR%\backupgc.log.0" > nul 2>&1
+        move /y "%JBOSS_LOG_DIR%\gc.log.2" "%JBOSS_LOG_DIR%\backupgc.log.2" > nul 2>&1
+        move /y "%JBOSS_LOG_DIR%\gc.log.3" "%JBOSS_LOG_DIR%\backupgc.log.3" > nul 2>&1
+        move /y "%JBOSS_LOG_DIR%\gc.log.4" "%JBOSS_LOG_DIR%\backupgc.log.4" > nul 2>&1
+        move /y "%JBOSS_LOG_DIR%\gc.log.*.current" "%JBOSS_LOG_DIR%\backupgc.log.current" > nul 2>&1
+
+        "%JAVA%" -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -Xloggc:"%JBOSS_LOG_DIR%\gc.log" -XX:-TraceClassUnloading -version > nul 2>&1
+        if not errorlevel == 1 (
+          if not exist "%JBOSS_LOG_DIR" > nul 2>&1 (
+            mkdir "%JBOSS_LOG_DIR%"
+          )
+		set JAVA_OPTS=%JAVA_OPTS% -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -Xloggc:"%JBOSS_LOG_DIR%\gc.log" -XX:GCLogFileSize=3M -XX:-TraceClassUnloading
+        )
+       )
+    )
+
+    rem set default modular jvm parameters
+    setlocal EnableDelayedExpansion
+    call "!DIRNAME!common.bat" :setDefaultModularJvmOptions "!JAVA_OPTS!"
+    set "JAVA_OPTS=!JAVA_OPTS! !DEFAULT_MODULAR_JVM_OPTIONS!"
+    setlocal DisableDelayedExpansion
+)
+
+
+
+
 rem Set the module options
 set "MODULE_OPTS="
 if "%SECMGR%" == "true" (
@@ -272,29 +272,19 @@ echo ===========================================================================
 echo.
 
 :RESTART
-rem if x%XLOGGC% == x (
   "%JAVA%" %JAVA_OPTS% ^
    "-Dorg.jboss.boot.log.file=%JBOSS_LOG_DIR%\server.log" ^
    "-Dlogging.configuration=file:%JBOSS_CONFIG_DIR%/logging.properties" ^
       -jar "%JBOSS_HOME%\jboss-modules.jar" ^
       %MODULE_OPTS% ^
       -mp "%JBOSS_MODULEPATH%" ^
-       org.jboss.as.standalone ^
+      org.jboss.as.standalone ^
       "-Djboss.home.dir=%JBOSS_HOME%" ^
-       %SERVER_OPTS%
-rem ) else (
-  rem "%JAVA%" -Xloggc:%XLOGGC% %JAVA_OPTS% ^
-   rem "-Dorg.jboss.boot.log.file=%JBOSS_LOG_DIR%\server.log" ^
-   rem "-Dlogging.configuration=file:%JBOSS_CONFIG_DIR%/logging.properties" ^
-      rem -jar "%JBOSS_HOME%\jboss-modules.jar" ^
-      rem %MODULE_OPTS% ^
-      rem -mp "%JBOSS_MODULEPATH%" ^
-      rem org.jboss.as.standalone ^
-      rem "-Djboss.home.dir=%JBOSS_HOME%" ^
-      rem %SERVER_OPTS%
-rem )
+      %SERVER_OPTS%
 
-if ERRORLEVEL 10 goto RESTART
+if %errorlevel% equ 10 (
+	goto RESTART
+)
 
 :END
 if "x%NOPAUSE%" == "x" pause
