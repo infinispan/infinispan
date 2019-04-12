@@ -46,7 +46,7 @@ rem # options that are always passed by run.bat.
 rem #
 
 rem # JVM memory allocation pool parameters - modify as appropriate.
-set "JAVA_OPTS=-Xms64M -Xmx512M"
+set "JAVA_OPTS=-Xms64M -Xmx512M -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m"
 
 rem # Prefer IPv4
 set "JAVA_OPTS=%JAVA_OPTS% -Djava.net.preferIPv4Stack=true"
@@ -64,7 +64,18 @@ rem set "JAVA_OPTS=%JAVA_OPTS% -agentlib:jdwp=transport=dt_shmem,address=jboss,s
 rem # Use JBoss Modules lockless mode
 rem set "JAVA_OPTS=%JAVA_OPTS% -Djboss.modules.lockless=true"
 
+rem # Uncomment to enable the experimental JDK 11 support for ByteBuddy
+rem # ByteBuddy is the default bytecode provider of Hibernate ORM
+rem set "JAVA_OPTS=%JAVA_OPTS% -Dnet.bytebuddy.experimental=true"
+
+rem # Uncomment to run server in debug mode
+rem set "DEBUG_MODE=true"
+rem set "DEBUG_PORT=8787"
+
 rem # Uncomment this to run with a security manager enabled
 rem set "SECMGR=true"
+
+rem # Uncomment this out to control garbage collection logging
+rem set "GC_LOG=true"
 
 :JAVA_OPTS_SET
