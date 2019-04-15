@@ -13,10 +13,10 @@ The {brandname} Spring Boot starter gives you a convenient way to get started wi
 
 ==== Spring Boot Starter Versions
 
-{brandname} supports Spring Boot 1.5.x and 2.0. For Spring Boot 1.5.x, use the Spring 4 dependencies. For Spring Boot 2.0, use the Spring 5 dependencies.
+{brandname} supports Spring Boot 1.5.x and 2.x. For Spring Boot 1.5.x, use the Spring 4 dependencies. For Spring Boot 2.x, use the Spring 5 dependencies.
 
 * Spring Boot 1.5.x: Replace `${version.infinispan.starter}` with {sb_starter}
-* Spring Boot 2.0: Replace `${version.infinispan.starter}` with {sb2_starter}
+* Spring Boot 2.x: Replace `${version.infinispan.starter}` with {sb2_starter}
 
 ==== Setting Up Your Project
 
@@ -279,7 +279,7 @@ infinispan.remote.maxRetries = # Sets the maximum number of attempts to connect 
 
 [NOTE]
 ====
-{brandname} supports the Actuator with Spring Boot 2.0 only.
+{brandname} supports the Actuator with Spring Boot 2.x only.
 ====
 
 To use the Actuator, add the following to your `pom.xml` file:
