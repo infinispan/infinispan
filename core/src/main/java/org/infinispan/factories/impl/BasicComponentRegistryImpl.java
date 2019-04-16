@@ -132,26 +132,38 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          return;
       }
 
+      boolean success = false;
+      try {
+         doInstantiateWrapper(wrapper, factory, name);
+         success = true;
+      } finally {
+         if (!success) {
+            commitWrapperStateChange(wrapper, WrapperState.INSTANTIATING, WrapperState.FAILED);
+         }
+      }
+   }
+
+   private void doInstantiateWrapper(ComponentWrapper wrapper, ComponentFactory factory, String name) {
       Object instance;
       try {
          instance = factory.construct(name);
       } catch (Throwable t) {
-         commitWrapperStateChange(wrapper, WrapperState.INSTANTIATING, WrapperState.FAILED);
          throw new CacheConfigurationException(
             "Failed to construct component " + name + ", path " + getCurrentComponentPath(), t);
       }
+
       if (instance instanceof ComponentAlias) {
          // Create the target component and point this wrapper to it
          ComponentAlias alias = (ComponentAlias) instance;
          commitWrapperAliasChange(wrapper, alias, null, WrapperState.INSTANTIATING, WrapperState.INSTANTIATED);
-         return;
+      } else {
+         ComponentMetadata metadata = getMetadataForComponent(instance);
+         if (metadata != null && metadata.getScope() != null && metadata.getScope() != scope) {
+            throw new CacheConfigurationException(
+               "Component " + wrapper.name + " has scope " + metadata.getScope() + " but its factory is " + scope);
+         }
+         commitWrapperInstanceChange(wrapper, instance, metadata, WrapperState.INSTANTIATING, WrapperState.INSTANTIATED);
       }
-      ComponentMetadata metadata = getMetadataForComponent(instance);
-      if (metadata != null && metadata.getScope() != null && metadata.getScope() != scope) {
-         throw new CacheConfigurationException(
-            "Component " + wrapper.name + " has scope " + metadata.getScope() + " but its factory is " + scope);
-      }
-      commitWrapperInstanceChange(wrapper, instance, metadata, WrapperState.INSTANTIATING, WrapperState.INSTANTIATED);
    }
 
    void wireWrapper(ComponentWrapper wrapper) {
@@ -161,6 +173,18 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          return;
       }
 
+      boolean success = false;
+      try {
+         doWireWrapper(wrapper);
+         success = true;
+      } finally {
+         if (!success) {
+            commitWrapperStateChange(wrapper, WrapperState.WIRING, WrapperState.FAILED);
+         }
+      }
+   }
+
+   private void doWireWrapper(ComponentWrapper wrapper) {
       if (wrapper.instance instanceof ComponentAlias) {
          ComponentAlias alias = (ComponentAlias) wrapper.instance;
          String aliasTargetName = alias.getComponentName();
@@ -172,12 +196,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          targetRef.wired();
          commitWrapperAliasChange(wrapper, alias, targetRef, WrapperState.WIRING, WrapperState.WIRED);
       } else {
-         try {
-            performInjection(wrapper.instance, wrapper.metadata, false);
-         } catch (Throwable t) {
-            commitWrapperStateChange(wrapper, WrapperState.WIRING, WrapperState.FAILED);
-            throw t;
-         }
+         performInjection(wrapper.instance, wrapper.metadata, false);
 
          WrapperState wiredState = wrapper.metadata != null ? WrapperState.WIRED : WrapperState.STARTED;
          commitWrapperStateChange(wrapper, WrapperState.WIRING, wiredState);
@@ -499,6 +518,18 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          return;
       }
 
+      boolean success = false;
+      try {
+         doStartWrapper(wrapper);
+         success = true;
+      } finally {
+         if (!success) {
+            commitWrapperStateChange(wrapper, WrapperState.INSTANTIATING, WrapperState.FAILED);
+         }
+      }
+   }
+
+   private void doStartWrapper(ComponentWrapper wrapper) {
       if (wrapper.aliasTarget != null) {
          wrapper.aliasTarget.running();
          commitWrapperStateChange(wrapper, WrapperState.STARTING, WrapperState.STARTED);
@@ -506,7 +537,6 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       }
 
       if (wrapper.metadata == null) {
-         commitWrapperStateChange(wrapper, WrapperState.STARTING, WrapperState.FAILED);
          throw new IllegalStateException("Components without metadata should go directly to RUNNING state");
       }
 
@@ -531,9 +561,6 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          }
 
          commitWrapperStateChange(wrapper, WrapperState.STARTING, WrapperState.STARTED);
-      } catch (Throwable t) {
-         commitWrapperStateChange(wrapper, WrapperState.STARTING, WrapperState.FAILED);
-         throw t;
       } finally {
          // Try to stop the component even if it failed, otherwise each component would have to catch exceptions
          logStartedComponent(wrapper);
@@ -587,12 +614,14 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
           && !prepareWrapperChange(wrapper, WrapperState.FAILED, WrapperState.STOPPING))
          return;
 
-      performStop(wrapper);
-
-      commitWrapperStateChange(wrapper, WrapperState.STOPPING, WrapperState.STOPPED);
+      try {
+         doStopWrapper(wrapper);
+      } finally {
+         commitWrapperStateChange(wrapper, WrapperState.STOPPING, WrapperState.STOPPED);
+      }
    }
 
-   private void performStop(ComponentWrapper wrapper) {
+   private void doStopWrapper(ComponentWrapper wrapper) {
       if (!wrapper.manageLifecycle || wrapper.metadata == null)
          return;
 
@@ -600,8 +629,8 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          for (ComponentMetadata.PrioritizedMethodMetadata method : wrapper.metadata.getStopMethods()) {
             ReflectionUtil.invokeAccessibly(wrapper.instance, method.getMethod(), null);
          }
-      } catch (Exception e) {
-         log.error("Error stopping component " + wrapper.name, e);
+      } catch (Throwable t) {
+         log.error("Error stopping component " + wrapper.name, t);
       }
    }
 
