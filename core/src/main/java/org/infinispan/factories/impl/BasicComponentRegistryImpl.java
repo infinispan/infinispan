@@ -524,7 +524,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          success = true;
       } finally {
          if (!success) {
-            commitWrapperStateChange(wrapper, WrapperState.INSTANTIATING, WrapperState.FAILED);
+            commitWrapperStateChange(wrapper, WrapperState.STARTING, WrapperState.FAILED);
          }
       }
    }
