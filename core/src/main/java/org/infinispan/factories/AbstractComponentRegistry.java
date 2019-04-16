@@ -382,6 +382,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       } finally {
          synchronized (this) {
             state = ComponentStatus.TERMINATED;
+            notifyAll();
          }
       }
    }
