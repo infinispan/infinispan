@@ -425,12 +425,12 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      return computeIfAbsent(key, mappingFunction, lifespan, lifespanUnit);
+      return cache.computeIfAbsent(key, mappingFunction, lifespan, lifespanUnit);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return computeIfAbsent(key, mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return cache.computeIfAbsent(key, mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
