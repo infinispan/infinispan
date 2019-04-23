@@ -68,6 +68,8 @@ public class ThreadLeakChecker {
                       "|Reference Reaper" +
                       // jboss-remoting
                       "|remoting-jmx client" +
+                      // wildfly-controller-client
+                      "|management-client-thread" +
                       // IBM JRE specific
                       "|ClassCache Reaper" +
                       ").*");
