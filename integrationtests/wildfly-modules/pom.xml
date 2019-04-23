@@ -134,13 +134,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query</artifactId>
-          <classifier>tests</classifier>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>org.infinispan.server</groupId>
          <artifactId>infinispan-server-infinispan</artifactId>
          <scope>test</scope>
@@ -149,6 +142,13 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-feature-pack-wf-modules</artifactId>
+         <type>zip</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.server</groupId>
+         <artifactId>infinispan-server-build</artifactId>
          <type>zip</type>
          <scope>test</scope>
       </dependency>
