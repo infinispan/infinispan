@@ -14,8 +14,8 @@
    <description>Integration tests - Wildfly Module Integration Tests</description>
 
    <properties>
-      <ispnserver.project.dir>${basedir}/../../server/integration</ispnserver.project.dir>
-      <server.build.dist>${ispnserver.project.dir}/build/target/server-distribution-thin/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
+      <ispnserver.project.dir>${basedir}/../../server/integration/build</ispnserver.project.dir>
+      <server.build.dist>${ispnserver.project.dir}/target/server-distribution-thin/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
       <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
       <resources.dir>${basedir}/src/test/resources</resources.dir>
       <serverMemoryJvmArgs>-Xmx300m ${testjvm.commonArgs}</serverMemoryJvmArgs>
@@ -128,13 +128,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query</artifactId>
-          <classifier>tests</classifier>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>org.infinispan.server</groupId>
          <artifactId>infinispan-server-infinispan</artifactId>
          <scope>test</scope>
@@ -143,6 +136,13 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-feature-pack-wf-modules</artifactId>
+         <type>zip</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.server</groupId>
+         <artifactId>infinispan-server-build</artifactId>
          <type>zip</type>
          <scope>test</scope>
       </dependency>
