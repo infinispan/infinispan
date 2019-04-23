@@ -2,9 +2,9 @@
 
 <server xmlns="urn:jboss:domain:8.0">
     <extensions>
-        <extension module="org.infinispan.extension:ispn-${infinispan.core.schema.version}"/>
-        <extension module="org.infinispan.server.endpoint:ispn-${infinispan.core.schema.version}"/>
-        <extension module="org.jgroups.extension:ispn-${infinispan.core.schema.version}"/>
+        <extension module="org.infinispan.extension:${infinispan.module.slot}"/>
+        <extension module="org.infinispan.server.endpoint:${infinispan.module.slot}"/>
+        <extension module="org.jgroups.extension:${infinispan.module.slot}"/>
 
         <extension module="org.jboss.as.clustering.infinispan"/>
         <extension module="org.jboss.as.clustering.jgroups"/>
@@ -336,24 +336,24 @@
             </channels>
             <stacks default="${jboss.default.jgroups.stack:udp}">
                 <stack name="udp">
-                    <transport type="UDP" socket-binding="jgroups-udp" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="PING" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="MERGE3" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="FD_ALL" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="VERIFY_SUSPECT" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="pbcast.NAKACK2" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="UNICAST3" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="pbcast.STABLE" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="pbcast.GMS" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="UFC" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="MFC" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
-                    <protocol type="FRAG2" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <transport type="UDP" socket-binding="jgroups-udp" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="PING" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="MERGE3" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="FD_ALL" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="VERIFY_SUSPECT" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="pbcast.NAKACK2" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="UNICAST3" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="pbcast.STABLE" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="pbcast.GMS" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="UFC" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="MFC" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="FRAG2" module="org.jgroups:${infinispan.module.slot}"/>
                 </stack>
             </stacks>
         </subsystem>
         <subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
-            <cache-container module="org.infinispan.extension:ispn-${infinispan.core.schema.version}" name="infinispan_container" default-cache="default">
+            <cache-container module="org.infinispan.extension:${infinispan.module.slot}" name="infinispan_container" default-cache="default">
                 <transport initial-cluster-size="2"/>
                 <global-state/>
                 <distributed-cache name="default"/>
