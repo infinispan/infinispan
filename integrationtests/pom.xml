@@ -47,7 +47,7 @@
                 <!--
                   java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
                     core externalizers for JDK types
-                  java.nio, jdk.internal.ref, sun.nio.ch: Netty, server/hotrod
+                  java.nio, jdk.internal.ref, jdk.internal.misc, sun.nio.ch: Netty, server/hotrod
                   com.sun.security.sasl: CRAM-MD5 mechanism, server/hotrod
                   java.text, java.awt.font: XStream, server/rest
                   java.security: Wildfly, server/integration/*
@@ -63,6 +63,7 @@
                     --add-opens=java.base/java.time=ALL-UNNAMED
                     --add-opens=java.base/java.nio=ALL-UNNAMED
                     --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
+                    --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
                     --add-exports=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
                     --add-opens=java.base/java.text=ALL-UNNAMED
                     --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
