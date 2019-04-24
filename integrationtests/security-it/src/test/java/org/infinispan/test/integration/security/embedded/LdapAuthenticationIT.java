@@ -9,6 +9,7 @@ import javax.naming.Context;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
 
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -120,6 +121,8 @@ public class LdapAuthenticationIT extends AbstractAuthentication {
 
       @Override
       public void tearDown(ManagementClient managementClient, String s) throws Exception {
+         // LdapServer creates an ExecutorFilter with an "unmanaged" executor and doesn't stop the executor itself
+         ThreadLeakChecker.ignoreThreadsContaining("thread-.*pool-");
          ldapServer.stop();
       }
    }
