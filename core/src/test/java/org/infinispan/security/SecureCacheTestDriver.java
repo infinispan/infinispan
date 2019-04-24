@@ -826,6 +826,16 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfAbsent_Object_SerializableFunction_long_TimeUnit(SecureCache<String, String> cache) {
+      cache.computeIfAbsent("b", k -> "no", 10, TimeUnit.SECONDS, 10, TimeUnit.SECONDS);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfAbsent_Object_SerializableFunction_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
+      cache.computeIfAbsent("b", k -> "no", 10, TimeUnit.SECONDS, 10, TimeUnit.SECONDS);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
    public void testMerge_Object_Object_SerializableBiFunction(SecureCache<String, String> cache) {
       cache.merge("a", "b", (k, v) -> "no");
    }
