@@ -473,4 +473,28 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
       return merge(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction);
    }
 
+   /**
+    * Overloaded {@link Cache#computeIfAbsent(Object, Function, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    * @param key, the key to be computed
+    * @param mappingFunction, mapping function to be appliyed to the key
+    * @return computed value or null if nothing is computed or computation value is null
+    */
+   default V computeIfAbsent(K key,
+                             SerializableFunction<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit);
+   }
+
+   /**
+    * Overloaded {@link Cache#computeIfAbsent(Object, Function, long, TimeUnit, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    * @param key, the key to be computed
+    * @param mappingFunction, mapping function to be appliyed to the key
+    * @return computed value or null if nothing is computed or computation value is null
+    */
+   default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
 }
