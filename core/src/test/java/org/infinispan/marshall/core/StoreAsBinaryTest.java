@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.EncoderCache;
@@ -497,6 +498,15 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       anotherObj.anObjectWithCustomReadObjectMethod = obj;
       cache1.put("cd-key", anotherObj);
       assertEquals(anotherObj, cache2.get("cd-key"));
+   }
+
+   public void testComputeIfAbsentMethods() {
+      Cache<Object, Object> cache = cache(0, "replSync");
+      cache.computeIfAbsent("1", k -> k + "1", -1, TimeUnit.NANOSECONDS);
+      assertEquals(1, cache.size());
+
+      cache.computeIfAbsent("2", k -> k + "2", -1, TimeUnit.NANOSECONDS, -1, TimeUnit.NANOSECONDS);
+      assertEquals(2, cache.size());
    }
 
    /**
