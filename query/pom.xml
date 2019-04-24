@@ -184,7 +184,6 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Djdk.attach.allowAttachSelf=true</argLine>
-               <disableXmlReport>false</disableXmlReport>
             </configuration>
          </plugin>
          <plugin>
