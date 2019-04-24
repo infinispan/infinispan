@@ -124,7 +124,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             if (trace) log.tracef("Topology changed, retrying command: %s", th);
          } else {
             Collection<?> affectedKeys = extractWrittenKeys(ctx, command);
-            log.executionError(command.getClass().getSimpleName(), toStr(affectedKeys), th);
+            log.executionError(command.getClass().getSimpleName(), getCacheNamePrefix(), toStr(affectedKeys), th);
          }
          if (ctx.isInTxScope() && ctx.isOriginLocal()) {
             if (trace) log.trace("Transaction marked for rollback as exception was received.");
