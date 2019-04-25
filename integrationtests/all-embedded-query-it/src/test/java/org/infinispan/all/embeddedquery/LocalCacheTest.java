@@ -21,8 +21,10 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.filter.FullTextFilter;
+import org.infinispan.Cache;
 import org.infinispan.all.embeddedquery.testdomain.Person;
 import org.infinispan.all.embeddedquery.testdomain.StaticTestingErrorHandler;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
@@ -37,6 +39,8 @@ import org.junit.Test;
  * @author Jiri Holusa (jholusa@redhat.com)
  */
 public class LocalCacheTest extends AbstractQueryTest {
+   protected EmbeddedCacheManager cacheManager;
+   protected Cache<Object, Object> cache;
 
    private Person person1;
    private Person person2;
@@ -48,12 +52,15 @@ public class LocalCacheTest extends AbstractQueryTest {
 
    @Before
    public void init() throws Exception {
-      cache = createCacheManager().getCache();
+      cacheManager = createCacheManager();
+      cache = cacheManager.getCache();
    }
 
    @After
    public void after() {
-      cache.clear();
+      if (cacheManager != null) {
+         cacheManager.stop();
+      }
    }
 
    @Test

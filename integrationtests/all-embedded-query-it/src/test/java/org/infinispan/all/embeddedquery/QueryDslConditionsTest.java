@@ -51,6 +51,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.transaction.TransactionMode;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -65,6 +66,9 @@ import org.junit.Test;
 public class QueryDslConditionsTest extends AbstractQueryTest {
 
    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
+   private static EmbeddedCacheManager cacheManager;
+   private static Cache<Object, Object> cache;
 
    private static Date makeDate(String dateStr) throws ParseException {
       DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -106,7 +110,8 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
    @BeforeClass
    public static void populateCache() throws Exception {
-      cache = createCacheManager().getCache();
+      cacheManager = createCacheManager();
+      cache = cacheManager.getCache();
 
       // create the test objects
       User user1 = getModelFactory().makeUser();
@@ -261,6 +266,13 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
       getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));
       getCacheForWrite().put("notIndexed2", new NotIndexed("xyz"));
+   }
+
+   @AfterClass
+   public static void tearDown() {
+      if (cacheManager != null) {
+         cacheManager.stop();
+      }
    }
 
    @Test
