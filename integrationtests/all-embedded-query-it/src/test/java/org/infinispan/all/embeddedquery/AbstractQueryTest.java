@@ -33,8 +33,6 @@ import org.infinispan.transaction.TransactionMode;
  */
 public abstract class AbstractQueryTest {
 
-   protected static Cache<Object, Object> cache;
-
    protected static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer();
 
    protected static EmbeddedCacheManager createCacheManager() throws Exception {

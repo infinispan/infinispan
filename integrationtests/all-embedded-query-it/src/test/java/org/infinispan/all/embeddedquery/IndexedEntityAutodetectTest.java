@@ -7,6 +7,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.transaction.TransactionMode;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -18,7 +19,6 @@ import org.junit.Test;
  * @since 8.2
  */
 public class IndexedEntityAutodetectTest extends LocalCacheTest {
-
    protected static EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcfg = new GlobalConfigurationBuilder();
 
@@ -39,7 +39,15 @@ public class IndexedEntityAutodetectTest extends LocalCacheTest {
 
    @Before
    public void init() throws Exception {
-      cache = createCacheManager().getCache();
+      cacheManager = createCacheManager();
+      cache = cacheManager.getCache();
+   }
+
+   @After
+   public void tearDown() {
+      if (cacheManager != null) {
+         cacheManager.stop();
+      }
    }
 
    @Override
