@@ -15,6 +15,7 @@ import org.infinispan.counter.api.SyncStrongCounter;
 import org.infinispan.counter.api.SyncWeakCounter;
 import org.infinispan.server.test.category.HotRodClustered;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -33,12 +34,19 @@ public class HotRodCounterIT {
    @InfinispanResource("container1")
    RemoteInfinispanServer server1;
 
-   private RemoteCacheManager remoteCacheManager;
+   private static RemoteCacheManager remoteCacheManager;
 
    @Before
    public void initialize() {
       if (remoteCacheManager == null) {
          remoteCacheManager = new RemoteCacheManager(createRemoteCacheManagerConfiguration(), true);
+      }
+   }
+
+   @AfterClass
+   public static void tearDown() {
+      if (remoteCacheManager != null) {
+         remoteCacheManager.stop();
       }
    }
 
