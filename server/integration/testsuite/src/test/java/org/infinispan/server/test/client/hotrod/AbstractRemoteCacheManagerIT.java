@@ -34,6 +34,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.junit.After;
 import org.junit.Test;
 
 import io.netty.channel.Channel;
@@ -58,7 +59,22 @@ public abstract class AbstractRemoteCacheManagerIT {
 
     private static final Log log = LogFactory.getLog(AbstractRemoteCacheManagerIT.class);
 
+    private RemoteCacheManager rcm;
+    private RemoteCacheManager rcm2;
+
     protected abstract List<RemoteInfinispanServer> getServers();
+
+    @After
+    public void tearDown() {
+       if (rcm != null) {
+          rcm.stop();
+          rcm = null;
+       }
+       if (rcm2 != null) {
+          rcm2.stop();
+          rcm2 = null;
+       }
+    }
 
     // creates a configuration with the same values as the hotrod-client.properties files, in ISPN 6.X.Y hotrod-client.properties file will be dropped
     private ConfigurationBuilder createRemoteCacheManagerConfigurationBuilder() {
@@ -86,8 +102,8 @@ public abstract class AbstractRemoteCacheManagerIT {
         Configuration conf = createRemoteCacheManagerConfigurationBuilder().build();
         // use the properties file hotrod-client.properties on classpath
         // this properties file contains the test properties with server_list set to ${node0.address}:11222;${node1.address}:11222
-        RemoteCacheManager rcm = new RemoteCacheManager();
-        RemoteCacheManager rcm2 = new RemoteCacheManager(false);
+       rcm = new RemoteCacheManager();
+       rcm2 = new RemoteCacheManager(false);
 
         assertTrue(rcm.isStarted());
         assertFalse(rcm2.isStarted());
@@ -99,8 +115,8 @@ public abstract class AbstractRemoteCacheManagerIT {
     @Test
     public void testConfigurationConstructors() throws Exception {
         Configuration conf = createRemoteCacheManagerConfigurationBuilder().build();
-        RemoteCacheManager rcm = new RemoteCacheManager(conf);
-        RemoteCacheManager rcm2 = new RemoteCacheManager(conf, false);
+       rcm = new RemoteCacheManager(conf);
+       rcm2 = new RemoteCacheManager(conf, false);
         assertTrue(rcm.isStarted());
         assertFalse(rcm2.isStarted());
         RemoteCache rc = rcm.getCache(testCache);
@@ -111,7 +127,7 @@ public abstract class AbstractRemoteCacheManagerIT {
     public void testEmptyConfiguration() throws Exception {
         ConfigurationBuilder confBuilder = new ConfigurationBuilder();
         addServers(confBuilder);
-        RemoteCacheManager rcm = new RemoteCacheManager(confBuilder.build());
+       rcm = new RemoteCacheManager(confBuilder.build());
         RemoteCache rc = rcm.getCache(testCache);
 
         ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -141,7 +157,7 @@ public abstract class AbstractRemoteCacheManagerIT {
     public void testStartStop() {
         Configuration cfg = createRemoteCacheManagerConfigurationBuilder().build();
 
-        RemoteCacheManager rcm = new RemoteCacheManager(cfg, false);
+       rcm = new RemoteCacheManager(cfg, false);
         // check initial status
         assertTrue("RemoteCacheManager should not be started initially", !rcm.isStarted());
         // check start status
@@ -157,7 +173,7 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         // When get named cache which doesn't exists it is created new with default settings
         // but it is not able to get some stats because it is not configured properly
-        RemoteCacheManager rcm = new RemoteCacheManager(createRemoteCacheManagerConfigurationBuilder().build());
+       rcm = new RemoteCacheManager(createRemoteCacheManagerConfigurationBuilder().build());
         RemoteCache rc1 = rcm.getCache("nonExistentCache");
 
         try {
@@ -205,7 +221,7 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         Configuration cfg = createRemoteCacheManagerConfigurationBuilder().build();
 
-        RemoteCacheManager rcm = new RemoteCacheManager(cfg);
+       rcm = new RemoteCacheManager(cfg);
         RemoteCache rc = rcm.getCache(testCache);
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
 
@@ -271,7 +287,7 @@ public abstract class AbstractRemoteCacheManagerIT {
                 .balancingStrategy("org.infinispan.server.test.client.hotrod.Node0OnlyBalancingStrategy")
                 .build();
 
-        RemoteCacheManager rcm = new RemoteCacheManager(cfg);
+       rcm = new RemoteCacheManager(cfg);
         RemoteCache rc = rcm.getCache(testCache);
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         // the factory used to create all remote operations for this class
