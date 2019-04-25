@@ -8,7 +8,9 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.query.facet.Facet;
 import org.hibernate.search.query.facet.FacetingRequest;
+import org.infinispan.Cache;
 import org.infinispan.all.embeddedquery.testdomain.Car;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -28,11 +30,14 @@ public class SimpleFacetingTest extends AbstractQueryTest {
    private static final String indexFieldName = "cubicCapacity";
    private static final String facetName = "ccs";
 
+   private static EmbeddedCacheManager cacheManager;
+   private static Cache<Object, Object> cache;
    private static SearchManager qf;
 
    @BeforeClass
    public static void prepareSearchFactory() throws Exception {
-      cache = createCacheManager().getCache();
+      cacheManager = createCacheManager();
+      cache = cacheManager.getCache();
       qf = Search.getSearchManager(cache);
       cache.put( "195 Inter", new Car( "Ferrari 195 Inter", "Rosso corsa", 2341 ) );
       cache.put( "212 Inter", new Car( "Ferrari 212 Inter", "black", 4000 ) );
@@ -42,8 +47,10 @@ public class SimpleFacetingTest extends AbstractQueryTest {
    }
 
    @AfterClass
-   public static void cleanupData() {
-      cache.clear();
+   public static void tearDown() {
+      if (cacheManager != null) {
+         cacheManager.stop();
+      }
    }
 
    @Test

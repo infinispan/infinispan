@@ -8,8 +8,10 @@ import java.util.List;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.QueryBuilder;
 import org.hibernate.search.exception.SearchException;
+import org.infinispan.Cache;
 import org.infinispan.all.embeddedquery.testdomain.NumericType;
 import org.infinispan.all.embeddedquery.testdomain.Person;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.junit.After;
@@ -23,6 +25,8 @@ import org.junit.Test;
  * @author Anna Manukyan
  */
 public class QueryPhrasesTest extends AbstractQueryTest {
+   private EmbeddedCacheManager cacheManager;
+   private Cache<Object, Object> cache;
 
    private Person person1;
    private Person person2;
@@ -39,12 +43,15 @@ public class QueryPhrasesTest extends AbstractQueryTest {
 
    @Before
    public void init() throws Exception{
-      cache = createCacheManager().getCache();
+      cacheManager = createCacheManager();
+      cache = cacheManager.getCache();
    }
 
    @After
    public void after() {
-      cache.clear();
+      if (cacheManager != null) {
+         cacheManager.stop();
+      }
    }
 
    @Test
