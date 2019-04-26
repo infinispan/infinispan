@@ -23,7 +23,7 @@
       <dependency>
          <groupId>com.puppycrawl.tools</groupId>
          <artifactId>checkstyle</artifactId>
-         <version>8.1</version>
+         <version>${versionx.com.puppycrawl.tools.checkstyle}</version>
          <exclusions>
             <exclusion>
                <!-- Excluding com.sun:tools since it causes errors when importing this module into an IDE on Windows (HSEARCH-1374) -->
@@ -48,6 +48,28 @@
                </execution>
             </executions>
             <inherited>true</inherited>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <version>${version.checkstyle.maven-plugin}</version>
+            <dependencies>
+               <dependency>
+                  <groupId>com.puppycrawl.tools</groupId>
+                  <artifactId>checkstyle</artifactId>
+                  <version>${versionx.com.puppycrawl.tools.checkstyle}</version>
+               </dependency>
+               <dependency>
+                  <groupId>org.infinispan</groupId>
+                  <artifactId>infinispan-checkstyle</artifactId>
+                  <version>${project.version}</version>
+               </dependency>
+            </dependencies>
+               <configuration>
+               <!-- Location is relative to the classpath -->
+               <configLocation>checkstyle.xml</configLocation>
+               <consoleOutput>true</consoleOutput>
+            </configuration>
          </plugin>
       </plugins>
    </build>

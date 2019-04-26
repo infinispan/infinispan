@@ -236,7 +236,6 @@
       <version.lucene.featurepack>5.5.5.hibernate05</version.lucene.featurepack>
 
       <!-- Plugin dependencies -->
-      <version.checkstyle>8.1</version.checkstyle>
       <version.checkstyle.maven-plugin>2.17</version.checkstyle.maven-plugin>
       <version.elasticsearch.plugin>5.7</version.elasticsearch.plugin>
       <version.karaf-maven-plugin>4.2.3</version.karaf-maven-plugin>
@@ -259,6 +258,9 @@
       <version.maven.surefire>3.0.0-M3</version.maven.surefire>
       <version.org.wildfly.build-tools>1.2.10.Final</version.org.wildfly.build-tools>
       <version.owasp-dependency-check-plugin>4.0.2</version.owasp-dependency-check-plugin>
+
+      <!-- versionx -->
+      <versionx.com.puppycrawl.tools.checkstyle>8.18</versionx.com.puppycrawl.tools.checkstyle>
 
       <!-- configuration properties -->
       <org.infinispan.attachServerZip>false</org.infinispan.attachServerZip>

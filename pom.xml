@@ -246,7 +246,6 @@
       <versionx.com.jayway.jsonpath.json-path>2.2.0</versionx.com.jayway.jsonpath.json-path>
       <versionx.com.jgoodies.forms>1.0.7</versionx.com.jgoodies.forms>
       <versionx.com.microsoft.azure.azure-storage>6.1.0</versionx.com.microsoft.azure.azure-storage>
-      <versionx.com.puppycrawl.tools.checkstyle>8.18</versionx.com.puppycrawl.tools.checkstyle>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
       <versionx.com.sun.istack.istack-commons-runtime>3.0.5</versionx.com.sun.istack.istack-commons-runtime>
       <versionx.com.sun.mail.javax.mail>1.5.5</versionx.com.sun.mail.javax.mail>
@@ -4274,7 +4273,7 @@
                   <dependency>
                      <groupId>com.puppycrawl.tools</groupId>
                      <artifactId>checkstyle</artifactId>
-                     <version>${version.checkstyle}</version>
+                     <version>${versionx.com.puppycrawl.tools.checkstyle}</version>
                   </dependency>
                   <dependency>
                      <groupId>org.infinispan</groupId>
@@ -4462,7 +4461,7 @@
                   <id>checkstyle</id>
                   <phase>verify</phase>
                   <goals>
-                     <goal>checkstyle</goal>
+                     <goal>check</goal>
                   </goals>
                </execution>
             </executions>
