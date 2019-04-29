@@ -42,7 +42,6 @@ import org.infinispan.rest.operations.exceptions.UnacceptableDataFormatException
 import org.infinispan.rest.operations.mediatypes.Charset;
 import org.infinispan.rest.operations.mediatypes.EntrySetFormatter;
 import org.infinispan.rest.operations.mediatypes.OutputPrinter;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -55,7 +54,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class CacheResource implements ResourceHandler {
 
    private static final MurmurHash3 hashFunc = MurmurHash3.getInstance();
-   private final static Log logger = LogFactory.getLog(CacheResource.class, Log.class);
 
    private final RestCacheManager<Object> restCacheManager;
    private final RestServerConfiguration restServerConfiguration;
@@ -99,7 +97,7 @@ public class CacheResource implements ResourceHandler {
          responseBuilder.entity(outputPrinter.print(cacheName, keys, charset));
          return responseBuilder.build();
       } catch (CacheException cacheException) {
-         throw createResponseException(cacheException);
+         throw new RestResponseException(cacheException);
       }
    }
 
@@ -133,7 +131,7 @@ public class CacheResource implements ResourceHandler {
          }
          return responseBuilder.build();
       } catch (CacheException cacheException) {
-         throw createResponseException(cacheException);
+         throw new RestResponseException(cacheException);
       }
    }
 
@@ -176,7 +174,7 @@ public class CacheResource implements ResourceHandler {
             return putInCache(responseBuilder, useAsync, cache, key, data, ttl, idle);
          }
       } catch (CacheException | IllegalStateException e) {
-         throw createResponseException(e);
+         throw new RestResponseException(e);
       }
    }
 
@@ -196,7 +194,7 @@ public class CacheResource implements ResourceHandler {
 
          return responseBuilder.build();
       } catch (CacheException cacheException) {
-         throw createResponseException(cacheException);
+         throw new RestResponseException(cacheException);
       }
    }
 
@@ -266,7 +264,7 @@ public class CacheResource implements ResourceHandler {
          }
          return responseBuilder.build();
       } catch (CacheException cacheException) {
-         throw createResponseException(cacheException);
+         throw new RestResponseException(cacheException);
       }
    }
 
@@ -305,21 +303,6 @@ public class CacheResource implements ResourceHandler {
       return responseBuilder.build();
    }
 
-   private RestResponseException createResponseException(Throwable exception) {
-      Throwable rootCauseException = getRootCauseException(exception);
-
-      return new RestResponseException(HttpResponseStatus.INTERNAL_SERVER_ERROR, rootCauseException.getMessage(), rootCauseException);
-   }
-
-   private Throwable getRootCauseException(Throwable re) {
-      if (re == null) return null;
-      Throwable cause = re.getCause();
-      if (cause != null)
-         return getRootCauseException(cause);
-      else
-         return re;
-   }
-
    private MediaType tryNarrowMediaType(MediaType negotiated, AdvancedCache<?, ?> cache) {
       if (!negotiated.matchesAll()) return negotiated;
       MediaType storageMediaType = cache.getValueDataConversion().getStorageMediaType();
@@ -341,7 +324,7 @@ public class CacheResource implements ResourceHandler {
                .findFirst();
 
          return negotiated.map(m -> tryNarrowMediaType(m, cache))
-               .orElseThrow(() -> logger.unsupportedDataFormat(accept));
+               .orElseThrow(() -> Log.REST.unsupportedDataFormat(accept));
 
       } catch (EncodingException e) {
          throw new UnacceptableDataFormatException();

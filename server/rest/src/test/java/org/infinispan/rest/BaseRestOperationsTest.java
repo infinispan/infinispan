@@ -43,6 +43,10 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.counter.EmbeddedCounterManagerFactory;
+import org.infinispan.counter.api.CounterConfiguration;
+import org.infinispan.counter.api.CounterManager;
+import org.infinispan.counter.api.CounterType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -73,6 +77,7 @@ public abstract class BaseRestOperationsTest extends MultipleCacheManagersTest {
 
       for (EmbeddedCacheManager cm : cacheManagers) {
          this.defineCaches(cm);
+         this.defineCounters(cm);
          String[] cacheNames = cm.getCacheNames().toArray(new String[0]);
          cm.startCaches(cacheNames);
          cm.getClassWhiteList().addClasses(TestClass.class);
@@ -83,6 +88,12 @@ public abstract class BaseRestOperationsTest extends MultipleCacheManagersTest {
       }
       client = new HttpClient();
       client.start();
+   }
+
+   private void defineCounters(EmbeddedCacheManager cm) {
+      CounterManager counterManager = EmbeddedCounterManagerFactory.asCounterManager(cm);
+      counterManager.defineCounter("weak", CounterConfiguration.builder(CounterType.WEAK).build());
+      counterManager.defineCounter("strong", CounterConfiguration.builder(CounterType.UNBOUNDED_STRONG).build());
    }
 
    protected RestServerHelper restServer() {

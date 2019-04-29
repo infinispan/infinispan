@@ -15,6 +15,7 @@
       <module name="org.apache.xerces" services="import" />
       <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
+      <module name="org.infinispan.counter" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.remote-query.server" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.query.dsl" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.objectfilter" slot="@infinispan.module.slot@"/>

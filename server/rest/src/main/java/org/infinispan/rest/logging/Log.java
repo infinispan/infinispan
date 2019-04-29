@@ -12,7 +12,9 @@ import org.infinispan.rest.framework.RegistrationException;
 import org.infinispan.rest.operations.exceptions.NoCacheFoundException;
 import org.infinispan.rest.operations.exceptions.ServiceUnavailableException;
 import org.infinispan.rest.operations.exceptions.UnacceptableDataFormatException;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -27,6 +29,8 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
+   Log REST = Logger.getMessageLogger(Log.class, LogFactory.LOG_ROOT + "REST");
+
    @Message(value = "Error transcoding content", id = 495)
    EncodingException errorTranscoding(@Cause Throwable cause);
 

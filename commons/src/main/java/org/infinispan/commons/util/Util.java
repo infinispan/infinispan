@@ -1151,4 +1151,13 @@ public final class Util {
          }
       }
    }
+
+   public static Throwable getRootCause(Throwable re) {
+      if (re == null) return null;
+      Throwable cause = re.getCause();
+      if (cause != null)
+         return getRootCause(cause);
+      else
+         return re;
+   }
 }
