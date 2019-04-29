@@ -19,7 +19,7 @@ public class AuthenticationException extends RestResponseException {
     * @param authenticationHeader Authentication header which will be sent to the client.
     */
    public AuthenticationException(Optional<String> authenticationHeader) {
-      super(HttpResponseStatus.UNAUTHORIZED, null);
+      super(HttpResponseStatus.UNAUTHORIZED, null, null);
       this.authenticationHeader = authenticationHeader;
    }
 

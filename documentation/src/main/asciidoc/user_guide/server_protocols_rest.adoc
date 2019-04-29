@@ -346,6 +346,29 @@ Example:
 }
 ----
 
+===== Counters
+
+====== `POST /v2/counters/{counterName}`
+
+Adds a value to the counter identified by _counterName_.
+If the payload is empty, the counter is incremented by one, otherwise the payload is interpreted as a signed long and added to the counter.
+The response depends on the type of counter:
+
+* _WEAK_ counters will return an empty response
+* _STRONG_ counters will return their value after the operation is applied
+
+NOTE: This method currently only processes _plain/text_ content.
+
+====== `GET /v2/counters/{counterName}`
+
+Returns the current value to the counter identified by _counterName_.
+
+NOTE: This method currently only processes _plain/text_ content.
+
+====== `DELETE /v2/counters/{counterName}`
+
+Resets the counter identified by _counterName_ to its initial value.
+
 ==== CORS
 
 The REST server supports https://en.wikipedia.org/wiki/Cross-origin_resource_sharing[CORS] including preflight and rules based on the request origin.

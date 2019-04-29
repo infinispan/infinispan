@@ -440,4 +440,46 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       assertEquals(2, jsonNode.findValue("string-keyed-jdbc-store").size());
    }
 
+   @Test
+   public void testWeakCounter() throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/counters/weak", restServer().getPort());
+      ContentResponse response = client.newRequest(url)
+            .method(HttpMethod.POST).content(new StringContentProvider("10")).send();
+      ResponseAssertion.assertThat(response).isOk();
+      eventually(() -> {
+         ContentResponse r = client.newRequest(url)
+               .method(HttpMethod.GET).send();
+         ResponseAssertion.assertThat(r).isOk();
+         long value = Long.parseLong(r.getContentAsString());
+         return value == 10;
+      });
+      response = client.newRequest(url)
+            .method(HttpMethod.DELETE).send();
+      ResponseAssertion.assertThat(response).isOk();
+      response = client.newRequest(url)
+            .method(HttpMethod.GET).send();
+      ResponseAssertion.assertThat(response).isOk();
+      assertEquals(0, Long.parseLong(response.getContentAsString()));
+   }
+
+   @Test
+   public void testStrongCounter() throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/counters/strong", restServer().getPort());
+      ContentResponse response = client.newRequest(url)
+            .method(HttpMethod.POST).content(new StringContentProvider("10")).send();
+      ResponseAssertion.assertThat(response).isOk();
+      assertEquals(10, Long.parseLong(response.getContentAsString()));
+      response = client.newRequest(url)
+            .method(HttpMethod.GET).send();
+      ResponseAssertion.assertThat(response).isOk();
+      assertEquals(10, Long.parseLong(response.getContentAsString()));
+      response = client.newRequest(url)
+            .method(HttpMethod.DELETE).send();
+      ResponseAssertion.assertThat(response).isOk();
+      response = client.newRequest(url)
+            .method(HttpMethod.GET).send();
+      ResponseAssertion.assertThat(response).isOk();
+      assertEquals(0, Long.parseLong(response.getContentAsString()));
+   }
+
 }

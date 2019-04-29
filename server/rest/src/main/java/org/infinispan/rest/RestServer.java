@@ -1,5 +1,6 @@
 package org.infinispan.rest;
 
+import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.impl.VoidAuthenticator;
@@ -11,6 +12,7 @@ import org.infinispan.rest.framework.impl.ResourceManagerImpl;
 import org.infinispan.rest.framework.impl.RestDispatcherImpl;
 import org.infinispan.rest.resources.CacheResource;
 import org.infinispan.rest.resources.ConfigResource;
+import org.infinispan.rest.resources.CounterResource;
 import org.infinispan.rest.resources.SplashResource;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -96,6 +98,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(new CacheResource(restCacheManager, configuration));
       resourceManager.registerResource(new SplashResource());
       resourceManager.registerResource(new ConfigResource(cacheManager));
+      resourceManager.registerResource(new CounterResource(EmbeddedCounterManagerFactory.asCounterManager(cacheManager)));
       this.restDispatcher = new RestDispatcherImpl(resourceManager);
    }
 
