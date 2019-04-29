@@ -51,7 +51,7 @@
             <env key="JAVA" value="${server.jvm}/bin/java"/>
         </exec>
         <echo>Waiting for Infinispan server to start</echo>
-        <waitfor maxwait="15" maxwaitunit="second" checkevery="1" checkeveryunit="second">
+        <waitfor maxwait="30" maxwaitunit="second" checkevery="1" checkeveryunit="second">
             <and>
                 <socket server="127.0.0.1" port="${management.port}"/>
                 <socket server="127.0.0.1" port="${hotrod.port}"/>
@@ -188,5 +188,5 @@
         </exec>
     </target>
 
-    <target name="kill-server" depends="-do.kinit, -do.ps, -do.lsof, -do.jps, -do.cmd"/>
+    <target name="kill-server" depends="-do.kinit, -do.lsof, -do.cmd"/>
 </project>

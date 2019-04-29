@@ -34,7 +34,7 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
         MBeanServerConnectionProvider provider1;
 
         // Target nodes
-        final int managementPortServer2 = 10090;
+        final int managementPortServer2 = 10390;
         MBeanServerConnectionProvider provider2;
 
         try {
@@ -50,7 +50,7 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
             builder3.addServer()
                     .host("127.0.0.1")
                     .port(11422)
-                    .version(ProtocolVersion.PROTOCOL_VERSION_25);
+                    .version(ProtocolVersion.parseVersion(System.getProperty("hotrod.protocol.version")));
 
             RemoteCacheManager rcm3 = new RemoteCacheManager(builder3.build());
             final RemoteCache<String, String> c3 = rcm3.getCache("default");
@@ -59,7 +59,7 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
             builder4.addServer()
                     .host("127.0.0.1")
                     .port(11522)
-                    .version(ProtocolVersion.PROTOCOL_VERSION_25);
+                    .version(ProtocolVersion.parseVersion(System.getProperty("hotrod.protocol.version")));
 
             RemoteCacheManager rcm4 = new RemoteCacheManager(builder4.build());
             final RemoteCache<String, String> c4 = rcm4.getCache("default");
