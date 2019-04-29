@@ -1346,6 +1346,7 @@
                                             <property name="hotrod.port" value="11522" />
                                         </ant>
                                         <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="start-server">
+                                            <property name="server.jvm" value="${server.old.jvm}" />
                                             <property name="server.dist" value="${server3.old.dist}" />
                                             <property name="port.offset" value="300" />
                                             <property name="management.port" value="10290" />
