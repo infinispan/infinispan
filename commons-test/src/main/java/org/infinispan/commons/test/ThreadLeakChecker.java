@@ -75,6 +75,8 @@ public class ThreadLeakChecker {
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
       "org.jboss.as.arquillian.container.managed.ManagedDeployableContainer$ConsoleConsumer";
+   private static final boolean ENABLED =
+      "true".equalsIgnoreCase(System.getProperty("infinispan.test.checkThreadLeaks", "true"));
 
    private static Logger log = Logger.getLogger(ThreadLeakChecker.class);
    private static volatile long lastUpdate = 0;
@@ -139,7 +141,7 @@ public class ThreadLeakChecker {
       }
    }
 
-   public static void updateThreadOwnership(List<String> availableOwners) {
+   private static void updateThreadOwnership(List<String> availableOwners) {
       // Update the thread ownership information
       Set<Thread> currentThreads = getThreadsSnapshot();
       runningThreads.keySet().retainAll(currentThreads);
@@ -154,6 +156,9 @@ public class ThreadLeakChecker {
     * Assumes that no tests are running.
     */
    public static void checkForLeaks() {
+      if (!ENABLED)
+         return;
+
       lock.lock();
       try {
          assert runningTests.isEmpty() : "Tests are still running: " + runningTests;
@@ -183,7 +188,7 @@ public class ThreadLeakChecker {
       if (!leaks.isEmpty()) {
          for (LeakInfo leakInfo : leaks) {
             log.warnf("Possible leaked thread:\n%s", prettyPrintStacktrace(leakInfo.thread));
-            leakInfo.reported = true;
+            leakInfo.markReported();
          }
          // Strategies for debugging test suite thread leaks
          // Use -Dinfinispan.test.parallel.threads=3 (or even less) to narrow down source tests
@@ -199,28 +204,26 @@ public class ThreadLeakChecker {
    private static List<LeakInfo> computeLeaks() {
       List<LeakInfo> leaks = new ArrayList<>();
       for (LeakInfo leakInfo : runningThreads.values()) {
-         if (!leakInfo.reported && leakInfo.thread.isAlive() && !ignore(leakInfo)) {
+         if (leakInfo.shouldReport() && leakInfo.thread.isAlive() && !ignore(leakInfo.thread)) {
             leaks.add(leakInfo);
          }
       }
       return leaks;
    }
 
-   private static boolean ignore(LeakInfo leakInfo) {
+   private static boolean ignore(Thread thread) {
       // System threads (running before the first test) have no potential owners
-      String threadName = leakInfo.thread.getName();
-      if (leakInfo.potentialOwnerTests.isEmpty())
-         return true;
+      String threadName = thread.getName();
       if (IGNORED_THREADS_REGEX.matcher(threadName).matches())
          return true;
 
-      if (leakInfo.thread.getName().startsWith("Thread-")) {
+      if (thread.getName().startsWith("Thread-")) {
          // Special check for ByteMan, because nobody calls TransformListener.terminate()
-         if (leakInfo.thread.getClass().getName().equals("org.jboss.byteman.agent.TransformListener"))
+         if (thread.getClass().getName().equals("org.jboss.byteman.agent.TransformListener"))
             return true;
 
          // Special check for Arquillian, because it uses an unnamed thread to read from the container console
-         StackTraceElement[] s = leakInfo.thread.getStackTrace();
+         StackTraceElement[] s = thread.getStackTrace();
          for (StackTraceElement ste : s) {
             if (ste.getClassName().equals(ARQUILLIAN_CONSOLE_CONSUMER)) {
                return true;
@@ -230,7 +233,7 @@ public class ThreadLeakChecker {
          return false;
    }
 
-   public static String prettyPrintStacktrace(Thread thread) {
+   private static String prettyPrintStacktrace(Thread thread) {
       // "management I/O-2" #55 prio=5 os_prio=0 tid=0x00007fe6a8134000 nid=0x7f9d runnable
       // [0x00007fe64e4db000]
       //    java.lang.Thread.State:RUNNABLE
@@ -244,12 +247,6 @@ public class ThreadLeakChecker {
          sb.append("\tat ").append(ste).append('\n');
       }
       return sb.toString();
-   }
-
-   private static <T> List<T> drain(BlockingQueue<T> blockingQueue) {
-      List<T> list = new ArrayList<>();
-      blockingQueue.drainTo(list);
-      return list;
    }
 
    private static Set<Thread> getThreadsSnapshot() {
@@ -269,6 +266,9 @@ public class ThreadLeakChecker {
       }
    }
 
+   /**
+    * Ignore threads matching a predicate.
+    */
    public static void ignoreThreadsMatching(Predicate<Thread> filter) {
       // Update the thread ownership information
       Set<Thread> currentThreads = getThreadsSnapshot();
@@ -279,36 +279,52 @@ public class ThreadLeakChecker {
       }
    }
 
+   /**
+    * Ignore a running thread.
+    */
    public static void ignoreThread(Thread thread) {
       LeakInfo leakInfo = runningThreads.computeIfAbsent(thread, k -> new LeakInfo(thread, Collections.emptyList()));
       leakInfo.ignore();
    }
 
-   public static void ignoreThreadsContaining(String threadNameSubstring) {
-      ignoreThreadsMatching(thread -> thread.getName().matches(".*" + threadNameSubstring + ".*"));
+   /**
+    * Ignore threads containing a regex.
+    */
+   public static void ignoreThreadsContaining(String threadNameRegex) {
+      Pattern pattern = Pattern.compile(".*" + threadNameRegex + ".*");
+      ignoreThreadsMatching(thread -> pattern.matcher(thread.getName()).matches());
    }
 
    private static class LeakInfo {
       final Thread thread;
       final List<String> potentialOwnerTests;
       boolean reported;
+      boolean ignored;
 
       LeakInfo(Thread thread, List<String> potentialOwnerTests) {
          this.thread = thread;
          this.potentialOwnerTests = potentialOwnerTests;
       }
 
-      public void ignore() {
+      void ignore() {
+         ignored = true;
+      }
+
+      void markReported() {
          reported = true;
       }
 
-      public boolean shouldReport() {
-         return !reported;
+      boolean shouldReport() {
+         return !ignored && !reported;
       }
 
       @Override
       public String toString() {
-         return "{" + thread.getName() + ": possible sources " + potentialOwnerTests + "}";
+         if (ignored) {
+            return "{" + thread.getName() + ": ignored}";
+         }
+         String reportedString = reported ? " reported, " : "";
+         return "{" + thread.getName() + ": " + reportedString + "possible sources " + potentialOwnerTests + "}";
       }
    }
 }

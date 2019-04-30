@@ -247,6 +247,7 @@
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
+                  <infinispan.test.checkThreadLeaks>false</infinispan.test.checkThreadLeaks>
                </systemPropertyVariables>
                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                <properties>
