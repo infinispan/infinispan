@@ -30,8 +30,8 @@ public class AddOperation extends BaseCounterOperation<Long> {
    private final long delta;
 
    public AddOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
-                       String counterName, long delta) {
-      super(COUNTER_ADD_AND_GET_REQUEST, COUNTER_ADD_AND_GET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
+         String counterName, long delta, boolean useConsistentHash) {
+      super(COUNTER_ADD_AND_GET_REQUEST, COUNTER_ADD_AND_GET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, useConsistentHash);
       this.delta = delta;
    }
 

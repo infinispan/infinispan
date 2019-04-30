@@ -19,13 +19,13 @@ import io.netty.channel.Channel;
 public class GetValueOperation extends BaseCounterOperation<Long> {
 
    public GetValueOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
-         Configuration cfg, String counterName) {
-      super(COUNTER_GET_REQUEST, COUNTER_GET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
+         Configuration cfg, String counterName, boolean useConsistentHash) {
+      super(COUNTER_GET_REQUEST, COUNTER_GET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, useConsistentHash);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel, COUNTER_GET_REQUEST);
+      sendHeaderAndCounterNameAndRead(channel);
    }
 
    @Override
