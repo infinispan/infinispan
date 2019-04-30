@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.counter.configuration.Reliability;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.server.commons.dmr.ModelNodes;
 import org.infinispan.server.commons.naming.BinderServiceBuilder;
@@ -211,6 +212,13 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
                 modules.add(ModuleIdentifier.create(moduleName, moduleSlot));
             }
             configBuilder.setModules(modules);
+        }
+
+        if (model.hasDefined(ModelKeys.COUNTERS)) {
+            ModelNode countersModel = model.get(ModelKeys.COUNTERS, ModelKeys.COUNTERS_NAME);
+            CounterManagerConfigurationBuilder counterManagerConfigurationBuilder = configBuilder.setCounterManagerConfiguration();
+            counterManagerConfigurationBuilder.setNumOwners(CacheContainerCountersResource.NUM_OWNERS.resolveModelAttribute(context, countersModel).asInt());
+            counterManagerConfigurationBuilder.setReliability(Reliability.valueOf(CacheContainerCountersResource.RELIABILITY.resolveModelAttribute(context, countersModel).asString()));
         }
 
         // Install cache container configuration service

@@ -210,7 +210,7 @@
             <indexing index="PRIMARY_OWNER" auto-config="true"/>
             <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
         </distributed-cache>
-        <counters>
+        <counters num-owners="2" reliability="AVAILABLE">
              <strong-counter name="c1" initial-value="0" storage="PERSISTENT"/>
              <strong-counter name="c2" initial-value="0" storage="VOLATILE">
                  <lower-bound value="0"/>

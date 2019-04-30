@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.management.MBeanServer;
 
+import org.infinispan.counter.configuration.Reliability;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.server.jgroups.spi.ChannelFactory;
 import org.jboss.modules.ModuleLoader;
@@ -50,6 +51,12 @@ public class EmbeddedCacheManagerConfigurationService {
         String getAuditLogger();
         Map<String, List<String>> getRoles();
     }
+
+    interface CounterManagerConfiguration {
+        int getNumOwners();
+        Reliability getReliability();
+    }
+
 
     interface GlobalStateLocationConfiguration {
         String getPersistencePath();
