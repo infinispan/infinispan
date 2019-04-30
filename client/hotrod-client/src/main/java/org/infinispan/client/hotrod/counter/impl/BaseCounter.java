@@ -10,10 +10,10 @@ public class BaseCounter {
    protected final String name;
    protected final CounterConfiguration configuration;
    protected final CounterOperationFactory factory;
-   protected final NotificationManager notificationManager;
+   private final NotificationManager notificationManager;
 
-   public BaseCounter(CounterConfiguration configuration, String name, CounterOperationFactory factory,
-                      NotificationManager notificationManager) {
+   BaseCounter(CounterConfiguration configuration, String name, CounterOperationFactory factory,
+         NotificationManager notificationManager) {
       this.configuration = configuration;
       this.name = name;
       this.factory = factory;
@@ -25,11 +25,11 @@ public class BaseCounter {
    }
 
    public CompletableFuture<Void> reset() {
-      return factory.newResetOperation(name).execute();
+      return factory.newResetOperation(name, useConsistentHash()).execute();
    }
 
    public CompletableFuture<Void> remove() {
-      return factory.newRemoveOperation(name).execute();
+      return factory.newRemoveOperation(name, useConsistentHash()).execute();
    }
 
    public CounterConfiguration getConfiguration() {
@@ -38,5 +38,9 @@ public class BaseCounter {
 
    public <T extends CounterListener> Handle<T> addListener(T listener) {
       return notificationManager.addListener(name, listener);
+   }
+
+   boolean useConsistentHash() {
+      return false;
    }
 }

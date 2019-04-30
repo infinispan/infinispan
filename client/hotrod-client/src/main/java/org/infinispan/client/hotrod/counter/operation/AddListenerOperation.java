@@ -30,8 +30,8 @@ public class AddListenerOperation extends BaseCounterOperation<Boolean> {
    private Channel channel;
 
    public AddListenerOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
-                               Configuration cfg, String counterName, byte[] listenerId, SocketAddress server) {
-      super(COUNTER_ADD_LISTENER_REQUEST, COUNTER_ADD_LISTENER_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
+         Configuration cfg, String counterName, byte[] listenerId, SocketAddress server) {
+      super(COUNTER_ADD_LISTENER_REQUEST, COUNTER_ADD_LISTENER_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, false);
       this.listenerId = listenerId;
       this.server = server;
    }

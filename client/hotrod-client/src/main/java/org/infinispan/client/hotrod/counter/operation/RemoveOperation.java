@@ -22,13 +22,13 @@ import io.netty.channel.Channel;
  */
 public class RemoveOperation extends BaseCounterOperation<Void> {
    public RemoveOperation(Codec codec, ChannelFactory transportFactory, AtomicInteger topologyId,
-                          Configuration cfg, String counterName) {
-      super(COUNTER_REMOVE_REQUEST, COUNTER_REMOVE_RESPONSE, codec, transportFactory, topologyId, cfg, counterName);
+         Configuration cfg, String counterName, boolean useConsistentHash) {
+      super(COUNTER_REMOVE_REQUEST, COUNTER_REMOVE_RESPONSE, codec, transportFactory, topologyId, cfg, counterName, useConsistentHash);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel, COUNTER_REMOVE_REQUEST);
+      sendHeaderAndCounterNameAndRead(channel);
    }
 
    @Override

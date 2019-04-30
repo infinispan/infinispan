@@ -32,7 +32,7 @@ public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
 
    public CompareAndSwapOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
                                   Configuration cfg, String counterName, long expect, long update, CounterConfiguration counterConfiguration) {
-      super(COUNTER_CAS_REQUEST, COUNTER_CAS_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_CAS_REQUEST, COUNTER_CAS_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, true);
       this.expect = expect;
       this.update = update;
       this.counterConfiguration = counterConfiguration;
