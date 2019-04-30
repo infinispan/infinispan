@@ -21,12 +21,12 @@ public class IsDefinedOperation extends BaseCounterOperation<Boolean> {
 
    public IsDefinedOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
                              Configuration cfg, String counterName) {
-      super(COUNTER_IS_DEFINED_REQUEST, COUNTER_IS_DEFINED_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_IS_DEFINED_REQUEST, COUNTER_IS_DEFINED_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, false);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel, COUNTER_IS_DEFINED_REQUEST);
+      sendHeaderAndCounterNameAndRead(channel);
    }
 
    @Override

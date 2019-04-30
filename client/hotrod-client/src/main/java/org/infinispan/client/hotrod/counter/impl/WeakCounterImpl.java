@@ -25,12 +25,12 @@ class WeakCounterImpl extends BaseCounter implements WeakCounter {
 
    @Override
    public long getValue() {
-      return await(factory.newGetValueOperation(name).execute());
+      return await(factory.newGetValueOperation(name, useConsistentHash()).execute());
    }
 
    @Override
    public CompletableFuture<Void> add(long delta) {
-      return factory.newAddOperation(name, delta).execute().thenRun(() -> {});
+      return factory.newAddOperation(name, delta, useConsistentHash()).execute().thenRun(() -> {});
    }
 
    @Override

@@ -93,7 +93,7 @@ public class NotificationManager {
       if (trace) {
          log.tracef("Remove listener for counter '%s'", counterName);
       }
-      clientListeners.compute(counterName, (name, list) -> {
+      clientListeners.computeIfPresent(counterName, (name, list) -> {
          list.remove(handle);
          if (list.isEmpty()) {
             if (dispatcher != null) {

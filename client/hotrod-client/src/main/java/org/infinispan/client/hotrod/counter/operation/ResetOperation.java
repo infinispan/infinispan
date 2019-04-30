@@ -21,13 +21,13 @@ import io.netty.channel.Channel;
 public class ResetOperation extends BaseCounterOperation<Void> {
 
    public ResetOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
-                         String counterName) {
-      super(COUNTER_RESET_REQUEST, COUNTER_RESET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
+         String counterName, boolean useConsistentHash) {
+      super(COUNTER_RESET_REQUEST, COUNTER_RESET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, useConsistentHash);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel, COUNTER_RESET_REQUEST);
+      sendHeaderAndCounterNameAndRead(channel);
    }
 
    @Override

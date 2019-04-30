@@ -27,7 +27,7 @@ public class DefineCounterOperation extends BaseCounterOperation<Boolean> {
 
    public DefineCounterOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
                                  Configuration cfg, String counterName, CounterConfiguration configuration) {
-      super(COUNTER_CREATE_REQUEST, COUNTER_CREATE_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_CREATE_REQUEST, COUNTER_CREATE_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, false);
       this.configuration = configuration;
    }
 
