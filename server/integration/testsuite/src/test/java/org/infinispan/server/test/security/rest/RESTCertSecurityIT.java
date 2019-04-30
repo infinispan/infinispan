@@ -5,12 +5,11 @@ import static org.junit.Assert.assertEquals;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.SocketException;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManager;
 
 import org.apache.http.HttpResponse;
@@ -130,7 +129,7 @@ public class RESTCertSecurityIT {
         put(client1, keyAddress(KEY_A), HttpStatus.SC_OK);
     }
 
-    @Test
+    @Test(expected = SSLException.class)
     @WithRunningServer({@RunningServer(name = CONTAINER, config = "testsuite/rest-sec-cert.xml")})
     public void testInvalidCertificateAccess() throws Exception {
         put(client2, keyAddress(KEY_A), HttpStatus.SC_FORBIDDEN);
@@ -146,23 +145,14 @@ public class RESTCertSecurityIT {
                 + server.getRESTEndpoint().getContextPath() + "/default/" + key;
     }
 
-    private HttpResponse handleIOException(IOException e, int expectedCode) throws IOException {
-       if ((expectedCode == HttpStatus.SC_FORBIDDEN) && ((e instanceof SSLHandshakeException) || (e instanceof SocketException)))
-          return null;
-       else throw e;
-    }
-
     private HttpResponse put(CloseableHttpClient httpClient, String uri, int expectedCode) throws Exception {
         HttpResponse response;
         HttpPut put = new HttpPut(uri);
         put.setEntity(new StringEntity("data", "UTF-8"));
-        try {
-           response = httpClient.execute(put);
-           assertEquals(expectedCode, response.getStatusLine().getStatusCode());
-           return response;
-        } catch (IOException e) {
-           return handleIOException(e, expectedCode);
-        }
+
+        response = httpClient.execute(put);
+        assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+        return response;
     }
 
     private HttpResponse post(CloseableHttpClient httpClient, String uri, int expectedCode) throws Exception {
@@ -201,7 +191,7 @@ public class RESTCertSecurityIT {
 
     public static CloseableHttpClient securedClient(String alias) throws Exception {
        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-       SSLContext ctx = SSLContext.getInstance("TLS");
+       SSLContext ctx = SSLContext.getInstance("TLSv1.2");
        JBossJSSESecurityDomain jsseSecurityDomain = new JBossJSSESecurityDomain("client_cert_auth");
        jsseSecurityDomain.setKeyStoreURL(tccl.getResource("keystore_client.jks").getPath());
        jsseSecurityDomain.setKeyStorePassword("secret");
