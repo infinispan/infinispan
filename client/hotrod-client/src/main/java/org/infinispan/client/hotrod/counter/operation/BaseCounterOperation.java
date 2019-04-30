@@ -1,14 +1,17 @@
 package org.infinispan.client.hotrod.counter.operation;
 
+import static org.infinispan.client.hotrod.counter.impl.CounterOperationFactory.COUNTER_CACHE_NAME;
+
 import java.net.SocketAddress;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -30,22 +33,22 @@ import io.netty.channel.ChannelHandlerContext;
 abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
 
    private static final Log commonsLog = LogFactory.getLog(BaseCounterOperation.class, Log.class);
+   private static final Charset CHARSET = StandardCharsets.UTF_8;
    private static final byte[] EMPTY_CACHE_NAME = Util.EMPTY_BYTE_ARRAY;
-   private static final byte[] COUNTER_CACHE_NAME = RemoteCacheManager.cacheNameBytes("org.infinispan.counter");
    private final String counterName;
+   private final boolean useConsistentHash;
 
    BaseCounterOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
-                        String counterName) {
+                        String counterName, boolean useConsistentHash) {
       super(requestCode, responseCode, codec, channelFactory, EMPTY_CACHE_NAME, topologyId, 0, cfg, null);
       this.counterName = counterName;
+      this.useConsistentHash = useConsistentHash;
    }
 
    /**
     * Writes the operation header followed by the counter's name.
-    *
-    * @return the {@link HeaderParams}.
     */
-   void sendHeaderAndCounterNameAndRead(Channel channel, short opCode) {
+   void sendHeaderAndCounterNameAndRead(Channel channel) {
       ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 0);
       channel.writeAndFlush(buf);
    }
@@ -66,8 +69,6 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
    /**
     * If the status is {@link #KEY_DOES_NOT_EXIST_STATUS}, the counter is undefined and a {@link CounterException} is
     * thrown.
-    *
-    * @return the operation's status.
     */
    void checkStatus(short status) {
       if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -81,7 +82,11 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
 
    @Override
    protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
-      channelFactory.fetchChannelAndInvoke(failedServers, COUNTER_CACHE_NAME, this);
+      if (retryCount == 0 && useConsistentHash) {
+         channelFactory.fetchChannelAndInvoke(new ByteString(counterName), failedServers, COUNTER_CACHE_NAME, this);
+      } else {
+         channelFactory.fetchChannelAndInvoke(failedServers, COUNTER_CACHE_NAME, this);
+      }
    }
 
    @Override
@@ -97,5 +102,35 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
    @Override
    protected void addParams(StringBuilder sb) {
       sb.append("counter=").append(counterName);
+   }
+
+   private class ByteString {
+
+      private final int hash;
+      private final byte[] b;
+
+      private ByteString(String s) {
+         //copied from ByteString in core
+         this.b = s.getBytes(CHARSET);
+         this.hash = Arrays.hashCode(b);
+      }
+
+      @Override
+      public int hashCode() {
+         return hash;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         ByteString that = (ByteString) o;
+         return Arrays.equals(b, that.b);
+      }
+
+      @Override
+      public String toString() {
+         return new String(b, CHARSET);
+      }
    }
 }

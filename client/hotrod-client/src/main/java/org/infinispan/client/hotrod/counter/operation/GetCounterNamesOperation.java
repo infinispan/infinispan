@@ -26,7 +26,7 @@ public class GetCounterNamesOperation extends BaseCounterOperation<Collection<St
 
    public GetCounterNamesOperation(Codec codec, ChannelFactory transportFactory, AtomicInteger topologyId,
                                    Configuration cfg) {
-      super(COUNTER_GET_NAMES_REQUEST, COUNTER_GET_NAMES_RESPONSE, codec, transportFactory, topologyId, cfg, "");
+      super(COUNTER_GET_NAMES_REQUEST, COUNTER_GET_NAMES_RESPONSE, codec, transportFactory, topologyId, cfg, "", false);
    }
 
    @Override

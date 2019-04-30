@@ -24,11 +24,11 @@ class StrongCounterImpl extends BaseCounter implements StrongCounter {
    }
 
    public CompletableFuture<Long> getValue() {
-      return factory.newGetValueOperation(name).execute();
+      return factory.newGetValueOperation(name, useConsistentHash()).execute();
    }
 
    public CompletableFuture<Long> addAndGet(long delta) {
-      return factory.newAddOperation(name, delta).execute();
+      return factory.newAddOperation(name, delta, useConsistentHash()).execute();
    }
 
    @Override
@@ -39,6 +39,11 @@ class StrongCounterImpl extends BaseCounter implements StrongCounter {
    @Override
    public SyncStrongCounter sync() {
       return syncCounter;
+   }
+
+   @Override
+   boolean useConsistentHash() {
+      return true;
    }
 
    private class Sync implements SyncStrongCounter {

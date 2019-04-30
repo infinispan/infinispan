@@ -26,7 +26,9 @@ import org.infinispan.counter.api.CounterConfiguration;
  * @author Pedro Ruivo
  * @since 9.2
  */
-class CounterOperationFactory {
+public class CounterOperationFactory {
+
+   public static final byte[] COUNTER_CACHE_NAME = RemoteCacheManager.cacheNameBytes("org.infinispan.COUNTER");
 
    private final Configuration configuration;
    private final ChannelFactory channelFactory;
@@ -37,7 +39,7 @@ class CounterOperationFactory {
       this.configuration = configuration;
       this.channelFactory = channelFactory;
       this.codec = codec;
-      this.topologyId = channelFactory.createTopologyId(RemoteCacheManager.cacheNameBytes("org.infinispan.counter"));
+      this.topologyId = channelFactory.createTopologyId(COUNTER_CACHE_NAME);
    }
 
    ChannelFactory getChannelFactory() {
@@ -60,20 +62,20 @@ class CounterOperationFactory {
       return new DefineCounterOperation(codec, channelFactory, topologyId, configuration, counterName, cfg);
    }
 
-   RemoveOperation newRemoveOperation(String counterName) {
-      return new RemoveOperation(codec, channelFactory, topologyId, configuration, counterName);
+   RemoveOperation newRemoveOperation(String counterName, boolean useConsistentHash) {
+      return new RemoveOperation(codec, channelFactory, topologyId, configuration, counterName, useConsistentHash);
    }
 
-   AddOperation newAddOperation(String counterName, long delta) {
-      return new AddOperation(codec, channelFactory, topologyId, configuration, counterName, delta);
+   AddOperation newAddOperation(String counterName, long delta, boolean useConsistentHash) {
+      return new AddOperation(codec, channelFactory, topologyId, configuration, counterName, delta, useConsistentHash);
    }
 
-   GetValueOperation newGetValueOperation(String counterName) {
-      return new GetValueOperation(codec, channelFactory, topologyId, configuration, counterName);
+   GetValueOperation newGetValueOperation(String counterName, boolean useConsistentHash) {
+      return new GetValueOperation(codec, channelFactory, topologyId, configuration, counterName, useConsistentHash);
    }
 
-   ResetOperation newResetOperation(String counterName) {
-      return new ResetOperation(codec, channelFactory, topologyId, configuration, counterName);
+   ResetOperation newResetOperation(String counterName, boolean useConsistentHash) {
+      return new ResetOperation(codec, channelFactory, topologyId, configuration, counterName, useConsistentHash);
    }
 
    CompareAndSwapOperation newCompareAndSwapOperation(String counterName, long expect, long update,

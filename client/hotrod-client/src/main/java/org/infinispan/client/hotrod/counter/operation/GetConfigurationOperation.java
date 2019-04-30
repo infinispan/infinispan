@@ -25,12 +25,12 @@ public class GetConfigurationOperation extends BaseCounterOperation<CounterConfi
 
    public GetConfigurationOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
                                     Configuration cfg, String counterName) {
-      super(COUNTER_GET_CONFIGURATION_REQUEST, COUNTER_GET_CONFIGURATION_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_GET_CONFIGURATION_REQUEST, COUNTER_GET_CONFIGURATION_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, false);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel, COUNTER_GET_CONFIGURATION_REQUEST);
+      sendHeaderAndCounterNameAndRead(channel);
    }
 
    @Override
