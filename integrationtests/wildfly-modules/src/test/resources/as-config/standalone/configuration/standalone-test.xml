@@ -359,10 +359,7 @@
                 <distributed-cache name="default"/>
                 <local-cache name="localCache"/>
                 <replicated-cache name="replicatedCache"/>
-                <counters>
-                    <strong-counter />
-                    <weak-counter />
-                </counters>
+                <counters />
             </cache-container>
         </subsystem>
         <subsystem xmlns="urn:infinispan:server:endpoint:${infinispan.core.schema.version}">

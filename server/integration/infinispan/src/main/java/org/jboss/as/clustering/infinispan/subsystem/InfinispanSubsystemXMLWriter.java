@@ -244,14 +244,13 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
          writer.writeStartElement(Element.COUNTERS.getLocalName());
 
          //counters element and its attributes
-         ModelNode counterRoot = container.get(ModelKeys.COUNTERS);
+         ModelNode counterRoot = container.get(ModelKeys.COUNTERS, ModelKeys.COUNTERS_NAME);
          this.writeOptional(writer, Attribute.RELIABILITY, counterRoot, ModelKeys.RELIABILITY);
          this.writeOptional(writer, Attribute.NUM_OWNERS, counterRoot, ModelKeys.NUM_OWNERS);
 
          //all counters configurations
-         ModelNode counterConfigurations = counterRoot.get(ModelKeys.COUNTERS_NAME);
-         processStrongCounterConfigurations(writer, counterConfigurations.get(ModelKeys.STRONG_COUNTER));
-         processWeakCounterConfigurations(writer, counterConfigurations.get(ModelKeys.WEAK_COUNTER));
+         processStrongCounterConfigurations(writer, counterRoot.get(ModelKeys.STRONG_COUNTER));
+         processWeakCounterConfigurations(writer, counterRoot.get(ModelKeys.WEAK_COUNTER));
          writer.writeEndElement();
       }
    }
