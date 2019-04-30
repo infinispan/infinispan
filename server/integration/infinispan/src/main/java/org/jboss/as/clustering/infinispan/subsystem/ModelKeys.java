@@ -187,7 +187,7 @@ public class ModelKeys {
     static final String MODULES = "modules";
     static final String MODULES_NAME = "MODULES";
     static final String NAME = "name";
-    static final String NUM_OWNERS = "num_owners";
+    static final String NUM_OWNERS = "num-owners";
     static final String NOTIFICATIONS = "notifications";
     static final String OBJECT_NAME = "OBJECT";
     static final String OFF_HEAP_NAME = "OFF-HEAP";
