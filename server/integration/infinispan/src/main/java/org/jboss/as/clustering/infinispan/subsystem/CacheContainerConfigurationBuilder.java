@@ -102,6 +102,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private final InjectedValue<ThreadPoolConfiguration> replicationQueueThreadPool = new InjectedValue<>();
     private final InjectedValue<PathManager> pathManager = new InjectedValue<>();
     private final InjectedValue<ModelController> modelController = new InjectedValue<>();
+    private CounterManagerConfigurationBuilder counterManagerConfiguration;
 
     public CacheContainerConfigurationBuilder(String name) {
         this.name = name;
@@ -252,6 +253,13 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
             }
         }
 
+        EmbeddedCacheManagerConfigurationService.CounterManagerConfiguration counterManager = (this.counterManagerConfiguration != null) ? this.counterManagerConfiguration.getValue() : null;
+        if (counterManager != null) {
+            builder.addModule(org.infinispan.counter.configuration.CounterManagerConfigurationBuilder.class)
+                  .numOwner(counterManager.getNumOwners())
+                  .reliability(counterManager.getReliability());
+        }
+
         builder.asyncThreadPool().read(this.asyncOperationsThreadPool.getValue());
         builder.expirationThreadPool().read(this.expirationThreadPool.getValue());
         builder.listenerThreadPool().read(this.listenerThreadPool.getValue());
@@ -334,5 +342,10 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     public GlobalStateLocationConfigurationBuilder setGlobalState() {
         this.globalStateLocation = new GlobalStateLocationConfigurationBuilder();
         return this.globalStateLocation;
+    }
+
+    public CounterManagerConfigurationBuilder setCounterManagerConfiguration() {
+        this.counterManagerConfiguration = new CounterManagerConfigurationBuilder();
+        return this.counterManagerConfiguration;
     }
 }
