@@ -187,7 +187,7 @@ public class ThreadLeakChecker {
          // Use -Dinfinispan.test.parallel.threads=3 (or even less) to narrow down source tests
          // Set a conditional breakpoint in Thread.start with the name of the leaked thread
          // If the thread has the pattern of a particular component, set a conditional breakpoint in that component
-         throw new RuntimeException("Leaked threads: \n  " +
+         log.error("Leaked threads: \n  " +
                                     leaks.stream()
                                        .map(Object::toString)
                                        .collect(Collectors.joining(",\n  ")));
