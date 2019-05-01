@@ -1,0 +1,9 @@
+:toc:
+:toclevels: 3
+:numbered:
+
+include::topics/attributes/product-attributes.adoc[]
+
+= {ProductName} Spring Boot Starter
+
+include::topics/productized/spring_boot_starter.adoc[leveloffset=+1]
