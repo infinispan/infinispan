@@ -1,6 +1,4 @@
-=== Using the Spring Boot Starter
-Quickly get your Spring Boot project up and running with {brandname}.
-
+= Spring Boot Starter for {brandname}
 The {brandname} starter provides a set of managed transitive dependencies that include everything your Spring Boot project needs to seamlessly interact with {brandname} in one of two modes:
 
 * Embedded Mode runs {brandname} inside your application.
@@ -11,14 +9,14 @@ The {brandname} starter provides a set of managed transitive dependencies that i
 The {brandname} Spring Boot starter gives you a convenient way to get started with Spring Boot but is optional. To use {brandname} with Spring Boot you can simply add the dependencies you want.
 ====
 
-==== Spring Boot Starter Versions
+== Spring Boot Starter Versions
 
 {brandname} supports Spring Boot 1.5.x and 2.0. For Spring Boot 1.5.x, use the Spring 4 dependencies. For Spring Boot 2.0, use the Spring 5 dependencies.
 
 * Spring Boot 1.5.x: Replace `${version.infinispan.starter}` with {sb_starter}
 * Spring Boot 2.0: Replace `${version.infinispan.starter}` with {sb2_starter}
 
-==== Setting Up Your Project
+= Setting Up Your Project
 
 To set up your project, add one of the following to your `pom.xml` file:
 
@@ -28,7 +26,7 @@ include::../dependencies/sb_embedded.adoc[]
 Remote Client/Server Mode::
 include::../dependencies/sb_remote.adoc[]
 
-==== Enforcing {brandname} Versions
+= Enforcing {brandname} Versions
 
 This starter uses a high-level API to ensure compatibility between major versions of {brandname}. However you can enforce a specific version of {brandname} with the `infinispan-bom` module.
 
@@ -36,7 +34,7 @@ Add `infinispan-bom` to your `pom.xml` file before the starter dependencies, as 
 
 include::../dependencies/sb_bom.adoc[]
 
-==== Running in Embedded Mode
+= Running in Embedded Mode
 
 . Add `infinispan-spring-boot-starter-embedded` to your project's classpath to enable Embedded mode.
 +
@@ -62,7 +60,7 @@ cacheManager.getCache("testCache").put("testKey", "testValue");
 System.out.println("Received value from cache: " + cacheManager.getCache("testCache").get("testKey"));
 ----
 
-===== Customizing the Cache Manager
+== Customizing the Cache Manager
 
 Customize the cache manager with the following configuration beans:
 
@@ -129,14 +127,14 @@ public InfinispanConfigurationCustomizer configurationCustomizer() {
 }
 ----
 
-===== Enabling Spring Cache Support
+== Enabling Spring Cache Support
 
 Add the `@EnableCaching` annotation to your application to enable Spring Cache support.
 
 When this starter detects the `EmbeddedCacheManager` bean, it instantiates a new `SpringEmbeddedCacheManager`, which provides an implementation of
 https://docs.spring.io/spring/docs/current/spring-framework-reference/html/cache.html[Spring Cache].
 
-===== Configuration Properties
+== Configuration Properties
 
 Include the following properties in the `application.properties` or `application.yml` file to configure your project:
 
@@ -153,7 +151,7 @@ infinispan.embedded.configXml = # Specifies a XML configuration file.
 If you specify a {brandname} configuration with the `infinispan.embedded.configXml` property, it takes priority over the global configuration bean or any configuration customizer.
 ====
 
-==== Running in Remote Client/Server Mode
+= Running in Remote Client/Server Mode
 
 . Provide the location for the {brandname} server so the starter can create the `RemoteCacheManager` bean.
 +
@@ -185,7 +183,7 @@ public YourClassName(RemoteCacheManager cacheManager) {
 }
 ----
 
-===== Customizing the Cache Manager
+== Customizing the Cache Manager
 
 Customize the cache manager with the following configuration beans:
 
@@ -238,14 +236,14 @@ public InfinispanRemoteCacheCustomizer customizer() {
 Use the `@Ordered` annotation to apply customizers in a specific order.
 ====
 
-===== Enabling Spring Cache Support
+== Enabling Spring Cache Support
 
 Add the `@EnableCaching` annotation to your application to enable Spring Cache support.
 
 When the {brandname} starter detects the `RemoteCacheManager` bean, it instantiates a new `SpringRemoteCacheManager`, which provides an implementation of
 https://docs.spring.io/spring/docs/current/spring-framework-reference/html/cache.html[Spring Cache].
 
-===== Enabling Spring Session Support
+== Enabling Spring Session Support
 
 {brandname} Spring Session support is built on
 `SpringRemoteCacheManager` and `SpringEmbeddedCacheManager`. This starter produces those beans by default.
@@ -259,7 +257,7 @@ To use Spring Session in your project, do the following:
 - `@EnableInfinispanRemoteHttpSession`
 - `@EnableInfinispanEmbeddedHttpSession`
 
-===== Configuration Properties
+== Configuration Properties
 
 Include the following properties in the `application.properties` or `application.yml` file to configure your project:
 
@@ -273,7 +271,7 @@ infinispan.remote.connectTimeout = # Sets a timeout value for initializing conne
 infinispan.remote.maxRetries = # Sets the maximum number of attempts to connect to Data Grid servers.
 ----
 
-==== Exposing {brandname} Statistics
+= Exposing {brandname} Statistics
 
 {brandname} supports the Spring Boot Actuator to expose cache statistics as metrics.
 

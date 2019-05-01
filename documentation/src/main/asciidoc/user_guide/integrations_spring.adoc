@@ -1,9 +1,3 @@
-//RHDG only: Productized Spring Boot starter
-ifdef::productized[]
-[[rhdg_spring_boot_starter]]
-include::topics/productized/spring_boot_starter.adoc[]
-endif::productized[]
-
 [[spring_integration]]
 === Using {brandname} with Spring
 {brandname} integrates with the Spring Framework to make it easy to add caching capabilities to your applications.
