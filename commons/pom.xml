@@ -121,10 +121,6 @@
                <parallel>classes</parallel>
                <groups combine.self="override">${defaultJUnitGroups}</groups>
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
-               <systemPropertyVariables combine.self="override">
-                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
-                  <build.directory>${project.build.directory}</build.directory>
-               </systemPropertyVariables>
                <properties combine.self="override">
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener}</listener>

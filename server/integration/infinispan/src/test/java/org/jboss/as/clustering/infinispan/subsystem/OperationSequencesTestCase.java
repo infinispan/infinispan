@@ -4,17 +4,14 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.FAI
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
 
 import org.jboss.as.subsystem.test.KernelServices;
-import org.jboss.byteman.contrib.bmunit.BMUnitRunner;
 import org.jboss.dmr.ModelNode;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
 * Test case for testing sequences of management operations.
 *
 * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
 */
-@RunWith(BMUnitRunner.class)
 public class OperationSequencesTestCase extends OperationTestCaseBase {
 
     @Test

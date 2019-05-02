@@ -180,10 +180,12 @@
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
       <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Djboss.modules.settings.xml.url=${jboss.modules.settings.xml.url}</testjvm.commonArgs>
       <testjvm.jigsawArgs />
-      <forkJvmArgs>-Xmx1G ${testjvm.commonArgs}</forkJvmArgs>
+      <testjvm.extraArgs/>
+      <forkJvmArgs>-Xmx1G ${testjvm.commonArgs} ${testjvm.extraArgs}</forkJvmArgs>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
-      <server.jvm.args>${testjvm.commonArgs} ${testjvm.jigsawArgs}</server.jvm.args>
+      <server.jvm.args>${testjvm.commonArgs} ${testjvm.jigsawArgs} ${testjvm.extraArgs}</server.jvm.args>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
+      <infinispan.test.jvm.version.regex>^1\.8\.0.*</infinispan.test.jvm.version.regex>
       <ansi.strip/>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
       <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
@@ -4562,7 +4564,7 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${testNGListeners}</listener>
                </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Djdk.attach.allowAttachSelf=true</argLine>
             </configuration>
          </plugin>
          <plugin>
@@ -5064,8 +5066,16 @@
          </activation>
          <properties>
             <server.jvm>${env.JAVA8_HOME}</server.jvm>
-            <server.jvm.args>${testjvm.commonArgs}</server.jvm.args>
+            <server.jvm.args>${testjvm.commonArgs} ${testjvm.extraArgs}</server.jvm.args>
          </properties>
+         <dependencies>
+            <dependency>
+               <groupId>com.sun</groupId>
+               <artifactId>tools</artifactId>
+               <scope>system</scope>
+               <systemPath>${env.JAVA8_HOME}/lib/tools.jar</systemPath>
+            </dependency>
+         </dependencies>
          <build>
             <plugins>
                <plugin>
@@ -5074,6 +5084,9 @@
                      <!-- Run the tests with JDK8 -->
                      <jvm>${env.JAVA8_HOME}/bin/java</jvm>
                      <argLine>${forkJvmArgs}</argLine>
+                     <systemProperties>
+                        <infinispan.test.jvm.version.regex>${infinispan.test.jvm.version.regex}</infinispan.test.jvm.version.regex>
+                     </systemProperties>
                   </configuration>
                   <executions>
                      <execution>
@@ -5088,6 +5101,9 @@
                   <configuration>
                      <jvm>${env.JAVA8_HOME}/bin/java</jvm>
                      <argLine>${forkJvmArgs}</argLine>
+                     <systemProperties>
+                        <infinispan.test.jvm.version.regex>${infinispan.test.jvm.version.regex}</infinispan.test.jvm.version.regex>
+                     </systemProperties>
                   </configuration>
                </plugin>
             </plugins>
