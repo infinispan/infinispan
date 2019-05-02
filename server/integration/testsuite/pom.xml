@@ -292,7 +292,7 @@
         <username.other>sa</username.other>
 
         <ispnserver.project.dir>${basedir}/../build</ispnserver.project.dir>
-        <server.build.dist>${ispnserver.project.dir}/target/server-distribution-thin/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
+        <server.build.dist>${ispnserver.project.dir}/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
 
         <server1.dist>${basedir}/target/server/node1</server1.dist>
         <server2.dist>${basedir}/target/server/node2</server2.dist>

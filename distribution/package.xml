@@ -86,7 +86,7 @@
    </target>
 
    <target name="server">
-      <property name="server.dir" value="${root.dir}/server/integration/build/target/server-distribution-fat/${infinispan.brand.prefix}-server-${infinispan.brand.version}"/>
+      <property name="server.dir" value="${root.dir}/server/integration/build/target/server-distribution-dist/${infinispan.brand.prefix}-server-${infinispan.brand.version}"/>
       <path id="jar.fileset.path">
          <fileset casesensitive="yes" dir="${server.dir}/modules">
             <include name="**/*.jar" />
