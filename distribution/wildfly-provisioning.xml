@@ -5,7 +5,7 @@
   on the feature pack `org.wildfly:wildfly-feature-pack`, which would pull in the whole WildFly server
   into our modules zip.
   -->
-<server-provisioning xmlns="urn:wildfly:server-provisioning:1.1" copy-module-artifacts="true" exclude-dependencies="true">
+<server-provisioning xmlns="urn:wildfly:server-provisioning:1.2" copy-module-artifacts="true" exclude-dependencies="true">
 	<feature-packs>
 		<feature-pack
 				groupId="org.hibernate"

@@ -31,8 +31,8 @@
       <remote.CacheEntryImpl>org.infinispan.jcache.JCacheEntry</remote.CacheEntryImpl>
       <remote.CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</remote.CacheInvocationContextImpl>
 
-      <ispnserver.project.dir>${basedir}/../../server/integration</ispnserver.project.dir>
-      <server.build.dist>${ispnserver.project.dir}/build/target/server-distribution-thin/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
+      <ispnserver.project.dir>${basedir}/../../server/integration/build</ispnserver.project.dir>
+      <server.build.dist>${ispnserver.project.dir}/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
       <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
       <server.dir.parent>${project.build.directory}</server.dir.parent>
       <server.dir.name>infinispan-server-${project.version}</server.dir.name>

@@ -14,8 +14,8 @@
    <description>Integration tests - Wildfly Module Integration Tests</description>
 
    <properties>
-      <ispnserver.project.dir>${basedir}/../../server/integration</ispnserver.project.dir>
-      <server.build.dist>${ispnserver.project.dir}/build/target/server-distribution-thin/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
+      <ispnserver.project.dir>${basedir}/../../server/integration/build</ispnserver.project.dir>
+      <server.build.dist>${ispnserver.project.dir}/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
       <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
       <resources.dir>${basedir}/src/test/resources</resources.dir>
       <serverMemoryJvmArgs>-Xmx300m ${testjvm.commonArgs}</serverMemoryJvmArgs>
