@@ -10,3 +10,14 @@ building Infinispan:
 
 or use the provided build.sh or build.bat depending on your platform of choice.
 
+Available profiles
+==================
+
+* *distribution* Builds the full distribution
+* *java8-test*   Runs the testsuite using a Java 8 installation (the JAVA8_HOME environment variable must point to it)
+
+System properties
+=================
+
+* *server.test.provisioning* Set this to _dist_ to copy artifacts to the server used in the testsuite (uses more disk space but avoids runtime resolution of artifacts)
+

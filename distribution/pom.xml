@@ -249,7 +249,7 @@
                      <target>
 			               <property name="plugin_classpath" refid="maven.plugin.classpath" />
                         <property name="server.output.dir.prefix" value="${infinispan.brand.prefix}-server" />
-			               <property name="server.thin.dir.path" value="${basedir}/../server/integration/build/target/server-distribution-thin/${server.output.dir.prefix}-${infinispan.brand.version}"/>
+			               <property name="server.thin.dir.path" value="${basedir}/../server/integration/build/target/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                         <echo message="Base dir: ${basedir}" />
                         <path id="xsd.fileset.path">
                            <fileset casesensitive="yes" dir="${server.thin.dir.path}/docs/schema">
