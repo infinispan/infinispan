@@ -7,6 +7,13 @@
   -->
 <server-provisioning xmlns="urn:wildfly:server-provisioning:1.1" copy-module-artifacts="true" exclude-dependencies="true">
 	<feature-packs>
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-client" version="${project.version}" />
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-commons" version="${project.version}" />
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-embedded" version="${project.version}" />
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-embedded-query" version="${project.version}" />
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-server" version="${project.version}" />
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-wf-modules" version="${project.version}" />
+
 		<feature-pack
 				groupId="org.hibernate"
 				artifactId="hibernate-search-jbossmodules-engine"
@@ -31,12 +38,5 @@
 				groupId="org.hibernate.gson-jbossmodules"
 				artifactId="gson-jbossmodules"
 				version="${version.gson.featurepack}"/>
-
-		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-client" version="${project.version}" />
-		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-commons" version="${project.version}" />
-		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-embedded" version="${project.version}" />
-		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-embedded-query" version="${project.version}" />
-		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-server" version="${project.version}" />
-		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-wf-modules" version="${project.version}" />
 	</feature-packs>
 </server-provisioning>
