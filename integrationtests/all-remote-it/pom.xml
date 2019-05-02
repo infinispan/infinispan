@@ -11,7 +11,7 @@
 
    <properties>
       <testNGListener />
-      <server.build.dist>${basedir}/../../server/integration/build/target/server-distribution-thin/</server.build.dist>
+      <server.build.dist>${basedir}/../../server/integration/build/target</server.build.dist>
       <server1.dist>${project.build.directory}/node1</server1.dist>
       <server2.dist>${project.build.directory}/node2</server2.dist>
    </properties>

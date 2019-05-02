@@ -181,6 +181,7 @@
       <default.transport.stack>udp</default.transport.stack>
       <infinispan.test.jgroups.protocol>${default.transport.stack}</infinispan.test.jgroups.protocol>
       <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
+      <server.test.provisioning>thin</server.test.provisioning>
       <skipArtifactUpload>false</skipArtifactUpload>
       <upload.username>infinispan</upload.username>
       <upload.host>filemgmt.jboss.org</upload.host>
