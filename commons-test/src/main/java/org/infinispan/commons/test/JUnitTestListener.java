@@ -66,6 +66,7 @@ public class JUnitTestListener extends RunListener {
 
    @Override
    public void testRunStarted(Description description) throws Exception {
+      EnvironmentCheck.checkJVMVersion();
       ThreadLeakChecker.saveInitialThreads();
    }
 

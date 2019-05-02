@@ -18,7 +18,7 @@
 
    <properties>
       <server.output.dir.prefix>${infinispan.brand.prefix}-server</server.output.dir.prefix>
-      <forkJvmArgs>-Xmx500m ${testjvm.commonArgs}</forkJvmArgs>
+      <forkJvmArgs>-Xmx500m ${testjvm.commonArgs} ${testjvm.extraArgs}</forkJvmArgs>
       <testjvm.jigsawArgs/>
       <version.org.infinispan.server-build.old>8.2.8.Final</version.org.infinispan.server-build.old>
    </properties>
@@ -30,14 +30,6 @@
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>xml-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-surefire-plugin</artifactId>
-               <configuration>
-                  <trimStackTrace>false</trimStackTrace>
-                  <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
-               </configuration>
             </plugin>
          </plugins>
       </pluginManagement>
