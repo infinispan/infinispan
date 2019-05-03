@@ -303,9 +303,6 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       // increment invalidations counter if statistics maintained
       incrementInvalidations();
       final InvalidateCommand invalidateCommand = commandsFactory.buildInvalidateCommand(EnumUtil.EMPTY_BIT_SET, keys);
-      invalidateCommand.setTopologyId(topologyId);
-      if (log.isDebugEnabled())
-         log.debug("Cache [" + rpcManager.getAddress() + "] replicating " + invalidateCommand);
 
       TopologyAffectedCommand command = invalidateCommand;
       if (ctx.isInTxScope()) {
@@ -314,7 +311,10 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          // so that the invalidation is executed in the same transaction and locks can be acquired and released properly.
          command = commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(),
                                                        Collections.singletonList(invalidateCommand), onePhaseCommit);
-         command.setTopologyId(invalidateCommand.getTopologyId());
+         command.setTopologyId(topologyId);
+      } else {
+         // Non-tx invalidation caches don't have a state transfer interceptor, so we need to set the topology here
+         invalidateCommand.setTopologyId(distributionManager.getCacheTopology().getTopologyId());
       }
       if (synchronous) {
          return rpcManager.invokeCommandOnAll(command, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
