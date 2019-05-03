@@ -218,6 +218,15 @@ public class ReplListener {
       }
    }
 
+   public void assertNoRpc() {
+      debugf("Expecting no commands");
+      for (VisitableCommand command : loggedCommands) {
+         for (Predicate<VisitableCommand> expectation : expectedCommands) {
+            assertFalse("Shouldn't have matched command " + command, expectation.test(command));
+         }
+      }
+   }
+
    public Cache<?, ?> getCache() {
       return cache;
    }
