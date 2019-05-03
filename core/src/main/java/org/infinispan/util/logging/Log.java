@@ -974,8 +974,8 @@ public interface Log extends BasicLogger {
    void unableToCreateInterceptor(Class type, @Cause Exception e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to broadcast invalidations as a part of the prepare phase. Rolling back.", id = 268)
-   void unableToRollbackInvalidationsDuringPrepare(@Cause Throwable e);
+   @Message(value = "Unable to broadcast evicts as a part of the prepare phase. Rolling back.", id = 268)
+   void unableToRollbackEvictionsDuringPrepare(@Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Cache used for Grid metadata should be synchronous.", id = 269)
@@ -1865,7 +1865,4 @@ public interface Log extends BasicLogger {
 
    @Message(value = "A store cannot be shared when utilised with a local cache.", id = 549)
    CacheConfigurationException sharedStoreWithLocalCache();
-
-   @Message(value = "Invalidation mode only supports when-split=ALLOW_READ_WRITES", id = 550)
-   CacheConfigurationException invalidationPartitionHandlingNotSuported();
 }
