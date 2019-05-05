@@ -32,10 +32,10 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheJmxRegistration.class);
    public static final String CACHE_JMX_GROUP = "type=Cache";
 
-   @Inject private Configuration cacheConfiguration;
+   @Inject Configuration cacheConfiguration;
    @Inject public CacheManagerJmxRegistration globalJmxRegistration;
    @ComponentName(KnownComponentNames.CACHE_NAME)
-   @Inject private String cacheName;
+   @Inject String cacheName;
 
    private Collection<ResourceDMBean> nonCacheDMBeans;
 

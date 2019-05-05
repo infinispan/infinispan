@@ -21,7 +21,7 @@ public final class IckleContinuousQueryProtobufFilterIndexingServiceProvider ext
 
    private RemoteQueryManager remoteQueryManager;
 
-   @Inject private Cache cache;
+   @Inject Cache cache;
 
    public IckleContinuousQueryProtobufFilterIndexingServiceProvider() {
       super(ContinuousQueryResult.ResultType.JOINING, ContinuousQueryResult.ResultType.UPDATED, ContinuousQueryResult.ResultType.LEAVING);

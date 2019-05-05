@@ -52,9 +52,9 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    private static final boolean trace = log.isTraceEnabled();
 
    @Inject @ComponentName(REMOTE_COMMAND_EXECUTOR)
-   private ExecutorService remoteCommandsExecutor;
-   @Inject private BackupReceiverRepository backupReceiverRepository;
-   @Inject private GlobalComponentRegistry globalComponentRegistry;
+   ExecutorService remoteCommandsExecutor;
+   @Inject BackupReceiverRepository backupReceiverRepository;
+   @Inject GlobalComponentRegistry globalComponentRegistry;
 
    private static Response shuttingDownResponse() {
       return CacheNotFoundResponse.INSTANCE;

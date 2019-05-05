@@ -36,6 +36,7 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.impl.TxInterceptor;
@@ -54,7 +55,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.EmbeddedTimeService;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -378,7 +378,7 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
       }
    }
 
-   private class LockManagerTimeService extends EmbeddedTimeService {
+   class LockManagerTimeService extends EmbeddedTimeService {
       private volatile boolean triggerTimeout = false;
 
       @Override

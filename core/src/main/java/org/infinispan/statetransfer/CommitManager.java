@@ -35,9 +35,9 @@ public class CommitManager {
    private static final boolean trace = log.isTraceEnabled();
    private final ConcurrentMap<Object, DiscardPolicy> tracker = new ConcurrentHashMap<>();
 
-   @Inject private InternalDataContainer dataContainer;
-   @Inject private PersistenceManager persistenceManager;
-   @Inject private TimeService timeService;
+   @Inject InternalDataContainer dataContainer;
+   @Inject PersistenceManager persistenceManager;
+   @Inject TimeService timeService;
 
    private volatile boolean trackStateTransfer;
    private volatile boolean trackXSiteStateTransfer;

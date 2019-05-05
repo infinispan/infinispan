@@ -64,7 +64,7 @@ public interface BasicComponentRegistry {
     * @param name The component name.
     * @param componentType The expected component type, not used to identify the component.
     */
-   <T> ComponentRef<T> getComponent(String name, Class<T> componentType);
+   <T, U extends T> ComponentRef<T> getComponent(String name, Class<U> componentType);
 
    /**
     * Looks up a running component named {@code name} in the registry, or registers it if necessary.

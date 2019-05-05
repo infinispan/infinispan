@@ -112,22 +112,22 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private static final Log log = LogFactory.getLog(PersistenceManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private Configuration configuration;
-   @Inject private GlobalConfiguration globalConfiguration;
-   @Inject private ComponentRef<AdvancedCache<Object, Object>> cache;
-   @Inject private StreamingMarshaller m;
-   @Inject private TransactionManager transactionManager;
-   @Inject private TimeService timeService;
+   @Inject Configuration configuration;
+   @Inject GlobalConfiguration globalConfiguration;
+   @Inject ComponentRef<AdvancedCache<Object, Object>> cache;
+   @Inject StreamingMarshaller m;
+   @Inject TransactionManager transactionManager;
+   @Inject TimeService timeService;
    @Inject @ComponentName(PERSISTENCE_EXECUTOR)
-   private ScheduledExecutorService persistenceExecutor;
-   @Inject private ByteBufferFactory byteBufferFactory;
-   @Inject private MarshalledEntryFactory marshalledEntryFactory;
-   @Inject private MarshallableEntryFactory marshallableEntryFactory;
-   @Inject private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
-   @Inject private ComponentRef<InternalExpirationManager<Object, Object>> expirationManager;
-   @Inject private CacheNotifier cacheNotifier;
-   @Inject private KeyPartitioner keyPartitioner;
-   @Inject private Transport transport;
+   ScheduledExecutorService persistenceExecutor;
+   @Inject ByteBufferFactory byteBufferFactory;
+   @Inject MarshalledEntryFactory marshalledEntryFactory;
+   @Inject MarshallableEntryFactory marshallableEntryFactory;
+   @Inject CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
+   @Inject ComponentRef<InternalExpirationManager<Object, Object>> expirationManager;
+   @Inject CacheNotifier cacheNotifier;
+   @Inject KeyPartitioner keyPartitioner;
+   @Inject Transport transport;
 
    @GuardedBy("storesMutex")
    private final List<CacheLoader> loaders = new ArrayList<>();

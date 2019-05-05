@@ -62,7 +62,7 @@ public class EmbeddedCounterManager implements CounterManager {
    private volatile boolean started = false;
 
    @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   private Executor asyncExecutor;
+   Executor asyncExecutor;
 
    public EmbeddedCounterManager(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;

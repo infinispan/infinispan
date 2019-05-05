@@ -23,8 +23,8 @@ import org.infinispan.commons.time.TimeService;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
-   @Inject private StatsCollector statsCollector;
-   @Inject private TimeService timeService;
+   @Inject StatsCollector statsCollector;
+   @Inject TimeService timeService;
 
    public StatsCollectingCache(String cacheName) {
       super(cacheName);

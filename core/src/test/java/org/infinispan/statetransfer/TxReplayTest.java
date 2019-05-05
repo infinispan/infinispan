@@ -98,7 +98,7 @@ public class TxReplayTest extends MultipleCacheManagersTest {
       assertFalse("Expected a remote transaction.", table.getRemoteTransactions().isEmpty());
    }
 
-   private static class TxCommandInterceptor extends CommandInterceptor {
+   static class TxCommandInterceptor extends CommandInterceptor {
       //counters
       private final AtomicInteger numberPrepares = new AtomicInteger(0);
       private final AtomicInteger numberCommits = new AtomicInteger(0);

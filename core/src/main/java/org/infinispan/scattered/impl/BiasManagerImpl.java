@@ -54,15 +54,15 @@ public class BiasManagerImpl implements BiasManager {
    private ConcurrentMap<Object, RemoteBias> remoteBias = new ConcurrentHashMap<>();
    private long renewLeasePeriod;
 
-   @Inject private CacheNotifier cacheNotifier;
-   @Inject private Configuration configuration;
-   @Inject private TimeService timeService;
-   @Inject private DistributionManager distributionManager;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private RpcManager rpcManager;
-   @Inject private KeyPartitioner keyPartitioner;
+   @Inject CacheNotifier cacheNotifier;
+   @Inject Configuration configuration;
+   @Inject TimeService timeService;
+   @Inject DistributionManager distributionManager;
+   @Inject CommandsFactory commandsFactory;
+   @Inject RpcManager rpcManager;
+   @Inject KeyPartitioner keyPartitioner;
    @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
-   @Inject private ScheduledExecutorService executor;
+   @Inject ScheduledExecutorService executor;
 
    @Start
    public void start() {

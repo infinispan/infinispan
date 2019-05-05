@@ -33,9 +33,9 @@ import org.infinispan.util.logging.LogFactory;
 public class RollingUpgradeManager {
    private static final Log log = LogFactory.getLog(RollingUpgradeManager.class);
    private final Set<SourceMigrator> sourceMigrators = new HashSet<>(2);
-   @Inject private Cache<Object, Object> cache;
-   @Inject private TimeService timeService;
-   @Inject private GlobalConfiguration globalConfiguration;
+   @Inject Cache<Object, Object> cache;
+   @Inject TimeService timeService;
+   @Inject GlobalConfiguration globalConfiguration;
 
    @ManagedOperation(
          description = "Synchronizes data from the old cluster to this using the specified migrator",

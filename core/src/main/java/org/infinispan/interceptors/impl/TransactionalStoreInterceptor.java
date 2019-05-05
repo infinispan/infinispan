@@ -25,9 +25,9 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
  * @since 9.0
  */
 public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
-   @Inject private PersistenceManager persistenceManager;
-   @Inject private InternalEntryFactory entryFactory;
-   @Inject private MarshallableEntryFactory marshalledEntryFactory;
+   @Inject PersistenceManager persistenceManager;
+   @Inject InternalEntryFactory entryFactory;
+   @Inject MarshallableEntryFactory marshalledEntryFactory;
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

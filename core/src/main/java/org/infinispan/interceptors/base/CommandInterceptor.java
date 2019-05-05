@@ -55,7 +55,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class CommandInterceptor extends AbstractVisitor implements AsyncInterceptor {
 
-   @Inject private ComponentRef<AsyncInterceptorChain> interceptorChain;
+   @Inject ComponentRef<AsyncInterceptorChain> interceptorChain;
    @Inject protected Configuration cacheConfiguration;
 
    private static final Log log = LogFactory.getLog(CommandInterceptor.class);

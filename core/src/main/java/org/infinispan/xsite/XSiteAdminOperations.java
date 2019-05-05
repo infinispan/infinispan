@@ -42,10 +42,10 @@ public class XSiteAdminOperations {
    public static final String SUCCESS = "ok";
    private static Log log = LogFactory.getLog(XSiteAdminOperations.class);
 
-   @Inject private RpcManager rpcManager;
-   @Inject private Cache cache;
-   @Inject private volatile BackupSender backupSender;
-   @Inject private XSiteStateTransferManager stateTransferManager;
+   @Inject RpcManager rpcManager;
+   @Inject Cache cache;
+   @Inject volatile BackupSender backupSender;
+   @Inject XSiteStateTransferManager stateTransferManager;
 
    public Map<String, SiteStatus> clusterStatus()  {
       Map<String, Boolean> localNodeStatus = backupSender.status();

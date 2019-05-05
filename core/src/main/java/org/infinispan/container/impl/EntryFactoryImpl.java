@@ -35,12 +35,12 @@ public class EntryFactoryImpl implements EntryFactory {
    private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
    private final static boolean trace = log.isTraceEnabled();
 
-   @Inject private InternalDataContainer container;
-   @Inject private Configuration configuration;
-   @Inject private TimeService timeService;
-   @Inject private VersionGenerator versionGenerator;
-   @Inject private DistributionManager distributionManager;
-   @Inject private InternalExpirationManager expirationManager;
+   @Inject InternalDataContainer container;
+   @Inject Configuration configuration;
+   @Inject TimeService timeService;
+   @Inject VersionGenerator versionGenerator;
+   @Inject DistributionManager distributionManager;
+   @Inject InternalExpirationManager expirationManager;
 
    private boolean isL1Enabled;
    private boolean useRepeatableRead;

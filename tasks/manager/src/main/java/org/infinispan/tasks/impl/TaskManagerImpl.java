@@ -46,10 +46,10 @@ import org.infinispan.util.logging.events.EventLogger;
 public class TaskManagerImpl implements TaskManager {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
-   @Inject private EmbeddedCacheManager cacheManager;
-   @Inject private TimeService timeService;
+   @Inject EmbeddedCacheManager cacheManager;
+   @Inject TimeService timeService;
    @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   private ExecutorService asyncExecutor;
+   ExecutorService asyncExecutor;
 
    private List<TaskEngine> engines;
    private ConcurrentMap<UUID, TaskExecution> runningTasks;

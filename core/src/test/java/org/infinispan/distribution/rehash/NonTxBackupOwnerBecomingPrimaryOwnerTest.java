@@ -258,7 +258,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLtm, true);
    }
 
-   private class StateTransferLatchInterceptor extends DDAsyncInterceptor {
+   class StateTransferLatchInterceptor extends DDAsyncInterceptor {
       private final CountDownLatch latch;
 
       private StateTransferLatchInterceptor(CountDownLatch latch) {

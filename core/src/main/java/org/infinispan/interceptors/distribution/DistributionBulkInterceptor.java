@@ -47,7 +47,7 @@ import org.infinispan.util.EntryWrapper;
  * @param <V> The value type of entries
  */
 public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
-   @Inject private ComponentRef<Cache<K, V>> cache;
+   @Inject ComponentRef<Cache<K, V>> cache;
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {

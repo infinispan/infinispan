@@ -43,7 +43,7 @@ public class TotalOrderManager {
    private static final boolean trace = log.isTraceEnabled();
 
    @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
-   private BlockingTaskAwareExecutorService totalOrderExecutor;
+   BlockingTaskAwareExecutorService totalOrderExecutor;
 
    /**
     * this map is used to keep track of concurrent transactions.

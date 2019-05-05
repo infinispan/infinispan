@@ -18,9 +18,9 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 public class OrderedUpdatesManagerImpl implements OrderedUpdatesManager {
-   @Inject private InternalDataContainer<Object, Object> dataContainer;
-   @Inject private DistributionManager distributionManager;
-   @Inject private PersistenceManager persistenceManager;
+   @Inject InternalDataContainer<Object, Object> dataContainer;
+   @Inject DistributionManager distributionManager;
+   @Inject PersistenceManager persistenceManager;
 
    private ConcurrentHashMap<Object, CompletableFuture<?>> locks = new ConcurrentHashMap<>();
 

@@ -14,7 +14,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  */
 final class CommandInitializer implements ModuleCommandInitializer {
 
-   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject EmbeddedCacheManager cacheManager;
 
    @Override
    public void initializeReplicableCommand(ReplicableCommand c, boolean isRemote) {

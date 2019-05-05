@@ -79,10 +79,10 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 
    @Inject protected PersistenceManager persistenceManager;
-   @Inject private InternalEntryFactory entryFactory;
-   @Inject private TransactionManager transactionManager;
-   @Inject private KeyPartitioner keyPartitioner;
-   @Inject private MarshallableEntryFactory marshalledEntryFactory;
+   @Inject InternalEntryFactory entryFactory;
+   @Inject TransactionManager transactionManager;
+   @Inject KeyPartitioner keyPartitioner;
+   @Inject MarshallableEntryFactory marshalledEntryFactory;
 
    PersistenceConfiguration loaderConfig = null;
    final AtomicLong cacheStores = new AtomicLong(0);

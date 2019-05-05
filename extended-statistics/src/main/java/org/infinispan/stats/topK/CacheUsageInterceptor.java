@@ -36,8 +36,8 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    public static final int DEFAULT_TOP_KEY = 10;
    private static final Log log = LogFactory.getLog(CacheUsageInterceptor.class, Log.class);
 
-   @Inject private BasicComponentRegistry componentRegistry;
-   @Inject private DistributionManager distributionManager;
+   @Inject BasicComponentRegistry componentRegistry;
+   @Inject DistributionManager distributionManager;
 
    private StreamSummaryContainer streamSummaryContainer;
 

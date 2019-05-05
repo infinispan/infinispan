@@ -256,7 +256,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
       });
    }
 
-   private class ControlledNextInterceptor extends BaseAsyncInterceptor {
+   class ControlledNextInterceptor extends BaseAsyncInterceptor {
 
       CompletableFuture<Object> lastReturnValue;
 

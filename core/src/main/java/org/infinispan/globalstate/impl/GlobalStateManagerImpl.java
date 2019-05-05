@@ -46,8 +46,8 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    public static final String VERSION_MAJOR = "version-major";
    private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   @Inject private GlobalConfiguration globalConfiguration;
-   @Inject private TimeService timeService;
+   @Inject GlobalConfiguration globalConfiguration;
+   @Inject TimeService timeService;
 
    private List<GlobalStateProvider> stateProviders = new ArrayList<>();
    private boolean persistentState;

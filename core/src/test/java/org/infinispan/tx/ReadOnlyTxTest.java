@@ -97,7 +97,7 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
       return TestingUtil.getTransactionTable(cache);
    }
 
-   private class CommitCommandCounterInterceptor extends BaseCustomInterceptor {
+   class CommitCommandCounterInterceptor extends BaseCustomInterceptor {
 
       public final AtomicInteger counter = new AtomicInteger(0);
 

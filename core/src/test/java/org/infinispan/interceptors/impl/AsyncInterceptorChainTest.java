@@ -97,7 +97,7 @@ public class AsyncInterceptorChainTest extends AbstractInfinispanTest {
       }
    }
 
-   private static class DummyCallInterceptor extends BaseAsyncInterceptor {
+   static class DummyCallInterceptor extends BaseAsyncInterceptor {
       @Override
       public Object visitCommand(InvocationContext ctx, VisitableCommand command)
             throws Throwable {
@@ -105,16 +105,16 @@ public class AsyncInterceptorChainTest extends AbstractInfinispanTest {
       }
    }
 
-   private static class DummyActivationInterceptor extends DummyCallInterceptor {
+   static class DummyActivationInterceptor extends DummyCallInterceptor {
    }
 
-   private static class DummyCacheMgmtInterceptor extends DummyCallInterceptor {
+   static class DummyCacheMgmtInterceptor extends DummyCallInterceptor {
    }
 
-   private static class DummyDistCacheWriterInterceptor extends DummyCallInterceptor {
+   static class DummyDistCacheWriterInterceptor extends DummyCallInterceptor {
    }
 
-   private static class DummyInvalidationInterceptor extends DummyCallInterceptor {
+   static class DummyInvalidationInterceptor extends DummyCallInterceptor {
    }
 
 }

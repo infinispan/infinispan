@@ -136,8 +136,8 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject protected TriangleOrderManager triangleOrderManager;
    @Inject protected DistributionManager distributionManager;
    @Inject protected KeyPartitioner keyPartitioner;
-   @Inject private InternalConflictManager conflictManager;
-   @Inject private LocalPublisherManager<Object, Object> localPublisherManager;
+   @Inject InternalConflictManager conflictManager;
+   @Inject LocalPublisherManager<Object, Object> localPublisherManager;
 
    protected String cacheName;
    protected long timeout;

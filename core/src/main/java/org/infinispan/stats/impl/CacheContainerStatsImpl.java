@@ -34,7 +34,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    private EmbeddedCacheManager cm;
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
    private boolean statisticsEnabled = false;
-   @Inject private TimeService timeService;
+   @Inject TimeService timeService;
 
    public CacheContainerStatsImpl(EmbeddedCacheManager cm) {
       this.cm = cm;

@@ -46,9 +46,9 @@ public class DistributionManagerImpl implements DistributionManager {
    private static final Log log = LogFactory.getLog(DistributionManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private Transport transport;
-   @Inject private KeyPartitioner keyPartitioner;
-   @Inject private Configuration configuration;
+   @Inject Transport transport;
+   @Inject KeyPartitioner keyPartitioner;
+   @Inject Configuration configuration;
 
    private CacheMode cacheMode;
 
@@ -57,7 +57,7 @@ public class DistributionManagerImpl implements DistributionManager {
    // Start before RpcManagerImpl
    @Start(priority = 8)
    @SuppressWarnings("unused")
-   private void start() throws Exception {
+   void start() throws Exception {
       if (trace) log.tracef("starting distribution manager on %s", getAddress());
 
       cacheMode = configuration.clustering().cacheMode();

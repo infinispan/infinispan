@@ -47,7 +47,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
    private ConfigurationBuilder cfgBuilder;
    private GlobalConfigurationBuilder gcfgBuilder;
 
-   private class MockTransport extends JGroupsTransport {
+   class MockTransport extends JGroupsTransport {
       volatile Callable<Void> callOnStateResponseCommand;
 
       @Override

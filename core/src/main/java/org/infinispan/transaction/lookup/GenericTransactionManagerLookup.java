@@ -48,7 +48,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     */
    private TransactionManager tm = null;
 
-   @Inject private GlobalConfiguration globalCfg;
+   @Inject GlobalConfiguration globalCfg;
 
    /**
     * Get the system-wide used TransactionManager

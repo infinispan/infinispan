@@ -74,7 +74,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       assertEquals("v2", c.get(new Key("k")));
    }
 
-   private static class ContextExtractingInterceptor extends CommandInterceptor {
+   static class ContextExtractingInterceptor extends CommandInterceptor {
       InvocationContext ctx;
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {

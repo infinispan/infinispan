@@ -28,8 +28,8 @@ import org.infinispan.util.logging.Log;
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 
-   @Inject private PartitionHandlingManager partitionHandlingManager;
-   @Inject private PendingLockManager pendingLockManager;
+   @Inject PartitionHandlingManager partitionHandlingManager;
+   @Inject PendingLockManager pendingLockManager;
 
    final InvocationSuccessFunction invokeNextFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
 

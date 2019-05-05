@@ -24,7 +24,7 @@ public class TriangleOrderManager {
    private static final Log log = LogFactory.getLog(TriangleOrderManager.class);
    private static final boolean trace = log.isTraceEnabled();
    private final TriangleSequencer[] sequencers;
-   @Inject private DistributionManager distributionManager;
+   @Inject DistributionManager distributionManager;
 
    public TriangleOrderManager(int segments) {
       TriangleSequencer[] triangleSequencers = new TriangleSequencer[segments];

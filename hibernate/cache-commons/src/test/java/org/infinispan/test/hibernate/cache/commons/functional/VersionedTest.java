@@ -1,5 +1,11 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -16,28 +22,20 @@ import javax.transaction.Synchronization;
 import org.hibernate.PessimisticLockException;
 import org.hibernate.Session;
 import org.hibernate.StaleStateException;
+import org.infinispan.AdvancedCache;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commons.util.ByRef;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
-
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.OtherItem;
-import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.junit.Test;
-
-import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.ByRef;
-import org.infinispan.context.InvocationContext;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -307,7 +305,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       withTxSession(s -> assertFalse(s.load(Item.class, itemId).getOtherItems().isEmpty()));
    }
 
-   private class CollectionUpdateTestInterceptor extends DDAsyncInterceptor {
+   class CollectionUpdateTestInterceptor extends DDAsyncInterceptor {
       final AtomicBoolean firstPutFromLoad = new AtomicBoolean(true);
       final CountDownLatch putFromLoadLatch;
       final CountDownLatch updateLatch = new CountDownLatch(1);
@@ -328,7 +326,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       }
    }
 
-   private class AnotherCollectionUpdateTestInterceptor extends DDAsyncInterceptor {
+   class AnotherCollectionUpdateTestInterceptor extends DDAsyncInterceptor {
       final CountDownLatch putFromLoadLatch;
       final AtomicBoolean committing;
 

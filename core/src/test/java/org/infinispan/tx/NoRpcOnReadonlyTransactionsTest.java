@@ -121,7 +121,7 @@ public class NoRpcOnReadonlyTransactionsTest extends MultipleCacheManagersTest {
 
    }
 
-   private static class TxCheckInterceptor extends CommandInterceptor {
+   static class TxCheckInterceptor extends CommandInterceptor {
       private volatile int remotePrepares;
       private volatile int remoteCommits;
 

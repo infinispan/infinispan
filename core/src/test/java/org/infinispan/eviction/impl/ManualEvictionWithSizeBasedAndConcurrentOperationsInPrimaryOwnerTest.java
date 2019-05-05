@@ -383,7 +383,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
    }
 
-   private class AfterPassivationOrCacheWriter extends ControlledCommandInterceptor {
+   class AfterPassivationOrCacheWriter extends ControlledCommandInterceptor {
 
       volatile Runnable beforeEvict;
       volatile Runnable afterEvict;

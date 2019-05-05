@@ -66,17 +66,17 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
 
-   @Inject private RpcManager rpcManager;
-   @Inject private Configuration configuration;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private ResponseGenerator responseGenerator;
+   @Inject RpcManager rpcManager;
+   @Inject Configuration configuration;
+   @Inject CommandsFactory commandsFactory;
+   @Inject ResponseGenerator responseGenerator;
    @Inject @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR)
-   private ExecutorService asyncExecutor;
-   @Inject private StateTransferManager stateTransferManager;
-   @Inject private DistributionManager distributionManager;
-   @Inject private CacheNotifier cacheNotifier;
-   @Inject private XSiteStateConsumer consumer;
-   @Inject private XSiteStateProvider provider;
+   ExecutorService asyncExecutor;
+   @Inject StateTransferManager stateTransferManager;
+   @Inject DistributionManager distributionManager;
+   @Inject CacheNotifier cacheNotifier;
+   @Inject XSiteStateConsumer consumer;
+   @Inject XSiteStateProvider provider;
 
    private final ConcurrentMap<String, XSiteStateTransferCollector> siteCollector;
    private final ConcurrentMap<String, String> status;

@@ -35,10 +35,10 @@ public class ActivationManagerImpl implements ActivationManager {
 
    private final AtomicLong activations = new AtomicLong(0);
 
-   @Inject private PersistenceManager persistenceManager;
-   @Inject private Configuration cfg;
-   @Inject private DistributionManager distributionManager;
-   @Inject private KeyPartitioner keyPartitioner;
+   @Inject PersistenceManager persistenceManager;
+   @Inject Configuration cfg;
+   @Inject DistributionManager distributionManager;
+   @Inject KeyPartitioner keyPartitioner;
 
    private boolean passivation;
 

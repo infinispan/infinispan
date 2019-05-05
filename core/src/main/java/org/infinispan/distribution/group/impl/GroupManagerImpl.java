@@ -23,7 +23,7 @@ import org.infinispan.remoting.transport.Address;
 
 public class GroupManagerImpl implements GroupManager {
 
-   @Inject private ComponentRegistry componentRegistry;
+   @Inject ComponentRegistry componentRegistry;
    // This can't be injected due to circular dependency with DistributionManager when using a GroupingPartitioner
    private DistributionManager distributionManager;
 

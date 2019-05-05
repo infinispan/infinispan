@@ -49,11 +49,11 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    protected final static boolean trace = log.isTraceEnabled();
 
-   @Inject private LocalPublisherManager<K, V> localPublisherManager;
-   @Inject private DistributionManager distributionManager;
-   @Inject private StateTransferLock stateTransferLock;
-   @Inject private RpcManager rpcManager;
-   @Inject private CommandsFactory commandsFactory;
+   @Inject LocalPublisherManager<K, V> localPublisherManager;
+   @Inject DistributionManager distributionManager;
+   @Inject StateTransferLock stateTransferLock;
+   @Inject RpcManager rpcManager;
+   @Inject CommandsFactory commandsFactory;
    @Inject protected Configuration cacheConfiguration;
 
    // Make sure we don't create one per invocation

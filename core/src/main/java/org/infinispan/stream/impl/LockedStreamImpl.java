@@ -198,7 +198,7 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
       realStream.close();
    }
 
-   private static abstract class LockHelper<K, V, R> {
+   static abstract class LockHelper<K, V, R> {
       protected final Predicate<? super CacheEntry<K, V>> predicate;
       @Inject protected transient LockManager lockManager;
 
@@ -249,7 +249,7 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
    }
 
    @SerializeWith(value = CacheEntryFunction.Externalizer.class)
-   private static class CacheEntryFunction<K, V, R> extends LockHelper<K, V, KeyValuePair<K, R>> implements Function<CacheEntry<K, V>, KeyValuePair<K, R>> {
+   static class CacheEntryFunction<K, V, R> extends LockHelper<K, V, KeyValuePair<K, R>> implements Function<CacheEntry<K, V>, KeyValuePair<K, R>> {
       private final BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction;
       @Inject protected transient Cache<K, V> cache;
 
@@ -284,7 +284,7 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
    }
 
    @SerializeWith(value = CacheEntryConsumer.Externalizer.class)
-   private static class CacheEntryConsumer<K, V> extends LockHelper<K, V, Void> implements BiConsumer<Cache<K, V>, CacheEntry<K, V>> {
+   static class CacheEntryConsumer<K, V> extends LockHelper<K, V, Void> implements BiConsumer<Cache<K, V>, CacheEntry<K, V>> {
       private final BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>> realConsumer;
 
       private CacheEntryConsumer(BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>> realConsumer,

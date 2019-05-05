@@ -43,7 +43,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
 public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
-	@Inject private CacheCommandInitializer commandInitializer;
+	@Inject CacheCommandInitializer commandInitializer;
 
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInterceptor.class);
    private static final Log ispnLog = LogFactory.getLog(NonTxInvalidationInterceptor.class);

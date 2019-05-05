@@ -58,12 +58,12 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private static final Log log = LogFactory.getLog(TrianglePerCacheInboundInvocationHandler.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private LockManager lockManager;
-   @Inject private DistributionManager distributionManager;
-   @Inject private TriangleOrderManager triangleOrderManager;
-   @Inject private RpcManager rpcManager;
-   @Inject private CommandAckCollector commandAckCollector;
-   @Inject private CommandsFactory commandsFactory;
+   @Inject LockManager lockManager;
+   @Inject DistributionManager distributionManager;
+   @Inject TriangleOrderManager triangleOrderManager;
+   @Inject RpcManager rpcManager;
+   @Inject CommandAckCollector commandAckCollector;
+   @Inject CommandsFactory commandsFactory;
 
    private long lockTimeout;
    private Address localAddress;

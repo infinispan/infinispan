@@ -101,7 +101,7 @@ public class IndexedCacheRestartTest extends AbstractInfinispanTest {
       assertEquals(1, list.size());
    }
 
-   private static class NoOpInterceptor extends CommandInterceptor {
+   static class NoOpInterceptor extends CommandInterceptor {
 
    }
 }

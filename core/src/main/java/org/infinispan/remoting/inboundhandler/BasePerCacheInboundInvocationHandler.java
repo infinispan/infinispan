@@ -55,9 +55,9 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
 
    @Inject @ComponentName(REMOTE_COMMAND_EXECUTOR)
    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
-   @Inject private StateTransferLock stateTransferLock;
-   @Inject private ResponseGenerator responseGenerator;
-   @Inject private CancellationService cancellationService;
+   @Inject StateTransferLock stateTransferLock;
+   @Inject ResponseGenerator responseGenerator;
+   @Inject CancellationService cancellationService;
    @Inject protected Configuration configuration;
 
    private volatile boolean stopped = false;

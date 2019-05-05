@@ -76,8 +76,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 17;
 
-   @Inject private transient LocalTopologyManager localTopologyManager;
-   @Inject private transient ClusterTopologyManager clusterTopologyManager;
+   @Inject transient LocalTopologyManager localTopologyManager;
+   @Inject transient ClusterTopologyManager clusterTopologyManager;
 
    private String cacheName;
    private Type type;

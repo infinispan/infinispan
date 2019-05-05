@@ -245,7 +245,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
       return interceptor;
    }
 
-   private static class BlockCommandInterceptor extends CommandInterceptor {
+   static class BlockCommandInterceptor extends CommandInterceptor {
 
       private volatile CheckPoint checkPoint;
       private volatile boolean open;

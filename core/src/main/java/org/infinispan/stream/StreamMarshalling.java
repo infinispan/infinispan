@@ -157,8 +157,8 @@ public class StreamMarshalling {
       }
    }
 
-   private static final class KeyToEntryFunction<K, V> implements Function<K, CacheEntry<K, V>> {
-      @Inject private AdvancedCache<K, V> advancedCache;
+   static final class KeyToEntryFunction<K, V> implements Function<K, CacheEntry<K, V>> {
+      @Inject AdvancedCache<K, V> advancedCache;
 
       @Override
       public CacheEntry<K, V> apply(K k) {

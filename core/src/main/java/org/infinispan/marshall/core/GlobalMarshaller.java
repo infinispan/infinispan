@@ -96,8 +96,8 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    private final MarshallableTypeHints marshallableTypeHints = new MarshallableTypeHints();
 
-   @Inject private GlobalComponentRegistry gcr;
-   @Inject private RemoteCommandsFactory cmdFactory;
+   @Inject GlobalComponentRegistry gcr;
+   @Inject RemoteCommandsFactory cmdFactory;
 
    private ClassToExternalizerMap internalExts;
    private IdToExternalizerMap reverseInternalExts;

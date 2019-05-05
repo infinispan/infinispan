@@ -37,9 +37,9 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
 
    private final CheckTopologyAction checkTopologyAction;
 
-   @Inject private LockManager lockManager;
-   @Inject private DistributionManager distributionManager;
-   @Inject private PendingLockManager pendingLockManager;
+   @Inject LockManager lockManager;
+   @Inject DistributionManager distributionManager;
+   @Inject PendingLockManager pendingLockManager;
 
    private boolean pessimisticLocking;
    private long lockAcquisitionTimeout;

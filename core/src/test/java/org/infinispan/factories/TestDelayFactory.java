@@ -24,7 +24,7 @@ public class TestDelayFactory extends AbstractComponentFactory implements AutoIn
    private Control control;
 
    @Inject
-   public void inject(Control control) throws InterruptedException {
+   public void inject(Control control) {
       this.control = control;
       control.await();
       injectionDone = true;
@@ -46,8 +46,12 @@ public class TestDelayFactory extends AbstractComponentFactory implements AutoIn
    public static class Control {
       private final CountDownLatch latch = new CountDownLatch(1);
 
-      public void await() throws InterruptedException {
-         latch.await(10, TimeUnit.SECONDS);
+      public void await() {
+         try {
+            latch.await(10, TimeUnit.SECONDS);
+         } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+         }
       }
 
       public void unblock() {

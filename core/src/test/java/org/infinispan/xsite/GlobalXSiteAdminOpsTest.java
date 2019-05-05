@@ -340,7 +340,7 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
       NO_BACKUP
    }
 
-   private static class BlockingTransport extends AbstractDelegatingTransport {
+   static class BlockingTransport extends AbstractDelegatingTransport {
 
       private final NotifierLatch notifierLatch;
 

@@ -129,10 +129,10 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    private static final Log log = LogFactory.getLog(ExtendedStatisticInterceptor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private BasicComponentRegistry componentRegistry;
-   @Inject private TimeService timeService;
-   @Inject private TransactionTable transactionTable;
-   @Inject private DistributionManager distributionManager;
+   @Inject BasicComponentRegistry componentRegistry;
+   @Inject TimeService timeService;
+   @Inject TransactionTable transactionTable;
+   @Inject DistributionManager distributionManager;
 
    private RpcManager rpcManager;
    private CacheStatisticManager cacheStatisticManager;

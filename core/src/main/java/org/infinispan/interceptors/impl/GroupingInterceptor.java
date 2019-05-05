@@ -29,10 +29,10 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent
  */
 public class GroupingInterceptor extends DDAsyncInterceptor {
 
-   @Inject private CacheNotifier<?, ?> cacheNotifier;
-   @Inject private GroupManager groupManager;
-   @Inject private InternalEntryFactory factory;
-   @Inject private DistributionManager distributionManager;
+   @Inject CacheNotifier<?, ?> cacheNotifier;
+   @Inject GroupManager groupManager;
+   @Inject InternalEntryFactory factory;
+   @Inject DistributionManager distributionManager;
 
    private boolean isPassivationEnabled;
 

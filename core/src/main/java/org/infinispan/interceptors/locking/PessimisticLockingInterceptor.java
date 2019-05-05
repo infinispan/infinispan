@@ -47,7 +47,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    private final InvocationSuccessAction releaseLockOnCompletion =
          (rCtx, rCommand, rv) -> releaseLockOnTxCompletion((TxInvocationContext) rCtx);
 
-   @Inject private CommandsFactory cf;
+   @Inject CommandsFactory cf;
 
    @Override
    protected Log getLog() {

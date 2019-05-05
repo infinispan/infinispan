@@ -196,17 +196,17 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    final List<CacheEntryListenerInvocation<K, V>> partitionChangedListeners = new CopyOnWriteArrayList<>();
    final List<CacheEntryListenerInvocation<K, V>> persistenceChangedListeners = new CopyOnWriteArrayList<>();
 
-   @Inject private TransactionManager transactionManager;
-   @Inject private Configuration config;
-   @Inject private InternalEntryFactory entryFactory;
-   @Inject private ClusterEventManager<K, V> eventManager;
-   @Inject private BasicComponentRegistry componentRegistry;
-   @Inject private KeyPartitioner keyPartitioner;
-   @Inject private RpcManager rpcManager;
+   @Inject TransactionManager transactionManager;
+   @Inject Configuration config;
+   @Inject InternalEntryFactory entryFactory;
+   @Inject ClusterEventManager<K, V> eventManager;
+   @Inject BasicComponentRegistry componentRegistry;
+   @Inject KeyPartitioner keyPartitioner;
+   @Inject RpcManager rpcManager;
 
-   @Inject private ComponentRef<AdvancedCache<K, V>> cache;
-   @Inject private ComponentRef<ClusteringDependentLogic> clusteringDependentLogic;
-   @Inject private ComponentRef<AsyncInterceptorChain> interceptorChain;
+   @Inject ComponentRef<AdvancedCache<K, V>> cache;
+   @Inject ComponentRef<ClusteringDependentLogic> clusteringDependentLogic;
+   @Inject ComponentRef<AsyncInterceptorChain> interceptorChain;
 
    private ClusterExecutor clusterExecutor;
    private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<>();

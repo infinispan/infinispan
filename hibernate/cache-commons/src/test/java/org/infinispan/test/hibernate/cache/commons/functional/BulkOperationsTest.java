@@ -6,27 +6,26 @@
  */
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.stat.SecondLevelCacheStatistics;
-
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
+import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 /**
  * BulkOperationsTestCase.
@@ -252,7 +251,7 @@ public class BulkOperationsTest extends SingleNodeTest {
     * the region invalidation timestamp will be in the future and we avoid potential invalid things being added to second level cache.
     * More info can be found in {@link org.infinispan.hibernate.cache.commons.access.FutureUpdateSynchronization}.
     */
-   private static final class AlwaysMoveForwardTimeService extends ControlledTimeService {
+   static final class AlwaysMoveForwardTimeService extends ControlledTimeService {
 
       @Override
       public long wallClockTime() {

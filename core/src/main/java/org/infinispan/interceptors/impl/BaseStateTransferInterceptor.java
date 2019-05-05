@@ -52,13 +52,13 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
    private final InvocationFinallyFunction handleReadCommandReturn = this::handleReadCommandReturn;
 
-   @Inject private Configuration configuration;
+   @Inject Configuration configuration;
    @Inject protected StateTransferLock stateTransferLock;
    @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
-   private Executor remoteExecutor;
-   @Inject private DistributionManager distributionManager;
+   Executor remoteExecutor;
+   @Inject DistributionManager distributionManager;
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
-   private ScheduledExecutorService timeoutExecutor;
+   ScheduledExecutorService timeoutExecutor;
 
    private long transactionDataTimeout;
    private boolean isScattered;

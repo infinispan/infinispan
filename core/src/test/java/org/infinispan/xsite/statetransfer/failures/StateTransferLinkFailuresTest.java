@@ -130,14 +130,13 @@ public class StateTransferLinkFailuresTest extends AbstractTopologyChangeTest {
    private List<ControllerTransport> replaceTransportInSite() {
       List<ControllerTransport> transports = new ArrayList<>(site(LON).cacheManagers().size());
       for (CacheContainer cacheContainer : site(LON).cacheManagers()) {
-         transports.add(wrapGlobalComponent(cacheContainer,
-                                            Transport.class,
+         transports.add(wrapGlobalComponent(cacheContainer, Transport.class,
                (wrapOn, current) -> new ControllerTransport(current), true));
       }
       return transports;
    }
 
-   private static class ControllerTransport extends AbstractDelegatingTransport {
+   static class ControllerTransport extends AbstractDelegatingTransport {
 
       private volatile boolean fail;
       private volatile boolean failAfterFirstChunk;

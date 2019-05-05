@@ -98,9 +98,9 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
 
    private static final Log log = LogFactory.getLog(TriangleDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
-   @Inject private CommandAckCollector commandAckCollector;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private TriangleOrderManager triangleOrderManager;
+   @Inject CommandAckCollector commandAckCollector;
+   @Inject CommandsFactory commandsFactory;
+   @Inject TriangleOrderManager triangleOrderManager;
    private Address localAddress;
 
    @Start

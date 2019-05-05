@@ -22,7 +22,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 @Scope(Scopes.NAMED_CACHE)
 @Deprecated
 public class InterceptorChain {
-   @Inject private AsyncInterceptorChain asyncInterceptorChain;
+   @Inject AsyncInterceptorChain asyncInterceptorChain;
 
    /**
     * Inserts the given interceptor at the specified position in the chain (o based indexing).

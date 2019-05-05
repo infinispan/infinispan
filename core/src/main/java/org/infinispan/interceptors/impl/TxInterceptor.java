@@ -104,10 +104,10 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    private final AtomicLong commits = new AtomicLong(0);
    private final AtomicLong rollbacks = new AtomicLong(0);
 
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private ComponentRef<Cache<K, V>> cache;
-   @Inject private RecoveryManager recoveryManager;
-   @Inject private TransactionTable txTable;
+   @Inject CommandsFactory commandsFactory;
+   @Inject ComponentRef<Cache<K, V>> cache;
+   @Inject RecoveryManager recoveryManager;
+   @Inject TransactionTable txTable;
 
    private boolean isTotalOrder;
    private boolean useOnePhaseForAutoCommitTx;

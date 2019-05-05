@@ -126,12 +126,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    private DataConversion keyDataConversion;
    private DataConversion valueDataConversion;
 
-   @Inject private ComponentRegistry componentRegistry;
-   @Inject private Configuration configuration;
-   @Inject private EmbeddedCacheManager cacheManager;
-   @Inject private InternalDataContainer<K, V> dataContainer;
-   @Inject private CacheNotifier<K, V> cacheNotifier;
-   @Inject private TimeService timeService;
+   @Inject ComponentRegistry componentRegistry;
+   @Inject Configuration configuration;
+   @Inject EmbeddedCacheManager cacheManager;
+   @Inject InternalDataContainer<K, V> dataContainer;
+   @Inject CacheNotifier<K, V> cacheNotifier;
+   @Inject TimeService timeService;
 
    private Metadata defaultMetadata;
 

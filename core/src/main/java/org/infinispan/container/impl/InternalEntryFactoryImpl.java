@@ -38,7 +38,7 @@ import org.infinispan.commons.time.TimeService;
  */
 public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
-   @Inject private TimeService timeService;
+   @Inject TimeService timeService;
 
    @Override
    public InternalCacheEntry create(Object key, Object value, Metadata metadata) {

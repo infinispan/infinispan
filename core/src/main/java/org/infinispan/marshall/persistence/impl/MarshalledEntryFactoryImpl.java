@@ -19,7 +19,7 @@ public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory, Marsh
 
    private static final MarshallableEntry EMPTY = new MarshalledEntryImpl(null, null, (ByteBuffer) null, null);
 
-   @Inject private Marshaller marshaller;
+   @Inject Marshaller marshaller;
 
    public MarshalledEntryFactoryImpl() {
    }

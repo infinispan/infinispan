@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
-
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 
@@ -145,7 +144,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
             .filter(key -> topology.getDistribution(key).isPrimary()).findAny().get();
    }
 
-   private static class FailPrepare extends DDAsyncInterceptor {
+   static class FailPrepare extends DDAsyncInterceptor {
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
          return invokeNextThenApply(ctx, command, ((rCtx, rCommand, rv) -> {

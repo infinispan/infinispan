@@ -54,15 +54,15 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private volatile AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
 
    @ComponentName(KnownComponentNames.CACHE_NAME)
-   @Inject private String cacheName;
+   @Inject String cacheName;
    @Inject protected DistributionManager distributionManager;
-   @Inject private LocalTopologyManager localTopologyManager;
-   @Inject private CacheNotifier<Object, Object> notifier;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private Configuration configuration;
-   @Inject private RpcManager rpcManager;
-   @Inject private LockManager lockManager;
-   @Inject private Transport transport;
+   @Inject LocalTopologyManager localTopologyManager;
+   @Inject CacheNotifier<Object, Object> notifier;
+   @Inject CommandsFactory commandsFactory;
+   @Inject Configuration configuration;
+   @Inject RpcManager rpcManager;
+   @Inject LockManager lockManager;
+   @Inject Transport transport;
 
    private boolean isVersioned;
    private PartitionHandling partitionHandling;

@@ -54,7 +54,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private final Configuration configuration;
    private final GlobalComponentRegistry globalComponents;
 
-   @Inject private CacheManagerNotifier cacheManagerNotifier;
+   @Inject CacheManagerNotifier cacheManagerNotifier;
 
    //Cached fields:
    private StateTransferManager stateTransferManager;

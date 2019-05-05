@@ -94,17 +94,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private static final Log log = LogFactory.getLog(ClusterTopologyManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private Transport transport;
-   @Inject private GlobalConfiguration globalConfiguration;
-   @Inject private GlobalComponentRegistry gcr;
-   @Inject private CacheManagerNotifier cacheManagerNotifier;
-   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject Transport transport;
+   @Inject GlobalConfiguration globalConfiguration;
+   @Inject GlobalComponentRegistry gcr;
+   @Inject CacheManagerNotifier cacheManagerNotifier;
+   @Inject EmbeddedCacheManager cacheManager;
    @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
-   private ExecutorService asyncTransportExecutor;
+   ExecutorService asyncTransportExecutor;
    @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
-   private ExecutorService stateTransferExecutor;
-   @Inject private EventLogManager eventLogManager;
-   @Inject private PersistentUUIDManager persistentUUIDManager;
+   ExecutorService stateTransferExecutor;
+   @Inject EventLogManager eventLogManager;
+   @Inject PersistentUUIDManager persistentUUIDManager;
 
    // These need to be volatile because they are sometimes read without holding the view handling lock.
    private volatile int viewId = -1;

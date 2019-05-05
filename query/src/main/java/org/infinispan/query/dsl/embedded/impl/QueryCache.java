@@ -58,8 +58,8 @@ public class QueryCache {
     */
    private static final long ENTRY_LIFESPAN = 300;  // seconds
 
-   @Inject private EmbeddedCacheManager cacheManager;
-   @Inject private InternalCacheRegistry internalCacheRegistry;
+   @Inject EmbeddedCacheManager cacheManager;
+   @Inject InternalCacheRegistry internalCacheRegistry;
 
    private volatile Cache<QueryCacheKey, Object> lazyCache;
 

@@ -12,17 +12,18 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
 import javax.transaction.xa.Xid;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
@@ -50,10 +51,7 @@ import org.infinispan.stream.CacheCollectors;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
-
-import net.jcip.annotations.GuardedBy;
 
 /**
  * It is a transaction log that registers all the transaction decisions before changing the cache.
@@ -86,14 +84,13 @@ public class GlobalTxTable implements Runnable, Lifecycle {
    @GuardedBy("this")
    private ScheduledFuture<?> scheduledFuture;
 
-   @Inject
-   private TimeService timeService;
+   @Inject TimeService timeService;
    @Inject
    @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   private ExecutorService asyncExecutor;
+   ExecutorService asyncExecutor;
    @Inject
    @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
-   private ScheduledExecutorService scheduledExecutor;
+   ScheduledExecutorService scheduledExecutor;
 
    public GlobalTxTable(Cache<CacheXid, TxState> storage, GlobalComponentRegistry gcr) {
       this.storage = storage;

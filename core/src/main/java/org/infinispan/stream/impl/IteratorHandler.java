@@ -42,7 +42,7 @@ public class IteratorHandler {
    private final Map<Object, CloseableIterator<?>> currentRequests = new ConcurrentHashMap<>();
    private final Map<Address, Set<Object>> ownerRequests = new ConcurrentHashMap<>();
 
-   @Inject private EmbeddedCacheManager manager;
+   @Inject EmbeddedCacheManager manager;
 
    /**
     * A {@link CloseableIterator} that also allows callers to attach {@link Runnable} instances to it, so that when
