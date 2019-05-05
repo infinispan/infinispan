@@ -46,9 +46,9 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
    private final InvocationSuccessAction handleSingleKeyWriteReturn = this::handleSingleKeyWriteReturn;
    private final InvocationSuccessAction handleMultipleKeysWriteReturn = this::handleMultipleKeysWriteReturn;
 
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private ClusteringDependentLogic clusteringDependentLogic;
-   @Inject private InternalEntryFactory internalEntryFactory;
+   @Inject CommandsFactory commandsFactory;
+   @Inject ClusteringDependentLogic clusteringDependentLogic;
+   @Inject InternalEntryFactory internalEntryFactory;
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {

@@ -101,7 +101,7 @@ public class GetWithForceWriteLockRetryTest extends MultipleCacheManagersTest {
       di3.unblock(1);
    }
 
-   private class DelayInterceptor extends BaseCustomInterceptor {
+   class DelayInterceptor extends BaseCustomInterceptor {
       private final AtomicInteger counter = new AtomicInteger(0);
       private final CheckPoint checkPoint = new CheckPoint();
       private final Class<?> commandToBlock;

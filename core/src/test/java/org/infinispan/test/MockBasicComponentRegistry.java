@@ -18,7 +18,7 @@ public class MockBasicComponentRegistry implements BasicComponentRegistry {
    }
 
    @Override
-   public <T> ComponentRef<T> getComponent(String name, Class<T> componentType) {
+   public <T, U extends T> ComponentRef<T> getComponent(String name, Class<U> componentType) {
       return (ComponentRef<T>) components.get(name);
    }
 

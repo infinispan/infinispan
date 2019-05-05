@@ -21,7 +21,7 @@ public class ReplicableManagerFunctionCommand implements ReplicableCommand {
    public static final byte COMMAND_ID = 60;
 
    private Function<? super EmbeddedCacheManager, ?> function;
-   @Inject private EmbeddedCacheManager manager;
+   @Inject EmbeddedCacheManager manager;
 
    public ReplicableManagerFunctionCommand() {
 

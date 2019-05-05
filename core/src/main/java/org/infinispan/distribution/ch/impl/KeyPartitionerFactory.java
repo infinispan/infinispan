@@ -22,7 +22,7 @@ import org.infinispan.factories.annotations.Inject;
 @DefaultFactoryFor(classes = KeyPartitioner.class)
 public class KeyPartitionerFactory extends AbstractNamedCacheComponentFactory
       implements AutoInstantiableFactory {
-   @Inject private GroupManager groupManager;
+   @Inject GroupManager groupManager;
 
    private KeyPartitioner getConfiguredPartitioner() {
       HashConfiguration hashConfiguration = configuration.clustering().hash();

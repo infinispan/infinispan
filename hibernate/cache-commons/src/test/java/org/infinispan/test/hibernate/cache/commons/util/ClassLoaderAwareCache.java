@@ -76,7 +76,7 @@ public class ClassLoaderAwareCache<K, V> extends AbstractDelegatingAdvancedCache
       AccessController.doPrivileged(action);
    }
 
-   private class ClassLoaderAwareCommandInterceptor extends CommandInterceptor {
+   class ClassLoaderAwareCommandInterceptor extends CommandInterceptor {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          ClassLoader classLoader = Thread.currentThread().getContextClassLoader();

@@ -66,10 +66,10 @@ import org.infinispan.commons.util.concurrent.StripedCounters;
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
-   @Inject private ComponentRef<AdvancedCache> cache;
-   @Inject private InternalDataContainer dataContainer;
-   @Inject private TimeService timeService;
-   @Inject private OffHeapMemoryAllocator allocator;
+   @Inject ComponentRef<AdvancedCache> cache;
+   @Inject InternalDataContainer dataContainer;
+   @Inject TimeService timeService;
+   @Inject OffHeapMemoryAllocator allocator;
 
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private volatile AtomicLong resetNanoseconds = new AtomicLong(0);

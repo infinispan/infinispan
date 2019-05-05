@@ -164,7 +164,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       assertTrue(message, v0.compareTo(v1) == result);
    }
 
-   private class BackupOwnerInterceptor extends BaseCustomInterceptor {
+   class BackupOwnerInterceptor extends BaseCustomInterceptor {
 
       private final Object blockCommitLock = new Object();
       private final Object prepareProcessedLock = new Object();

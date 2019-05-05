@@ -26,6 +26,7 @@ import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.cli.interpreter.session.SessionImpl;
 import org.infinispan.cli.interpreter.statement.Statement;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -35,7 +36,6 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 @Scope(Scopes.GLOBAL)
@@ -45,10 +45,8 @@ public class Interpreter {
    private static final long DEFAULT_SESSION_REAPER_WAKEUP_INTERVAL = 60000l; // in millis
    private static final long DEFAULT_SESSION_TIMEOUT = 360000l; // in millis
 
-   @Inject
-   private EmbeddedCacheManager cacheManager;
-   @Inject
-   private TimeService timeService;
+   @Inject EmbeddedCacheManager cacheManager;
+   @Inject TimeService timeService;
 
    private ScheduledExecutorService executor;
    private long sessionReaperWakeupInterval = DEFAULT_SESSION_REAPER_WAKEUP_INTERVAL;

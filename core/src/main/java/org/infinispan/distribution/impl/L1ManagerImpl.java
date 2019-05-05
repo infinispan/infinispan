@@ -38,12 +38,12 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
    private static final Log log = LogFactory.getLog(L1ManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private Configuration configuration;
-   @Inject private RpcManager rpcManager;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private TimeService timeService;
+   @Inject Configuration configuration;
+   @Inject RpcManager rpcManager;
+   @Inject CommandsFactory commandsFactory;
+   @Inject TimeService timeService;
    @Inject @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
-   private ScheduledExecutorService scheduledExecutor;
+   ScheduledExecutorService scheduledExecutor;
 
    private int threshold;
    private long l1Lifespan;

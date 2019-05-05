@@ -200,11 +200,11 @@ public class DataConversionTest extends AbstractInfinispanTest {
    }
 
    @SuppressWarnings("unused")
-   private static class TestInterceptor extends BaseCustomAsyncInterceptor {
+   static class TestInterceptor extends BaseCustomAsyncInterceptor {
 
       private final int i;
 
-      @Inject private ComponentRef<AdvancedCache<?, ?>> cache;
+      @Inject ComponentRef<AdvancedCache<?, ?>> cache;
 
       TestInterceptor(int i) {
          this.i = i;

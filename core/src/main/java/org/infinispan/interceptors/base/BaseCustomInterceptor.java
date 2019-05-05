@@ -25,13 +25,13 @@ import org.infinispan.manager.EmbeddedCacheManager;
  */
 @Deprecated
 public class BaseCustomInterceptor extends CommandInterceptor {
-   @Inject private ComponentRef<Cache<?, ?>> cacheRef;
+   @Inject ComponentRef<Cache<?, ?>> cacheRef;
    @Inject protected EmbeddedCacheManager embeddedCacheManager;
 
    protected Cache<?, ?> cache;
 
    @Start(priority = 1)
-   private void setup() {
+   void setup() {
       // Needed for backwards compatibility
       this.cache = cacheRef.wired();
    }

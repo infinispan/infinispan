@@ -16,7 +16,7 @@ import org.infinispan.jmx.annotations.Units;
 @MBean(objectName = "Configuration", description = "Runtime cache configuration attributes")
 public class CacheConfigurationMBean {
 
-   @Inject private Configuration configuration;
+   @Inject Configuration configuration;
 
    @ManagedAttribute(description = "Gets the eviction size for the cache",
          displayName = "Gets the eviction size for the cache",

@@ -151,13 +151,13 @@ public class PrefetchTest extends MultipleCacheManagersTest {
             ((PutKeyValueCommand) command).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER);
    }
 
-   private static class BlockingBefore extends BlockingInterceptor<PutKeyValueCommand> {
+   static class BlockingBefore extends BlockingInterceptor<PutKeyValueCommand> {
       public BlockingBefore(CyclicBarrier barrier) {
          super(barrier, false, true, PrefetchTest::isStateTransferPut);
       }
    }
 
-   private static class BlockingAfter extends BlockingInterceptor<PutKeyValueCommand> {
+   static class BlockingAfter extends BlockingInterceptor<PutKeyValueCommand> {
       public BlockingAfter(CyclicBarrier barrier) {
          super(barrier, true, true, PrefetchTest::isStateTransferPut);
       }

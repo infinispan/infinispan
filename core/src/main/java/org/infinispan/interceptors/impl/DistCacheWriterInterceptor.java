@@ -39,7 +39,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    private static final Log log = LogFactory.getLog(DistCacheWriterInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private DistributionManager dm;
+   @Inject DistributionManager dm;
 
    private boolean isUsingLockDelegation;
 

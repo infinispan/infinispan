@@ -94,18 +94,18 @@ public class InterceptorChainTest extends AbstractInfinispanTest {
       }
    }
 
-   private static class DummyCallInterceptor extends CommandInterceptor {
+   static class DummyCallInterceptor extends CommandInterceptor {
    }
 
-   private static class DummyActivationInterceptor extends CommandInterceptor {
+   static class DummyActivationInterceptor extends CommandInterceptor {
    }
 
-   private static class DummyCacheMgmtInterceptor extends CommandInterceptor {
+   static class DummyCacheMgmtInterceptor extends CommandInterceptor {
    }
 
-   private static class DummyDistCacheWriterInterceptor extends CommandInterceptor {
+   static class DummyDistCacheWriterInterceptor extends CommandInterceptor {
    }
 
-   private static class DummyInvalidationInterceptor extends CommandInterceptor {
+   static class DummyInvalidationInterceptor extends CommandInterceptor {
    }
 }

@@ -7,5 +7,5 @@ import org.infinispan.globalstate.GlobalConfigurationManager;
 
 @Scope(Scopes.GLOBAL)
 public class GlobalConfigurationManagerPostStart {
-   @Inject private GlobalConfigurationManager gcm;
+   @Inject GlobalConfigurationManager gcm;
 }

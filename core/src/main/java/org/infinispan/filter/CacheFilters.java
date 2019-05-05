@@ -81,7 +81,7 @@ public final class CacheFilters {
          StreamMarshalling.nonNullPredicate());
    }
 
-   private static class KeyValueFilterAsPredicate<K, V> implements Predicate<CacheEntry<K, V>> {
+   static class KeyValueFilterAsPredicate<K, V> implements Predicate<CacheEntry<K, V>> {
       private final KeyValueFilter<? super K, ? super V> filter;
 
       public KeyValueFilterAsPredicate(KeyValueFilter<? super K, ? super V> filter) {
@@ -100,7 +100,7 @@ public final class CacheFilters {
       }
    }
 
-   private static class ConverterAsCacheEntryFunction<K, V, C> implements Function<CacheEntry<K, V>, CacheEntry<K, C>> {
+   static class ConverterAsCacheEntryFunction<K, V, C> implements Function<CacheEntry<K, V>, CacheEntry<K, C>> {
       protected final Converter<? super K, ? super V, C> converter;
 
       protected InternalEntryFactory factory;
@@ -129,7 +129,7 @@ public final class CacheFilters {
       }
    }
 
-   private static class FilterConverterAsCacheEntryFunction<K, V, C> implements Function<CacheEntry<K, V>, CacheEntry<K, C>> {
+   static class FilterConverterAsCacheEntryFunction<K, V, C> implements Function<CacheEntry<K, V>, CacheEntry<K, C>> {
       protected final KeyValueFilterConverter<? super K, ? super V, C> converter;
 
       protected InternalEntryFactory factory;

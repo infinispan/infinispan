@@ -192,7 +192,7 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
       }
    }
 
-   private static class CollectKeysInterceptor extends BaseCustomInterceptor {
+   static class CollectKeysInterceptor extends BaseCustomInterceptor {
 
       private final Set<Object> keys;
 

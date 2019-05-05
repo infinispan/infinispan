@@ -26,8 +26,8 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   @Inject private EmbeddedCacheManager cacheManager;
-   @Inject private CacheManagerJmxRegistration cacheManagerJmxRegistration;
+   @Inject EmbeddedCacheManager cacheManager;
+   @Inject CacheManagerJmxRegistration cacheManagerJmxRegistration;
    private final ConcurrentMap<String, EnumSet<Flag>> internalCaches = new ConcurrentHashMap<>();
    private final Set<String> privateCaches = ConcurrentHashMap.newKeySet();
 

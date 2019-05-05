@@ -39,7 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private static final Log log = LogFactory.getLog(PartitionHandlingInterceptor.class);
 
-   @Inject private PartitionHandlingManager partitionHandlingManager;
+   @Inject PartitionHandlingManager partitionHandlingManager;
 
    private InvocationFinallyAction handleDataReadReturn = this::handleDataReadReturn;
    private InvocationFinallyAction handleGetAllCommandReturn = this::handleGetAllCommandReturn;

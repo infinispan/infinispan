@@ -49,11 +49,11 @@ public class DefaultPendingLockManager implements PendingLockManager {
    private static final boolean trace = log.isTraceEnabled();
    private static final int NO_PENDING_CHECK = -2;
    private final Map<GlobalTransaction, PendingLockPromise> pendingLockPromiseMap;
-   @Inject private TransactionTable transactionTable;
-   @Inject private TimeService timeService;
+   @Inject TransactionTable transactionTable;
+   @Inject TimeService timeService;
+   @Inject DistributionManager distributionManager;
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
-   private ScheduledExecutorService timeoutExecutor;
-   @Inject private DistributionManager distributionManager;
+   ScheduledExecutorService timeoutExecutor;
 
    public DefaultPendingLockManager() {
       pendingLockPromiseMap = new ConcurrentHashMap<>();

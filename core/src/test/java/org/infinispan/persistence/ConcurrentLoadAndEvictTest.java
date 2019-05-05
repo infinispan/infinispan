@@ -17,9 +17,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -99,7 +99,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       assert !TestingUtil.extractComponent(cache, InternalDataContainer.class).containsKey("a");
    }
 
-   public static class SlowDownInterceptor extends CommandInterceptor implements Cloneable{
+   public static class SlowDownInterceptor extends CommandInterceptor implements Cloneable {
 
       private static final long serialVersionUID = 8790944676490291484L;
 

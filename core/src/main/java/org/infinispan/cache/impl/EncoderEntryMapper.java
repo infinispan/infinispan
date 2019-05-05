@@ -23,7 +23,7 @@ import org.infinispan.metadata.Metadata;
  */
 public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements InjectiveFunction<T, T> {
    @Inject
-   private transient InternalEntryFactory entryFactory;
+   transient InternalEntryFactory entryFactory;
 
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;

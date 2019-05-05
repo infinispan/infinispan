@@ -147,7 +147,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
       PUT, REPLACE, REMOVE
    }
 
-   private class CommandInterceptorController extends BaseCustomInterceptor {
+   class CommandInterceptorController extends BaseCustomInterceptor {
 
       private final ReclosableLatch blockRemoteGet = new ReclosableLatch(true);
       private final ReclosableLatch blockCommit = new ReclosableLatch(true);

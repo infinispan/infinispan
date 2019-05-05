@@ -34,8 +34,7 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
 
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
 
-   @Inject
-   private KeyPartitioner keyPartitioner;
+   @Inject KeyPartitioner keyPartitioner;
 
    public InternalDataContainerAdapter(DataContainer<K, V> container) {
       this.container = container;

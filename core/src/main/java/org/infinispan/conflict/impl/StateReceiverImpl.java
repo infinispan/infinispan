@@ -48,13 +48,13 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    private static final boolean trace = log.isTraceEnabled();
 
    @ComponentName(CACHE_NAME)
-   @Inject private String cacheName;
-   @Inject private CacheNotifier cacheNotifier;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private InternalDataContainer<K, V> dataContainer;
-   @Inject private RpcManager rpcManager;
+   @Inject String cacheName;
+   @Inject CacheNotifier cacheNotifier;
+   @Inject CommandsFactory commandsFactory;
+   @Inject InternalDataContainer<K, V> dataContainer;
+   @Inject RpcManager rpcManager;
    @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
-   private ExecutorService stateTransferExecutor;
+   ExecutorService stateTransferExecutor;
 
    private LimitedExecutor stateReceiverExecutor;
 

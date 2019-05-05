@@ -84,16 +84,16 @@ public class BackupSenderImpl implements BackupSender {
    private static Log log = LogFactory.getLog(BackupSenderImpl.class);
    private static final BackupResponse EMPTY_RESPONSE = new EmptyBackupResponse();
 
-   @Inject private ComponentRef<Cache> cache;
-   @Inject private RpcManager rpcManager;
-   @Inject private Transport transport;
-   @Inject private Configuration config;
-   @Inject private TransactionTable txTable;
-   @Inject private TimeService timeService;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private EventLogManager eventLogManager;
-   @Inject private GlobalConfiguration globalConfig;
-   @Inject private KeyPartitioner keyPartitioner;
+   @Inject ComponentRef<Cache> cache;
+   @Inject RpcManager rpcManager;
+   @Inject Transport transport;
+   @Inject Configuration config;
+   @Inject TransactionTable txTable;
+   @Inject TimeService timeService;
+   @Inject CommandsFactory commandsFactory;
+   @Inject EventLogManager eventLogManager;
+   @Inject GlobalConfiguration globalConfig;
+   @Inject KeyPartitioner keyPartitioner;
 
    private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<>();
    private final ConcurrentMap<String, OfflineStatus> offlineStatus = new ConcurrentHashMap<>();

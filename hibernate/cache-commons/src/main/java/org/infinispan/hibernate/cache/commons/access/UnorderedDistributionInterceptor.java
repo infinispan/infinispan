@@ -35,7 +35,7 @@ import org.infinispan.util.logging.LogFactory;
 public class UnorderedDistributionInterceptor extends NonTxDistributionInterceptor {
 	private static Log log = LogFactory.getLog(UnorderedDistributionInterceptor.class);
 
-	@Inject private DistributionManager distributionManager;
+	@Inject DistributionManager distributionManager;
 	private boolean isReplicated;
 
 	@Start

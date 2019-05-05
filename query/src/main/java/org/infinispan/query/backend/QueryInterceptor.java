@@ -82,11 +82,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       }
    };
 
-   @Inject private DistributionManager distributionManager;
-   @Inject private RpcManager rpcManager;
+   @Inject DistributionManager distributionManager;
+   @Inject RpcManager rpcManager;
    @Inject @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR)
-   private ExecutorService asyncExecutor;
-   @Inject private InternalCacheRegistry internalCacheRegistry;
+   ExecutorService asyncExecutor;
+   @Inject InternalCacheRegistry internalCacheRegistry;
 
    private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;

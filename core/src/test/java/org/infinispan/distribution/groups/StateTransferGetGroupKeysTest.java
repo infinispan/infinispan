@@ -177,7 +177,7 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       }
    }
 
-   private static class BlockCommandInterceptor extends CommandInterceptor {
+   static class BlockCommandInterceptor extends CommandInterceptor {
 
       private volatile CheckPoint checkPoint;
       private volatile boolean open;

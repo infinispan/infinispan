@@ -25,9 +25,9 @@ import org.infinispan.transaction.impl.TransactionTable;
 @Deprecated
 public class TransactionalInvocationContextFactory extends AbstractInvocationContextFactory {
 
-   @Inject private TransactionManager tm;
-   @Inject private TransactionTable transactionTable;
-   @Inject private BatchContainer batchContainer;
+   @Inject TransactionManager tm;
+   @Inject TransactionTable transactionTable;
+   @Inject BatchContainer batchContainer;
 
    private boolean batchingEnabled;
 

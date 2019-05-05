@@ -10,7 +10,7 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class PreloadManager {
-   @Inject private PersistenceManager persistenceManager;
+   @Inject PersistenceManager persistenceManager;
 
    @Start
    public void start() {

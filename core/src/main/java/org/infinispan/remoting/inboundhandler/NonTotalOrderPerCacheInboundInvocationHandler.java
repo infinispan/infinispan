@@ -37,8 +37,8 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
 
    private final CheckTopologyAction checkTopologyAction;
 
-   @Inject private LockManager lockManager;
-   @Inject private DistributionManager distributionManager;
+   @Inject LockManager lockManager;
+   @Inject DistributionManager distributionManager;
 
    private long lockTimeout;
    private boolean isLocking;

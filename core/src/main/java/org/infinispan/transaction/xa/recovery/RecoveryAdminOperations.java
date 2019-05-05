@@ -31,7 +31,7 @@ public class RecoveryAdminOperations {
 
    private static final String SEPARATOR = ", ";
 
-   @Inject private RecoveryManager recoveryManager;
+   @Inject RecoveryManager recoveryManager;
 
    @ManagedOperation(description = "Shows all the prepared transactions for which the originating node crashed", displayName="Show in doubt transactions")
    public String showInDoubtTransactions() {

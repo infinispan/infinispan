@@ -51,8 +51,8 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    private static final Log log = LogFactory.getLog(L1LastChanceInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private L1Manager l1Manager;
-   @Inject private ClusteringDependentLogic cdl;
+   @Inject L1Manager l1Manager;
+   @Inject ClusteringDependentLogic cdl;
 
    private final InvocationSuccessFunction handleDataWriteCommandEntryInL1 = this::handleDataWriteCommandEntryInL1;
    private final InvocationSuccessFunction handleDataWriteCommandEntryNotInL1 = this::handleDataWriteCommandEntryNotInL1;

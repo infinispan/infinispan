@@ -273,15 +273,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       CompletableFuture<Void> managerStopResumed = new CompletableFuture<>();
       try {
          manager.addListener(new MyListener(CACHE_NAME, cacheStartBlocked, cacheStartResumed));
-         TestingUtil.replaceComponent(manager, GlobalMarshaller.class, new GlobalMarshaller() {
-            @Override
-            public void stop() {
-               log.tracef("Stopping global component registry");
-               managerStopBlocked.complete(null);
-               managerStopResumed.join();
-               super.stop();
-            }
-         }, true);
+         TestingUtil.replaceComponent(manager, GlobalMarshaller.class,
+                                      new LatchGlobalMarshaller(managerStopBlocked, managerStopResumed), true);
 
          Future<?> cacheStartFuture = fork(() -> manager.getCache(CACHE_NAME));
          cacheStartBlocked.get(10, SECONDS);
@@ -352,12 +345,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cacheManager.defineConfiguration("correct-cache-3", cacheManager.getDefaultCacheConfiguration());
          ConfigurationBuilder incorrectBuilder = new ConfigurationBuilder();
          incorrectBuilder.customInterceptors().addInterceptor().position(InterceptorConfiguration.Position.FIRST)
-               .interceptor(new BaseCustomAsyncInterceptor() {
-                  @Override
-                  protected void start() {
-                     throw new IllegalStateException();
-                  }
-               });
+               .interceptor(new ExceptionInterceptor());
          cacheManager.defineConfiguration("incorrect", incorrectBuilder.build());
          cacheManager.startCaches("correct-cache-1", "correct-cache-2", "correct-cache-3", "incorrect");
       } finally {
@@ -573,6 +561,13 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       @Override public UnreliableCacheStoreConfigurationBuilder self() { return this; }
    }
 
+   static class ExceptionInterceptor extends BaseCustomAsyncInterceptor {
+      @Override
+      protected void start() {
+         throw new IllegalStateException();
+      }
+   }
+
    @Listener
    private class MyListener {
       private String cacheName;
@@ -614,6 +609,25 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       @Stop
       public void stop() {
          stopped = true;
+      }
+   }
+
+   class LatchGlobalMarshaller extends GlobalMarshaller {
+      private final CompletableFuture<Void> managerStopBlocked;
+      private final CompletableFuture<Void> managerStopResumed;
+
+      public LatchGlobalMarshaller(CompletableFuture<Void> managerStopBlocked,
+                                   CompletableFuture<Void> managerStopResumed) {
+         this.managerStopBlocked = managerStopBlocked;
+         this.managerStopResumed = managerStopResumed;
+      }
+
+      @Override
+      public void stop() {
+         log.tracef("Stopping global component registry");
+         managerStopBlocked.complete(null);
+         managerStopResumed.join();
+         super.stop();
       }
    }
 }

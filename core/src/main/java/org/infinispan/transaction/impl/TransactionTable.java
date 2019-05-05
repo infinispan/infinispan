@@ -90,22 +90,22 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    public static final int CACHE_STOPPED_TOPOLOGY_ID = -1;
 
    @ComponentName(KnownComponentNames.CACHE_NAME)
-   @Inject private String cacheName;
+   @Inject String cacheName;
    @Inject protected Configuration configuration;
    @Inject protected TransactionCoordinator txCoordinator;
-   @Inject private TransactionFactory txFactory;
+   @Inject TransactionFactory txFactory;
    @Inject protected RpcManager rpcManager;
    @Inject protected CommandsFactory commandsFactory;
-   @Inject private ClusteringDependentLogic clusteringLogic;
-   @Inject private CacheNotifier notifier;
-   @Inject private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
-   @Inject private TimeService timeService;
-   @Inject private CacheManagerNotifier cacheManagerNotifier;
+   @Inject ClusteringDependentLogic clusteringLogic;
+   @Inject CacheNotifier notifier;
+   @Inject TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+   @Inject TimeService timeService;
+   @Inject CacheManagerNotifier cacheManagerNotifier;
    @Inject protected PartitionHandlingManager partitionHandlingManager;
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
-   private ScheduledExecutorService timeoutExecutor;
-   @Inject private TransactionOriginatorChecker transactionOriginatorChecker;
-   @Inject private TransactionManager transactionManager;
+   ScheduledExecutorService timeoutExecutor;
+   @Inject TransactionOriginatorChecker transactionOriginatorChecker;
+   @Inject TransactionManager transactionManager;
 
    /**
     * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
@@ -182,7 +182,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    @Stop
    @SuppressWarnings("unused")
-   private void stop() {
+   void stop() {
       running = false;
       cacheManagerNotifier.removeListener(this);
       if (clustered) {

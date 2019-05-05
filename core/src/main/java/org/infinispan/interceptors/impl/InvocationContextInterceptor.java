@@ -44,8 +44,8 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private ComponentRegistry componentRegistry;
-   @Inject private TransactionTable txTable;
+   @Inject ComponentRegistry componentRegistry;
+   @Inject TransactionTable txTable;
 
    private volatile boolean shuttingDown = false;
 
@@ -66,12 +66,12 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    };
 
    @Start(priority = 1)
-   private void setStartStatus() {
+   void setStartStatus() {
       shuttingDown = false;
    }
 
    @Stop(priority = 1)
-   private void setStopStatus() {
+   void setStopStatus() {
       shuttingDown = true;
    }
 

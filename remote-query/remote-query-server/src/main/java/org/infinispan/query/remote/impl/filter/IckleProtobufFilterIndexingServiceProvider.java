@@ -19,7 +19,7 @@ public final class IckleProtobufFilterIndexingServiceProvider extends IckleFilte
 
    private RemoteQueryManager remoteQueryManager;
 
-   @Inject private Cache cache;
+   @Inject Cache cache;
 
    private RemoteQueryManager getRemoteQueryManager() {
       if (remoteQueryManager == null) {

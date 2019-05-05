@@ -515,7 +515,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 		Set<Integer> contactIds;
 	}
 
-	private static class HookInterceptor extends BaseCustomInterceptor {
+	static class HookInterceptor extends BaseCustomInterceptor {
 		final AtomicReference<Exception> failure;
 		Phaser phaser;
 		Thread thread;

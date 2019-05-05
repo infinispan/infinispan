@@ -439,7 +439,7 @@ public interface ClusteringDependentLogic {
     * This logic is used in replicated mode caches.
     */
    class ReplicationLogic extends InvalidationLogic {
-      @Inject private StateTransferLock stateTransferLock;
+      @Inject StateTransferLock stateTransferLock;
 
       private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner =
             segment -> getCacheTopology().getSegmentDistribution(segment).isPrimary();
@@ -517,7 +517,7 @@ public interface ClusteringDependentLogic {
     * This logic is used in distributed mode caches.
     */
    class DistributionLogic extends AbstractClusteringDependentLogic {
-      @Inject private StateTransferLock stateTransferLock;
+      @Inject StateTransferLock stateTransferLock;
 
       private final WriteSkewHelper.KeySpecificLogic localNodeIsOwner = new WriteSkewHelper.KeySpecificLogic() {
          @Override

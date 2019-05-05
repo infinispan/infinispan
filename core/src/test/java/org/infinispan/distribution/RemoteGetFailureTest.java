@@ -260,14 +260,14 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       ((GMS) channel.getProtocolStack().findProtocol(GMS.class)).installView(view);
    }
 
-   private static class FailingInterceptor extends DDAsyncInterceptor {
+   static class FailingInterceptor extends DDAsyncInterceptor {
       @Override
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          throw new CacheException("Injected");
       }
    }
 
-   private static class DelayingInterceptor extends DDAsyncInterceptor {
+   static class DelayingInterceptor extends DDAsyncInterceptor {
       private final CountDownLatch arrival;
       private final CountDownLatch release;
 
@@ -285,7 +285,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       }
    }
 
-   private class CheckOTEInterceptor extends DDAsyncInterceptor {
+   class CheckOTEInterceptor extends DDAsyncInterceptor {
       private final AtomicInteger thrown;
       private final AtomicInteger retried;
 

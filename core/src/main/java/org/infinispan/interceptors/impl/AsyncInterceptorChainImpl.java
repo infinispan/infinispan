@@ -56,7 +56,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    }
 
    @Start
-   private void printChainInfo() {
+   void printChainInfo() {
       if (log.isDebugEnabled()) {
          log.debugf("Interceptor chain size: %d", size());
          log.debugf("Interceptor chain is: %s", toString());

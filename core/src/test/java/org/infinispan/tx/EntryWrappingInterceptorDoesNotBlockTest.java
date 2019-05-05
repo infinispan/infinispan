@@ -250,7 +250,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       }
    }
 
-   private class PrepareExpectingInterceptor extends DDAsyncInterceptor {
+   class PrepareExpectingInterceptor extends DDAsyncInterceptor {
       private final CountDownLatch latch = new CountDownLatch(1);
 
       @Override

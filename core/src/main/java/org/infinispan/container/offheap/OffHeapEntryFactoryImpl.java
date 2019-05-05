@@ -27,11 +27,11 @@ import org.infinispan.commons.time.TimeService;
 public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
 
-   @Inject private Marshaller marshaller;
-   @Inject private OffHeapMemoryAllocator allocator;
-   @Inject private TimeService timeService;
-   @Inject private InternalEntryFactory internalEntryFactory;
-   @Inject private Configuration configuration;
+   @Inject Marshaller marshaller;
+   @Inject OffHeapMemoryAllocator allocator;
+   @Inject TimeService timeService;
+   @Inject InternalEntryFactory internalEntryFactory;
+   @Inject Configuration configuration;
 
    private boolean evictionEnabled;
 

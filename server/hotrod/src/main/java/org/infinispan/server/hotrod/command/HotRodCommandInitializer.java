@@ -18,7 +18,7 @@ import org.infinispan.server.hotrod.command.tx.ForwardRollbackCommand;
  */
 final class HotRodCommandInitializer implements ModuleCommandInitializer {
 
-   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject EmbeddedCacheManager cacheManager;
 
    @Override
    public void initializeReplicableCommand(ReplicableCommand c, boolean isRemote) {

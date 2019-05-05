@@ -81,19 +81,19 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private static final Flag[] userMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES};
    private static final Flag[] autoMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES, Flag.PUT_FOR_STATE_TRANSFER, Flag.SKIP_REMOTE_LOOKUP};
 
-   @Inject private ComponentRef<AsyncInterceptorChain> interceptorChain;
-   @Inject private ComponentRef<AdvancedCache<K, V>> cache;
-   @Inject private Configuration cacheConfiguration;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private DistributionManager distributionManager;
+   @Inject ComponentRef<AsyncInterceptorChain> interceptorChain;
+   @Inject ComponentRef<AdvancedCache<K, V>> cache;
+   @Inject Configuration cacheConfiguration;
+   @Inject CommandsFactory commandsFactory;
+   @Inject DistributionManager distributionManager;
    @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
-   private ExecutorService stateTransferExecutor;
-   @Inject private InvocationContextFactory invocationContextFactory;
-   @Inject private RpcManager rpcManager;
-   @Inject private ComponentRef<StateConsumer> stateConsumer;
-   @Inject private StateReceiver<K, V> stateReceiver;
-   @Inject private EntryMergePolicyFactoryRegistry mergePolicyRegistry;
-   @Inject private TimeService timeService;
+   ExecutorService stateTransferExecutor;
+   @Inject InvocationContextFactory invocationContextFactory;
+   @Inject RpcManager rpcManager;
+   @Inject ComponentRef<StateConsumer> stateConsumer;
+   @Inject StateReceiver<K, V> stateReceiver;
+   @Inject EntryMergePolicyFactoryRegistry mergePolicyRegistry;
+   @Inject TimeService timeService;
 
    private String cacheName;
    private Address localAddress;

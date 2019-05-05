@@ -52,10 +52,10 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 	private PutFromLoadValidator putFromLoadValidator;
 	private final ByteString cacheName;
 
-	@Inject private RpcManager rpcManager;
-	@Inject private CacheCommandInitializer cacheCommandInitializer;
-	@Inject private InternalDataContainer dataContainer;
-	@Inject private DistributionManager distributionManager;
+	@Inject RpcManager rpcManager;
+	@Inject CacheCommandInitializer cacheCommandInitializer;
+	@Inject InternalDataContainer dataContainer;
+	@Inject DistributionManager distributionManager;
 
 	private RpcOptions asyncUnordered;
 

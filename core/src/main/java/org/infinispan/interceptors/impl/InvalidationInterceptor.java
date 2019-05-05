@@ -77,7 +77,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    private final InvocationSuccessFunction handleCommit = this::handleCommit;
    private final InvocationSuccessFunction handlePrepare = this::handlePrepare;
 
-   @Inject private CommandsFactory commandsFactory;
+   @Inject CommandsFactory commandsFactory;
 
    private boolean statisticsEnabled;
 
@@ -87,7 +87,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Start
-   private void start() {
+   void start() {
       this.setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
    }
 

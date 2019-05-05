@@ -33,10 +33,10 @@ public class TransactionFactory {
 
    private static final Log log = LogFactory.getLog(TransactionFactory.class);
 
-   @Inject private Configuration configuration;
+   @Inject Configuration configuration;
    @Inject @ComponentName(value = KnownComponentNames.TRANSACTION_VERSION_GENERATOR)
-   private VersionGenerator clusterIdGenerator;
-   @Inject private TimeService timeService;
+   VersionGenerator clusterIdGenerator;
+   @Inject TimeService timeService;
 
    private TxFactoryEnum txFactoryEnum;
    private boolean isClustered;

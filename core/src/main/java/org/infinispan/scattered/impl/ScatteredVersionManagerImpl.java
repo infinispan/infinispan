@@ -61,17 +61,17 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    protected static final Log log = LogFactory.getLog(ScatteredVersionManagerImpl.class);
    protected static final boolean trace = log.isTraceEnabled();
 
-   @Inject private Configuration configuration;
-   @Inject private ComponentRegistry componentRegistry;
+   @Inject Configuration configuration;
+   @Inject ComponentRegistry componentRegistry;
    @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
-   private ExecutorService executorService;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private RpcManager rpcManager;
-   @Inject private InternalDataContainer<K, ?> dataContainer;
-   @Inject private PersistenceManager persistenceManager;
-   @Inject private DistributionManager distributionManager;
-   @Inject private ClusterTopologyManager clusterTopologyManager;
-   @Inject private OrderedUpdatesManager orderedUpdatesManager;
+   ExecutorService executorService;
+   @Inject CommandsFactory commandsFactory;
+   @Inject RpcManager rpcManager;
+   @Inject InternalDataContainer<K, ?> dataContainer;
+   @Inject PersistenceManager persistenceManager;
+   @Inject DistributionManager distributionManager;
+   @Inject ClusterTopologyManager clusterTopologyManager;
+   @Inject OrderedUpdatesManager orderedUpdatesManager;
 
    private int invalidationBatchSize;
    private int numSegments;

@@ -81,25 +81,7 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
 
       DISCARD d1 = TestingUtil.getDiscardForCache(c1.getCacheManager());
       GlobalConfigurationBuilder gcb2 = new GlobalConfigurationBuilder();
-      gcb2.transport().transport(new JGroupsTransport() {
-         @Override
-         public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
-                                                     ResponseCollector<T> collector, DeliverOrder deliverOrder,
-                                                     long timeout, TimeUnit unit) {
-            if (command instanceof StateRequestCommand &&
-                  ((StateRequestCommand) command).getType() == StateRequestCommand.Type.START_STATE_TRANSFER &&
-                  target.equals(address(1))) {
-               d1.setDiscardAll(true);
-
-               fork((Callable<Void>) () -> {
-                  log.info("KILLING the c1 cache");
-                  TestingUtil.killCacheManagers(manager(c1));
-                  return null;
-               });
-            }
-            return super.invokeCommand(target, command, collector, deliverOrder, timeout, unit);
-         }
-      });
+      gcb2.transport().transport(new KillingJGroupsTransport(d1, c1));
 
       log.info("adding cache c2");
       addClusterEnabledCacheManager(gcb2, cfgBuilder, new TransportFlags().withFD(true));
@@ -116,5 +98,33 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
       eventuallyEquals(numKeys, () -> c2.entrySet().size());
 
       log.info("Ending the test");
+   }
+
+   class KillingJGroupsTransport extends JGroupsTransport {
+      private final DISCARD d1;
+      private final Cache<Object, Object> c1;
+
+      public KillingJGroupsTransport(DISCARD d1, Cache<Object, Object> c1) {
+         this.d1 = d1;
+         this.c1 = c1;
+      }
+
+      @Override
+      public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                                  ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                  long timeout, TimeUnit unit) {
+         if (command instanceof StateRequestCommand &&
+               ((StateRequestCommand) command).getType() == StateRequestCommand.Type.START_STATE_TRANSFER &&
+             target.equals(address(1))) {
+            d1.setDiscardAll(true);
+
+            fork((Callable<Void>) () -> {
+               log.info("KILLING the c1 cache");
+               TestingUtil.killCacheManagers(manager(c1));
+               return null;
+            });
+         }
+         return super.invokeCommand(target, command, collector, deliverOrder, timeout, unit);
+      }
    }
 }

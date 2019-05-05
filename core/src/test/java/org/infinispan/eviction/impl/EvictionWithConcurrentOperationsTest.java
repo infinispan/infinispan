@@ -599,7 +599,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
    }
 
-   private class AfterActivationOrCacheLoader extends ControlledCommandInterceptor {
+   class AfterActivationOrCacheLoader extends ControlledCommandInterceptor {
 
       public AfterActivationOrCacheLoader injectThis(Cache<Object, Object> injectInCache) {
          AsyncInterceptorChain chain =

@@ -17,9 +17,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -106,7 +106,7 @@ public class ActivationDuringEvictTest extends SingleCacheManagerTest {
       assertEquals(expected, se.getValue());
    }
 
-   private static class SlowDownInterceptor extends CommandInterceptor implements Cloneable{
+   static class SlowDownInterceptor extends CommandInterceptor implements Cloneable {
 
       private static final long serialVersionUID = 8790944676490291484L;
 

@@ -97,7 +97,7 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
       }
    }
 
-   private static class BlowUpInterceptor extends CommandInterceptor {
+   static class BlowUpInterceptor extends CommandInterceptor {
 
       private final AtomicBoolean injectFailures;
 

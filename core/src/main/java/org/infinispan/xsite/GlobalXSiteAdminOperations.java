@@ -34,7 +34,7 @@ public class GlobalXSiteAdminOperations {
 
    public static final String CACHE_DELIMITER = ",";
 
-   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject EmbeddedCacheManager cacheManager;
 
    private static void addCacheAdmin(Cache cache, List<CacheXSiteAdminOperation> list) {
       if (cache != null) {

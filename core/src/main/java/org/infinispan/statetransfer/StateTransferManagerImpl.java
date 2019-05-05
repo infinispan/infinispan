@@ -62,21 +62,21 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject protected String cacheName;
-   @Inject private StateConsumer stateConsumer;
-   @Inject private StateProvider stateProvider;
-   @Inject private PartitionHandlingManager partitionHandlingManager;
-   @Inject private DistributionManager distributionManager;
-   @Inject private CacheNotifier cacheNotifier;
-   @Inject private Configuration configuration;
-   @Inject private GlobalConfiguration globalConfiguration;
-   @Inject private RpcManager rpcManager;
-   @Inject private LocalTopologyManager localTopologyManager;
-   @Inject private KeyPartitioner keyPartitioner;
-   @Inject private GlobalStateManager globalStateManager;
+   @Inject StateConsumer stateConsumer;
+   @Inject StateProvider stateProvider;
+   @Inject PartitionHandlingManager partitionHandlingManager;
+   @Inject DistributionManager distributionManager;
+   @Inject CacheNotifier cacheNotifier;
+   @Inject Configuration configuration;
+   @Inject GlobalConfiguration globalConfiguration;
+   @Inject RpcManager rpcManager;
+   @Inject LocalTopologyManager localTopologyManager;
+   @Inject KeyPartitioner keyPartitioner;
+   @Inject GlobalStateManager globalStateManager;
    // Only join the cluster after preloading
-   @Inject private PreloadManager preloadManager;
+   @Inject PreloadManager preloadManager;
    // Make sure we can handle incoming requests before joining
-   @Inject private PerCacheInboundInvocationHandler inboundInvocationHandler;
+   @Inject PerCacheInboundInvocationHandler inboundInvocationHandler;
 
    private Optional<Integer> persistentStateChecksum;
 

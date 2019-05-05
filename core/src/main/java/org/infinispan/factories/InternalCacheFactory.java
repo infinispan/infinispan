@@ -245,7 +245,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
    }
 
-   private static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>> extends AbstractDelegatingAdvancedCache<K, V> {
+   static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>> extends AbstractDelegatingAdvancedCache<K, V> {
 
       @Inject
       protected ComponentRegistry componentRegistry;
@@ -307,9 +307,8 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
    }
 
-   private static class PartitionHandlingCache<K, V> extends AbstractGetAdvancedCache<K, V, PartitionHandlingCache<K, V>> {
-      @Inject
-      private PartitionHandlingManager manager;
+   static class PartitionHandlingCache<K, V> extends AbstractGetAdvancedCache<K, V, PartitionHandlingCache<K, V>> {
+      @Inject PartitionHandlingManager manager;
 
       // We store the flags as bits passed from AdvancedCache.withFlags etc.
       private final long bitFlags;
@@ -386,10 +385,9 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
    }
 
-   private static class StatsCache<K, V> extends AbstractGetAdvancedCache<K, V, StatsCache<K, V>> {
+   static class StatsCache<K, V> extends AbstractGetAdvancedCache<K, V, StatsCache<K, V>> {
 
-      @Inject
-      private TimeService timeService;
+      @Inject TimeService timeService;
       private CacheMgmtInterceptor interceptor;
 
       public StatsCache(AbstractGetAdvancedCache<K, V, ?> cache) {
@@ -441,10 +439,9 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
    }
 
-   private static class GetReplCache<K, V> extends AbstractGetAdvancedCache<K, V, GetReplCache<K, V>> {
+   static class GetReplCache<K, V> extends AbstractGetAdvancedCache<K, V, GetReplCache<K, V>> {
 
-      @Inject
-      private CacheNotifier<K, V> cacheNotifier;
+      @Inject CacheNotifier<K, V> cacheNotifier;
 
       // The hasListeners is commented out until EncoderCache can properly pass down the addListener invocation
       // to the next delegate in the chain. Otherwise we miss listener additions and don't fire events properly.

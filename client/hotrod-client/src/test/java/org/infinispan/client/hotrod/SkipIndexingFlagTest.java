@@ -221,7 +221,7 @@ public class SkipIndexingFlagTest extends SingleCacheManagerTest {
       abstract void execute(RemoteCache<String, String> cache);
    }
 
-   private static class FlagCheckCommandInterceptor extends BaseCustomInterceptor {
+   static class FlagCheckCommandInterceptor extends BaseCustomInterceptor {
 
       private volatile boolean expectSkipIndexingFlag;
 

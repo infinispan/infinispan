@@ -55,14 +55,10 @@ import org.infinispan.util.logging.LogFactory;
 public class ScriptingManagerImpl implements ScriptingManager {
    private static final Log log = LogFactory.getLog(ScriptingManagerImpl.class, Log.class);
 
-   @Inject
-   private EmbeddedCacheManager cacheManager;
-   @Inject
-   private TaskManager taskManager;
-   @Inject
-   private InternalCacheRegistry internalCacheRegistry;
-   @Inject
-   private EncoderRegistry encoderRegistry;
+   @Inject EmbeddedCacheManager cacheManager;
+   @Inject TaskManager taskManager;
+   @Inject InternalCacheRegistry internalCacheRegistry;
+   @Inject EncoderRegistry encoderRegistry;
 
    private ScriptEngineManager scriptEngineManager;
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = new ConcurrentHashMap<>(2);

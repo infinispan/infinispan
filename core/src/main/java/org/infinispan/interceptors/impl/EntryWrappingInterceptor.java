@@ -90,17 +90,17 @@ import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
  * @since 9.0
  */
 public class EntryWrappingInterceptor extends DDAsyncInterceptor {
-   @Inject private EntryFactory entryFactory;
-   @Inject private InternalDataContainer<Object, Object> dataContainer;
+   @Inject EntryFactory entryFactory;
+   @Inject InternalDataContainer<Object, Object> dataContainer;
    @Inject protected ClusteringDependentLogic cdl;
-   @Inject private VersionGenerator versionGenerator;
+   @Inject VersionGenerator versionGenerator;
    @Inject protected DistributionManager distributionManager;
-   @Inject private ComponentRef<StateConsumer> stateConsumer;
-   @Inject private StateTransferLock stateTransferLock;
-   @Inject private ComponentRef<XSiteStateConsumer> xSiteStateConsumer;
-   @Inject private GroupManager groupManager;
-   @Inject private CacheNotifier<Object, Object> notifier;
-   @Inject private KeyPartitioner keyPartitioner;
+   @Inject ComponentRef<StateConsumer> stateConsumer;
+   @Inject StateTransferLock stateTransferLock;
+   @Inject ComponentRef<XSiteStateConsumer> xSiteStateConsumer;
+   @Inject GroupManager groupManager;
+   @Inject CacheNotifier<Object, Object> notifier;
+   @Inject KeyPartitioner keyPartitioner;
 
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
    private boolean isInvalidation;

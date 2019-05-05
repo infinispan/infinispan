@@ -54,11 +54,11 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
    private static final boolean trace = log.isTraceEnabled();
 
    private AdvancedCache<K, V> cache;
-   @Inject private ComponentRegistry registry;
-   @Inject private DistributionManager dm;
-   @Inject private RpcManager rpc;
-   @Inject private CommandsFactory factory;
-   @Inject private IteratorHandler iteratorHandler;
+   @Inject ComponentRegistry registry;
+   @Inject DistributionManager dm;
+   @Inject RpcManager rpc;
+   @Inject CommandsFactory factory;
+   @Inject IteratorHandler iteratorHandler;
    private boolean hasLoader;
    private boolean isReplicated;
    private int maxSegment;

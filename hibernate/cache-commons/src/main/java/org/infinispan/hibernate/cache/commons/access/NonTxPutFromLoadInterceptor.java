@@ -32,8 +32,8 @@ public class NonTxPutFromLoadInterceptor extends BaseCustomAsyncInterceptor {
 	private final ByteString cacheName;
 	private final PutFromLoadValidator putFromLoadValidator;
 
-	@Inject private CacheCommandInitializer commandInitializer;
-	@Inject private RpcManager rpcManager;
+	@Inject CacheCommandInitializer commandInitializer;
+	@Inject RpcManager rpcManager;
 
 	public NonTxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, ByteString cacheName) {
 		this.putFromLoadValidator = putFromLoadValidator;

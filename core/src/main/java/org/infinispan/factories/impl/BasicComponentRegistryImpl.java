@@ -69,11 +69,11 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    }
 
    @Override
-   public <T> ComponentRef<T> getComponent(String name, Class<T> componentType) {
+   public <T, U extends T> ComponentRef<T> getComponent(String name, Class<U> componentType) {
       return getComponent0(name, componentType, true);
    }
 
-   public <T> ComponentRef<T> getComponent0(String name, Class<T> componentType, boolean needInstance) {
+   private <T, U extends T> ComponentRef<T> getComponent0(String name, Class<U> componentType, boolean needInstance) {
       ComponentWrapper wrapper = components.get(name);
       if (wrapper != null && (wrapper.isAtLeast(WrapperState.WIRED) || !needInstance)) {
          // The wrapper already exists, return it even if the instance was not wired or even created yet
@@ -124,7 +124,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       }
    }
 
-   void instantiateWrapper(ComponentWrapper wrapper, ComponentFactory factory) {
+   private void instantiateWrapper(ComponentWrapper wrapper, ComponentFactory factory) {
       String name = wrapper.name;
       if (!prepareWrapperChange(wrapper, WrapperState.EMPTY, WrapperState.INSTANTIATING)) {
          // Someone else has started instantiating and wiring the component, wait for them to finish
@@ -154,7 +154,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       commitWrapperInstanceChange(wrapper, instance, metadata, WrapperState.INSTANTIATING, WrapperState.INSTANTIATED);
    }
 
-   void wireWrapper(ComponentWrapper wrapper) {
+   private void wireWrapper(ComponentWrapper wrapper) {
       if (!prepareWrapperChange(wrapper, WrapperState.INSTANTIATED, WrapperState.WIRING)) {
          // Someone else has started wiring the component, wait for them to finish
          awaitWrapperState(wrapper, WrapperState.WIRED);

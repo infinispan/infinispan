@@ -831,7 +831,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       }
    }
 
-   private static class WaitForTopologyInterceptor extends DDAsyncInterceptor {
+   static class WaitForTopologyInterceptor extends DDAsyncInterceptor {
       private static final Log log = LogFactory.getLog(RemoteGetDuringStateTransferTest.class);
 
       protected final int expectedTopologyId;
@@ -862,7 +862,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       }
    }
 
-   private static class FailReadsInterceptor extends BaseCustomAsyncInterceptor {
+   static class FailReadsInterceptor extends BaseCustomAsyncInterceptor {
       private final AtomicBoolean hit = new AtomicBoolean();
 
       @Override
@@ -876,7 +876,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       }
    }
 
-   private static class AssertNoRetryInterceptor extends DDAsyncInterceptor {
+   static class AssertNoRetryInterceptor extends DDAsyncInterceptor {
       @Override
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
          assertFalse(command.hasAnyFlag(FlagBitSets.COMMAND_RETRY));

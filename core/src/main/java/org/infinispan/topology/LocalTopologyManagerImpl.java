@@ -64,15 +64,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private static Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private Transport transport;
+   @Inject Transport transport;
    @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
-   private ExecutorService asyncTransportExecutor;
-   @Inject private GlobalComponentRegistry gcr;
-   @Inject private TimeService timeService;
-   @Inject private GlobalStateManager globalStateManager;
-   @Inject private PersistentUUIDManager persistentUUIDManager;
+   ExecutorService asyncTransportExecutor;
+   @Inject GlobalComponentRegistry gcr;
+   @Inject TimeService timeService;
+   @Inject GlobalStateManager globalStateManager;
+   @Inject PersistentUUIDManager persistentUUIDManager;
    // Not used directly, but we have to start the ClusterTopologyManager before sending the join request
-   @Inject private ClusterTopologyManager clusterTopologyManager;
+   @Inject ClusterTopologyManager clusterTopologyManager;
 
    private final WithinThreadExecutor withinThreadExecutor = new WithinThreadExecutor();
 

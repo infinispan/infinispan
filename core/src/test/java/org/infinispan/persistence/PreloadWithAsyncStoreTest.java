@@ -160,7 +160,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       }
    }
 
-   private class ExceptionTrackerInterceptor extends CommandInterceptor {
+   class ExceptionTrackerInterceptor extends CommandInterceptor {
 
       private volatile int exceptionsCaught = 0;
 

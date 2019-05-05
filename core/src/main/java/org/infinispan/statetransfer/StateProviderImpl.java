@@ -61,11 +61,11 @@ public class StateProviderImpl implements StateProvider {
 
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject protected String cacheName;
-   @Inject private Configuration configuration;
+   @Inject Configuration configuration;
    @Inject protected RpcManager rpcManager;
    @Inject protected CommandsFactory commandsFactory;
-   @Inject private ClusterCacheNotifier clusterCacheNotifier;
-   @Inject private TransactionTable transactionTable;     // optional
+   @Inject ClusterCacheNotifier clusterCacheNotifier;
+   @Inject TransactionTable transactionTable;     // optional
    @Inject protected InternalDataContainer dataContainer;
    @Inject protected PersistenceManager persistenceManager; // optional
    @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
@@ -74,7 +74,7 @@ public class StateProviderImpl implements StateProvider {
    @Inject protected InternalEntryFactory entryFactory;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected DistributionManager distributionManager;
-   @Inject private TransactionOriginatorChecker transactionOriginatorChecker;
+   @Inject TransactionOriginatorChecker transactionOriginatorChecker;
 
    protected long timeout;
    protected int chunkSize;

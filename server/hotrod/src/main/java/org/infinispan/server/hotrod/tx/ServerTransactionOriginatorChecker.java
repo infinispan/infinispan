@@ -18,7 +18,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @since 9.1
  */
 public class ServerTransactionOriginatorChecker implements TransactionOriginatorChecker {
-   @Inject private RpcManager rpcManager;
+   @Inject RpcManager rpcManager;
 
    @Override
    public boolean isOriginatorMissing(GlobalTransaction gtx) {

@@ -107,12 +107,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Inject protected PersistenceManager persistenceManager;
    @Inject protected CacheNotifier notifier;
    @Inject protected EntryFactory entryFactory;
-   @Inject private TimeService timeService;
-   @Inject private InternalEntryFactory iceFactory;
-   @Inject private InternalDataContainer<K, V> dataContainer;
-   @Inject private GroupManager groupManager;
-   @Inject private ComponentRef<Cache<K, V>> cache;
-   @Inject private KeyPartitioner partitioner;
+   @Inject TimeService timeService;
+   @Inject InternalEntryFactory iceFactory;
+   @Inject InternalDataContainer<K, V> dataContainer;
+   @Inject GroupManager groupManager;
+   @Inject ComponentRef<Cache<K, V>> cache;
+   @Inject KeyPartitioner partitioner;
 
    private boolean activation;
 

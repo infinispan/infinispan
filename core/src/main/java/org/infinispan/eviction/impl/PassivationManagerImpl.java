@@ -34,14 +34,14 @@ public class PassivationManagerImpl implements PassivationManager {
    private static final Log log = LogFactory.getLog(PassivationManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private PersistenceManager persistenceManager;
-   @Inject private CacheNotifier notifier;
-   @Inject private Configuration cfg;
-   @Inject private InternalDataContainer<Object, Object> container;
-   @Inject private TimeService timeService;
-   @Inject private MarshallableEntryFactory marshalledEntryFactory;
-   @Inject private DistributionManager distributionManager;
-   @Inject private KeyPartitioner keyPartitioner;
+   @Inject PersistenceManager persistenceManager;
+   @Inject CacheNotifier notifier;
+   @Inject Configuration cfg;
+   @Inject InternalDataContainer<Object, Object> container;
+   @Inject TimeService timeService;
+   @Inject MarshallableEntryFactory marshalledEntryFactory;
+   @Inject DistributionManager distributionManager;
+   @Inject KeyPartitioner keyPartitioner;
 
    private volatile boolean skipOnStop = false;
 

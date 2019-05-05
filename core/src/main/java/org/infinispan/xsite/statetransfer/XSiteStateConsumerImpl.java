@@ -40,12 +40,12 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
 
-   @Inject private TransactionManager transactionManager;
-   @Inject private InvocationContextFactory invocationContextFactory;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private AsyncInterceptorChain interceptorChain;
-   @Inject private CommitManager commitManager;
-   @Inject private KeyPartitioner keyPartitioner;
+   @Inject TransactionManager transactionManager;
+   @Inject InvocationContextFactory invocationContextFactory;
+   @Inject CommandsFactory commandsFactory;
+   @Inject AsyncInterceptorChain interceptorChain;
+   @Inject CommitManager commitManager;
+   @Inject KeyPartitioner keyPartitioner;
 
    private AtomicReference<String> sendingSite = new AtomicReference<>(null);
 

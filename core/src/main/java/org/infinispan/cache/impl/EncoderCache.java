@@ -58,10 +58,8 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private static Log log = LogFactory.getLog(EncoderCache.class);
 
-   @Inject
-   private InternalEntryFactory entryFactory;
-   @Inject
-   private BasicComponentRegistry componentRegistry;
+   @Inject InternalEntryFactory entryFactory;
+   @Inject BasicComponentRegistry componentRegistry;
 
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;

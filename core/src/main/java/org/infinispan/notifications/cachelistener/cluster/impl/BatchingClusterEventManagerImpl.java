@@ -28,10 +28,10 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 
 public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManager<K, V> {
-   @Inject private EmbeddedCacheManager cacheManager;
-   @Inject private Configuration configuration;
-   @Inject private RpcManager rpcManager;
-   @Inject private ComponentRef<CommandsFactory> commandsFactory;
+   @Inject EmbeddedCacheManager cacheManager;
+   @Inject Configuration configuration;
+   @Inject RpcManager rpcManager;
+   @Inject ComponentRef<CommandsFactory> commandsFactory;
 
    private long timeout;
 

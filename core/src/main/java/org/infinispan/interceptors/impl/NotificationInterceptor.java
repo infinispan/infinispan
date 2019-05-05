@@ -19,7 +19,7 @@ import org.infinispan.notifications.cachelistener.annotation.TransactionComplete
  * @since 9.0
  */
 public class NotificationInterceptor extends DDAsyncInterceptor {
-   @Inject private CacheNotifier notifier;
+   @Inject CacheNotifier notifier;
    private final InvocationSuccessFunction commitSuccessAction = new InvocationSuccessFunction() {
       @Override
       public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv)

@@ -56,16 +56,16 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private final ConcurrentMap<String, StatePushTask> runningStateTransfer;
 
-   @Inject private InternalDataContainer<?, ?> dataContainer;
-   @Inject private PersistenceManager persistenceManager;
-   @Inject private ClusteringDependentLogic clusteringDependentLogic;
-   @Inject private CommandsFactory commandsFactory;
-   @Inject private RpcManager rpcManager;
+   @Inject InternalDataContainer<?, ?> dataContainer;
+   @Inject PersistenceManager persistenceManager;
+   @Inject ClusteringDependentLogic clusteringDependentLogic;
+   @Inject CommandsFactory commandsFactory;
+   @Inject RpcManager rpcManager;
    @Inject @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR)
-   private ExecutorService executorService;
-   @Inject private Configuration configuration;
-   @Inject private ComponentRef<XSiteStateTransferManager> stateTransferManager;
-   @Inject private StateTransferLock stateTransferLock;
+   ExecutorService executorService;
+   @Inject Configuration configuration;
+   @Inject ComponentRef<XSiteStateTransferManager> stateTransferManager;
+   @Inject StateTransferLock stateTransferLock;
 
    public XSiteStateProviderImpl() {
       runningStateTransfer = new ConcurrentHashMap<>();

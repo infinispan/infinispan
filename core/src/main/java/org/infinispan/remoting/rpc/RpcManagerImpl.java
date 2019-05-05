@@ -73,11 +73,11 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    private static final Log log = LogFactory.getLog(RpcManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private Transport t;
-   @Inject private Configuration configuration;
-   @Inject private ComponentRef<CommandsFactory> cf;
-   @Inject private DistributionManager distributionManager;
-   @Inject private TimeService timeService;
+   @Inject Transport t;
+   @Inject Configuration configuration;
+   @Inject ComponentRef<CommandsFactory> cf;
+   @Inject DistributionManager distributionManager;
+   @Inject TimeService timeService;
 
    private final Function<ReplicableCommand, ReplicableCommand> toCacheRpcCommand = this::toCacheRpcCommand;
    private final AttributeListener<Long> updateRpcOptions = this::updateRpcOptions;
@@ -96,7 +96,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
 
    @Start(priority = 9)
-   private void start() {
+   void start() {
       statisticsEnabled = configuration.jmxStatistics().enabled();
 
       if (configuration.transaction().transactionProtocol().isTotalOrder())
@@ -109,7 +109,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    }
 
    @Stop
-   private void stop() {
+   void stop() {
       configuration.clustering()
                    .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
                    .removeListener(updateRpcOptions);

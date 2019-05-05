@@ -24,9 +24,9 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public class BatchingInterceptor extends DDAsyncInterceptor {
-   @Inject private BatchContainer batchContainer;
-   @Inject private TransactionManager transactionManager;
-   @Inject private InvocationContextFactory invocationContextFactory;
+   @Inject BatchContainer batchContainer;
+   @Inject TransactionManager transactionManager;
+   @Inject InvocationContextFactory invocationContextFactory;
 
    private static final Log log = LogFactory.getLog(BatchingInterceptor.class);
 

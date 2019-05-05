@@ -61,8 +61,8 @@ public class CommandAckCollector {
    private static final boolean trace = log.isTraceEnabled();
 
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
-   private ScheduledExecutorService timeoutExecutor;
-   @Inject private Configuration configuration;
+   ScheduledExecutorService timeoutExecutor;
+   @Inject Configuration configuration;
 
    private final ConcurrentHashMap<Long, BaseAckTarget> collectorMap;
    private long timeoutNanoSeconds;

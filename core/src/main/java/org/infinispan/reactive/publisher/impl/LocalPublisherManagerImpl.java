@@ -51,8 +51,8 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject private ComponentRef<Cache<K, V>> cacheComponentRef;
-   @Inject private DistributionManager distributionManager;
+   @Inject ComponentRef<Cache<K, V>> cacheComponentRef;
+   @Inject DistributionManager distributionManager;
    // This cache should only be used for retrieving entries via Cache#get
    private AdvancedCache<K, V> remoteCache;
    // This cache should be used for iteration purposes or Cache#get that are local only
