@@ -68,15 +68,16 @@ public class HotRodTargetMigrator implements TargetMigrator {
          throw log.couldNotMigrateData(cache.getName());
       }
       Marshaller marshaller = new MigrationMarshaller(whiteList);
-      byte[] knownKeys;
-      try {
-         knownKeys = marshaller.objectToByteBuffer(MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS);
-      } catch (Exception e) {
-         throw new CacheException(e);
-      }
+
       RemoteStore store = stores.iterator().next();
       final RemoteCache<Object, Object> remoteSourceCache = store.getRemoteCache();
       if (!supportsIteration(store.getConfiguration().protocolVersion())) {
+         byte[] knownKeys;
+         try {
+            knownKeys = marshaller.objectToByteBuffer(MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS);
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
          if (remoteSourceCache.containsKey(knownKeys)) {
             RemoteStoreConfiguration storeConfig = store.getConfiguration();
             if (!storeConfig.hotRodWrapping()) {
