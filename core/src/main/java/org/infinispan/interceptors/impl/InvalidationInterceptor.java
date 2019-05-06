@@ -13,6 +13,7 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -30,9 +31,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
@@ -50,10 +51,17 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * This interceptor acts as a replacement to the replication interceptor when the CacheImpl is configured with
  * ClusteredSyncMode as INVALIDATE.
- * <p/>
- * The idea is that rather than replicating changes to all caches in a cluster when write methods are called, simply
+ *
+ * <p>The idea is that rather than replicating changes to all caches in a cluster when write methods are called, simply
  * broadcast an {@link InvalidateCommand} on the remote caches containing all keys modified.  This allows the remote
- * cache to look up the value in a shared cache loader which would have been updated with the changes.
+ * cache to look up the value in a shared cache loader which would have been updated with the changes.</p>
+ *
+ * <p>Transactional caches, still lock affected keys on the primary owner:
+ * <ul>
+ *    <li>Pessimistic caches acquire locks with an explicit lock command and release during the one-phase PrepareCommand.</li>
+ *    <li>Optimistic caches acquire locks during the 2-phase prepare command and release locks with a TxCompletionNotificationCommand.</li>
+ * </ul>
+ * </p>
  *
  * @author Manik Surtani
  * @author Galder Zamarreño
@@ -66,9 +74,10 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    private static final Log log = LogFactory.getLog(InvalidationInterceptor.class);
 
    private final AtomicLong invalidations = new AtomicLong(0);
+   private final InvocationSuccessFunction handleCommit = this::handleCommit;
+   private final InvocationSuccessFunction handlePrepare = this::handlePrepare;
 
    @Inject private CommandsFactory commandsFactory;
-   @Inject private DistributionManager distributionManager;
 
    private boolean statisticsEnabled;
 
@@ -136,59 +145,59 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         // fetch the modifications before the transaction is committed (and thus removed from the txTable)
-         TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
-         if (!shouldInvokeRemoteTxCommand(txInvocationContext)) {
-            log.tracef("Nothing to invalidate - no modifications in the transaction.");
-            return rv;
-         }
+      return invokeNextThenApply(ctx, command, handlePrepare);
+   }
 
-         if (txInvocationContext.getTransaction() == null)
-            throw new IllegalStateException("We must have an associated transaction");
-         PrepareCommand prepareCommand = (PrepareCommand) rCommand;
-         List<WriteCommand> mods = Arrays.asList(prepareCommand.getModifications());
-         Collection<Object> remoteKeys = keysToInvalidateForPrepare(mods, txInvocationContext);
-         if (remoteKeys == null) {
-            return rv;
-         }
+   private Object handlePrepare(InvocationContext ctx, VisitableCommand command, Object rv) throws Throwable {
+      // fetch the modifications before the transaction is committed (and thus removed from the txTable)
+      TxInvocationContext txInvocationContext = (TxInvocationContext) ctx;
+      if (!shouldInvokeRemoteTxCommand(txInvocationContext)) {
+         log.tracef("Nothing to invalidate - no modifications in the transaction.");
+         return rv;
+      }
 
-         CompletionStage<Void> remoteInvocation =
-               invalidateAcrossCluster(txInvocationContext, remoteKeys.toArray(), defaultSynchronous,
-                                       prepareCommand.isOnePhaseCommit(), prepareCommand.getTopologyId());
-         return asyncValue(remoteInvocation.handle((responses, t) -> {
-            if (t == null) {
-               return null;
-            }
-            log.unableToRollbackInvalidationsDuringPrepare(t);
-            if (t instanceof RuntimeException)
-               throw ((RuntimeException) t);
-            else
-               throw new RuntimeException("Unable to broadcast invalidation messages", t);
-         }));
-      });
+      if (txInvocationContext.getTransaction() == null)
+         throw new IllegalStateException("We must have an associated transaction");
+      PrepareCommand prepareCommand = (PrepareCommand) command;
+      List<WriteCommand> mods = Arrays.asList(prepareCommand.getModifications());
+      Collection<Object> remoteKeys = keysToInvalidateForPrepare(mods, txInvocationContext);
+      if (remoteKeys == null) {
+         return rv;
+      }
+
+      CompletionStage<Void> remoteInvocation =
+         invalidateAcrossCluster(txInvocationContext, remoteKeys.toArray(), defaultSynchronous,
+                                 prepareCommand.isOnePhaseCommit(), prepareCommand.getTopologyId());
+      return asyncValue(remoteInvocation.handle((responses, t) -> {
+         if (t == null) {
+            return null;
+         }
+         log.unableToRollbackInvalidationsDuringPrepare(t);
+         if (t instanceof RuntimeException)
+            throw ((RuntimeException) t);
+         else
+            throw new RuntimeException("Unable to broadcast invalidation messages", t);
+      }));
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) {
+      if (!shouldInvokeRemoteTxCommand(ctx)) {
          return invokeNext(ctx, command);
       }
 
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         try {
-            CompletionStage<Void> remoteInvocation =
-               rpcManager.invokeCommandOnAll(command, VoidResponseCollector.ignoreLeavers(),
-                                             rpcManager.getSyncRpcOptions());
-            return asyncValue(remoteInvocation.handle((responses, t) -> {
-               if (t != null) throw wrapException(t);
+      return invokeNextThenApply(ctx, command, handleCommit);
+   }
 
-               return null;
-            }));
-         } catch (Throwable t) {
-            throw wrapException(t);
-         }
-      });
+   private Object handleCommit(InvocationContext ctx, VisitableCommand command, Object ignored) {
+      try {
+         CompletionStage<Void> remoteInvocation =
+            rpcManager.invokeCommandOnAll(command, VoidResponseCollector.ignoreLeavers(),
+                                          rpcManager.getSyncRpcOptions());
+         return asyncValue(remoteInvocation);
+      } catch (Throwable t) {
+         throw wrapException(t);
+      }
    }
 
    private RuntimeException wrapException(Throwable t) {
@@ -231,9 +240,11 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          if (writeCommand.isSuccessful()) {
             if (keys != null && keys.length != 0) {
                if (!isLocalModeForced(writeCommand)) {
+                  // Non-tx invalidation caches don't have a state transfer interceptor,
+                  // so the command topology id is not set
+                  int topologyId = rpcManager.getTopologyId();
                   CompletionStage<Void> remoteInvocation =
-                        invalidateAcrossCluster(rCtx, keys, isSynchronous(writeCommand), true,
-                                                writeCommand.getTopologyId());
+                     invalidateAcrossCluster(rCtx, keys, isSynchronous(writeCommand), true, topologyId);
                   return asyncValue(remoteInvocation.thenApply(responses -> rv));
                }
             }
@@ -311,11 +322,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          // so that the invalidation is executed in the same transaction and locks can be acquired and released properly.
          command = commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(),
                                                        Collections.singletonList(invalidateCommand), onePhaseCommit);
-         command.setTopologyId(topologyId);
-      } else {
-         // Non-tx invalidation caches don't have a state transfer interceptor, so we need to set the topology here
-         invalidateCommand.setTopologyId(distributionManager.getCacheTopology().getTopologyId());
       }
+      command.setTopologyId(topologyId);
       if (synchronous) {
          return rpcManager.invokeCommandOnAll(command, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
       } else {
