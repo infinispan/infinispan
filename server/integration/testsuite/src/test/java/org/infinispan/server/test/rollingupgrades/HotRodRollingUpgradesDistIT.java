@@ -31,11 +31,12 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
     public void testHotRodRollingUpgradesDiffVersionsDist() throws Exception {
         // Target nodes
         final int managementPortServer1 = 9990;
-        MBeanServerConnectionProvider provider1;
 
         // Target nodes
         final int managementPortServer2 = 10390;
-        MBeanServerConnectionProvider provider2;
+
+        // Source node
+        int managementPortServer3 = 10199;
 
         try {
 
@@ -47,10 +48,11 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
 
             // we use PROTOCOL_VERSION_25 here because servers using older version are out of testing scope
             ConfigurationBuilder builder3 = new ConfigurationBuilder();
+            ProtocolVersion protocolVersion = ProtocolVersion.parseVersion(System.getProperty("hotrod.protocol.version"));
             builder3.addServer()
                     .host("127.0.0.1")
                     .port(11422)
-                    .version(ProtocolVersion.parseVersion(System.getProperty("hotrod.protocol.version")));
+                    .version(protocolVersion);
 
             RemoteCacheManager rcm3 = new RemoteCacheManager(builder3.build());
             final RemoteCache<String, String> c3 = rcm3.getCache("default");
@@ -59,7 +61,7 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
             builder4.addServer()
                     .host("127.0.0.1")
                     .port(11522)
-                    .version(ProtocolVersion.parseVersion(System.getProperty("hotrod.protocol.version")));
+                    .version(protocolVersion);
 
             RemoteCacheManager rcm4 = new RemoteCacheManager(builder4.build());
             final RemoteCache<String, String> c4 = rcm4.getCache("default");
@@ -90,11 +92,20 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
             assertEquals("Can't access entries stored in source node (target's RemoteCacheStore).", "value1", c2.get("key1"));
             assertEquals("Can't access entries stored in source node (target's RemoteCacheStore).", "valuex1", c2.get("keyx1"));
 
-            provider1 = new MBeanServerConnectionProvider(s1.server.getHotrodEndpoint().getInetAddress().getHostName(),
+            MBeanServerConnectionProvider provider1 = new MBeanServerConnectionProvider(s1.server.getHotrodEndpoint().getInetAddress().getHostName(),
                     managementPortServer1);
 
-            provider2 = new MBeanServerConnectionProvider(s2.server.getHotrodEndpoint().getInetAddress().getHostName(),
+            MBeanServerConnectionProvider provider2 = new MBeanServerConnectionProvider(s2.server.getHotrodEndpoint().getInetAddress().getHostName(),
                   managementPortServer2);
+
+            // If we are talking to a server which cannot handle iteration
+            if (protocolVersion.compareTo(ProtocolVersion.PROTOCOL_VERSION_25) < 0) {
+                MBeanServerConnectionProvider provider3 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer3, "remote");
+                final ObjectName rollMan3 = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(dist_sync)\","
+                      + "manager=\"clustered\"," + "component=RollingUpgradeManager");
+
+                invokeOperation(provider3, rollMan3.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
+            }
 
             final ObjectName rollManTarget = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
                     + "manager=\"clustered-new\"," + "component=RollingUpgradeManager");
