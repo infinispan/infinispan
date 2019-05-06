@@ -147,8 +147,19 @@ That means other nodes still see the stale value for a while after the write com
 the originator.
 
 Transactions can be used to batch the invalidation messages.
-They won't behave like regular transactions though, as locks are only acquired on the
-local node, and entries can be invalidated by other transactions at any time.
+Transactions acquire the key lock on the primary owner.
+To find more about how primary owners are assigned, please read the
+link:#key_ownership[Key Ownership] section.
+
+* With pessimistic locking, each write triggers a lock message, which is
+broadcast to all the nodes.
+During transaction commit, the originator broadcasts a one-phase prepare message
+(optionally fire-and-forget) which invalidates all affected keys and releases the locks.
+
+* With optimistic locking, the originator broadcasts a prepare message, a commit message,
+and an unlock message (optional).
+Either the one-phase prepare or the unlock message is fire-and-forget,
+and the last message always releases the locks.
 
 
 === Replicated Mode
