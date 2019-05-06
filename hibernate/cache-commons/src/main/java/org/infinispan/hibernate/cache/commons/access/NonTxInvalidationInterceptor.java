@@ -105,9 +105,6 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
             invalidateCommand = commandsFactory.buildInvalidateCommand(EnumUtil.EMPTY_BIT_SET, new Object[] {key });
 			}
 			invalidateCommand.setTopologyId(rpcManager.getTopologyId());
-			if (log.isDebugEnabled()) {
-				log.debug("Cache [" + rpcManager.getAddress() + "] replicating " + invalidateCommand);
-			}
 
 			if (isSynchronous(command)) {
 				return rpcManager.invokeCommandOnAll(invalidateCommand, VoidResponseCollector.ignoreLeavers(), syncRpcOptions)

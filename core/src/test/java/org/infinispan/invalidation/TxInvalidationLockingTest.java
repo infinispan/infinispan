@@ -31,8 +31,8 @@ import org.testng.annotations.Test;
  *
  * @author Dan Berindei
  */
-@Test(groups = "functional", testName = "invalidation.InvalidationSharedStoreTest")
-public class InvalidationSharedStoreTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "invalidation.TxInvalidationLockingTest")
+public class TxInvalidationLockingTest extends MultipleCacheManagersTest {
    private static final String KEY = "key";
    private static final String VALUE1 = "value1";
    private static final Object VALUE2 = "value2";
@@ -71,7 +71,7 @@ public class InvalidationSharedStoreTest extends MultipleCacheManagersTest {
                  .lockingMode(lockingMode)
                  .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
                  .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
-                 .storeName(InvalidationSharedStoreTest.class.getName())
+                 .storeName(TxInvalidationLockingTest.class.getName())
                  .build();
       return cacheConfig;
    }
@@ -179,5 +179,36 @@ public class InvalidationSharedStoreTest extends MultipleCacheManagersTest {
       // No WriteSkewException
       tx2Future.get(30, TimeUnit.SECONDS);
       assertEquals(VALUE2, cache1.get(KEY));
+   }
+
+   public void testReadOnlyTransaction() throws Exception {
+      // pessimistic - regular read
+      AdvancedCache<Object, Object> pessimisticCache1 = advancedCache(0, PESSIMISTIC_CACHE);
+      tm(pessimisticCache1).begin();
+      try {
+         Object initialValue = pessimisticCache1.get(KEY);
+         assertNull(initialValue);
+      } finally {
+         tm(pessimisticCache1).commit();
+      }
+
+      // pessimistic - read with write lock
+      tm(pessimisticCache1).begin();
+      try {
+         Object initialValue = pessimisticCache1.withFlags(Flag.FORCE_WRITE_LOCK).get(KEY);
+         assertNull(initialValue);
+      } finally {
+         tm(pessimisticCache1).commit();
+      }
+
+      // optimistic
+      AdvancedCache<Object, Object> optimisticCache1 = advancedCache(0, OPTIMISTIC_CACHE);
+      tm(optimisticCache1).begin();
+      try {
+         Object initialValue = optimisticCache1.get(KEY);
+         assertNull(initialValue);
+      } finally {
+         tm(optimisticCache1).commit();
+      }
    }
 }
