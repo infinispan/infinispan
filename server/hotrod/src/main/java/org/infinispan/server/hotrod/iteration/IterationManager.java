@@ -12,12 +12,12 @@ import org.infinispan.filter.KeyValueFilterConverterFactory;
  * @since 9.0
  */
 public interface IterationManager {
-   String start(Cache cache, BitSet segments,
+   IterationState start(Cache cache, BitSet segments,
                 String filterConverterFactory, List<byte[]> filterConverterParams, MediaType valueMediaType, int batch, boolean metadata);
 
-   IterableIterationResult next(String cacheName, String iterationId);
+   IterableIterationResult next(String iterationId);
 
-   boolean close(String cacheName, String iterationId);
+   IterationState close(String iterationId);
 
    void addKeyValueFilterConverterFactory(String name, KeyValueFilterConverterFactory factory);
 
