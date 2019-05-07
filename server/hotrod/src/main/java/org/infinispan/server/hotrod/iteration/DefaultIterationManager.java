@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod.iteration;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.filter.CacheFilters.filterAndConvert;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,6 +26,8 @@ import org.infinispan.CacheStream;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.time.TimeServiceTicker;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
@@ -34,6 +38,11 @@ import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.RemovalListener;
 
 /**
  * @author gustavonalle
@@ -70,22 +79,42 @@ class IterationSegmentsListener implements BaseCacheStream.SegmentCompletionList
    }
 }
 
-class IterationState {
+class DefaultIterationState implements IterationState, Closeable {
    final IterationSegmentsListener listener;
    final Iterator<CacheEntry<Object, Object>> iterator;
    final CacheStream<CacheEntry<Object, Object>> stream;
    final int batch;
    final boolean metadata;
    final Function<Object, Object> resultFunction;
+   private final String id;
+   private final IterationReaper reaper;
 
-   IterationState(IterationSegmentsListener listener, Iterator<CacheEntry<Object, Object>> iterator, CacheStream<CacheEntry<Object, Object>> stream,
-                  int batch, boolean metadata, Function<Object, Object> resultFunction) {
+   DefaultIterationState(String id, IterationSegmentsListener listener, Iterator<CacheEntry<Object, Object>> iterator, CacheStream<CacheEntry<Object, Object>> stream,
+                         int batch, boolean metadata, Function<Object, Object> resultFunction, IterationReaper reaper) {
+      this.id = id;
       this.listener = listener;
       this.iterator = iterator;
       this.stream = stream;
       this.batch = batch;
       this.metadata = metadata;
       this.resultFunction = resultFunction;
+      this.reaper = reaper;
+   }
+
+   @Override
+   public void close() {
+      stream.close();
+      reaper.dispose();
+   }
+
+   @Override
+   public String getId() {
+      return id;
+   }
+
+   @Override
+   public IterationReaper getReaper() {
+      return reaper;
    }
 }
 
@@ -94,12 +123,26 @@ public class DefaultIterationManager implements IterationManager {
 
    private static final Log log = LogFactory.getLog(DefaultIterationManager.class, Log.class);
 
-   private final Map<String, IterationState> iterationStateMap = CollectionFactory.makeConcurrentMap();
+   private final com.github.benmanes.caffeine.cache.Cache<String, DefaultIterationState> iterationStateMap;
    private final Map<String, KeyValueFilterConverterFactory> filterConverterFactoryMap =
          CollectionFactory.makeConcurrentMap();
 
+   public DefaultIterationManager(TimeService timeService) {
+      Caffeine<Object, Object> builder = Caffeine.newBuilder();
+      builder.expireAfterAccess(5, TimeUnit.MINUTES).removalListener(new RemovalListener<String, DefaultIterationState>() {
+         @Override
+         public void onRemoval(String key, DefaultIterationState value, RemovalCause cause) {
+            value.close();
+            if (cause.wasEvicted()) {
+               log.removedUnclosedIterator(key);
+            }
+         }
+      }).ticker(new TimeServiceTicker(timeService)).executor(new WithinThreadExecutor());
+      iterationStateMap = builder.build();
+   }
+
    @Override
-   public String start(Cache cache, BitSet segments, String filterConverterFactory, List<byte[]> filterConverterParams, MediaType requestValueType, int batch, boolean metadata) {
+   public IterationState start(Cache cache, BitSet segments, String filterConverterFactory, List<byte[]> filterConverterParams, MediaType requestValueType, int batch, boolean metadata) {
       String iterationId = Util.threadLocalRandomUUID().toString();
       AdvancedCache<Object, Object> advancedCache = cache.getAdvancedCache();
 
@@ -140,10 +183,10 @@ public class DefaultIterationManager implements IterationManager {
       }
       Iterator<CacheEntry<Object, Object>> iterator = filteredStream.iterator();
 
-      IterationState iterationState = new IterationState(segmentListener, iterator, stream, batch, metadata, resultTransformer);
+      DefaultIterationState iterationState = new DefaultIterationState(iterationId, segmentListener, iterator, stream, batch, metadata, resultTransformer, new IterationReaper(this, iterationId));
 
       iterationStateMap.put(iterationId, iterationState);
-      return iterationId;
+      return iterationState;
    }
 
    private KeyValueFilterConverterFactory getFactory(String name) {
@@ -171,8 +214,8 @@ public class DefaultIterationManager implements IterationManager {
    }
 
    @Override
-   public IterableIterationResult next(String cacheName, String iterationId) {
-      IterationState iterationState = iterationStateMap.get(iterationId);
+   public IterableIterationResult next(String iterationId) {
+      DefaultIterationState iterationState = iterationStateMap.getIfPresent(iterationId);
       if (iterationState != null) {
          int i = 0;
          List<CacheEntry> entries = new ArrayList<>(iterationState.batch);
@@ -188,14 +231,12 @@ public class DefaultIterationManager implements IterationManager {
    }
 
    @Override
-   public boolean close(String cacheName, String iterationId) {
-      IterationState iterationState = iterationStateMap.get(iterationId);
+   public IterationState close(String iterationId) {
+      DefaultIterationState iterationState = iterationStateMap.getIfPresent(iterationId);
       if (iterationState != null) {
-         iterationState.stream.close();
-         iterationStateMap.remove(iterationId);
-         return true;
+         iterationStateMap.invalidate(iterationId);
       }
-      return false;
+      return iterationState;
    }
 
    @Override
@@ -210,7 +251,7 @@ public class DefaultIterationManager implements IterationManager {
 
    @Override
    public int activeIterations() {
-      return iterationStateMap.size();
+      iterationStateMap.cleanUp();
+      return iterationStateMap.asMap().size();
    }
-
 }
