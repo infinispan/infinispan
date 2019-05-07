@@ -3,7 +3,7 @@
 
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-build-configuration-parent</artifactId>
-   <version>9.4.13-SNAPSHOT</version>
+   <version>9.4.13.Final</version>
    <packaging>pom</packaging>
 
    <name>Infinispan Common Parent</name>
