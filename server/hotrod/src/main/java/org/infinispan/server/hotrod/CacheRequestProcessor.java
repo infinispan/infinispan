@@ -18,7 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.hotrod.HotRodServer.CacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
-import org.infinispan.server.hotrod.iteration.IterationReaper;
+import org.infinispan.server.hotrod.iteration.IterationState;
 import org.infinispan.server.hotrod.logging.Log;
 
 import io.netty.buffer.ByteBuf;
@@ -541,10 +541,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> {
          try {
-            String iterationId = server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
+            IterationState iterationState = server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
                   filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata);
-            channel.closeFuture().addListener(new IterationReaper(server.getIterationManager(), cache.getName(), iterationId));
-            writeResponse(header, header.encoder().iterationStartResponse(header, server, channel.alloc(), iterationId));
+            iterationState.getReaper().registerChannel(channel);
+            writeResponse(header, header.encoder().iterationStartResponse(header, server, channel.alloc(), iterationState.getId()));
          } catch (Throwable t) {
             writeException(header, t);
          }
@@ -552,10 +552,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void iterationNext(HotRodHeader header, Subject subject, String iterationId) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> {
          try {
-            IterableIterationResult iterationResult = server.getIterationManager().next(cache.getName(), iterationId);
+            IterableIterationResult iterationResult = server.getIterationManager().next(iterationId);
             writeResponse(header, header.encoder().iterationNextResponse(header, server, channel.alloc(), iterationResult));
          } catch (Throwable t) {
             writeException(header, t);
@@ -564,11 +563,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void iterationEnd(HotRodHeader header, Subject subject, String iterationId) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> {
          try {
-            boolean removed = server.getIterationManager().close(cache.getName(), iterationId);
-            writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), removed ? OperationStatus.Success : OperationStatus.InvalidIteration));
+            IterationState removed = server.getIterationManager().close(iterationId);
+            writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), removed != null ? OperationStatus.Success : OperationStatus.InvalidIteration));
          } catch (Throwable t) {
             writeException(header, t);
          }
