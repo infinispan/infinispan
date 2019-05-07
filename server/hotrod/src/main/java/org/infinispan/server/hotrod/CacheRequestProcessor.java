@@ -18,6 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.hotrod.HotRodServer.CacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
+import org.infinispan.server.hotrod.iteration.IterationReaper;
 import org.infinispan.server.hotrod.logging.Log;
 
 import io.netty.buffer.ByteBuf;
@@ -542,6 +543,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          try {
             String iterationId = server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
                   filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata);
+            channel.closeFuture().addListener(new IterationReaper(server.getIterationManager(), cache.getName(), iterationId));
             writeResponse(header, header.encoder().iterationStartResponse(header, server, channel.alloc(), iterationId));
          } catch (Throwable t) {
             writeException(header, t);

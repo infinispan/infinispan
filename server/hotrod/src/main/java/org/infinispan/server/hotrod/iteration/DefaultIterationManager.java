@@ -212,5 +212,4 @@ public class DefaultIterationManager implements IterationManager {
    public int activeIterations() {
       return iterationStateMap.size();
    }
-
 }
