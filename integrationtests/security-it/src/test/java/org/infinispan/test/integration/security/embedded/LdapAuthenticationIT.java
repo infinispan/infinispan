@@ -122,7 +122,7 @@ public class LdapAuthenticationIT extends AbstractAuthentication {
       @Override
       public void tearDown(ManagementClient managementClient, String s) throws Exception {
          // LdapServer creates an ExecutorFilter with an "unmanaged" executor and doesn't stop the executor itself
-         ThreadLeakChecker.ignoreThreadsContaining("thread-.*pool-");
+         ThreadLeakChecker.ignoreThreadsContaining("pool-.*thread-");
          ldapServer.stop();
       }
    }
