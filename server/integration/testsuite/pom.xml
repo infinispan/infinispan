@@ -1534,5 +1534,14 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>jigsaw</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <testjvm.jigsawArgs>--add-modules java.se</testjvm.jigsawArgs>
+            </properties>
+        </profile>
     </profiles>
 </project>
