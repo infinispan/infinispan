@@ -35,6 +35,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.io.SignedNumeric;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
@@ -348,7 +349,7 @@ public class HotRodClient {
 
    public Map<String, String> stats() {
       StatsOp op = new StatsOp(0xA0, protocolVersion, (byte) 0x15, defaultCacheName, (byte) 1, 0, null);
-      boolean writeFuture = writeOp(op);
+      writeOp(op);
       // Get the handler instance to retrieve the answer.
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
       TestStatsResponse resp = (TestStatsResponse) handler.getResponse(op.id);
@@ -369,10 +370,7 @@ public class HotRodClient {
 
    public TestBulkGetResponse bulkGet(int count) {
       BulkGetOp op = new BulkGetOp(0xA0, protocolVersion, (byte) 0x19, defaultCacheName, (byte) 1, 0, count);
-      boolean writeFuture = writeOp(op);
-      // Get the handler instance to retrieve the answer.
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return (TestBulkGetResponse) handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestBulkGetKeysResponse bulkGetKeys() {
@@ -381,26 +379,17 @@ public class HotRodClient {
 
    public TestBulkGetKeysResponse bulkGetKeys(int scope) {
       BulkGetKeysOp op = new BulkGetKeysOp(0xA0, protocolVersion, (byte) 0x1D, defaultCacheName, (byte) 1, 0, scope);
-      boolean writeFuture = writeOp(op);
-      // Get the handler instance to retrieve the answer.
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return (TestBulkGetKeysResponse) handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestQueryResponse query(byte[] query) {
       QueryOp op = new QueryOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, query);
-      boolean writeFuture = writeOp(op);
-      // Get the handler instance to retrieve the answer.
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return (TestQueryResponse) handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestAuthMechListResponse authMechList() {
       AuthMechListOp op = new AuthMechListOp(0xA0, protocolVersion, (byte) 0x21, defaultCacheName, (byte) 1, 0);
-      boolean writeFuture = writeOp(op);
-      // Get the handler instance to retrieve the answer.
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return (TestAuthMechListResponse) handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestAuthResponse auth(SaslClient sc) throws SaslException {
@@ -432,8 +421,8 @@ public class HotRodClient {
 
    public TestResponse removeClientListener(byte[] listenerId) {
       RemoveClientListenerOp op = new RemoveClientListenerOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, listenerId);
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
       writeOp(op);
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
       TestResponse response = handler.getResponse(op.id);
       if (response.getStatus() == Success) handler.removeClientListener(listenerId);
       return response;
@@ -441,61 +430,65 @@ public class HotRodClient {
 
    public TestSizeResponse size() {
       SizeOp op = new SizeOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0);
-      boolean writeFuture = writeOp(op);
-      // Get the handler instance to retrieve the answer.
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return (TestSizeResponse) handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestGetWithMetadataResponse getStream(byte[] key, int offset) {
       GetStreamOp op = new GetStreamOp(0xA0, protocolVersion, defaultCacheName, key, 0, (byte) 1, 0, offset);
-      writeOp(op);
-      // Get the handler instance to retrieve the answer.
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return (TestGetWithMetadataResponse) handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestResponse putStream(byte[] key, byte[] value, long version, int lifespan, int maxIdle) {
       PutStreamOp op = new PutStreamOp(0xA0, protocolVersion, defaultCacheName, key, value, lifespan, maxIdle, version, (byte)1, 0);
-      writeOp(op);
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestResponse prepareTx(Xid xid, boolean onePhaseCommit, Collection<TxWrite> modifications) {
       PrepareOp op = new PrepareOp(protocolVersion, defaultCacheName, 0, xid,
             onePhaseCommit, modifications);
-      writeOp(op);
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestResponse commitTx(Xid xid) {
       CommitOrRollbackOp op = new CommitOrRollbackOp(protocolVersion, defaultCacheName, xid, true);
-      writeOp(op);
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestResponse rollbackTx(Xid xid) {
       CommitOrRollbackOp op = new CommitOrRollbackOp(protocolVersion, defaultCacheName, xid, false);
-      writeOp(op);
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestResponse forgetTx(Xid xid) {
       TxOp op = new ForgetTxOp(protocolVersion, xid);
-      writeOp(op);
-      ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return handler.getResponse(op.id);
+      return execute(op);
    }
 
    public TestResponse recovery() {
       Op op = new RecoveryOp(protocolVersion);
+      return execute(op);
+   }
+
+   public TestIteratorStartResponse iteratorStart(byte[] segmentMask, String filterConverterFactory,
+                                                  List<byte[]> filterConverterParams, int batch, boolean includeMetadata) {
+      IterationStartOp op = new IterationStartOp(0xA0, protocolVersion, defaultCacheName, (byte)1, 0, segmentMask, filterConverterFactory, filterConverterParams, batch, includeMetadata);
+      return execute(op);
+   }
+
+   public TestIteratorNextResponse iteratorNext(String iterationId) {
+      IterationNextOp op = new IterationNextOp(0xA0, protocolVersion, defaultCacheName, (byte)1, 0, iterationId);
+      return execute(op);
+   }
+
+   public TestResponse iteratorEnd(String iterationId) {
+      IterationEndOp op = new IterationEndOp(0xA0, protocolVersion, defaultCacheName, (byte)1, 0, iterationId);
+      return execute(op);
+   }
+
+   <T> T execute(Op op) {
       writeOp(op);
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      return handler.getResponse(op.id);
+      return (T)handler.getResponse(op.id);
    }
 
    /*public TestPutStreamResponse putStream(byte[] k, int lifespan, int maxIdle, byte[] v, long dataVersion) {
@@ -589,7 +582,8 @@ class Encoder extends MessageToByteEncoder<Object> {
                && op.code != 0x17 && op.code != 0x19
                && op.code != 0x1D && op.code != 0x1F
                && op.code != 0x21 && op.code != 0x23
-               && op.code != 0x29) { // if it's a key based op...
+               && op.code != 0x29 && op.code != 0x31
+               && op.code != 0x31 && op.code != 0x35) { // if it's a key based op...
             writeRangedBytes(op.key, buffer); // key length + key
             if (op.code == 0x37) {
                // GetStream has an offset
@@ -640,6 +634,32 @@ class Encoder extends MessageToByteEncoder<Object> {
                writeUnsignedInt(0, buffer);
             }
             writeRangedBytes(((AuthOp) op).response, buffer);
+         } else if (op.code == 0x31) {
+            IterationStartOp startop = (IterationStartOp) op;
+            if (startop.segmentMask == null) {
+               writeUnsignedInt(SignedNumeric.encode(-1), buffer);
+            } else {
+               buffer.writeBytes(startop.segmentMask);
+            }
+            if (startop.filterConverterFactory != null) {
+               writeRangedBytes(startop.filterConverterFactory.getBytes(), buffer);
+               if (startop.filterConverterParams != null && startop.filterConverterParams.size() > 0) {
+                  buffer.writeByte(startop.filterConverterParams.size());
+                  startop.filterConverterParams.forEach(param -> buffer.writeBytes(param));
+               } else {
+                  buffer.writeByte(0);
+               }
+            } else {
+               writeUnsignedInt(SignedNumeric.encode(-1), buffer);
+            }
+            writeUnsignedInt(startop.batch, buffer);
+            buffer.writeByte(startop.includeMetadata ? 1 : 0);
+         } else if (op.code == 0x33) {
+            IterationNextOp nextop = (IterationNextOp) op;
+            writeRangedBytes(nextop.iterationId.getBytes(), buffer);
+         } else if (op.code == 0x35) {
+            IterationEndOp endop = (IterationEndOp) op;
+            writeRangedBytes(endop.iterationId.getBytes(), buffer);
          }
       }
    }
@@ -775,6 +795,7 @@ class Decoder extends ReplayingDecoder<Void> {
          case PING:
          case ADD_CLIENT_LISTENER:
          case REMOVE_CLIENT_LISTENER:
+         case ITERATION_END:
             resp = new TestResponse(op.version, id, op.cacheName, op.clientIntel, opCode,
                   status, op.topologyId, topologyChangeResponse);
             break;
@@ -900,6 +921,13 @@ class Decoder extends ReplayingDecoder<Void> {
             else
                resp = new TestErrorResponse(op.version, id, op.cacheName, op.clientIntel,
                      status, op.topologyId, topologyChangeResponse, readString(buf));
+            break;
+         case ITERATION_START:
+            String iterationId = readString(buf);
+            resp = new TestIteratorStartResponse(op.version, id, op.cacheName, op.clientIntel, op.topologyId, topologyChangeResponse, iterationId);
+            break;
+         case ITERATION_NEXT:
+            resp = new TestIteratorNextResponse(op.version, id, op.cacheName, op.clientIntel, op.topologyId, topologyChangeResponse);
             break;
          case PREPARE_TX:
          case ROLLBACK_TX:
@@ -1242,6 +1270,42 @@ class AuthOp extends AbstractOp {
 class SizeOp extends AbstractOp {
    public SizeOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId) {
       super(magic, version, (byte) 0x29, cacheName, clientIntel, topologyId);
+   }
+}
+
+class IterationStartOp extends AbstractOp {
+   final byte[] segmentMask;
+   final String filterConverterFactory;
+   final List<byte[]> filterConverterParams;
+   final int batch;
+   final boolean includeMetadata;
+
+   public IterationStartOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId, byte[] segmentMask, String filterConverterFactory,
+                           List<byte[]> filterConverterParams, int batch, boolean includeMetadata) {
+      super(magic, version, (byte) 0x31, cacheName, clientIntel, topologyId);
+      this.segmentMask = segmentMask;
+      this.filterConverterFactory = filterConverterFactory;
+      this.filterConverterParams = filterConverterParams;
+      this.batch = batch;
+      this.includeMetadata = includeMetadata;
+   }
+}
+
+class IterationNextOp extends AbstractOp {
+   String iterationId;
+
+   public IterationNextOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId, String iterationId) {
+      super(magic, version, (byte) 0x33, cacheName, clientIntel, topologyId);
+      this.iterationId = iterationId;
+   }
+}
+
+class IterationEndOp extends AbstractOp {
+   String iterationId;
+
+   public IterationEndOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId, String iterationId) {
+      super(magic, version, (byte) 0x35, cacheName, clientIntel, topologyId);
+      this.iterationId = iterationId;
    }
 }
 
