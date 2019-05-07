@@ -1,0 +1,18 @@
+= Configuring {brandname} for HTTP Session Externalization
+
+//Community
+ifndef::productized[]
+Create a cache on your {brandname} cluster in which {wildflybrandname} or {tomcatbrandname} can remotely store HTTP session data.
+endif::productized[]
+
+//Product
+ifdef::productized[]
+Create a cache on your {ProductName} cluster in which {ProductEAP} or {ProductJWS} can remotely store HTTP session data.
+endif::productized[]
+
+For {brandname} clusters, either `distributed-cache` or `replicated-cache` is suitable for most use cases.
+
+[IMPORTANT]
+====
+You cannot configure cache names on {brandname} when externalizing sessions from {tomcatbrandname}. The {brandname} session client stores all data to the `default` cache.
+====

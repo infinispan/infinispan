@@ -1,0 +1,8 @@
+// Show the table of contents
+:toc:
+
+// The name of the title
+:ProjectName: Externalizing HTTP Sessions to {brandname}
+
+// The name of the title for the purposes of {context}
+:ProjectNameID: externalizing-to-rhdg

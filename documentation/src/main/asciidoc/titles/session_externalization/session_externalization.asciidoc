@@ -1,0 +1,15 @@
+// Include global attributes
+include::topics/attributes/community-attributes.adoc[]
+
+= Externalizing HTTP Sessions to {brandname}
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:stem: asciimath
+
+include::topics/con_session_externalization.adoc[leveloffset=+1]
+include::topics/proc_creating_caches_session_externalization.adoc[leveloffset=+1]
+include::topics/proc_externalizing_sessions_wfly.adoc[leveloffset=+1]
+include::topics/proc_externalizing_sessions_tcat.adoc[leveloffset=+1]
+include::topics/ref_session_externalizer.adoc[leveloffset=+1]

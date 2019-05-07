@@ -1,0 +1,5 @@
+//
+// This file contains attributes for building community documentation.
+// Global community attributes are defined in the pom.xml.
+//
+:plusplus: ++

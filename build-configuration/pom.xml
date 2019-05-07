@@ -92,6 +92,7 @@
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
       <wildfly.brand.name>WildFly</wildfly.brand.name>
       <wildfly.brand.prefix>wildfly</wildfly.brand.prefix>
+      <tomcat.brand.name>Tomcat</tomcat.brand.name>
 
       <!-- jboss repository urls -->
       <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>

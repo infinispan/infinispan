@@ -1,0 +1,13 @@
+// Include attributes
+include::topics/attributes/product-attributes.adoc[]
+include::title-attributes.adoc[]
+
+// Name and ID of the title
+[id="{ProjectNameID}"]
+= {ProjectName}
+
+include::topics/con_session_externalization.adoc[leveloffset=+1]
+include::topics/proc_creating_caches_session_externalization.adoc[leveloffset=+1]
+include::topics/proc_externalizing_sessions_wfly.adoc[leveloffset=+1]
+include::topics/proc_externalizing_sessions_tcat.adoc[leveloffset=+1]
+include::topics/ref_session_externalizer.adoc[leveloffset=+1]

@@ -13,6 +13,8 @@
 :FullProductName: Red Hat Data Grid
 :ProductName: Data Grid
 :ProductShortName: RHDG
+:ProductEAP: Jboss Enterprise Application Platform (EAP)
+:ProductJWS: JBoss Web Server (JWS)
 :ProductRelease: 7.3
 :ProductVersion: 7.3
 :FullProductRelease: 7.3.1
@@ -30,6 +32,7 @@
 //
 :brandname: Red Hat Data Grid
 :wildflybrandname: EAP
+:tomcatbrandname: JWS
 :infinispanversion: 9.4.0
 :moduleprefix: jdg
 :infinispanslot: jdg-7.3
@@ -63,3 +66,45 @@
 :sb_starter: 1.0.7.Final-redhat-00004
 //Spring Boot 2.x
 :sb2_starter: 2.1.5.Final-redhat-00005
+
+//
+// Product Doc Home
+//
+:doc_home: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
+
+//Doc Home
+:doc_home: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
+
+//Product Doc URLs
+
+:relnotes_url: https://access.redhat.com/documentation/en-us/red_hat_data_grid/7.3/html-single/red_hat_data_grid_7.3_release_notes/
+
+:os_url: https://access.redhat.com/documentation/en-us/red_hat_data_grid/7.3/html-single/data_grid_for_openshift/
+
+:ug_url: https://access.redhat.com/documentation/en-us/red_hat_data_grid/7.3/html-single/red_hat_data_grid_user_guide/
+
+:sg_url: https://access.redhat.com/documentation/en-us/red_hat_data_grid/7.3/html-single/red_hat_data_grid_server_guide/
+
+:hr_url: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/java/org/infinispan/client/hotrod/
+
+:sb_starter: https://access.redhat.com/documentation/en-us/red_hat_data_grid/7.3/html-single/data_grid_spring_boot_starter/
+
+//OpenShift Quickstarts
+:os_quickstarts: https://github.com/jboss-developer/jboss-jdg-quickstarts/tree/jdg-7.3.x/openshift/
+
+//OpenShift 7.3 Resources
+:os_resources: https://github.com/jboss-container-images/jboss-datagrid-7-openshift-image/tree/7.3-v1.1/
+
+
+//
+// OpenShift
+//
+:openshift: Red Hat OpenShift
+:openshiftshort: OpenShift
+:openshiftplatform: Red Hat OpenShift Container Platform
+:ossecrets: OpenShift Secrets
+:osweb: OpenShift Web Console
+:osproduct: Red Hat Data Grid for OpenShift
+:osproductshort: Data Grid for OpenShift
+:datagridservice: datagrid-service
+:cacheservice: cache-service
