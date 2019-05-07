@@ -98,4 +98,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Error serializing script response '%s'", id = 28025)
    EncodingException errorSerializingResponse(Object o);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Removed unclosed iterator '%s'", id = 28026)
+   void removedUnclosedIterator(String iteratorId);
 }

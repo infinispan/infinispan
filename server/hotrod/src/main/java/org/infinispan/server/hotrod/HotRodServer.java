@@ -223,7 +223,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // These are also initialized by super.startInternal, but we need them before
       this.configuration = configuration;
       this.cacheManager = cacheManager;
-      this.iterationManager = new DefaultIterationManager();
+      this.iterationManager = new DefaultIterationManager(cacheManager.getGlobalComponentRegistry().getTimeService());
 
       // populate the sasl factories based on the required mechs
       setupSasl();
