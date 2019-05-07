@@ -1,0 +1,8 @@
+Create a cache on your {brandname} cluster to act as a remote store for HTTP session data.
+
+Either `distributed-cache` or `replicated-cache` is suitable for most use cases.
+
+[IMPORTANT]
+====
+You cannot configure cache names on {brandname} when externalizing sessions from {tomcatbrandname}. The {brandname} session client stores all data to the `default` cache.
+====

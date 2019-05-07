@@ -1,0 +1,40 @@
+ifndef::productized[]
+Clone the link:https://github.com/wildfly-clustering/wildfly-clustering-tomcat[wildfly-clustering-tomcat] source repository then build, install, and configure the session client for {tomcatbrandname}.
+endif::productized[]
+ifdef::productized[]
+. Copy the `lib/` directory from the {brandname} session client archive into `$CATALINA_HOME`.
+. In your application's **WAR**, open `META-INF/context.xml` for editing.
+. Specify the {brandname} session client implementation as follows:
++
+[source,xml,options="nowrap"]
+----
+<Manager className="org.wildfly.clustering.tomcat.hotrod.HotRodManager"
+         server_list="192.0.2.0:11222;192.0.2.1:11222"
+         persistenceStrategy="${persistenceStrategy}"
+         />
+----
++
+. Add configuration attributes to `context.xml` as appropriate.
++
+The `HotRodManager` implementation has one configuration attribute:
++
+`persistenceStrategy`::
+Controls session object serialization and has the following options:
++
+* `COARSE` preserves object relationships and serializes all attributes of a session together. This is the default.
+* `FINE` serializes only attributes that have changed. This option uses less memory but does not preserve object relationships.
+endif::productized[]
+
+You can also configure the session client with the following:
+
+ifndef::productized[]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[Hot Rod client properties]
+endif::productized[]
+ifdef::productized[]
+* link:{hr_url}configuration/package-summary.html#package.description[Hot Rod client properties]
+endif::productized[]
+* Common attributes from the `org.apache.catalina.Manager` interface.
+- link:https://tomcat.apache.org/tomcat-7.0-doc/config/manager.html#Common_Attributes[Tomcat 7 common attributes]
+- link:https://tomcat.apache.org/tomcat-8.0-doc/config/manager.html#Common_Attributes[Tomcat 8 common attributes]
+
+//-

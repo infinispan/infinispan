@@ -1,0 +1,3 @@
+include::topics/con_session_externalization.adoc[]
+include::stories/externalizing_sessions_wfly.adoc[]
+include::stories/externalizing_sessions_tcat.adoc[]

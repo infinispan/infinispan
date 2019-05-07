@@ -1,0 +1,22 @@
+[id='externalizing_sessions_tcat']
+== Externalizing HTTP Sessions from {tomcatbrandname}
+:context: external_sessions_tcat
+
+{brandname} provides a session client that uses the Apache Tomcat `Manager` API to enable session externalization.
+
+ifdef::productized[]
+.Prerequisites
+
+* {ProductJWS} 3.1
+* {ProductName} {ProductVersion}
+* {brandname} session client. Download one of the following from the Red Hat customer portal:
+- **jboss-datagrid-7.3._x_-tomcat7-session-client.zip**
+- **jboss-datagrid-7.3._x_-tomcat8-session-client.zip**
+endif::productized[]
+
+=== Configuring {brandname} for HTTP Session Externalization
+include::topics/proc_creating_caches_session_externalization.adoc[]
+=== Installing the {brandname} Session Client for {tomcatbrandname}
+include::topics/proc_externalizing_sessions_tcat.adoc[]
+=== Marshalling with HTTP Session Externalization
+include::topics/ref_session_externalizer.adoc[]

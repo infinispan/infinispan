@@ -1,0 +1,13 @@
+// Include global attributes
+include::topics/attributes/community-attributes.adoc[]
+
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:stem: asciimath
+
+[id='externalizing-to-ispn']
+= Externalizing HTTP Sessions to {brandname}
+
+include::stories.adoc[]

@@ -1,0 +1,91 @@
+. Define remote stores on the `infinispan` subsystem in {wildflybrandname}, for example:
++
+[source,xml,options="nowrap"]
+----
+<subsystem xmlns="urn:jboss:domain:infinispan:4.0">
+  [...]
+  <cache-container name="web" default-cache="datagrid" module="org.wildfly.clustering.web.infinispan" statistics-enabled="true">
+    <transport lock-timeout="60000"/>
+    <invalidation-cache name="datagrid">
+      <locking isolation="REPEATABLE_READ"/>
+      <transaction mode="BATCH"/>
+      <remote-store remote-servers="datagrid-node1 datagrid-node2"
+                    cache="default" socket-timeout="60000"
+                    preload="false" passivation="false" purge="false"
+                    shared="true"/>
+    </invalidation-cache>
+  </cache-container>
+</subsystem>
+----
++
+In the preceding example:
++
+* `cache-container name="web"` names the {wildflybrandname} cache container for HTTP session data.
+* `invalidation-cache` configures {wildflybrandname} so that read operations for HTTP session data come from the invalidation cache, write operations go to the invalidation cache and through to the remote {brandname} cache. {wildflybrandname} also sends invalidation messages to other nodes when applications write to the session. These invalidation messages ensure that the cluster does not contain stale data.
+* `remote-store` configures {brandname} as a remote cache store for HTTP session data.
+* `shared="true"` is recommended to avoid multiple cache instances writing the same modification.
+* `preload="false"` ensures that you do not load all the cached sessions into memory at startup.
+* `passivation="false"` ensures that write operations to the cache result in writes to the remote store, essentially a 'write-through' configuration.
++
+. Create outbound socket binding declarations with the hostname and port of each {brandname} node.
++
+[source,options="nowrap"]
+----
+<socket-binding-group name="standard-sockets" ...>
+    ...
+    <outbound-socket-binding name="datagrid-node1">
+        <remote-destination
+                host="hostname.datagrid.node1"
+                port="11222"/>
+    </outbound-socket-binding>
+    <outbound-socket-binding name="datagrid-node2">
+        <remote-destination
+                host="hostname.datagrid.node2"
+                port="11222"/>
+    </outbound-socket-binding>
+</socket-binding-group>
+----
++
+. Configure session replication using the `replication-config` element in the `jboss-web.xml` file in your application's **WAR**.
++
+[source,xml,options="nowrap"]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-web xmlns="http://www.jboss.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.jboss.com/xml/ns/javaee http://www.jboss.org/j2ee/schema/jboss-web_10_0.xsd" version="10.0">
+
+    <display-name>Application Name</display-name>
+
+    <distributable/>
+
+    <replication-config>
+        <replication-granularity>ATTRIBUTE</replication-granularity>
+        <cache-name>web.datagrid</cache-name>
+    </replication-config>
+
+</jboss-web>
+----
++
+In the preceding example:
++
+* `<distributable/>` enables clustering of your web application.
+* `<replication-granularity>ATTRIBUTE</replication-granularity>` stores attributes in an HTTP session as separate entries in the cache. The default is `SESSION`, which stores attributes in an HTTP session as a single entry.
++
+[TIP]
+====
+By default, session attributes are mutable unless they are of a known immutable type or annotated with `@org.wildfly.clustering.web.annotation.Immutable` or `@net.jcip.annotations.Immutable`. By annotating attributes as immutable, you can reduce the number of write operations to the cache.
+====
++
+* `<cache-name>web.datagrid</cache-name>` specifies the name of the cache container, `web`, and the name of the invalidation cache, `datagrid`.
+
+For more information, see:
+
+//Product Only
+ifdef::productized[]
+* link:https://access.redhat.com/solutions/3408381[Configuring and Tuning Session Replication for {wildflybrandname} on the Red Hat customer portal].
+* link:https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.2/html-single/configuration_guide/index#jdg_externalize_http_sessions[Externalize HTTP Sessions to Data Grid - {wildflybrandname} Configuration Guide]
+* link:https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.2/html/development_guide/clustering_in_web_applications#enable_session_replication_in_your_application[Enabling Session Replication in Your Application and Immutable Session Attributes - {wildflybrandname} Developer Guide]
+endif::productized[]
+* link:https://docs.jboss.org/jbossas/docs/Clustering_Guide/5/html_single/#clustering-http-app[Configuring Clustering and Replication - JBoss Application Server Guide]
+
+//-

@@ -1,0 +1,9 @@
+// Include attributes
+include::topics/attributes/product-attributes.adoc[]
+include::title-attributes.adoc[]
+
+// Name and ID of the title
+[id="{ProjectNameID}-{context}"]
+= {ProjectName}
+
+include::stories.adoc[]

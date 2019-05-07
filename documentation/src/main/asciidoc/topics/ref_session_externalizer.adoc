@@ -1,0 +1,9 @@
+{brandname} uses the JBoss Marshalling framework to convert objects into a transferable format so that {brandname} can distribute HTTP session data across the cluster.
+
+To set up marshalling for custom objects, you provide an `Externalizer` implementation for the type and annotate the marshalled type class with `SerializeWith` to indicate the externalizer class to use.
+
+For more information, see:
+
+* link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[org.infinispan.commons.marshall.Externalizer]
+
+//-

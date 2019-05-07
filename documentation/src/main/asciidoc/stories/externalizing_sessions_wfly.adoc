@@ -1,0 +1,19 @@
+[id='externalizing_sessions_wfly']
+== Externalizing HTTP Sessions from {wildflybrandname}
+:context: external_sessions_wfly
+
+You can externalize HTTP session data from {wildflybrandname} in standalone or domain mode.
+
+ifdef::productized[]
+.Prerequisites
+
+* {ProductEAP} 7.2
+* {ProductName} {ProductVersion}
+endif::productized[]
+
+=== Configuring {brandname} for HTTP Session Externalization
+include::topics/proc_creating_caches_session_externalization.adoc[]
+=== Defining a Remote Store on {wildflybrandname}
+include::topics/proc_externalizing_sessions_wfly.adoc[]
+=== Marshalling with HTTP Session Externalization
+include::topics/ref_session_externalizer.adoc[]
