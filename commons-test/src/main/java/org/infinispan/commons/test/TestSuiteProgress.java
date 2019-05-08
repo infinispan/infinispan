@@ -81,15 +81,24 @@ public class TestSuiteProgress {
       log.error(message, exception);
    }
 
-   void progress(CharSequence message) {
+   /**
+    * Write a fake test failures in the test-failures log, for {@code process_trace_logs.sh}
+    */
+   static void fakeTestFailure(String name, Throwable exception) {
+      String message = "Test failed: " + name;
+      System.out.printf("[TestSuiteProgress] %s%n", message);
+      log.error(message, exception);
+   }
+
+   private void progress(CharSequence message) {
       progress(null, message, null);
    }
 
-   void progress(String color, CharSequence message) {
+   private void progress(String color, CharSequence message) {
       progress(color, message, null);
    }
 
-   synchronized void progress(String color, CharSequence message, Throwable t) {
+   private synchronized void progress(String color, CharSequence message, Throwable t) {
       String actualColor = "";
       String actualReset = "";
       if (useColor && color != null) {

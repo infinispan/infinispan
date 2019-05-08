@@ -1,15 +1,19 @@
 package org.infinispan.commons.test;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
@@ -23,6 +27,15 @@ import org.jboss.logging.Logger;
  *
  * <p>Every second record new threads and the tests that might have started them.
  * After the last test, log the threads that are still running and the source tests.</p>
+ *
+ * <p>
+ * Strategies for debugging test suite thread leaks:
+ * </p>
+ * <ul>
+ *    <li>Use -Dinfinispan.test.parallel.threads=3 (or even less) to narrow down source tests</li>
+ *    <li>Set a conditional breakpoint in Thread.start with the name of the leaked thread</li>
+ *    <li>If the thread has the pattern of a particular component, set a conditional breakpoint in that component</li>
+ * </ul>
  *
  * @author Dan Berindei
  * @since 10.0
@@ -81,23 +94,26 @@ public class ThreadLeakChecker {
    private static final boolean ENABLED =
       "true".equalsIgnoreCase(System.getProperty("infinispan.test.checkThreadLeaks", "true"));
 
-   private static Logger log = Logger.getLogger(ThreadLeakChecker.class);
-   private static volatile long lastUpdate = 0;
-   private static final Set<String> runningTests = ConcurrentHashMap.newKeySet();
-   private static final BlockingQueue<String> finishedTests = new LinkedBlockingDeque<>();
+   private static final Logger log = Logger.getLogger(ThreadLeakChecker.class);
    private static final Map<Thread, LeakInfo> runningThreads = new ConcurrentHashMap<>();
    private static final Lock lock = new ReentrantLock();
+
+   private static final LeakException IGNORED = new LeakException("IGNORED");
+   private static final LeakException UNKNOWN = new LeakException("UNKNOWN");
+   private static final ThreadInfoLocal threadInfo = new ThreadInfoLocal();
+
+   private static class ThreadInfoLocal extends InheritableThreadLocal<LeakException> {
+      @Override
+      protected LeakException childValue(LeakException parentValue) {
+         return new LeakException(Thread.currentThread().getName(), parentValue);
+      }
+   }
 
    /**
     * A test class has started, and we should consider it as a potential owner for new threads.
     */
    public static void testStarted(String testName) {
-      lock.lock();
-      try {
-         runningTests.add(testName);
-      } finally {
-         lock.unlock();
-      }
+      threadInfo.set(new LeakException(testName));
    }
 
    /**
@@ -108,11 +124,9 @@ public class ThreadLeakChecker {
       try {
          Set<Thread> currentThreads = getThreadsSnapshot();
          for (Thread thread : currentThreads) {
-            LeakInfo leakInfo = new LeakInfo(thread, Collections.emptyList());
-            leakInfo.ignore();
+            LeakInfo leakInfo = new LeakInfo(thread, IGNORED);
             runningThreads.putIfAbsent(thread, leakInfo);
          }
-         lastUpdate = System.nanoTime();
       } finally {
          lock.unlock();
       }
@@ -122,34 +136,41 @@ public class ThreadLeakChecker {
     * A test class has finished, and we should not consider it a potential owner for new threads any more.
     */
    public static void testFinished(String testName) {
-      lock.lock();
-      try {
-         finishedTests.add(testName);
-
-         // Only update threads once per second, unless this is the last test
-         // or the test suite runs on a single thread
-         boolean noRunningTest = runningTests.size() <= finishedTests.size();
-         if (!noRunningTest && (System.nanoTime() - lastUpdate < TimeUnit.SECONDS.toNanos(1)))
-            return;
-
-         lastUpdate = System.nanoTime();
-
-         // Available owners are tests that were running at any point since the last check
-         List<String> availableOwners = new ArrayList<>(runningTests);
-         runningTests.removeAll(finishedTests);
-         finishedTests.clear();
-         updateThreadOwnership(availableOwners);
-      } finally {
-         lock.unlock();
-      }
+      threadInfo.set(new LeakException("after-" + testName));
    }
 
    private static void updateThreadOwnership(List<String> availableOwners) {
       // Update the thread ownership information
       Set<Thread> currentThreads = getThreadsSnapshot();
       runningThreads.keySet().retainAll(currentThreads);
+
+      Field threadLocalsField;
+      Method getEntryMethod;
+      Field valueField;
+      try {
+         threadLocalsField = Thread.class.getDeclaredField("inheritableThreadLocals");
+         threadLocalsField.setAccessible(true);
+         getEntryMethod = Class.forName("java.lang.ThreadLocal$ThreadLocalMap").getDeclaredMethod("getEntry", ThreadLocal.class);
+         getEntryMethod.setAccessible(true);
+         valueField = Class.forName("java.lang.ThreadLocal$ThreadLocalMap$Entry").getDeclaredField("value");
+         valueField.setAccessible(true);
+      } catch (NoSuchFieldException | NoSuchMethodException | ClassNotFoundException e) {
+         log.error("Error obtaining thread local accessors, ignoring thread leaks");
+         return;
+      }
+
       for (Thread thread : currentThreads) {
-         runningThreads.putIfAbsent(thread, new LeakInfo(thread, availableOwners));
+         if (runningThreads.containsKey(thread))
+            continue;
+
+         try {
+            Object threadLocalsMap = threadLocalsField.get(thread);
+            Object entry = threadLocalsMap != null ? getEntryMethod.invoke(threadLocalsMap, threadInfo) : null;
+            LeakException stacktrace = entry != null ? (LeakException) valueField.get(entry) : UNKNOWN;
+            runningThreads.putIfAbsent(thread, new LeakInfo(thread, stacktrace));
+         } catch (IllegalAccessException | InvocationTargetException e) {
+            log.error("Error extracting backtrace of leaked thread " + thread.getName());
+         }
       }
    }
 
@@ -164,7 +185,6 @@ public class ThreadLeakChecker {
 
       lock.lock();
       try {
-         assert runningTests.isEmpty() : "Tests are still running: " + runningTests;
          performCheck();
       } finally {
          lock.unlock();
@@ -189,18 +209,42 @@ public class ThreadLeakChecker {
       }
 
       if (!leaks.isEmpty()) {
-         for (LeakInfo leakInfo : leaks) {
-            log.warnf("Possible leaked thread:\n%s", prettyPrintStacktrace(leakInfo.thread));
-            leakInfo.markReported();
+         try {
+            File reportsDir = new File("target/surefire-reports");
+            if (!reportsDir.exists() && !reportsDir.mkdirs()) {
+               throw new IOException("Cannot create report directory " + reportsDir.getAbsolutePath());
+            }
+            PolarionJUnitXMLWriter writer = new PolarionJUnitXMLWriter(
+               new File(reportsDir, "TEST-ThreadLeakChecker.xml"));
+            String property = System.getProperty("infinispan.modulesuffix");
+            String moduleName = property != null ? property.substring(1) : "";
+            writer.start(moduleName, leaks.size(), 0, leaks.size(), 0, false);
+
+            for (LeakInfo leakInfo : leaks) {
+               String testName = "ThreadLeakChecker";
+               Throwable cause = leakInfo.stacktrace;
+               while (cause != null) {
+                  testName = cause.getMessage();
+                  cause = cause.getCause();
+               }
+               LeakException exception = new LeakException("Leaked thread: " + leakInfo.thread.getName(),
+                                                           leakInfo.stacktrace);
+               exception.setStackTrace(leakInfo.thread.getStackTrace());
+
+               TestSuiteProgress.fakeTestFailure(testName + ".ThreadLeakChecker", exception);
+
+               StringWriter exceptionWriter = new StringWriter();
+               exception.printStackTrace(new PrintWriter(exceptionWriter));
+               writer.writeTestCase("ThreadLeakChecker", testName, 0, PolarionJUnitXMLWriter.Status.FAILURE,
+                                    exceptionWriter.toString(), exception.getClass().getName(), exception.getMessage());
+
+               leakInfo.markReported();
+            }
+
+            writer.close();
+         } catch (Exception e) {
+            throw new RuntimeException("Error reporting thread leaks", e);
          }
-         // Strategies for debugging test suite thread leaks
-         // Use -Dinfinispan.test.parallel.threads=3 (or even less) to narrow down source tests
-         // Set a conditional breakpoint in Thread.start with the name of the leaked thread
-         // If the thread has the pattern of a particular component, set a conditional breakpoint in that component
-         throw new RuntimeException("Leaked threads: \n  " +
-                                    leaks.stream()
-                                       .map(Object::toString)
-                                       .collect(Collectors.joining(",\n  ")));
       }
    }
 
@@ -236,17 +280,9 @@ public class ThreadLeakChecker {
          return false;
    }
 
-   private static String prettyPrintStacktrace(Thread thread) {
-      // "management I/O-2" #55 prio=5 os_prio=0 tid=0x00007fe6a8134000 nid=0x7f9d runnable
-      // [0x00007fe64e4db000]
-      //    java.lang.Thread.State:RUNNABLE
+   private static String prettyPrintStacktrace(StackTraceElement[] stackTraceElements) {
       StringBuilder sb = new StringBuilder();
-      sb.append(String.format("\"%s\" %sprio=%d tid=0x%x nid=NA %s\n", thread.getName(),
-                              thread.isDaemon() ? "daemon " : "", thread.getPriority(), thread.getId(),
-                              thread.getState().toString().toLowerCase()));
-      sb.append("   java.lang.Thread.State: ").append(thread.getState()).append('\n');
-      StackTraceElement[] s = thread.getStackTrace();
-      for (StackTraceElement ste : s) {
+      for (StackTraceElement ste : stackTraceElements) {
          sb.append("\tat ").append(ste).append('\n');
       }
       return sb.toString();
@@ -286,8 +322,7 @@ public class ThreadLeakChecker {
     * Ignore a running thread.
     */
    public static void ignoreThread(Thread thread) {
-      LeakInfo leakInfo = runningThreads.computeIfAbsent(thread, k -> new LeakInfo(thread, Collections.emptyList()));
-      leakInfo.ignore();
+      LeakInfo leakInfo = runningThreads.computeIfAbsent(thread, k -> new LeakInfo(thread, IGNORED));
    }
 
    /**
@@ -300,17 +335,12 @@ public class ThreadLeakChecker {
 
    private static class LeakInfo {
       final Thread thread;
-      final List<String> potentialOwnerTests;
+      final LeakException stacktrace;
       boolean reported;
-      boolean ignored;
 
-      LeakInfo(Thread thread, List<String> potentialOwnerTests) {
+      LeakInfo(Thread thread, LeakException stacktrace) {
          this.thread = thread;
-         this.potentialOwnerTests = potentialOwnerTests;
-      }
-
-      void ignore() {
-         ignored = true;
+         this.stacktrace = stacktrace;
       }
 
       void markReported() {
@@ -318,16 +348,30 @@ public class ThreadLeakChecker {
       }
 
       boolean shouldReport() {
-         return !ignored && !reported;
+         return stacktrace != IGNORED && !reported;
       }
 
       @Override
       public String toString() {
-         if (ignored) {
-            return "{" + thread.getName() + ": ignored}";
+         String owners;
+         if (stacktrace == IGNORED) {
+            owners = "ignored";
+         } else {
+            owners = "created by " + stacktrace.getMessage();
          }
-         String reportedString = reported ? " reported, " : "";
-         return "{" + thread.getName() + ": " + reportedString + "possible sources " + potentialOwnerTests + "}";
+         return "{" + thread.getName() + ": " + owners + "}";
+      }
+   }
+
+   private static class LeakException extends Exception {
+      private static final long serialVersionUID = 2192447894828825555L;
+
+      LeakException(String testName) {
+         super(testName, null, false, false);
+      }
+
+      LeakException(String message, LeakException parent) {
+         super(message + " << " + parent.getMessage(), parent, false, true);
       }
    }
 }

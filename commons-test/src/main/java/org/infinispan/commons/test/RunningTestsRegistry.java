@@ -53,10 +53,14 @@ class RunningTestsRegistry {
    }
 
    private static void killLongTest(Thread testThread, String testName, String simpleName) {
-      String safeTestName = testName.replaceAll("[^a-zA-Z0-9=]", "_");
+      RuntimeException exception =
+         new RuntimeException(String.format("Test timed out after %d seconds", MAX_TEST_SECONDS));
+      exception.setStackTrace(testThread.getStackTrace());
+      TestSuiteProgress.fakeTestFailure(testName, exception);
 
       List<String> pids = collectChildProcesses(testName);
 
+      String safeTestName = simpleName.replaceAll("[^a-zA-Z0-9=]", "_");
       dumpThreads(safeTestName, pids);
 
       killTest(testThread, pids);
@@ -64,11 +68,6 @@ class RunningTestsRegistry {
 
    private static List<String> collectChildProcesses(String testName) {
       try {
-         System.err.printf(
-            "[ERROR] Test %s has been running for more than %d seconds. Interrupting the test thread and dumping " +
-            "threads of the test suite process and its children.\n",
-            testName, MAX_TEST_SECONDS);
-
          String jvmName = ManagementFactory.getRuntimeMXBean().getName();
          String ppid = jvmName.split("@")[0];
 
@@ -115,9 +114,9 @@ class RunningTestsRegistry {
          LocalDateTime now = LocalDateTime.now();
          if (jstackFile.canExecute() && !pids.isEmpty()) {
             for (String pid : pids) {
-               File dumpFile = new File(String.format("threaddump-%1$s-%2$tY-%2$tm-%2$td-%3$s.log",
+               File dumpFile = new File(String.format("threaddump-%1$s-%2$tY%2$tm%2$td-%2$tH%2$tM-%3$s.log",
                                                       safeTestName, now, pid));
-               System.out.printf("Dumping thread stacks of process %s to %s\n", pid, dumpFile.getAbsolutePath());
+               System.err.printf("Dumping threads of process %s to %s\n", pid, dumpFile.getAbsolutePath());
                Process jstack = new ProcessBuilder()
                                    .command(jstackFile.getAbsolutePath(), pid)
                                    .redirectOutput(dumpFile)
@@ -125,9 +124,9 @@ class RunningTestsRegistry {
                jstack.waitFor(10, SECONDS);
             }
          } else {
-            File dumpFile = new File(String.format("threaddump-%1$s-%2$tY-%2$tm-%2$td.log",
+            File dumpFile = new File(String.format("threaddump-%1$s-%2$tY%2$tm%2$td-%2$tH%2$tM.log",
                                                    safeTestName, now));
-            System.out.printf("Cannot find jstack in %s, programmatically dumping thread stacks of testsuite process to %s\n", javaHome, dumpFile.getAbsolutePath());
+            System.err.printf("Cannot find jstack in %s, programmatically dumping thread stacks of testsuite process to %s\n", javaHome, dumpFile.getAbsolutePath());
             ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
             try (PrintWriter writer = new PrintWriter(new FileWriter(dumpFile))) {
                // 2019-02-05 14:03:11
@@ -148,7 +147,7 @@ class RunningTestsRegistry {
       try {
          // Interrupt the test thread
          testThread.interrupt();
-         System.out.printf("Interrupted thread %s (%d).\n", testThread.getName(), testThread.getId());
+         System.err.printf("Interrupted thread %s (%d).\n", testThread.getName(), testThread.getId());
 
          testThread.join(SECONDS.toMillis(1));
          if (testThread.isAlive()) {
@@ -175,7 +174,7 @@ class RunningTestsRegistry {
             }
             kill.waitFor(10, SECONDS);
             if (kill.exitValue() == 0) {
-               System.out.printf("Killed processes %s\n", String.join(" ", pids));
+               System.err.printf("Killed processes %s\n", String.join(" ", pids));
             } else {
                System.err.printf("Failed to kill processes, exit code %d from command %s\n", kill.exitValue(), command);
             }
