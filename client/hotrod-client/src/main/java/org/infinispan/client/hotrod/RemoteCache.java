@@ -512,4 +512,9 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * Return the currently {@link DataFormat} being used.
     */
    DataFormat getDataFormat();
+
+   /**
+    * @return {@code true} if the cache can participate in a transaction, {@code false} otherwise.
+    */
+   boolean isTransactional();
 }

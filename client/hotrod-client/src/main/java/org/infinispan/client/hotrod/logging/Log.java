@@ -16,6 +16,7 @@ import java.util.Set;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.event.IncorrectClientListenerException;
+import org.infinispan.client.hotrod.exceptions.CacheNotTransactionalException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.CacheConfigurationException;
@@ -298,7 +299,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException invalidTransactionManagerLookup();
 
    @Message(value = "Cache %s doesn't support transactions. Please check the documentation how to configure it properly.", id = 4084)
-   HotRodClientException cacheDoesNotSupportTransactions(String name);
+   CacheNotTransactionalException cacheDoesNotSupportTransactions(String name);
 
    @LogMessage(level = ERROR)
    @Message(value = "Error checking server configuration for transactional cache %s", id = 4085)
