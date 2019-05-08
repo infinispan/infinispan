@@ -49,8 +49,7 @@ public class ITestUtils {
    }
 
    public static RemoteCacheManager createCacheManager(RemoteInfinispanServer server, String protocolVersion) {
-      return new RemoteCacheManager(createConfigBuilder(server.getHotrodEndpoint().getInetAddress().getHostName(),
-            server.getHotrodEndpoint().getPort(), protocolVersion).build());
+      return new RemoteCacheManager(createConfigBuilder(server, protocolVersion).build());
    }
 
    public static ConfigurationBuilder createConfigBuilder(String hostName, int port) {
@@ -61,6 +60,16 @@ public class ITestUtils {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host(hostName).port(port).protocolVersion(protocolVersion).addJavaSerialWhiteList(".*");
       return builder;
+   }
+
+   public static ConfigurationBuilder createConfigBuilder(RemoteInfinispanServer server) {
+      return createConfigBuilder(server, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
+   }
+
+   public static ConfigurationBuilder createConfigBuilder(RemoteInfinispanServer server, String protocolVersion) {
+      String hostName = server.getHotrodEndpoint().getInetAddress().getHostName();
+      int port = server.getHotrodEndpoint().getPort();
+      return createConfigBuilder(hostName, port, protocolVersion);
    }
 
    /**

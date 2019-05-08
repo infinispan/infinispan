@@ -45,7 +45,7 @@ import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.GenderMarshaller;
 import org.infinispan.protostream.sampledomain.marshallers.UserMarshaller;
 import org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer;
-import org.infinispan.server.test.util.RemoteCacheManagerFactory;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
@@ -58,6 +58,7 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -78,8 +79,10 @@ public class HotRodCustomMarshallerIteratorIT {
    private static final String PARAM_FILTER_CONVERTER_FACTORY_NAME = "param-filter-converter";
    private static final String CACHE_NAME = "default";
 
-   private static RemoteCacheManager remoteCacheManager;
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
 
+   private RemoteCacheManager remoteCacheManager;
    private RemoteCache<Integer, User> remoteCache;
 
    @InfinispanResource("remote-iterator-local")
@@ -109,13 +112,12 @@ public class HotRodCustomMarshallerIteratorIT {
 
    @Before
    public void setup() throws Exception {
-      RemoteCacheManagerFactory remoteCacheManagerFactory = new RemoteCacheManagerFactory();
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.addServer()
-            .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
-            .port(server1.getHotrodEndpoint().getPort())
-            .marshaller(new CustomProtoStreamMarshaller());
-      remoteCacheManager = remoteCacheManagerFactory.createManager(clientBuilder);
+                   .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
+                   .port(server1.getHotrodEndpoint().getPort())
+                   .marshaller(new CustomProtoStreamMarshaller());
+      remoteCacheManager = classRCM.cacheRemoteCacheManager(clientBuilder);
       remoteCache = remoteCacheManager.getCache(CACHE_NAME);
 
       waitForDeploymentCompletion();
@@ -137,9 +139,6 @@ public class HotRodCustomMarshallerIteratorIT {
 
    @AfterClass
    public static void after() {
-      if (remoteCacheManager != null) {
-         remoteCacheManager.stop();
-      }
       new File(System.getProperty("server1.dist"), "/standalone/deployments/" + FILTER_MARSHALLER_DEPLOYMENT_JAR).delete();
    }
 

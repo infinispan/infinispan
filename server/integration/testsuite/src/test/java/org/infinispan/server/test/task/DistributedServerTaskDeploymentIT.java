@@ -13,11 +13,10 @@ import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.test.category.Task;
 import org.infinispan.server.test.task.servertask.DistributedDeploymentTestServerTask;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.infinispan.tasks.ServerTask;
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -29,6 +28,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -57,6 +57,9 @@ public class DistributedServerTaskDeploymentIT {
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
 
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
+
     @Deployment(name = "node1", managed = false)
     @TargetsContainer("clusteredcache-1")
     @OverProtocol("jmx-as7")
@@ -80,12 +83,8 @@ public class DistributedServerTaskDeploymentIT {
     }
 
     @Before
-    public void setUp() {
-        if (rcm1 == null) {
-            Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName())
-                    .port(server1.getHotrodEndpoint().getPort()).build();
-            rcm1 = new RemoteCacheManager(conf);
-        }
+    public void setUp() throws Exception {
+       rcm1 = classRCM.cacheRemoteCacheManager(server1);
     }
 
     @Test

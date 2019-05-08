@@ -6,12 +6,14 @@ import static org.junit.Assert.assertNull;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -36,9 +38,13 @@ public class FileCacheStoreIT {
     @ArquillianResource
     ContainerController controller;
 
+   @Rule
+   public Cleanup cleanup = new Cleanup();
+
     @Test
     public void testSurviveRestart() throws Exception {
         RemoteCacheManagerFactory rcmFactory = new RemoteCacheManagerFactory();
+        cleanup.add(rcmFactory::stopManagers);
         RemoteInfinispanMBeans s = RemoteInfinispanMBeans.create(server, CONTAINER, "default", "local");
 
         controller.start(CONTAINER);
@@ -58,6 +64,5 @@ public class FileCacheStoreIT {
         assertEquals("v3", rc.get("k3"));
         assertNull(rc.get("k1")); //maxEntries was 2, this entry should be lost as the oldest entries are removed
         controller.stop(CONTAINER);
-        rcmFactory.stopManagers();
     }
 }

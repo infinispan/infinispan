@@ -55,12 +55,13 @@ import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
@@ -78,28 +79,20 @@ import org.junit.Test;
 public abstract class AbstractRemoteCacheIT {
     private static final Log log = LogFactory.getLog(AbstractRemoteCacheIT.class);
     protected static String testCache = "default";
-    protected static RemoteCacheManager remoteCacheManager = null;
+    protected RemoteCacheManager remoteCacheManager = null;
     protected RemoteCache remoteCache;
     protected final int ASYNC_OPS_ENTRY_LOAD = 10;
+
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
 
     protected abstract List<RemoteInfinispanServer> getServers();
 
     @Before
-    public void initialize() {
-        if (remoteCacheManager == null) {
-            Configuration config = createRemoteCacheManagerConfiguration();
-            remoteCacheManager = new RemoteCacheManager(config, true);
-        }
-        remoteCache = remoteCacheManager.getCache(testCache);
-        remoteCache.clear();
-    }
-
-    @AfterClass
-    public static void release() {
-        if (remoteCacheManager != null) {
-            remoteCacheManager.stop();
-            remoteCacheManager = null;
-        }
+    public void initialize() throws Exception {
+       remoteCacheManager = classRCM.cacheRemoteCacheManager(createRemoteCacheManagerConfiguration());
+       remoteCache = remoteCacheManager.getCache(testCache);
+       remoteCache.clear();
     }
 
    protected static Archive<?> createPojoArchive() {

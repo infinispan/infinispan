@@ -14,10 +14,12 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,16 +45,18 @@ public class ClusteredCacheConfigurationIT {
     RemoteCacheManager rcm1;
     RemoteCacheManager rcm2;
 
+   @Rule
+   public Cleanup cleanup = new Cleanup();
+
     @Before
     public void setUp() {
-        if (rcm1 == null) {
-            Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName())
-                    .port(server1.getHotrodEndpoint().getPort()).build();
-            Configuration conf2 = new ConfigurationBuilder().addServer().host(server2.getHotrodEndpoint().getInetAddress().getHostName())
-                    .port(server2.getHotrodEndpoint().getPort()).build();
-            rcm1 = new RemoteCacheManager(conf);
-            rcm2 = new RemoteCacheManager(conf2);
-        }
+       Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName())
+               .port(server1.getHotrodEndpoint().getPort()).build();
+       Configuration conf2 = new ConfigurationBuilder().addServer().host(server2.getHotrodEndpoint().getInetAddress().getHostName())
+               .port(server2.getHotrodEndpoint().getPort()).build();
+       rcm1 = new RemoteCacheManager(conf);
+       rcm2 = new RemoteCacheManager(conf2);
+       cleanup.add(rcm1, rcm2);
     }
 
     @Test

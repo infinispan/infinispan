@@ -19,6 +19,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.test.category.Task;
 import org.infinispan.server.test.task.servertask.DistributedAuthServerTask;
 import org.infinispan.server.test.task.servertask.LocalAuthTestServerTask;
@@ -54,6 +55,9 @@ public class DistributedAuthServerTaskIT {
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
 
+   @Rule
+   public Cleanup cleanup = new Cleanup();
+
     @BeforeClass
     public static void before() throws Exception {
         String[] serverDirs = new String[]{System.getProperty("server1.dist"), System.getProperty("server2.dist")};
@@ -80,13 +84,13 @@ public class DistributedAuthServerTaskIT {
             f.delete();
     }
 
-    @Test
+   @Test
     @SuppressWarnings("unchecked")
     public void shouldRunLocalAuthTest() throws Exception {
         SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
         config.forIspnServer(server1).withServerName("node0");
         config.forCredentials(EXECUTOR_LOGIN, EXECUTOR_PASSWORD);
-        RemoteCacheManager rcm = new RemoteCacheManager(config.build(), true);
+        RemoteCacheManager rcm = cleanup.add(new RemoteCacheManager(config.build(), true));
         RemoteCache remoteCache = rcm.getCache(LocalAuthTestServerTask.CACHE_NAME);
 
         String result = (String) remoteCache.execute(LocalAuthTestServerTask.NAME, Collections.emptyMap());
@@ -102,7 +106,7 @@ public class DistributedAuthServerTaskIT {
         SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
         config.forIspnServer(server1).withServerName("node0");
         config.forCredentials(EXECUTOR_LOGIN, EXECUTOR_PASSWORD);
-        RemoteCacheManager rcm = new RemoteCacheManager(config.build(), true);
+        RemoteCacheManager rcm = cleanup.add(new RemoteCacheManager(config.build(), true));
         RemoteCache remoteCache = rcm.getCache(DistributedAuthServerTask.CACHE_NAME);
 
         List<String> result = (List<String>) remoteCache.execute(DistributedAuthServerTask.NAME, Collections.emptyMap());
@@ -117,7 +121,7 @@ public class DistributedAuthServerTaskIT {
         SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
         config.forIspnServer(server1).withServerName("node0");
         config.forCredentials(ADMIN_LOGIN, ADMIN_PASSWD);
-        RemoteCacheManager rcm = new RemoteCacheManager(config.build(), true);
+        RemoteCacheManager rcm = cleanup.add(new RemoteCacheManager(config.build(), true));
         RemoteCache remoteCache = rcm.getCache(DistributedAuthServerTask.CACHE_NAME);
 
         exceptionRule.expect(HotRodClientException.class);

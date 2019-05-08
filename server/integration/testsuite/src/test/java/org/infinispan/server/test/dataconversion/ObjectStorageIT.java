@@ -22,6 +22,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -30,6 +31,7 @@ import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -53,6 +55,9 @@ public class ObjectStorageIT {
    @InfinispanResource(SERVER)
    RemoteInfinispanServer server;
    private static CloseableHttpClient httpClient;
+
+   @Rule
+   public Cleanup cleanup = new Cleanup();
 
    @BeforeClass
    public static void before() {
@@ -86,6 +91,7 @@ public class ObjectStorageIT {
    @WithRunningServer({@RunningServer(name = SERVER)})
    public void shouldDeserializeStringContent() throws IOException {
       RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      cleanup.add(rcm);
       RemoteCache<Integer, Currency> remoteCache = rcm.getCache();
       remoteCache.put(1, new Currency("United States", "USD"));
       remoteCache.put(2, new Currency("Algeria", "DZD"));

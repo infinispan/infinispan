@@ -17,6 +17,7 @@ import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.test.category.Task;
 import org.infinispan.server.test.task.servertask.PriceTask;
 import org.infinispan.server.test.task.servertask.SpotPrice;
@@ -28,6 +29,7 @@ import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -48,6 +50,9 @@ public class LocalServerTestCompatModeIT {
 
    @InfinispanResource(INFINISPAN_SERVER)
    RemoteInfinispanServer server;
+
+   @Rule
+   public Cleanup cleanup = new Cleanup();
 
    @BeforeClass
    public static void before() throws Exception {
@@ -76,7 +81,7 @@ public class LocalServerTestCompatModeIT {
    @Test
    @WithRunningServer({@RunningServer(name = INFINISPAN_SERVER)})
    public void shouldRunPriceTask() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      RemoteCacheManager rcm = cleanup.add(ITestUtils.createCacheManager(server));
       RemoteCache remoteCache = rcm.getCache();
       Instant now = Instant.now();
       remoteCache.put(1, new SpotPrice("RHT", now, 500.0f));

@@ -16,6 +16,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.test.category.Security;
 import org.infinispan.server.test.category.Task;
 import org.infinispan.server.test.task.servertask.LocalAuthTestServerTask;
@@ -48,6 +49,9 @@ public class LocalAuthServerTaskIT {
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
 
+   @Rule
+   public Cleanup cleanup = new Cleanup();
+
     @BeforeClass
     public static void before() throws Exception {
         String serverDir = System.getProperty("server1.dist");
@@ -78,6 +82,7 @@ public class LocalAuthServerTaskIT {
         config.forIspnServer(server).withServerName("node0");
         config.forCredentials(EXECUTOR_LOGIN, EXECUTOR_PASSWORD);
         RemoteCacheManager rcm = new RemoteCacheManager(config.build(), true);
+        cleanup.add(rcm);
         RemoteCache remoteCache = rcm.getCache(LocalAuthTestServerTask.CACHE_NAME);
 
         String result = (String) remoteCache.execute(LocalAuthTestServerTask.NAME, Collections.emptyMap());
@@ -91,6 +96,7 @@ public class LocalAuthServerTaskIT {
         config.forIspnServer(server).withServerName("node0");
         config.forCredentials(ADMIN_LOGIN, ADMIN_PASSWD);
         RemoteCacheManager rcm = new RemoteCacheManager(config.build(), true);
+        cleanup.add(rcm);
         RemoteCache remoteCache = rcm.getCache(LocalAuthTestServerTask.CACHE_NAME);
 
         exceptionRule.expect(HotRodClientException.class);

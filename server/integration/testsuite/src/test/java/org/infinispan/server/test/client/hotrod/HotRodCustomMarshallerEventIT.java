@@ -31,6 +31,7 @@ import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.server.test.category.HotRodSingleNode;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
@@ -39,6 +40,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -51,12 +53,13 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 @Category(HotRodSingleNode.class)
 public class HotRodCustomMarshallerEventIT {
-
     private static final String MARSHALLER_JAR = "marshaller.jar";
+    private static final String TEST_CACHE_NAME = "default";
 
-    private final String TEST_CACHE_NAME = "default";
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
 
-    static RemoteCacheManager remoteCacheManager;
+    RemoteCacheManager remoteCacheManager;
 
     RemoteCache<Id, Id> remoteCache;
 
@@ -72,12 +75,10 @@ public class HotRodCustomMarshallerEventIT {
     }
 
     @Before
-    public void initialize() {
-        if (remoteCacheManager == null) {
-            Configuration config = createRemoteCacheManagerConfiguration();
-            remoteCacheManager = new RemoteCacheManager(config, true);
-        }
-        remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
+    public void initialize() throws Exception {
+       Configuration config = createRemoteCacheManagerConfiguration();
+       remoteCacheManager = classRCM.cacheRemoteCacheManager(config);
+       remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
     }
 
     private Configuration createRemoteCacheManagerConfiguration() {
@@ -94,9 +95,6 @@ public class HotRodCustomMarshallerEventIT {
 
     @AfterClass
     public static void after() {
-        if (remoteCacheManager != null) {
-            remoteCacheManager.stop();
-        }
         new File(System.getProperty("server1.dist"), "/standalone/deployments" + MARSHALLER_JAR).delete();
     }
 

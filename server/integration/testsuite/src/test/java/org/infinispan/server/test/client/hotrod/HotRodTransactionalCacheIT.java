@@ -15,9 +15,10 @@ import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.server.test.category.HotRodClustered;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -43,21 +44,14 @@ public class HotRodTransactionalCacheIT {
    @InfinispanResource("container1")
    RemoteInfinispanServer server1;
 
-   private static RemoteCacheManager remoteCacheManager;
+   private RemoteCacheManager remoteCacheManager;
+
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
 
    @Before
-   public void initialize() {
-      if (remoteCacheManager == null) {
-         Configuration config = createRemoteCacheManagerConfiguration();
-         remoteCacheManager = new RemoteCacheManager(config, true);
-      }
-   }
-
-   @AfterClass
-   public static void tearDown() {
-      if (remoteCacheManager != null) {
-         remoteCacheManager.stop();
-      }
+   public void initialize() throws Exception {
+      remoteCacheManager = classRCM.cacheRemoteCacheManager(createRemoteCacheManagerConfiguration());
    }
 
    @Test

@@ -38,8 +38,8 @@ import org.junit.runner.RunWith;
 @WithRunningServer({@RunningServer(name = "hotrodSslWithSni", config = "testsuite/hotrod-ssl-with-sni.xml")})
 public class HotRodSslWithSniEncryptionIT {
 
-   protected static RemoteCache<String, String> remoteCache = null;
-   protected static RemoteCacheManager remoteCacheManager = null;
+   protected RemoteCache<String, String> remoteCache = null;
+   protected RemoteCacheManager remoteCacheManager = null;
 
    @InfinispanResource("hotrodSslWithSni")
    RemoteInfinispanServer ispnServer;

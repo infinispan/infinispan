@@ -11,9 +11,10 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-import org.infinispan.server.test.util.RemoteCacheManagerFactory;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 
 /**
  * Base class for tests for remote queries over HotRod.
@@ -22,13 +23,14 @@ import org.junit.Before;
  * @author Martin Gencur
  */
 public abstract class RemoteQueryBaseIT {
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
 
    protected final String cacheContainerName;
    protected final String cacheName;
 
    protected RemoteCacheManager remoteCacheManager;
    protected RemoteCache<Integer, User> remoteCache;
-   protected RemoteCacheManagerFactory rcmFactory;
 
    protected RemoteQueryBaseIT(String cacheContainerName, String cacheName) {
       this.cacheContainerName = cacheContainerName;
@@ -42,13 +44,12 @@ public abstract class RemoteQueryBaseIT {
 
    @Before
    public void setUp() throws Exception {
-      rcmFactory = new RemoteCacheManagerFactory();
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.addServer()
-            .host(getServer().getHotrodEndpoint().getInetAddress().getHostName())
-            .port(getServer().getHotrodEndpoint().getPort())
-            .marshaller(new ProtoStreamMarshaller());
-      remoteCacheManager = rcmFactory.createManager(clientBuilder);
+                   .host(getServer().getHotrodEndpoint().getInetAddress().getHostName())
+                   .port(getServer().getHotrodEndpoint().getPort())
+                   .marshaller(new ProtoStreamMarshaller());
+      remoteCacheManager = classRCM.cacheRemoteCacheManager(clientBuilder);
       remoteCache = remoteCacheManager.getCache(cacheName);
 
       //initialize server-side serialization context
@@ -70,9 +71,5 @@ public abstract class RemoteQueryBaseIT {
          }
          remoteCache = null;
       }
-      if (rcmFactory != null) {
-         rcmFactory.stopManagers();
-      }
-      rcmFactory = null;
    }
 }

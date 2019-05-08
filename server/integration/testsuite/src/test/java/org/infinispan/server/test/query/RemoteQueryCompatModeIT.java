@@ -15,6 +15,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
 import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
@@ -29,6 +30,7 @@ import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -48,10 +50,11 @@ public class RemoteQueryCompatModeIT {
     */
    private static final Set<File> deployments = new HashSet<>();
 
-   private static RemoteCacheManager remoteCacheManager;
-
    @InfinispanResource("custom-compat-marshaller")
    RemoteInfinispanServer server1;
+
+   @Rule
+   public Cleanup cleanup = new Cleanup();
 
    @BeforeClass
    public static void before() {
@@ -79,9 +82,6 @@ public class RemoteQueryCompatModeIT {
 
    @AfterClass
    public static void after() {
-      if (remoteCacheManager != null) {
-         remoteCacheManager.stop();
-      }
       for (File f : deployments) {
          f.delete();
       }
@@ -90,7 +90,7 @@ public class RemoteQueryCompatModeIT {
    @Test
    @WithRunningServer(@RunningServer(name = "custom-compat-marshaller"))
    public void testCompatQuery() {
-      remoteCacheManager = ITestUtils.createCacheManager(server1);
+      RemoteCacheManager remoteCacheManager = cleanup.add(ITestUtils.createCacheManager(server1));
       RemoteCache<Integer, TestEntity> remoteCache = remoteCacheManager.getCache();
       remoteCache.clear();
 

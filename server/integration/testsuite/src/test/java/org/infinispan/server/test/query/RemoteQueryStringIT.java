@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.sampledomain.Transaction;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
@@ -32,6 +33,7 @@ import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -51,10 +53,11 @@ public class RemoteQueryStringIT {
 
    private static File deployment;
 
-   private static RemoteCacheManager remoteCacheManager;
-
    @InfinispanResource("query-programmatic-search-mapping-provider")
    protected RemoteInfinispanServer server;
+
+   @Rule
+   public Cleanup cleanup = new Cleanup();
 
    @BeforeClass
    public static void before() {
@@ -69,10 +72,7 @@ public class RemoteQueryStringIT {
    }
 
    @AfterClass
-   public static void after() {
-      if (remoteCacheManager != null) {
-         remoteCacheManager.stop();
-      }
+   public static void afterClass() {
       if (deployment != null) {
          deployment.delete();
       }
@@ -86,7 +86,7 @@ public class RemoteQueryStringIT {
             .host(server.getHotrodEndpoint().getInetAddress().getHostName())
             .port(server.getHotrodEndpoint().getPort())
             .marshaller(new ProtoStreamMarshaller());
-      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      RemoteCacheManager remoteCacheManager = cleanup.add(new RemoteCacheManager(clientBuilder.build()));
 
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);

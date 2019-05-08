@@ -4,7 +4,6 @@ import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-
 import javax.management.ObjectName;
 
 import org.infinispan.arquillian.core.InfinispanResource;
@@ -14,6 +13,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.cluster.MyCustomCacheStore;
 import org.infinispan.persistence.spi.ExternalStore;
@@ -26,6 +26,7 @@ import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -40,14 +41,17 @@ import org.junit.runner.RunWith;
 @Category(CacheStore.class)
 public class CustomCacheStoreIT {
 
+   private static final int managementPort = 9990;
+
+   private static final String cacheLoaderMBean = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache,name=\"default(local)\",manager=\"local\",component=CacheLoader";
+
    private static File deployment;
 
    @InfinispanResource("standalone-customcs")
    RemoteInfinispanServer server;
 
-   private static final int managementPort = 9990;
-
-   private static final String cacheLoaderMBean = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache,name=\"default(local)\",manager=\"local\",component=CacheLoader";
+   @Rule
+   public Cleanup cleanup = new Cleanup();
 
    @BeforeClass
    public static void before() throws Exception {
@@ -71,6 +75,7 @@ public class CustomCacheStoreIT {
    @WithRunningServer({@RunningServer(name = "standalone-customcs")})
    public void testIfDeployedCacheContainsProperValues() throws Exception {
       RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      cleanup.add(rcm);
       RemoteCache<String, String> rc = rcm.getCache();
       assertNull(rc.get("key1"));
       rc.put("key1", "value1");
@@ -84,6 +89,7 @@ public class CustomCacheStoreIT {
    @WithRunningServer({@RunningServer(name = "standalone-customcs")})
    public void testDuplicateCustomStoresConfiguration() throws Exception {
       RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      cleanup.add(rcm);
       RemoteCache<String, String> rc = rcm.getCache();
       assertEquals("10", rc.get("customProperty"));
       rc = rcm.getCache("duplicateCustomStore");

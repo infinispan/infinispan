@@ -4,7 +4,6 @@ import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Scanner;
-
 import javax.management.ObjectName;
 
 import org.infinispan.arquillian.core.InfinispanResource;
@@ -16,9 +15,11 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,15 +41,15 @@ public class CacheContainerIT {
     final String dumpServicesBean = "jboss.msc:type=container,name=jboss-as";
     final String dumpServicesOp = "dumpServicesToString";
 
-    RemoteCacheManager rcm1; // connects to 'default' cache container
-    RemoteCacheManager rcm2; // connects to 'special-cache-container' cache container
-    MBeanServerConnectionProvider provider;
+   static RemoteCacheManager rcm1; // connects to 'default' cache container
+   static RemoteCacheManager rcm2; // connects to 'special-cache-container' cache container
+
+   @ClassRule
+   public static Cleanup classCleanup = new Cleanup();
 
     @Before
     public void setUp() {
         if (rcm1 == null) {
-            provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
-
             Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1
                     .getHotrodEndpoint().getPort()).build();
             Configuration conf2 = new ConfigurationBuilder().addServer()
@@ -56,6 +57,7 @@ public class CacheContainerIT {
                     .port(server1.getHotrodEndpoint("hotrodconnector2").getPort()).build();
             rcm1 = new RemoteCacheManager(conf);
             rcm2 = new RemoteCacheManager(conf2);
+            classCleanup.add(rcm1, rcm2);
         }
     }
 
@@ -90,8 +92,11 @@ public class CacheContainerIT {
     @Ignore
     @Test
     public void testExecutorAttributesAndStartMode() throws Exception {
-        String services = provider.getConnection().invoke(new ObjectName(dumpServicesBean), dumpServicesOp, null, null)
-                .toString();
+       String hostName = server1.getHotrodEndpoint().getInetAddress().getHostName();
+       MBeanServerConnectionProvider provider = new MBeanServerConnectionProvider(hostName, SERVER1_MGMT_PORT);
+       String services = provider.getConnection()
+                                 .invoke(new ObjectName(dumpServicesBean), dumpServicesOp, null, null)
+                                 .toString();
         boolean b1 = false, b2 = false, b3 = false;
         final String executorPrefix = "jboss.thread.executor.";
         Scanner s = new Scanner(services).useDelimiter("\n");

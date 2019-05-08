@@ -49,7 +49,7 @@ public abstract class HotRodSaslAuthTestBase {
    public static final String EXECUTOR_PASSWORD = "executorPassword";
 
    protected RemoteCache<String, String> remoteCache;
-   protected static RemoteCacheManager remoteCacheManager = null;
+   protected RemoteCacheManager remoteCacheManager = null;
 
    public abstract String getTestedMech();
 

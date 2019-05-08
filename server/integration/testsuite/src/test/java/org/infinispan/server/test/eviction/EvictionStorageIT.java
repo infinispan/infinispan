@@ -9,9 +9,10 @@ import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.server.test.util.ITestUtils;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -25,13 +26,14 @@ public class EvictionStorageIT {
    @InfinispanResource("eviction")
    RemoteInfinispanServer server1;
 
-   private static RemoteCacheManager remoteCacheManager;
+   private RemoteCacheManager remoteCacheManager;
+
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
 
    @Before
-   public void setUp() {
-      if (remoteCacheManager == null) {
-         remoteCacheManager = ITestUtils.createCacheManager(server1);
-      }
+   public void setUp() throws Exception {
+      remoteCacheManager = classRCM.cacheRemoteCacheManager(server1);
    }
 
    @Test

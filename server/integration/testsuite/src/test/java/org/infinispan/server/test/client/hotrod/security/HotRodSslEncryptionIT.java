@@ -38,8 +38,8 @@ public class HotRodSslEncryptionIT {
            + "ca.jks";
    protected static final String DEFAULT_TRUSTSTORE_PASSWORD = "secret";
 
-   protected static RemoteCache<String, String> remoteCache = null;
-   protected static RemoteCacheManager remoteCacheManager = null;
+   protected RemoteCache<String, String> remoteCache = null;
+   protected RemoteCacheManager remoteCacheManager = null;
 
    @InfinispanResource("hotrodSslNoAuth")
    RemoteInfinispanServer ispnServer;

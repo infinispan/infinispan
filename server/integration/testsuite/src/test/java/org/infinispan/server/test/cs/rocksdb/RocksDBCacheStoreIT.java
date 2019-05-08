@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractMarshaller;
@@ -29,6 +30,7 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -59,6 +61,9 @@ public class RocksDBCacheStoreIT {
     private static File expiredDir = new File(ITestUtils.SERVER_DATA_DIR + File.separator + "rocksdb-expiredtestcache");
 
     private final TestMarshaller clientMarshaller = new TestMarshaller();
+
+   @Rule
+   public Cleanup cleanup = new Cleanup();
 
     @Before
     @After
@@ -116,10 +121,8 @@ public class RocksDBCacheStoreIT {
 
         log.tracef("RocksDB file " + dataDir.getAbsolutePath() + " contents:");
 
-
-        for(RocksIterator i = db.newIterator(); i.isValid(); i.next()) {
-            log.tracef("key \"" + Hex.encodeHexString(i.key()) + "\": value \""
-                + Hex.encodeHexString(i.value()) + "\"");
+       for (RocksIterator i = db.newIterator(); i.isValid(); i.next()) {
+          log.tracef("key \"%s\": value \"%s\"", Hex.encodeHexString(i.key()), Hex.encodeHexString(i.value()));
           assertNotNull(i.value());
        }
     }
@@ -159,6 +162,6 @@ public class RocksDBCacheStoreIT {
         ConfigurationBuilder cfgBuild = ITestUtils.createConfigBuilder(server.getHotrodEndpoint().getInetAddress().getHostName(),
               server.getHotrodEndpoint().getPort());
         cfgBuild.marshaller(clientMarshaller);
-        return new RemoteCacheManager(cfgBuild.build());
+        return cleanup.add(new RemoteCacheManager(cfgBuild.build()));
     }
 }
