@@ -14,10 +14,12 @@ import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -40,6 +42,8 @@ public class ExpirationIT {
     @InfinispanResource("expiration-2")
     RemoteInfinispanServer server2;
 
+    @Rule
+    public Cleanup cleanup = new Cleanup();
 
     @Test
     public void testRESTExpiration() throws Exception {
@@ -83,6 +87,7 @@ public class ExpirationIT {
     public void testHotRodExpiration() throws Exception {
         RemoteCacheManager rcm1 = ITestUtils.createCacheManager(server1);
         RemoteCacheManager rcm2 = ITestUtils.createCacheManager(server2);
+        cleanup.add(rcm1, rcm2);
         RemoteCache<String, String> c = rcm1.getCache("hotrodExpiration");
         RemoteCache<String, String> c2 = rcm2.getCache("hotrodExpiration");
         // global cache lifespan - 2000ms

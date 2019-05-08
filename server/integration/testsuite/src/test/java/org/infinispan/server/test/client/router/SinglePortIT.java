@@ -9,9 +9,11 @@ import java.util.Queue;
 
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.rest.http2.NettyHttpClient;
 import org.infinispan.server.test.category.Security;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -43,10 +45,14 @@ public class SinglePortIT {
 
    public static final String CACHE_NAME = "default";
 
+   @Rule
+   public Cleanup cleanup = new Cleanup();
+
    @Test
    public void testRestPlainTextUpgrade() throws Exception {
       //when
       NettyHttpClient client = NettyHttpClient.newHttp2ClientWithHttp11Upgrade();
+      cleanup.add(NettyHttpClient::stop, client);
       client.start("localhost", 8080);
 
       FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/test",

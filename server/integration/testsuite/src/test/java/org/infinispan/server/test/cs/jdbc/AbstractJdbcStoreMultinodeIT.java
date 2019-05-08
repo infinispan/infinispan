@@ -4,11 +4,9 @@ import static org.infinispan.server.test.util.ITestUtils.createMBeans;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
-import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.infinispan.server.test.util.jdbc.DBServer;
 import org.jboss.arquillian.container.test.api.ContainerController;
@@ -16,7 +14,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 
 /**
@@ -37,9 +34,6 @@ public abstract class AbstractJdbcStoreMultinodeIT {
     protected static DBServer dbServer1 = DBServer.create();
     protected static DBServer dbServer2 = DBServer.create();
 
-    private static RemoteCacheManagerFactory rcmFactory;
-    protected RemoteCache cache;
-
     protected RemoteInfinispanMBeans mbeans1;
     protected RemoteInfinispanMBeans mbeans2;
 
@@ -54,11 +48,6 @@ public abstract class AbstractJdbcStoreMultinodeIT {
 
     @InfinispanResource(CONTAINER2)
     protected RemoteInfinispanServer server2;
-
-    @BeforeClass
-    public static void startup() {
-        rcmFactory = new RemoteCacheManagerFactory();
-    }
 
     @AfterClass
     public static void cleanup() {
@@ -78,11 +67,6 @@ public abstract class AbstractJdbcStoreMultinodeIT {
             // catching the exception, because the drop is not part of the tests
             log.error("Couldn't drop the tables: ", e);
         }
-
-        if (rcmFactory != null) {
-            rcmFactory.stopManagers();
-        }
-        rcmFactory = null;
     }
 
     @Before
@@ -102,10 +86,6 @@ public abstract class AbstractJdbcStoreMultinodeIT {
 
         mbeans1 = createMBeans(server1, CONTAINER1, cacheName(), managerName());
         mbeans2 = createMBeans(server2, CONTAINER2, cacheName(), managerName());
-    }
-
-    protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans mbeans) {
-        return rcmFactory.createCache(mbeans);
     }
 
     protected abstract void dBServers();

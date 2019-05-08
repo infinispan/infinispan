@@ -32,8 +32,8 @@ public class MultitenancyIT {
 
    public static final String CACHE_NAME = "cache-1";
 
-   private static RemoteCache<String, Object> remoteCache = null;
-   private static RemoteCacheManager remoteCacheManager = null;
+   private RemoteCache<String, Object> remoteCache = null;
+   private RemoteCacheManager remoteCacheManager = null;
    RESTHelper rest;
 
    @After

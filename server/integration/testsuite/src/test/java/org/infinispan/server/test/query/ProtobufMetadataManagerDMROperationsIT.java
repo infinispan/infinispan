@@ -18,7 +18,6 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.category.Queries;
-import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.clustering.infinispan.subsystem.InfinispanExtension;
 import org.jboss.as.controller.PathAddress;
@@ -61,24 +60,23 @@ public class ProtobufMetadataManagerDMROperationsIT {
             controller.close();
          }
       } finally {
-         RemoteCacheManagerFactory rcmFactory = new RemoteCacheManagerFactory();
          ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
          clientBuilder.addServer()
                .host(server.getHotrodEndpoint().getInetAddress().getHostName())
                .port(server.getHotrodEndpoint().getPort())
                .marshaller(new ProtoStreamMarshaller());
-         RemoteCacheManager remoteCacheManager = rcmFactory.createManager(clientBuilder);
-         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+         try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
+            RemoteCache<String, String> metadataCache =
+               remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
 
-         // remove all files that were potentially left behind by this test
-         metadataCache.remove("test1.proto");
-         metadataCache.remove("test1.proto.errors");
-         metadataCache.remove("test2.proto");
-         metadataCache.remove("test2.proto.errors");
-         metadataCache.remove("test3.proto");
-         metadataCache.remove("test3.proto.errors");
-
-         rcmFactory.stopManagers();
+            // remove all files that were potentially left behind by this test
+            metadataCache.remove("test1.proto");
+            metadataCache.remove("test1.proto.errors");
+            metadataCache.remove("test2.proto");
+            metadataCache.remove("test2.proto.errors");
+            metadataCache.remove("test3.proto");
+            metadataCache.remove("test3.proto.errors");
+         }
       }
    }
 

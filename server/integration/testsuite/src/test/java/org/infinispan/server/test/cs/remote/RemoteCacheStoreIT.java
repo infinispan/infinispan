@@ -12,14 +12,16 @@ import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -49,7 +51,6 @@ public class RemoteCacheStoreIT {
     private final String READONLY_CACHE_NAME = "readOnlyCache";
 
     private MemcachedClient mc;
-    RemoteCache<Object, Object> cache;
 
     @InfinispanResource(CONTAINER_LOCAL)
     RemoteInfinispanServer server1;
@@ -61,12 +62,21 @@ public class RemoteCacheStoreIT {
     ContainerController controller;
 
     RemoteCacheManager rcm1;
+    RemoteCacheManager rcm2;
+
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM1 = new ClassRemoteCacheManager();
+
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM2 = new ClassRemoteCacheManager();
+
+   @Rule
+   public Cleanup cleanup = new Cleanup();
 
     @Before
     public void setUp() throws Exception {
-        Configuration conf = new ConfigurationBuilder().addServer().host(server2.getHotrodEndpoint().getInetAddress().getHostName()).port(server2
-                .getHotrodEndpoint().getPort()).build();
-        cache = new RemoteCacheManager(conf).getCache();
+       rcm1 = classRCM1.cacheRemoteCacheManager(server1);
+       rcm2 = classRCM2.cacheRemoteCacheManager(server2);
     }
 
     /**
@@ -75,9 +85,6 @@ public class RemoteCacheStoreIT {
     @Test
     @WithRunningServer({@RunningServer(name = CONTAINER_LOCAL)})
     public void testReadOnly() throws Exception {
-        Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1
-                .getHotrodEndpoint().getPort()).build();
-        rcm1 = new RemoteCacheManager(conf);
         RemoteCache<String, String> rc1 = rcm1.getCache(READONLY_CACHE_NAME);
         // put 3 keys, one entry is evicted, but not stored
         Set<String> allKeys = new HashSet<>();
@@ -113,6 +120,7 @@ public class RemoteCacheStoreIT {
     public void testPassivateAfterEviction() throws Exception {
         mc = new MemcachedClient(server1.getMemcachedEndpoint().getInetAddress().getHostName(), server1.getMemcachedEndpoint()
                 .getPort());
+        cleanup.add(MemcachedClient::close, mc);
         assertCleanCacheAndStore();
         mc.set("k1", "v1");
         mc.set("k2", "v2");
@@ -129,13 +137,14 @@ public class RemoteCacheStoreIT {
         mc.delete("k1");
         mc.delete("k2");
         mc.delete("k3");
+        mc.close();
     }
 
     private void assertCleanCacheAndStore() throws Exception {
         mc.delete("k1");
         mc.delete("k2");
         mc.delete("k3");
-        cache.clear();
+        rcm2.getCache().clear();
         assertEquals(0, server1.getCacheManager(LOCAL_CACHE_MANAGER).getCache(LOCAL_CACHE_NAME).getNumberOfEntries());
         assertEquals(0, server2.getCacheManager(LOCAL_CACHE_MANAGER).getDefaultCache().getNumberOfEntries());
     }

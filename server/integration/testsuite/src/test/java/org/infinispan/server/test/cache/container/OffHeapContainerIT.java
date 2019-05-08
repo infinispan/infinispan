@@ -29,10 +29,11 @@ import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.server.test.util.ITestUtils;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -47,16 +48,17 @@ import org.junit.runner.RunWith;
 public class OffHeapContainerIT {
 
    public static final String CONFIG_NAME = "off-heap";
-   private static RemoteCacheManager remoteCacheManager;
+   private RemoteCacheManager remoteCacheManager;
 
    @InfinispanResource(OffHeapContainerIT.CONFIG_NAME)
    RemoteInfinispanServer server1;
 
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
+
    @Before
-   public void setUp() {
-      if (remoteCacheManager == null) {
-         remoteCacheManager = ITestUtils.createCacheManager(server1);
-      }
+   public void setUp() throws Exception {
+      remoteCacheManager = classRCM.cacheRemoteCacheManager(server1);
    }
 
    @Test

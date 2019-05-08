@@ -11,14 +11,13 @@ import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.server.test.category.HotRodClustered;
 import org.infinispan.server.test.category.HotRodSingleNode;
-import org.infinispan.server.test.util.RemoteCacheManagerFactory;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -32,7 +31,12 @@ public class HotRodRemoteCacheCompatIT {
 
    private static final String CACHE_NAME = "compatibilityCache";
    private static final int CACHE_SIZE = 1000;
-   private static RemoteCacheManager remoteCacheManager;
+
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager(rcm -> {
+      rcm.getCache(CACHE_NAME).clear();
+      rcm.stop();
+   });
 
    private RemoteCache<Object, Object> remoteCache;
 
@@ -40,22 +44,9 @@ public class HotRodRemoteCacheCompatIT {
    RemoteInfinispanServer server1;
 
    @Before
-   public void setup() {
-      RemoteCacheManagerFactory remoteCacheManagerFactory = new RemoteCacheManagerFactory();
-      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-      clientBuilder.addServer()
-              .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
-              .port(server1.getHotrodEndpoint().getPort());
-      remoteCacheManager = remoteCacheManagerFactory.createManager(clientBuilder);
-      remoteCache = remoteCacheManager.getCache(CACHE_NAME);
-   }
-
-   @AfterClass
-   public static void release() {
-      if (remoteCacheManager != null) {
-         remoteCacheManager.getCache(CACHE_NAME).clear();
-         remoteCacheManager.stop();
-      }
+   public void setup() throws Exception {
+      RemoteCacheManager rcm = classRCM.cacheRemoteCacheManager(server1);
+      remoteCache = rcm.getCache(CACHE_NAME);
    }
 
    @Test

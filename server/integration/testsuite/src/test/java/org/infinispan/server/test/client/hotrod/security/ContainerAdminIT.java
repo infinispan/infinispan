@@ -14,10 +14,11 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.test.category.Security;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -36,24 +37,17 @@ public class ContainerAdminIT {
    @InfinispanResource("hotrodAuthClustered-2")
    RemoteInfinispanServer server2;
 
-   private static RemoteCacheManager adminRCM = null;
+   private RemoteCacheManager adminRCM;
+
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
 
    @Before
-   public void prepareAdminRCM() {
-      if (adminRCM == null) {
-         SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
-         config.forIspnServer(server1).withServerName("node0");
-         config.forCredentials(ADMIN_LOGIN, ADMIN_PASSWD);
-         adminRCM = new RemoteCacheManager(config.build(), true);
-      }
-   }
-
-   @AfterClass
-   public static void stopAdminRCM() {
-      if (adminRCM != null) {
-         adminRCM.stop();
-         adminRCM = null;
-      }
+   public void prepareAdminRCM() throws Exception {
+      SecurityConfigurationHelper config = new SecurityConfigurationHelper("DIGEST-MD5");
+      config.forIspnServer(server1).withServerName("node0");
+      config.forCredentials(ADMIN_LOGIN, ADMIN_PASSWD);
+      adminRCM = classRCM.cacheRemoteCacheManager(config);
    }
 
    @Test

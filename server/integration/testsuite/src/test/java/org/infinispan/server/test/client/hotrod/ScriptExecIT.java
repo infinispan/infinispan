@@ -19,10 +19,11 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.test.category.HotRodSingleNode;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -41,7 +42,7 @@ public class ScriptExecIT {
    private static final String COMPATIBILITY_CACHE_NAME = "compatibilityCache";
    private static final String STREAM = "stream.js";
 
-   static RemoteCacheManager remoteCacheManager;
+   RemoteCacheManager remoteCacheManager;
    RemoteCache<Integer, String> remoteCache;
    RemoteCache<String, String> scriptCache;
 
@@ -51,12 +52,12 @@ public class ScriptExecIT {
    @Rule
    public ExpectedException exceptionRule = ExpectedException.none();
 
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
+
    @Before
-   public void initialize() {
-      if (remoteCacheManager == null || !remoteCacheManager.isStarted()) {
-         Configuration config = createRemoteCacheManagerConfiguration();
-         remoteCacheManager = new RemoteCacheManager(config, true);
-      }
+   public void initialize() throws Exception {
+      remoteCacheManager = classRCM.cacheRemoteCacheManager(createRemoteCacheManagerConfiguration());
       scriptCache = remoteCacheManager.getCache(SCRIPT_CACHE_NAME);
       remoteCache = remoteCacheManager.getCache();
    }
@@ -142,12 +143,4 @@ public class ScriptExecIT {
          }
       }
    }
-
-   @AfterClass
-   public static void release() {
-      if (remoteCacheManager != null) {
-         remoteCacheManager.stop();
-      }
-   }
-
 }

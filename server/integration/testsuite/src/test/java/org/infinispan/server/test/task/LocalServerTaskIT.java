@@ -17,6 +17,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.test.category.Task;
 import org.infinispan.server.test.task.servertask.Greeting;
 import org.infinispan.server.test.task.servertask.GreetingServerTask;
@@ -47,6 +48,9 @@ public class LocalServerTaskIT {
 
    @Rule
    public ExpectedException exceptionRule = ExpectedException.none();
+
+   @Rule
+   public Cleanup cleanup = new Cleanup();
 
    @BeforeClass
    public static void before() throws Exception {
@@ -83,7 +87,7 @@ public class LocalServerTaskIT {
    @Test
    @WithRunningServer({@RunningServer(name = "standalone-customtask")})
    public void shouldModifyCacheInViaTask() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      RemoteCacheManager rcm = cleanup.add(ITestUtils.createCacheManager(server));
 
       String value = "value";
       rcm.getCache().put(LocalTestServerTask.TASK_EXECUTED, value);
@@ -96,7 +100,7 @@ public class LocalServerTaskIT {
    @Test
    @WithRunningServer({@RunningServer(name = "standalone-customtask")})
    public void shouldThrowExceptionInViaTask() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      RemoteCacheManager rcm = cleanup.add(ITestUtils.createCacheManager(server));
 
       exceptionRule.expect(HotRodClientException.class);
       exceptionRule.expectMessage(LocalExceptionalServerTask.EXCEPTION_MESSAGE);
@@ -107,7 +111,7 @@ public class LocalServerTaskIT {
    @Test
    @WithRunningServer({@RunningServer(name = "standalone-customtask")})
    public void shouldExecuteMapReduceViaTask() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      RemoteCacheManager rcm = cleanup.add(ITestUtils.createCacheManager(server));
       RemoteCache remoteCache = rcm.getCache();
       remoteCache.put(1, "word1 word2 word3");
       remoteCache.put(2, "word1 word2");
@@ -123,7 +127,7 @@ public class LocalServerTaskIT {
    @Test
    @WithRunningServer({@RunningServer(name = "standalone-customtask")})
    public void shouldExecuteMapReduceViaJavaScriptInTask() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      RemoteCacheManager rcm = cleanup.add(ITestUtils.createCacheManager(server));
       RemoteCache remoteCache = rcm.getCache();
       remoteCache.put(1, "word1 word2 word3");
       remoteCache.put(2, "word1 word2");
@@ -139,7 +143,7 @@ public class LocalServerTaskIT {
    @Test
    @WithRunningServer({@RunningServer(name = "standalone-customtask")})
    public void shouldWorkWithCustomMojo() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      RemoteCacheManager rcm = cleanup.add(ITestUtils.createCacheManager(server));
       RemoteCache remoteCache = rcm.getCache();
 
       Map params = new HashMap();

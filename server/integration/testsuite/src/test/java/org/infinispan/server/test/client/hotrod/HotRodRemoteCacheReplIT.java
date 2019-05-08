@@ -59,7 +59,6 @@ public class HotRodRemoteCacheReplIT extends AbstractRemoteCacheIT {
 
    @AfterClass
    public static void after() {
-      release();
       deployments.forEach(File::delete);
    }
 

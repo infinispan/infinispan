@@ -21,14 +21,15 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.category.Queries;
-import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -42,6 +43,7 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 @WithRunningServer(@RunningServer(name = "remote-query-2"))
 public class RemoteQueryDescriptorIT {
+   public static final String MBEAN = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=RemoteQuery,name=\"clustered\",component=ProtobufMetadataManager";
 
    @InfinispanResource("remote-query-1")
    protected RemoteInfinispanServer server1;
@@ -49,17 +51,22 @@ public class RemoteQueryDescriptorIT {
    @InfinispanResource("remote-query-2")
    protected RemoteInfinispanServer server2;
 
-   public static final String MBEAN = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=RemoteQuery,name=\"clustered\",component=ProtobufMetadataManager";
+   @Rule
+   public Cleanup cleanup = new Cleanup();
 
    @Test
    public void testDescriptorPropagation() throws Exception {
       registerProtoOnServer1();
       assertRegisteredOn(server1);
       assertRegisteredOn(server2);
-      populateCache();
 
-      assertEquals(1, queryResultsIn(server1));
-      assertEquals(1, queryResultsIn(server2));
+      ConfigurationBuilder configurationBuilder = configurationBuilder(server1);
+      try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(configurationBuilder.build())) {
+         populateCache(remoteCacheManager);
+
+         assertEquals(1, queryResultsIn(server1, remoteCacheManager));
+         assertEquals(1, queryResultsIn(server2, remoteCacheManager));
+      }
    }
 
    private void registerProtoOnServer1() throws Exception {
@@ -98,9 +105,7 @@ public class RemoteQueryDescriptorIT {
       return new MBeanServerConnectionProvider(server.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
    }
 
-   private int queryResultsIn(RemoteInfinispanServer server) throws IOException {
-      ConfigurationBuilder configurationBuilder = configurationBuilder(server);
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManagerFactory().createManager(configurationBuilder);
+   private int queryResultsIn(RemoteInfinispanServer server, RemoteCacheManager remoteCacheManager) throws IOException {
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
       RemoteCache<Integer, User> remoteCache = remoteCacheManager.getCache("repl_descriptor");
       Query query = Search.getQueryFactory(remoteCache).from(User.class).build();
@@ -116,16 +121,14 @@ public class RemoteQueryDescriptorIT {
             .marshaller(new ProtoStreamMarshaller());
    }
 
-   private void populateCache() throws IOException {
-      ConfigurationBuilder clientBuilder = configurationBuilder(server1);
+   private void populateCache(RemoteCacheManager remoteCacheManager) throws IOException {
       User user = new User();
       user.setId(0);
       user.setName("user1");
       user.setSurname("surname");
-      RemoteCacheManager manager = new RemoteCacheManagerFactory().createManager(clientBuilder);
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(manager));
+      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
 
-      RemoteCache<Object, Object> cache = manager.getCache("repl_descriptor");
+      RemoteCache<Object, Object> cache = remoteCacheManager.getCache("repl_descriptor");
       cache.put(1, user);
    }
 }

@@ -7,7 +7,6 @@ import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTe
 import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.TEST_SERVER_NAME;
 
 import java.security.PrivilegedActionException;
-
 import javax.security.auth.login.LoginException;
 
 import org.infinispan.arquillian.core.InfinispanResource;
@@ -17,11 +16,13 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.test.category.Security;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
-import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -49,38 +50,37 @@ public class ClusteredCacheAuthExternalIT {
     private static final String ARQ_NODE_1_ID = "hotrodAuthExternalClustered";
 
     @ArquillianResource
-    public ContainerController controller;
+    static ContainerController controller;
 
     @InfinispanResource("hotrodAuthExternalClustered")
-    RemoteInfinispanServer server1;
+    static RemoteInfinispanServer server1;
 
     @InfinispanResource("hotrodAuthExternalClustered-2")
-    RemoteInfinispanServer server2;
+    static RemoteInfinispanServer server2;
 
-    private static RemoteCacheManager rcm;
-    private static boolean isInitialized = false; //Arquillian is not able to inject to static fields, so the ISPN server cannot be used in @BeforeClass method
+   private RemoteCacheManager rcm;
 
-    public void initRCM() {
-        controller.start(ARQ_NODE_1_ID);
-        final SecurityConfigurationHelper cb = new SecurityConfigurationHelper(SASL_MECH).forIspnServer(server1).withServerName(TEST_SERVER_NAME).withDefaultSsl();
-        cb.security().ssl().keyAlias("client1");
-        rcm = new RemoteCacheManager(cb.forExternalAuth().build(), true);
-        controller.stop(ARQ_NODE_1_ID);
-        isInitialized = true;
-    }
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM = new ClassRemoteCacheManager();
 
-    @AfterClass
-    public static void release() {
-        if(rcm != null) {
-            rcm.stop();
-        }
-    }
+   @Before
+   public void initRCM() throws Exception {
+      rcm = classRCM.cache(() -> {
+         controller.start(ARQ_NODE_1_ID);
+         SecurityConfigurationHelper cb = new SecurityConfigurationHelper(SASL_MECH);
+         cb.forIspnServer(server1)
+           .withServerName(TEST_SERVER_NAME)
+           .withDefaultSsl();
+         cb.security().ssl().keyAlias("client1");
+         cb.forExternalAuth();
+         RemoteCacheManager remoteCacheManager = new RemoteCacheManager(cb.build(), true);
+         controller.stop(ARQ_NODE_1_ID);
+         return remoteCacheManager;
+      });
+   }
 
-    private synchronized RemoteCache<String, String> getRemoteCacheFor(String login) {
-        if(!isInitialized) {
-            initRCM();
-        }
-        return rcm.getCache(TEST_CACHE_NAME);
+    private RemoteCache<String, String> getRemoteCacheFor(String login) {
+       return rcm.getCache(TEST_CACHE_NAME);
     }
 
     @Test

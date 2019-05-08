@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeDataSupport;
 
@@ -26,14 +25,14 @@ import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.server.test.util.ClassRemoteCacheManager;
 import org.infinispan.test.Exceptions;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,22 +52,25 @@ public class HotRodRemoteStreamingIT {
 
    private static final String USED_MEMORY_KEY = "used";
 
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM1 = new ClassRemoteCacheManager();
+   @ClassRule
+   public static ClassRemoteCacheManager classRCM2 = new ClassRemoteCacheManager();
+
    @InfinispanResource(SERVER_1_NAME)
-   private static RemoteInfinispanServer server1;
-   private static RemoteCacheManager rcm1;
+   private RemoteInfinispanServer server1;
+   private RemoteCacheManager rcm1;
 
    @InfinispanResource(SERVER_2_NAME)
-   private static RemoteInfinispanServer server2;
-   private static RemoteCacheManager rcm2;
-
-   private StreamingRemoteCache<Object> src1, src2;
+   private RemoteInfinispanServer server2;
+   private RemoteCacheManager rcm2;
 
    @ArquillianResource
    private ContainerController controller;
 
-   private Configuration conf1, conf2;
+   private StreamingRemoteCache<Object> src1, src2;
 
-   private Boolean finalized = new Boolean(false);
+   private boolean finalized = false;
 
    private static Random random = new Random();
 
@@ -76,18 +78,9 @@ public class HotRodRemoteStreamingIT {
     * Refresh the resources for each test
     */
    @Before
-   public void setUp() {
-
-      if (conf1 == null || conf2 == null) {
-         conf1 = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName())
-               .port(server1.getHotrodEndpoint().getPort()).build();
-
-         conf2 = new ConfigurationBuilder().addServer().host(server2.getHotrodEndpoint().getInetAddress().getHostName())
-               .port(server2.getHotrodEndpoint().getPort()).build();
-      }
-
-      rcm1 = new RemoteCacheManager(conf1);
-      rcm2 = new RemoteCacheManager(conf2);
+   public void setUp() throws Exception {
+      rcm1 = classRCM1.cacheRemoteCacheManager(server1);
+      rcm2 = classRCM2.cacheRemoteCacheManager(server2);
 
       src1 = rcm1.getCache("streamingTestCache").streaming();
       src2 = rcm2.getCache("streamingTestCache").streaming();
@@ -291,7 +284,7 @@ public class HotRodRemoteStreamingIT {
     */
    @Test
    @Ignore("ISPN-8724")
-   public void serverShutdownTest() throws IOException, InterruptedException {
+   public void serverShutdownTest() throws Exception {
       byte[] value = new byte[5000];
       random.nextBytes(value);
       try {
@@ -334,7 +327,7 @@ public class HotRodRemoteStreamingIT {
     */
    @Test
    @Ignore("ISPN-8724")
-   public void serverKillTest() throws IOException, InterruptedException {
+   public void serverKillTest() throws Exception {
       byte[] value = new byte[5000];
       random.nextBytes(value);
       try {
@@ -512,7 +505,7 @@ public class HotRodRemoteStreamingIT {
     *
     * @param i
     */
-   private void startServer(int i) {
+   private void startServer(int i) throws Exception {
       if (i % 2 == 0) {
          controller.start(SERVER_1_NAME);
       } else {
