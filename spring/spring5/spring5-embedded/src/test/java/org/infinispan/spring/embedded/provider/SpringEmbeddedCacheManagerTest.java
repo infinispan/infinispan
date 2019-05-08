@@ -2,16 +2,21 @@ package org.infinispan.spring.embedded.provider;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNotSame;
 import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.util.Collection;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.cache.Cache;
 import org.testng.annotations.Test;
@@ -169,6 +174,75 @@ public class SpringEmbeddedCacheManagerTest extends AbstractInfinispanTest {
             assertSame(
                   "getNativeCacheManager() should have returned the EmbeddedCacheManager supplied at construction time. However, it retuned a different one.",
                   cm, nativeCacheManagerReturned);
+         }
+      });
+   }
+
+   @Test
+   public final void getCacheShouldReturnSameInstanceForSameName() {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
+         @Override
+         public void call() {
+            // Given
+            final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(cm);
+            final String sameCacheName = "same";
+
+            // When
+            final SpringCache firstObtainedSpringCache = objectUnderTest.getCache(sameCacheName);
+            final SpringCache secondObtainedSpringCache = objectUnderTest.getCache(sameCacheName);
+
+            // Then
+            assertSame(
+                    "getCache() should have returned the same SpringCache instance for the same name",
+                    firstObtainedSpringCache, secondObtainedSpringCache);
+         }
+      });
+   }
+
+   @Test
+   public final void getCacheShouldReturnDifferentInstancesForDifferentNames() {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
+         @Override
+         public void call() {
+            // Given
+            final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(cm);
+            final String firstCacheName = "thisCache";
+            final String secondCacheName = "thatCache";
+
+            // When
+            final SpringCache firstObtainedSpringCache = objectUnderTest.getCache(firstCacheName);
+            final SpringCache secondObtainedSpringCache = objectUnderTest.getCache(secondCacheName);
+
+            // Then
+            assertNotSame(
+                    "getCache() should have returned different SpringCache instances for different names",
+                    firstObtainedSpringCache, secondObtainedSpringCache);
+         }
+      });
+   }
+
+   @Test
+   public final void getCacheThrowsExceptionForSameNameAfterLifecycleStop() {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
+         @Override
+         public void call() {
+            // Given
+            final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(cm);
+            final String sameCacheName = "same";
+
+            // When
+            final SpringCache obtainedSpringCache = objectUnderTest.getCache(sameCacheName);
+
+            assertNotNull(
+                    "getCache() should have returned a SpringCache instance",
+                    obtainedSpringCache
+            );
+
+            // Given
+            objectUnderTest.stop();
+
+            // Then
+            Exceptions.expectException(IllegalLifecycleStateException.class, () -> objectUnderTest.getCache(sameCacheName));
          }
       });
    }
