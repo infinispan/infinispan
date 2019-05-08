@@ -1,7 +1,10 @@
 package org.infinispan.spring.embedded.provider;
 
 import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
+import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.springframework.cache.CacheManager;
@@ -27,6 +30,7 @@ import org.springframework.util.Assert;
 public class SpringEmbeddedCacheManager implements CacheManager {
 
    private final EmbeddedCacheManager nativeCacheManager;
+   private final ConcurrentMap<String, SpringCache> springCaches = new ConcurrentHashMap<>();
 
    /**
     * @param nativeCacheManager Underlying cache manager
@@ -39,7 +43,11 @@ public class SpringEmbeddedCacheManager implements CacheManager {
 
    @Override
    public SpringCache getCache(final String name) {
-      return new SpringCache(this.nativeCacheManager.getCache(name));
+      return springCaches.computeIfAbsent(name, n -> {
+         final Cache<Object, Object> nativeCache = this.nativeCacheManager.getCache(n);
+
+         return new SpringCache(nativeCache);
+      });
    }
 
    @Override
@@ -66,5 +74,6 @@ public class SpringEmbeddedCacheManager implements CacheManager {
     */
    public void stop() {
       this.nativeCacheManager.stop();
+      this.springCaches.clear();
    }
 }

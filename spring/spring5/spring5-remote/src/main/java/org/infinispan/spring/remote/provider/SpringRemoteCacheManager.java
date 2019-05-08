@@ -1,6 +1,8 @@
 package org.infinispan.spring.remote.provider;
 
 import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -21,6 +23,7 @@ import org.springframework.util.Assert;
 public class SpringRemoteCacheManager implements org.springframework.cache.CacheManager {
 
    private final RemoteCacheManager nativeCacheManager;
+   private final ConcurrentMap<String, SpringCache> springCaches = new ConcurrentHashMap<>();
    private volatile long readTimeout;
    private volatile long writeTimeout;
 
@@ -44,8 +47,11 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
     */
    @Override
    public SpringCache getCache(final String name) {
-      RemoteCache<Object, Object> nativeCache = this.nativeCacheManager.getCache(name);
-      return new SpringCache(nativeCache, readTimeout, writeTimeout);
+      return springCaches.computeIfAbsent(name, n -> {
+         final RemoteCache<Object, Object> nativeCache = this.nativeCacheManager.getCache(name);
+
+         return new SpringCache(nativeCache, readTimeout, writeTimeout);
+      });
    }
 
    /**
@@ -101,5 +107,6 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
     */
    public void stop() {
       this.nativeCacheManager.stop();
+      this.springCaches.clear();
    }
 }
