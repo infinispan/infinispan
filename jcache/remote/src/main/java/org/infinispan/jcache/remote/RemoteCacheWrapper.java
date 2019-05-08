@@ -593,4 +593,9 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    public ServerStatistics serverStatistics() {
       return delegate.serverStatistics();
    }
+
+   @Override
+   public boolean isTransactional() {
+      return delegate.isTransactional();
+   }
 }

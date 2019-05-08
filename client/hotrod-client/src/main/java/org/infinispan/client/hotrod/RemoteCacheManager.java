@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.impl.Util.await;
+import static org.infinispan.client.hotrod.impl.Util.checkTransactionSupport;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -33,6 +34,7 @@ import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.counter.impl.RemoteCounterManager;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
@@ -332,13 +334,11 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       started = true;
    }
 
-   private final void warnAboutUberJarDuplicates() {
-      UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
-      scanner.isClasspathCorrectAsync()
-            .thenAcceptAsync(isClasspathCorrect -> {
-               if (!isClasspathCorrect)
-                  log.warnAboutUberJarDuplicates();
-            });
+   @Override
+   public boolean isTransactional(String cacheName) {
+      ClientStatistics stats = ClientStatistics.dummyClientStatistics(timeService);
+      OperationsFactory factory = createOperationFactory(cacheName, false, stats);
+      return checkTransactionSupport(cacheName, factory, log);
    }
 
    public MarshallerRegistry getMarshallerRegistry() {
@@ -403,6 +403,9 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             if (transactionMode == TransactionMode.NONE) {
                result = createRemoteCache(cacheName);
             } else {
+               if (!this.isTransactional(cacheName)) {
+                  throw log.cacheDoesNotSupportTransactions(cacheName);
+               }
                TransactionManager transactionManager = getTransactionManager(transactionManagerOverride);
                result = createRemoteTransactionalCache(cacheName, forceReturnValueOverride,
                      transactionMode == TransactionMode.FULL_XA, transactionMode, transactionManager);
@@ -415,9 +418,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             // Default cache is always started, so don't do for it
             if (!cacheName.equals(RemoteCacheManager.DEFAULT_CACHE_NAME) && pingResponse.isCacheNotFound()) {
                return null;
-            }
-            if (transactionMode != TransactionMode.NONE) {
-               ((TransactionalRemoteCacheImpl<K, V>) result).checkTransactionSupport();
             }
 
             result.start();
@@ -454,9 +454,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    private void startRemoteCache(RemoteCacheHolder remoteCacheHolder) {
       RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache();
-      OperationsFactory operationsFactory = new OperationsFactory(
-            channelFactory, remoteCache.getName(), remoteCacheHolder.forceReturnValue, codec, listenerNotifier,
-            configuration, remoteCache.getClientStatistics());
+      OperationsFactory operationsFactory = createOperationFactory(remoteCache.getName(),
+            remoteCacheHolder.forceReturnValue, remoteCache.getClientStatistics());
       initRemoteCache(remoteCache, operationsFactory);
       remoteCache.start();
    }
@@ -475,6 +474,16 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    @Override
    public Marshaller getMarshaller() {
       return marshaller;
+   }
+
+   private void warnAboutUberJarDuplicates() {
+      UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
+      scanner.isClasspathCorrectAsync()
+            .thenAcceptAsync(isClasspathCorrect -> {
+               if (!isClasspathCorrect) {
+                  log.warnAboutUberJarDuplicates();
+               }
+            });
    }
 
    public static byte[] cacheNameBytes(String cacheName) {
@@ -590,6 +599,12 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    @Override
    public int getIdleConnectionCount() {
       return channelFactory.getNumIdle();
+   }
+
+   private OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue,
+         ClientStatistics stats) {
+      return new OperationsFactory(channelFactory, cacheName, forceReturnValue, codec, listenerNotifier, configuration,
+            stats);
    }
 
    private static class RemoteCacheKey {

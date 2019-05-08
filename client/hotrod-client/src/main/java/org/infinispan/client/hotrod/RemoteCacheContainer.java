@@ -125,4 +125,9 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
    boolean switchToDefaultCluster();
 
    Marshaller getMarshaller();
+
+   /**
+    * @return {@code true} if the cache with name {@code cacheName} can participate in transactions.
+    */
+   boolean isTransactional(String cacheName);
 }

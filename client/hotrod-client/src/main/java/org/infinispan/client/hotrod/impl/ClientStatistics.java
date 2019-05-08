@@ -165,6 +165,15 @@ public class ClientStatistics implements RemoteCacheClientStatisticsMXBean {
       return timeService.timeDuration(resetNanoseconds.get(), TimeUnit.SECONDS);
    }
 
+   /**
+    * It returns a {@link ClientStatistics} instance to be used when the statistics aren't needed.
+    *
+    * @return a disabled {@link ClientStatistics} instance.
+    */
+   public static ClientStatistics dummyClientStatistics(TimeService timeService) {
+      return new ClientStatistics(false, timeService);
+   }
+
    @SuppressWarnings("unused")
    private static class StripeA {
       private long slack1, slack2, slack3, slack4, slack5, slack6, slack7, slack8;

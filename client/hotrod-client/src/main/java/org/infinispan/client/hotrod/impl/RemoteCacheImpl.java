@@ -859,6 +859,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return dataFormat;
    }
 
+   @Override
+   public boolean isTransactional() {
+      return false;
+   }
+
    public boolean isObjectStorage() {
       return isObjectStorage;
    }

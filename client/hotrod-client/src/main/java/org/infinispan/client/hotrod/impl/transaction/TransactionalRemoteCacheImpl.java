@@ -1,24 +1,20 @@
 package org.infinispan.client.hotrod.impl.transaction;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.impl.transaction.entry.TransactionEntry;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -32,7 +28,7 @@ import org.infinispan.commons.time.TimeService;
  * (keys, values).
  * <p>
  * {@link TransactionalRemoteCacheImpl#containsValue(Object)} is a special case where a key with the specific value is
- * marked as read fpr the transaction.
+ * marked as read for the transaction.
  *
  * @author Pedro Ruivo
  * @since 9.3
@@ -40,22 +36,6 @@ import org.infinispan.commons.time.TimeService;
 public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
 
    private static final Log log = LogFactory.getLog(TransactionalRemoteCacheImpl.class, Log.class);
-   private static final Xid DUMMY_XID = new Xid() {
-      @Override
-      public int getFormatId() {
-         return 0;
-      }
-
-      @Override
-      public byte[] getGlobalTransactionId() {
-         return new byte[] {1};
-      }
-
-      @Override
-      public byte[] getBranchQualifier() {
-         return new byte[] {1};
-      }
-   };
 
    private final boolean forceReturnValue;
    private final boolean recoveryEnabled;
@@ -65,8 +45,6 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    private final Function<K, MetadataValue<V>> remoteGet = super::getWithMetadata;
    private final Function<K, byte[]> keyMarshaller = this::keyToBytes;
    private final Function<V, byte[]> valueMarshaller = this::valueToBytes;
-
-   private volatile boolean hasTransactionSupport = false;
 
    public TransactionalRemoteCacheImpl(RemoteCacheManager rcm, String name, boolean forceReturnValue,
          boolean recoveryEnabled, TransactionManager transactionManager,
@@ -238,21 +216,9 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
       return transactionManager;
    }
 
-   public void checkTransactionSupport() {
-      PrepareTransactionOperation op = operationsFactory.newPrepareTransactionOperation(DUMMY_XID, true, Collections.emptyList(),
-            false, 60000);
-      try {
-         hasTransactionSupport = op.execute().handle((integer, throwable) -> {
-            if (throwable != null) {
-               log.invalidTxServerConfig(getName(), throwable);
-            }
-            return throwable == null;
-         }).get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      } catch (ExecutionException e) {
-         log.debugf("Exception while checking transaction support in server", e);
-      }
+   @Override
+   public boolean isTransactional() {
+      return true;
    }
 
    boolean isRecoveryEnabled() {
@@ -341,11 +307,7 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
       assertRemoteCacheManagerIsStarted();
       Transaction tx = getRunningTransaction();
       if (tx != null) {
-         if (hasTransactionSupport) {
-            return transactionTable.enlist(this, tx);
-         } else {
-            throw log.cacheDoesNotSupportTransactions(getName());
-         }
+         return transactionTable.enlist(this, tx);
       }
       return null;
    }
