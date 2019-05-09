@@ -6,6 +6,11 @@
  */
 package org.infinispan.test.hibernate.cache.commons.functional.cluster;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -14,30 +19,29 @@ import java.util.concurrent.TimeUnit;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Restrictions;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.infinispan.Cache;
 import org.infinispan.commons.test.categories.Smoke;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.hibernate.criterion.Restrictions;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Citizen;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.NaturalIdOnManyToOne;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.State;
-import org.infinispan.Cache;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
-import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.jboss.util.collection.ConcurrentSet;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * // TODO: Document this
@@ -265,6 +269,13 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 				visited.add(event.getKey().toString());
 			}
 		}
+
+		@CacheEntryCreated
+      @CacheEntryModified
+      @CacheEntryRemoved
+		public void nodeWritten(CacheEntryEvent event) {
+		   log.debug( event.toString() );
+      }
 	}
 
 }
