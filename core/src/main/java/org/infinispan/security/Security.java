@@ -8,7 +8,8 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.acl.Group;
-import java.util.Stack;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import javax.security.auth.Subject;
 
@@ -30,7 +31,7 @@ public final class Security {
 
    private static final ThreadLocal<Boolean> PRIVILEGED = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-   private static final ThreadLocal<Stack<Subject>> SUBJECT = new ThreadLocal<>();
+   private static final ThreadLocal<Deque<Subject>> SUBJECT = new ThreadLocal<>();
 
    private static boolean isTrustedClass(Class<?> klass) {
       // TODO: implement a better way
@@ -76,9 +77,9 @@ public final class Security {
     * @see Subject#doAs(Subject, PrivilegedAction)
     */
    public static <T> T doAs(final Subject subject, final java.security.PrivilegedAction<T> action) {
-      Stack<Subject> stack = SUBJECT.get();
+      Deque<Subject> stack = SUBJECT.get();
       if (stack == null) {
-         stack = new Stack<>();
+         stack = new ArrayDeque<>();
          SUBJECT.set(stack);
       }
       stack.push(subject);
@@ -101,9 +102,9 @@ public final class Security {
    public static <T> T doAs(final Subject subject,
          final java.security.PrivilegedExceptionAction<T> action)
          throws java.security.PrivilegedActionException {
-      Stack<Subject> stack = SUBJECT.get();
+      Deque<Subject> stack = SUBJECT.get();
       if (stack == null) {
-         stack = new Stack<>();
+         stack = new ArrayDeque<>();
          SUBJECT.set(stack);
       }
       stack.push(subject);
