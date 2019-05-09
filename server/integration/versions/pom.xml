@@ -17,7 +17,7 @@
    <description>Infinispan Server - BOM</description>
 
    <properties>
-      <server.output.dir.prefix>${infinispan.brand.prefix}-server</server.output.dir.prefix>
+      <server.output.dir.prefix>${infinispan.brand.prefix}-${wildfly.brand.prefix}-server</server.output.dir.prefix>
       <forkJvmArgs>-Xmx500m ${testjvm.commonArgs} ${testjvm.extraArgs}</forkJvmArgs>
       <testjvm.jigsawArgs/>
       <version.org.infinispan.server-build.old>8.2.8.Final</version.org.infinispan.server-build.old>

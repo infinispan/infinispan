@@ -8,7 +8,7 @@
         <container qualifier="container-1" default="true" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${project.build.directory}/node1/${infinispan.brand.prefix}-server-${infinispan.brand.version}</property>
+                <property name="jbossHome">${project.build.directory}/node1/${infinispan.brand.prefix}-${wildfly.brand.prefix}-server-${infinispan.brand.version}</property>
                 <property name="serverConfig">clustered.xml</property>
                 <property name="javaVmArguments">
                     ${server.jvm.args}
@@ -21,7 +21,7 @@
         <container qualifier="container-2" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${project.build.directory}/node2/${infinispan.brand.prefix}-server-${infinispan.brand.version}</property>
+                <property name="jbossHome">${project.build.directory}/node2/${infinispan.brand.prefix}-${wildfly.brand.prefix}-server-${infinispan.brand.version}</property>
                 <property name="serverConfig">clustered.xml</property>
                 <property name="javaVmArguments">
                     ${server.jvm.args}
