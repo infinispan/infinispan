@@ -14,17 +14,17 @@
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-embedded</artifactId>
+         <artifactId>infinispan-core</artifactId>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-embedded-query</artifactId>
+         <artifactId>infinispan-query</artifactId>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote</artifactId>
+         <artifactId>infinispan-client-hotrod</artifactId>
       </dependency>
 
       <dependency>
@@ -337,9 +337,6 @@
                   </goals>
                   <configuration>
                      <descriptors>
-                        <descriptor>src/main/assemblies/minimal.xml</descriptor>
-                        <descriptor>src/main/assemblies/all.xml</descriptor>
-                        <descriptor>src/main/assemblies/remote.xml</descriptor>
                         <descriptor>src/main/assemblies/src.xml</descriptor>
                      </descriptors>
                      <finalName>${infinispan.brand.prefix}-${infinispan.brand.version}</finalName>
