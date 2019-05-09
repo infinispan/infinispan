@@ -64,6 +64,7 @@
                   <jgroups.udp.enable_bundling>false</jgroups.udp.enable_bundling>
                   <jgroups.bind_addr>localhost</jgroups.bind_addr>
                   <hibernate.cache.infinispan.jgroups_cfg>2lc-test-tcp.xml</hibernate.cache.infinispan.jgroups_cfg>
+                  <infinispan.test.checkThreadLeaks>false</infinispan.test.checkThreadLeaks>
                </systemPropertyVariables>
             </configuration>
             <dependencies>
