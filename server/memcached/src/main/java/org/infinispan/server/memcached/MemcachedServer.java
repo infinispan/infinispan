@@ -7,6 +7,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ExpirationConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -40,9 +42,14 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
    @Override
    protected void startInternal(MemcachedServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
       if (cacheManager.getCacheConfiguration(configuration.defaultCacheName()) == null) {
-         // Define the Memcached cache as clone of the default one
-         cacheManager.defineConfiguration(configuration.defaultCacheName(),
-            new ConfigurationBuilder().read(cacheManager.getDefaultCacheConfiguration()).build());
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         Configuration defaultCacheConfiguration = cacheManager.getDefaultCacheConfiguration();
+         if (defaultCacheConfiguration != null) { // We have a default configuration, use that
+            builder.read(defaultCacheConfiguration);
+         } else if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
+            builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+         }
+         cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
       }
       ExpirationConfiguration expConfig = cacheManager.getCacheConfiguration(configuration.defaultCacheName()).expiration();
       if (expConfig.lifespan() >= 0 || expConfig.maxIdle() >= 0)
@@ -78,6 +85,13 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
    public int getWorkerThreads() {
       // Unused for now, so just return the smallest possible valid value
       return 1;
+   }
+
+   /**
+    * Returns the cache being used by the Memcached server
+    */
+   public Cache<byte[], byte[]> getCache() {
+      return memcachedCache;
    }
 
 }
