@@ -460,6 +460,27 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       });
    }
 
+   public void testAsyncInheritance() {
+      String config = TestingUtil.wrapXMLWithSchema(
+            "<cache-container>" +
+                  "   <transport cluster=\"demoCluster\"/>\n" +
+                  "   <replicated-cache-configuration mode=\"ASYNC\" name=\"repl-1\">\n" +
+                  "   </replicated-cache-configuration>\n" +
+                  "   <replicated-cache-configuration name=\"repl-2\" configuration=\"repl-1\">\n" +
+                  "   </replicated-cache-configuration>\n" +
+                  "</cache-container>"
+      );
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      ConfigurationBuilderHolder holder = TestCacheManagerFactory.holderFromStream(is, false);
+      Configuration repl1 = holder.getNamedConfigurationBuilders().get("repl-1").build();
+      Configuration repl2 = holder.getNamedConfigurationBuilders().get("repl-2").build();
+      assertTrue(repl1.isTemplate());
+      assertTrue(repl2.isTemplate());
+      assertEquals(CacheMode.REPL_ASYNC, repl1.clustering().cacheMode());
+      assertEquals(CacheMode.REPL_ASYNC, repl2.clustering().cacheMode());
+   }
+
 
    private void assertNamedCacheFile(ConfigurationBuilderHolder holder, boolean deprecated) {
       GlobalConfiguration gc = holder.getGlobalConfigurationBuilder().build();

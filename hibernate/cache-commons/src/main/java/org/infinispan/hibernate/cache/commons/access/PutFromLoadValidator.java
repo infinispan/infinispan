@@ -145,6 +145,7 @@ public class PutFromLoadValidator {
 			Configuration cacheConfiguration = cache.getCacheConfiguration();
 			ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 			configurationBuilder.read(pendingPutsConfiguration);
+			configurationBuilder.template(false);
 			configurationBuilder.dataContainer().keyEquivalence(cacheConfiguration.dataContainer().keyEquivalence());
 			cacheManager.defineConfiguration(pendingPutsName, configurationBuilder.build());
 		}
