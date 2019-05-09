@@ -373,6 +373,20 @@
                      <appendAssemblyId>false</appendAssemblyId>
                   </configuration>
                </execution>
+               <execution>
+                  <id>assemble-wildfly-server</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/main/assemblies/wildfly-server.xml</descriptor>
+                     </descriptors>
+                     <finalName>${infinispan.brand.prefix}-wildfly-server-${infinispan.brand.version}</finalName>
+                     <appendAssemblyId>false</appendAssemblyId>
+                  </configuration>
+               </execution>
             </executions>
             <configuration>
                <outputDirectory>${project.build.directory}/distribution</outputDirectory>
