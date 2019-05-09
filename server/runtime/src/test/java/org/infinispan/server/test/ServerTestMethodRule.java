@@ -1,5 +1,10 @@
 package org.infinispan.server.test;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -10,6 +15,8 @@ import org.junit.runners.model.Statement;
  **/
 public class ServerTestMethodRule implements TestRule {
    private final ServerTestRule serverTestRule;
+   private String methodName;
+   private List<RemoteCache> remoteCaches = new ArrayList<>();
 
    public ServerTestMethodRule(ServerTestRule serverTestRule) {
       assert serverTestRule != null;
@@ -24,6 +31,7 @@ public class ServerTestMethodRule implements TestRule {
             before();
             try {
                ServerTestMethodConfiguration config = description.getAnnotation(ServerTestMethodConfiguration.class);
+               methodName = description.getMethodName();
                base.evaluate();
             } finally {
                after();
@@ -36,5 +44,11 @@ public class ServerTestMethodRule implements TestRule {
    }
 
    private void after() {
+      remoteCaches.forEach(remoteCache -> serverTestRule.hotRodClient().administration().removeCache(remoteCache.getName()));
+      remoteCaches.clear();
+   }
+
+   public <K, V> RemoteCache<K, V> getHotRodCache(CacheMode mode) {
+      return serverTestRule.hotRodClient().administration().getOrCreateCache(methodName, "org.infinispan." + mode.name());
    }
 }

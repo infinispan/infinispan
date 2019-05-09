@@ -25,6 +25,8 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.configuration.ServerConfiguration;
+import org.infinispan.server.configuration.ServerConfigurationBuilder;
+import org.infinispan.server.configuration.admin.ServerAdminOperationsHandler;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.logging.Log;
@@ -35,22 +37,39 @@ import org.infinispan.util.logging.LogFactory;
  * @since 10.0
  */
 public class Server {
-   public static final Log log = LogFactory.getLog(Server.class, Log.class);
+   public static final Log log = LogFactory.getLog("SERVER", Log.class);
 
    // Properties
    public static final String INFINISPAN_BIND_ADDRESS = "infinispan.bind.address";
+   public static final String INFINISPAN_CLUSTER_NAME = "infinispan.cluster.name";
    public static final String INFINISPAN_NODE_NAME = "infinispan.node.name";
    public static final String INFINISPAN_PORT_OFFSET = "infinispan.socket.binding.port-offset";
-   public static final String INFINISPAN_SERVER_ROOT = "infinispan.server.root";
-   public static final String INFINISPAN_SERVER_HOME = "infinispan.server.home";
-   public static final String INFINISPAN_SERVER_CONFIG = "infinispan.server.config";
-   public static final String INFINISPAN_SERVER_DATA = "infinispan.server.data";
-   public static final String INFINISPAN_SERVER_LOG = "infinispan.server.log";
+   /**
+    * Property name indicating the path to the server installation. If unspecified, the current working directory will be used
+    */
+   public static final String INFINISPAN_SERVER_HOME_PATH = "infinispan.server.home.path";
+   /**
+    * Property name indicating the path to the root of a server instance. If unspecified, defaults to the <i>server</i> directory under the server home.
+    */
+   public static final String INFINISPAN_SERVER_ROOT_PATH = "infinispan.server.root.path";
+   /**
+    * Property name indicating the path to the configuration directory of a server instance. If unspecified, defaults to the <i>conf</i> directory under the server root.
+    */
+   public static final String INFINISPAN_SERVER_CONFIG_PATH = "infinispan.server.config.path";
+   /**
+    * Property name indicating the path to the data directory of a server instance. If unspecified, defaults to the <i>data</i> directory under the server root.
+    */
+   public static final String INFINISPAN_SERVER_DATA_PATH = "infinispan.server.data.path";
+   /**
+    * Property name indicating the path to the log directory of a server instance. If unspecified, defaults to the <i>log</i> directory under the server root.
+    */
+   public static final String INFINISPAN_SERVER_LOG_PATH = "infinispan.server.log.path";
 
    // Defaults
    private static final String SERVER_DEFAULTS = "infinispan-defaults.xml";
    public static final String DEFAULT_SERVER_CONFIG = "conf";
    public static final String DEFAULT_SERVER_DATA = "data";
+   public static final String DEFAULT_SERVER_LIB = "lib";
    public static final String DEFAULT_SERVER_LOG = "log";
    public static final String DEFAULT_SERVER_ROOT_DIR = "server";
    public static final String DEFAULT_CONFIGURATION_FILE = "infinispan.xml";
@@ -106,12 +125,12 @@ public class Server {
       this.status = ComponentStatus.INSTANTIATED;
 
       // Populate system properties unless they have already been set externally
-      properties.putIfAbsent(INFINISPAN_SERVER_ROOT, serverRoot);
-      properties.putIfAbsent(INFINISPAN_SERVER_CONFIG, new File(serverRoot, DEFAULT_SERVER_CONFIG).getAbsolutePath());
-      properties.putIfAbsent(INFINISPAN_SERVER_DATA, new File(serverRoot, DEFAULT_SERVER_DATA).getAbsolutePath());
-      properties.putIfAbsent(INFINISPAN_SERVER_LOG, new File(serverRoot, DEFAULT_SERVER_LOG).getAbsolutePath());
+      properties.putIfAbsent(INFINISPAN_SERVER_ROOT_PATH, serverRoot);
+      properties.putIfAbsent(INFINISPAN_SERVER_CONFIG_PATH, new File(serverRoot, DEFAULT_SERVER_CONFIG).getAbsolutePath());
+      properties.putIfAbsent(INFINISPAN_SERVER_DATA_PATH, new File(serverRoot, DEFAULT_SERVER_DATA).getAbsolutePath());
+      properties.putIfAbsent(INFINISPAN_SERVER_LOG_PATH, new File(serverRoot, DEFAULT_SERVER_LOG).getAbsolutePath());
 
-      this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG));
+      this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
    }
 
    private void parseConfiguration(InputStream config) {
@@ -124,13 +143,23 @@ public class Server {
          configurationBuilderHolder = new ConfigurationBuilderHolder();
          configurationBuilderHolder.getGlobalConfigurationBuilder().read(defaultsHolder.getGlobalConfigurationBuilder().build());
 
+         // Copy all default templates
+         for (Map.Entry<String, ConfigurationBuilder> entry : defaultsHolder.getNamedConfigurationBuilders().entrySet()) {
+            configurationBuilderHolder.newConfigurationBuilder(entry.getKey()).read(entry.getValue().build());
+         }
+
          // then load the user configuration
          configurationBuilderHolder = parser.parse(config, configurationBuilderHolder);
+
+         // Set the operation handler on all endpoints
+         ServerAdminOperationsHandler adminOperationsHandler = new ServerAdminOperationsHandler(defaultsHolder);
+         ServerConfigurationBuilder serverConfigurationBuilder = configurationBuilderHolder.getGlobalConfigurationBuilder().module(ServerConfigurationBuilder.class);
+         serverConfigurationBuilder.endpoints().forEach(builder -> builder.adminOperationsHandler(adminOperationsHandler));
 
          // Amend the named caches configurations with the defaults
          for (Map.Entry<String, ConfigurationBuilder> entry : configurationBuilderHolder.getNamedConfigurationBuilders().entrySet()) {
             Configuration cfg = entry.getValue().build();
-            ConfigurationBuilder defaultCfg = defaultsHolder.getNamedConfigurationBuilders().get(cfg.clustering().cacheMode().name());
+            ConfigurationBuilder defaultCfg = defaultsHolder.getNamedConfigurationBuilders().get("org.infinispan." + cfg.clustering().cacheMode().name());
             ConfigurationBuilder rebased = new ConfigurationBuilder().read(defaultCfg.build());
             rebased.read(cfg);
             entry.setValue(rebased);
@@ -187,7 +216,7 @@ public class Server {
 
    private void shutdown() {
       status = ComponentStatus.STOPPING;
-      // We can shutdown the protocol servers in parallel
+      // Shutdown the protocol servers in parallel
       protocolServers.values().parallelStream().forEach(ps -> ps.stop());
       cacheManagers.values().forEach(cm -> cm.stop());
       status = ComponentStatus.TERMINATED;

@@ -13,8 +13,8 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
-   @Message(value = "Task Engine '%s' has already been registered", id = 27001)
-   IllegalStateException duplicateTaskEngineRegistration(String taskEngineName);
+   /*@Message(value = "Task Engine '%s' has already been registered", id = 27001)
+   IllegalStateException duplicateTaskEngineRegistration(String taskEngineName);*/
 
    @Message(value = "Unknown task '%s'", id = 27002)
    IllegalArgumentException unknownTask(String taskName);

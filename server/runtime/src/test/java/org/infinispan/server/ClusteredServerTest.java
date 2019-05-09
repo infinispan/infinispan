@@ -3,10 +3,10 @@ package org.infinispan.server;
 import static org.junit.Assert.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.server.test.ServerTestConfiguration;
 import org.infinispan.server.test.ServerTestMethodConfiguration;
 import org.infinispan.server.test.ServerTestMethodRule;
-import org.infinispan.server.test.ServerTestConfiguration;
 import org.infinispan.server.test.ServerTestRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -16,7 +16,7 @@ import org.junit.Test;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@ServerTestConfiguration
+@ServerTestConfiguration(configurationFile = "server.xml")
 public class ClusteredServerTest {
 
    @ClassRule
@@ -28,17 +28,9 @@ public class ClusteredServerTest {
    @Test
    @ServerTestMethodConfiguration
    public void testCluster() {
-      RemoteCacheManager client = serverTestRule.hotRodClient();
-      RemoteCache<String, String> cache = client.getCache();
+      RemoteCache<String, String> cache = serverTestMethodRule.getHotRodCache(CacheMode.DIST_SYNC);
       cache.put("k1", "v1");
       assertEquals(1, cache.size());
       assertEquals("v1", cache.get("k1"));
-   }
-
-   @Test
-   public void testCluster2() {
-      RestClient restClient = serverTestRule.restClient();
-      restClient.put("k2", "v2");
-      assertEquals("v2", restClient.get("k2"));
    }
 }

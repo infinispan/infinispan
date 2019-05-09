@@ -1,5 +1,7 @@
 package org.infinispan.server.configuration.hotrod;
 
+import java.util.EnumSet;
+
 import javax.security.sasl.Sasl;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -11,12 +13,14 @@ import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.infinispan.server.configuration.ServerConfigurationBuilder;
+import org.infinispan.server.configuration.ServerConfigurationParser;
 import org.infinispan.server.core.configuration.SslConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.infinispan.server.configuration.ServerConfigurationBuilder;
-import org.infinispan.server.configuration.ServerConfigurationParser;
+import org.infinispan.server.security.ElytronAuthenticationProvider;
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.auth.server.SecurityDomain;
 
 /**
  * Server endpoint configuration parser
@@ -131,11 +135,11 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case AUTHENTICATION: {
-               parseAuthentication(reader, builder.authentication().enable());
+               parseAuthentication(reader, serverBuilder, builder.authentication().enable());
                break;
             }
             case ENCRYPTION: {
-               parseEncryption(reader, builder.ssl().enable());
+               parseEncryption(reader, serverBuilder, builder.ssl().enable());
                break;
             }
             default: {
@@ -145,7 +149,9 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseEncryption(XMLExtendedStreamReader reader, SslConfigurationBuilder builder) throws XMLStreamException {
+   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {
+      String securityRealm = ParseUtils.requireAttributes(reader, Attribute.SECURITY_REALM)[0];
+      builder.sslContext(serverBuilder.getSSLContext(securityRealm));
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -156,7 +162,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SECURITY_REALM: {
-
+               // Already seen
                break;
             }
             default: {
@@ -168,7 +174,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SNI: {
-               parseSni(reader, builder);
+               parseSni(reader, serverBuilder, builder);
                break;
             }
             default: {
@@ -178,18 +184,36 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseSni(XMLExtendedStreamReader reader, SslConfigurationBuilder builder) {
-
-   }
-
-   private void parseAuthentication(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
+   private void parseSni(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
+            case HOST_NAME: {
+               builder.sniHostName(value);
+               break;
+            }
             case SECURITY_REALM: {
+               builder.sslContext(serverBuilder.getSSLContext(value));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
 
+   private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
+      String securityRealm = ParseUtils.requireAttributes(reader, Attribute.SECURITY_REALM)[0];
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case SECURITY_REALM: {
+               // Already seen
                break;
             }
             default: {
@@ -209,6 +233,8 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
+      SecurityDomain securityDomain = serverBuilder.getSecurityDomain(securityRealm);
+      builder.serverAuthenticationProvider(new ElytronAuthenticationProvider(securityDomain));
    }
 
    private void parseSasl(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
@@ -218,6 +244,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case SERVER_CONTEXT_NAME: {
+               //TODO: Kerberos auth
                break;
             }
             case SERVER_NAME: {
@@ -243,7 +270,74 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
+      final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case POLICY: {
+               if (visited.contains(element)) {
+                  throw ParseUtils.unexpectedElement(reader);
+               } else {
+                  visited.add(element);
+               }
+               parsePolicy(reader, builder);
+               break;
+            }
+            case PROPERTY: {
+               builder.addMechProperty(ParseUtils.requireSingleAttribute(reader, Attribute.NAME.name()), reader.getElementText());
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
 
+   }
+
+   void parsePolicy(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
+      if (reader.getAttributeCount() > 0) {
+         throw ParseUtils.unexpectedAttribute(reader, 0);
+      }
+      // Handle nested elements.
+      final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         if (visited.contains(element)) {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+         visited.add(element);
+         String value = ParseUtils.readStringAttributeElement(reader, Attribute.VALUE.name());
+         switch (element) {
+            case FORWARD_SECRECY: {
+               builder.addMechProperty(Sasl.POLICY_FORWARD_SECRECY, value);
+               break;
+            }
+            case NO_ACTIVE: {
+               builder.addMechProperty(Sasl.POLICY_NOACTIVE, value);
+               break;
+            }
+            case NO_ANONYMOUS: {
+               builder.addMechProperty(Sasl.POLICY_NOANONYMOUS, value);
+               break;
+            }
+            case NO_DICTIONARY: {
+               builder.addMechProperty(Sasl.POLICY_NODICTIONARY, value);
+               break;
+            }
+            case NO_PLAIN_TEXT: {
+               builder.addMechProperty(Sasl.POLICY_NOPLAINTEXT, value);
+               break;
+            }
+            case PASS_CREDENTIALS: {
+               builder.addMechProperty(Sasl.POLICY_PASS_CREDENTIALS, value);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
    }
 
    private void parseTopologyStateTransfer(XMLExtendedStreamReader reader, HotRodServerConfigurationBuilder builder) throws XMLStreamException {

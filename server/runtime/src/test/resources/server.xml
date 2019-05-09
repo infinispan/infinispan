@@ -9,10 +9,8 @@
       <stack-file name="test" path="test-jgroups-tcp.xml"/>
    </jgroups>
 
-   <cache-container default-cache="default" statistics="false">
+   <cache-container>
       <transport cluster="${infinispan.cluster.name}" stack="test"/>
-      <global-state/>
-      <distributed-cache name="default"/>
    </cache-container>
 
    <server xmlns="urn:infinispan:server:10.0">
@@ -36,20 +34,19 @@
          <security-realms>
             <security-realm name="ManagementRealm">
                <properties-realm groups-attribute="Roles">
-                  <user-properties path="mgmt-users.properties" relative-to="infinispan.server.config.dir" plain-text="true"/>
-                  <group-properties path="mgmt-groups.properties" relative-to="infinispan.server.config.dir" />
+                  <user-properties path="admin-users.properties" relative-to="infinispan.server.config.path" plain-text="true"/>
+                  <group-properties path="admin-groups.properties" relative-to="infinispan.server.config.path" />
                </properties-realm>
             </security-realm>
             <security-realm name="PublicRealm">
                <properties-realm groups-attribute="Roles">
-                  <user-properties path="public-users.properties" relative-to="infinispan.server.config.dir" plain-text="true"/>
-                  <group-properties path="public-groups.properties" relative-to="infinispan.server.config.dir" />
+                  <user-properties path="public-users.properties" relative-to="infinispan.server.config.path" plain-text="true"/>
+                  <group-properties path="public-groups.properties" relative-to="infinispan.server.config.path" />
                </properties-realm>
                <server-identities>
                   <ssl>
-                     <keystore path="application.keystore" relative-to="infinispan.server.config.dir"
-                               keystore-password="password" alias="server" key-password="password"
-                               generate-self-signed-certificate-host="localhost"/>
+                     <keystore path="server.pfx" relative-to="infinispan.server.config.path"
+                               keystore-password="secret" alias="server" key-password="secret"/>
                   </ssl>
                </server-identities>
             </security-realm>
@@ -58,7 +55,6 @@
 
       <endpoints>
          <hotrod-connector socket-binding="hotrod"/>
-         <memcached-connector socket-binding="memcached"/>
          <rest-connector socket-binding="rest"/>
       </endpoints>
    </server>

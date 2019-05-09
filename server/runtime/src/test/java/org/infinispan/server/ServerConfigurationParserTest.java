@@ -4,8 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
 
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -31,7 +33,9 @@ public class ServerConfigurationParserTest {
    public void testParser() throws IOException {
       FileLookup fileLookup = FileLookupFactory.newInstance();
       try (InputStream is = fileLookup.lookupFile("infinispan.xml", ServerConfigurationParserTest.class.getClassLoader())) {
-         ParserRegistry registry = new ParserRegistry();
+         Properties properties = new Properties();
+         properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, System.getProperty("build.directory") + File.separator + "test-classes");
+         ParserRegistry registry = new ParserRegistry(this.getClass().getClassLoader(), false, properties);
          ConfigurationBuilderHolder holder = registry.parse(is);
          GlobalConfiguration global = holder.getGlobalConfigurationBuilder().build();
          ServerConfiguration server = global.module(ServerConfiguration.class);
@@ -44,7 +48,6 @@ public class ServerConfigurationParserTest {
          NetworkAddress adminInterface = server.networkInterfaces().get("admin");
          assertNotNull(adminInterface);
          assertTrue(adminInterface.getAddress().isLoopbackAddress());
-
 
          // Socket bindings
          assertEquals(4, server.socketBindings().size());

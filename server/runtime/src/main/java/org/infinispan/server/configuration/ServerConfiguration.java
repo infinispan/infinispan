@@ -8,7 +8,7 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.network.SocketBinding;
-import org.infinispan.server.security.ServerSecurityRealm;
+import org.wildfly.security.auth.server.SecurityDomain;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -18,18 +18,18 @@ import org.infinispan.server.security.ServerSecurityRealm;
 public class ServerConfiguration {
    final Map<String, NetworkAddress> networkInterfaces;
    final Map<String, SocketBinding> socketBindings;
-   final Map<String, ServerSecurityRealm> securityRealms;
+   final Map<String, SecurityDomain> securityDomains;
    final List<ProtocolServerConfiguration> endpoints;
 
    public ServerConfiguration(
          Map<String, NetworkAddress> networkInterfaces,
          Map<String, SocketBinding> socketBindings,
-         final Map<String, ServerSecurityRealm> securityRealms,
+         final Map<String, SecurityDomain> securityDomains,
          List<ProtocolServerConfiguration> endpoints
    ) {
       this.networkInterfaces = Collections.unmodifiableMap(networkInterfaces);
       this.socketBindings = Collections.unmodifiableMap(socketBindings);
-      this.securityRealms = Collections.unmodifiableMap(securityRealms);
+      this.securityDomains = Collections.unmodifiableMap(securityDomains);
       this.endpoints = endpoints;
    }
 
@@ -41,8 +41,8 @@ public class ServerConfiguration {
       return socketBindings;
    }
 
-   public Map<String, ServerSecurityRealm> securityRealms() {
-      return securityRealms;
+   public Map<String, SecurityDomain> securityDomains() {
+      return securityDomains;
    }
 
    public List<ProtocolServerConfiguration> endpoints() {

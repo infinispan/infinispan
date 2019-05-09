@@ -3,13 +3,21 @@ package org.infinispan.server.configuration;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 
 import java.io.File;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.io.FileInputStream;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedKeyManager;
+import javax.net.ssl.X509TrustManager;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -19,10 +27,20 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.infinispan.server.Server;
 import org.infinispan.server.network.NetworkAddress;
-import org.infinispan.server.security.PropertiesSecurityRealm;
+import org.infinispan.server.security.KeyStoreUtils;
+import org.infinispan.server.security.realm.KerberosSecurityRealm;
+import org.infinispan.server.security.realm.PropertiesSecurityRealm;
 import org.kohsuke.MetaInfServices;
-import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.keystore.AliasFilter;
+import org.wildfly.security.keystore.FilteringKeyStore;
+import org.wildfly.security.keystore.KeyStoreUtil;
+import org.wildfly.security.ssl.CipherSuiteSelector;
+import org.wildfly.security.ssl.ProtocolSelector;
+import org.wildfly.security.ssl.SSLContextBuilder;
+import org.wildfly.security.util.ProviderUtil;
 
 /**
  * Server endpoint configuration parser
@@ -58,7 +76,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
       if (!holder.inScope(ParserScope.GLOBAL)) {
          throw coreLog.invalidScope(ParserScope.GLOBAL.name(), holder.getScope());
       }
-
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
@@ -238,103 +255,66 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseSecurityRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
-      // TODO: ISPN-9944 Complete parsing and implementation of the Security Realms
-      String name = ParseUtils.requireSingleAttribute(reader, Attribute.NAME);
-      Map<Class<? extends SecurityRealm>, SecurityRealm> subRealms = new LinkedHashMap<>();
+      String name = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
+      SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
+      SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
+      boolean hasTrustStore = false;
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case KERBEROS_REALM:
-               SecurityRealm realm = parseKerberosRealm(reader, builder);
+               parseKerberosRealm(reader, domainBuilder);
+               break;
+            case LDAP_REALM:
+               parseLdapRealm(reader, domainBuilder);
                break;
             case LOCAL_REALM:
-               realm = parseLocalRealm(reader, builder);
+               parseLocalRealm(reader, domainBuilder);
                break;
             case PROPERTIES_REALM:
-               realm = parsePropertiesRealm(reader, name);
+               parsePropertiesRealm(reader, domainBuilder);
                break;
             case SERVER_IDENTITIES:
-               parseServerIdentitities(reader, builder);
+               parseServerIdentitities(reader, sslContextBuilder);
                break;
             case TRUSTSTORE_REALM:
+               parseTrustStoreRealm(reader, sslContextBuilder);
+               hasTrustStore = true;
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
          }
       }
+      SecurityDomain securityDomain = domainBuilder.build();
+      builder.addSecurityDomain(name, securityDomain);
+      if (hasTrustStore) {
+         sslContextBuilder.setSecurityDomain(securityDomain);
+      }
+      try {
+         builder.addSSLContext(name, sslContextBuilder.build().create());
+      } catch (GeneralSecurityException e) {
+         throw new CacheConfigurationException(e);
+      }
    }
 
-   private SecurityRealm parseKerberosRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
+   private void parseKerberosRealm(XMLExtendedStreamReader reader, SecurityDomain.Builder domainBuilder) throws XMLStreamException {
       String keyTab = ParseUtils.requireAttributes(reader, Attribute.KEYTAB)[0];
       ParseUtils.requireNoContent(reader);
-      return null;
+      domainBuilder.addRealm("kerberos", new KerberosSecurityRealm(new File(keyTab)));
    }
 
-   private SecurityRealm parseLocalRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
-      ParseUtils.requireNoContent(reader);
-      return null;
-   }
-
-   private SecurityRealm parsePropertiesRealm(XMLExtendedStreamReader reader, String name) throws XMLStreamException {
-      File usersFile = null;
-      File groupsFile = null;
-      boolean plainText = true;
-
-      Element element = nextElement(reader);
-      if (element == Element.USER_PROPERTIES) {
-         usersFile = new File(ParseUtils.requireAttributes(reader, Attribute.PATH)[0]);
-         ParseUtils.requireNoContent(reader);
-         element = nextElement(reader);
-      }
-      if (element == Element.GROUP_PROPERTIES) {
-         groupsFile = new File(ParseUtils.requireAttributes(reader, Attribute.PATH)[0]);
-         ParseUtils.requireNoContent(reader);
-         element = nextElement(reader);
-      }
-      if (element != null) {
-         throw ParseUtils.unexpectedElement(reader);
-      }
-      return new PropertiesSecurityRealm(usersFile, groupsFile, plainText, "Roles", name);
-   }
-
-   private void parseServerIdentitities(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case SSL:
-               parseSSL(reader, builder);
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
-      }
-   }
-
-   private void parseSSL(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case ENGINE:
-               parseSSLEngine(reader, builder);
-               break;
-            case KEYSTORE:
-               parseKeyStore(reader, builder);
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
-      }
-   }
-
-   private void parseSSLEngine(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
+   private void parseLdapRealm(XMLExtendedStreamReader reader, SecurityDomain.Builder domainBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-            case ENABLED_PROTOCOLS:
+            case NAME:
+               // Already seen
                break;
-            case ENABLED_CIPHERSUITES:
+            case DIRECT_VERIFICATION:
+               break;
+            case ALLOW_BLANK_PASSWORD:
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -343,12 +323,152 @@ public class ServerConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseKeyStore(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
+   private void parseLocalRealm(XMLExtendedStreamReader reader, SecurityDomain.Builder domainBuilder) throws XMLStreamException {
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parsePropertiesRealm(XMLExtendedStreamReader reader, SecurityDomain.Builder domainBuilder) throws XMLStreamException {
+      File usersFile = null;
+      File groupsFile = null;
+      boolean plainText = false;
+      String realmName = null;
+      String groupsAttribute = "groups";
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case GROUPS_ATTRIBUTE:
+               groupsAttribute = value;
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+
+      Element element = nextElement(reader);
+      if (element == Element.USER_PROPERTIES) {
+         String path = ParseUtils.requireAttributes(reader, Attribute.PATH)[0];
+         String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
+         for (int i = 0; i < reader.getAttributeCount(); i++) {
+            ParseUtils.requireNoNamespaceAttribute(reader, i);
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+               case PATH:
+                  // Already seen
+                  break;
+               case RELATIVE_TO:
+                  relativeTo = ParseUtils.requireAttributeProperty(reader, i);
+                  break;
+               case DIGEST_REALM_NAME:
+                  realmName = value;
+                  break;
+               case PLAIN_TEXT:
+                  plainText = Boolean.parseBoolean(value);
+                  break;
+               default:
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+         usersFile = new File(ParseUtils.resolvePath(path, relativeTo));
+         ParseUtils.requireNoContent(reader);
+         element = nextElement(reader);
+      }
+      if (element == Element.GROUP_PROPERTIES) {
+         String path = ParseUtils.requireAttributes(reader, Attribute.PATH)[0];
+         String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
+         for (int i = 0; i < reader.getAttributeCount(); i++) {
+            ParseUtils.requireNoNamespaceAttribute(reader, i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+               case PATH:
+                  // Already seen
+                  break;
+               case RELATIVE_TO:
+                  relativeTo = ParseUtils.requireAttributeProperty(reader, i);
+                  break;
+               default:
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+
+         groupsFile = new File(ParseUtils.resolvePath(path, relativeTo));
+         ParseUtils.requireNoContent(reader);
+         element = nextElement(reader);
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader);
+      }
+      domainBuilder.addRealm("properties",
+            new PropertiesSecurityRealm(usersFile, groupsFile, plainText, groupsAttribute, realmName));
+   }
+
+   private void parseServerIdentitities(XMLExtendedStreamReader reader, SSLContextBuilder sslContextBuilder) throws
+         XMLStreamException {
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case SSL:
+               parseSSL(reader, sslContextBuilder);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseSSL(XMLExtendedStreamReader reader, SSLContextBuilder sslContextBuilder) throws
+         XMLStreamException {
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case ENGINE:
+               parseSSLEngine(reader, sslContextBuilder);
+               break;
+            case KEYSTORE:
+               parseKeyStore(reader, sslContextBuilder);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseSSLEngine(XMLExtendedStreamReader reader, SSLContextBuilder sslContextBuilder) throws
+         XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case ENABLED_PROTOCOLS:
+               ProtocolSelector protocolSelector = ProtocolSelector.empty();
+               for(String protocol : reader.getListAttributeValue(i)) {
+                  protocolSelector.add(protocol);
+               }
+               sslContextBuilder.setProtocolSelector(protocolSelector);
+               break;
+            case ENABLED_CIPHERSUITES:
+               sslContextBuilder.setCipherSuiteSelector(CipherSuiteSelector.fromString(reader.getAttributeValue(i)));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseKeyStore(XMLExtendedStreamReader reader, SSLContextBuilder sslContextBuilder) throws
+         XMLStreamException {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATH);
-      String keyStoreFileName = attributes[0];
-      String keyStorePassword = null;
-      String keyStoreAlias = null;
-      String keyStoreKeyPassword = null;
+      String path = attributes[0];
+      String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
+      String keyStoreProvider = null;
+      char[] keyStorePassword = null;
+      String keyAlias = null;
+      char[] keyPassword = null;
+      String generateSelfSignedHost = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -357,27 +477,100 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case PATH:
                // Already seen
                break;
+            case PROVIDER:
+               keyStoreProvider = value;
+               break;
             case RELATIVE_TO:
+               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
                break;
             case KEYSTORE_PASSWORD:
-               keyStorePassword = value;
+               keyStorePassword = value.toCharArray();
                break;
             case ALIAS:
-               keyStoreAlias = value;
+               keyAlias = value;
                break;
             case KEY_PASSWORD:
-               keyStoreKeyPassword = value;
+               keyPassword = value.toCharArray();
                break;
             case GENERATE_SELF_SIGNED_CERTIFICATE_HOST:
+               generateSelfSignedHost = value;
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
       ParseUtils.requireNoContent(reader);
+      String keyStoreFileName = ParseUtils.resolvePath(path, relativeTo);
+      try {
+         if (!new File(keyStoreFileName).exists() && generateSelfSignedHost != null) {
+            KeyStoreUtils.generateSelfSignedCertificate(keyStoreFileName, keyStoreProvider, keyStorePassword, keyPassword, keyAlias, generateSelfSignedHost);
+         }
+         KeyStore keyStore = KeyStoreUtil.loadKeyStore(ProviderUtil.INSTALLED_PROVIDERS, keyStoreProvider, new FileInputStream(keyStoreFileName), keyStoreFileName, keyStorePassword);
+         if (keyAlias != null) {
+            keyStore = FilteringKeyStore.filteringKeyStore(keyStore, AliasFilter.fromString(keyAlias));
+         }
+         KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+         kmf.init(keyStore, keyPassword);
+         for (KeyManager keyManager : kmf.getKeyManagers()) {
+            if (keyManager instanceof X509ExtendedKeyManager) {
+               sslContextBuilder.setKeyManager((X509ExtendedKeyManager) keyManager);
+               return;
+            }
+         }
+         throw Server.log.noDefaultKeyManager();
+      } catch (Exception e) {
+         throw new CacheConfigurationException(e);
+      }
    }
 
-   private void parseEndpoints(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseTrustStoreRealm(XMLExtendedStreamReader reader, SSLContextBuilder sslContextBuilder) throws
+         XMLStreamException {
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATH);
+      String path = attributes[0];
+      String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
+      String keyStoreProvider = null;
+      char[] keyStorePassword = null;
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case PATH:
+               // Already seen
+               break;
+            case PROVIDER:
+               keyStoreProvider = value;
+               break;
+            case KEYSTORE_PASSWORD:
+               keyStorePassword = value.toCharArray();
+               break;
+            case RELATIVE_TO:
+               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+      String trustStoreFileName = ParseUtils.resolvePath(path, relativeTo);
+      try {
+         KeyStore keyStore = KeyStoreUtil.loadKeyStore(ProviderUtil.INSTALLED_PROVIDERS, keyStoreProvider, new FileInputStream(trustStoreFileName), trustStoreFileName, keyStorePassword);
+         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+         tmf.init(keyStore);
+         for (TrustManager trustManager : tmf.getTrustManagers()) {
+            if (trustManager instanceof X509TrustManager) {
+               sslContextBuilder.setTrustManager((X509TrustManager) trustManager);
+               return;
+            }
+         }
+         throw Server.log.noDefaultKeyManager();
+      } catch (Exception e) {
+         throw new CacheConfigurationException(e);
+      }
+   }
+
+   private void parseEndpoints(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws
+         XMLStreamException {
       holder.pushScope(ENDPOINTS_SCOPE);
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          reader.handleAny(holder);

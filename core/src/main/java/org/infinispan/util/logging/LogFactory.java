@@ -23,6 +23,10 @@ public class LogFactory {
       return Logger.getMessageLogger(logClass, clazz.getName());
    }
 
+   public static <T> T getLog(String category, Class<T> logClass) {
+      return Logger.getMessageLogger(logClass, LOG_ROOT + category);
+   }
+
    public static Logger getLogger(String category) {
       return Logger.getLogger(LOG_ROOT + category);
    }

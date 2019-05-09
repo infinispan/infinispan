@@ -14,6 +14,7 @@ public enum Attribute {
    CACHE_CONTAINER,
    EXTERNAL_HOST,
    EXTERNAL_PORT,
+   HOST_NAME,
    IDLE_TIMEOUT,
    IO_THREADS,
    LAZY_RETRIEVAL,
@@ -32,6 +33,7 @@ public enum Attribute {
    STRENGTH,
    TCP_KEEPALIVE,
    TCP_NODELAY,
+   VALUE,
    WORKER_THREADS,
    ;
 

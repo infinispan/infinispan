@@ -12,7 +12,15 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ServerTestConfiguration {
-   String configurationFile() default "clustered.xml";
+   String configurationFile();
 
+   /**
+    * Defines the number of servers to start.
+    */
    int numServers() default 2;
+
+   /**
+    * Defines how the server instances should be started.
+    */
+   ServerRunMode runMode() default ServerRunMode.EMBEDDED;
 }

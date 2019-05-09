@@ -1,5 +1,8 @@
 package org.infinispan.server.logging;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -55,9 +58,22 @@ public interface Log extends BasicLogger {
    @Message(value = "The path '%s' is not absolute", id = 80011)
    CacheConfigurationException nonAbsolutePath(String path);
 
-   @Message(value = "Duplicate security realm '%s'", id = 80012)
-   CacheConfigurationException duplicateSecurityRealm(String name);
+   @Message(value = "Duplicate security domain '%s'", id = 80012)
+   CacheConfigurationException duplicateSecurityDomain(String name);
 
    @Message(value = "Duplicate realm type '%s' in realm '%s'", id = 80013)
    CacheConfigurationException duplicateRealmType(String type, String name);
+
+   @Message(value = "Unknown security domain '%s'", id = 80014)
+   CacheConfigurationException unknownSecurityDomain(String name);
+
+   @Message(value = "Unable to load realm property files", id = 80015)
+   CacheConfigurationException unableToLoadRealmPropertyFiles(@Cause IOException e);
+
+   @Message(value = "No default key manager available", id = 80016)
+   NoSuchAlgorithmException noDefaultKeyManager();
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Server configuration: %s", id = 80017)
+   void serverConfiguration(String name);
 }

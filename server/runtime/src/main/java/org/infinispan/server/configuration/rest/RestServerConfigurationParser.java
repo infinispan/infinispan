@@ -17,9 +17,9 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
-import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
+import org.infinispan.server.core.configuration.SslConfigurationBuilder;
 import org.infinispan.server.network.SocketBinding;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
@@ -78,11 +78,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          switch (attribute) {
             case SOCKET_BINDING: {
                SocketBinding socketBinding = serverBuilder.getSocketBinding(value);
-               if (socketBinding != null) {
-                  builder.host(socketBinding.getAddress().getAddress().getHostAddress()).port(socketBinding.getPort());
-               } else {
-                  throw Server.log.unknownSocketBinding(value);
-               }
+               builder.host(socketBinding.getAddress().getAddress().getHostAddress()).port(socketBinding.getPort());
                break;
             }
             case CACHE_CONTAINER: {
@@ -138,7 +134,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case ENCRYPTION: {
-               parseEncryption(reader, builder);
+               parseEncryption(reader, serverBuilder, builder.ssl().enable());
                break;
             }
             case CORS_RULES: {
@@ -162,11 +158,9 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case SECURITY_REALM: {
-
                break;
             }
             case AUTH_METHOD: {
-
                break;
             }
             default: {
@@ -178,18 +172,18 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseEncryption(XMLExtendedStreamReader reader, RestServerConfigurationBuilder builder) throws XMLStreamException {
+   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          String value = replaceProperties(reader.getAttributeValue(i));
          switch (attribute) {
             case REQUIRE_SSL_CLIENT_AUTH: {
-               builder.ssl().requireClientAuth(Boolean.parseBoolean(value));
+               builder.requireClientAuth(Boolean.parseBoolean(value));
                break;
             }
             case SECURITY_REALM: {
-               // TODO
+               builder.sslContext(serverBuilder.getSSLContext(value));
                break;
             }
             default: {
@@ -218,7 +212,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          ParseUtils.requireNoContent(reader);
    }
 
-   private void parseSni(XMLExtendedStreamReader reader, RestServerConfigurationBuilder builder) {
+   private void parseSni(XMLExtendedStreamReader reader, SslConfigurationBuilder builder) {
 
    }
 

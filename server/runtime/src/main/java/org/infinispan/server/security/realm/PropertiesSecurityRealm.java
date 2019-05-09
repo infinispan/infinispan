@@ -1,13 +1,16 @@
-package org.infinispan.server.security;
+package org.infinispan.server.security.realm;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 
+import org.infinispan.server.Server;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.realm.LegacyPropertiesSecurityRealm;
+import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.credential.Credential;
@@ -31,9 +34,10 @@ public class PropertiesSecurityRealm implements SecurityRealm {
       this.plainText = plainText;
       this.groupsAttribute = groupsAttribute;
       this.realmName = realmName;
+      load();
    }
 
-   private void load() throws IOException {
+   private void load() {
       try (InputStream usersInputStream = new FileInputStream(usersFile);
            InputStream groupsInputStream = groupsFile != null ? new FileInputStream(groupsFile) : null) {
          delegate = LegacyPropertiesSecurityRealm.builder()
@@ -43,16 +47,41 @@ public class PropertiesSecurityRealm implements SecurityRealm {
                .setGroupsAttribute(groupsAttribute)
                .setDefaultRealm(realmName)
                .build();
+      } catch (IOException e) {
+         throw Server.log.unableToLoadRealmPropertyFiles(e);
       }
+   }
+
+   void reload() {
+      try (InputStream usersInputStream = new FileInputStream(usersFile);
+           InputStream groupsInputStream = groupsFile != null ? new FileInputStream(groupsFile) : null) {
+         delegate.load(usersInputStream, groupsInputStream);
+      } catch (IOException e) {
+         throw Server.log.unableToLoadRealmPropertyFiles(e);
+      }
+   }
+
+   long getLoadTime() {
+      return delegate.getLoadTime();
+   }
+
+   @Override
+   public RealmIdentity getRealmIdentity(Principal principal) throws RealmUnavailableException {
+      return delegate.getRealmIdentity(principal);
+   }
+
+   @Override
+   public RealmIdentity getRealmIdentity(Evidence evidence) throws RealmUnavailableException {
+      return delegate.getRealmIdentity(evidence);
    }
 
    @Override
    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
-      return null;
+      return delegate.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
    }
 
    @Override
    public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-      return null;
+      return delegate.getEvidenceVerifySupport(evidenceType, algorithmName);
    }
 }

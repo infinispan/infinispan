@@ -3,29 +3,24 @@ package org.infinispan.server.test;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.commons.time.DefaultTimeService;
-import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.Util;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.server.RestClient;
 import org.infinispan.server.Server;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
-import org.infinispan.server.DefaultExitHandler;
-import org.infinispan.server.RestClient;
-import org.infinispan.test.TestingUtil;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -33,104 +28,124 @@ import org.junit.runners.model.Statement;
 import net.spy.memcached.MemcachedClient;
 
 /**
+ * Creates a cluster of servers to be used for running multiple tests It performs the following tasks:
+ * <ul>
+ * <li>It creates a temporary directory using the test name</li>
+ * <li>It creates a common configuration directory to be shared by all servers</li>
+ * <li>It creates a runtime directory structure for each server in the cluster (data, log, lib)</li>
+ * <li>It populates the configuration directory with multiple certificates (ca.pfx, server.pfx, user1.pfx,
+ * user2.pfx)</li>
+ * <li>It populates the configuration directory with user/group property files</li>
+ * </ul>
+ *
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
 public class ServerTestRule implements TestRule {
-   List<Server> servers;
-   List<CompletableFuture<Integer>> serverFutures;
-   int numServers = 2;
-   TimeService timeService = DefaultTimeService.INSTANCE;
-   RemoteCacheManager hotRodClient;
-   RestClient httpClient;
-   MemcachedClient memcachedClient;
+   Map<Integer, RemoteCacheManager> hotRodClients = new LinkedHashMap<>();
+   Map<Integer, RestClient> httpClients = new LinkedHashMap<>();
+   Map<Integer, MemcachedClient> memcachedClients = new LinkedHashMap<>();
 
    @Override
    public Statement apply(Statement base, Description description) {
       return new Statement() {
          @Override
          public void evaluate() throws Throwable {
-            String serverBaseName = description.getClassName();
-            ServerTestConfiguration annotation = description.getTestClass().getAnnotation(ServerTestConfiguration.class);
-            String configurationFile = "clustered.xml";
-            if (annotation != null) {
-               configurationFile = annotation.configurationFile();
-               numServers = annotation.numServers();
-            }
-            before(serverBaseName, description.getTestClass().getClassLoader().getResource(configurationFile));
+            ServerTestConfiguration configuration = description.getTestClass().getAnnotation(ServerTestConfiguration.class);
+            Objects.requireNonNull(configuration, "The class under test must be annotated with @ServerTestConfiguration");
+            ServerDriver serverDriver = configuration.runMode().newDriver(description.getClassName(), configuration);
+            serverDriver.before();
             try {
                base.evaluate();
             } finally {
-               after();
+               serverDriver.after();
             }
          }
       };
    }
 
-   private void before(String serverBaseName, URL resource) {
-      servers = new ArrayList<>();
-      serverFutures = new ArrayList<>();
-      for (int i = 0; i < numServers; i++) {
-         long start = timeService.time();
-         String serverName = serverBaseName + "#" + i;
-         File serverRoot = createServerHierarchy(serverName);
-         String path = resource.getPath();
-         Properties properties = new Properties();
-         properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(i * 100));
-         Server server = new Server(serverRoot, new File(path), properties);
-         server.setExitHandler(new DefaultExitHandler());
-         serverFutures.add(server.run());
-         servers.add(server);
-      }
-
+   void after(ServerTestConfiguration configuration) {
+      hotRodClients.values().forEach(rcm -> rcm.stop());
+      hotRodClients.clear();
+      memcachedClients.values().forEach(c -> c.shutdown());
+      memcachedClients.clear();
    }
 
-   private void after() {
-      if (hotRodClient != null) {
-         hotRodClient.stop();
-      }
-      for (int i = 0; i < servers.size(); i++) {
-         long start = timeService.time();
-         Server server = servers.get(i);
-         server.getExitHandler().exit(0);
-         try {
-            serverFutures.get(i).get();
-         } catch (Throwable t) {
-            throw new RuntimeException(t);
-         }
-         // delete server root
-         Util.recursiveFileRemove(server.getServerRoot());
-      }
-   }
-
-
-   private static File createServerHierarchy(String name) {
-      File tmp = new File(TestingUtil.tmpDirectory(name));
-      for (String dir : Arrays.asList("conf", "data", "log", "lib")) {
-         new File(tmp, dir).mkdirs();
-      }
-      return tmp;
-   }
-
+   /**
+    * @return a client configured against the first Hot Rod endpoint exposed by the server
+    */
    public RemoteCacheManager hotRodClient() {
-      if (hotRodClient == null) {
-         ConfigurationBuilder builder = new ConfigurationBuilder();
-         for (Server server : servers) {
-            for (ProtocolServer ps : server.getProtocolServers().values()) {
+      initHotRodClients();
+      return hotRodClients.values().iterator().next();
+   }
+
+   /**
+    * @param port the port of the Hot Rod endpoint for which a client should be returned
+    * @return a client configured against the Hot Rod endpoint exposed by the server on the specified port
+    */
+   public RemoteCacheManager hotRodClient(int port) {
+      initHotRodClients();
+      return hotRodClients.get(port);
+   }
+
+   List<Server> getServers() {
+      return null;
+   }
+
+   private void initHotRodClients() {
+      if (hotRodClients.isEmpty()) {
+         // Add all known server addresses
+         Map<Integer, ConfigurationBuilder> hotRodConfig = new LinkedHashMap<>();
+         String confDir = "";
+         List<Server> servers = getServers();
+         for (int i = 0; i < servers.size(); i++) {
+            int portOffset = i * 100;
+            for (ProtocolServer ps : servers.get(i).getProtocolServers().values()) {
                if (ps instanceof HotRodServer) {
                   HotRodServerConfiguration serverConfiguration = ((HotRodServer) ps).getConfiguration();
+                  int configuredPort = serverConfiguration.publicPort() - portOffset;
+                  ConfigurationBuilder builder = hotRodConfig.computeIfAbsent(configuredPort, port -> new ConfigurationBuilder());
                   builder.addServer().host(serverConfiguration.publicHost()).port(serverConfiguration.publicPort());
+                  if (serverConfiguration.ssl().enabled()) {
+                     builder.security().ssl().enable().trustStoreFileName(new File(confDir, "server.pfx").getAbsolutePath()).trustStorePassword("secret".toCharArray());
+                  }
+                  if (serverConfiguration.authentication().enabled()) {
+                     builder.security()
+                           .authentication()
+                           .enable();
+                  }
                }
             }
          }
-         hotRodClient = new RemoteCacheManager(builder.build());
+         hotRodClients.putAll(hotRodConfig.entrySet().stream().collect(
+               Collectors.toMap(
+                     e -> e.getKey(),
+                     e -> new RemoteCacheManager(e.getValue().build())
+               )
+         ));
       }
-      return hotRodClient;
    }
 
+   /**
+    * @return a client configured against the first REST endpoint exposed by the server
+    */
    public RestClient restClient() {
-      if (httpClient == null) {
-         for (Server server : servers) {
+      initRestClients();
+      return httpClients.values().iterator().next();
+   }
+
+   /**
+    * @param port the port of the REST endpoint for which a client should be returned
+    * @return a client configured against the REST endpoint exposed by the server on the specified port
+    */
+   public RestClient restClient(int port) {
+      initRestClients();
+      return httpClients.get(port);
+   }
+
+   private void initRestClients() {
+      if (httpClients.isEmpty()) {
+         for (Server server : getServers()) {
             for (ProtocolServer ps : server.getProtocolServers().values()) {
                if (ps instanceof RestServer) {
                   RestServerConfiguration serverConfiguration = ((RestServer) ps).getConfiguration();
@@ -140,31 +155,57 @@ public class ServerTestRule implements TestRule {
                         serverConfiguration.port(),
                         serverConfiguration.contextPath()
                   );
-                  httpClient = new RestClient(baseURI);
+                  httpClients.put(serverConfiguration.port(), new RestClient(baseURI));
                }
             }
          }
       }
-      return httpClient;
    }
 
+   /**
+    * @return a client configured against the first Memcached endpoint exposed by the server
+    */
    public MemcachedClient memcachedClient() {
-      if (memcachedClient == null) {
-         List<InetSocketAddress> addresses = new ArrayList<>();
-         for (Server server : servers) {
+      initHotRodClients();
+      return memcachedClients.values().iterator().next();
+   }
+
+   /**
+    * @param port the port of the Memcached endpoint for which a client should be returned
+    * @return a client configured against the Memcached endpoint exposed by the server on the specified port
+    */
+   public MemcachedClient memcachedClient(int port) {
+      initMemcachedClient();
+      return memcachedClients.get(port);
+   }
+
+   private void initMemcachedClient() {
+      if (memcachedClients.isEmpty()) {
+         Map<Integer, List<InetSocketAddress>> addresses = new LinkedHashMap<>();
+         for (Server server : getServers()) {
             for (ProtocolServer ps : server.getProtocolServers().values()) {
                if (ps instanceof MemcachedServer) {
                   MemcachedServerConfiguration serverConfiguration = ((MemcachedServer) ps).getConfiguration();
-                  addresses.add(new InetSocketAddress(serverConfiguration.host(), serverConfiguration.port()));
+                  List<InetSocketAddress> serverAddresses = addresses.computeIfAbsent(serverConfiguration.port(), port -> new ArrayList<>());
+                  serverAddresses.add(new InetSocketAddress(serverConfiguration.host(), serverConfiguration.port()));
                }
             }
          }
-         try {
-            memcachedClient = new MemcachedClient(addresses);
-         } catch (IOException e) {
-            throw new RuntimeException(e);
-         }
+
+         memcachedClients.putAll(addresses.entrySet().stream().collect(
+               Collectors.toMap(
+                     e -> e.getKey(),
+                     e -> newMemcachedClient(e.getValue())
+               )
+         ));
       }
-      return memcachedClient;
+   }
+
+   private MemcachedClient newMemcachedClient(List<InetSocketAddress> addrs) {
+      try {
+         return new MemcachedClient(addrs);
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
    }
 }
