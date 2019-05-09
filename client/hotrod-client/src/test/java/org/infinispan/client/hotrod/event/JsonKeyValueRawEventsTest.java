@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -41,7 +42,7 @@ public class JsonKeyValueRawEventsTest extends SingleHotRodServerTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.encoding().key().mediaType(APPLICATION_JBOSS_MARSHALLING_TYPE);
       builder.encoding().value().mediaType(APPLICATION_JBOSS_MARSHALLING_TYPE);
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), builder);
       cacheManager.getClassWhiteList().addRegexps(".*");
       return cacheManager;
    }

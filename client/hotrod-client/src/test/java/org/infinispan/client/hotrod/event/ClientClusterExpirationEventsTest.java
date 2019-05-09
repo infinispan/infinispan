@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.concurrent.TimeUnit;
@@ -48,7 +49,7 @@ public class ClientClusterExpirationEventsTest extends MultiHotRodServersTest {
    }
 
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder);
       server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory());

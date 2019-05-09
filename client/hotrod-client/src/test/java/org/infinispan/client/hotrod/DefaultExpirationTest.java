@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertHotRodEquals;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -33,7 +34,7 @@ public class DefaultExpirationTest extends SingleCacheManagerTest {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultStandaloneCacheConfig(false));
       builder.expiration().lifespan(3, TimeUnit.SECONDS).maxIdle(2, TimeUnit.SECONDS);
-      return TestCacheManagerFactory.createCacheManager(builder);
+      return TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), builder);
    }
 
    @Override

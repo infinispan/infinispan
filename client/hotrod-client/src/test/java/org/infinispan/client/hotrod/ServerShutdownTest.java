@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -24,6 +25,7 @@ public class ServerShutdownTest extends AbstractInfinispanTest {
    public void testServerShutdownWithConnectedClient() {
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(
+                  hotRodGlobalConfiguration(this.getClass()),
                   hotRodCacheConfiguration())) {
          @Override
          public void call() {
@@ -51,6 +53,7 @@ public class ServerShutdownTest extends AbstractInfinispanTest {
    public void testServerShutdownWithoutConnectedClient() {
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(
+                  hotRodGlobalConfiguration(this.getClass()),
                   hotRodCacheConfiguration())) {
          @Override
          public void call() {

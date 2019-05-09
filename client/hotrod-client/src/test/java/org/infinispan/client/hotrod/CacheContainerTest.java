@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -28,7 +29,7 @@ public class CacheContainerTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManager(
+      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()),
             hotRodCacheConfiguration());
       cacheManager.defineConfiguration(CACHE_NAME, hotRodCacheConfiguration().build());
       hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);

@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.test;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
 
@@ -61,7 +63,11 @@ public class HotRodClientTestingUtil {
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager) {
-      return startHotRodServer(cacheManager, new HotRodServerConfigurationBuilder());
+      Optional<String> cacheName = cacheManager.getCacheManagerConfiguration().defaultCacheName();
+      assertTrue(cacheName.isPresent());
+      HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
+      serverBuilder.defaultCacheName(cacheName.get());
+      return startHotRodServer(cacheManager, serverBuilder);
    }
 
    /**

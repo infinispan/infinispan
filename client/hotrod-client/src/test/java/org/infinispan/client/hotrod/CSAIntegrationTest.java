@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertHotRodEquals;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.marshall;
 import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
@@ -65,9 +66,9 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numOwners(1);
       builder.unsafe().unreliableReturnValues(true);
-      addClusterEnabledCacheManager(builder);
-      addClusterEnabledCacheManager(builder);
-      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
+      addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
+      addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
 
       hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(manager(0));
       addr2hrServer.put(InetSocketAddress.createUnresolved(hotRodServer1.getHost(), hotRodServer1.getPort()), hotRodServer1);

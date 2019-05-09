@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -125,7 +126,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
       final int numServers = numberOfHotRodServers();
       hotrodServers = new HotRodServer[numServers];
 
-      createCluster(hotRodCacheConfiguration(clusterConfig()), numberOfHotRodServers());
+      createCluster(hotRodClusteredGlobalConfiguration(this.getClass()), hotRodCacheConfiguration(clusterConfig()), numberOfHotRodServers());
 
       timeService = new ControlledTimeService();
 

@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.retry;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getLoadBalancer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.marshall;
 
 import java.net.SocketAddress;
@@ -45,9 +46,9 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       config = hotRodCacheConfiguration(getCacheConfig());
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), config);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), config);
+      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), config);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
       registerCacheManager(cm3);

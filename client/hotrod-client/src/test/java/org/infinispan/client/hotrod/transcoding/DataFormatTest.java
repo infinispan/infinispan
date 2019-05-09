@@ -6,6 +6,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createServerModeCacheManager;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
@@ -43,7 +44,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternallyMarshallable;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -73,7 +73,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = createServerModeCacheManager(hotRodCacheConfiguration());
+      cacheManager = createServerModeCacheManager(hotRodGlobalConfiguration(this.getClass()), hotRodCacheConfiguration());
       ConfigurationBuilder builder = buildCacheConfig();
 
       cacheManager.defineConfiguration(CACHE_NAME, hotRodCacheConfiguration(builder).build());
@@ -82,7 +82,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
 
    @Override
    protected HotRodServer createHotRodServer() {
-      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cacheManager, new HotRodServerConfigurationBuilder());
+      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       server.addCacheEventFilterFactory("static-filter-factory", new EventLogListener.StaticCacheEventFilterFactory(42));
       server.addCacheEventFilterFactory("raw-static-filter-factory", new EventLogListener.RawStaticCacheEventFilterFactory());
       return server;

@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
@@ -107,7 +108,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getConfigurationBuilder();
-      createClusteredCaches(getNodesCount(), cfg, true);
+      createClusteredCaches(getNodesCount(), hotRodClusteredGlobalConfiguration(this.getClass()), cfg, true);
 
       cache = manager(0).getCache();
 

@@ -443,7 +443,10 @@ class Encoder2x implements VersionedEncoder {
          if (CounterModuleLifecycle.COUNTER_CACHE_NAME.equals(header.cacheName)) {
             cacheTopology = getCounterCacheTopology(server.getCacheManager());
             newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, CacheMode.DIST_SYNC,
-                                              cacheTopology);
+                  cacheTopology);
+         } else if (header.cacheName.isEmpty() && !server.hasDefaultCache()) {
+            cacheTopology = null;
+            newTopology = Optional.empty();
          } else {
             HotRodServer.CacheInfo cacheInfo = server.getCacheInfo(header);
             Configuration configuration = cacheInfo.configuration;

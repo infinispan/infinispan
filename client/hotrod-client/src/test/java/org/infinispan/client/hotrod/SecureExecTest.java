@@ -44,6 +44,7 @@ public class SecureExecTest extends AbstractAuthenticationTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.defaultCacheName(this.getClass().getSimpleName());
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper());
       globalRoles
             .role("admin")

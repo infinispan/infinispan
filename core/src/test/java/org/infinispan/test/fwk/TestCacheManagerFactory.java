@@ -321,23 +321,31 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String cacheManagerName, String jmxDomain, boolean allowDuplicateDomains) {
-      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, true, allowDuplicateDomains, new ConfigurationBuilder(), new PerThreadMBeanServerLookup());
+      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, true, allowDuplicateDomains, GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), new PerThreadMBeanServerLookup());
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, ConfigurationBuilder builder) {
       return createClusteredCacheManagerEnforceJmxDomain(jmxDomain, true, false, builder);
    }
 
-   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
-         String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder) {
-      return createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain,
-            exposeGlobalJmx, allowDuplicateDomains, builder, new PerThreadMBeanServerLookup());
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String cacheManagerName, String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder, MBeanServerLookup mBeanServerLookup) {
+      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, exposeGlobalJmx, allowDuplicateDomains, GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, mBeanServerLookup);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
+      return createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain, true, false, globalBuilder, builder, new PerThreadMBeanServerLookup());
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
-         String cacheManagerName, String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder,
+         String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder) {
+      return createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain,
+            exposeGlobalJmx, allowDuplicateDomains, GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, new PerThreadMBeanServerLookup());
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
+         String cacheManagerName, String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder,
          MBeanServerLookup mBeanServerLookup) {
-      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+
       amendGlobalConfiguration(globalBuilder, new TransportFlags());
       globalBuilder.globalJmxStatistics()
             .jmxDomain(jmxDomain)
@@ -466,5 +474,4 @@ public class TestCacheManagerFactory {
 
       return holder;
    }
-
 }

@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.security.PrivilegedAction;
@@ -46,8 +47,8 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global
+      GlobalConfigurationBuilder global = hotRodGlobalConfiguration(this.getClass());
+            global
          .security()
             .authorization()
                .enable()

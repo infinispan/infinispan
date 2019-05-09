@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
@@ -82,7 +83,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    }
 
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm);
       InetSocketAddress addr = new InetSocketAddress(server.getHost(), server.getPort());
       addr2hrServer.put(addr, server);
@@ -90,7 +91,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    }
 
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder, int port) {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
       HotRodServer server = HotRodTestingUtil.startHotRodServer(
          cm, port, new HotRodServerConfigurationBuilder());
       InetSocketAddress addr = new InetSocketAddress(server.getHost(), server.getPort());

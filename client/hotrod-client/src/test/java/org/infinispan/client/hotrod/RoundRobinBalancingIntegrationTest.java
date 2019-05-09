@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.net.InetSocketAddress;
@@ -50,9 +51,9 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      c1 = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration()).getCache();
-      c2 = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration()).getCache();
-      c3 = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration()).getCache();
+      c1 = TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), hotRodCacheConfiguration()).getCache();
+      c2 = TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), hotRodCacheConfiguration()).getCache();
+      c3 = TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), hotRodCacheConfiguration()).getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager(), c3.getCacheManager());
 
       hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(c1.getCacheManager());
@@ -104,7 +105,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
 
    @Test(dependsOnMethods = "testRoundRobinLoadBalancing")
    public void testAddNewHotrodServer() {
-      c4 = TestCacheManagerFactory.createCacheManager(
+      c4 = TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()),
             hotRodCacheConfiguration()).getCache();
       hotRodServer4 = HotRodClientTestingUtil.startHotRodServer(c4.getCacheManager());
       registerCacheManager(c4.getCacheManager());
@@ -218,7 +219,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
    }
 
    private RoundRobinBalancingStrategy getBalancer() {
-      ChannelFactory channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
+      ChannelFactory channelFactory = remoteCacheManager.getChannelFactory();
       return (RoundRobinBalancingStrategy) channelFactory.getBalancer(HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
    }
 

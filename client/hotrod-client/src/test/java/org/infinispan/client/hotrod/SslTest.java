@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class SslTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), hotRodCacheConfiguration());
       cacheManager.getCache();
 
       return cacheManager;

@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -46,7 +47,7 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultStandaloneCacheConfig(false));
       EmbeddedCacheManager cm = TestCacheManagerFactory
-            .createCacheManager(hotRodCacheConfiguration());
+            .createCacheManager(hotRodGlobalConfiguration(this.getClass()), hotRodCacheConfiguration());
       cm.defineConfiguration(CACHE_NAME, builder.build());
       cm.getCache(CACHE_NAME);
       return cm;

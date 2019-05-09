@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -39,7 +40,7 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
       cfg.jmxStatistics().enable();
       cacheContainer = TestCacheManagerFactory
-            .createClusteredCacheManagerEnforceJmxDomain(getClass().getSimpleName(), cfg);
+            .createClusteredCacheManagerEnforceJmxDomain(getClass().getSimpleName(), hotRodClusteredGlobalConfiguration(this.getClass()), cfg);
 
       hotrodServer = HotRodClientTestingUtil.startHotRodServer((EmbeddedCacheManager) cacheContainer);
       startTime = System.currentTimeMillis();

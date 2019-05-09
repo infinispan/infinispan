@@ -9,6 +9,7 @@ import static org.infinispan.query.dsl.Expression.min;
 import static org.infinispan.query.dsl.Expression.param;
 import static org.infinispan.query.dsl.Expression.sum;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -97,7 +98,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getConfigurationBuilder();
-      createClusteredCaches(1, cfg, true);
+      createClusteredCaches(1, hotRodGlobalConfiguration(this.getClass()), cfg, true);
 
       cache = manager(0).getCache();
 

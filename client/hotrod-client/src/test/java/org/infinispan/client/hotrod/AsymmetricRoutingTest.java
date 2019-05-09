@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.testng.AssertJUnit.assertEquals;
@@ -79,7 +80,7 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
    }
 
    private HotRodServer addHotRodServer() {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultBuilder);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), defaultBuilder);
       cm.defineConfiguration(DIST_ONE_CACHE_NAME, distOneBuilder.build());
       cm.defineConfiguration(DIST_TWO_CACHE_NAME, distTwoBuilder.build());
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm);

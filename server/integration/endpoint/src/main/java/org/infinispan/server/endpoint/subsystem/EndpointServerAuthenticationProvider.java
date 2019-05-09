@@ -84,7 +84,7 @@ public class EndpointServerAuthenticationProvider implements ServerAuthenticatio
       }
 
       @Override
-      public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+      public void handle(Callback[] callbacks) {
          for (Callback callback : callbacks) {
             if (callback instanceof AvailableRealmsCallback) {
                ((AvailableRealmsCallback) callback).setRealmNames(realm.getName());

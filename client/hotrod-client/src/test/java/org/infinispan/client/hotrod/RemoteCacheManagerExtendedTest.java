@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -30,7 +31,7 @@ public class RemoteCacheManagerExtendedTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      return TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), hotRodCacheConfiguration());
    }
 
    @Override

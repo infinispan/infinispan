@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -67,7 +68,7 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getConfigurationBuilder();
-      createClusteredCaches(1, cfg, true);
+      createClusteredCaches(1, hotRodClusteredGlobalConfiguration(this.getClass()), cfg, true);
 
       cache = manager(0).getCache();
 

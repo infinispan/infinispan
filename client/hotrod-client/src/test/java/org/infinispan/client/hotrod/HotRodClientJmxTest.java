@@ -5,6 +5,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServ
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.remoteCacheManagerObjectName;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.remoteCacheObjectName;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -46,7 +47,7 @@ public class HotRodClientJmxTest extends AbstractInfinispanTest {
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
       cfg.jmxStatistics().enable();
       cacheContainer = TestCacheManagerFactory
-            .createClusteredCacheManagerEnforceJmxDomain(getClass().getSimpleName(), cfg);
+            .createClusteredCacheManagerEnforceJmxDomain(getClass().getSimpleName(), hotRodGlobalConfiguration(this.getClass()), cfg);
 
       hotrodServer = HotRodClientTestingUtil.startHotRodServer((EmbeddedCacheManager) cacheContainer);
       startTime = System.currentTimeMillis();

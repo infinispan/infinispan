@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.Flag.FORCE_RETURN_VALUE;
 import static org.infinispan.client.hotrod.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -87,7 +88,7 @@ public class SkipCacheLoadFlagTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), hotRodCacheConfiguration());
       cache = cacheManager.getCache();
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);

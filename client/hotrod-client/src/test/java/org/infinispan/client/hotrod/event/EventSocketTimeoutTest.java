@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.net.SocketTimeoutException;
@@ -28,7 +29,7 @@ public class EventSocketTimeoutTest extends SingleHotRodServerTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.customInterceptors().addInterceptor().interceptor(
          new TimeoutInducingInterceptor()).after(EntryWrappingInterceptor.class);
-      return TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(builder));
+      return TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), hotRodCacheConfiguration(builder));
    }
 
    @Override

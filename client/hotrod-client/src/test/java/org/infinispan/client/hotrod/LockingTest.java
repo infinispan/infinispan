@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.infinispan.test.TestingUtil.orTimeout;
 
 import java.util.concurrent.Callable;
@@ -57,7 +58,7 @@ public class LockingTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.locking().lockAcquisitionTimeout(100, TimeUnit.MILLISECONDS);
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), builder);
       for (CacheName cacheName : CacheName.values()) {
          cacheName.configure(builder);
          cacheManager.defineConfiguration(cacheName.name(), builder.build());

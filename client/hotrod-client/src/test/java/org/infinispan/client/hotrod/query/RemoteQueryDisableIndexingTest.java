@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -100,7 +101,7 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getConfigurationBuilder();
-      createClusteredCaches(getNodesCount(), cfg, true);
+      createClusteredCaches(getNodesCount(), hotRodGlobalConfiguration(this.getClass()), cfg, true);
 
       cache = manager(0).getCache();
 

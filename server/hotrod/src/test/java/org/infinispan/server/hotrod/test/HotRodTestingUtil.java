@@ -474,6 +474,18 @@ public class HotRodTestingUtil {
       }
    }
 
+   public static GlobalConfigurationBuilder hotRodGlobalConfiguration(Class<?> klass) {
+      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
+      globalConfigurationBuilder.defaultCacheName(klass.getSimpleName());
+      return globalConfigurationBuilder;
+   }
+
+   public static GlobalConfigurationBuilder hotRodClusteredGlobalConfiguration(Class<?> klass) {
+      GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalConfigurationBuilder.defaultCacheName(klass.getSimpleName());
+      return globalConfigurationBuilder;
+   }
+
    public static ConfigurationBuilder hotRodCacheConfiguration() {
       return new ConfigurationBuilder();
    }

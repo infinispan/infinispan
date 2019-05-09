@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.xsite;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collection;
@@ -104,7 +105,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       BackupConfigurationBuilder backup = builder.sites().addBackup();
       backup.site(backupSiteName).strategy(BackupStrategy.SYNC);
 
-      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      GlobalConfigurationBuilder globalBuilder = hotRodClusteredGlobalConfiguration(this.getClass());
       globalBuilder.site().localSite(siteName);
       TestSite site = createSite(siteName, NODES_PER_SITE, globalBuilder, builder);
       Collection<EmbeddedCacheManager> cacheManagers = site.cacheManagers();

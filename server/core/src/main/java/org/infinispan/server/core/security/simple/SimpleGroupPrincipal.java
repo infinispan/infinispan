@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.security.Principal;
-import java.security.acl.Group;
-import java.util.Enumeration;
 
 import org.infinispan.commons.marshall.SerializeWith;
 
@@ -16,7 +14,7 @@ import org.infinispan.commons.marshall.SerializeWith;
  * @since 7.0
  */
 @SerializeWith(SimpleGroupPrincipal.Externalizer.class)
-public class SimpleGroupPrincipal implements Group {
+public class SimpleGroupPrincipal implements Principal {
 
    final String name;
 
@@ -27,26 +25,6 @@ public class SimpleGroupPrincipal implements Group {
    @Override
    public String getName() {
       return name;
-   }
-
-   @Override
-   public boolean addMember(Principal user) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public boolean removeMember(Principal user) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public boolean isMember(Principal member) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public Enumeration<? extends Principal> members() {
-      throw new UnsupportedOperationException();
    }
 
    @Override

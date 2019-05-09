@@ -109,6 +109,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
       globalConfigurationBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       globalConfigurationBuilder.transport().defaultTransport();
+      globalConfigurationBuilder.defaultCacheName(this.getClass().getSimpleName());
       return globalConfigurationBuilder;
    }
 
@@ -116,7 +117,10 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder globalConfigurationBuilder = getServerModeGlobalConfigurationBuilder();
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(globalConfigurationBuilder, builder);
-      HotRodServer server = HotRodTestingUtil.startHotRodServer(cm, port, new HotRodServerConfigurationBuilder());
+      HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
+      serverBuilder.defaultCacheName(globalConfigurationBuilder.defaultCacheName().get());
+
+      HotRodServer server = HotRodTestingUtil.startHotRodServer(cm, port, serverBuilder);
       servers.add(server);
       return server;
    }

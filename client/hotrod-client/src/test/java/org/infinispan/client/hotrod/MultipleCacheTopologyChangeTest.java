@@ -4,6 +4,7 @@ import static java.util.Arrays.stream;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertTrue;
@@ -84,7 +85,7 @@ public class MultipleCacheTopologyChangeTest extends MultipleCacheManagersTest {
       }
 
       public void start() {
-         cacheManager = createClusteredCacheManager(hotRodCacheConfiguration(getConfigurationBuilder()));
+         cacheManager = createClusteredCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), hotRodCacheConfiguration(getConfigurationBuilder()));
          registerCacheManager(cacheManager);
          stream(cacheNames).forEach(cacheName -> {
             cacheManager.defineConfiguration(cacheName, getConfigurationBuilder().build());

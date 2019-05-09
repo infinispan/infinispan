@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -134,7 +135,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      return TestCacheManagerFactory.createServerModeCacheManager(builder);
+      return TestCacheManagerFactory.createServerModeCacheManager(hotRodGlobalConfiguration(this.getClass()), builder);
    }
 
    @Override

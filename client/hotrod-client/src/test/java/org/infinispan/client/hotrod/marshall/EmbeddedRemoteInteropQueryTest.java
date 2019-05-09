@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.marshall;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -81,7 +82,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = createConfigBuilder();
 
-      cacheManager = TestCacheManagerFactory.createServerModeCacheManager(builder);
+      cacheManager = TestCacheManagerFactory.createServerModeCacheManager(hotRodGlobalConfiguration(this.getClass()), builder);
       cache = cacheManager.getCache();
 
       embeddedCache = cache.getAdvancedCache().withEncoding(IdentityEncoder.class);

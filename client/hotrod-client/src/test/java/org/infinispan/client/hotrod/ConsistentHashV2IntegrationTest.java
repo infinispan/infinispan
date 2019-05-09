@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -47,10 +48,10 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = buildConfiguration();
 
-      addClusterEnabledCacheManager(builder);
-      addClusterEnabledCacheManager(builder);
-      addClusterEnabledCacheManager(builder);
-      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
+      addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
+      addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
+      addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
 
       hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(manager(0));
       hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(manager(1));
@@ -138,7 +139,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
 
       final int topologyIdBeforeJoin = channelFactory.getTopologyId(new byte[]{});
       log.tracef("Starting test with client topology id %d", topologyIdBeforeJoin);
-      EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(buildConfiguration());
+      EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), buildConfiguration());
       HotRodServer hotRodServer5 = HotRodClientTestingUtil.startHotRodServer(cm5);
 
       // Rebalancing to include the joiner will increment the topology id by 2

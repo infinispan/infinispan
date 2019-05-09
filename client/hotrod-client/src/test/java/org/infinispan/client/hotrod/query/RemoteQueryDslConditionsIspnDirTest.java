@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -21,7 +23,7 @@ public class RemoteQueryDslConditionsIspnDirTest extends RemoteQueryDslCondition
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultCacheConfiguration = new ConfigurationBuilder();
-      createClusteredCaches(1, defaultCacheConfiguration, true);
+      createClusteredCaches(1, hotRodGlobalConfiguration(this.getClass()), defaultCacheConfiguration, true);
 
       ConfigurationBuilder cfg = getConfigurationBuilder();
       manager(0).defineConfiguration(TEST_CACHE_NAME, cfg.build());

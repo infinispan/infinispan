@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotSame;
 
@@ -33,7 +34,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManager(
+      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()),
             hotRodCacheConfiguration(getDefaultStandaloneCacheConfig(false)));
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
@@ -48,7 +49,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
 
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       rc = remoteCacheManager.getCache();
-      channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
+      channelFactory = remoteCacheManager.getChannelFactory();
       return cacheManager;
    }
 

@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodClusteredGlobalConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -31,8 +32,8 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      addClusterEnabledCacheManager(builder);
-      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
+      addClusterEnabledCacheManager(hotRodClusteredGlobalConfiguration(this.getClass()), builder);
 
       hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(manager(0));
       hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(manager(1));

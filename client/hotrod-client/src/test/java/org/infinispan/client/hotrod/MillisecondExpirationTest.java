@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodGlobalConfiguration;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.concurrent.TimeUnit;
@@ -21,7 +22,7 @@ public class MillisecondExpirationTest extends DefaultExpirationTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultStandaloneCacheConfig(false));
-      return TestCacheManagerFactory.createCacheManager(builder);
+      return TestCacheManagerFactory.createCacheManager(hotRodGlobalConfiguration(this.getClass()), builder);
    }
 
    @Test
