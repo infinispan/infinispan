@@ -118,9 +118,6 @@
       <module>client/hotrod-client</module>
       <module>atomic-factory</module>
       <module>all</module>
-      <module>all/remote</module>
-      <module>all/embedded</module>
-      <module>all/embedded-query</module>
       <module>all/cli</module>
       <module>osgi</module>
       <module>spring/spring5</module>
@@ -151,9 +148,6 @@
       <module>integrationtests/osgi</module>
       <module>integrationtests/elasticsearch-indexmanager-it</module>
       <module>integrationtests/cdi-weld-se-it</module>
-      <module>integrationtests/all-embedded-it</module>
-      <module>integrationtests/all-embedded-query-it</module>
-      <module>integrationtests/all-remote-it</module>
       <module>integrationtests/spring-boot-it</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
@@ -2299,11 +2293,6 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-embedded</artifactId>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-jcache-commons</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
@@ -2456,11 +2445,6 @@
             <version>${version.infinispan}</version>
             <type>test-jar</type>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-embedded-query</artifactId>
-            <version>${version.infinispan}</version>
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
@@ -4890,14 +4874,11 @@
          <id>distribution</id>
          <modules>
             <module>documentation</module>
-            <module>javadoc/javadoc-embedded</module>
-            <module>javadoc/javadoc-remote</module>
             <module>javadoc/javadoc-all</module>
             <module>distribution</module>
          </modules>
          <properties>
             <skipTests>true</skipTests>
-            <dependencies.excludeArtifactIds>infinispan-embedded,infinispan-embedded-query,infinispan-remote</dependencies.excludeArtifactIds>
             <dependencies.excludeGroupIds>org.infinispan,org.jgroups,org.jboss.marshalling,org.jboss.logging,net.jcip,org.kohsuke.metainf-services</dependencies.excludeGroupIds>
          </properties>
          <build>

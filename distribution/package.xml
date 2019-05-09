@@ -34,7 +34,7 @@
       <base-distribution dir="${output.dir}" type="all" javadocs="all"/>
 
       <copy todir="${output.dir}">
-         <file file="${org.infinispan:infinispan-remote:jar}" />
+         <file file="${org.infinispan:infinispan-client-hotrod:jar}" />
          <file file="${org.infinispan:infinispan-cli:jar}" />
          <mapper type="flatten" />
       </copy>
@@ -60,7 +60,7 @@
       <sequential>
          <mkdir dir="${output.dir}" />
          <copy todir="${output.dir}">
-            <file file="${org.infinispan:infinispan-remote:jar}" />
+            <file file="${org.infinispan:infinispan-client-hotrod:jar}" />
             <mapper type="flatten" />
          </copy>
          <base-distribution-lib-remote dir="${output.dir}" />
@@ -128,8 +128,8 @@
          <mkdir dir="@{dir}" />
          <!-- Core JARs -->
          <copy todir="@{dir}">
-            <file file="${org.infinispan:infinispan-embedded:jar}" />
-            <file file="${org.infinispan:infinispan-embedded-query:jar}" />
+            <file file="${org.infinispan:infinispan-core:jar}" />
+            <file file="${org.infinispan:infinispan-query:jar}" />
             <mapper type="flatten" />
          </copy>
          <base-distribution-lib-embedded dir="@{dir}"/>
