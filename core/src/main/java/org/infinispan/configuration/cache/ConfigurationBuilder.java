@@ -355,6 +355,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       this.compatibility.read(template.compatibility());
       this.memory.read(template.memory());
       this.encoding.read(template.encoding());
+      this.template = template.isTemplate();
 
       for (Object c : template.modules().values()) {
          Builder<Object> builder = this.addModule(ConfigurationUtils.builderFor(c));

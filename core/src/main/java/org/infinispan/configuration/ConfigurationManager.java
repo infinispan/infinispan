@@ -76,9 +76,14 @@ public class ConfigurationManager {
             String key = c.getKey();
             if (GlobUtils.isGlob(key)) {
                if (name.matches(GlobUtils.globToRegex(key))) {
-                  if (match == null)
+                  if (match == null) {
                      match = c.getValue();
-                  else
+                     // If this is a template, turn it into a concrete configuration
+                     if (match.isTemplate()) {
+                        ConfigurationBuilder builder = new ConfigurationBuilder().read(match).template(false);
+                        match = builder.build();
+                     }
+                  } else
                      throw log.configurationNameMatchesMultipleWildcards(name);
                }
             }

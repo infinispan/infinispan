@@ -495,7 +495,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
          if (globalStats != null) {
             builder.jmxStatistics().enabled(globalStats).available(globalStats);
          }
-         configuration = builder.build();
+         configuration = builder.template(false).build();
          type.validate(configuration);
          manager.defineConfiguration(cacheName, configuration);
       }
