@@ -208,6 +208,7 @@
       <version.org.wildfly>${appserver.version}</version.org.wildfly>
       <version.org.wildfly.arquillian>2.1.1.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>6.0.2.Final</version.org.wildfly.core>
+      <version.org.wildfly.elytron>1.8.0.Final</version.org.wildfly.elytron>
       <version.osgi>4.3.1</version.osgi>
       <version.pax.exam>4.11.0</version.pax.exam>
       <version.picketbox>5.0.3.Final</version.picketbox>

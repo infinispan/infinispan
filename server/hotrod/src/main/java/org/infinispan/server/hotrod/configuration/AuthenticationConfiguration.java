@@ -57,8 +57,13 @@ public class AuthenticationConfiguration {
 
    @Override
    public String toString() {
-      return "AuthenticationConfiguration [enabled=" + enabled + ", allowedMechs=" + allowedMechs
-            + ", serverAuthenticationProvider=" + serverAuthenticationProvider + ", mechProperties=" + mechProperties
-            + ", serverName=" + serverName + ", serverSubject=" + serverSubject + "]";
+      return "AuthenticationConfiguration[" +
+            "enabled=" + enabled +
+            ", allowedMechs=" + allowedMechs +
+            ", serverAuthenticationProvider=" + serverAuthenticationProvider +
+            ", mechProperties=" + mechProperties +
+            ", serverName='" + serverName + '\'' +
+            ", serverSubject=" + serverSubject +
+            ']';
    }
 }

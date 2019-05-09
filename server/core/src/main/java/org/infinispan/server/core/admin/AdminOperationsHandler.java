@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.Util;
 import org.infinispan.security.Security;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
@@ -24,10 +23,9 @@ import org.infinispan.tasks.spi.TaskEngine;
 public abstract class AdminOperationsHandler implements TaskEngine {
    final Map<String, AdminServerTask> tasks;
 
-   protected AdminOperationsHandler(Class<? extends AdminServerTask>... taskClasses) {
-      this.tasks = new HashMap<>(taskClasses.length);
-      for(Class<? extends AdminServerTask> taskClass : taskClasses) {
-         AdminServerTask<?> task = Util.getInstance(taskClass);
+   protected AdminOperationsHandler(AdminServerTask<?>... tasks) {
+      this.tasks = new HashMap<>(tasks.length);
+      for (AdminServerTask<?> task : tasks) {
          this.tasks.put(task.getName(), task);
       }
    }

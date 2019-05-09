@@ -20,7 +20,7 @@ public class HotRodAccessLoggingTest extends HotRodSingleNodeTest {
    protected void setup() throws Exception {
       logAppender = new StringLogAppender("org.infinispan.HOTROD_ACCESS_LOG",
             Level.TRACE,
-            t -> t.getName().startsWith("HotRod-HotRodAccessLoggingTest-ServerIO"),
+            t -> t.getName().startsWith("Hot Rod-HotRodAccessLoggingTest-ServerIO"),
             PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
       logAppender.install();
       super.setup();
@@ -37,7 +37,7 @@ public class HotRodAccessLoggingTest extends HotRodSingleNodeTest {
 
       server().getTransport().stop();
 
-      String logline = logAppender.getLog(0).toString();
+      String logline = logAppender.getLog(0);
       assertTrue(logline, logline.matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\w+\\] \"PUT /HotRodCache/\\[B0x6B6579 HOTROD/2\\.1\" OK \\d+ \\d+ \\d+$"));
    }
 }

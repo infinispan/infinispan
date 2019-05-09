@@ -725,7 +725,7 @@
       <versionx.org.wildfly.legacy.test.wildfly-legacy-spi>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-spi>
       <versionx.org.wildfly.legacy.test.wildfly-legacy-versions>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-versions>
       <versionx.org.wildfly.security.elytron-web.undertow-server>1.1.0.Final</versionx.org.wildfly.security.elytron-web.undertow-server>
-      <versionx.org.wildfly.security.wildfly-elytron>1.3.3.Final</versionx.org.wildfly.security.wildfly-elytron>
+      <versionx.org.wildfly.security.wildfly-elytron>${version.org.wildfly.elytron}</versionx.org.wildfly.security.wildfly-elytron>
       <versionx.org.wildfly.security.wildfly-security-manager>1.1.2.Final</versionx.org.wildfly.security.wildfly-security-manager>
       <versionx.org.wildfly.transaction.wildfly-transaction-client>1.1.2.Final</versionx.org.wildfly.transaction.wildfly-transaction-client>
       <versionx.org.wildfly.wildfly-clustering-common>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-common>

@@ -2,10 +2,10 @@ package org.infinispan.server.hotrod.configuration;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import javax.security.auth.Subject;
 import javax.security.sasl.SaslServerFactory;
@@ -15,6 +15,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
 import org.infinispan.server.core.security.external.ExternalSaslServerFactory;
+import org.infinispan.server.hotrod.DefaultSaslServerFactoryFactory;
 import org.infinispan.server.hotrod.logging.Log;
 
 /**
@@ -31,6 +32,7 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
    private Map<String, String> mechProperties = new HashMap<String, String>();
    private String serverName;
    private Subject serverSubject;
+   private BiFunction<String, Map<String, ?>, SaslServerFactory> saslFactoryFactory = new DefaultSaslServerFactoryFactory();
 
    AuthenticationConfigurationBuilder(HotRodServerChildConfigurationBuilder builder) {
       super(builder);
@@ -89,8 +91,7 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
          }
          Set<String> allMechs = new LinkedHashSet<String>();
          Collections.addAll(allMechs, ExternalSaslServerFactory.NAMES);
-         for (Iterator<SaslServerFactory> factories = SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true); factories.hasNext(); ) {
-            SaslServerFactory factory = factories.next();
+         for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true)) {
             for (String mech : factory.getMechanismNames(mechProperties)) {
                allMechs.add(mech);
             }

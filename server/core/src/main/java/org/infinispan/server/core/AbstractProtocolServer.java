@@ -11,7 +11,6 @@ import javax.management.ObjectName;
 
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -224,14 +223,17 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    }
 
    protected void startDefaultCache() {
-      cacheManager.getCache(defaultCacheName());
+      String name = defaultCacheName();
+      if (name != null) {
+         cacheManager.getCache(name);
+      }
    }
 
    public String defaultCacheName() {
       if (configuration.defaultCacheName() != null) {
          return configuration.defaultCacheName();
       } else {
-         return cacheManager.getCacheManagerConfiguration().defaultCacheName().orElse(BasicCacheContainer.DEFAULT_CACHE_NAME);
+         return cacheManager.getCacheManagerConfiguration().defaultCacheName().orElse(null);
       }
    }
 
