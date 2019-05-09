@@ -86,13 +86,20 @@ public class SoftIndexFileStoreConfigurationParser implements ConfigurationParse
    }
 
    private void parseData(XMLExtendedStreamReader reader, SoftIndexFileStoreConfigurationBuilder builder) throws XMLStreamException {
+      String path = null;
+      String relativeTo = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-            case PATH:
-               builder.dataLocation(value);
+            case PATH: {
+               path = value;
                break;
+            }
+            case RELATIVE_TO: {
+               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
+               break;
+            }
             case MAX_FILE_SIZE:
                builder.maxFileSize(Integer.parseInt(value));
                break;
@@ -104,16 +111,27 @@ public class SoftIndexFileStoreConfigurationParser implements ConfigurationParse
          }
       }
       ParseUtils.requireNoContent(reader);
+      path = ParseUtils.resolvePath(path, relativeTo);
+      if (path != null) {
+         builder.dataLocation(path);
+      }
    }
 
    private void parseIndex(XMLExtendedStreamReader reader, SoftIndexFileStoreConfigurationBuilder builder) throws XMLStreamException {
+      String path = null;
+      String relativeTo = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-            case PATH:
-               builder.indexLocation(value);
+            case PATH: {
+               path = value;
                break;
+            }
+            case RELATIVE_TO: {
+               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
+               break;
+            }
             case SEGMENTS:
                builder.indexSegments(Integer.parseInt(value));
                break;
@@ -131,6 +149,10 @@ public class SoftIndexFileStoreConfigurationParser implements ConfigurationParse
          }
       }
       ParseUtils.requireNoContent(reader);
+      path = ParseUtils.resolvePath(path, relativeTo);
+      if (path != null) {
+         builder.indexLocation(path);
+      }
    }
 
    @Override

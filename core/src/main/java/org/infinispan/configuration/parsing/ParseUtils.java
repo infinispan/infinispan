@@ -296,9 +296,9 @@ public final class ParseUtils {
        return null;
     }
 
-   public static String[] getListAttributeValue(String value) {
-      return value.split("\\s+");
-   }
+    public static String[] getListAttributeValue(String value) {
+       return value.split("\\s+");
+    }
 
     public static String resolvePath(String path, String relativeTo) {
         if (path == null) {
@@ -309,6 +309,16 @@ public final class ParseUtils {
             return new File(new File(relativeTo), path).getAbsolutePath();
         } else {
             return path;
+        }
+    }
+
+    public static String requireAttributeProperty(final XMLStreamReader reader, int i) throws XMLStreamException {
+        String property = reader.getAttributeValue(i);
+        Object value = reader.getProperty(property);
+        if (value == null) {
+            throw new XMLStreamException("Missing required property '" + property +"' for attribute '" + reader.getAttributeLocalName(i) + "'", reader.getLocation());
+        } else {
+            return value.toString();
         }
     }
 }

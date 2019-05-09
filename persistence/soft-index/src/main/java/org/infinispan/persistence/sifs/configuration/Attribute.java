@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Enumerates the attributes used by the LevelDB cache stores configuration
+ * Enumerates the attributes used by the SoftIndex cache stores configuration
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  */
@@ -19,12 +19,12 @@ public enum Attribute {
    MAX_NODE_SIZE("max-node-size"),
    MIN_NODE_SIZE("min-node-size"),
    OPEN_FILES_LIMIT("open-files-limit"),
-   SYNC_WRITES("sync-writes")
-   ;
+   SYNC_WRITES("sync-writes"),
+   RELATIVE_TO("relative-to");
 
    private final String name;
 
-   private Attribute(final String name) {
+   Attribute(final String name) {
       this.name = name;
    }
 

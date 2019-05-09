@@ -687,7 +687,7 @@
   <xs:complexType name="global-state-path">
     <xs:attribute name="relative-to" type="xs:string" default="jboss.server.data.dir">
         <xs:annotation>
-            <xs:documentation>Ignored in embedded mode.</xs:documentation>
+            <xs:documentation>A property name whose value will be used as the root path for storing global state</xs:documentation>
         </xs:annotation>
     </xs:attribute>
     <xs:attribute name="path" type="xs:string" use="required">
@@ -1783,7 +1783,7 @@
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="relative-to" type="xs:string">
-          <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
+          <xs:annotation><xs:documentation>A property name indicating the root path where data is stored.</xs:documentation></xs:annotation>
         </xs:attribute>
         <xs:attribute name="path" type="xs:string">
           <xs:annotation>

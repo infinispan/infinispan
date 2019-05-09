@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Version;
@@ -134,7 +135,9 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
 
    @Test
    public void testLatestVersion() throws IOException {
-      ParserRegistry parserRegistry = new ParserRegistry();
+      Properties properties = new Properties();
+      properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(loadLatestVersionTest());
       testConfigurations(builderHolder);
    }

@@ -1047,7 +1047,7 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               relativeTo = (String)reader.getProperty(reader.getAttributeValue(i));
+               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
                break;
             }
             case PATH: {
@@ -1885,7 +1885,7 @@ public class Parser implements ConfigurationParser {
          throw log.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
-      CacheMode baseCacheMode = configuration == null ? CacheMode.INVALIDATION_SYNC : builder.clustering().cacheMode();
+      CacheMode baseCacheMode = configuration == null ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
@@ -1980,7 +1980,7 @@ public class Parser implements ConfigurationParser {
          throw log.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
-      CacheMode baseCacheMode = configuration == null ? CacheMode.REPL_SYNC : builder.clustering().cacheMode();
+      CacheMode baseCacheMode = configuration == null ? CacheMode.REPL_SYNC : CacheMode.REPL_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
@@ -2035,7 +2035,7 @@ public class Parser implements ConfigurationParser {
          throw log.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
-      CacheMode baseCacheMode = configuration == null ? CacheMode.DIST_SYNC : builder.clustering().cacheMode();
+      CacheMode baseCacheMode = configuration == null ? CacheMode.DIST_SYNC : CacheMode.DIST_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
@@ -2122,7 +2122,7 @@ public class Parser implements ConfigurationParser {
          throw log.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
-      CacheMode baseCacheMode = configuration == null ? CacheMode.SCATTERED_SYNC : builder.clustering().cacheMode();
+      CacheMode baseCacheMode = configuration == null ? CacheMode.SCATTERED_SYNC : CacheMode.SCATTERED_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
@@ -2152,7 +2152,7 @@ public class Parser implements ConfigurationParser {
       if (holder.getNamedConfigurationBuilders().containsKey(name)) {
          throw log.duplicateCacheName(name);
       }
-      ConfigurationBuilder builder = holder.newConfigurationBuilder(name).template(template);
+      ConfigurationBuilder builder = holder.newConfigurationBuilder(name);
       if (baseConfigurationName != null) {
          ConfigurationBuilder baseConfigurationBuilder = holder.getNamedConfigurationBuilders().get(baseConfigurationName);
          if (baseConfigurationBuilder == null) {
@@ -2165,7 +2165,7 @@ public class Parser implements ConfigurationParser {
          builder.read(baseConfiguration);
       }
 
-      return builder;
+      return builder.template(template);
    }
 
    private void parsePersistence(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -2243,7 +2243,7 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               relativeTo = (String) reader.getProperty(value);
+               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
                break;
             }
             case PATH: {

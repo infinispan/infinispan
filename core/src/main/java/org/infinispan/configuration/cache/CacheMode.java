@@ -103,6 +103,10 @@ public enum CacheMode {
       }
    }
 
+   public CacheMode toSync(boolean sync) {
+      return sync ? toSync() : toAsync();
+   }
+
    public CacheMode toAsync() {
       switch (this) {
          case REPL_SYNC:

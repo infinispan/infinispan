@@ -174,7 +174,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
-      if (cacheMode().isClustered() && globalConfig.transport().transport() == null) {
+      if (cacheMode().isClustered() && globalConfig.transport().transport() == null && !builder.template()) {
          throw log.missingTransportConfiguration();
       }
 

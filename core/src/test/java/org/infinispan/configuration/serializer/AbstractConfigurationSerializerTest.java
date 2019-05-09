@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
@@ -31,7 +32,9 @@ import org.testng.annotations.Test;
 public abstract class AbstractConfigurationSerializerTest extends AbstractInfinispanTest {
    @Test(dataProvider="configurationFiles")
    public void configurationSerializationTest(Path config) throws Exception {
-      ParserRegistry registry = new ParserRegistry();
+      Properties properties = new Properties();
+      properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
+      ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
       InputStream is = FileLookupFactory.newInstance().lookupFileStrict(config.toString(), Thread.currentThread().getContextClassLoader());
       ConfigurationBuilderHolder holderBefore = registry.parse(is);
       Map<String, Configuration> configurations = new HashMap<>();
@@ -86,7 +89,9 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
    @Test(dataProvider = "configurationFiles")
    public void jsonSerializationTest(Path config) throws Exception {
       JsonWriter jsonWriter = new JsonWriter();
-      ParserRegistry registry = new ParserRegistry();
+      Properties properties = new Properties();
+      properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
+      ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
       InputStream is = FileLookupFactory.newInstance().lookupFileStrict(config.toString(), Thread.currentThread().getContextClassLoader());
       ConfigurationBuilderHolder holderBefore = registry.parse(is);
       JsonReader jsonReader = new JsonReader();
