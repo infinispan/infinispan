@@ -174,14 +174,7 @@ public class TEST_PING extends Discovery {
 
    private Map<Address, TEST_PING> getTestDiscoveries() {
       DiscoveryKey key = new DiscoveryKey(testName, cluster_name);
-      ConcurrentMap<Address, TEST_PING> discoveries = all.get(key);
-      if (discoveries == null) {
-         discoveries = new ConcurrentHashMap<Address, TEST_PING>();
-         ConcurrentMap<Address, TEST_PING> ret = all.putIfAbsent(key, discoveries);
-         if (ret != null)
-            discoveries = ret;
-      }
-      return discoveries;
+      return all.computeIfAbsent(key,  k -> new ConcurrentHashMap<>());
    }
 
    @Override
