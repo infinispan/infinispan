@@ -2,13 +2,13 @@
 <assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
-   <id>server</id>
+   <id>wildfly-server</id>
    <formats>
       <format>zip</format>
    </formats>
 
    <includeBaseDirectory>true</includeBaseDirectory>
-   <baseDirectory>${infinispan.brand.prefix}-server-${infinispan.brand.version}</baseDirectory>
+   <baseDirectory>${infinispan.brand.prefix}-${wildfly.brand.prefix}-server-${infinispan.brand.version}</baseDirectory>
 
    <fileSets>
       <fileSet>
@@ -19,7 +19,7 @@
          </includes>
       </fileSet>
       <fileSet>
-         <directory>../server/runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</directory>
+         <directory>../server/integration/build/target/server-distribution-dist/${infinispan.brand.prefix}-${wildfly.brand.prefix}-server-${infinispan.brand.version}</directory>
          <outputDirectory />
          <includes>
             <include>**/**</include>

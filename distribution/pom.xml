@@ -233,7 +233,7 @@
                   <configuration>
                      <target>
 			               <property name="plugin_classpath" refid="maven.plugin.classpath" />
-                        <property name="server.output.dir.prefix" value="${infinispan.brand.prefix}-server" />
+                        <property name="server.output.dir.prefix" value="${infinispan.brand.prefix}-${wildfly.brand.prefix}-server" />
 			               <property name="server.thin.dir.path" value="${basedir}/../server/integration/build/target/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                         <echo message="Base dir: ${basedir}" />
                         <path id="xsd.fileset.path">
@@ -370,6 +370,20 @@
                         <descriptor>src/main/assemblies/server.xml</descriptor>
                      </descriptors>
                      <finalName>${infinispan.brand.prefix}-server-${infinispan.brand.version}</finalName>
+                     <appendAssemblyId>false</appendAssemblyId>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>assemble-wildfly-server</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/main/assemblies/wildfly-server.xml</descriptor>
+                     </descriptors>
+                     <finalName>${infinispan.brand.prefix}-${wildfly.brand.prefix}-server-${infinispan.brand.version}</finalName>
                      <appendAssemblyId>false</appendAssemblyId>
                   </configuration>
                </execution>
