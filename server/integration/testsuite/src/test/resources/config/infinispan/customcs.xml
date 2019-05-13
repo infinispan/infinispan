@@ -7,6 +7,13 @@
                         </store>
                     </persistence>
                 </local-cache>
-                <local-cache name="memcachedCache"/>
+                <local-cache name="duplicateCustomStore">
+                    <persistence>
+                        <store name="customStore" class="org.infinispan.persistence.cluster.MyCustomCacheStore">
+                            <property name="customProperty">20</property>
+                            <property name="anotherCustomProperty">20</property>
+                        </store>
+                    </persistence>
+                </local-cache>
             </cache-container>
         </subsystem>

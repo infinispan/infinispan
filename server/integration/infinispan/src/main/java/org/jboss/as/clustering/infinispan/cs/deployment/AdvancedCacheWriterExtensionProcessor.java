@@ -1,12 +1,14 @@
 package org.jboss.as.clustering.infinispan.cs.deployment;
 
+import java.util.function.Supplier;
+
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 
 public final class AdvancedCacheWriterExtensionProcessor extends AbstractCacheStoreExtensionProcessor<AdvancedCacheWriter> {
 
    @Override
-   public AdvancedCacheWriterService createService(String serviceName, AdvancedCacheWriter instance) {
-      return new AdvancedCacheWriterService(serviceName, instance);
+   public AdvancedCacheWriterService createService(String implClassName, Supplier<AdvancedCacheWriter> instanceFactory) {
+      return new AdvancedCacheWriterService(implClassName, instanceFactory);
    }
 
    @Override
@@ -15,19 +17,8 @@ public final class AdvancedCacheWriterExtensionProcessor extends AbstractCacheSt
    }
 
    private static class AdvancedCacheWriterService extends AbstractExtensionManagerService<AdvancedCacheWriter> {
-      private AdvancedCacheWriterService(String serviceName, AdvancedCacheWriter AdvancedCacheWriter) {
-         super(serviceName, AdvancedCacheWriter);
-      }
-
-      @Override
-      public AdvancedCacheWriter getValue() {
-         return extension;
-      }
-
-      @Override
-      public String getServiceTypeName() {
-         return "AdvancedCacheWriter-service";
+      private AdvancedCacheWriterService(String className, Supplier<AdvancedCacheWriter> instanceFactory) {
+         super("AdvancedCacheWriter-service", className, instanceFactory);
       }
    }
-
 }
