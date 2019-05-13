@@ -2,7 +2,7 @@
     <target name="branding">
         <move todir="${feature-pack.modules}" filtering="true">
             <fileset dir="${feature-pack.modules}"/>
-            <regexpmapper from="(.*)/slot/(.*)" to="\1/${infinispan.module.slot}/\2" />
+            <regexpmapper from="(.*)[/\\]slot[/\\](.*)" to="\1/${infinispan.module.slot}/\2" />
         </move>
         <move todir="${feature-pack.modules}" filtering="true">
             <fileset dir="${feature-pack.modules}"/>
