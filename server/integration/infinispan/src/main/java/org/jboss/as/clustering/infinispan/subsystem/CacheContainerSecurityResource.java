@@ -23,6 +23,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
@@ -38,8 +39,8 @@ public class CacheContainerSecurityResource extends SimpleResourceDefinition {
     private static final PathElement PATH = PathElement.pathElement(ModelKeys.SECURITY);
 
     CacheContainerSecurityResource() {
-        super(PATH, new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY), CacheConfigOperationHandlers.CONTAINER_SECURITY_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
+        super(PATH, new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY),
+              new ReloadRequiredAddStepHandler(), ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 
     @Override

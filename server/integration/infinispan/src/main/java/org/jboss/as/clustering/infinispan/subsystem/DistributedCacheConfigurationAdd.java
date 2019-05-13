@@ -61,11 +61,11 @@ public class DistributedCacheConfigurationAdd extends SharedStateCacheConfigurat
      * @return
      */
     @Override
-    void processModelNode(OperationContext context, String containerName, ModelNode cache, ConfigurationBuilder builder, List<Dependency<?>> dependencies)
+    void processModelNode(OperationContext context, String containerName, String cacheName, ModelNode cache, ConfigurationBuilder builder, List<Dependency<?>> dependencies)
             throws OperationFailedException {
 
         // process the basic clustered configuration
-        super.processModelNode(context, containerName, cache, builder, dependencies);
+        super.processModelNode(context, containerName, cacheName, cache, builder, dependencies);
 
         final int owners = DistributedCacheConfigurationResource.OWNERS.resolveModelAttribute(context, cache).asInt();
         final int segments = DistributedCacheConfigurationResource.SEGMENTS.resolveModelAttribute(context, cache).asInt();

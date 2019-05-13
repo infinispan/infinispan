@@ -23,6 +23,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
@@ -42,7 +43,7 @@ public class CacheContainerConfigurationsResource extends SimpleResourceDefiniti
     CacheContainerConfigurationsResource(ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(PATH,
               new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.CONFIGURATIONS),
-              CacheConfigOperationHandlers.CONTAINER_CONFIGURATIONS_ADD,
+              new ReloadRequiredAddStepHandler(),
               ReloadRequiredRemoveStepHandler.INSTANCE);
 
         this.resolvePathHandler = resolvePathHandler;

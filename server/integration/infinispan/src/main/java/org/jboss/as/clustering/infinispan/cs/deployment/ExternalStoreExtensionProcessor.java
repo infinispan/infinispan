@@ -1,12 +1,14 @@
 package org.jboss.as.clustering.infinispan.cs.deployment;
 
+import java.util.function.Supplier;
+
 import org.infinispan.persistence.spi.ExternalStore;
 
 public final class ExternalStoreExtensionProcessor extends AbstractCacheStoreExtensionProcessor<ExternalStore> {
 
    @Override
-   public ExternalStoreService createService(String serviceName, ExternalStore instance) {
-      return new ExternalStoreService(serviceName, instance);
+   public ExternalStoreService createService(String implClassName, Supplier<ExternalStore> instanceFactory) {
+      return new ExternalStoreService(implClassName, instanceFactory);
    }
 
    @Override
@@ -15,19 +17,8 @@ public final class ExternalStoreExtensionProcessor extends AbstractCacheStoreExt
    }
 
    private static class ExternalStoreService extends AbstractExtensionManagerService<ExternalStore> {
-      private ExternalStoreService(String serviceName, ExternalStore ExternalStore) {
-         super(serviceName, ExternalStore);
-      }
-
-      @Override
-      public ExternalStore getValue() {
-         return extension;
-      }
-
-      @Override
-      public String getServiceTypeName() {
-         return "ExternalStore-service";
+      private ExternalStoreService(String className, Supplier<ExternalStore> instanceFactory) {
+         super("ExternalStore-service", className, instanceFactory);
       }
    }
-
 }

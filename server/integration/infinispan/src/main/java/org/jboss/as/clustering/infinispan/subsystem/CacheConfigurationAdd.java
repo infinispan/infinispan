@@ -226,7 +226,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         builder.template(CacheConfigurationResource.TEMPLATE.resolveModelAttribute(context, cacheModel).asBoolean());
 
         // process cache configuration ModelNode describing overrides to defaults
-        processModelNode(context, containerName, cacheModel, builder, dependencies);
+        processModelNode(context, containerName, cacheName, cacheModel, builder, dependencies);
 
         // install the cache configuration service (configures a cache)
         ServiceController<?> serviceController = installCacheConfigurationService(context.getServiceTarget(), containerName, cacheName,
@@ -331,8 +331,8 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
      * @param builder       ConfigurationBuilder object to add data to
      * @return initialised Configuration object
      */
-    void processModelNode(OperationContext context, String containerName, ModelNode cache, ConfigurationBuilder builder, List<Dependency<?>> dependencies)
-            throws OperationFailedException {
+    void processModelNode(OperationContext context, String containerName, String cacheName, ModelNode cache,
+                          ConfigurationBuilder builder, List<Dependency<?>> dependencies) throws OperationFailedException {
 
         builder.jmxStatistics().enabled(CacheConfigurationResource.STATISTICS.resolveModelAttribute(context, cache).asBoolean());
         builder.jmxStatistics().available(CacheConfigurationResource.STATISTICS_AVAILABLE.resolveModelAttribute(context, cache).asBoolean());
@@ -612,10 +612,10 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                       .passivation(passivation);
 
                 for (String loaderKey : PersistenceConfigurationResource.LOADER_KEYS)
-                    handleLoaderProperties(context, persistence, loaderKey, persistenceBuilder);
+                    handleLoaderProperties(context, persistence, loaderKey, cacheName, persistenceBuilder);
 
                 for (String storeKey : PersistenceConfigurationResource.STORE_KEYS)
-                    handleStoreProperties(context, persistence, storeKey, containerName, persistenceBuilder, dependencies);
+                    handleStoreProperties(context, persistence, storeKey, containerName, cacheName, persistenceBuilder, dependencies);
             }
         }
 
@@ -648,13 +648,13 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         }
     }
 
-    private void handleLoaderProperties(OperationContext context, ModelNode persistence, String loaderKey, PersistenceConfigurationBuilder builder)
-            throws OperationFailedException {
+    private void handleLoaderProperties(OperationContext context, ModelNode persistence, String loaderKey, String cacheName,
+                                        PersistenceConfigurationBuilder builder) throws OperationFailedException {
         if (persistence.hasDefined(loaderKey)) {
             for (Property loaderEntry : persistence.get(loaderKey).asPropertyList()) {
                 ModelNode loader = loaderEntry.getValue();
                 StoreConfigurationBuilder<?, ?> scb = buildCacheLoader(builder, loader, loaderKey);
-                parseCommonAttributes(context, loader, scb);
+                parseCommonAttributes(context, loader, cacheName, scb);
                 final Properties properties = getProperties(loader);
                 scb.withProperties(properties);
             }
@@ -674,15 +674,15 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
       return properties;
    }
 
-   private void handleStoreProperties(OperationContext context, ModelNode persistence, String storeKey, String containerName,
-                                      PersistenceConfigurationBuilder builder, List<Dependency<?>> dependencies)
+   private void handleStoreProperties(OperationContext context, ModelNode persistence, String storeKey,String containerName,
+                                      String cacheName, PersistenceConfigurationBuilder builder, List<Dependency<?>> dependencies)
             throws OperationFailedException {
 
         if (persistence.hasDefined(storeKey)) {
            for (Property storeEntry : persistence.get(storeKey).asPropertyList()) {
                 ModelNode store = storeEntry.getValue();
                 StoreConfigurationBuilder<?, ?> scb = buildCacheStore(context, builder, containerName, store, storeKey, dependencies);
-                parseCommonAttributes(context, store, scb);
+                parseCommonAttributes(context, store, cacheName, scb);
             }
         }
     }
@@ -1006,7 +1006,15 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
       return CacheLoader.class.getClassLoader().loadClass(className).newInstance();
    }
 
-   private void parseCommonAttributes(OperationContext context, ModelNode store, StoreConfigurationBuilder storeConfigurationBuilder) throws OperationFailedException {
+   private void parseCommonAttributes(OperationContext context, ModelNode store, String cacheName,
+                                      StoreConfigurationBuilder storeConfigurationBuilder) throws OperationFailedException {
+
+      if (storeConfigurationBuilder instanceof DeployedStoreConfigurationBuilder) {
+         ModelNode nameAttr = store.get(ModelKeys.NAME);
+         String name = String.format("%s.%s", cacheName, (nameAttr.isDefined() ? nameAttr.asString() : ModelKeys.STORE));
+         ((DeployedStoreConfigurationBuilder) storeConfigurationBuilder).name(name);
+      }
+
       ModelNode shared = store.get(ModelKeys.SHARED);
       if (shared != null && shared.isDefined()) {
          storeConfigurationBuilder.shared(shared.asBoolean());
