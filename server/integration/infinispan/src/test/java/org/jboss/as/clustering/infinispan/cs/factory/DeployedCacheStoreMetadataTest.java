@@ -2,6 +2,8 @@ package org.jboss.as.clustering.infinispan.cs.factory;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.function.Supplier;
+
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.junit.Test;
@@ -11,10 +13,11 @@ public class DeployedCacheStoreMetadataTest {
    @Test
    public void testImportingMetadataWithLoaderWriterClassOnly() {
       //given
-      Object loaderWriterRawInstance = new CustomStoreWithoutConfiguration();
+      Supplier<Object> instanceSupplier = CustomStoreWithConfiguration::new;
+      Object loaderWriterRawInstance = instanceSupplier.get();
 
       //when
-      DeployedCacheStoreMetadata deployedCacheStoreMetadata = DeployedCacheStoreMetadata.fromDeployedStoreInstance(loaderWriterRawInstance);
+      DeployedCacheStoreMetadata deployedCacheStoreMetadata = DeployedCacheStoreMetadata.fromDeployedStoreInstance(instanceSupplier);
 
       //then
       assertEquals(CustomStoreConfiguration.class, deployedCacheStoreMetadata.getStoreConfigurationClass());
@@ -26,10 +29,11 @@ public class DeployedCacheStoreMetadataTest {
    @Test
    public void testImportingMetadataWithLoaderWriterWithConfiguration() {
       //given
-      Object loaderWriterRawInstance = new CustomStoreWithConfiguration();
+      Supplier<Object> instanceSupplier = CustomStoreWithConfiguration::new;
+      Object loaderWriterRawInstance = instanceSupplier.get();
 
       //when
-      DeployedCacheStoreMetadata deployedCacheStoreMetadata = DeployedCacheStoreMetadata.fromDeployedStoreInstance(loaderWriterRawInstance);
+      DeployedCacheStoreMetadata deployedCacheStoreMetadata = DeployedCacheStoreMetadata.fromDeployedStoreInstance(instanceSupplier);
 
       //then
       assertEquals(CustomStoreConfigurationWithoutBuilder.class, deployedCacheStoreMetadata.getStoreConfigurationClass());
@@ -38,11 +42,8 @@ public class DeployedCacheStoreMetadataTest {
 
    @Test
    public void testImportingMetadataWithLoaderWriterWithConfigurationAndBuilder() {
-      //given
-      Object loaderWriterRawInstance = new CustomStoreWithConfigurationAndBuilder();
-
       //when
-      DeployedCacheStoreMetadata deployedCacheStoreMetadata = DeployedCacheStoreMetadata.fromDeployedStoreInstance(loaderWriterRawInstance);
+      DeployedCacheStoreMetadata deployedCacheStoreMetadata = DeployedCacheStoreMetadata.fromDeployedStoreInstance(CustomStoreWithConfigurationAndBuilder::new);
 
       //then
       assertEquals(CustomStoreConfigurationWithBuilder.class, deployedCacheStoreMetadata.getStoreConfigurationClass());
