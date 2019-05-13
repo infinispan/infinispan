@@ -21,6 +21,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.persistence.internal.PersistenceUtil;
+import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -162,11 +163,13 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    }
 
    @Override
-   public void purge(Executor threadPool, PurgeListener<? super K> listener) {
+   public void purge(Executor executor, ExpirationPurgeListener<K, V> listener) {
       for (int i = 0; i < stores.length(); ++i) {
          AdvancedLoadWriteStore<K, V> alws = stores.get(i);
-         if (alws != null) {
-            alws.purge(threadPool, listener);
+         if (alws instanceof AdvancedCacheExpirationWriter) {
+            ((AdvancedCacheExpirationWriter) alws).purge(executor, listener);
+         } else if (alws != null) {
+            alws.purge(executor, listener);
          }
       }
    }
