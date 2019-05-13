@@ -1,5 +1,6 @@
 package org.infinispan.persistence.spi;
 
+import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.util.IntSet;
@@ -22,7 +23,7 @@ import net.jcip.annotations.ThreadSafe;
  * @since 9.4
  */
 @ThreadSafe
-public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWriteStore<K, V> {
+public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWriteStore<K, V>, AdvancedCacheExpirationWriter<K, V> {
    // CacheLoader methods
 
    /**
@@ -281,4 +282,12 @@ public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWrite
     * @implSpec This method does nothing by default
     */
    default void removeSegments(IntSet segments) { }
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   default void purge(Executor executor, ExpirationPurgeListener<K, V> listener) {
+      purge(executor, (PurgeListener<K>) listener);
+   }
 }
