@@ -1,6 +1,5 @@
 package org.infinispan.commons.test;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.BufferedReader;
@@ -33,7 +32,7 @@ import org.infinispan.commons.test.skip.OS;
  * @since 9.2
  */
 class RunningTestsRegistry {
-   private static final long MAX_TEST_SECONDS = MINUTES.toSeconds(5);
+   private static final long MAX_TEST_SECONDS = Long.parseUnsignedLong(System.getProperty("infinispan.test.maxTestSeconds", "300"));
 
    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
          r -> new Thread(r, "RunningTestsRegistry-Worker"));
@@ -85,9 +84,9 @@ class RunningTestsRegistry {
                try (BufferedReader psOutput = new BufferedReader(new InputStreamReader(ps.getInputStream()))) {
                   psOutput.lines().forEach(line -> {
                      // Add children to the list excluding the ps command we just ran
-                     String[] pidAndCommand = line.split("\\s+");
-                     if (!"ps".equals(pidAndCommand[1].trim())) {
-                        pids.add(pidAndCommand[0].trim());
+                     String[] pidAndCommand = line.trim().split("\\s+");
+                     if (!"ps".equals(pidAndCommand[1])) {
+                        pids.add(pidAndCommand[0]);
                      }
                   });
                }
@@ -107,10 +106,11 @@ class RunningTestsRegistry {
 
    private static void dumpThreads(String safeTestName, List<String> pids) {
       try {
+         String extension = OS.getCurrentOs() == OS.WINDOWS ? ".exe" : "";
          String javaHome = System.getProperty("java.home");
-         File jstackFile = new File(javaHome, "bin/jstack");
+         File jstackFile = new File(javaHome, "bin/jstack" + extension);
          if (!jstackFile.canExecute()) {
-            jstackFile = new File(javaHome, "../bin/jstack");
+            jstackFile = new File(javaHome, "../bin/jstack" + extension);
          }
          LocalDateTime now = LocalDateTime.now();
          if (jstackFile.canExecute() && !pids.isEmpty()) {
@@ -156,8 +156,9 @@ class RunningTestsRegistry {
             // Thread.stop() works for lock(), but not if the thread is waiting to enter a synchronized block
             // So we just kill the fork and its children instead
             Process kill;
+            List<String> command;
             if (OS.getCurrentOs() == OS.WINDOWS) {
-               List<String> command = new ArrayList<>(Arrays.asList("taskkill", "/t", "/pid"));
+               command = new ArrayList<>(Arrays.asList("taskkill", "/t", "/f"));
                for (String pid : pids) {
                   command.add("/pid");
                   command.add(pid);
@@ -166,14 +167,18 @@ class RunningTestsRegistry {
                          .command(command)
                          .start();
             } else {
-               List<String> command = new ArrayList<>(Collections.singletonList("kill"));
+               command = new ArrayList<>(Collections.singletonList("kill"));
                command.addAll(pids);
                kill = new ProcessBuilder()
                          .command(command)
                          .start();
             }
             kill.waitFor(10, SECONDS);
-            System.out.printf("Killed processes %s\n", String.join(" ", pids));
+            if (kill.exitValue() == 0) {
+               System.out.printf("Killed processes %s\n", String.join(" ", pids));
+            } else {
+               System.err.printf("Failed to kill processes, exit code %d from command %s\n", kill.exitValue(), command);
+            }
          }
       } catch (Exception e) {
          System.err.println("Error killing test:");
