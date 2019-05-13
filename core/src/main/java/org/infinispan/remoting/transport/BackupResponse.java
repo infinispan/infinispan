@@ -38,4 +38,16 @@ public interface BackupResponse {
     * @param timeElapsedConsumer The {@link Consumer} to be invoke.
     */
    void notifyFinish(LongConsumer timeElapsedConsumer);
+
+   /**
+    * Invokes {@link XSiteAsyncAckListener} for each ack received from an asynchronous cross site request.
+    *
+    * If the request times-out or failed to be sent, the listeners receives a non-null {@link Throwable}.
+    */
+   void notifyAsyncAck(XSiteAsyncAckListener listener);
+
+   /**
+    * @return {@code true} if the request for the remote site is synchronous.
+    */
+   boolean isSync(String siteName);
 }

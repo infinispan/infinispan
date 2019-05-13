@@ -11,16 +11,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.function.LongConsumer;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.remoting.CacheUnreachableException;
-import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.BackupResponse;
+import org.infinispan.remoting.transport.XSiteAsyncAckListener;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -36,7 +36,7 @@ public class JGroupsBackupResponse implements BackupResponse {
 
    private static Log log = LogFactory.getLog(JGroupsBackupResponse.class);
 
-   private final Map<XSiteBackup, Future<ValidResponse>> syncBackupCalls;
+   private final Map<XSiteBackup, CompletableFuture<ValidResponse>> backupCalls;
    private Map<String, Throwable> errors;
    private Set<String> communicationErrors;
    private final TimeService timeService;
@@ -46,8 +46,9 @@ public class JGroupsBackupResponse implements BackupResponse {
    private volatile LongConsumer timeElapsedConsumer = value -> {
    };
 
-   public JGroupsBackupResponse(Map<XSiteBackup, Future<ValidResponse>> syncBackupCalls, TimeService timeService) {
-      this.syncBackupCalls = syncBackupCalls;
+   public JGroupsBackupResponse(Map<XSiteBackup, CompletableFuture<ValidResponse>> backupCalls,
+         TimeService timeService) {
+      this.backupCalls = Objects.requireNonNull(backupCalls);
       this.timeService = timeService;
       sendTimeNanos = timeService.time();
    }
@@ -55,10 +56,17 @@ public class JGroupsBackupResponse implements BackupResponse {
    @Override
    public void waitForBackupToFinish() throws Exception {
       long deductFromTimeout = timeService.timeDuration(sendTimeNanos, MILLISECONDS);
-      errors = new HashMap<>(syncBackupCalls.size());
+      errors = new HashMap<>(backupCalls.size());
       long elapsedTime = 0;
-      for (Map.Entry<XSiteBackup, Future<ValidResponse>> entry : syncBackupCalls.entrySet()) {
+      boolean hasSyncBackups = false;
+      for (Map.Entry<XSiteBackup, CompletableFuture<ValidResponse>> entry : backupCalls.entrySet()) {
          XSiteBackup xSiteBackup = entry.getKey();
+
+         if (!xSiteBackup.isSync()) {
+            continue;
+         }
+
+         hasSyncBackups = true;
          long timeout = xSiteBackup.getTimeout();
          String siteName = xSiteBackup.getSiteName();
 
@@ -90,15 +98,11 @@ public class JGroupsBackupResponse implements BackupResponse {
             elapsedTime += timeService.timeDuration(startNanos, MILLISECONDS);
          }
 
-         if (response instanceof ExceptionResponse) {
-            Throwable remoteException = ((ExceptionResponse) response).getException();
-            log.tracef(remoteException, "Got error backup response from site %s", siteName);
-            errors.put(siteName, remoteException);
-         } else {
-            log.tracef("Received response from site %s: %s", siteName, response);
-         }
+         log.tracef("Received response from site %s: %s", siteName, response);
       }
-      timeElapsedConsumer.accept(timeService.timeDuration(sendTimeNanos, MILLISECONDS));
+      if (hasSyncBackups) {
+         timeElapsedConsumer.accept(timeService.timeDuration(sendTimeNanos, MILLISECONDS));
+      }
    }
 
    private void addCommunicationError(String siteName) {
@@ -120,7 +124,7 @@ public class JGroupsBackupResponse implements BackupResponse {
 
    @Override
    public boolean isEmpty() {
-      return syncBackupCalls == null || syncBackupCalls.isEmpty();
+      return backupCalls.keySet().stream().noneMatch(XSiteBackup::isSync);
    }
 
    @Override
@@ -141,11 +145,11 @@ public class JGroupsBackupResponse implements BackupResponse {
    @Override
    public String toString() {
       return "JGroupsBackupResponse{" +
-            "syncBackupCalls=" + syncBackupCalls +
-            ", errors=" + errors +
-            ", communicationErrors=" + communicationErrors +
-            ", sendTimeNanos=" + sendTimeNanos +
-            '}';
+             "backupCalls=" + backupCalls +
+             ", errors=" + errors +
+             ", communicationErrors=" + communicationErrors +
+             ", sendTimeNanos=" + sendTimeNanos +
+             '}';
    }
 
    private Throwable filterException(Throwable throwable) {
@@ -153,5 +157,29 @@ public class JGroupsBackupResponse implements BackupResponse {
          return new CacheUnreachableException((UnreachableException) throwable);
       }
       return throwable;
+   }
+
+   @Override
+   public void notifyAsyncAck(XSiteAsyncAckListener listener) {
+      XSiteAsyncAckListener nonNullListener = Objects.requireNonNull(listener);
+      for (Map.Entry<XSiteBackup, CompletableFuture<ValidResponse>> entry : backupCalls.entrySet()) {
+         XSiteBackup backup = entry.getKey();
+         if (backup.isSync()) {
+            continue;
+         }
+         // TODO whenCompleteAsync? currently not needed...
+         entry.getValue().whenComplete((response, throwable) -> nonNullListener
+               .onAckReceived(sendTimeNanos, backup.getSiteName(), throwable));
+      }
+   }
+
+   @Override
+   public boolean isSync(String siteName) {
+      for (XSiteBackup backup : backupCalls.keySet()) {
+         if (backup.getSiteName().equals(siteName)) {
+            return backup.isSync();
+         }
+      }
+      return false;
    }
 }

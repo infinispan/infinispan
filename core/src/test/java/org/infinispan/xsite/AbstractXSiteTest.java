@@ -85,6 +85,15 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       siteName2index.clear();
    }
 
+   protected void killSite(String siteName) {
+      Integer index = siteName2index.remove(siteName);
+      if (index == null) {
+         return;
+      }
+      TestSite site = sites.remove(index.intValue());
+      killSite(site);
+   }
+
    protected void killSite(TestSite ts) {
       ts.cacheManagers.forEach(Lifecycle::stop);
    }

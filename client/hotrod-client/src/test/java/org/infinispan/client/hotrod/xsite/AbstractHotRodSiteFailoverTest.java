@@ -74,7 +74,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       return siteServers.get(siteName).get(0).getPort();
    }
 
-   void killSite(String siteName) {
+   protected void killSite(String siteName) {
       log.debugf("Kill site '%s' with ports: %s", siteName,
          siteServers.get(siteName).stream().map(s -> String.valueOf(s.getPort())).collect(Collectors.joining(", ")));
 

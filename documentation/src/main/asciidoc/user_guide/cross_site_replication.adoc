@@ -206,11 +206,6 @@ If backing up to a site fails for a certain number of times during a time interv
 
 ==== Configuration
 
-[IMPORTANT]
-====
-You can take sites offline automatically with the `SYNC` backup strategy only. If the backup strategy is `ASYNC` then you must take sites offline manually.
-====
-
 The following configuration provides an example for taking sites offline:
 
 .infinispan.xml

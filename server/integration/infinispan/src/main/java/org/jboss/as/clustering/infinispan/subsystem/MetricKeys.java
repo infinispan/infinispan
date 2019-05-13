@@ -98,6 +98,10 @@ public class MetricKeys {
     public static final String MAX_XSITE_REPLICATION_TIME = "maximum-xsite-replication-time";
     public static final String SYNC_XSITE_COUNT = "sync-xsite-replication-count";
     public static final String ASYNC_XSITE_COUNT = "async-xsite-replication-count";
+    public static final String AVG_ASYNC_XSITE_REPLICATION_TIME = "average-async-xsite-replication-time";
+    public static final String MIN_ASYNC_XSITE_REPLICATION_TIME = "minimum-async-xsite-replication-time";
+    public static final String MAX_ASYNC_XSITE_REPLICATION_TIME = "maximum-async-xsite-replication-time";
+    public static final String ASYNC_XSITE_ACKS_COUNT = "async-xsite-acks-count";
     // Backup Metrics
     public static final String SITES_ONLINE = "sites-online";
     public static final String SITES_OFFLINE = "sites-offline";

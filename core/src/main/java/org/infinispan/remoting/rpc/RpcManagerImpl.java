@@ -86,6 +86,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    private final AtomicLong replicationFailures = new AtomicLong(0);
    private final AtomicLong totalReplicationTime = new AtomicLong(0);
    private volatile SimpleStat syncXSiteReplicationTime = new DefaultSimpleStat();
+   private volatile SimpleStat asyncXSiteReplicationTime = new DefaultSimpleStat();
    private final LongAdder asyncXSiteCounter = new LongAdder();
 
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
@@ -412,6 +413,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       }
       BackupResponse response = t.backupRemotely(sites, command);
       response.notifyFinish(this::registerXsiteReplicationTime);
+      response.notifyAsyncAck(this::registerAsyncXSiteReplicationTime);
       int asyncCount = 0;
       for (XSiteBackup b : sites) {
          if (!b.isSync()) {
@@ -426,6 +428,11 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    private void registerXsiteReplicationTime(long durationMillis) {
       syncXSiteReplicationTime.record(durationMillis);
+   }
+
+   private void registerAsyncXSiteReplicationTime(long sendTime, String siteNameIgnored, Throwable throwable) {
+      long durationMillis = timeService.timeDuration(sendTime, TimeUnit.MILLISECONDS);
+      asyncXSiteReplicationTime.record(durationMillis);
    }
 
    private <T> T errorReplicating(Throwable t) {
@@ -462,6 +469,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       totalReplicationTime.set(0);
       syncXSiteReplicationTime = new DefaultSimpleStat();
       asyncXSiteCounter.reset();
+      asyncXSiteReplicationTime = new DefaultSimpleStat();
    }
 
    @ManagedAttribute(description = "Number of successful replications", displayName = "Number of successful replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
@@ -572,6 +580,38 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          displayType = DisplayType.SUMMARY)
    public long getAsyncXSiteCount() {
       return isStatisticsEnabled() ? asyncXSiteCounter.sum() : 0;
+   }
+
+   @ManagedAttribute(description = "Returns the average replication time, in milliseconds, for an asynchronous cross-site replication request",
+         displayName = "Average async Cross-Site replication time",
+         units = Units.MILLISECONDS,
+         displayType = DisplayType.SUMMARY)
+   public long getAverageAsyncXSiteReplicationTime() {
+      return isStatisticsEnabled() ? asyncXSiteReplicationTime.getAverage(-1) : -1;
+   }
+
+   @ManagedAttribute(description = "Returns the minimum replication time, in milliseconds, for an asynchronous cross-site replication request",
+         displayName = "Minimum async Cross-Site replication time",
+         units = Units.MILLISECONDS,
+         displayType = DisplayType.SUMMARY)
+   public long getMinimumAsyncXSiteReplicationTime() {
+      return isStatisticsEnabled() ? asyncXSiteReplicationTime.getMin(-1) : -1;
+   }
+
+   @ManagedAttribute(description = "Returns the maximum replication time, in milliseconds, for an asynchronous cross-site replication request",
+         displayName = "Maximum async Cross-Site replication time",
+         units = Units.MILLISECONDS,
+         displayType = DisplayType.SUMMARY)
+   public long getMaximumAsyncXSiteReplicationTime() {
+      return isStatisticsEnabled() ? asyncXSiteReplicationTime.getMax(-1) : -1;
+   }
+
+   @ManagedAttribute(description = "Returns the number of async cross-site acknowledges received",
+         displayName = "Async Cross-Site replication acks",
+         units = Units.NONE,
+         displayType = DisplayType.SUMMARY)
+   public long getAsyncXSiteAcksCount() {
+      return isStatisticsEnabled() ? asyncXSiteReplicationTime.count() : 0;
    }
 
    // mainly for unit testing

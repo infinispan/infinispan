@@ -22,7 +22,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -30,6 +29,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -38,16 +38,16 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.jmx.JmxUtil;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
-import org.infinispan.util.logging.TraceException;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
@@ -80,10 +80,10 @@ import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleTargetRequest;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.TraceException;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.jgroups.AnycastAddress;
@@ -312,32 +312,29 @@ public class JGroupsTransport implements Transport {
       if (trace)
          log.tracef("About to send to backups %s, command %s", backups, command);
       boolean rsvp = isRsvpCommand(command);
-      Map<XSiteBackup, Future<ValidResponse>> syncBackupCalls = new HashMap<>(backups.size());
+      Map<XSiteBackup, CompletableFuture<ValidResponse>> backupCalls = new HashMap<>(backups.size());
       for (XSiteBackup xsb : backups) {
          Address recipient = JGroupsAddressCache.fromJGroupsAddress(new SiteMaster(xsb.getSiteName()));
-         if (xsb.isSync()) {
-            long timeout = xsb.getTimeout();
-            long requestId = requests.newRequestId();
-            logRequest(requestId, command, recipient);
-            SingleSiteRequest<ValidResponse> request =
-                  new SingleSiteRequest<>(SingleResponseCollector.validOnly(), requestId, requests, xsb.getSiteName());
-            addRequest(request);
+         long requestId = requests.newRequestId();
+         logRequest(requestId, command, recipient);
+         SingleSiteRequest<ValidResponse> request =
+               new SingleSiteRequest<>(SingleResponseCollector.validOnly(), requestId, requests, xsb.getSiteName());
+         addRequest(request);
+         backupCalls.put(xsb, request);
 
-            try {
-               sendCommand(recipient, command, request.getRequestId(), DeliverOrder.NONE, rsvp, false, false);
-               if (timeout > 0) {
-                  request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
-               }
-            } catch (Throwable t) {
-               request.cancel(true);
-               throw t;
+         DeliverOrder order = xsb.isSync() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
+         long timeout = xsb.getTimeout();
+         try {
+            sendCommand(recipient, command, request.getRequestId(), order, rsvp, false, false);
+            if (timeout > 0) {
+               request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
             }
-            syncBackupCalls.put(xsb, request);
-         } else {
-            sendCommand(recipient, command, Request.NO_REQUEST_ID, DeliverOrder.PER_SENDER, false, false, false);
+         } catch (Throwable t) {
+            request.cancel(true);
+            throw t;
          }
       }
-      return new JGroupsBackupResponse(syncBackupCalls, timeService);
+      return new JGroupsBackupResponse(backupCalls, timeService);
    }
 
    @Override

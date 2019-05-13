@@ -92,4 +92,21 @@ public class AggregateBackupResponse implements BackupResponse {
          br.notifyFinish(timeElapsedConsumer);
       }
    }
+
+   @Override
+   public void notifyAsyncAck(XSiteAsyncAckListener listener) {
+      for (BackupResponse br : responses) {
+         br.notifyAsyncAck(listener);
+      }
+   }
+
+   @Override
+   public boolean isSync(String siteName) {
+      for (BackupResponse br : responses) {
+         if (br.isSync(siteName)) {
+            return true;
+         }
+      }
+      return false;
+   }
 }
