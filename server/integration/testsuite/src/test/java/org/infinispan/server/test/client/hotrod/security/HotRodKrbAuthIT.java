@@ -1,5 +1,6 @@
 package org.infinispan.server.test.client.hotrod.security;
 
+import java.io.File;
 import java.security.PrivilegedActionException;
 
 import javax.security.auth.Subject;
@@ -50,9 +51,8 @@ public class HotRodKrbAuthIT extends HotRodSaslAuthTestBase {
    protected Subject getSubject(String login, String password) throws LoginException {
       boolean isIBMJDK = System.getProperty("java.vendor").contains("IBM");
       String krbLogin = isIBMJDK ? "/ibm_jaas_krb_login.conf" : "/jaas_krb_login.conf";
-      System.setProperty("java.security.auth.login.config", HotRodKrbAuthIT.class.getResource(krbLogin)
-            .getPath());
-      System.setProperty("java.security.krb5.conf", HotRodKrbAuthIT.class.getResource("/krb5.conf").getPath());
+      System.setProperty("java.security.auth.login.config", new File(HotRodKrbAuthIT.class.getResource(krbLogin).getFile()).getAbsolutePath());
+      System.setProperty("java.security.krb5.conf", new File(HotRodKrbAuthIT.class.getResource("/krb5.conf").getFile()).getAbsolutePath());
       LoginContext lc = new LoginContext("HotRodKrbClient", new SimpleLoginHandler(login + "@" + KRB_REALM, password));
       if (isIBMJDK) {
          // workaround for IBM JDK: the first negotiation always fails, so let's do a dummy login/logout round.
