@@ -2,10 +2,17 @@ package org.infinispan.persistence.cluster;
 
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -18,7 +25,9 @@ import org.infinispan.persistence.spi.PersistenceException;
 @ConfiguredBy(MyCustomCacheStoreConfiguration.class)
 public class MyCustomCacheStore implements ExternalStore {
 
-    private MyCustomCacheStoreConfiguration config;
+    private Marshaller clientMarshaller;
+    private StreamingMarshaller serverMarshaller;
+    private StoreConfiguration config;
 
     public MyCustomCacheStore() {
         try {
@@ -31,6 +40,8 @@ public class MyCustomCacheStore implements ExternalStore {
     @Override
     public void init(InitializationContext ctx) {
         this.config = ctx.getConfiguration();
+        this.clientMarshaller = new GenericJBossMarshaller();
+        this.serverMarshaller = ctx.getMarshaller();
     }
 
     @Override
@@ -44,8 +55,23 @@ public class MyCustomCacheStore implements ExternalStore {
 
     @Override
     public MarshalledEntry load(Object key) throws PersistenceException {
-        assert config.customProperty() == 10;
-        return null;
+        if (!(key instanceof WrappedByteArray))
+            throw new IllegalArgumentException(String.format("Expected key to be of type '%s'", WrappedByteArray.class.getSimpleName()));
+
+        WrappedByteArray wrappedKey = (WrappedByteArray) key;
+        try {
+            String unwrappedKey = (String) clientMarshaller.objectFromByteBuffer(wrappedKey.getBytes());
+            String propertyValue = config.properties().getProperty(unwrappedKey);
+            if (propertyValue == null)
+                return null;
+            WrappedByteArray wrappedValue = new WrappedByteArray(clientMarshaller.objectToByteBuffer(propertyValue));
+            return new MarshalledEntryImpl<>(key, wrappedValue, null, serverMarshaller);
+        } catch (ClassNotFoundException | IOException e) {
+            throw new IllegalStateException(e);
+        }
+        catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
     }
 
     @Override
@@ -62,5 +88,4 @@ public class MyCustomCacheStore implements ExternalStore {
     public void stop() throws PersistenceException {
         //nothing to do here
     }
-
 }

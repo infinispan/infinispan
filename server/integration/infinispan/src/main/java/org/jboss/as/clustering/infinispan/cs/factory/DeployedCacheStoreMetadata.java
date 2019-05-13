@@ -1,5 +1,7 @@
 package org.jboss.as.clustering.infinispan.cs.factory;
 
+import java.util.function.Supplier;
+
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
@@ -20,13 +22,13 @@ public class DeployedCacheStoreMetadata {
    private Class<? extends StoreConfiguration> storeConfigurationClass;
    private Class<? extends StoreConfigurationBuilder> storeBuilderClass;
 
-   public DeployedCacheStoreMetadata(Object loaderWriterRawInstance) {
+   private DeployedCacheStoreMetadata(Object loaderWriterRawInstance) {
       this.loaderWriterRawInstance = loaderWriterRawInstance;
       this.loaderWriterInstanceName = loaderWriterRawInstance.getClass().getName();
    }
 
-   public static DeployedCacheStoreMetadata fromDeployedStoreInstance(Object loaderWriterRawInstance) {
-      DeployedCacheStoreMetadata ret = new DeployedCacheStoreMetadata(loaderWriterRawInstance);
+   static DeployedCacheStoreMetadata fromDeployedStoreInstance(Supplier loaderWriterRawInstance) {
+      DeployedCacheStoreMetadata ret = new DeployedCacheStoreMetadata(loaderWriterRawInstance.get());
       ret.initializeConfigurationData();
       return ret;
    }
@@ -53,19 +55,19 @@ public class DeployedCacheStoreMetadata {
       }
    }
 
-   public String getDeployedCacheClassName() {
+   String getDeployedCacheClassName() {
       return loaderWriterInstanceName;
    }
 
-   public Object getLoaderWriterRawInstance() {
+   Object getLoaderWriterRawInstance() {
       return loaderWriterRawInstance;
    }
 
-   public Class<? extends StoreConfiguration> getStoreConfigurationClass() {
+   Class<? extends StoreConfiguration> getStoreConfigurationClass() {
       return storeConfigurationClass;
    }
 
-   public Class<? extends StoreConfigurationBuilder> getStoreBuilderClass() {
+   Class<? extends StoreConfigurationBuilder> getStoreBuilderClass() {
       return storeBuilderClass;
    }
 

@@ -31,7 +31,6 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.SimpleListAttributeDefinition;
 import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.registry.AliasEntry;
@@ -78,14 +77,7 @@ public class BaseLoaderConfigurationResource extends CacheConfigurationChildReso
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
-    // used to pass in a list of properties to the loader add command
-    static final AttributeDefinition PROPERTY = new SimpleAttributeDefinitionBuilder(ModelKeys.PROPERTY, ModelType.PROPERTY, true).build();
-    static final SimpleListAttributeDefinition PROPERTIES = SimpleListAttributeDefinition.Builder.of(ModelKeys.PROPERTIES, PROPERTY).
-            setRequired(false).
-            build();
-
-    static final AttributeDefinition[] BASE_LOADER_ATTRIBUTES = {SHARED, PRELOAD};
-    static final AttributeDefinition[] BASE_LOADER_PARAMETERS = {SHARED, PRELOAD, PROPERTIES};
+    static final AttributeDefinition[] BASE_LOADER_ATTRIBUTES = {NAME, PRELOAD, SHARED};
 
     // operations
     private static final OperationDefinition RESET_LOADER_STATISTICS =

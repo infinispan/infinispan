@@ -36,6 +36,11 @@ public class DeployedStoreConfigurationBuilder extends AbstractStoreConfiguratio
       return this;
    }
 
+   public DeployedStoreConfigurationBuilder name(String name) {
+      attributes.attribute(DeployedStoreConfiguration.NAME).set(name);
+      return this;
+   }
+
    public DeployedStoreConfigurationBuilder customStoreClassName(String customStoreClassName) {
       attributes.attribute(DeployedStoreConfiguration.CUSTOM_STORE_CLASS_NAME).set(customStoreClassName);
       return this;

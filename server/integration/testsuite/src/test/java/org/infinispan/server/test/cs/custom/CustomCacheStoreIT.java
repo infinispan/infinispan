@@ -1,7 +1,7 @@
 package org.infinispan.server.test.cs.custom;
 
+import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 import java.io.File;
 
@@ -50,9 +50,9 @@ public class CustomCacheStoreIT {
 
    @BeforeClass
    public static void before() throws Exception {
-      JavaArchive deployedCacheStore = ShrinkWrap.create(JavaArchive.class);
-      deployedCacheStore.addPackage(MyCustomCacheStore.class.getPackage());
-      deployedCacheStore.addAsServiceProvider(ExternalStore.class, MyCustomCacheStore.class);
+      JavaArchive deployedCacheStore = ShrinkWrap.create(JavaArchive.class)
+            .addPackage(MyCustomCacheStore.class.getPackage())
+            .addAsServiceProvider(ExternalStore.class, MyCustomCacheStore.class);
 
       deployment = new File(System.getProperty("server1.dist"), "/standalone/deployments/custom-store.jar");
       deployedCacheStore.as(ZipExporter.class).exportTo(deployment, true);
@@ -76,6 +76,17 @@ public class CustomCacheStoreIT {
       // check via jmx that MyCustomCacheStore is indeed used
       MBeanServerConnectionProvider provider = new MBeanServerConnectionProvider(server.getHotrodEndpoint().getInetAddress().getHostName(), managementPort);
       assertEquals("[org.infinispan.persistence.cluster.MyCustomCacheStore]", getAttribute(provider, cacheLoaderMBean, "stores"));
+   }
+
+   @Test
+   @WithRunningServer({@RunningServer(name = "standalone-customcs")})
+   public void testDuplicateCustomStoresConfiguration() throws Exception {
+      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
+      RemoteCache<String, String> rc = rcm.getCache();
+      assertEquals("10", rc.get("customProperty"));
+      rc = rcm.getCache("duplicateCustomStore");
+      assertEquals("20", rc.get("customProperty"));
+      assertEquals("20", rc.get("anotherCustomProperty"));
    }
 
    private String getAttribute(MBeanServerConnectionProvider provider, String mbean, String attr) throws Exception {

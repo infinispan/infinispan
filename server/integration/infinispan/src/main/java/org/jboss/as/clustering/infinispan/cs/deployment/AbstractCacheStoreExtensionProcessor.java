@@ -2,6 +2,7 @@ package org.jboss.as.clustering.infinispan.cs.deployment;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
@@ -14,13 +15,12 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.ServicesAttachment;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
-import org.jboss.msc.service.Service;
+import org.jboss.msc.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StopContext;
-import org.jboss.msc.value.InjectedValue;
 
 public abstract class AbstractCacheStoreExtensionProcessor<T> implements DeploymentUnitProcessor {
 
@@ -47,55 +47,60 @@ public abstract class AbstractCacheStoreExtensionProcessor<T> implements Deploym
          try {
             Class<? extends T> clazz = classLoader.loadClass(serviceClassName).asSubclass(serviceClass);
             Constructor<? extends T> ctor = clazz.getConstructor();
-            T instance = ctor.newInstance();
-            installService(ctx, serviceClassName, instance);
-         } catch (Exception e) {
-            InfinispanMessages.MESSAGES.unableToInstantiateClass(serviceClassName);
+            installService(ctx, serviceClassName, () -> {
+               try {
+                  return ctor.newInstance();
+               } catch (Exception e) {
+                  throw InfinispanMessages.MESSAGES.unableToInstantiateClass(serviceClassName);
+               }
+            });
+         } catch (ClassNotFoundException | NoSuchMethodException e) {
+            throw InfinispanMessages.MESSAGES.unableToInstantiateClass(serviceClassName);
          }
       }
    }
 
-   public final void installService(DeploymentPhaseContext ctx, String implementationClassName, T instance) {
-      AbstractExtensionManagerService<T> service = createService(implementationClassName, instance);
-      ServiceName extensionServiceName = ServiceName.JBOSS.append(service.getServiceTypeName(), implementationClassName.replaceAll("\\.", "_"));
+   private void installService(DeploymentPhaseContext ctx, String implementationClassName, Supplier<T> instanceFactory) {
+      AbstractExtensionManagerService<T> service = createService(implementationClassName, instanceFactory);
       InfinispanLogger.ROOT_LOGGER.installDeployedCacheStore(implementationClassName);
-      ServiceBuilder<T> serviceBuilder = ctx.getServiceTarget().addService(extensionServiceName, service);
-      serviceBuilder.setInitialMode(ServiceController.Mode.ACTIVE);
-      serviceBuilder.addDependency(DeployedCacheStoreFactoryService.SERVICE_NAME, DeployedCacheStoreFactory.class, service.getDeployedCacheStoreFactory());
+
+      ServiceBuilder<?> serviceBuilder = ctx.getServiceTarget().addService(service.getName()).setInitialMode(ServiceController.Mode.ACTIVE);
+      service.deployedCacheStoreFactory = serviceBuilder.requires(DeployedCacheStoreFactoryService.SERVICE_NAME);
+      serviceBuilder.setInstance(service);
       serviceBuilder.install();
    }
 
    public abstract Class<T> getServiceClass();
 
-   public abstract AbstractExtensionManagerService<T> createService(String serviceName, T instance);
+   public abstract AbstractExtensionManagerService<T> createService(String implClassName, Supplier<T> instanceFactory);
 
-   protected static abstract class AbstractExtensionManagerService<T> implements Service<T> {
+   static abstract class AbstractExtensionManagerService<T> implements Service {
 
-      protected final T extension;
-      protected final String className;
-      protected final InjectedValue<DeployedCacheStoreFactory> deployedCacheStoreFactory = new InjectedValue<>();
+      final Supplier<T> instanceFactory;
+      final String className;
+      final String serviceName;
+      Supplier<DeployedCacheStoreFactory> deployedCacheStoreFactory;
 
-      protected AbstractExtensionManagerService(String className, T extension) {
-         this.extension = extension;
+      AbstractExtensionManagerService(String serviceName, String className, Supplier<T> instanceFactory) {
+         this.serviceName = serviceName;
          this.className = className;
+         this.instanceFactory = instanceFactory;
       }
 
       @Override
       public void start(StartContext context) {
          InfinispanLogger.ROOT_LOGGER.deployedStoreStarted(className);
-         deployedCacheStoreFactory.getValue().addInstance(extension);
+         deployedCacheStoreFactory.get().addInstanceFactory(className, instanceFactory);
       }
 
       @Override
       public void stop(StopContext context) {
          InfinispanLogger.ROOT_LOGGER.deployedStoreStopped(className);
-         deployedCacheStoreFactory.getValue().removeInstance(extension);
+         deployedCacheStoreFactory.get().removeInstance(className);
       }
 
-      InjectedValue<DeployedCacheStoreFactory> getDeployedCacheStoreFactory() {
-         return deployedCacheStoreFactory;
+      public ServiceName getName() {
+         return ServiceName.JBOSS.append(serviceName, className.replace(".", "_"));
       }
-
-      public abstract String getServiceTypeName();
    }
 }

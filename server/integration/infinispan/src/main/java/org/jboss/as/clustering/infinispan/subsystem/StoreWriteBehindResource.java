@@ -25,6 +25,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -68,9 +69,9 @@ public class StoreWriteBehindResource extends SimpleResourceDefinition {
 
     StoreWriteBehindResource() {
         super(STORE_WRITE_BEHIND_PATH,
-                new InfinispanResourceDescriptionResolver(ModelKeys.WRITE_BEHIND),
-                CacheConfigOperationHandlers.STORE_WRITE_BEHIND_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
+              new InfinispanResourceDescriptionResolver(ModelKeys.WRITE_BEHIND),
+              new ReloadRequiredAddStepHandler(StoreWriteBehindResource.ATTRIBUTES),
+              ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 
     @Override
