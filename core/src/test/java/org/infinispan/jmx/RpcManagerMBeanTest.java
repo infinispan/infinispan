@@ -1,8 +1,10 @@
 package org.infinispan.jmx;
 
-import static java.util.Collections.singletonMap;
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
+import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.infinispan.test.TestingUtil.replaceField;
+import static org.infinispan.test.TestingUtil.sleepThread;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -18,7 +20,10 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.Attribute;
@@ -29,10 +34,10 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
@@ -41,7 +46,6 @@ import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsBackupResponse;
 import org.infinispan.test.Exceptions;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.XSiteBackup;
@@ -123,7 +127,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       Object avgReplTime = mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime");
       assertNotEquals(avgReplTime, (long) 0);
 
-      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
+      RpcManagerImpl rpcManager = (RpcManagerImpl) extractComponent(cache1, RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();
       try {
          Address mockAddress1 = mock(Address.class);
@@ -152,13 +156,30 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
    @Test(dependsOnMethods = "testEnableJmxStats")
    public void testXsiteStats() throws Exception {
       ControlledTimeService timeService = new ControlledTimeService();
-      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache(0, cachename), RpcManager.class);
+      RpcManagerImpl rpcManager = (RpcManagerImpl) extractComponent(cache(0, cachename), RpcManager.class);
+      replaceField(timeService, "timeService", rpcManager, RpcManagerImpl.class);
       Transport originalTransport = rpcManager.getTransport();
+
       List<BackupResponse> responses = new ArrayList<>(3);
+      List<CompletableFuture<ValidResponse>> asyncFutures = new ArrayList<>(2);
+
       try {
          Transport mockTransport = mock(Transport.class);
          when(mockTransport.backupRemotely(anyCollection(), any(XSiteReplicateCommand.class)))
-               .thenReturn(mockBackupResponse(timeService));
+               .then(invocationOnMock -> {
+                  Collection<XSiteBackup> arg1 = invocationOnMock.getArgument(0);
+                  Map<XSiteBackup, CompletableFuture<ValidResponse>> siteResponses = new HashMap<>();
+                  for (XSiteBackup b : arg1) {
+                     if (b.isSync()) {
+                        siteResponses.put(b, CompletableFutures.completedNull());
+                     } else {
+                        CompletableFuture<ValidResponse> f = new CompletableFuture<>();
+                        asyncFutures.add(f);
+                        siteResponses.put(b, f);
+                     }
+                  }
+                  return new JGroupsBackupResponse(siteResponses, timeService);
+               });
 
          rpcManager.setTransport(mockTransport);
 
@@ -170,8 +191,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
 
          remoteSites.clear();
          remoteSites.add(newBackup("Site3", false));
-         //the JGroupsTransport filters out the async request and generates an empty BackupResponse
-         rpcManager.invokeXSite(remoteSites, mock(XSiteReplicateCommand.class));
+         responses.add(rpcManager.invokeXSite(remoteSites, mock(XSiteReplicateCommand.class)));
 
          remoteSites.clear();
          remoteSites.add(newBackup("Site4", true));
@@ -182,30 +202,46 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
          rpcManager.setTransport(originalTransport);
       }
 
+      assertEquals(responses.size(), 3);
+      assertEquals(asyncFutures.size(), 2);
+
       //in the end, we end up with 2 sync request and 2 async requests
       timeService.advance(10);
       responses.get(0).waitForBackupToFinish();
+      asyncFutures.get(0).complete(null);
 
       timeService.advance(20);
       responses.get(1).waitForBackupToFinish();
+      responses.get(2).waitForBackupToFinish();
+      asyncFutures.get(1).complete(null);
 
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManagenName = getCacheObjectName(jmxDomain, cachename + "(repl_sync)", "RpcManager");
-      assertEquals(mBeanServer.getAttribute(rpcManagenName, "SyncXSiteCount"), (long) 2);
-      assertEquals(mBeanServer.getAttribute(rpcManagenName, "AsyncXSiteCount"), (long) 2);
+      ObjectName rpcManagerName = getCacheObjectName(jmxDomain, cachename + "(repl_sync)", "RpcManager");
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "SyncXSiteCount"), (long) 2);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "AsyncXSiteCount"), (long) 2);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "AsyncXSiteAcksCount"), (long) 2);
 
-      assertEquals(mBeanServer.getAttribute(rpcManagenName, "MinimumXSiteReplicationTime"), (long) 10);
-      assertEquals(mBeanServer.getAttribute(rpcManagenName, "MaximumXSiteReplicationTime"), (long) 30);
-      assertEquals(mBeanServer.getAttribute(rpcManagenName, "AverageXSiteReplicationTime"), (long) 20);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MinimumXSiteReplicationTime"), (long) 10);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MaximumXSiteReplicationTime"), (long) 30);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "AverageXSiteReplicationTime"), (long) 20);
 
-      mBeanServer.invoke(rpcManagenName, "resetStatistics", new Object[0], new String[0]);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MinimumAsyncXSiteReplicationTime"), (long) 10);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MaximumAsyncXSiteReplicationTime"), (long) 30);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "AverageAsyncXSiteReplicationTime"), (long) 20);
 
-      assertEquals(mBeanServer.getAttribute(rpcManagenName, "SyncXSiteCount"), (long) 0);
-      assertEquals(mBeanServer.getAttribute(rpcManagenName, "AsyncXSiteCount"), (long) 0);
+      mBeanServer.invoke(rpcManagerName, "resetStatistics", new Object[0], new String[0]);
 
-      assertEquals(mBeanServer.getAttribute(rpcManagenName, "MinimumXSiteReplicationTime"), (long) -1);
-      assertEquals(mBeanServer.getAttribute(rpcManagenName, "MaximumXSiteReplicationTime"), (long) -1);
-      assertEquals(mBeanServer.getAttribute(rpcManagenName, "AverageXSiteReplicationTime"), (long) -1);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "SyncXSiteCount"), (long) 0);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "AsyncXSiteCount"), (long) 0);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "AsyncXSiteAcksCount"), (long) 0);
+
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MinimumXSiteReplicationTime"), (long) -1);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MaximumXSiteReplicationTime"), (long) -1);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "AverageXSiteReplicationTime"), (long) -1);
+
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MinimumAsyncXSiteReplicationTime"), (long) -1);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "MaximumAsyncXSiteReplicationTime"), (long) -1);
+      assertEquals(mBeanServer.getAttribute(rpcManagerName, "AverageAsyncXSiteReplicationTime"), (long) -1);
    }
 
    public static class SlowToSerialize implements Externalizable, ExternalPojo {
@@ -223,13 +259,13 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       @Override
       public void writeExternal(ObjectOutput out) throws IOException {
          out.writeObject(val);
-         TestingUtil.sleepThread(delay);
+         sleepThread(delay);
       }
 
       @Override
       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
          val = (String) in.readObject();
-         TestingUtil.sleepThread(delay);
+         sleepThread(delay);
       }
 
       @Override
@@ -248,11 +284,6 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       public int hashCode() {
          return val != null ? val.hashCode() : 0;
       }
-   }
-
-   private static BackupResponse mockBackupResponse(TimeService timeService) {
-      XSiteBackup backup = newBackup("test", true);
-      return new JGroupsBackupResponse(singletonMap(backup, CompletableFutures.completedNull()), timeService);
    }
 
    private static XSiteBackup newBackup(String name, boolean sync) {

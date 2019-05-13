@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.LongConsumer;
 
 import javax.transaction.Transaction;
@@ -55,10 +57,13 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.AggregateBackupResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteAsyncAckListener;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -68,6 +73,7 @@ import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
 import org.infinispan.xsite.notification.SiteStatusListener;
+import org.jgroups.UnreachableException;
 
 /**
  * @author Mircea Markus
@@ -152,6 +158,7 @@ public class BackupSenderImpl implements BackupSender {
    @Override
    public void processResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable {
       log.tracef("Processing backup response %s for command %s", backupResponse, command);
+      backupResponse.notifyAsyncAck(this::notifyAsyncAckReceived);
       backupResponse.waitForBackupToFinish();
       updateOfflineSites(backupResponse);
       processFailedResponses(backupResponse, command, transaction);
@@ -161,17 +168,30 @@ public class BackupSenderImpl implements BackupSender {
       if (offlineStatus.isEmpty() || backupResponse.isEmpty()) return;
       Set<String> communicationErrors = backupResponse.getCommunicationErrors();
       for (Map.Entry<String, OfflineStatus> statusEntry : offlineStatus.entrySet()) {
+         String siteName = statusEntry.getKey();
          OfflineStatus status = statusEntry.getValue();
          if (!status.isEnabled()) {
             continue;
          }
-         if (communicationErrors.contains(statusEntry.getKey())) {
+         if (communicationErrors.contains(siteName)) {
             status.updateOnCommunicationFailure(backupResponse.getSendTimeMillis());
             log.tracef("OfflineStatus updated %s", status);
-         } else if (!status.isOffline()) {
+         } else if (backupResponse.isSync(siteName) && !status.isOffline()) {
             status.reset();
          }
       }
+   }
+
+   private static boolean isCommunicationError(Throwable throwable) {
+      Throwable error = throwable;
+      if(throwable instanceof ExecutionException) {
+         error = throwable.getCause();
+      }
+      return error instanceof TimeoutException ||
+             error instanceof org.infinispan.util.concurrent.TimeoutException ||
+             error instanceof UnreachableException ||
+             error instanceof CacheUnreachableException ||
+             error instanceof SuspectException;
    }
 
    @Override
@@ -358,6 +378,27 @@ public class BackupSenderImpl implements BackupSender {
       return eventLogManager.getEventLogger().context(cacheName).scope(rpcManager.getAddress());
    }
 
+   private void notifyAsyncAckReceived(long sendTime, String siteName, Throwable throwable) {
+      log.debugf("Async ack received from %s. Throwable=%s", siteName, throwable);
+      OfflineStatus status = offlineStatus.get(siteName);
+      if (status == null) {
+         //no offline status configured!
+         return;
+      }
+
+      if (throwable == null) {
+         //no exception
+         if (!status.isOffline()) {
+            status.reset();
+         }
+         return;
+      }
+
+      if (isCommunicationError(throwable)) {
+         status.updateOnCommunicationFailure(sendTime);
+      }
+   }
+
    private static final class CustomBackupPolicyInvoker extends AbstractVisitor {
 
       private final String site;
@@ -532,6 +573,17 @@ public class BackupSenderImpl implements BackupSender {
       @Override
       public void notifyFinish(LongConsumer timeElapsedConsumer) {
          //nothing
+      }
+
+      @Override
+      public void notifyAsyncAck(XSiteAsyncAckListener listener) {
+         //nothing
+      }
+
+      @Override
+      public boolean isSync(String siteName) {
+         // no-op, this should never be invoked
+         return false;
       }
    }
 }

@@ -123,6 +123,10 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         MAX_XSITE_TIME(MetricKeys.MAX_XSITE_REPLICATION_TIME, ModelType.LONG, true, true),
         SYNC_XSITE_COUNT(MetricKeys.SYNC_XSITE_COUNT, ModelType.LONG, true, true),
         ASYNC_XSITE_COUNT(MetricKeys.ASYNC_XSITE_COUNT, ModelType.LONG, true, true),
+        AVG_ASYNC_XSITE_TIME(MetricKeys.AVG_ASYNC_XSITE_REPLICATION_TIME, ModelType.LONG, true, true),
+        MIN_ASYNC_XSITE_TIME(MetricKeys.MIN_ASYNC_XSITE_REPLICATION_TIME, ModelType.LONG, true, true),
+        MAX_ASYNC_XSITE_TIME(MetricKeys.MAX_ASYNC_XSITE_REPLICATION_TIME, ModelType.LONG, true, true),
+        ASYNC_XSITE_ACKS_COUNT(MetricKeys.ASYNC_XSITE_ACKS_COUNT, ModelType.LONG, true, true),
         //backup site
         ONLINE_SITES(MetricKeys.SITES_ONLINE, ModelType.LIST, ModelType.STRING, false),
         OFFLINE_SITES(MetricKeys.SITES_OFFLINE, ModelType.LIST, ModelType.STRING, false),
@@ -338,6 +342,18 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                     break;
                 case ASYNC_XSITE_COUNT:
                     result.set(rpcManager.getAsyncXSiteCount());
+                    break;
+                case AVG_ASYNC_XSITE_TIME:
+                    result.set(rpcManager.getAverageAsyncXSiteReplicationTime());
+                    break;
+                case MAX_ASYNC_XSITE_TIME:
+                    result.set(rpcManager.getMaximumAsyncXSiteReplicationTime());
+                    break;
+                case MIN_ASYNC_XSITE_TIME:
+                    result.set(rpcManager.getMinimumAsyncXSiteReplicationTime());
+                    break;
+                case ASYNC_XSITE_ACKS_COUNT:
+                    result.set(rpcManager.getAsyncXSiteAcksCount());
                     break;
                 case SYNC_XSITE_COUNT_RECEIVED:
                     result.set(handler.getSyncXSiteRequestsReceived());

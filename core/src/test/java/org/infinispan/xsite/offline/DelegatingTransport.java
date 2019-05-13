@@ -11,6 +11,7 @@ import java.util.function.LongConsumer;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteAsyncAckListener;
 import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
@@ -73,6 +74,21 @@ public class DelegatingTransport extends AbstractDelegatingTransport {
          @Override
          public void notifyFinish(LongConsumer timeElapsedConsumer) {
             //no-op
+         }
+
+         @Override
+         public void notifyAsyncAck(XSiteAsyncAckListener listener) {
+            //no-op
+         }
+
+         @Override
+         public boolean isSync(String siteName) {
+            for (XSiteBackup backup : backups) {
+               if (backup.getSiteName().equals(siteName) && backup.isSync()) {
+                  return true;
+               }
+            }
+            return false;
          }
       };
    }
