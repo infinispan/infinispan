@@ -14,10 +14,13 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.util.Properties;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.skip.SkipTestNG;
+import org.infinispan.commons.util.Features;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.factories.DataContainerFactory;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -67,6 +70,9 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
 
    @Test
    public void readerCompatibilityTest() throws Exception {
+      boolean segmentationAvailable = new Features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE);
+      SkipTestNG.skipIf(segmentCount > 0 && !segmentationAvailable, "Segmentation is disabled");
+
       Properties properties = new Properties();
       configureStoreProperties(properties, SOURCE);
       configureStoreProperties(properties, TARGET);
