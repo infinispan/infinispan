@@ -17,7 +17,6 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
@@ -290,7 +289,6 @@ public class TestingUtil {
       try {
          field = baseType.getDeclaredField(fieldName);
          field.setAccessible(true);
-         stripFinalModifier(field);
          field.set(owner, newValue);
       }
       catch (Exception e) {
@@ -307,22 +305,12 @@ public class TestingUtil {
       try {
          field = baseType.getDeclaredField(fieldName);
          field.setAccessible(true);
-         stripFinalModifier(field);
          Object prevValue = field.get(owner);
          Object newValue = func.apply((T) prevValue);
          field.set(owner, newValue);
       }
       catch (Exception e) {
          throw new RuntimeException(e);//just to simplify exception handling
-      }
-   }
-
-   private static void stripFinalModifier(Field field) throws NoSuchFieldException, IllegalAccessException {
-      int modifiers = field.getModifiers();
-      if (Modifier.isFinal(modifiers)) {
-         Field modField = Field.class.getDeclaredField("modifiers");
-         modField.setAccessible(true);
-         modField.setInt(field, modifiers & ~Modifier.FINAL);
       }
    }
 
