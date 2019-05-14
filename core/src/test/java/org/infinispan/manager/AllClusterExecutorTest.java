@@ -388,6 +388,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
                try {
                   checkPoint.get().trigger("block_execution");
                   checkPoint.get().awaitStrict("resume_execution", 10, TimeUnit.SECONDS);
+                  checkPoint.get().trigger("complete");
                } catch (InterruptedException | TimeoutException e) {
                   throw new TestException(e);
                }
@@ -403,6 +404,9 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
             Exceptions.expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, futureRemote);
             checkPoint.get().awaitStrict("block_execution", 10, TimeUnit.SECONDS);
             checkPoint.get().trigger("resume_execution");
+            // Have to wait for callback to complete - otherwise a different thread could find the "resume_execution"
+            // checkpoint reached incorrectly
+            checkPoint.get().awaitStrict("complete", 10, TimeUnit.SECONDS);
 
             CompletableFuture<Void> futureLocal =
                executor(cm1).filterTargets(a -> a.equals(cm1.getAddress()))
@@ -413,6 +417,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
             Exceptions.expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, futureLocal);
             checkPoint.get().awaitStrict("block_execution", 10, TimeUnit.SECONDS);
             checkPoint.get().trigger("resume_execution");
+            checkPoint.get().awaitStrict("complete", 10, TimeUnit.SECONDS);
          }
       });
    }
