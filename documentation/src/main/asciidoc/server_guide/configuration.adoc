@@ -35,6 +35,10 @@ For some properties, {brandname} uses values other than the JGroups defaults to 
   - `default-jgroups-tcp.xml`
   - `default-jgroups-udp.xml`
 
+ifdef::productized[]
+These JGroups files are available in the {brandname} source distribution from the Red Hat customer portal.
+endif::productized[]
+
 See link:http://www.jgroups.org/manual/html/protlist.html[JGroups Protocol] documentation for more information about available properties and default values.
 ====
 
