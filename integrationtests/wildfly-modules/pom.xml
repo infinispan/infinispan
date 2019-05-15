@@ -26,7 +26,7 @@
       <mcast.ip>234.99.54.14</mcast.ip>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
-      <server.jvm.args>${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args} ${testjvm.jigsawArgs}</server.jvm.args>
+      <server.jvm.args>${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args} ${testjvm.jigsawArgs}</server.jvm.args>
       <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
    </properties>
 
@@ -430,7 +430,7 @@
          </activation>
          <properties>
             <server.jvm>${env.JAVA8_HOME}</server.jvm>
-            <server.jvm.args>${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+            <server.jvm.args>${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
          </properties>
       </profile>
    </profiles>
