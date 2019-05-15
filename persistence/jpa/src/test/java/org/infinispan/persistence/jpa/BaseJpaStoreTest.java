@@ -149,7 +149,6 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
          em.persist(obj2.getValue());
          em.flush();
          txn.commit();
-         em.close();
 
          assertEquals(cs.size(), 2);
          assertTrue(cs.contains(obj1.getKey()));
