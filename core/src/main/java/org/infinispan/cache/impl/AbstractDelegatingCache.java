@@ -20,6 +20,7 @@ import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -36,6 +37,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.cache.impl.AbstractDelegatingAdvancedCache
  */
+@MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
    private final Cache<K, V> cache;
