@@ -39,7 +39,7 @@
       <server.dir>${server.dir.parent}/${server.dir.name}</server.dir>
       <mcast.ip>234.99.54.14</mcast.ip>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
-      <server.jvm.args>${jvm.ip.stack} ${serverMemoryJvmArgs} ${testjvm.jigsawArgs}</server.jvm.args>
+      <server.jvm.args>${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${testjvm.jigsawArgs}</server.jvm.args>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
       <serverMemoryJvmArgs>-Xmx500m ${testjvm.commonArgs}</serverMemoryJvmArgs>
 
@@ -47,6 +47,10 @@
       <failsafe.reportdir.remote>${project.build.directory}/failsafe-reports-remote</failsafe.reportdir.remote>
       <failsafe.summary.embedded>${failsafe.reportdir.embedded}/failsafe-summary.xml</failsafe.summary.embedded>
       <failsafe.summary.remote>${failsafe.reportdir.remote}/failsafe-summary.xml</failsafe.summary.remote>
+
+      <default.transport.stack>udp</default.transport.stack>
+      <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
+      <jvm.x64.args />
    </properties>
 
    <dependencies>
@@ -373,6 +377,16 @@
                </plugin>
             </plugins>
          </build>
+      </profile>
+      <profile>
+         <id>java8-test</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <server.jvm>${env.JAVA8_HOME}</server.jvm>
+            <server.jvm.args>${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+         </properties>
       </profile>
 
    </profiles>
