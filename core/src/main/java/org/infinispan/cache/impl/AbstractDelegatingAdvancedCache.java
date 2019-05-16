@@ -35,7 +35,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -52,7 +51,6 @@ import org.infinispan.util.concurrent.locks.LockManager;
  * @author Tristan Tarrant
  * @see org.infinispan.cache.impl.AbstractDelegatingCache
  */
-@MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V> {
 
    protected final AdvancedCache<K, V> cache;

@@ -15,6 +15,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Units;
@@ -24,6 +25,7 @@ import org.infinispan.util.logging.Log;
  * @author Ryan Emerson
  * @since 9.0
  */
+@MBean
 @Scope(Scopes.NONE)
 public abstract class AbstractClusterStats implements JmxStatisticsExposer {
 
