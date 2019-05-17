@@ -15,12 +15,15 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 
 /**
  * {@link java.util.function.Function} that uses an encoder to converter entries from the configured storage format to
  * the requested format.
  */
+@Scope(Scopes.NAMED_CACHE)
 public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements InjectiveFunction<T, T> {
    @Inject
    transient InternalEntryFactory entryFactory;

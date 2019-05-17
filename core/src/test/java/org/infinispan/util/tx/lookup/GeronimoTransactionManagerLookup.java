@@ -11,6 +11,8 @@ import org.apache.geronimo.transaction.manager.XidFactoryImpl;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -23,6 +25,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author mgencur
  *
  */
+@Scope(Scopes.GLOBAL)
 public class GeronimoTransactionManagerLookup implements TransactionManagerLookup {
 
    private static final int DEFAULT_TRANSACTION_TIMEOUT = 600;

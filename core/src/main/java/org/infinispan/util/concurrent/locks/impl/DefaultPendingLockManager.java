@@ -20,6 +20,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
@@ -43,6 +45,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 8.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class DefaultPendingLockManager implements PendingLockManager {
 
    private static final Log log = LogFactory.getLog(DefaultPendingLockManager.class);

@@ -6,6 +6,9 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.command.tx.ForwardCommitCommand;
 import org.infinispan.server.hotrod.command.tx.ForwardRollbackCommand;
@@ -16,6 +19,8 @@ import org.infinispan.server.hotrod.command.tx.ForwardRollbackCommand;
  * @author Pedro Ruivo
  * @since 9.1
  */
+@Scope(Scopes.GLOBAL)
+@SurvivesRestarts
 final class HotRodCommandInitializer implements ModuleCommandInitializer {
 
    @Inject EmbeddedCacheManager cacheManager;

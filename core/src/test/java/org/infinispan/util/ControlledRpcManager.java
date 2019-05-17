@@ -38,6 +38,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -59,6 +61,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Dan Berindei
  * @since 4.2
  */
+@Scope(Scopes.NAMED_CACHE)
 public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    private static final Log log = LogFactory.getLog(ControlledRpcManager.class);
    private static final int TIMEOUT_SECONDS = 10;

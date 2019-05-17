@@ -22,6 +22,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -31,6 +33,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author wburns
  * @since 9.4
  */
+@Scope(Scopes.NAMED_CACHE)
 public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInternalDataContainer<WrappedBytes, WrappedBytes> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();

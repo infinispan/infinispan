@@ -2,6 +2,8 @@ package org.infinispan.notifications.cachelistener.filter;
 
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -10,6 +12,7 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 7.0
  */
+@Scope(Scopes.NONE)
 public class CompositeCacheEventFilter<K, V> implements CacheEventFilter<K, V> {
    private final CacheEventFilter<? super K, ? super V>[] filters;
 

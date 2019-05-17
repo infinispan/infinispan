@@ -9,6 +9,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -22,6 +24,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.2
  */
 @Listener
+@Scope(Scopes.GLOBAL)
 public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
 
    private static Log log = LogFactory.getLog(BackupReceiverRepositoryImpl.class);

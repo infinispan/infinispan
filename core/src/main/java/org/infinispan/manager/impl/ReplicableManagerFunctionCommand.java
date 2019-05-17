@@ -8,6 +8,8 @@ import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
@@ -16,6 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @author wburns
  * @since 8.2
  */
+@Scope(Scopes.NONE)
 public class ReplicableManagerFunctionCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 60;

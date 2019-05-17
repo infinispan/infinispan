@@ -16,6 +16,8 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -26,6 +28,7 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 9.3
  */
+@Scope(Scopes.NAMED_CACHE)
 public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataContainer<K, V>
       implements InternalDataContainer<K, V> {
    private static final int REMOTE_SEGMENT_BATCH_SIZE = 32;

@@ -15,6 +15,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -27,6 +29,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see java.lang.management.ManagementFactory#getPlatformMBeanServer()
  * @since 4.0
  */
+@Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 public class CacheJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheJmxRegistration.class);

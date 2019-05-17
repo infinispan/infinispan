@@ -66,6 +66,8 @@ import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.EmptyAsyncInterceptorChain;
@@ -111,6 +113,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents a simplified cache instance.")
+@Scope(Scopes.NAMED_CACHE)
 public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    private final static Log log = LogFactory.getLog(SimpleCacheImpl.class);
 

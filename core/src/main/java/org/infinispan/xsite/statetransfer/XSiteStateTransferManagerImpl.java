@@ -35,6 +35,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
@@ -60,6 +62,7 @@ import org.infinispan.xsite.XSiteBackup;
  * @since 7.0
  */
 @Listener
+@Scope(Scopes.NAMED_CACHE)
 public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager {
 
    private static final Log log = LogFactory.getLog(XSiteStateTransferManagerImpl.class);

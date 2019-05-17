@@ -2,6 +2,8 @@ package org.infinispan.container.versioning;
 
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
@@ -13,6 +15,7 @@ import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
  * @author Manik Surtani
  * @since 5.1
  */
+@Scope(Scopes.NAMED_CACHE)
 public class SimpleClusteredVersionGenerator implements VersionGenerator {
    // The current cache topology ID is recorded and used as a part of the version generated, and as such used as the
    // most significant part of a version comparison. If a version is generated based on an old cache topology and another is

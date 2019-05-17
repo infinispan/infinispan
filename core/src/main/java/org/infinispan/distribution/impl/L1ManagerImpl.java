@@ -26,6 +26,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -34,6 +36,7 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+@Scope(Scopes.NAMED_CACHE)
 public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
    private static final Log log = LogFactory.getLog(L1ManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();

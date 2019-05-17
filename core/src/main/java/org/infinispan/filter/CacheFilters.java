@@ -16,6 +16,8 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.StreamMarshalling;
@@ -81,6 +83,7 @@ public final class CacheFilters {
          StreamMarshalling.nonNullPredicate());
    }
 
+   @Scope(Scopes.NONE)
    static class KeyValueFilterAsPredicate<K, V> implements Predicate<CacheEntry<K, V>> {
       private final KeyValueFilter<? super K, ? super V> filter;
 
@@ -100,6 +103,7 @@ public final class CacheFilters {
       }
    }
 
+   @Scope(Scopes.NONE)
    static class ConverterAsCacheEntryFunction<K, V, C> implements Function<CacheEntry<K, V>, CacheEntry<K, C>> {
       protected final Converter<? super K, ? super V, C> converter;
 
@@ -129,6 +133,7 @@ public final class CacheFilters {
       }
    }
 
+   @Scope(Scopes.NONE)
    static class FilterConverterAsCacheEntryFunction<K, V, C> implements Function<CacheEntry<K, V>, CacheEntry<K, C>> {
       protected final KeyValueFilterConverter<? super K, ? super V, C> converter;
 

@@ -9,6 +9,8 @@ import java.util.Set;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
@@ -18,6 +20,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
  * @author anistor@redhat.com
  * @since 7.2
  */
+@Scope(Scopes.NONE)
 public class CacheEventFilterConverterAsKeyValueFilterConverter<K, V, C> extends AbstractKeyValueFilterConverter<K, V, C> {
 
    private static final EventType CREATE_EVENT = new EventType(false, false, Event.Type.CACHE_ENTRY_CREATED);

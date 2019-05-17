@@ -8,7 +8,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.management.MBeanException;
 import javax.management.ObjectName;
 
@@ -20,6 +19,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -49,6 +50,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
  */
 @MBean(objectName = ProtobufMetadataManagerConstants.OBJECT_NAME,
       description = "Component that acts as a manager and container for Protocol Buffers message type definitions in the scope of a CacheManger.")
+@Scope(Scopes.GLOBAL)
 public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManager {
 
    private volatile Cache<String, String> protobufSchemaCache;

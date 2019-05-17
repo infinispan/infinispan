@@ -19,7 +19,14 @@ public enum Scopes {
     * Components bounded to this scope can only be created by a {@link org.infinispan.Cache} and exist in the {@link
     * org.infinispan.Cache}'s {@link org.infinispan.factories.ComponentRegistry}.
     */
-   NAMED_CACHE;
+   NAMED_CACHE,
+
+   /**
+    * Components bounded to this scope cannot be registered either in a cache or in a global registry.
+    *
+    * @since 10.0
+    */
+   NONE;
 
    public static Scopes getDefaultScope() {
       return NAMED_CACHE;

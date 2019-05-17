@@ -9,6 +9,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationManager;
@@ -21,6 +23,7 @@ import org.infinispan.security.GlobalSecurityManager;
  * @author Tristan Tarrant
  * @since 7.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class AuthorizationManagerImpl implements AuthorizationManager {
    private AuthorizationConfiguration configuration;
    private AuthorizationHelper authzHelper;

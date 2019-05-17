@@ -12,6 +12,9 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.LocalModeAddress;
@@ -24,6 +27,8 @@ import org.infinispan.util.ByteString;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@Scope(Scopes.GLOBAL)
+@SurvivesRestarts
 public class CacheCommandInitializer implements ModuleCommandInitializer {
 
 	private final ConcurrentHashMap<String, PutFromLoadValidator> putFromLoadValidators

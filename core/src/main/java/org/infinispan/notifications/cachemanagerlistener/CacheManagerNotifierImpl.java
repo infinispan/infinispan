@@ -10,6 +10,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import javax.transaction.Transaction;
 
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
@@ -37,6 +40,8 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani
  * @since 4.0
  */
+@Scope(Scopes.GLOBAL)
+@SurvivesRestarts
 public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, ListenerInvocation<Event>>
       implements CacheManagerNotifier {
 

@@ -12,6 +12,8 @@ import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * {@link java.util.function.Function} that uses a keyEncoder to converter keys from the configured storage format to
@@ -19,6 +21,7 @@ import org.infinispan.factories.annotations.Inject;
  *
  * @since 9.1
  */
+@Scope(Scopes.NONE)
 public class EncoderKeyMapper<K> implements InjectiveFunction<K, K> {
    private final DataConversion dataConversion;
 

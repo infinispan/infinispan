@@ -41,6 +41,8 @@ import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.util.CoreImmutables;
@@ -58,6 +60,7 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
  * @author wburns
  * @since 9.3
  */
+@Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractInternalDataContainer<K, V> implements InternalDataContainer<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();

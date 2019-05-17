@@ -8,6 +8,8 @@ import javax.transaction.xa.Xid;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
@@ -22,6 +24,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea Markus
  * @since 5.0
  */
+@Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 @MBean(objectName = "RecoveryAdmin", description = "Exposes tooling for handling transaction recovery.")
 public class RecoveryAdminOperations {

@@ -12,7 +12,10 @@ import org.infinispan.commons.marshall.Ids;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
+@Scope(Scopes.NAMED_CACHE)
 public class BiFunctionMapper implements BiFunction {
 
    private final DataConversion keyDataConversion;

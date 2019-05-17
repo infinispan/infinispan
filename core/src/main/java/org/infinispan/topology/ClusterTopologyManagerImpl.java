@@ -43,6 +43,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -86,6 +88,7 @@ import net.jcip.annotations.GuardedBy;
  * @author Pedro Ruivo
  * @since 5.2
  */
+@Scope(Scopes.GLOBAL)
 public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    public static final int INITIAL_CONNECTION_ATTEMPTS = 10;

@@ -12,6 +12,8 @@ import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -22,7 +24,7 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 8.0
  */
-
+@Scope(Scopes.NONE)
 public class IterationFilter<K, V, C> extends AbstractKeyValueFilterConverter<K, V, C> {
    final Optional<KeyValueFilterConverter<K, V, C>> providedFilter;
    private final MediaType requestType;

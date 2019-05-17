@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -30,6 +32,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@Scope(Scopes.NAMED_CACHE)
 public class NumericVersionGenerator implements VersionGenerator {
 
    private static final Log log = LogFactory.getLog(NumericVersionGenerator.class);

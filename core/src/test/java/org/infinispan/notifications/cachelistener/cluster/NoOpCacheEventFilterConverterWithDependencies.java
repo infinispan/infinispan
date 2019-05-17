@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
@@ -13,6 +15,7 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
  * @author anistor@redhat.com
  * @since 7.2
  */
+@Scope(Scopes.NONE)
 public class NoOpCacheEventFilterConverterWithDependencies<K, V>
       extends AbstractCacheEventFilterConverter<K, V, V> implements Serializable, ExternalPojo {
 

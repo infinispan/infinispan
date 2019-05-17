@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.StripedHashFunction;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
@@ -20,6 +22,7 @@ import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
  * @author Pedro Ruivo
  * @since 8.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class StripedLockContainer implements LockContainer {
 
    private final InfinispanLock[] sharedLocks;

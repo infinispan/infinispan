@@ -26,6 +26,8 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -45,6 +47,7 @@ import io.reactivex.processors.PublishProcessor;
  * @author wburns
  * @since 10.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManager<K, V> {
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    protected final static boolean trace = log.isTraceEnabled();

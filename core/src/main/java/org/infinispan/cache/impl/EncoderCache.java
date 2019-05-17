@@ -37,6 +37,8 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
@@ -54,6 +56,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @since 9.1
  */
+@Scope(Scopes.NAMED_CACHE)
 public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private static Log log = LogFactory.getLog(EncoderCache.class);

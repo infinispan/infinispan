@@ -34,6 +34,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
@@ -54,6 +56,7 @@ import io.reactivex.Flowable;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@Scope(Scopes.NAMED_CACHE)
 public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K> {
    private static final AtomicIntegerFieldUpdater<ScatteredVersionManagerImpl> topologyIdUpdater
          = AtomicIntegerFieldUpdater.newUpdater(ScatteredVersionManagerImpl.class, "topologyId");

@@ -27,6 +27,8 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
 
 /**
@@ -34,6 +36,7 @@ import org.infinispan.marshall.core.EncoderRegistry;
  *
  * @since 9.2
  */
+@Scope(Scopes.NAMED_CACHE)
 public final class DataConversion {
 
    public static final DataConversion DEFAULT_KEY = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE, true);
