@@ -13,6 +13,8 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -29,6 +31,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = "Activation",
       description = "Component that handles activating entries that have been passivated to a CacheStore by loading them into memory.")
+@Scope(Scopes.NAMED_CACHE)
 public class ActivationManagerImpl implements ActivationManager {
 
    private static final Log log = LogFactory.getLog(ActivationManagerImpl.class);

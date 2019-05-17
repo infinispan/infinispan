@@ -44,6 +44,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -79,6 +81,7 @@ import net.jcip.annotations.GuardedBy;
  * @since 4.0
  */
 @Listener
+@Scope(Scopes.NAMED_CACHE)
 public class TransactionTable implements org.infinispan.transaction.TransactionTable {
    public enum CompletedTransactionStatus {
       NOT_COMPLETED, COMMITTED, ABORTED, EXPIRED

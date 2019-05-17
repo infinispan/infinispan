@@ -13,6 +13,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
@@ -27,6 +29,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 
+@Scope(Scopes.NAMED_CACHE)
 public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManager<K, V> {
    @Inject EmbeddedCacheManager cacheManager;
    @Inject Configuration configuration;

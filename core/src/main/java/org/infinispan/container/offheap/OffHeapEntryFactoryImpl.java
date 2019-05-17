@@ -14,6 +14,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commons.time.TimeService;
@@ -24,6 +26,7 @@ import org.infinispan.commons.time.TimeService;
  * @author wburns
  * @since 9.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
 

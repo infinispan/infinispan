@@ -9,6 +9,8 @@ import java.util.Set;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.Ids;
 
 /**
@@ -18,6 +20,7 @@ import org.infinispan.marshall.core.Ids;
  * @author wburns
  * @since 7.0
  */
+@Scope(Scopes.NONE)
 public class KeyValueFilterAsKeyFilter<K> implements KeyFilter<K> {
 
    private final KeyValueFilter<? super K, ?> filter;

@@ -21,6 +21,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.GlobalStateProvider;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -40,6 +42,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 8.1
  */
+@Scope(Scopes.GLOBAL)
 public class GlobalStateManagerImpl implements GlobalStateManager {
    public static final String VERSION = "@version";
    public static final String TIMESTAMP = "@timestamp";

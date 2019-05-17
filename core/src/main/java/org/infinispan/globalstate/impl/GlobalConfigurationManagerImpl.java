@@ -13,6 +13,8 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.globalstate.ScopeFilter;
@@ -29,7 +31,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 9.2
  */
-
+@Scope(Scopes.GLOBAL)
 public class GlobalConfigurationManagerImpl implements GlobalConfigurationManager {
    private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 

@@ -10,6 +10,8 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.metadata.Metadata;
 
@@ -20,6 +22,7 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 9.4
  */
+@Scope(Scopes.NONE)
 public class KeyValueFilterConverterAsCacheEventFilterConverter<K, V, C> implements CacheEventFilterConverter<K, V, C> {
    private final KeyValueFilterConverter<K, V, C> keyValueFilterConverter;
 

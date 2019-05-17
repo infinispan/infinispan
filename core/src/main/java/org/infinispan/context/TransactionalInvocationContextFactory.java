@@ -11,6 +11,8 @@ import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -23,6 +25,7 @@ import org.infinispan.transaction.impl.TransactionTable;
  * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
 @Deprecated
+@Scope(Scopes.NAMED_CACHE)
 public class TransactionalInvocationContextFactory extends AbstractInvocationContextFactory {
 
    @Inject TransactionManager tm;

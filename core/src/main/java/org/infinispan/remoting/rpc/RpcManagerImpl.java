@@ -32,6 +32,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -68,6 +70,7 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  * @since 4.0
  */
 @MBean(objectName = "RpcManager", description = "Manages all remote calls to remote cache instances in the cluster.")
+@Scope(Scopes.NAMED_CACHE)
 public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(RpcManagerImpl.class);

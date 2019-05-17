@@ -10,6 +10,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -22,6 +24,7 @@ import org.infinispan.util.logging.Log;
  * @author Ryan Emerson
  * @since 9.0
  */
+@Scope(Scopes.NONE)
 public abstract class AbstractClusterStats implements JmxStatisticsExposer {
 
    public static final long DEFAULT_STALE_STATS_THRESHOLD = 3000;

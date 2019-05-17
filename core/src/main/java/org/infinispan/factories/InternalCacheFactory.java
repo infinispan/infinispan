@@ -37,6 +37,8 @@ import org.infinispan.eviction.impl.PassivationManagerStub;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -245,6 +247,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
    }
 
+   @Scope(Scopes.NAMED_CACHE)
    static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>> extends AbstractDelegatingAdvancedCache<K, V> {
 
       @Inject

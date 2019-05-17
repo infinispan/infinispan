@@ -20,6 +20,8 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
@@ -42,6 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 @MBean(objectName = "DistributionManager", description = "Component that handles distribution of content across a cluster")
+@Scope(Scopes.NAMED_CACHE)
 public class DistributionManagerImpl implements DistributionManager {
    private static final Log log = LogFactory.getLog(DistributionManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();

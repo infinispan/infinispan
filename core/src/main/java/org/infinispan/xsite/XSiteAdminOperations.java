@@ -10,6 +10,8 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
@@ -33,6 +35,7 @@ import org.infinispan.xsite.status.SiteStatus;
  * @author Mircea Markus
  * @since 5.2
  */
+@Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 @MBean(objectName = "XSiteAdmin", description = "Exposes tooling for handling backing up data to remote sites.")
 public class XSiteAdminOperations {

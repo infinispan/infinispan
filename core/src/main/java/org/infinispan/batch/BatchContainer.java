@@ -5,6 +5,8 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * A container for holding thread locals for batching, to be used with the {@link org.infinispan.Cache#startBatch()} and
@@ -13,6 +15,7 @@ import org.infinispan.factories.annotations.Inject;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class BatchContainer {
    @Inject TransactionManager transactionManager;
    private final ThreadLocal<BatchDetails> batchDetailsTl = new ThreadLocal<BatchDetails>();

@@ -12,6 +12,8 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -21,6 +23,7 @@ import org.reactivestreams.Publisher;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 public class PersistenceManagerStub implements PersistenceManager {
    @Start

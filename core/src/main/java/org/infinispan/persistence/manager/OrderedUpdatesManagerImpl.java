@@ -14,9 +14,12 @@ import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.CompletableFutures;
 
+@Scope(Scopes.NAMED_CACHE)
 public class OrderedUpdatesManagerImpl implements OrderedUpdatesManager {
    @Inject InternalDataContainer<Object, Object> dataContainer;
    @Inject DistributionManager distributionManager;

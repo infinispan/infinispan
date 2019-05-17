@@ -26,6 +26,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.SyncInvocationStage;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
@@ -51,6 +53,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 8.0
  */
 @MBean(objectName = "LockManager", description = "Manager that handles MVCC locks for entries")
+@Scope(Scopes.NAMED_CACHE)
 public class DefaultLockManager implements LockManager {
 
    private static final Log log = LogFactory.getLog(DefaultLockManager.class);

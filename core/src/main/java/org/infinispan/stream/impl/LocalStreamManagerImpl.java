@@ -28,6 +28,8 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
@@ -49,6 +51,7 @@ import org.infinispan.util.logging.LogFactory;
  * @param <V> value type of underlying cache
  */
 @Listener(observation = Listener.Observation.POST)
+@Scope(Scopes.NAMED_CACHE)
 public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManager<Original, K> {
    private final static Log log = LogFactory.getLog(LocalStreamManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();

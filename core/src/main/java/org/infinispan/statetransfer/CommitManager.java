@@ -14,6 +14,8 @@ import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.commons.time.TimeService;
@@ -29,6 +31,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 7.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class CommitManager {
 
    private static final Log log = LogFactory.getLog(CommitManager.class);

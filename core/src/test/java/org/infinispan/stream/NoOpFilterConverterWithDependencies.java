@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.metadata.Metadata;
 
@@ -12,6 +14,7 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 8.0
  */
+@Scope(Scopes.NONE)
 public class NoOpFilterConverterWithDependencies<K, V> extends AbstractKeyValueFilterConverter<K, V, V>
         implements Serializable {
 

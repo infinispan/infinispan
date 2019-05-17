@@ -11,6 +11,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -20,6 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Jason T. Greene
  * @since 4.0
  */
+@Scope(Scopes.GLOBAL)
 public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup {
    private Method manager, user;
    private static final Log log = LogFactory.getLog(JBossStandaloneJTAManagerLookup.class);

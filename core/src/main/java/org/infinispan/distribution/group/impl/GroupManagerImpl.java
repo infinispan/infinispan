@@ -19,8 +19,11 @@ import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 
+@Scope(Scopes.NAMED_CACHE)
 public class GroupManagerImpl implements GroupManager {
 
    @Inject ComponentRegistry componentRegistry;

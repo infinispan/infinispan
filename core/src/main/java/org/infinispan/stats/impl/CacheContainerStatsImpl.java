@@ -8,6 +8,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -29,6 +31,7 @@ import org.infinispan.commons.time.TimeService;
  *
  */
 @MBean(objectName = CacheContainerStats.OBJECT_NAME, description = "General cache container statistics such as timings, hit/miss ratio, etc.")
+@Scope(Scopes.GLOBAL)
 public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisticsExposer {
 
    private EmbeddedCacheManager cm;

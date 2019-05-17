@@ -98,6 +98,8 @@ import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -146,6 +148,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @since 4.0
  */
+@Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class CacheImpl<K, V> implements AdvancedCache<K, V> {

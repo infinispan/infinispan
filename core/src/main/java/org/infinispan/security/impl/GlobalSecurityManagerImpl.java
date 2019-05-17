@@ -4,6 +4,8 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -17,6 +19,7 @@ import org.infinispan.security.GlobalSecurityManager;
  * @since 8.1
  */
 @MBean(objectName = "GlobalSecurityManager", description = "Controls global ACL caches")
+@Scope(Scopes.GLOBAL)
 public class GlobalSecurityManagerImpl implements GlobalSecurityManager {
    private static final String ACL_CACHE = "___acl_cache";
    private EmbeddedCacheManager cacheManager;

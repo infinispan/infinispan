@@ -57,6 +57,8 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.AggregateBackupResponse;
@@ -79,6 +81,7 @@ import org.jgroups.UnreachableException;
  * @author Mircea Markus
  * @since 5.2
  */
+@Scope(Scopes.NAMED_CACHE)
 public class BackupSenderImpl implements BackupSender {
 
    private static Log log = LogFactory.getLog(BackupSenderImpl.class);

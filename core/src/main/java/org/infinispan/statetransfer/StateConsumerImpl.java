@@ -62,6 +62,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -104,6 +106,7 @@ import net.jcip.annotations.GuardedBy;
  * @author anistor@redhat.com
  * @since 5.2
  */
+@Scope(Scopes.NAMED_CACHE)
 public class StateConsumerImpl implements StateConsumer {
    private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();

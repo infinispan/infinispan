@@ -20,6 +20,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -32,6 +34,7 @@ import org.infinispan.util.logging.LogFactory;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
+@Scope(Scopes.NAMED_CACHE)
 public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K, V> {
    private static final Log log = LogFactory.getLog(ExpirationManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();

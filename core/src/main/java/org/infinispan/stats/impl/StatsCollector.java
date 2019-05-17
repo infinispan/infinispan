@@ -17,6 +17,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -32,6 +34,7 @@ import org.infinispan.commons.time.TimeService;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
+@Scope(Scopes.NAMED_CACHE)
 public class StatsCollector implements Stats, JmxStatisticsExposer {
    private final LongAdder hitTimes = new LongAdder();
    private final LongAdder missTimes = new LongAdder();

@@ -9,6 +9,8 @@ import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -22,6 +24,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Markus Plesser
  * @since 4.0
  */
+@Scope(Scopes.GLOBAL)
 public class GenericTransactionManagerLookup implements TransactionManagerLookup {
 
    private static final Log log = LogFactory.getLog(GenericTransactionManagerLookup.class);

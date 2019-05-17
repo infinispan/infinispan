@@ -16,6 +16,7 @@ import org.infinispan.container.versioning.NumericVersionGenerator;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -46,6 +47,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
  * @author Manik Surtani
  * @since 4.0
  */
+@SurvivesRestarts
 public class ComponentRegistry extends AbstractComponentRegistry {
    private static final Log log = LogFactory.getLog(ComponentRegistry.class);
    private static final boolean trace = log.isTraceEnabled();

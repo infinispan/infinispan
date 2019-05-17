@@ -12,6 +12,8 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -29,6 +31,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Mircea.Markus@jboss.com
  */
+@Scope(Scopes.NAMED_CACHE)
 public class TransactionFactory {
 
    private static final Log log = LogFactory.getLog(TransactionFactory.class);

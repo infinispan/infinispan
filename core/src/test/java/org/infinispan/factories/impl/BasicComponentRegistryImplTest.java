@@ -216,6 +216,7 @@ public class BasicComponentRegistryImplTest {
    }
 
    @DefaultFactoryFor(classes = {D.class, E.class, F.class}, names = "DD")
+   @Scope(Scopes.NAMED_CACHE)
    static class DEFFactory implements ComponentFactory {
       private final D d;
 

@@ -20,6 +20,8 @@ import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.util.logging.Log;
@@ -31,6 +33,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 7.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class XSiteStateConsumerImpl implements XSiteStateConsumer {
 
    private static final long STATE_TRANSFER_PUT_FLAGS = EnumUtil.bitSetOf(PUT_FOR_X_SITE_STATE_TRANSFER,

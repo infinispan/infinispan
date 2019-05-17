@@ -13,6 +13,8 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -21,6 +23,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
  * @param <K> the key type
  */
+@Scope(Scopes.NONE)
 public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 47;
 

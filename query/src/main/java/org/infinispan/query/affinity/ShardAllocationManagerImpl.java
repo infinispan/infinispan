@@ -6,6 +6,8 @@ import org.infinispan.Cache;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.Listener.Observation;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
@@ -19,6 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 @Listener(observation = Observation.POST)
+@Scope(Scopes.NAMED_CACHE)
 public final class ShardAllocationManagerImpl implements ShardAllocatorManager {
 
    private static final Log logger = LogFactory.getLog(ShardAllocationManagerImpl.class, Log.class);

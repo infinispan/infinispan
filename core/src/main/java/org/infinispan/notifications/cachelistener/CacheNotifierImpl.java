@@ -61,8 +61,11 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -146,6 +149,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 4.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, CacheEntryListenerInvocation<K, V>>
       implements ClusterCacheNotifier<K, V> {
 
@@ -259,6 +263,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       }
    }
 
+   @Stop(priority = 99)
    @Override
    public void stop() {
       super.stop();

@@ -8,12 +8,15 @@ import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import net.jcip.annotations.ThreadSafe;
 
+@Scope(Scopes.NAMED_CACHE)
 @ThreadSafe
 public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
    @Inject CacheNotifier<K, V> cacheNotifier;

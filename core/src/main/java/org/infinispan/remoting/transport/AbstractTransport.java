@@ -3,6 +3,8 @@ package org.infinispan.remoting.transport;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -20,6 +22,7 @@ import org.infinispan.util.logging.Log;
  * @deprecated Since 9.1, please implement {@link Transport} directly.
  */
 @Deprecated
+@Scope(Scopes.GLOBAL)
 public abstract class AbstractTransport implements Transport {
 
    @Inject protected GlobalConfiguration configuration;

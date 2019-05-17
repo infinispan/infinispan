@@ -10,6 +10,8 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.Ids;
 
 /**
@@ -18,6 +20,7 @@ import org.infinispan.marshall.core.Ids;
  * @author Mircea Markus
  * @since 6.0
  */
+@Scope(Scopes.NONE)
 public class CompositeKeyFilter<K> implements KeyFilter<K> {
    private final KeyFilter<? super K>[] filters;
 

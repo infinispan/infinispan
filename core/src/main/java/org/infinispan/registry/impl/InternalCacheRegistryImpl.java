@@ -12,6 +12,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -24,6 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 7.2
  */
+@Scope(Scopes.GLOBAL)
 public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    @Inject EmbeddedCacheManager cacheManager;

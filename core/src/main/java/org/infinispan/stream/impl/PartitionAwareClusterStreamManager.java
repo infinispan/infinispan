@@ -14,6 +14,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
@@ -27,6 +29,7 @@ import org.infinispan.stream.impl.intops.IntermediateOperation;
  * Cluster stream manager that also pays attention to partition status and properly closes iterators and throws
  * exceptions when the availability mode changes.
  */
+@Scope(Scopes.NAMED_CACHE)
 public class PartitionAwareClusterStreamManager<Original, K> extends ClusterStreamManagerImpl<Original, K> {
    protected final PartitionListener listener = new PartitionListener();
    @Inject protected Cache<?, ?> cache;

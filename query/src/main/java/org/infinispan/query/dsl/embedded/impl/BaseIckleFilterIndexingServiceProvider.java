@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
@@ -45,6 +47,7 @@ import org.infinispan.util.concurrent.CompletionStages;
  * @author anistor@redhat.com
  * @since 8.1
  */
+@Scope(Scopes.NAMED_CACHE)
 public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIndexingServiceProvider {
 
    private final ConcurrentMap<Matcher, FilteringListenerInvocation<?, ?>> filteringInvocations = new ConcurrentHashMap<>(4);

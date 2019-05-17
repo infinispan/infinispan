@@ -3,6 +3,8 @@ package org.infinispan.marshall.persistence.impl;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadata;
@@ -15,6 +17,7 @@ import org.infinispan.persistence.spi.MarshalledValue;
  * @author Ryan Emerson
  * @since 10.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory, MarshallableEntryFactory {
 
    private static final MarshallableEntry EMPTY = new MarshalledEntryImpl(null, null, (ByteBuffer) null, null);

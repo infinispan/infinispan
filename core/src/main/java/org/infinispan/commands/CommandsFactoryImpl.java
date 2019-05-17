@@ -108,6 +108,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
@@ -169,6 +171,7 @@ import org.reactivestreams.Publisher;
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @since 4.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class CommandsFactoryImpl implements CommandsFactory {
    private static final Log log = LogFactory.getLog(CommandsFactoryImpl.class);
    private static final boolean trace = log.isTraceEnabled();

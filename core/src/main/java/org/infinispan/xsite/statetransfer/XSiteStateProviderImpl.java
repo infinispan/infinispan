@@ -27,6 +27,8 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -47,6 +49,7 @@ import io.reactivex.Flowable;
  * @author Pedro Ruivo
  * @since 7.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private static final int DEFAULT_CHUNK_SIZE = 1024;

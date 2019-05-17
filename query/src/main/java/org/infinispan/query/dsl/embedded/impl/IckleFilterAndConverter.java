@@ -15,6 +15,8 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.Matcher;
@@ -29,6 +31,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
  * @author anistor@redhat.com
  * @since 7.0
  */
+@Scope(Scopes.NONE)
 public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> implements Function<Map.Entry<K, V>, ObjectFilter.FilterResult> {
 
    /**

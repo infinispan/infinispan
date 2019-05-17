@@ -55,6 +55,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -72,6 +74,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * @author Ryan Emerson
  */
+@Scope(Scopes.NAMED_CACHE)
 public class DefaultConflictManager<K, V> implements InternalConflictManager<K, V> {
 
    private static Log log = LogFactory.getLog(DefaultConflictManager.class);

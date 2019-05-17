@@ -12,6 +12,8 @@ import org.infinispan.commons.marshall.Ids;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * {@link java.util.function.Function} that uses a valueEncoder to converter values from the configured storage format
@@ -19,6 +21,7 @@ import org.infinispan.factories.annotations.Inject;
  *
  * @since 9.1
  */
+@Scope(Scopes.NONE)
 public class EncoderValueMapper<V> implements Function<V, V> {
 
    private final DataConversion dataConversion;

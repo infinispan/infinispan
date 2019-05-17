@@ -9,11 +9,14 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.ByteString;
 
 /**
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
  */
+@Scope(Scopes.NONE)
 public class StreamIteratorNextCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 71;
 

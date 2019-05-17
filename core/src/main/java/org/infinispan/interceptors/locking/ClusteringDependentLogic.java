@@ -171,6 +171,7 @@ public interface ClusteringDependentLogic {
 
    Address getAddress();
 
+   @Scope(Scopes.NAMED_CACHE)
    abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic {
       @Inject protected DistributionManager distributionManager;
       @Inject protected InternalDataContainer<Object, Object> dataContainer;

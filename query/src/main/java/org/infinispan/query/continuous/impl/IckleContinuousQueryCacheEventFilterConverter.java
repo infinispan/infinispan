@@ -14,6 +14,8 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
@@ -27,6 +29,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
  * @author anistor@redhat.com
  * @since 8.0
  */
+@Scope(Scopes.NONE)
 public class IckleContinuousQueryCacheEventFilterConverter<K, V, C> extends AbstractCacheEventFilterConverter<K, V, C>
       implements IndexedFilter<K, V, C> {
 

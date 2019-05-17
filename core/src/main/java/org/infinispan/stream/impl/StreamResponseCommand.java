@@ -10,6 +10,8 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.IntSetsExternalization;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -18,6 +20,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * Stream response command used to handle returning intermediate or final responses from the remote node
  * @param <R> the response type
  */
+@Scope(Scopes.NONE)
 public class StreamResponseCommand<R> extends BaseRpcCommand {
    public static final byte COMMAND_ID = 48;
 

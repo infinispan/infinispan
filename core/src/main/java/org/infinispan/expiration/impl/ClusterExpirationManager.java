@@ -20,6 +20,8 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.remoting.responses.ValidResponse;
@@ -47,6 +49,7 @@ import net.jcip.annotations.ThreadSafe;
  * @param <K>
  * @param <V>
  */
+@Scope(Scopes.NAMED_CACHE)
 @ThreadSafe
 public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> {
    private static final Log log = LogFactory.getLog(ClusterExpirationManager.class);

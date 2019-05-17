@@ -26,6 +26,8 @@ import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commons.time.TimeService;
@@ -36,6 +38,7 @@ import org.infinispan.commons.time.TimeService;
  * @author Manik Surtani
  * @since 5.1
  */
+@Scope(Scopes.NAMED_CACHE)
 public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
    @Inject TimeService timeService;
