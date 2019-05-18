@@ -68,7 +68,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
 
    BaseCompleteTransactionOperation(HotRodHeader header, HotRodServer server, Subject subject, XidImpl xid,
          BiConsumer<HotRodHeader, Integer> reply) {
-      GlobalComponentRegistry gcr = server.getCacheManager().getGlobalComponentRegistry();
+      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(server.getCacheManager());
       this.globalTxTable = gcr.getComponent(GlobalTxTable.class);
       this.asyncExecutor = gcr.getComponent(ExecutorService.class, KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR);
       this.header = header;
@@ -203,7 +203,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
    private CompletableFuture<Void> completeWithRemoteCommand(AdvancedCache<?, ?> cache, RpcManager rpcManager,
          TxState state)
          throws Throwable {
-      CommandsFactory commandsFactory = cache.getComponentRegistry().getCommandsFactory();
+      CommandsFactory commandsFactory = SecurityActions.getComponentRegistry(cache).getCommandsFactory();
       CacheRpcCommand command = buildRemoteCommand(cache.getCacheConfiguration(), commandsFactory, state);
       CompletableFuture<Void> remote = rpcManager
             .invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions())

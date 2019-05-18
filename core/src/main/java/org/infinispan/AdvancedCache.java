@@ -144,7 +144,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
 
    /**
     * @return the component registry for this cache instance
+    * @deprecated Since 10.0, with no public API replacement
     */
+   @Deprecated
    ComponentRegistry getComponentRegistry();
 
    /**

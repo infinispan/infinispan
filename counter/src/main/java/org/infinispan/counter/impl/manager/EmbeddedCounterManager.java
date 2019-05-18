@@ -76,7 +76,7 @@ public class EmbeddedCounterManager implements CounterManager {
    }
 
    private static boolean isGlobalStateEnabled(EmbeddedCacheManager cacheManager) {
-      return cacheManager.getGlobalComponentRegistry().getGlobalConfiguration().globalState().enabled();
+      return SecurityActions.getCacheManagerConfiguration(cacheManager).globalState().enabled();
    }
 
    @Start

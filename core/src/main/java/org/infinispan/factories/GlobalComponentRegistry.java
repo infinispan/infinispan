@@ -20,6 +20,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
 import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
@@ -95,10 +96,12 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
     *
     * @param configuration configuration with which this is created
+    * @param configurationManager
     */
    public GlobalComponentRegistry(GlobalConfiguration configuration,
                                   EmbeddedCacheManager cacheManager,
-                                  Set<String> createdCaches, ModuleRepository moduleRepository) {
+                                  Set<String> createdCaches, ModuleRepository moduleRepository,
+                                  ConfigurationManager configurationManager) {
       super(new ComponentMetadataRepo(), moduleRepository, true, null);
 
       ClassLoader configuredClassLoader = configuration.classLoader();
@@ -114,6 +117,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(this, GlobalComponentRegistry.class);
          registerComponent(configuration, GlobalConfiguration.class);
          registerComponent(cacheManager, EmbeddedCacheManager.class);
+         basicComponentRegistry.registerComponent(ConfigurationManager.class.getName(), configurationManager, true);
          basicComponentRegistry.registerComponent(CacheManagerJmxRegistration.class.getName(), new CacheManagerJmxRegistration(), true);
          basicComponentRegistry.registerComponent(CacheManagerNotifier.class.getName(), new CacheManagerNotifierImpl(), true);
          basicComponentRegistry.registerComponent(InternalCacheRegistry.class.getName(), new InternalCacheRegistryImpl(), true);

@@ -1050,6 +1050,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public String toString() {
-      return String.format("SecureCache '%s'", delegate.getName());
+      return "Secure " + delegate;
    }
 }

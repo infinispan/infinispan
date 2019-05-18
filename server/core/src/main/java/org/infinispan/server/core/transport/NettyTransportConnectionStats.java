@@ -33,7 +33,7 @@ class NettyTransportConnectionStats {
 
    public NettyTransportConnectionStats(EmbeddedCacheManager cacheManager, ChannelGroup acceptedChannels, String threadNamePrefix) {
       this.cacheManager = cacheManager;
-      this.isGlobalStatsEnabled = cacheManager != null && cacheManager.getCacheManagerConfiguration().globalJmxStatistics().enabled();
+      this.isGlobalStatsEnabled = cacheManager != null && SecurityActions.getCacheManagerConfiguration(cacheManager).globalJmxStatistics().enabled();
       this.acceptedChannels = acceptedChannels;
       this.threadNamePrefix = threadNamePrefix;
    }
@@ -70,7 +70,7 @@ class NettyTransportConnectionStats {
    private int calculateGlobalConnections() {
       AtomicInteger connectionCount = new AtomicInteger();
       // Submit calculation task
-      CompletableFuture<Void> results = cacheManager.executor().submitConsumer(
+      CompletableFuture<Void> results = SecurityActions.getClusterExecutor(cacheManager).submitConsumer(
             new ConnectionAdderTask(threadNamePrefix), (a, v, t) -> {
                if (t != null) {
                   throw new CacheException(t);
@@ -95,7 +95,7 @@ class NettyTransportConnectionStats {
 
       @Override
       public Integer apply(EmbeddedCacheManager embeddedCacheManager) {
-         GlobalJmxStatisticsConfiguration globalCfg = embeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics();
+         GlobalJmxStatisticsConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(embeddedCacheManager).globalJmxStatistics();
          String jmxDomain = globalCfg.domain();
          MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg.mbeanServerLookup(), globalCfg.properties());
          try {

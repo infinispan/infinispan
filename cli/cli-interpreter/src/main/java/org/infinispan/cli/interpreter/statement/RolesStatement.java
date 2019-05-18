@@ -27,7 +27,8 @@ public class RolesStatement implements Statement {
 
    @Override
    public Result execute(Session session) throws StatementException {
-      GlobalAuthorizationConfiguration gac = session.getCacheManager().getCacheManagerConfiguration().security().authorization();
+      GlobalAuthorizationConfiguration gac =
+         SecurityActions.getCacheManagerConfiguration(session.getCacheManager()).security().authorization();
       if (!gac.enabled()) {
          throw log.authorizationNotEnabledOnContainer();
       }

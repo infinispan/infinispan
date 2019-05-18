@@ -31,7 +31,7 @@ public class ServerTaskEngine implements TaskEngine {
 
    public ServerTaskEngine(ServerTaskRegistry manager, EmbeddedCacheManager cacheManager, ScriptConversions scriptConversions) {
       this.registry = manager;
-      this.globalAuthzHelper = cacheManager.getGlobalComponentRegistry().getComponent(AuthorizationHelper.class);
+      this.globalAuthzHelper = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(AuthorizationHelper.class);
       this.scriptConversions = scriptConversions;
    }
 

@@ -58,6 +58,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -99,6 +100,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 @Scope(Scopes.GLOBAL)
 public class RemoteCommandsFactory {
    @Inject EmbeddedCacheManager cacheManager;
+   @Inject GlobalComponentRegistry globalComponentRegistry;
    @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_FACTORIES)
    Map<Byte,ModuleCommandFactory> commandFactories;
 

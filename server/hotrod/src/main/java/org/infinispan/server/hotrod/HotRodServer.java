@@ -218,7 +218,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // These are also initialized by super.startInternal, but we need them before
       this.configuration = configuration;
       this.cacheManager = cacheManager;
-      GlobalComponentRegistry gcr = cacheManager.getGlobalComponentRegistry();
+      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.iterationManager = new DefaultIterationManager(gcr.getTimeService());
       this.hasDefaultCache = configuration.defaultCacheName() != null || cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent();
 
@@ -251,7 +251,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       super.startInternal(configuration, cacheManager);
 
       // Add self to topology cache last, after everything is initialized
-      if (Configurations.isClustered(cacheManager.getCacheManagerConfiguration())) {
+      if (Configurations.isClustered(SecurityActions.getCacheManagerConfiguration(cacheManager))) {
          defineTopologyCacheConfig(cacheManager);
          if (log.isDebugEnabled())
             log.debugf("Externally facing address is %s:%d", configuration.proxyHost(), configuration.proxyPort());
@@ -329,7 +329,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    private void defineTopologyCacheConfig(EmbeddedCacheManager cacheManager) {
-      InternalCacheRegistry internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(
+      InternalCacheRegistry internalCacheRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(
          InternalCacheRegistry.class);
       internalCacheRegistry.registerInternalCache(configuration.topologyCacheName(),
                                                   createTopologyCacheConfig(
@@ -395,7 +395,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    private boolean checkCacheIsAvailable(String cacheName, byte hotRodVersion, long messageId) {
-      InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      InternalCacheRegistry icr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(InternalCacheRegistry.class);
       boolean keep;
       if (icr.isPrivateCache(cacheName)) {
          throw new RequestParsingException(
@@ -521,8 +521,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       if (topologyChangeListener != null) {
          SecurityActions.removeListener(addressCache, topologyChangeListener);
       }
-      if (cacheManager != null && Configurations.isClustered(cacheManager.getCacheManagerConfiguration())) {
-         InternalCacheRegistry internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      if (cacheManager != null && Configurations.isClustered(SecurityActions.getCacheManagerConfiguration(cacheManager))) {
+         InternalCacheRegistry internalCacheRegistry =
+            SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(InternalCacheRegistry.class);
          if (internalCacheRegistry != null)
             internalCacheRegistry.unregisterInternalCache(configuration.topologyCacheName());
       }

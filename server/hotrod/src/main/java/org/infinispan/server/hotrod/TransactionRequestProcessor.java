@@ -73,7 +73,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
 
    void forgetTransaction(HotRodHeader header, Subject subject, XidImpl xid) {
       //TODO authentication?
-      GlobalTxTable txTable = server.getCacheManager().getGlobalComponentRegistry().getComponent(GlobalTxTable.class);
+      GlobalTxTable txTable = SecurityActions.getGlobalComponentRegistry(server.getCacheManager()).getComponent(GlobalTxTable.class);
       executor.execute(() -> {
          try {
             txTable.forgetTransaction(xid);
@@ -91,7 +91,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       }
       executor.execute(() -> {
          try {
-            GlobalTxTable txTable = server.getCacheManager().getGlobalComponentRegistry()
+            GlobalTxTable txTable = SecurityActions.getGlobalComponentRegistry(server.getCacheManager())
                   .getComponent(GlobalTxTable.class);
             Collection<Xid> preparedTx = txTable.getPreparedTransactions();
             writeResponse(header, createRecoveryResponse(header, preparedTx));

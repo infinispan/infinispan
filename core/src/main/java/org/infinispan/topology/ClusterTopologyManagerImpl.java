@@ -28,11 +28,13 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -79,8 +81,6 @@ import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
 
-import net.jcip.annotations.GuardedBy;
-
 /**
  * The {@code ClusterTopologyManager} implementation.
  *
@@ -99,6 +99,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Inject Transport transport;
    @Inject GlobalConfiguration globalConfiguration;
+   @Inject ConfigurationManager configurationManager;
    @Inject GlobalComponentRegistry gcr;
    @Inject CacheManagerNotifier cacheManagerNotifier;
    @Inject EmbeddedCacheManager cacheManager;
@@ -411,8 +412,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          } else {
             lostDataCheck = ClusterTopologyManagerImpl::distLostDataCheck;
          }
+         // TODO Partition handling config should be part of the join info
          AvailabilityStrategy availabilityStrategy;
-         Configuration config = cacheManager.getCacheConfiguration(cacheName);
+         Configuration config = configurationManager.getConfiguration(cacheName, true);
          PartitionHandling partitionHandling = config != null ? config.clustering().partitionHandling().whenSplit() : null;
          boolean resolveConflictsOnMerge = resolveConflictsOnMerge(config, cacheMode);
          if (partitionHandling != null && partitionHandling != PartitionHandling.ALLOW_READ_WRITES) {
@@ -737,7 +739,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public void setInitialCacheTopologyId(String cacheName, int topologyId) {
-      Configuration configuration = cacheManager.getCacheConfiguration(cacheName);
+      // TODO Include cache mode in join info
+      Configuration configuration = configurationManager.getConfiguration(cacheName, true);
       ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(cacheName, configuration.clustering().cacheMode());
       cacheStatus.setInitialTopologyId(topologyId);
    }

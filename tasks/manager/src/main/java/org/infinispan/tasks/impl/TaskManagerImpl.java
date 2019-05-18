@@ -50,6 +50,7 @@ public class TaskManagerImpl implements TaskManager {
    @Inject TimeService timeService;
    @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
    ExecutorService asyncExecutor;
+   @Inject EventLogManager eventLogManager;
 
    private List<TaskEngine> engines;
    private ConcurrentMap<UUID, TaskExecution> runningTasks;
@@ -92,7 +93,7 @@ public class TaskManagerImpl implements TaskManager {
             CompletableFuture<T> task = engine.runTask(name, context, asyncExecutor);
             return task.whenComplete((r, e) -> {
                if (context.isLogEvent()) {
-                  EventLogger eventLog = EventLogManager.getEventLogger(cacheManager).scope(cacheManager.getAddress());
+                  EventLogger eventLog = eventLogManager.getEventLogger().scope(cacheManager.getAddress());
                   who.ifPresent(eventLog::who);
                   context.getCache().ifPresent(eventLog::context);
                   if (e != null) {

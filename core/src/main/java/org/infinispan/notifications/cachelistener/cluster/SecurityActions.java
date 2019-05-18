@@ -3,9 +3,12 @@ package org.infinispan.notifications.cachelistener.cluster;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetClusterExecutorAction;
 
 /**
@@ -29,5 +32,9 @@ final class SecurityActions {
    static ClusterExecutor getClusterExecutor(final Cache<?, ?> cache) {
       GetClusterExecutorAction action = new GetClusterExecutorAction(cache);
       return doPrivileged(action);
+   }
+
+   static <K, V> ComponentRegistry getComponentRegistry(AdvancedCache<K, V> cache) {
+      return doPrivileged(new GetCacheComponentRegistryAction(cache));
    }
 }

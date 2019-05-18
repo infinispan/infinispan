@@ -3,9 +3,11 @@ package org.infinispan.server.core;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 
 /**
@@ -27,5 +29,9 @@ final class SecurityActions {
 
    static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetGlobalComponentRegistryAction(cacheManager));
+   }
+
+   public static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 }

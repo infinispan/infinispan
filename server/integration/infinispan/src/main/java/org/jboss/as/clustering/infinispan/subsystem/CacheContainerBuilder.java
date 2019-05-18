@@ -32,7 +32,6 @@ import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.commons.service.Builder;
-import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.CacheContainer;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.task.ServerTaskRegistry;
@@ -101,7 +100,7 @@ public class CacheContainerBuilder implements Builder<CacheContainer>, Service<C
     public void start(StartContext context) {
         GlobalConfiguration config = this.configuration.getValue();
         this.container = new DefaultCacheContainer(config, this.defaultCache);
-        this.container.getGlobalComponentRegistry().registerComponent(this.serverTaskRegistry.getValue(), ServerTaskRegistry.class);
+        SecurityActions.getGlobalComponentRegistry(this.container).registerComponent(this.serverTaskRegistry.getValue(), ServerTaskRegistry.class);
         SecurityActions.registerAndStartContainer(this.container, this);
         InfinispanLogger.ROOT_LOGGER.cacheContainerStarted(this.name);
     }
@@ -118,13 +117,13 @@ public class CacheContainerBuilder implements Builder<CacheContainer>, Service<C
 
     @CacheStarted
     public void cacheStarted(CacheStartedEvent event) {
-        if (!event.getCacheManager().getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class).isInternalCache(event.getCacheName()))
+        if (!SecurityActions.getGlobalComponentRegistry(event.getCacheManager()).getComponent(InternalCacheRegistry.class).isInternalCache(event.getCacheName()))
             InfinispanLogger.ROOT_LOGGER.cacheStarted(event.getCacheName(), this.name);
     }
 
     @CacheStopped
     public void cacheStopped(CacheStoppedEvent event) {
-        if (!event.getCacheManager().getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class).isInternalCache(event.getCacheName()))
+        if (!SecurityActions.getGlobalComponentRegistry(event.getCacheManager()).getComponent(InternalCacheRegistry.class).isInternalCache(event.getCacheName()))
             InfinispanLogger.ROOT_LOGGER.cacheStopped(event.getCacheName(), this.name);
     }
 }

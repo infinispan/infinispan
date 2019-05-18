@@ -41,7 +41,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
    private void init() {
       cacheManager = TestCacheManagerFactory.createClusteredCacheManager();
       internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
-      clusterHealth = new ClusterHealthImpl(cacheManager);
+      clusterHealth = new ClusterHealthImpl(cacheManager, cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class));
    }
 
    @BeforeMethod
@@ -114,7 +114,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
 
       mockRehashInProgress(CACHE_NAME, mockedCache, mockedAdvancedCache, mockedDistributionManager);
 
-      ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager);
+      ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager, mockedCacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class));
 
       assertEquals(HealthStatus.HEALTHY_REBALANCING, clusterHealth.getHealthStatus());
    }
@@ -140,7 +140,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
       when(mockedCacheManager.getCacheNames()).thenReturn(Collections.emptySet());
       mockRehashInProgress(INTERNAL_CACHE_NAME, mockedCache, mockedAdvancedCache, mockedDistributionManager);
 
-      ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager);
+      ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager, mockedCacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class));
 
       assertEquals(HealthStatus.HEALTHY_REBALANCING, clusterHealth.getHealthStatus());
    }
@@ -154,13 +154,13 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
    }
 
    public void testGetNumberOfNodesWithNullTransport() throws Exception {
-      ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager);
+      ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager, mockedCacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class));
 
       assertEquals(0, clusterHealth.getNumberOfNodes());
    }
 
    public void testGetNodeNamesWithNullTransport() throws Exception {
-      ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager);
+      ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager, mockedCacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class));
 
       assertTrue(clusterHealth.getNodeNames().isEmpty());
    }

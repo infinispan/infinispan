@@ -139,7 +139,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    };
 
    protected void registerServerMBeans() {
-      GlobalConfiguration globalCfg = cacheManager.getCacheManagerConfiguration();
+      GlobalConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(cacheManager);
       GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
       if (jmxConfig.enabled()) {
          mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
@@ -157,7 +157,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
 
    private ObjectName registerMBean(Object instance, String jmxDomain, String groupName, String name) throws Exception {
       CacheManagerJmxRegistration jmxRegistration =
-         cacheManager.getGlobalComponentRegistry().getComponent(CacheManagerJmxRegistration.class);
+         SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerJmxRegistration.class);
       return jmxRegistration.registerExternalMBean(instance, jmxDomain, groupName, name);
    }
 
@@ -225,7 +225,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       if (configuration.defaultCacheName() != null) {
          return configuration.defaultCacheName();
       } else {
-         return cacheManager.getCacheManagerConfiguration().defaultCacheName().orElse(null);
+         return SecurityActions.getCacheManagerConfiguration(cacheManager).defaultCacheName().orElse(null);
       }
    }
 

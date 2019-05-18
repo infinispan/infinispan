@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
@@ -74,9 +73,8 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
     * Acquires a Matcher instance from the ComponentRegistry of the given Cache object.
     */
    @Inject
-   protected void injectDependencies(Cache cache) {
-      this.queryCache = cache.getCacheManager().getGlobalComponentRegistry().getComponent(QueryCache.class);
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+   protected void injectDependencies(ComponentRegistry componentRegistry, QueryCache queryCache) {
+      this.queryCache = queryCache;
       matcher = componentRegistry.getComponent(matcherImplClass);
       if (matcher == null) {
          throw new CacheException("Expected component not found in registry: " + matcherImplClass.getName());

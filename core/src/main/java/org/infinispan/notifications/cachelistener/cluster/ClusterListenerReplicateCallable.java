@@ -81,11 +81,10 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
 
    @Override
    public void accept(EmbeddedCacheManager cacheManager, Cache<K, V> cache) {
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry componentRegistry = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
 
       CacheNotifier<K, V> cacheNotifier = componentRegistry.getComponent(CacheNotifier.class);
-      CacheManagerNotifier cacheManagerNotifier = cache.getCacheManager().getGlobalComponentRegistry().getComponent(
-            CacheManagerNotifier.class);
+      CacheManagerNotifier cacheManagerNotifier = componentRegistry.getComponent(CacheManagerNotifier.class);
       Address ourAddress = cache.getCacheManager().getAddress();
       ClusterEventManager<K, V> eventManager = componentRegistry.getComponent(ClusterEventManager.class);
       if (filter != null) {

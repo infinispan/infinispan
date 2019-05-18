@@ -21,10 +21,10 @@ public final class EmbeddedCounterManagerFactory {
     * @return the {@link CounterManager} associated to the {@link EmbeddedCacheManager}.
     */
    public static CounterManager asCounterManager(EmbeddedCacheManager cacheManager) {
-      return requireNonNull(cacheManager, "EmbeddedCacheManager can't be null.")
-                .getGlobalComponentRegistry()
-                .getComponent(BasicComponentRegistry.class)
-                .getComponent(CounterManager.class)
-                .running();
+      requireNonNull(cacheManager, "EmbeddedCacheManager can't be null.");
+      return SecurityActions.getGlobalComponentRegistry(cacheManager)
+                            .getComponent(BasicComponentRegistry.class)
+                            .getComponent(CounterManager.class)
+                            .running();
    }
 }

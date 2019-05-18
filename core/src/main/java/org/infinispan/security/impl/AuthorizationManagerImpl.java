@@ -41,7 +41,7 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
       this.authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHE, cacheName,
             globalACLCache);
       if (globalACLCache != null) {
-         cacheManager.addCacheDependency(cacheName, globalACLCache.getName());
+         SecurityActions.addCacheDependency(cacheManager, cacheName, globalACLCache.getName());
       }
    }
 

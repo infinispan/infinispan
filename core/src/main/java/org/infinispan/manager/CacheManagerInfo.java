@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.ConfigurationManager;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -23,14 +22,13 @@ public class CacheManagerInfo {
    public static final List<String> LOCAL_NODE = Collections.singletonList("local");
    private final DefaultCacheManager cacheManager;
    private final ConfigurationManager configurationManager;
-   private final GlobalComponentRegistry globalComponentRegistry;
    private InternalCacheRegistry internalCacheRegistry;
 
-   public CacheManagerInfo(DefaultCacheManager cacheManager) {
+   public CacheManagerInfo(DefaultCacheManager cacheManager,
+                           ConfigurationManager configurationManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;
-      this.configurationManager = cacheManager.getConfigurationManager();
-      this.globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
-      this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+      this.configurationManager = configurationManager;
+      this.internalCacheRegistry = internalCacheRegistry;
 
    }
 
@@ -57,7 +55,6 @@ public class CacheManagerInfo {
 
    public Set<String> getCacheConfigurationNames() {
       Set<String> names = new HashSet<>(configurationManager.getDefinedConfigurations());
-      InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.filterPrivateCaches(names);
       if (names.isEmpty())
          return Collections.emptySet();

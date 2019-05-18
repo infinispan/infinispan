@@ -4,11 +4,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.PrivilegedAction;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.security.Security;
 import org.infinispan.test.TestingUtil;
 
 /**
@@ -17,7 +19,9 @@ import org.infinispan.test.TestingUtil;
 public class ScriptingUtils {
 
     public static ScriptingManager getScriptingManager(EmbeddedCacheManager manager) {
-        return manager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+       return Security.doPrivileged((PrivilegedAction<ScriptingManager>) () -> {
+          return manager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+       });
     }
 
     public static void loadData(BasicCache<String, String> cache, String fileName) throws IOException {

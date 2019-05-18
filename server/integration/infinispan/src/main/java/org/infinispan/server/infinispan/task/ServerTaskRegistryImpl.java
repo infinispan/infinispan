@@ -28,7 +28,7 @@ public class ServerTaskRegistryImpl implements ServerTaskRegistry {
 
    @Inject
    public void init(TaskManager taskManager, EmbeddedCacheManager cacheManager) {
-      EncoderRegistry encoderRegistry = cacheManager.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
+      EncoderRegistry encoderRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(EncoderRegistry.class);
       ServerTaskEngine engine = new ServerTaskEngine(this, cacheManager, new ScriptConversions(encoderRegistry));
       taskManager.registerTaskEngine(engine);
    }
