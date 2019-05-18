@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -1097,6 +1096,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public String toString() {
-      return String.format("SecureCache '%s'", delegate.getName());
+      return "Secure " + delegate;
    }
 }

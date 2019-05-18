@@ -39,7 +39,7 @@ class NettyTransportConnectionStats {
 
    public NettyTransportConnectionStats(EmbeddedCacheManager cacheManager, ChannelGroup acceptedChannels, String threadNamePrefix) {
       this.cacheManager = cacheManager;
-      this.isGlobalStatsEnabled = cacheManager != null && cacheManager.getCacheManagerConfiguration().globalJmxStatistics().enabled();
+      this.isGlobalStatsEnabled = cacheManager != null && SecurityActions.getCacheManagerConfiguration(cacheManager).globalJmxStatistics().enabled();
       this.acceptedChannels = acceptedChannels;
       this.threadNamePrefix = threadNamePrefix;
    }
@@ -109,7 +109,7 @@ class NettyTransportConnectionStats {
 
       @Override
       public Integer call() throws Exception {
-         GlobalJmxStatisticsConfiguration globalCfg = cache.getCacheManager().getCacheManagerConfiguration().globalJmxStatistics();
+         GlobalJmxStatisticsConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(cache).globalJmxStatistics();
          String jmxDomain = globalCfg.domain();
          MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg.mbeanServerLookup(), globalCfg.properties());
          try {

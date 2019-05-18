@@ -40,7 +40,6 @@ import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.query.SearchManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
-import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.topology.LocalTopologyManager;

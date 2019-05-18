@@ -34,7 +34,9 @@ public final class Security {
 
    private static boolean isTrustedClass(Class<?> klass) {
       // TODO: implement a better way
-      return klass.getPackage().getName().startsWith("org.infinispan.");
+      String packageName = klass.getPackage().getName();
+      return packageName.startsWith("org.infinispan") ||
+             packageName.startsWith("org.jboss.as.clustering.infinispan");
    }
 
    public static <T> T doPrivileged(PrivilegedAction<T> action) {

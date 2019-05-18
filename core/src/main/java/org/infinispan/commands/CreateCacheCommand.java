@@ -9,6 +9,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -16,7 +18,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -35,6 +36,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
    private String cacheNameToCreate;
    private String cacheConfigurationName;
    private int expectedMembers;
+   private ConfigurationManager configurationManager;
 
    private CreateCacheCommand() {
       super(null);
@@ -56,8 +58,9 @@ public class CreateCacheCommand extends BaseRpcCommand {
       this.expectedMembers = expectedMembers;
    }
 
-   public void init(EmbeddedCacheManager cacheManager) {
+   public void init(EmbeddedCacheManager cacheManager, ConfigurationManager configurationManager) {
       this.cacheManager = cacheManager;
+      this.configurationManager = configurationManager;
    }
 
    @Override
@@ -66,7 +69,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
          throw new NullPointerException("Cache configuration name is required");
       }
 
-      Configuration cacheConfig = cacheManager.getCacheConfiguration(cacheConfigurationName);
+      Configuration cacheConfig = configurationManager.getConfiguration(cacheConfigurationName, true);
       if (cacheConfig == null) {
          throw new IllegalStateException(
                "Cache configuration " + cacheConfigurationName + " is not defined on node " +

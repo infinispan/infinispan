@@ -83,8 +83,10 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    @Override
    public void stop() {
+      if (restCacheManager != null) {
+         restCacheManager.stop();
+      }
       super.stop();
-      restCacheManager.stop();
    }
 
    @Override

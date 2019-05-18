@@ -36,7 +36,6 @@ import java.util.Set;
 import org.infinispan.Version;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.ClusterContainerStats;
@@ -180,7 +179,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
             context.getFailureDescription().set(String.format("Unavailable cache container %s", attrName));
         } else {
             CacheContainerStats stats = cacheManager.getStats();
-            ClusterContainerStats clusterContainerStats = cacheManager.getGlobalComponentRegistry().getComponent(ClusterContainerStats.class);
+            ClusterContainerStats clusterContainerStats = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ClusterContainerStats.class);
             switch (metric) {
                 case CACHE_MANAGER_STATUS:
                     result.set(SecurityActions.getCacheManagerStatus(cacheManager).toString());

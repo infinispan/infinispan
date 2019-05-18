@@ -52,6 +52,7 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.health.Health;
 import org.infinispan.health.impl.HealthImpl;
 import org.infinispan.health.impl.jmx.HealthJMXExposerImpl;
@@ -254,17 +255,18 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             defaultCacheName = null;
          }
       }
-      this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
-      this.globalComponentRegistry.registerComponent(configurationManager, ConfigurationManager.class);
+      this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(), configurationManager);
       this.globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
 
       this.authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
       this.globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
 
       this.stats = new CacheContainerStatsImpl(this);
-      health = new HealthImpl(this);
+      globalComponentRegistry.registerComponent(stats, CacheContainerStats.class);
+      this.health = new HealthImpl(this, globalComponentRegistry.getComponent(InternalCacheRegistry.class));
       globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
-      this.cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class));
+      this.cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
+                                                            globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
       if (start)
          start();
    }
@@ -329,18 +331,19 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          configurationManager = new ConfigurationManager(holder);
          GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
          defaultCacheName = globalConfiguration.defaultCacheName().orElse(null);
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
-         globalComponentRegistry.registerComponent(configurationManager, ConfigurationManager.class);
+         this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(), configurationManager);
          globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
 
          stats = new CacheContainerStatsImpl(this);
-         health = new HealthImpl(this);
+         globalComponentRegistry.registerComponent(this, CacheContainerStats.class);
+         this.health = new HealthImpl(this, globalComponentRegistry.getComponent(InternalCacheRegistry.class));
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
 
          authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
          this.globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
 
-         cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class));
+         cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
+                                                          globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
       } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
@@ -410,7 +413,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             }
          }
          configurationManager.removeConfiguration(configurationName);
-         this.getGlobalComponentRegistry().removeCache(configurationName);
+         globalComponentRegistry.removeCache(configurationName);
       }
    }
 
@@ -742,6 +745,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    public void stop() {
       authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
 
+      internalStop();
+   }
+
+   private void internalStop() {
       lifecycleLock.lock();
       try {
          while (status == ComponentStatus.STOPPING) {
@@ -826,17 +833,18 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public ComponentStatus getStatus() {
-      authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
       return status;
    }
 
    @Override
    public GlobalConfiguration getCacheManagerConfiguration() {
+      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       return configurationManager.getGlobalConfiguration();
    }
 
    @Override
    public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
+      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       if (defaultCacheName != null) {
          return configurationManager.getConfiguration(defaultCacheName, true);
       } else {
@@ -846,6 +854,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public Configuration getCacheConfiguration(String name) {
+      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       Configuration configuration = configurationManager.getConfiguration(name, true);
       if (configuration == null && cacheExists(name)) {
          return getDefaultCacheConfiguration();
@@ -1031,11 +1040,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public GlobalComponentRegistry getGlobalComponentRegistry() {
+      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       return globalComponentRegistry;
    }
 
    @Override
    public void addCacheDependency(String from, String to) {
+      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       cacheDependencyGraph.addDependency(from, to);
    }
 

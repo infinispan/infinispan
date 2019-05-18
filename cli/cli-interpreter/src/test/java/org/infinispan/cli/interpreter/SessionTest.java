@@ -2,6 +2,7 @@ package org.infinispan.cli.interpreter;
 
 import java.util.Map;
 
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -13,7 +14,9 @@ public class SessionTest extends SingleCacheManagerTest {
 
    public void testSessionExpiration() throws Exception {
       Interpreter interpreter = new Interpreter();
-      TestingUtil.inject(interpreter, cacheManager, TIME_SERVICE);
+      ConfigurationManager configurationManager =
+         TestingUtil.extractGlobalComponent(cacheManager, ConfigurationManager.class);
+      TestingUtil.inject(interpreter, cacheManager, TIME_SERVICE, configurationManager);
       interpreter.setSessionTimeout(500);
       interpreter.setSessionReaperWakeupInterval(1000);
       interpreter.start();

@@ -14,7 +14,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
-import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
@@ -96,7 +95,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
-         GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
+         GlobalXSiteAdminOperations xsiteAdminOperations = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(GlobalXSiteAdminOperations.class);
          return toOperationResult(xsiteAdminOperations.takeSiteOffline(siteName.asString()));
       }
    }
@@ -112,7 +111,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
-         GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
+         GlobalXSiteAdminOperations xsiteAdminOperations = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(GlobalXSiteAdminOperations.class);
          return toOperationResult(xsiteAdminOperations.bringSiteOnline(siteName.asString()));
       }
    }
@@ -128,7 +127,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
-         GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
+         GlobalXSiteAdminOperations xsiteAdminOperations = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(GlobalXSiteAdminOperations.class);
          return toOperationResult(xsiteAdminOperations.pushState(siteName.asString()));
       }
    }
@@ -144,7 +143,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
-         GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
+         GlobalXSiteAdminOperations xsiteAdminOperations = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(GlobalXSiteAdminOperations.class);
          return toOperationResult(xsiteAdminOperations.cancelPushState(siteName.asString()));
       }
    }
@@ -192,7 +191,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
 
         @Override
         protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
-            TaskManager taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
+            TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
             List<Task> tasks = taskManager.getTasks();
             tasks.sort(Comparator.comparing(Task::getName));
             final ModelNode result = new ModelNode().setEmptyList();
@@ -219,7 +218,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
         protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
             String taskName = CacheContainerResource.TASK_NAME.resolveModelAttribute(context, operation).asString();
             boolean taskAsync = CacheContainerResource.TASK_ASYNC.resolveModelAttribute(context, operation).asBoolean();
-            TaskManager taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
+            TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
             TaskContext taskContext = new TaskContext();
             ModelNode cacheNameNode = CacheContainerResource.TASK_CACHE_NAME.resolveModelAttribute(context, operation);
             if (cacheNameNode.isDefined()) {
@@ -249,7 +248,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
 
         @Override
         protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
-            TaskManager taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
+            TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
             List<TaskExecution> taskExecutions = taskManager.getCurrentTasks();
             taskExecutions.sort(Comparator.comparing(TaskExecution::getStart));
             final ModelNode result = new ModelNode().setEmptyList();
@@ -274,7 +273,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
 
         @Override
         protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
-            ScriptingManager scriptManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+            ScriptingManager scriptManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ScriptingManager.class);
             String scriptName = CacheContainerResource.SCRIPT_NAME.resolveModelAttribute(context, operation).asString();
             String scriptCode = CacheContainerResource.SCRIPT_CODE.resolveModelAttribute(context, operation).asString();
             scriptManager.addScript(scriptName, scriptCode);
@@ -291,7 +290,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
 
         @Override
         protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
-            ScriptingManager scriptManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+            ScriptingManager scriptManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ScriptingManager.class);
             String scriptName = CacheContainerResource.SCRIPT_NAME.resolveModelAttribute(context, operation).asString();
             String scriptCode = scriptManager.getScript(scriptName);
             return scriptCode != null ? new ModelNode().set(scriptCode) : null;
@@ -307,7 +306,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
 
         @Override
         protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
-            ScriptingManager scriptManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+            ScriptingManager scriptManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ScriptingManager.class);
             String scriptName = CacheContainerResource.SCRIPT_NAME.resolveModelAttribute(context, operation).asString();
             scriptManager.removeScript(scriptName);
             return null;

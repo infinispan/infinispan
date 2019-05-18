@@ -32,7 +32,7 @@ public class GetProtobufSchemaHandler extends AbstractRuntimeOnlyHandler {
             CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
       if (controller != null) {
          final EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
-         final ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+         final ProtobufMetadataManager protoManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ProtobufMetadataManager.class);
 
          if (protoManager != null) {
             try {

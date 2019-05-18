@@ -24,7 +24,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
 
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;

@@ -70,6 +70,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       this.directoryProviderName = directoryProviderName;
       this.serviceManager = context.getServiceManager();
       this.cacheManager = serviceManager.requestService(CacheManagerService.class).getEmbeddedCacheManager();
+      this.
       metadataCacheName = InfinispanIntegration.getMetadataCacheName(properties);
       dataCacheName = InfinispanIntegration.getDataCacheName(properties);
       lockingCacheName = InfinispanIntegration.getLockingCacheName(properties);

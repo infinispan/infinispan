@@ -75,13 +75,6 @@ final class SecurityActions {
       String setProperty(String name, String value);
    }
 
-   static String getProperty(String name, String defaultValue) {
-      if (System.getSecurityManager() == null)
-         return SysProps.NON_PRIVILEGED.getProperty(name, defaultValue);
-
-      return SysProps.PRIVILEGED.getProperty(name, defaultValue);
-   }
-
    static int getIntProperty(String name, int defaultValue) {
       String value = getProperty(name);
       if (value != null) {
@@ -99,14 +92,5 @@ final class SecurityActions {
          return SysProps.NON_PRIVILEGED.getProperty(name);
 
       return SysProps.PRIVILEGED.getProperty(name);
-   }
-
-   static String setProperty(String name, String value) {
-      if (System.getSecurityManager() == null) {
-         return SysProps.NON_PRIVILEGED.setProperty(name, value);
-      } else {
-         return SysProps.PRIVILEGED.setProperty(name, value);
-      }
-
    }
 }

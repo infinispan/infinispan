@@ -59,6 +59,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -98,6 +99,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 @Scope(Scopes.GLOBAL)
 public class RemoteCommandsFactory {
    @Inject private EmbeddedCacheManager cacheManager;
+   @Inject private GlobalComponentRegistry globalComponentRegistry;
    @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_FACTORIES)
    private Map<Byte,ModuleCommandFactory> commandFactories;
 
@@ -275,7 +277,7 @@ public class RemoteCommandsFactory {
                command = new StateResponseCommand(cacheName);
                break;
             case RemoveCacheCommand.COMMAND_ID:
-               command = new RemoveCacheCommand(cacheName, cacheManager);
+               command = new RemoveCacheCommand(cacheName, globalComponentRegistry);
                break;
             case TxCompletionNotificationCommand.COMMAND_ID:
                command = new TxCompletionNotificationCommand(cacheName);

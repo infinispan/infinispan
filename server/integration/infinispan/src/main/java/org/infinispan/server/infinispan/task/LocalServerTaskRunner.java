@@ -27,6 +27,6 @@ public class LocalServerTaskRunner implements ServerTaskRunner {
 
    private ServerTaskRegistry getRegistry(TaskContext context) {
       Cache<?, ?> cache = context.getCache().get();
-      return cache.getCacheManager().getGlobalComponentRegistry().getComponent(ServerTaskRegistry.class);
+      return SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(ServerTaskRegistry.class);
    }
 }

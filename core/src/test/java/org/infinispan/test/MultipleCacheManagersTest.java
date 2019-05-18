@@ -139,7 +139,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
 
       for (EmbeddedCacheManager cm : cacheManagers) {
-         String nodeName = cm.getCacheManagerConfiguration().transport().nodeName();
+         String nodeName = SecurityActions.getCacheManagerConfiguration(cm).transport().nodeName();
          assertTrue("Invalid node name for test " + getCurrentTestShortName() + ": " + nodeName,
                     nodeName != null && nodeName.contains(getCurrentTestShortName()));
       }

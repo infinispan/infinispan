@@ -57,7 +57,7 @@ public class RegisterProtoSchemasOperationHandler implements OperationStepHandle
 
       if (controller != null) {
          EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
-         ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+         ProtobufMetadataManager protoManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ProtobufMetadataManager.class);
          if (protoManager != null) {
             try {
                String namesParameter = CacheContainerResource.PROTO_NAMES.getName();

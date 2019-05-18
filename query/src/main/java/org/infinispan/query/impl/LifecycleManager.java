@@ -12,7 +12,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -161,16 +160,16 @@ public class LifecycleManager implements ModuleLifecycle {
       if (indexingConfiguration.indexedEntities().isEmpty()) {
          // todo [anistor] remove dependency on QueryKnownClasses in Infinispan 10.0
          // indexed classes are autodetected and propagated across cluster via this cache
-         cacheManager.addCacheDependency(cacheStarting, QueryKnownClasses.QUERY_KNOWN_CLASSES_CACHE_NAME);
+         SecurityActions.addCacheDependency(cacheManager, cacheStarting, QueryKnownClasses.QUERY_KNOWN_CLASSES_CACHE_NAME);
       }
       if (hasInfinispanDirectory(indexingConfiguration.properties())) {
          String metadataCacheName = getMetadataCacheName(indexingConfiguration.properties());
          String lockingCacheName = getLockingCacheName(indexingConfiguration.properties());
          String dataCacheName = getDataCacheName(indexingConfiguration.properties());
          if (!cacheStarting.equals(metadataCacheName) && !cacheStarting.equals(lockingCacheName) && !cacheStarting.equals(dataCacheName)) {
-            cacheManager.addCacheDependency(cacheStarting, metadataCacheName);
-            cacheManager.addCacheDependency(cacheStarting, lockingCacheName);
-            cacheManager.addCacheDependency(cacheStarting, dataCacheName);
+            SecurityActions.addCacheDependency(cacheManager, cacheStarting, metadataCacheName);
+            SecurityActions.addCacheDependency(cacheManager, cacheStarting, lockingCacheName);
+            SecurityActions.addCacheDependency(cacheManager, cacheStarting, dataCacheName);
          }
       }
    }

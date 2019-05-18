@@ -25,7 +25,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.infinispan.SecurityActions;
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
 import org.jboss.logging.Logger;
 import org.jboss.msc.service.Service;
@@ -70,7 +69,7 @@ public abstract class AbstractCacheConfigurationService implements Service<Confi
 
         EmbeddedCacheManager container = this.getCacheContainer();
         CacheMode mode = this.config.clustering().cacheMode();
-        if (mode.isClustered() && (container.getCacheManagerConfiguration().transport().transport() == null)) {
+        if (mode.isClustered() && (SecurityActions.getCacheManagerConfiguration(container).transport().transport() == null)) {
             throw InfinispanMessages.MESSAGES.transportRequired(mode, this.name, container.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName());
         }
 

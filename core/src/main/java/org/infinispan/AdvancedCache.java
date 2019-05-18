@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
@@ -203,7 +202,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
 
    /**
     * @return the component registry for this cache instance
+    * @deprecated Since 10.0, with no public API replacement
     */
+   @Deprecated
    ComponentRegistry getComponentRegistry();
 
    /**

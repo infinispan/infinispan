@@ -4,8 +4,10 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 
 /**
  * SecurityActions for the org.infinispan.query.backend package.
@@ -28,5 +30,9 @@ final class SecurityActions {
 
    static <K, V> Cache<K, V> getCache(EmbeddedCacheManager cacheManager, String cacheName) {
       return doPrivileged(() -> cacheManager.getCache(cacheName));
+   }
+
+   static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 }
