@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -41,7 +42,7 @@ public class ComponentRegistryTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
       AdvancedCache cache = mock(AdvancedCache.class);
 
-      gcr = new GlobalComponentRegistry(gc, cm, cachesSet);
+      gcr = new GlobalComponentRegistry(gc, cm, cachesSet, mock(ConfigurationManager.class));
       cr1 = new ComponentRegistry("cache", c, cache, gcr, ComponentRegistryTest.class.getClassLoader());
       cr2 = new ComponentRegistry("cache", c, cache, gcr, ComponentRegistryTest.class.getClassLoader());
 

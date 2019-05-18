@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -62,7 +63,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       // Create global component registry with dependencies
       GlobalConfiguration gc = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
-      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cacheManager, Collections.emptySet());
+      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cacheManager, Collections.emptySet(),
+                                                                mock(ConfigurationManager.class));
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
 
       CacheManagerNotifierImpl managerNotifier = new CacheManagerNotifierImpl();
@@ -138,7 +140,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       // Create global component registry with dependencies
       GlobalConfiguration gc = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
-      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cacheManager, Collections.emptySet());
+      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cacheManager, Collections.emptySet(),
+                                                                mock(ConfigurationManager.class));
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
 
       CacheManagerNotifierImpl managerNotifier = new CacheManagerNotifierImpl();

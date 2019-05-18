@@ -24,10 +24,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
-
 import javax.security.auth.Subject;
 import javax.security.sasl.SaslServerFactory;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOutboundHandler;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -95,12 +98,6 @@ import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.KeyValuePair;
-
-import com.github.benmanes.caffeine.cache.Caffeine;
-
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOutboundHandler;
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information on
@@ -234,7 +231,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // These are also initialized by super.startInternal, but we need them before
       this.configuration = configuration;
       this.cacheManager = cacheManager;
-      this.iterationManager = new DefaultIterationManager(cacheManager.getGlobalComponentRegistry().getTimeService());
+      this.iterationManager = new DefaultIterationManager(SecurityActions.getGlobalComponentRegistry(cacheManager).getTimeService());
 
       // populate the sasl factories based on the required mechs
       setupSasl();
@@ -242,7 +239,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // Initialize query-specific stuff
       List<QueryFacade> queryFacades = loadQueryFacades();
       queryFacade = queryFacades.size() > 0 ? queryFacades.get(0) : null;
-      clientListenerRegistry = new ClientListenerRegistry(cacheManager.getGlobalComponentRegistry().getComponent(EncoderRegistry.class));
+      clientListenerRegistry = new ClientListenerRegistry(SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(EncoderRegistry.class));
       clientCounterNotificationManager = new ClientCounterManagerNotificationManager(asCounterManager(cacheManager));
 
       addKeyValueFilterConverterFactory(ToEmptyBytesKeyValueFilterConverter.class.getName(), new ToEmptyBytesFactory());
@@ -263,7 +260,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       super.startInternal(configuration, cacheManager);
 
       // Add self to topology cache last, after everything is initialized
-      if (Configurations.isClustered(cacheManager.getCacheManagerConfiguration())) {
+      if (Configurations.isClustered(SecurityActions.getCacheManagerConfiguration(cacheManager))) {
          defineTopologyCacheConfig(cacheManager);
          if (log.isDebugEnabled())
             log.debugf("Externally facing address is %s:%d", configuration.proxyHost(), configuration.proxyPort());
@@ -312,7 +309,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private void preStartCaches() {
       // Start defined caches to avoid issues with lazily started caches. Skip internal caches if authorization is not
       // enabled
-      InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      InternalCacheRegistry icr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(InternalCacheRegistry.class);
       boolean authz = cacheManager.getCacheManagerConfiguration().security().authorization().enabled();
       for (String cacheName : cacheManager.getCacheNames()) {
          getCacheInstance(UNKNOWN_TYPES, null, cacheName, cacheManager, false, (!icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED) || authz));
@@ -339,7 +336,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    private void defineTopologyCacheConfig(EmbeddedCacheManager cacheManager) {
-      InternalCacheRegistry internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      InternalCacheRegistry internalCacheRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.registerInternalCache(configuration.topologyCacheName(),
             createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration().transport().distributedSyncTimeout()).build(),
             EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
@@ -378,7 +375,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       KeyValuePair<String, String> requestMediaTypes = getRequestMediaTypes(header, getCacheConfiguration(cacheName));
       AdvancedCache<byte[], byte[]> cache = knownCaches.get(getDecoratedCacheKey(cacheName, requestMediaTypes));
       if (cache == null) {
-         InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+         InternalCacheRegistry icr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(InternalCacheRegistry.class);
          if (icr.isPrivateCache(cacheName)) {
             throw new RequestParsingException(
                   String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
@@ -580,8 +577,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       if (topologyChangeListener != null) {
          SecurityActions.removeListener(addressCache, topologyChangeListener);
       }
-      if (cacheManager != null && Configurations.isClustered(cacheManager.getCacheManagerConfiguration())) {
-         InternalCacheRegistry internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      if (cacheManager != null && Configurations.isClustered(SecurityActions.getCacheManagerConfiguration(cacheManager))) {
+         InternalCacheRegistry internalCacheRegistry =
+            SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(InternalCacheRegistry.class);
          if (internalCacheRegistry != null)
             internalCacheRegistry.unregisterInternalCache(configuration.topologyCacheName());
       }

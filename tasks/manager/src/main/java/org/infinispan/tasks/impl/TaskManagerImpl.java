@@ -11,9 +11,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-
 import javax.security.auth.Subject;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -30,7 +30,6 @@ import org.infinispan.tasks.TaskExecution;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.tasks.logging.Log;
 import org.infinispan.tasks.spi.TaskEngine;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
@@ -50,6 +49,7 @@ public class TaskManagerImpl implements TaskManager {
    @Inject private TimeService timeService;
    @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
    private ExecutorService asyncExecutor;
+   @Inject private EventLogManager eventLogManager;
 
    private List<TaskEngine> engines;
    private ConcurrentMap<UUID, TaskExecution> runningTasks;
@@ -94,7 +94,7 @@ public class TaskManagerImpl implements TaskManager {
             CompletableFuture<T> task = engine.runTask(name, context, asyncExecutor);
             return task.whenComplete((r, e) -> {
                if (context.isLogEvent()) {
-                  EventLogger eventLog = EventLogManager.getEventLogger(cacheManager).scope(cacheManager.getAddress());
+                  EventLogger eventLog = eventLogManager.getEventLogger().scope(cacheManager.getAddress());
                   who.ifPresent(eventLog::who);
                   context.getCache().ifPresent(eventLog::context);
                   if (e != null) {

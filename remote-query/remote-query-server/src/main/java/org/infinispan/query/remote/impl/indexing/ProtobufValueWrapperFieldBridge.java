@@ -12,7 +12,6 @@ import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.query.remote.impl.logging.Log;
 
 /**
@@ -59,7 +58,7 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
 
    private void decodeAndIndex(ProtobufValueWrapper valueWrapper, Document document, LuceneOptions luceneOptions) {
       if (serializationContext == null) {
-         serializationContext = ProtobufMetadataManagerImpl.getSerializationContext(cache.getCacheManager());
+         serializationContext = SecurityActions.getSerializationContext(cache.getCacheManager());
          wrapperDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
       }
 

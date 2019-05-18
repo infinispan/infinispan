@@ -47,7 +47,6 @@ import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandler;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
-import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.util.concurrent.locks.impl.DefaultLockManager;
 import org.infinispan.xsite.XSiteAdminOperations;

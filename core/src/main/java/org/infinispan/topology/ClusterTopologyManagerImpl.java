@@ -34,6 +34,7 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -95,6 +96,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Inject private Transport transport;
    @Inject private GlobalConfiguration globalConfiguration;
+   @Inject private ConfigurationManager configurationManager;
    @Inject private GlobalComponentRegistry gcr;
    @Inject private CacheManagerNotifier cacheManagerNotifier;
    @Inject private EmbeddedCacheManager cacheManager;
@@ -407,8 +409,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          } else {
             lostDataCheck = ClusterTopologyManagerImpl::distLostDataCheck;
          }
+         // TODO Partition handling config should be part of the join info
          AvailabilityStrategy availabilityStrategy;
-         Configuration config = cacheManager.getCacheConfiguration(cacheName);
+         Configuration config = configurationManager.getConfiguration(cacheName, true);
          PartitionHandling partitionHandling = config != null ? config.clustering().partitionHandling().whenSplit() : null;
          boolean resolveConflictsOnMerge = resolveConflictsOnMerge(config, cacheMode);
          if (partitionHandling != null && partitionHandling != PartitionHandling.ALLOW_READ_WRITES) {
@@ -733,7 +736,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public void setInitialCacheTopologyId(String cacheName, int topologyId) {
-      Configuration configuration = cacheManager.getCacheConfiguration(cacheName);
+      // TODO Include cache mode in join info
+      Configuration configuration = configurationManager.getConfiguration(cacheName, true);
       ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(cacheName, configuration.clustering().cacheMode());
       cacheStatus.setInitialTopologyId(topologyId);
    }

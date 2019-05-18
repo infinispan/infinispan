@@ -9,14 +9,12 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheInterceptorChainAction;
-import org.infinispan.security.actions.GetCacheRpcManagerAction;
 
 /**
  * SecurityActions for the org.infinispan.distexec package.
@@ -43,11 +41,6 @@ final class SecurityActions {
 
    static AuthorizationManager getCacheAuthorizationManager(final AdvancedCache<?, ?> cache) {
       GetCacheAuthorizationManagerAction action = new GetCacheAuthorizationManagerAction(cache);
-      return doPrivileged(action);
-   }
-
-   static RpcManager getCacheRpcManager(final AdvancedCache<?, ?> cache) {
-      GetCacheRpcManagerAction action = new GetCacheRpcManagerAction(cache);
       return doPrivileged(action);
    }
 

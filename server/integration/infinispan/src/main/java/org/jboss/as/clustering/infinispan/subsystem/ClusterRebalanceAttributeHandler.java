@@ -23,7 +23,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VALUE;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;

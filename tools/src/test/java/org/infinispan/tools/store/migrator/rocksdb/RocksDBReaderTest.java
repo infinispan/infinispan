@@ -21,7 +21,7 @@ public class RocksDBReaderTest extends AbstractReaderTest {
    private static final String SOURCE_DIR = "target/test-classes/leveldbstore/";
 
    private String getTargetDirectory() {
-      return SOURCE_DIR + "/rocksdbstore-" + segmentCount + "/";
+      return SOURCE_DIR + "rocksdbstore-" + segmentCount + "/";
    }
 
    @Factory

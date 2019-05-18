@@ -21,10 +21,11 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    private final AuthorizationHelper authzHelper;
    private final EnumSet<AdminFlag> flags;
 
-   DefaultCacheManagerAdmin(EmbeddedCacheManager cm, AuthorizationHelper authzHelper, EnumSet<AdminFlag> flags) {
+   DefaultCacheManagerAdmin(EmbeddedCacheManager cm, AuthorizationHelper authzHelper, EnumSet<AdminFlag> flags,
+                            GlobalConfigurationManager clusterConfigurationManager) {
       this.cacheManager = cm;
       this.authzHelper = authzHelper;
-      this.clusterConfigurationManager = cm.getGlobalComponentRegistry().getComponent(GlobalConfigurationManager.class);
+      this.clusterConfigurationManager = clusterConfigurationManager;
       this.flags = flags;
    }
 
@@ -66,13 +67,13 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    public EmbeddedCacheManagerAdmin withFlags(AdminFlag... flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
       for(AdminFlag flag : flags) newFlags.add((flag));
-      return new DefaultCacheManagerAdmin(cacheManager, authzHelper, newFlags);
+      return new DefaultCacheManagerAdmin(cacheManager, authzHelper, newFlags, clusterConfigurationManager);
    }
 
    @Override
    public EmbeddedCacheManagerAdmin withFlags(EnumSet<AdminFlag> flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
       newFlags.addAll(flags);
-      return new DefaultCacheManagerAdmin(cacheManager, authzHelper, newFlags);
+      return new DefaultCacheManagerAdmin(cacheManager, authzHelper, newFlags, clusterConfigurationManager);
    }
 }

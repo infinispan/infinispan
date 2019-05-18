@@ -65,9 +65,13 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    @GuardedBy("this")
    private boolean registered = false;
+   private GlobalComponentRegistry globalComponentRegistry;
+   private GlobalConfiguration globalCfg;
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
+      this.globalComponentRegistry = gcr;
+      this.globalCfg = globalCfg;
       Map<Integer, AdvancedExternalizer<?>> externalizers = globalCfg.serialization().advancedExternalizers();
       externalizers.put(SERVER_ADDRESS, new ServerAddress.Externalizer());
       externalizers.put(KEY_VALUE_VERSION_CONVERTER, new KeyValueVersionConverter.Externalizer());
@@ -84,7 +88,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       externalizers.put(XID_PREDICATE, XidPredicate.EXTERNALIZER);
       externalizers.put(CONDITIONAL_MARK_ROLLBACK_FUNCTION, ConditionalMarkAsRollbackFunction.EXTERNALIZER);
 
-      registerGlobalTxTable(gcr);
+      registerGlobalTxTable();
    }
 
    @Override
@@ -106,8 +110,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
             !componentRegistry.getComponent(Configuration.class).transaction().transactionMode().isTransactional()) {
          return;
       }
-      EmbeddedCacheManager cacheManager = componentRegistry.getGlobalComponentRegistry()
-            .getComponent(EmbeddedCacheManager.class);
+      EmbeddedCacheManager cacheManager = globalComponentRegistry.getComponent(EmbeddedCacheManager.class);
       createGlobalTxTable(cacheManager);
       // TODO We need a way for a module to install a factory before the default implementation is instantiated
       BasicComponentRegistry basicComponentRegistry = componentRegistry.getComponent(BasicComponentRegistry.class);
@@ -119,11 +122,11 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    /**
     * Creates the global transaction internal cache.
     */
-   private void registerGlobalTxTable(GlobalComponentRegistry globalComponentRegistry) {
+   private void registerGlobalTxTable() {
       InternalCacheRegistry registry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       //we can't lose transactions. distributed cache can lose data is num_owner nodes crash at the same time
-      builder.clustering().cacheMode(globalComponentRegistry.getGlobalConfiguration().isClustered() ?
+      builder.clustering().cacheMode(globalCfg.isClustered() ?
             CacheMode.REPL_SYNC :
             CacheMode.LOCAL);
       builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
@@ -135,8 +138,8 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    private synchronized void createGlobalTxTable(EmbeddedCacheManager cacheManager) {
       if (!registered) {
          Cache<CacheXid, TxState> cache = cacheManager.getCache(GLOBAL_TX_TABLE_CACHE_NAME);
-         GlobalTxTable txTable = new GlobalTxTable(cache, cacheManager.getGlobalComponentRegistry());
-         cacheManager.getGlobalComponentRegistry().registerComponent(txTable, GlobalTxTable.class);
+         GlobalTxTable txTable = new GlobalTxTable(cache, globalComponentRegistry);
+         globalComponentRegistry.registerComponent(txTable, GlobalTxTable.class);
          registered = true;
 
       }

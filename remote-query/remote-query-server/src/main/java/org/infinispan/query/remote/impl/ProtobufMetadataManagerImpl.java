@@ -8,7 +8,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.management.MBeanException;
 import javax.management.ObjectName;
 
@@ -89,7 +88,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    protected void addCacheDependency(String dependantCacheName) {
       protobufSchemaCache = (Cache<String, String>) SecurityActions.getUnwrappedCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME).getAdvancedCache().withEncoding(IdentityEncoder.class);
       // add stop dependency
-      cacheManager.addCacheDependency(dependantCacheName, ProtobufMetadataManagerImpl.PROTOBUF_METADATA_CACHE_NAME);
+      SecurityActions.addCacheDependency(cacheManager, dependantCacheName, ProtobufMetadataManagerImpl.PROTOBUF_METADATA_CACHE_NAME);
    }
 
    /**

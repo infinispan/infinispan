@@ -5,6 +5,7 @@ import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -14,7 +15,7 @@ import org.infinispan.security.actions.AddCacheManagerListenerAction;
 import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
-import org.infinispan.security.actions.GetCacheGlobalComponentRegistryAction;
+import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.RemoveListenerAction;
 import org.infinispan.security.impl.SecureCacheImpl;
@@ -53,23 +54,22 @@ final class SecurityActions {
       return (org.infinispan.Cache<K, V>) doPrivileged(action);
    }
 
-   static GlobalComponentRegistry getCacheGlobalComponentRegistry(final AdvancedCache<?, ?> cache) {
-      GetCacheGlobalComponentRegistryAction action = new GetCacheGlobalComponentRegistryAction(cache);
-      return doPrivileged(action);
-   }
-
    static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
       GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
       return doPrivileged(action);
+   }
+
+   static GlobalConfiguration getCacheManagerConfiguration(final EmbeddedCacheManager cacheManager) {
+      return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 
    static void addListener(EmbeddedCacheManager cacheManager, Object listener) {
       doPrivileged(new AddCacheManagerListenerAction(cacheManager, listener));
    }
 
-   static Void removeListener(Listenable listenable, Object listener) {
+   static void removeListener(Listenable listenable, Object listener) {
       RemoveListenerAction action = new RemoveListenerAction(listenable, listener);
-      return doPrivileged(action);
+      doPrivileged(action);
    }
 
    static <K, V> AdvancedCache<K, V> getUnwrappedCache(final AdvancedCache<K, V> cache) {

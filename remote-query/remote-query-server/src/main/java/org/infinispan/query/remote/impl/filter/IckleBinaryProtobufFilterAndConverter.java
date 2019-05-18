@@ -20,7 +20,6 @@ import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.impl.ExternalizerIds;
-import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 
 /**
  * Adapter for {@link IckleProtobufFilterAndConverter} that produces binary values as a result of filter/conversion.
@@ -37,7 +36,7 @@ public final class IckleBinaryProtobufFilterAndConverter<K, V> extends AbstractK
    @Inject
    void injectDependencies(ComponentRegistry componentRegistry, EmbeddedCacheManager cacheManager) {
       componentRegistry.wireDependencies(delegate);
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
+      serCtx = SecurityActions.getSerializationContext(cacheManager);
    }
 
    IckleBinaryProtobufFilterAndConverter(String queryString, Map<String, Object> namedParameters) {

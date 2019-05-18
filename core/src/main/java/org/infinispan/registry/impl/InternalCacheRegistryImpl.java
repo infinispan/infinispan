@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -27,8 +28,10 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
    @Inject private EmbeddedCacheManager cacheManager;
    @Inject private CacheManagerJmxRegistration cacheManagerJmxRegistration;
+   @Inject private ConfigurationManager configurationManager;
    private final ConcurrentMap<String, EnumSet<Flag>> internalCaches = new ConcurrentHashMap<>();
    private final Set<String> privateCaches = new ConcurrentHashSet<>();
 
@@ -40,7 +43,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    // Synchronized to prevent users from registering the same configuration at the same time
    @Override
    public synchronized void registerInternalCache(String name, Configuration configuration, EnumSet<Flag> flags) {
-      boolean configPresent = cacheManager.getCacheConfiguration(name) != null;
+      boolean configPresent = configurationManager.getConfiguration(name, true) != null;
       // check if it already has been defined. Currently we don't support existing user-defined configuration.
       if ((flags.contains(Flag.EXCLUSIVE) || !internalCaches.containsKey(name)) && configPresent) {
          throw log.existingConfigForInternalCache(name);
@@ -51,7 +54,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       }
       ConfigurationBuilder builder = new ConfigurationBuilder().read(configuration);
       builder.jmxStatistics().disable(); // Internal caches must not be included in stats counts
-      GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
+      GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
       if (flags.contains(Flag.GLOBAL) && globalConfiguration.isClustered()) {
          // TODO: choose a merge policy
          builder.clustering()

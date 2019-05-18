@@ -25,8 +25,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
-import org.jboss.security.SecurityContext;
-import org.jboss.security.SecurityContextAssociation;
 
 /**
  * Privileged Actions
@@ -42,92 +40,6 @@ class SecurityActions {
           return Security.doPrivileged(action);
       }
   }
-   /**
-    * Set the {@code SecurityContext} on the {@code SecurityContextAssociation}
-    *
-    * @param sc
-    *           the security context
-    */
-   static void setSecurityContextOnAssociation(final SecurityContext sc) {
-      AccessController.doPrivileged(new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            SecurityContextAssociation.setSecurityContext(sc);
-            return null;
-         }
-      });
-   }
-
-   /**
-    * Get the current {@code SecurityContext}
-    *
-    * @return an instance of {@code SecurityContext}
-    */
-   static SecurityContext getSecurityContext() {
-      return AccessController.doPrivileged(new PrivilegedAction<SecurityContext>() {
-         @Override
-         public SecurityContext run() {
-            return SecurityContextAssociation.getSecurityContext();
-         }
-      });
-   }
-
-   /**
-    * Clears current {@code SecurityContext}
-    */
-   static void clearSecurityContext() {
-      AccessController.doPrivileged(new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            SecurityContextAssociation.clearSecurityContext();
-            return null;
-         }
-      });
-   }
-
-   public static final String AUTH_EXCEPTION_KEY = "org.jboss.security.exception";
-
-   static void clearAuthException() {
-      if (System.getSecurityManager() != null) {
-         AccessController.doPrivileged(new PrivilegedAction<Void>() {
-
-            @Override
-            public Void run() {
-               SecurityContext sc = getSecurityContext();
-               if (sc != null)
-                  sc.getData().put(AUTH_EXCEPTION_KEY, null);
-               return null;
-            }
-         });
-      } else {
-         SecurityContext sc = getSecurityContext();
-         if (sc != null)
-            sc.getData().put(AUTH_EXCEPTION_KEY, null);
-      }
-   }
-
-   static Throwable getAuthException() {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(new PrivilegedAction<Throwable>() {
-
-            @Override
-            public Throwable run() {
-               SecurityContext sc = getSecurityContext();
-               Throwable exception = null;
-               if (sc != null)
-                  exception = (Throwable) sc.getData().get(AUTH_EXCEPTION_KEY);
-               return exception;
-            }
-         });
-      } else {
-         SecurityContext sc = getSecurityContext();
-         Throwable exception = null;
-         if (sc != null)
-            exception = (Throwable) sc.getData().get(AUTH_EXCEPTION_KEY);
-         return exception;
-      }
-   }
 
    static void startProtocolServer(final ProtocolServer server, final ProtocolServerConfiguration configuration, final EmbeddedCacheManager cacheManager) {
       PrivilegedAction<Void> action = new PrivilegedAction<Void>() {

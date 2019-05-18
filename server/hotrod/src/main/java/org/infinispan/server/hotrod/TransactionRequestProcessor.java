@@ -3,12 +3,13 @@ package org.infinispan.server.hotrod;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
-
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
@@ -24,9 +25,6 @@ import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.LogFactory;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 
 class TransactionRequestProcessor extends CacheRequestProcessor {
    private static final Log log = LogFactory.getLog(TransactionRequestProcessor.class, Log.class);
@@ -70,7 +68,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
 
    void forgetTransaction(HotRodHeader header, Subject subject, XidImpl xid) {
       //TODO authentication?
-      GlobalTxTable txTable = server.getCacheManager().getGlobalComponentRegistry().getComponent(GlobalTxTable.class);
+      GlobalTxTable txTable = SecurityActions.getGlobalComponentRegistry(server.getCacheManager()).getComponent(GlobalTxTable.class);
       executor.execute(() -> {
          try {
             txTable.forgetTransaction(xid);
@@ -88,7 +86,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       }
       executor.execute(() -> {
          try {
-            GlobalTxTable txTable = server.getCacheManager().getGlobalComponentRegistry()
+            GlobalTxTable txTable = SecurityActions.getGlobalComponentRegistry(server.getCacheManager())
                   .getComponent(GlobalTxTable.class);
             Collection<Xid> preparedTx = txTable.getPreparedTransactions();
             writeResponse(header, createRecoveryResponse(header, preparedTx));

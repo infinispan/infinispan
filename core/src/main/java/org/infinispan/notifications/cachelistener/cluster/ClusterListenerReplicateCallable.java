@@ -79,11 +79,10 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
    public void setEnvironment(Cache<K, V> cache, Set<K> inputKeys) {
       cacheManager = cache.getCacheManager();
 
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry componentRegistry = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
 
       cacheNotifier = componentRegistry.getComponent(CacheNotifier.class);
-      cacheManagerNotifier = cache.getCacheManager().getGlobalComponentRegistry().getComponent(
-            CacheManagerNotifier.class);
+      cacheManagerNotifier = componentRegistry.getComponent(CacheManagerNotifier.class);
       distExecutor = SecurityActions.getDefaultExecutorService(cache);
       ourAddress = cache.getCacheManager().getAddress();
       eventManager = componentRegistry.getComponent(ClusterEventManager.class);

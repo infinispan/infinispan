@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.security.Security;
@@ -17,6 +18,7 @@ import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheDistributionManagerAction;
 import org.infinispan.security.actions.GetCacheEntryAction;
+import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.RemoveListenerAction;
 
 /**
@@ -62,5 +64,8 @@ final class SecurityActions {
    static Configuration getCacheConfiguration(final AdvancedCache<?, ?> cache) {
       GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
       return doPrivileged(action);
+   }
+   static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(new GetGlobalComponentRegistryAction(cacheManager));
    }
 }

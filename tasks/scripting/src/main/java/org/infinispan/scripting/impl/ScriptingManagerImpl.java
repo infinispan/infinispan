@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
@@ -63,6 +62,10 @@ public class ScriptingManagerImpl implements ScriptingManager {
    private InternalCacheRegistry internalCacheRegistry;
    @Inject
    private EncoderRegistry encoderRegistry;
+   @Inject
+   private GlobalConfiguration globalConfiguration;
+   @Inject
+   private AuthorizationHelper globalAuthzHelper;
 
    private ScriptEngineManager scriptEngineManager;
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = CollectionFactory.makeConcurrentMap(2);
@@ -70,7 +73,6 @@ public class ScriptingManagerImpl implements ScriptingManager {
    private Cache<String, String> scriptCache;
    private ScriptConversions scriptConversions;
    ConcurrentMap<String, CompiledScript> compiledScripts = CollectionFactory.makeConcurrentMap();
-   private AuthorizationHelper globalAuthzHelper;
 
    private final Function<String, ScriptEngine> getEngineByName = this::getEngineByName;
    private final Function<String, ScriptEngine> getEngineByExtension = this::getEngineByExtension;
@@ -95,8 +97,6 @@ public class ScriptingManagerImpl implements ScriptingManager {
    }
 
    private ConfigurationBuilder getScriptCacheConfiguration() {
-      GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
-
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       cfg.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
@@ -104,7 +104,6 @@ public class ScriptingManagerImpl implements ScriptingManager {
       if (globalConfiguration.security().authorization().enabled()) {
          globalConfiguration.security().authorization().roles().put(SCRIPT_MANAGER_ROLE, new CacheRoleImpl(SCRIPT_MANAGER_ROLE, AuthorizationPermission.ALL));
          cfg.security().authorization().enable().role(SCRIPT_MANAGER_ROLE);
-         globalAuthzHelper = cacheManager.getGlobalComponentRegistry().getComponent(AuthorizationHelper.class);
       }
       return cfg;
    }

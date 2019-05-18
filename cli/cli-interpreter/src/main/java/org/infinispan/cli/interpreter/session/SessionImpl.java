@@ -3,7 +3,6 @@ package org.infinispan.cli.interpreter.session;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 
 import java.util.Collection;
-
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
@@ -18,11 +17,12 @@ import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 public class SessionImpl implements Session {
@@ -33,19 +33,21 @@ public class SessionImpl implements Session {
    private final CodecRegistry codecRegistry;
    private final String id;
    private final TimeService timeService;
+   private ConfigurationManager configurationManager;
    private Cache<?, ?> cache = null;
    private String cacheName = null;
    private long timestamp;
    private Codec codec;
 
    public SessionImpl(final CodecRegistry codecRegistry, final EmbeddedCacheManager cacheManager, final String id,
-                      TimeService timeService) {
+                      TimeService timeService, ConfigurationManager configurationManager) {
       if (timeService == null) {
          throw new IllegalArgumentException("TimeService cannot be null");
       }
       this.codecRegistry = codecRegistry;
       this.cacheManager = cacheManager;
       this.timeService = timeService;
+      this.configurationManager = configurationManager;
       this.id = id;
       timestamp = timeService.time();
       codec = this.codecRegistry.getCodec("none");
@@ -95,7 +97,7 @@ public class SessionImpl implements Session {
    public void createCache(String cacheName, String baseCacheName) {
       Configuration configuration;
       if (baseCacheName != null) {
-         configuration = cacheManager.getCacheConfiguration(baseCacheName);
+         configuration = configurationManager.getConfiguration(baseCacheName, true);
          if (configuration == null) {
             throw log.nonExistentCache(baseCacheName);
          }
@@ -114,7 +116,7 @@ public class SessionImpl implements Session {
          CreateCacheCommand ccc = factory.buildCreateCacheCommand(cacheName, baseCacheName);
          try {
             rpc.invokeRemotely(null, ccc, rpc.getDefaultRpcOptions(true));
-            ccc.init(cacheManager);
+            ccc.init(cacheManager, configurationManager);
             ccc.invoke();
          } catch (Throwable e) {
             throw log.cannotCreateClusteredCaches(e, cacheName);
@@ -129,7 +131,7 @@ public class SessionImpl implements Session {
 
    @Override
    public void reset() {
-      if (cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent())
+      if (configurationManager.getGlobalConfiguration().defaultCacheName().isPresent())
          resetCache(cacheManager.getCache());
       for (String cacheName : cacheManager.getCacheNames()) {
          resetCache(cacheManager.getCache(cacheName));

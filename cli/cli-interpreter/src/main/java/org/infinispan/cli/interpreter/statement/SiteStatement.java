@@ -99,7 +99,8 @@ public class SiteStatement implements Statement {
 
    private Result executeContainerOperation(Options option, Session session) throws StatementException {
       EmbeddedCacheManager cacheManager = session.getCacheManager();
-      GlobalXSiteAdminOperations xSiteAdmin = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
+      GlobalXSiteAdminOperations xSiteAdmin = SecurityActions.getGlobalComponentRegistry(cacheManager)
+                                                             .getComponent(GlobalXSiteAdminOperations.class);
       String siteName = siteData != null ? siteData.getSiteName() : null;
       requireSiteName(siteName);
 

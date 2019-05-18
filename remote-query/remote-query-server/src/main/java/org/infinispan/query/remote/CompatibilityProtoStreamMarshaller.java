@@ -1,10 +1,10 @@
 package org.infinispan.query.remote;
 
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
-import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 
 /**
  * A per {@link EmbeddedCacheManager} marshaller that should be used as compatibility mode marshaller in server. An
@@ -17,14 +17,15 @@ public class CompatibilityProtoStreamMarshaller extends BaseProtoStreamMarshalle
 
    @Inject protected EmbeddedCacheManager cacheManager;
 
-   public CompatibilityProtoStreamMarshaller() {
+   private SerializationContext serCtx;
+
+   @Start
+   void start() {
+      serCtx = SecurityActions.getSerializationContext(cacheManager);
    }
 
    @Override
    protected SerializationContext getSerializationContext() {
-      if (cacheManager == null) {
-         throw new IllegalStateException("cacheManager not set");
-      }
-      return ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
+      return serCtx;
    }
 }

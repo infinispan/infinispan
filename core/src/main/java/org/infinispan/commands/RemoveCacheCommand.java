@@ -14,7 +14,6 @@ import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.jmx.CacheJmxRegistration;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.DependencyGraph;
@@ -33,31 +32,30 @@ public class RemoveCacheCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 18;
 
-   private EmbeddedCacheManager cacheManager;
+   private GlobalComponentRegistry globalComponentRegistry;
 
    private RemoveCacheCommand() {
       super(null); // For command id uniqueness test
    }
 
-   public RemoveCacheCommand(ByteString cacheName, EmbeddedCacheManager cacheManager) {
+   public RemoveCacheCommand(ByteString cacheName, GlobalComponentRegistry globalComponentRegistry) {
       super(cacheName);
-      this.cacheManager = cacheManager;
+      this.globalComponentRegistry = globalComponentRegistry;
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      removeCache(cacheManager, cacheName.toString());
+      removeCache(globalComponentRegistry, cacheName.toString());
       return CompletableFutures.completedNull();
    }
 
-   public static void removeCache(EmbeddedCacheManager cacheManager, String cacheName) {
-      GlobalComponentRegistry globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
+   public static void removeCache(GlobalComponentRegistry globalComponentRegistry, String cacheName) {
       ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(cacheName);
       if (cacheComponentRegistry != null) {
          cacheComponentRegistry.getComponent(PersistenceManager.class).setClearOnStop(true);
          cacheComponentRegistry.getComponent(CacheJmxRegistration.class).setUnregisterCacheMBean(true);
          cacheComponentRegistry.getComponent(PassivationManager.class).skipPassivationOnStop(true);
-         Cache<?, ?> cache = cacheManager.getCache(cacheName, false);
+         Cache<?, ?> cache = cacheComponentRegistry.getComponent(Cache.class);
          if (cache != null) {
             cache.stop();
          }

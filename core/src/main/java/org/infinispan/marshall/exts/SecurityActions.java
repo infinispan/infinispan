@@ -5,9 +5,6 @@ import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 /**
  * SecurityActions for the org.infinispan.marshall.exts package.
  *
@@ -18,8 +15,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 8.2
  */
 final class SecurityActions {
-   private static final Log log = LogFactory.getLog(SecurityActions.class);
-
    private static Field getDeclaredField(Class<?> c, String fieldName) {
       try {
          return c.getDeclaredField(fieldName);

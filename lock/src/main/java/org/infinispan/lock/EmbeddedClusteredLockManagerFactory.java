@@ -28,8 +28,7 @@ public final class EmbeddedClusteredLockManagerFactory {
       if (!cacheManager.getCacheManagerConfiguration().isClustered()) {
          throw log.requireClustered();
       }
-      return cacheManager
-            .getGlobalComponentRegistry()
+      return SecurityActions.getGlobalComponentRegistry(cacheManager)
             .getComponent(ClusteredLockManager.class);
    }
 }
