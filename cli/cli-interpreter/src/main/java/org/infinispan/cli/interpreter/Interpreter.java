@@ -26,6 +26,7 @@ import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.cli.interpreter.session.SessionImpl;
 import org.infinispan.cli.interpreter.statement.Statement;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -46,6 +47,7 @@ public class Interpreter {
 
    @Inject EmbeddedCacheManager cacheManager;
    @Inject TimeService timeService;
+   @Inject ConfigurationManager configurationManager;
 
    private ScheduledExecutorService executor;
    private long sessionReaperWakeupInterval = DEFAULT_SESSION_REAPER_WAKEUP_INTERVAL;
@@ -76,7 +78,7 @@ public class Interpreter {
    @ManagedOperation(description = "Creates a new interpreter session")
    public String createSessionId(String cacheName) {
       String sessionId = UUID.randomUUID().toString();
-      SessionImpl session = new SessionImpl(codecRegistry, cacheManager, sessionId, timeService);
+      SessionImpl session = new SessionImpl(codecRegistry, cacheManager, sessionId, timeService, configurationManager);
       sessions.put(sessionId, session);
       if (cacheName != null) {
          session.setCurrentCache(cacheName);
@@ -116,7 +118,8 @@ public class Interpreter {
    @ManagedOperation(description = "Parses and executes IspnCliQL statements")
    public Map<String, String> execute(final String sessionId, final String s) throws Exception {
       Session session = null;
-      ClassLoader oldCL = SecurityActions.setThreadContextClassLoader(cacheManager.getCacheManagerConfiguration().classLoader());
+      ClassLoader classLoader = configurationManager.getGlobalConfiguration().classLoader();
+      ClassLoader oldCL = SecurityActions.setThreadContextClassLoader(classLoader);
       Map<String, String> response = new HashMap<>();
       try {
          session = validateSession(sessionId);
@@ -162,7 +165,7 @@ public class Interpreter {
 
    private Session validateSession(final String sessionId) {
       if (sessionId == null) {
-         Session session = new SessionImpl(codecRegistry, cacheManager, null, timeService);
+         Session session = new SessionImpl(codecRegistry, cacheManager, null, timeService, configurationManager);
          cacheManager.getCacheManagerConfiguration().defaultCacheName().ifPresent(session::setCurrentCache);
          return session;
       }

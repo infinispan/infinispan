@@ -34,7 +34,7 @@ public class DistributedServerTask<T> implements Serializable, Function<Embedded
    public T apply(EmbeddedCacheManager embeddedCacheManager) {
       Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName);
       // todo inject global component registry to be independent of existence of cache.
-      GlobalComponentRegistry componentRegistry = cache.getCacheManager().getGlobalComponentRegistry();
+      GlobalComponentRegistry componentRegistry = SecurityActions.getGlobalComponentRegistry(embeddedCacheManager);
       ServerTaskRegistry taskRegistry = componentRegistry.getComponent(ServerTaskRegistry.class);
       Marshaller marshaller = componentRegistry.getComponent(StreamingMarshaller.class);
       ServerTaskWrapper<T> task = taskRegistry.getTask(taskName);

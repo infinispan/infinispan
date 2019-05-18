@@ -64,6 +64,6 @@ public final class ComponentRegistryUtils {
     * Returns the optional QueryCache.
     */
    public static QueryCache getQueryCache(Cache<?, ?> cache) {
-      return SecurityActions.getCacheGlobalComponentRegistry(cache.getAdvancedCache()).getComponent(QueryCache.class);
+      return SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(QueryCache.class);
    }
 }

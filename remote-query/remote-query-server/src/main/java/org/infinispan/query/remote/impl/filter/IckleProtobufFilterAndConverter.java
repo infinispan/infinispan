@@ -8,12 +8,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 
@@ -31,10 +32,10 @@ public final class IckleProtobufFilterAndConverter extends IckleFilterAndConvert
    }
 
    @Override
-   protected void injectDependencies(Cache cache) {
-      RemoteQueryManager remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
+   protected void injectDependencies(ComponentRegistry componentRegistry, QueryCache queryCache) {
+      RemoteQueryManager remoteQueryManager = componentRegistry.getComponent(RemoteQueryManager.class);
       matcherImplClass = remoteQueryManager.getMatcherClass(MediaType.APPLICATION_PROTOSTREAM);
-      super.injectDependencies(cache);
+      super.injectDependencies(componentRegistry, queryCache);
    }
 
    public static final class Externalizer extends AbstractExternalizer<IckleProtobufFilterAndConverter> {

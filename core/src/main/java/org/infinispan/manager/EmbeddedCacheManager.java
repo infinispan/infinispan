@@ -280,10 +280,9 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     * memory and in any backing cache store.
     *
     * @param cacheName name of cache to remove
-    * @deprecated obtain a {@link org.infinispan.commons.api.CacheContainerAdmin} instance using {@link #administration()} and invoke the {@link org.infinispan.commons.api.CacheContainerAdmin#removeCache(String)} method
+    * @deprecated Since 9.2, obtain a {@link org.infinispan.commons.api.CacheContainerAdmin} instance using {@link #administration()} and invoke the {@link org.infinispan.commons.api.CacheContainerAdmin#removeCache(String)} method
     */
    @Deprecated
-   // since 9.2
    void removeCache(String cacheName);
 
    /**
@@ -291,6 +290,10 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     */
    Transport getTransport();
 
+   /**
+    * @deprecated Since 10.0, with no public API replacement
+    */
+   @Deprecated
    GlobalComponentRegistry getGlobalComponentRegistry();
 
    /**

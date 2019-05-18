@@ -8,19 +8,23 @@ import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
 import org.infinispan.health.HostInfo;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.registry.InternalCacheRegistry;
 
 public class HealthImpl implements Health {
 
     private final EmbeddedCacheManager embeddedCacheManager;
+    private final InternalCacheRegistry internalCacheRegistry;
     private final HostInfo hostInfoImpl = new HostInfoImpl();
 
-    public HealthImpl(EmbeddedCacheManager embeddedCacheManager) {
+   public HealthImpl(EmbeddedCacheManager embeddedCacheManager,
+                     InternalCacheRegistry internalCacheRegistry) {
         this.embeddedCacheManager = embeddedCacheManager;
+        this.internalCacheRegistry = internalCacheRegistry;
     }
 
     @Override
     public ClusterHealth getClusterHealth() {
-        return new ClusterHealthImpl(embeddedCacheManager);
+       return new ClusterHealthImpl(embeddedCacheManager, internalCacheRegistry);
     }
 
     @Override

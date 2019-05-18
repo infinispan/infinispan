@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transaction;
 
+import net.jcip.annotations.ThreadSafe;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
@@ -25,8 +26,6 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import net.jcip.annotations.ThreadSafe;
 
 // TODO [anistor] This class must be removed in 10.0 after we remove autodetection.
 
@@ -224,7 +223,7 @@ public final class QueryKnownClasses {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 
       // allow the registry to work for local caches as well as clustered caches
-      CacheMode cacheMode = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration().isClustered()
+      CacheMode cacheMode = SecurityActions.getCacheManagerConfiguration(cacheManager).isClustered()
             ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
       configurationBuilder.clustering().cacheMode(cacheMode);
 

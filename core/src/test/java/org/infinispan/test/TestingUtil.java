@@ -70,6 +70,7 @@ import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -357,7 +358,8 @@ public class TestingUtil {
             if (cacheTopology != null) {
                rebalanceInProgress = cacheTopology.getPhase() != CacheTopology.Phase.NO_REBALANCE;
                ConsistentHash currentCH = cacheTopology.getCurrentCH();
-               ConsistentHashFactory chf = StateTransferManagerImpl.pickConsistentHashFactory(c.getCacheManager().getCacheManagerConfiguration(), c.getCacheConfiguration());
+               ConsistentHashFactory chf = StateTransferManagerImpl.pickConsistentHashFactory(
+                  extractGlobalConfiguration(c.getCacheManager()), c.getCacheConfiguration());
 
                chContainsAllMembers = currentCH.getMembers().size() == caches.length;
                currentChIsBalanced = true;
@@ -815,8 +817,9 @@ public class TestingUtil {
       for (int i = cacheManagers.size() - 1; i >= 0; i--) {
          EmbeddedCacheManager cm = cacheManagers.get(i);
          try {
-            if (cm != null)
-               cm.stop();
+            if (cm != null) {
+               SecurityActions.stopManager(cm);
+            }
          } catch (Throwable e) {
             log.warn("Problems killing cache manager " + cm, e);
          }
@@ -876,13 +879,17 @@ public class TestingUtil {
       Set<String> running = new LinkedHashSet<>(getOrderedCacheNames(cacheContainer));
       extractGlobalComponent(cacheContainer, InternalCacheRegistry.class).filterPrivateCaches(running);
       running.addAll(cacheContainer.getCacheNames());
-      cacheContainer.getCacheManagerConfiguration().defaultCacheName().ifPresent(n -> running.add(n));
+      extractGlobalConfiguration(cacheContainer).defaultCacheName().ifPresent(n -> running.add(n));
 
       return running.stream()
               .map(s -> cacheContainer.getCache(s, false))
               .filter(Objects::nonNull)
               .filter(c -> c.getStatus().allowInvocations())
               .collect(Collectors.toCollection(LinkedHashSet::new));
+   }
+
+   public static GlobalConfiguration extractGlobalConfiguration(EmbeddedCacheManager cacheContainer) {
+      return SecurityActions.getCacheManagerConfiguration(cacheContainer);
    }
 
    private static void clearRunningTx(Cache cache) {
@@ -905,14 +912,7 @@ public class TestingUtil {
    }
 
    private static void removeInMemoryData(Cache cache) {
-      EmbeddedCacheManager mgr = cache.getCacheManager();
-      Address a = mgr.getAddress();
-      String str;
-      if (a == null)
-         str = "a non-clustered cache manager";
-      else
-         str = "a cache manager at address " + a;
-      log.debugf("Cleaning data for cache '%s' on %s", cache.getName(), str);
+      log.debugf("Cleaning data for cache %s", cache);
       InternalDataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       if (log.isDebugEnabled()) log.debugf("Data container size before clear: %d", dataContainer.sizeIncludingExpired());
       dataContainer.clear();
@@ -1003,11 +1003,11 @@ public class TestingUtil {
     * @return component registry
     */
    public static ComponentRegistry extractComponentRegistry(Cache cache) {
-      return cache.getAdvancedCache().getComponentRegistry();
+      return SecurityActions.getComponentRegistry(cache);
    }
 
    public static GlobalComponentRegistry extractGlobalComponentRegistry(CacheContainer cacheContainer) {
-      return ((EmbeddedCacheManager) cacheContainer).getGlobalComponentRegistry();
+      return SecurityActions.getGlobalComponentRegistry((EmbeddedCacheManager) cacheContainer);
    }
 
    public static LockManager extractLockManager(Cache cache) {
@@ -1015,7 +1015,8 @@ public class TestingUtil {
    }
 
    public static GlobalMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
-      return (GlobalMarshaller) cm.getGlobalComponentRegistry().getComponent(StreamingMarshaller.class, KnownComponentNames.INTERNAL_MARSHALLER);
+      GlobalComponentRegistry gcr = extractGlobalComponentRegistry(cm);
+      return (GlobalMarshaller) gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.INTERNAL_MARSHALLER);
    }
 
    public static PersistenceMarshaller extractPersistenceMarshaller(EmbeddedCacheManager cm) {
@@ -1028,10 +1029,8 @@ public class TestingUtil {
 
    /**
     * Add a hook to cache startup sequence that will allow to replace existing component with a mock.
-    * @param cacheContainer
-    * @param consumer
     */
-   public static void addCacheStartingHook(CacheContainer cacheContainer, BiConsumer<String, ComponentRegistry> consumer) {
+   public static void addCacheStartingHook(EmbeddedCacheManager cacheContainer, BiConsumer<String, ComponentRegistry> consumer) {
       GlobalComponentRegistry gcr = extractGlobalComponentRegistry(cacheContainer);
       extractField(gcr, "moduleLifecycles");
       TestingUtil.<Collection<ModuleLifecycle>>replaceField(gcr, "moduleLifecycles", moduleLifecycles -> {
@@ -1543,7 +1542,7 @@ public class TestingUtil {
    }
 
    public static String getDefaultCacheName(EmbeddedCacheManager cm) {
-      return cm.getCacheManagerConfiguration().defaultCacheName().get();
+      return extractGlobalConfiguration(cm).defaultCacheName().get();
    }
 
 

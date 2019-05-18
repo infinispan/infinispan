@@ -30,7 +30,6 @@ import java.util.Map;
 import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationStepHandler;
@@ -103,6 +102,6 @@ public class CliInterpreterHandler implements OperationStepHandler {
          return null;
       }
 
-      return cacheManager.getGlobalComponentRegistry().getComponent(Interpreter.class);
+      return SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(Interpreter.class);
    }
 }

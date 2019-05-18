@@ -46,8 +46,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void ping(HotRodHeader header, Subject subject) {
-      // we need to throw an exception when this cache is inaccessible, but ignore the empty cache name if no default cache has been configured
-      if (!header.cacheName.isEmpty() || server.getCacheManager().getCacheManagerConfiguration().defaultCacheName().isPresent()) {
+      // we need to throw an exception when the cache is inaccessible
+      // but ignore the default cache, because the client always pings the default cache first
+      if (!header.cacheName.isEmpty()) {
          server.cache(server.getCacheInfo(header), header, subject);
       }
       writeResponse(header, header.encoder().pingResponse(header, server, channel.alloc(), OperationStatus.Success));

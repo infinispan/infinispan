@@ -5,10 +5,14 @@ import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.health.Health;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.health.Health;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
+import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
+import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheManagerHealthAction;
 
 /**
@@ -35,5 +39,13 @@ final class SecurityActions {
    static Health getHealth(final EmbeddedCacheManager cacheManager) {
       GetCacheManagerHealthAction action = new GetCacheManagerHealthAction(cacheManager);
       return doPrivileged(action);
+   }
+
+   static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(new GetGlobalComponentRegistryAction(cacheManager));
+   }
+
+   public static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 }

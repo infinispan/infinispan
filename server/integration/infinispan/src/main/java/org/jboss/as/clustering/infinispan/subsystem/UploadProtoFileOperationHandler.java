@@ -60,7 +60,7 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
 
        if (controller != null) {
           EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
-          ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+          ProtobufMetadataManager protoManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ProtobufMetadataManager.class);
           if (protoManager != null) {
              try {
                 List<ModelNode> descriptorsNames = names.asList();

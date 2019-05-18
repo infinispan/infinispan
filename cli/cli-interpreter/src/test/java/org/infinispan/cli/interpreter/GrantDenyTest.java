@@ -93,7 +93,7 @@ public class GrantDenyTest extends SingleCacheManagerTest {
 
    public void testGrantDeny() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(cacheManager.getCacheManagerConfiguration().defaultCacheName().get());
+      String sessionId = interpreter.createSessionId(TestingUtil.extractGlobalConfiguration(cacheManager).defaultCacheName().get());
       execute(interpreter, sessionId, "grant reader to jack;");
       assertTrue(cpm.list("jack").contains("reader"));
       execute(interpreter, sessionId, "grant reader to jill;");

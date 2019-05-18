@@ -18,9 +18,9 @@ public class ClusterHealthImpl implements ClusterHealth {
    private final EmbeddedCacheManager cacheManager;
    private final InternalCacheRegistry internalCacheRegistry;
 
-   public ClusterHealthImpl(EmbeddedCacheManager cacheManager) {
+   public ClusterHealthImpl(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;
-      internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      this.internalCacheRegistry = internalCacheRegistry;
    }
 
    @Override

@@ -66,9 +66,9 @@ public class CacheManagerResource implements ResourceHandler {
    public CacheManagerResource(InvocationHelper invocationHelper) {
       objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
       this.cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
+      GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       this.cacheManagerName = globalConfiguration.cacheManagerName();
-      GlobalComponentRegistry globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
+      GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
    }
 

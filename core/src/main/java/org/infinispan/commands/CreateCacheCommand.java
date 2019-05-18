@@ -10,6 +10,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -35,6 +36,7 @@ public class CreateCacheCommand extends BaseRpcCommand implements InitializableC
    private String cacheNameToCreate;
    private String cacheConfigurationName;
    private int expectedMembers;
+   private ConfigurationManager configurationManager;
 
    private CreateCacheCommand() {
       super(null);
@@ -59,6 +61,7 @@ public class CreateCacheCommand extends BaseRpcCommand implements InitializableC
    @Override
    public void init(ComponentRegistry componentRegistry, boolean isRemote) {
       this.cacheManager = componentRegistry.getGlobalComponentRegistry().getCacheManager();
+      this.configurationManager = componentRegistry.getComponent(ConfigurationManager.class);
    }
 
    @Override
@@ -67,7 +70,7 @@ public class CreateCacheCommand extends BaseRpcCommand implements InitializableC
          throw new NullPointerException("Cache configuration name is required");
       }
 
-      Configuration cacheConfig = cacheManager.getCacheConfiguration(cacheConfigurationName);
+      Configuration cacheConfig = configurationManager.getConfiguration(cacheConfigurationName, true);
       if (cacheConfig == null) {
          throw new IllegalStateException(
                "Cache configuration " + cacheConfigurationName + " is not defined on node " +

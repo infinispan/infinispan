@@ -13,10 +13,10 @@ import org.hibernate.search.spi.BuildContext;
 import org.hibernate.search.store.ShardIdentifierProvider;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.search.spi.CacheManagerService;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.backend.ComponentRegistryService;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -53,11 +53,8 @@ public class AffinityShardIdentifierProvider implements ShardIdentifierProvider 
       ComponentRegistryService componentRegistryService = serviceManager.requestService(ComponentRegistryService.class);
       this.componentRegistry = componentRegistryService.getComponentRegistry();
       CacheManagerService cacheManagerService = serviceManager.requestService(CacheManagerService.class);
-      EmbeddedCacheManager embeddedCacheManager = cacheManagerService.getEmbeddedCacheManager();
       rpcManager = componentRegistry.getComponent(RpcManager.class);
-      String cacheName = componentRegistry.getCacheName();
-      ClusteringConfiguration clusteringConfiguration =
-            embeddedCacheManager.getCacheConfiguration(cacheName).clustering();
+      ClusteringConfiguration clusteringConfiguration = componentRegistry.getComponent(Configuration.class).clustering();
       int numberOfShards = getNumberOfShards(properties);
       shardAllocatorManager = this.componentRegistry.getComponent(ShardAllocatorManager.class);
       shardAllocatorManager.initialize(numberOfShards, clusteringConfiguration.hash().numSegments());

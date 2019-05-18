@@ -61,7 +61,7 @@ public class CounterConfigurationManager {
    CounterConfigurationManager(EmbeddedCacheManager cacheManager, CounterConfigurationStorage storage) {
       this.cacheManager = cacheManager;
       this.storage = storage;
-      GlobalConfiguration globalConfig = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
+      GlobalConfiguration globalConfig = SecurityActions.getCacheManagerConfiguration(cacheManager);
       CounterManagerConfiguration counterManagerConfig = globalConfig.module(CounterManagerConfiguration.class);
       this.configuredCounters = counterManagerConfig == null ?
             Collections.emptyList() :
@@ -233,7 +233,7 @@ public class CounterConfigurationManager {
 
    private void startCounterCache() {
       if (counterCacheStarted.compareAndSet(false, true)) {
-         cacheManager.getGlobalComponentRegistry()
+         SecurityActions.getGlobalComponentRegistry(cacheManager)
                .getComponent(Executor.class, KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
                .execute(() -> {
                   String oldName = Thread.currentThread().getName();

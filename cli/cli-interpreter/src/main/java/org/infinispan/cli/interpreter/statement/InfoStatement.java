@@ -35,7 +35,7 @@ public class InfoStatement implements Statement {
 
    private Result cacheManagerInfo(Session session) {
       EmbeddedCacheManager cacheManager = session.getCacheManager();
-      GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
+      GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       return new StringResult(globalConfiguration.toString());
    }
 

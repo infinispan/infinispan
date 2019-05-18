@@ -17,6 +17,7 @@ import javax.script.SimpleBindings;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -49,6 +50,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
    @Inject TaskManager taskManager;
    @Inject AuthorizationHelper globalAuthzHelper;
    @Inject EncoderRegistry encoderRegistry;
+   @Inject GlobalConfiguration globalConfiguration;
 
    private ScriptEngineManager scriptEngineManager;
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = new ConcurrentHashMap<>(2);
@@ -65,7 +67,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    @Start
    public void start() {
-      ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
+      ClassLoader classLoader = globalConfiguration.classLoader();
       this.scriptEngineManager = new ScriptEngineManager(classLoader);
       taskManager.registerTaskEngine(new ScriptingTaskEngine(this));
       scriptConversions = new ScriptConversions(encoderRegistry);

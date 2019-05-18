@@ -44,18 +44,18 @@ public class ClusterRoleMapper implements PrincipalRoleMapper {
       }
    }
 
-   @SuppressWarnings("unchecked")
    @Override
    public void setContext(PrincipalRoleMapperContext context) {
       this.cacheManager = context.getCacheManager();
-      GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.clustering().cacheMode(cacheMode)
             .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
             .security().authorization().disable();
 
-      InternalCacheRegistry internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      InternalCacheRegistry internalCacheRegistry =
+         SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.registerInternalCache(CLUSTER_ROLE_MAPPER_CACHE, cfg.build(), EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT));
    }
 

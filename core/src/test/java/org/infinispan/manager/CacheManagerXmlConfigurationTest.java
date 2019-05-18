@@ -14,6 +14,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.Security;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -52,9 +53,10 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
          return null;
       });
 
-      assertEquals("s1", cm.getCacheManagerConfiguration().transport().siteId());
-      assertEquals("r1", cm.getCacheManagerConfiguration().transport().rackId());
-      assertEquals("m1", cm.getCacheManagerConfiguration().transport().machineId());
+      GlobalConfiguration globalConfiguration = TestingUtil.extractGlobalConfiguration(cm);
+      assertEquals("s1", globalConfiguration.transport().siteId());
+      assertEquals("r1", globalConfiguration.transport().rackId());
+      assertEquals("m1", globalConfiguration.transport().machineId());
 
       // test default cache
       Cache c = cm.getCache();

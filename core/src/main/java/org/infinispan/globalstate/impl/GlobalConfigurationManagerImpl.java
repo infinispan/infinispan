@@ -3,15 +3,17 @@ package org.infinispan.globalstate.impl;
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -40,19 +42,21 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    public static final String CACHE_SCOPE = "cache";
 
-   private EmbeddedCacheManager cacheManager;
-   private Cache<ScopedState, Object> stateCache;
-   private ParserRegistry parserRegistry;
-   private LocalConfigurationStorage localConfigurationManager;
-   private LocalTopologyManager localTopologyManager;
+   @Inject EmbeddedCacheManager cacheManager;
+   @Inject LocalTopologyManager localTopologyManager;
+   @Inject ConfigurationManager configurationManager;
+   @Inject InternalCacheRegistry internalCacheRegistry;
+   @Inject GlobalComponentRegistry globalComponentRegistry;
    @Inject @ComponentName(KnownComponentNames.PERSISTENCE_EXECUTOR)
    ExecutorService blockingExecutorService;
 
-   @Inject
-   void inject(GlobalConfiguration globalConfiguration, EmbeddedCacheManager cacheManager, LocalTopologyManager ltm) {
-      this.cacheManager = cacheManager;
-      this.localTopologyManager = ltm;
-      switch(globalConfiguration.globalState().configurationStorage()) {
+   private Cache<ScopedState, Object> stateCache;
+   private ParserRegistry parserRegistry;
+   private LocalConfigurationStorage localConfigurationManager;
+
+   @Start
+   void start() {
+      switch(configurationManager.getGlobalConfiguration().globalState().configurationStorage()) {
          case IMMUTABLE:
             this.localConfigurationManager = new ImmutableLocalConfigurationStorage();
             break;
@@ -63,14 +67,10 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             this.localConfigurationManager = new OverlayLocalConfigurationStorage();
             break;
          default:
-            this.localConfigurationManager = globalConfiguration.globalState().configurationStorageClass().get();
+            this.localConfigurationManager = configurationManager.getGlobalConfiguration().globalState().configurationStorageClass().get();
             break;
       }
-   }
 
-   @Start
-   public void start() {
-      InternalCacheRegistry internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.registerInternalCache(
             CONFIG_STATE_CACHE_NAME,
             new ConfigurationBuilder().build(),
@@ -131,15 +131,20 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       if (template == null) {
          // The user has not specified a template, if a cache already exists just return it without checking for compatibility
          if (cacheManager.cacheExists(cacheName))
-            return cacheManager.getCacheConfiguration(cacheName);
+            return configurationManager.getConfiguration(cacheName, true);
          else {
-            configuration = cacheManager.getDefaultCacheConfiguration();
+            Optional<String> defaultCacheName = configurationManager.getGlobalConfiguration().defaultCacheName();
+            if (defaultCacheName.isPresent()) {
+               configuration = configurationManager.getConfiguration(defaultCacheName.get(), true);
+            } else {
+               configuration = null;
+            }
          }
          if (configuration == null) {
             configuration = new ConfigurationBuilder().build();
          }
       } else {
-         configuration = cacheManager.getCacheConfiguration(template);
+         configuration = configurationManager.getConfiguration(template, true);
          if (configuration == null) {
             throw log.undeclaredConfiguration(template, cacheName);
          }
