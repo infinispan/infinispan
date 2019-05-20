@@ -19,9 +19,9 @@ import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.Flag;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.LazyConcatIterator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -99,11 +99,13 @@ public class PersistenceEntryStreamSupplier<K, V> implements AbstractLocalCacheS
             return e;
          });
          Flowable<CacheEntry<K, V>> flowable = Flowable.fromPublisher(publisher)
-               .map(me -> (CacheEntry<K, V>) PersistenceUtil.convert(me, iceFactory));
-         Iterable<CacheEntry<K, V>> iterable = () -> new LazyConcatIterator<>(localIterator,
+               .map(me -> PersistenceUtil.convert(me, iceFactory));
+         CloseableIterator<CacheEntry<K, V>> iterator = new LazyConcatIterator<>(localIterator,
                () -> org.infinispan.util.Closeables.iterator(flowable, 128));
 
-         stream = StreamSupport.stream(iterable.spliterator(), parallel);
+         Iterable<CacheEntry<K, V>> iterable = () -> iterator;
+         // Make sure we close the iterator when the resulting stream is closed
+         stream = StreamSupport.stream(iterable.spliterator(), parallel).onClose(iterator::close);
       }
       return stream;
    }
