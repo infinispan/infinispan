@@ -237,7 +237,7 @@
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>2.17</version.checkstyle.maven-plugin>
-      <version.elasticsearch.plugin>5.7</version.elasticsearch.plugin>
+      <version.elasticsearch.plugin>6.13</version.elasticsearch.plugin>
       <version.karaf-maven-plugin>4.2.3</version.karaf-maven-plugin>
       <version.maven.antlr3>${version.antlr3}</version.maven.antlr3>
       <version.maven.antrun>1.8</version.maven.antrun>
