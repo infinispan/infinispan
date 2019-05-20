@@ -30,16 +30,7 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
 
    public void testInducedFailureOn1pc() throws Exception {
 
-      cache(1).getAdvancedCache().addInterceptor(new CommandInterceptor() {
-
-         @Override
-         public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-            if (fail)
-               throw new RuntimeException("Induced exception");
-            else
-               return invokeNextInterceptor(ctx, command);
-         }
-      }, 1);
+      cache(1).getAdvancedCache().addInterceptor(new FailInterceptor(), 1);
 
       tm(0).begin();
       cache(0).put("k", "v");
@@ -64,5 +55,16 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
       assert !lockManager(index).isLocked("k");
       assert TestingUtil.getTransactionTable(cache(index)).getLocalTxCount() == 0;
       assert TestingUtil.getTransactionTable(cache(index)).getRemoteTxCount() == 0;
+   }
+
+   class FailInterceptor extends CommandInterceptor {
+
+      @Override
+      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+         if (fail)
+            throw new RuntimeException("Induced exception");
+         else
+            return invokeNextInterceptor(ctx, command);
+      }
    }
 }

@@ -30,13 +30,15 @@ public class ExceptionDuringGetTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "java.lang.RuntimeException: Induced!")
    public void testExceptionDuringGet() {
-      advancedCache(0).getAsyncInterceptorChain().addInterceptorAfter(new CommandInterceptor() {
-         @Override
-         protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-            throw new RuntimeException("Induced!");
-         }
-      }, PessimisticLockingInterceptor.class);
+      advancedCache(0).getAsyncInterceptorChain().addInterceptorAfter(new ExceptionInterceptor(), PessimisticLockingInterceptor.class);
       cache(0).get("k");
       assert false;
+   }
+
+   static class ExceptionInterceptor extends CommandInterceptor {
+      @Override
+      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+         throw new RuntimeException("Induced!");
+      }
    }
 }

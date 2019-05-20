@@ -142,22 +142,8 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
 
       final CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
       final CountDownLatch applyStateStartedLatch = new CountDownLatch(1);
-      builder.customInterceptors().addInterceptor().before(InvocationContextInterceptor.class).interceptor(new CommandInterceptor() {
-         @Override
-         protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-            // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
-            // are performed first and create opportunity for inconsistencies
-            if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-               // signal we encounter a state transfer PUT
-               applyStateStartedLatch.countDown();
-               // wait until it is ok to apply state
-               if (!applyStateProceedLatch.await(15, TimeUnit.SECONDS)) {
-                  throw new TimeoutException();
-               }
-            }
-            return super.handleDefault(ctx, cmd);
-         }
-      });
+      builder.customInterceptors().addInterceptor().before(InvocationContextInterceptor.class)
+             .interceptor(new LatchInterceptor(applyStateStartedLatch, applyStateProceedLatch));
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(builder);
@@ -258,5 +244,30 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       assertNotNull("Found null on cache " + cacheIndex, ice);
       assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, ice.getValue());
       assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, cache(cacheIndex).get(key));
+   }
+
+   static class LatchInterceptor extends CommandInterceptor {
+      private final CountDownLatch applyStateStartedLatch;
+      private final CountDownLatch applyStateProceedLatch;
+
+      public LatchInterceptor(CountDownLatch applyStateStartedLatch, CountDownLatch applyStateProceedLatch) {
+         this.applyStateStartedLatch = applyStateStartedLatch;
+         this.applyStateProceedLatch = applyStateProceedLatch;
+      }
+
+      @Override
+      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+         // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
+         // are performed first and create opportunity for inconsistencies
+         if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+            // signal we encounter a state transfer PUT
+            applyStateStartedLatch.countDown();
+            // wait until it is ok to apply state
+            if (!applyStateProceedLatch.await(15, TimeUnit.SECONDS)) {
+               throw new TimeoutException();
+            }
+         }
+         return super.handleDefault(ctx, cmd);
+      }
    }
 }

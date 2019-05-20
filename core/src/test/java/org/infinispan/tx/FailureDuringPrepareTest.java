@@ -41,17 +41,7 @@ public class FailureDuringPrepareTest extends MultipleCacheManagersTest {
    }
 
    private void runTest(boolean multipleResources) throws NotSupportedException, SystemException, RollbackException {
-      advancedCache(1).addInterceptor(new CommandInterceptor() {
-         @Override
-         public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-            try {
-               return super.visitPrepareCommand(ctx, command);
-            } finally {
-               //allow the prepare to succeed then crash
-               throw new RuntimeException("Induced fault!");
-            }
-         }
-      },2);
+      advancedCache(1).addInterceptor(new FailInterceptor(), 2);
 
       tm(0).begin();
 
@@ -78,4 +68,15 @@ public class FailureDuringPrepareTest extends MultipleCacheManagersTest {
    }
 
 
+   static class FailInterceptor extends CommandInterceptor {
+      @Override
+      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+         try {
+            return super.visitPrepareCommand(ctx, command);
+         } finally {
+            //allow the prepare to succeed then crash
+            throw new RuntimeException("Induced fault!");
+         }
+      }
+   }
 }

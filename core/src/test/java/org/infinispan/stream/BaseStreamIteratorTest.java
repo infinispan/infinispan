@@ -30,6 +30,7 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.test.Exceptions;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -54,6 +55,11 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       cache.put(key, key.toString());
       valuesInserted.put(key, key.toString());
       return valuesInserted;
+   }
+
+   @AfterMethod
+   public void removeInterceptor() {
+      advancedCache(0, CACHE_NAME).getAsyncInterceptorChain().removeInterceptor(AssertSkipCacheStoreInterceptor.class);
    }
 
    @Test
@@ -151,13 +157,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
-         @Override
-         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
-            return super.visitRemoveCommand(ctx, command);
-         }
-      }, 0);
+      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       for (Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).keySet().iterator();
            it.hasNext();) {
@@ -174,13 +174,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
-         @Override
-         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
-            return super.visitRemoveCommand(ctx, command);
-         }
-      }, 0);
+      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE)
             .keySet()
@@ -198,13 +192,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
-         @Override
-         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
-            return super.visitRemoveCommand(ctx, command);
-         }
-      }, 0);
+      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       for (Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).values().iterator();
            it.hasNext();) {
@@ -221,13 +209,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
-         @Override
-         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
-            return super.visitRemoveCommand(ctx, command);
-         }
-      }, 0);
+      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE)
             .values()
@@ -245,13 +227,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
-         @Override
-         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
-            return super.visitRemoveCommand(ctx, command);
-         }
-      }, 0);
+      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       for (Iterator<Map.Entry<Object, Object>> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(
               Flag.SKIP_CACHE_STORE).entrySet().iterator(); it.hasNext();) {
@@ -270,13 +246,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
-         @Override
-         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
-            return super.visitRemoveCommand(ctx, command);
-         }
-      }, 0);
+      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       Iterator<Map.Entry<Object, Object>> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(
               Flag.SKIP_CACHE_STORE)
@@ -290,5 +260,13 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
    assertEquals(values.get(key), entry.getValue());
    // We don't support remove on stream iterator
    Exceptions.expectException(UnsupportedOperationException.class, it::remove);
+   }
+
+   static class AssertSkipCacheStoreInterceptor extends BaseCustomInterceptor {
+      @Override
+      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+         assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));
+         return super.visitRemoveCommand(ctx, command);
+      }
    }
 }
