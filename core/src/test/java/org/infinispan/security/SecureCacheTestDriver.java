@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
@@ -18,6 +17,7 @@ import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -38,8 +38,7 @@ public class SecureCacheTestDriver {
    private CacheEventFilter<String, String> keyValueFilter;
 
    public SecureCacheTestDriver() {
-      interceptor = new CommandInterceptor() {
-      };
+      interceptor = new FooInterceptor();
       keyFilter = key -> true;
       keyValueFilter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> true;
       converter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> null;

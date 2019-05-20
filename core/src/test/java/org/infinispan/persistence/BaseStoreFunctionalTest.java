@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
@@ -30,12 +29,13 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -262,18 +262,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
          assertCacheEntry(cache, "1", "v1", -1, -1);
          ByRef<Boolean> passivate = new ByRef<>(false);
          PersistenceManager actual = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class);
-         PersistenceManager stub = new PersistenceManagerStub() {
-            @Override
-            public void stop() {
-               actual.stop();
-            }
-
-            @Override
-            public void writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries,
-                  Predicate<? super StoreConfiguration> predicate, long flags) {
-               passivate.set(true);
-            }
-         };
+         PersistenceManager stub = new DelegatingPersistenceManager(actual, passivate);
          TestingUtil.replaceComponent(cache, PersistenceManager.class, stub, true);
          local.administration().removeCache(cacheName);
          assertFalse(local.isRunning(cacheName));
@@ -361,5 +350,27 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertEquals(maxIdleMillis, ice.getMaxIdle());
       if (lifespanMillis > -1) assert ice.getCreated() > -1 : "Lifespan is set but created time is not";
       if (maxIdleMillis > -1) assert ice.getLastUsed() > -1 : "Max idle is set but last used is not";
+   }
+
+   @SurvivesRestarts
+   static class DelegatingPersistenceManager extends PersistenceManagerStub {
+      private final PersistenceManager actual;
+      private final ByRef<Boolean> passivate;
+
+      public DelegatingPersistenceManager(PersistenceManager actual, ByRef<Boolean> passivate) {
+         this.actual = actual;
+         this.passivate = passivate;
+      }
+
+      @Override
+      public void stop() {
+         actual.stop();
+      }
+
+      @Override
+      public void writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries,
+                                             Predicate<? super StoreConfiguration> predicate, long flags) {
+         passivate.set(true);
+      }
    }
 }

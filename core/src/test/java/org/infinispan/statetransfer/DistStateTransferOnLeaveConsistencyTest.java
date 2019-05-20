@@ -144,42 +144,10 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
 
       final CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
       final CountDownLatch applyStateStartedLatch1 = new CountDownLatch(1);
-      advancedCache(0).addInterceptor(new CommandInterceptor() {
-         @Override
-         protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-            // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
-            // are performed first and create opportunity for inconsistencies
-            if (cmd instanceof PutKeyValueCommand &&
-                  ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-               // signal we encounter a state transfer PUT
-               applyStateStartedLatch1.countDown();
-               // wait until it is ok to apply state
-               if (!applyStateProceedLatch.await(15, TimeUnit.SECONDS)) {
-                  throw new TimeoutException();
-               }
-            }
-            return super.handleDefault(ctx, cmd);
-         }
-      }, 0);
+      advancedCache(0).addInterceptor(new LatchInterceptor(applyStateStartedLatch1, applyStateProceedLatch), 0);
 
       final CountDownLatch applyStateStartedLatch2 = new CountDownLatch(1);
-      advancedCache(2).addInterceptor(new CommandInterceptor() {
-         @Override
-         protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-            // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
-            // are performed first and create opportunity for inconsistencies
-            if (cmd instanceof PutKeyValueCommand &&
-                  ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-               // signal we encounter a state transfer PUT
-               applyStateStartedLatch2.countDown();
-               // wait until it is ok to apply state
-               if (!applyStateProceedLatch.await(15, TimeUnit.SECONDS)) {
-                  throw new TimeoutException();
-               }
-            }
-            return super.handleDefault(ctx, cmd);
-         }
-      }, 0);
+      advancedCache(2).addInterceptor(new LatchInterceptor(applyStateStartedLatch2, applyStateProceedLatch), 0);
 
       // The indexes will only be used after node 1 is killed
       consistentHashFactory.setOwnerIndexes(new int[][]{{0, 1}, {1, 0}});
@@ -294,6 +262,32 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
             assertEquals(expected, cache(0).get(i));
             assertEquals(expected, cache(2).get(i));
          }
+      }
+   }
+
+   static class LatchInterceptor extends CommandInterceptor {
+      private final CountDownLatch startedLatch;
+      private final CountDownLatch proceedLatch;
+
+      public LatchInterceptor(CountDownLatch startedLatch, CountDownLatch proceedLatch) {
+         this.startedLatch = startedLatch;
+         this.proceedLatch = proceedLatch;
+      }
+
+      @Override
+      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+         // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
+         // are performed first and create opportunity for inconsistencies
+         if (cmd instanceof PutKeyValueCommand &&
+             ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+            // signal we encounter a state transfer PUT
+            startedLatch.countDown();
+            // wait until it is ok to apply state
+            if (!proceedLatch.await(15, TimeUnit.SECONDS)) {
+               throw new TimeoutException();
+            }
+         }
+         return super.handleDefault(ctx, cmd);
       }
    }
 }

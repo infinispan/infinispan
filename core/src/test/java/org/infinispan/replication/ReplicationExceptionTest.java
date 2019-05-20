@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.Serializable;
-
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
@@ -109,15 +108,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
    public void testSyncReplTimeout() {
       AdvancedCache<Object, Object> cache1 = advancedCache(0, "syncReplCache");
       AdvancedCache<Object, Object> cache2 = advancedCache(1, "syncReplCache");
-      cache2.addInterceptor(new CommandInterceptor() {
-         @Override
-         protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd)
-                  throws Throwable {
-            // Add a delay
-            Thread.sleep(100);
-            return super.handleDefault(ctx, cmd);
-         }
-      }, 0);
+      cache2.addInterceptor(new DelayInterceptor(), 0);
 
       cache1.getCacheConfiguration().clustering().remoteTimeout(10);
       cache2.getCacheConfiguration().clustering().remoteTimeout(10);
@@ -155,6 +146,16 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       public ContainerData() {
          i = 99;
          non_serializable_data = new NonSerializabeData();
+      }
+   }
+
+   static class DelayInterceptor extends CommandInterceptor {
+      @Override
+      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd)
+               throws Throwable {
+         // Add a delay
+         Thread.sleep(100);
+         return super.handleDefault(ctx, cmd);
       }
    }
 }

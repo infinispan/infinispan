@@ -159,15 +159,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
 
       // Delay the commit on the remote node. Can't used blockNewTransactions because we don't want a StateTransferInProgressException
       AsyncInterceptorChain c2ic = c2.getAdvancedCache().getAsyncInterceptorChain();
-      c2ic.addInterceptorBefore(new CommandInterceptor() {
-         @Override
-         protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-            if (command instanceof CommitCommand) {
-               Thread.sleep(3000);
-            }
-            return super.handleDefault(ctx, command);
-         }
-      }, StateTransferInterceptor.class);
+      c2ic.addInterceptorBefore(new DelayCommandInterceptor(), StateTransferInterceptor.class);
 
       // Schedule the remote node to stop on another thread since the main thread will be busy with the commit call
       Thread worker = new Thread("RehasherSim,StaleLocksWithCommitDuringStateTransferTest") {
@@ -203,5 +195,15 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       // test that we don't leak locks
       assertEventuallyNotLocked(c1, k1);
       assertEventuallyNotLocked(c1, k2);
+   }
+
+   static class DelayCommandInterceptor extends CommandInterceptor {
+      @Override
+      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+         if (command instanceof CommitCommand) {
+            Thread.sleep(3000);
+         }
+         return super.handleDefault(ctx, command);
+      }
    }
 }
