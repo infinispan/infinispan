@@ -1,6 +1,7 @@
 package org.infinispan.stream.impl.local;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
@@ -24,8 +25,6 @@ import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.factories.ComponentRegistry;
@@ -202,20 +201,27 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
    @Override
    public void forEach(Consumer<? super R> action) {
       injectCache(action);
-      createStream().forEach(action);
+      try (Stream<R> stream = createStream()) {
+         stream.forEach(action);
+      }
    }
 
    @Override
    public <K, V> void forEach(BiConsumer<Cache<K, V>, ? super R> action) {
       Cache<K, V> cache = registry.getComponent(Cache.class);
       registry.wireDependencies(action);
-      createStream().forEach(e -> action.accept(cache, e));
+      try (Stream<R> stream = createStream()) {
+         stream.forEach(e -> action.accept(cache, e));
+      }
+
    }
 
    @Override
    public void forEachOrdered(Consumer<? super R> action) {
       injectCache(action);
-      createStream().forEachOrdered(action);
+      try (Stream<R> stream = createStream()) {
+         stream.forEachOrdered(action);
+      }
    }
 
    /**
@@ -231,97 +237,135 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
 
    @Override
    public Object[] toArray() {
-      return createStream().toArray();
+      try (Stream<R> stream = createStream()) {
+         return stream.toArray();
+      }
    }
 
    @Override
    public <A> A[] toArray(IntFunction<A[]> generator) {
-      return createStream().toArray(generator);
+      try (Stream<R> stream = createStream()) {
+         return stream.toArray(generator);
+      }
    }
 
    @Override
    public R reduce(R identity, BinaryOperator<R> accumulator) {
-      return createStream().reduce(identity, accumulator);
+      try (Stream<R> stream = createStream()) {
+         return stream.reduce(identity, accumulator);
+      }
    }
 
    @Override
    public Optional<R> reduce(BinaryOperator<R> accumulator) {
-      return createStream().reduce(accumulator);
+      try (Stream<R> stream = createStream()) {
+         return stream.reduce(accumulator);
+      }
    }
 
    @Override
    public <U> U reduce(U identity, BiFunction<U, ? super R, U> accumulator, BinaryOperator<U> combiner) {
-      return createStream().reduce(identity, accumulator, combiner);
+      try (Stream<R> stream = createStream()) {
+         return stream.reduce(identity, accumulator, combiner);
+      }
    }
 
    @Override
    public <R1> R1 collect(Supplier<R1> supplier, BiConsumer<R1, ? super R> accumulator, BiConsumer<R1, R1> combiner) {
-      return createStream().collect(supplier, accumulator, combiner);
+      try (Stream<R> stream = createStream()) {
+         return stream.collect(supplier, accumulator, combiner);
+      }
    }
 
    @Override
    public <R1, A> R1 collect(Collector<? super R, A, R1> collector) {
-      return createStream().collect(collector);
+      try (Stream<R> stream = createStream()) {
+         return stream.collect(collector);
+      }
    }
 
    @Override
    public <R1> R1 collect(SerializableSupplier<Collector<? super R, ?, R1>> supplier) {
-      return createStream().collect(supplier.get());
+      try (Stream<R> stream = createStream()) {
+         return stream.collect(supplier.get());
+      }
    }
 
    @Override
    public <R1> R1 collect(Supplier<Collector<? super R, ?, R1>> supplier) {
-      return createStream().collect(supplier.get());
+      try (Stream<R> stream = createStream()) {
+         return stream.collect(supplier.get());
+      }
    }
 
    @Override
    public Optional<R> min(Comparator<? super R> comparator) {
-      return createStream().min(comparator);
+      try (Stream<R> stream = createStream()) {
+         return stream.min(comparator);
+      }
    }
 
    @Override
    public Optional<R> max(Comparator<? super R> comparator) {
-      return createStream().max(comparator);
+      try (Stream<R> stream = createStream()) {
+         return stream.max(comparator);
+      }
    }
 
    @Override
    public long count() {
-      return createStream().count();
+      try (Stream<R> stream = createStream()) {
+         return stream.count();
+      }
    }
 
    @Override
    public boolean anyMatch(Predicate<? super R> predicate) {
-      return createStream().anyMatch(predicate);
+      try (Stream<R> stream = createStream()) {
+         return stream.anyMatch(predicate);
+      }
    }
 
    @Override
    public boolean allMatch(Predicate<? super R> predicate) {
-      return createStream().allMatch(predicate);
+      try (Stream<R> stream = createStream()) {
+         return stream.allMatch(predicate);
+      }
    }
 
    @Override
    public boolean noneMatch(Predicate<? super R> predicate) {
-      return createStream().noneMatch(predicate);
+      try (Stream<R> stream = createStream()) {
+         return stream.noneMatch(predicate);
+      }
    }
 
    @Override
    public Optional<R> findFirst() {
-      return createStream().findFirst();
+      try (Stream<R> stream = createStream()) {
+         return stream.findFirst();
+      }
    }
 
    @Override
    public Optional<R> findAny() {
-      return createStream().findAny();
+      try (Stream<R> stream = createStream()) {
+         return stream.findAny();
+      }
    }
 
    @Override
-   public CloseableIterator<R> iterator() {
-      return Closeables.iterator(createStream());
+   public Iterator<R> iterator() {
+      Stream<R> stream = createStream();
+      onCloseRunnables.add(stream::close);
+      return stream.iterator();
    }
 
    @Override
    public Spliterator<R> spliterator() {
-      return createStream().spliterator();
+      Stream<R> stream = createStream();
+      onCloseRunnables.add(stream::close);
+      return stream.spliterator();
    }
 
    @Override
