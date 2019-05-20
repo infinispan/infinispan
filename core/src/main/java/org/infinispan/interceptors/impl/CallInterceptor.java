@@ -572,11 +572,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Override
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
       // Use an unwrapped cache to avoid unneeded transformations as we only want a count
-      long size = cacheWithFlags(command.getFlagsBitSet()).keySet().stream().count();
-      if (size > Integer.MAX_VALUE) {
-         return Integer.MAX_VALUE;
-      } else {
-         return (int) size;
+      try (CacheStream stream = cacheWithFlags(command.getFlagsBitSet()).keySet().stream()) {
+         return (int) Math.min(stream.count(), Integer.MAX_VALUE);
       }
    }
 

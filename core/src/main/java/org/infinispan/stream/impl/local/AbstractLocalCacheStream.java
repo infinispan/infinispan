@@ -27,6 +27,8 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
    protected Set<?> keysToFilter;
    protected boolean parallel;
 
+   private S stream;
+
    public interface StreamSupplier<T, S extends BaseStream<T, S>> {
       S buildStream(IntSet segmentsToFilter, Set<?> keysToFilter, boolean parallel);
    }
@@ -65,7 +67,9 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
          intOp.handleInjection(registry);
          stream = intOp.perform(stream);
       }
-      return (S) stream;
+      // Capture lazily created backing stream so we can close it on close().
+      this.stream = (S) stream;
+      return this.stream;
    }
 
    @Override
@@ -99,6 +103,9 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
 
    @Override
    public void close() {
+      if (this.stream != null) {
+         this.stream.close();
+      }
       onCloseRunnables.forEach(Runnable::run);
    }
 }
