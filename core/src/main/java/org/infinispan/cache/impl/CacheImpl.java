@@ -24,6 +24,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
+
 import javax.security.auth.Subject;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -497,7 +499,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final boolean isEmpty(long explicitFlags) {
-      return !entrySet(explicitFlags).stream().anyMatch(StreamMarshalling.alwaysTruePredicate());
+      try (Stream<K> stream = keySet(explicitFlags).stream()) {
+         return !stream.anyMatch(StreamMarshalling.alwaysTruePredicate());
+      }
    }
 
    @Override
@@ -512,7 +516,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public final boolean containsValue(Object value) {
       assertValueNotNull(value);
-      return values().stream().anyMatch(StreamMarshalling.equalityPredicate(value));
+      try (Stream<V> stream = values().stream()) {
+         return stream.anyMatch(StreamMarshalling.equalityPredicate(value));
+      }
    }
 
    @Override

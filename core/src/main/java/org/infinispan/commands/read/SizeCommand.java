@@ -1,5 +1,7 @@
 package org.infinispan.commands.read;
 
+import java.util.stream.Stream;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
@@ -42,11 +44,8 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
 
    @Override
    public Integer perform(InvocationContext ctx) throws Throwable {
-      long size = cache.keySet().stream().count();
-      if (size > Integer.MAX_VALUE) {
-         return Integer.MAX_VALUE;
-      } else {
-         return (int) size;
+      try (Stream<?> stream = cache.keySet().stream()) {
+         return (int) Math.min(stream.count(), Integer.MAX_VALUE);
       }
    }
 
