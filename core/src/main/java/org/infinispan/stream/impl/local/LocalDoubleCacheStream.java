@@ -122,19 +122,25 @@ public class LocalDoubleCacheStream extends AbstractLocalCacheStream<Double, Dou
    @Override
    public void forEach(DoubleConsumer action) {
       injectCache(action);
-      createStream().forEach(action);
+      try (DoubleStream stream = createStream()) {
+         stream.forEach(action);
+      }
    }
 
    @Override
    public <K, V> void forEach(ObjDoubleConsumer<Cache<K, V>> action) {
       Cache<K, V> cache = registry.getComponent(Cache.class);
-      createStream().forEach(d -> action.accept(cache, d));
+      try (DoubleStream stream = createStream()) {
+         stream.forEach(d -> action.accept(cache, d));
+      }
    }
 
    @Override
    public void forEachOrdered(DoubleConsumer action) {
       injectCache(action);
-      createStream().forEachOrdered(action);
+      try (DoubleStream stream = createStream()) {
+         stream.forEachOrdered(action);
+      }
    }
 
    /**
@@ -150,77 +156,107 @@ public class LocalDoubleCacheStream extends AbstractLocalCacheStream<Double, Dou
 
    @Override
    public double[] toArray() {
-      return createStream().toArray();
+      try (DoubleStream stream = createStream()) {
+         return stream.toArray();
+      }
    }
 
    @Override
    public double reduce(double identity, DoubleBinaryOperator op) {
-      return createStream().reduce(identity, op);
+      try (DoubleStream stream = createStream()) {
+         return stream.reduce(identity, op);
+      }
    }
 
    @Override
    public OptionalDouble reduce(DoubleBinaryOperator op) {
-      return createStream().reduce(op);
+      try (DoubleStream stream = createStream()) {
+         return stream.reduce(op);
+      }
    }
 
    @Override
    public <R> R collect(Supplier<R> supplier, ObjDoubleConsumer<R> accumulator, BiConsumer<R, R> combiner) {
-      return createStream().collect(supplier, accumulator, combiner);
+      try (DoubleStream stream = createStream()) {
+         return stream.collect(supplier, accumulator, combiner);
+      }
    }
 
    @Override
    public double sum() {
-      return createStream().sum();
+      try (DoubleStream stream = createStream()) {
+         return stream.sum();
+      }
    }
 
    @Override
    public OptionalDouble min() {
-      return createStream().min();
+      try (DoubleStream stream = createStream()) {
+         return stream.min();
+      }
    }
 
    @Override
    public OptionalDouble max() {
-      return createStream().max();
+      try (DoubleStream stream = createStream()) {
+         return stream.max();
+      }
    }
 
    @Override
    public long count() {
-      return createStream().count();
+      try (DoubleStream stream = createStream()) {
+         return stream.count();
+      }
    }
 
    @Override
    public OptionalDouble average() {
-      return createStream().average();
+      try (DoubleStream stream = createStream()) {
+         return stream.average();
+      }
    }
 
    @Override
    public DoubleSummaryStatistics summaryStatistics() {
-      return createStream().summaryStatistics();
+      try (DoubleStream stream = createStream()) {
+         return stream.summaryStatistics();
+      }
    }
 
    @Override
    public boolean anyMatch(DoublePredicate predicate) {
-      return createStream().anyMatch(predicate);
+      try (DoubleStream stream = createStream()) {
+         return stream.anyMatch(predicate);
+      }
    }
 
    @Override
    public boolean allMatch(DoublePredicate predicate) {
-      return createStream().allMatch(predicate);
+      try (DoubleStream stream = createStream()) {
+         return stream.allMatch(predicate);
+      }
    }
 
    @Override
    public boolean noneMatch(DoublePredicate predicate) {
-      return createStream().noneMatch(predicate);
+      try (DoubleStream stream = createStream()) {
+         return stream.noneMatch(predicate);
+      }
    }
 
    @Override
    public OptionalDouble findFirst() {
-      return createStream().findFirst();
+      try (DoubleStream stream = createStream()) {
+         return stream.findFirst();
+      }
    }
 
    @Override
    public OptionalDouble findAny() {
-      return createStream().findAny();
+      try (DoubleStream stream = createStream()) {
+         return stream.findAny();
+      }
    }
 
    @Override
@@ -231,12 +267,16 @@ public class LocalDoubleCacheStream extends AbstractLocalCacheStream<Double, Dou
 
    @Override
    public PrimitiveIterator.OfDouble iterator() {
-      return createStream().iterator();
+      DoubleStream stream = createStream();
+      onCloseRunnables.add(stream::close);
+      return stream.iterator();
    }
 
    @Override
    public Spliterator.OfDouble spliterator() {
-      return createStream().spliterator();
+      DoubleStream stream = createStream();
+      onCloseRunnables.add(stream::close);
+      return stream.spliterator();
    }
 
    @Override

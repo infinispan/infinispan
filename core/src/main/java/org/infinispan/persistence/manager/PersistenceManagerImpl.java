@@ -192,6 +192,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
    }
 
+   /**
+    * Returns how many publisher invocations are currently active.
+    * @return count of active publisher instances
+    */
+   public int activePublisherInvocations() {
+      return Integer.MAX_VALUE - publisherSemaphore.availablePermits();
+   }
+
    protected void pollStoreAvailability() {
       storesMutex.readLock().lock();
       try {

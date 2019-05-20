@@ -125,19 +125,25 @@ public class LocalIntCacheStream extends AbstractLocalCacheStream<Integer, IntSt
    @Override
    public void forEach(IntConsumer action) {
       injectCache(action);
-      createStream().forEach(action);
+      try (IntStream stream = createStream()) {
+         stream.forEach(action);
+      }
    }
 
    @Override
    public <K, V> void forEach(ObjIntConsumer<Cache<K, V>> action) {
       Cache<K, V> cache = registry.getComponent(Cache.class);
-      createStream().forEach(i -> action.accept(cache, i));
+      try (IntStream stream = createStream()) {
+         stream.forEach(i -> action.accept(cache, i));
+      }
    }
 
    @Override
    public void forEachOrdered(IntConsumer action) {
       injectCache(action);
-      createStream().forEachOrdered(action);
+      try (IntStream stream = createStream()) {
+         stream.forEachOrdered(action);
+      }
    }
 
    /**
@@ -153,77 +159,107 @@ public class LocalIntCacheStream extends AbstractLocalCacheStream<Integer, IntSt
 
    @Override
    public int[] toArray() {
-      return createStream().toArray();
+      try (IntStream stream = createStream()) {
+         return stream.toArray();
+      }
    }
 
    @Override
    public int reduce(int identity, IntBinaryOperator op) {
-      return createStream().reduce(identity, op);
+      try (IntStream stream = createStream()) {
+         return stream.reduce(identity, op);
+      }
    }
 
    @Override
    public OptionalInt reduce(IntBinaryOperator op) {
-      return createStream().reduce(op);
+      try (IntStream stream = createStream()) {
+         return stream.reduce(op);
+      }
    }
 
    @Override
    public <R> R collect(Supplier<R> supplier, ObjIntConsumer<R> accumulator, BiConsumer<R, R> combiner) {
-      return createStream().collect(supplier, accumulator, combiner);
+      try (IntStream stream = createStream()) {
+         return stream.collect(supplier, accumulator, combiner);
+      }
    }
 
    @Override
    public int sum() {
-      return createStream().sum();
+      try (IntStream stream = createStream()) {
+         return stream.sum();
+      }
    }
 
    @Override
    public OptionalInt min() {
-      return createStream().min();
+      try (IntStream stream = createStream()) {
+         return stream.min();
+      }
    }
 
    @Override
    public OptionalInt max() {
-      return createStream().max();
+      try (IntStream stream = createStream()) {
+         return stream.max();
+      }
    }
 
    @Override
    public long count() {
-      return createStream().count();
+      try (IntStream stream = createStream()) {
+         return stream.count();
+      }
    }
 
    @Override
    public OptionalDouble average() {
-      return createStream().average();
+      try (IntStream stream = createStream()) {
+         return stream.average();
+      }
    }
 
    @Override
    public IntSummaryStatistics summaryStatistics() {
-      return createStream().summaryStatistics();
+      try (IntStream stream = createStream()) {
+         return stream.summaryStatistics();
+      }
    }
 
    @Override
    public boolean anyMatch(IntPredicate predicate) {
-      return createStream().anyMatch(predicate);
+      try (IntStream stream = createStream()) {
+         return stream.anyMatch(predicate);
+      }
    }
 
    @Override
    public boolean allMatch(IntPredicate predicate) {
-      return createStream().allMatch(predicate);
+      try (IntStream stream = createStream()) {
+         return stream.allMatch(predicate);
+      }
    }
 
    @Override
    public boolean noneMatch(IntPredicate predicate) {
-      return createStream().noneMatch(predicate);
+      try (IntStream stream = createStream()) {
+         return stream.noneMatch(predicate);
+      }
    }
 
    @Override
    public OptionalInt findFirst() {
-      return createStream().findFirst();
+      try (IntStream stream = createStream()) {
+         return stream.findFirst();
+      }
    }
 
    @Override
    public OptionalInt findAny() {
-      return createStream().findAny();
+      try (IntStream stream = createStream()) {
+         return stream.findAny();
+      }
    }
 
    @Override
@@ -244,12 +280,16 @@ public class LocalIntCacheStream extends AbstractLocalCacheStream<Integer, IntSt
 
    @Override
    public PrimitiveIterator.OfInt iterator() {
-      return createStream().iterator();
+      IntStream stream = createStream();
+      onCloseRunnables.add(stream::close);
+      return stream.iterator();
    }
 
    @Override
    public Spliterator.OfInt spliterator() {
-      return createStream().spliterator();
+      IntStream stream = createStream();
+      onCloseRunnables.add(stream::close);
+      return stream.spliterator();
    }
 
    @Override
