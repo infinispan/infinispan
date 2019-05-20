@@ -4,6 +4,7 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.B
 import static org.infinispan.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.CountDownLatch;
@@ -21,6 +22,7 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -75,6 +77,21 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       c.get(30, TimeUnit.SECONDS);
       stopFuture.get(30, TimeUnit.SECONDS);
       assertEquals(3, count.get());
+   }
+
+   public void testEarlyTerminatedOperation() {
+      PersistenceManager persistenceManager = extractComponent(cache, PersistenceManager.class);
+      StreamingMarshaller marshaller = extractComponent(cache, StreamingMarshaller.class);
+      KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
+      // This has to be > 128 - as the flowable pulls a chunk of that size
+      for (int i = 0; i < 140; ++i) {
+         String key = "k" + i;
+         persistenceManager.writeToAllNonTxStores(marshalledEntry(key, "v", marshaller), keyPartitioner.getSegment(key), BOTH);
+      }
+      PersistenceManagerImpl pmImpl = (PersistenceManagerImpl) persistenceManager;
+      assertEquals(0, pmImpl.activePublisherInvocations());
+      assertFalse(cache.isEmpty());
+      assertEquals(0, pmImpl.activePublisherInvocations());
    }
 
    @Override

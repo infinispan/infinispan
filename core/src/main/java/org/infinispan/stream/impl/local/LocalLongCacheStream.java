@@ -126,19 +126,25 @@ public class LocalLongCacheStream extends AbstractLocalCacheStream<Long, LongStr
    @Override
    public void forEach(LongConsumer action) {
       injectCache(action);
-      createStream().forEach(action);
+      try (LongStream stream = createStream()) {
+         stream.forEach(action);
+      }
    }
 
    @Override
    public <K, V> void forEach(ObjLongConsumer<Cache<K, V>> action) {
       Cache<K, V> cache = registry.getComponent(Cache.class);
-      createStream().forEach(l -> action.accept(cache, l));
+      try (LongStream stream = createStream()) {
+         stream.forEach(l -> action.accept(cache, l));
+      }
    }
 
    @Override
    public void forEachOrdered(LongConsumer action) {
       injectCache(action);
-      createStream().forEachOrdered(action);
+      try (LongStream stream = createStream()) {
+         stream.forEachOrdered(action);
+      }
    }
 
    /**
@@ -154,77 +160,107 @@ public class LocalLongCacheStream extends AbstractLocalCacheStream<Long, LongStr
 
    @Override
    public long[] toArray() {
-      return createStream().toArray();
+      try (LongStream stream = createStream()) {
+         return stream.toArray();
+      }
    }
 
    @Override
    public long reduce(long identity, LongBinaryOperator op) {
-      return createStream().reduce(identity, op);
+      try (LongStream stream = createStream()) {
+         return stream.reduce(identity, op);
+      }
    }
 
    @Override
    public OptionalLong reduce(LongBinaryOperator op) {
-      return createStream().reduce(op);
+      try (LongStream stream = createStream()) {
+         return stream.reduce(op);
+      }
    }
 
    @Override
    public <R> R collect(Supplier<R> supplier, ObjLongConsumer<R> accumulator, BiConsumer<R, R> combiner) {
-      return createStream().collect(supplier, accumulator, combiner);
+      try (LongStream stream = createStream()) {
+         return stream.collect(supplier, accumulator, combiner);
+      }
    }
 
    @Override
    public long sum() {
-      return createStream().sum();
+      try (LongStream stream = createStream()) {
+         return stream.sum();
+      }
    }
 
    @Override
    public OptionalLong min() {
-      return createStream().min();
+      try (LongStream stream = createStream()) {
+         return stream.min();
+      }
    }
 
    @Override
    public OptionalLong max() {
-      return createStream().max();
+      try (LongStream stream = createStream()) {
+         return stream.max();
+      }
    }
 
    @Override
    public long count() {
-      return createStream().count();
+      try (LongStream stream = createStream()) {
+         return stream.count();
+      }
    }
 
    @Override
    public OptionalDouble average() {
-      return createStream().average();
+      try (LongStream stream = createStream()) {
+         return stream.average();
+      }
    }
 
    @Override
    public LongSummaryStatistics summaryStatistics() {
-      return createStream().summaryStatistics();
+      try (LongStream stream = createStream()) {
+         return stream.summaryStatistics();
+      }
    }
 
    @Override
    public boolean anyMatch(LongPredicate predicate) {
-      return createStream().anyMatch(predicate);
+      try (LongStream stream = createStream()) {
+         return stream.anyMatch(predicate);
+      }
    }
 
    @Override
    public boolean allMatch(LongPredicate predicate) {
-      return createStream().allMatch(predicate);
+      try (LongStream stream = createStream()) {
+         return stream.allMatch(predicate);
+      }
    }
 
    @Override
    public boolean noneMatch(LongPredicate predicate) {
-      return createStream().noneMatch(predicate);
+      try (LongStream stream = createStream()) {
+         return stream.noneMatch(predicate);
+      }
    }
 
    @Override
    public OptionalLong findFirst() {
-      return createStream().findFirst();
+      try (LongStream stream = createStream()) {
+         return stream.findFirst();
+      }
    }
 
    @Override
    public OptionalLong findAny() {
-      return createStream().findAny();
+      try (LongStream stream = createStream()) {
+         return stream.findAny();
+      }
    }
 
    @Override
@@ -240,12 +276,16 @@ public class LocalLongCacheStream extends AbstractLocalCacheStream<Long, LongStr
 
    @Override
    public PrimitiveIterator.OfLong iterator() {
-      return createStream().iterator();
+      LongStream stream = createStream();
+      onCloseRunnables.add(stream::close);
+      return stream.iterator();
    }
 
    @Override
    public Spliterator.OfLong spliterator() {
-      return createStream().spliterator();
+      LongStream stream = createStream();
+      onCloseRunnables.add(stream::close);
+      return stream.spliterator();
    }
 
    @Override
