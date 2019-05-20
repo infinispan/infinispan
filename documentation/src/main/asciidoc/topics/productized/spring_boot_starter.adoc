@@ -161,7 +161,7 @@ This starter first attempts to locate the server from the `hotrod-client.propert
 +
 [source,text,options=nowrap]
 ----
-infinispan.client.hotrod.server_list=127.0.0.1:6667
+infinispan.client.hotrod.server_list=127.0.0.1:11222
 ----
 +
 * `application.properties`:
