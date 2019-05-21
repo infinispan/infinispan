@@ -13,7 +13,6 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,7 +26,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import javax.security.auth.Subject;
-import javax.security.sasl.SaslServerFactory;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -38,7 +36,6 @@ import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -120,7 +117,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private Cache<Address, ServerAddress> addressCache;
    private final Map<String, CacheInfo> knownCaches = new ConcurrentHashMap<>();
    private QueryFacade queryFacade;
-   private Map<String, SaslServerFactory> saslMechFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
    private ClientListenerRegistry clientListenerRegistry;
    private Marshaller marshaller;
    private ClusterExecutor clusterExecutor;
@@ -229,9 +225,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       this.cacheManager = cacheManager;
       this.iterationManager = new DefaultIterationManager(cacheManager.getGlobalComponentRegistry().getTimeService());
       this.hasDefaultCache = configuration.defaultCacheName() != null || cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent();
-
-      // populate the sasl factories based on the required mechs
-      setupSasl();
 
       // Initialize query-specific stuff
       List<QueryFacade> queryFacades = loadQueryFacades();
@@ -467,27 +460,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
       RollingUpgradeManager migrationManager = cr.getComponent(RollingUpgradeManager.class);
       if (migrationManager != null) migrationManager.addSourceMigrator(new HotRodSourceMigrator(cache));
-   }
-
-   private void setupSasl() {
-      if (configuration.authentication().enabled()) {
-         Iterator<SaslServerFactory> saslFactories = SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true);
-         while (saslFactories.hasNext()) {
-            SaslServerFactory saslFactory = saslFactories.next();
-            String[] saslFactoryMechs = saslFactory.getMechanismNames(configuration.authentication().mechProperties());
-            for (String supportedMech : saslFactoryMechs) {
-               for (String mech : configuration.authentication().allowedMechs()) {
-                  if (supportedMech.equals(mech)) {
-                     saslMechFactories.putIfAbsent(mech, saslFactory);
-                  }
-               }
-            }
-         }
-      }
-   }
-
-   SaslServerFactory getSaslServerFactory(String mech) {
-      return saslMechFactories.get(mech);
    }
 
    public Cache<Address, ServerAddress> getAddressCache() {

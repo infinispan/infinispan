@@ -14,6 +14,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthenticationException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
+import javax.security.sasl.RealmChoiceCallback;
 
 import org.infinispan.server.core.security.AuthorizingCallbackHandler;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
@@ -27,7 +28,7 @@ import org.infinispan.server.core.security.SubjectUserInfo;
  */
 public final class SimpleServerAuthenticationProvider implements ServerAuthenticationProvider {
 
-   private final Map<String, Map<String, Entry>> map = new HashMap<String, Map<String, Entry>>();
+   private final Map<String, Map<String, Entry>> map = new HashMap<>();
 
    /**
     * {@inheritDoc}
@@ -58,6 +59,9 @@ public final class SimpleServerAuthenticationProvider implements ServerAuthentic
                      realmName = defaultRealm.toLowerCase().trim();
                      realmCallback.setText(realmName);
                   }
+               } else if (callback instanceof RealmChoiceCallback) {
+                  final RealmChoiceCallback realmChoiceCallback = (RealmChoiceCallback) callback;
+                  realmChoiceCallback.setSelectedIndex(realmChoiceCallback.getDefaultChoice());
                } else if (callback instanceof PasswordCallback) {
                   final PasswordCallback passwordCallback = (PasswordCallback) callback;
                   // retrieve the record based on user and realm (if any)

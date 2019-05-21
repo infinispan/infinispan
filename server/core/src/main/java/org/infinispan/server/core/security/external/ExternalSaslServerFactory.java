@@ -1,10 +1,9 @@
 package org.infinispan.server.core.security.external;
 
-import java.security.Principal;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.sasl.SaslException;
+import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
@@ -12,14 +11,14 @@ public final class ExternalSaslServerFactory implements SaslServerFactory {
 
    public static final String[] NAMES = new String[]{"EXTERNAL"};
 
-   private final Principal peerPrincipal;
+   private final X500Principal peerPrincipal;
 
-   public ExternalSaslServerFactory(final Principal peerPrincipal) {
+   public ExternalSaslServerFactory(final X500Principal peerPrincipal) {
       this.peerPrincipal = peerPrincipal;
    }
 
    public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName,
-                                      final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+                                      final Map<String, ?> props, final CallbackHandler cbh) {
       return new ExternalSaslServer(cbh, peerPrincipal);
    }
 

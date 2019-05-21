@@ -73,7 +73,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
 
       channel.close();
 
-      assertEquals("v", rc.get("k"));
+         assertEquals("v", rc.get("k"));
       assertEquals(0, channelFactory.getNumActive(address));
       assertEquals(1, channelFactory.getNumIdle(address));
 
