@@ -11,7 +11,6 @@ import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -77,7 +76,7 @@ public class UpgradeTest extends AbstractInfinispanTest {
       }
 
       Interpreter targetInterpreter = getInterpreter(targetContainer);
-      String targetSessionId = targetInterpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String targetSessionId = targetInterpreter.createSessionId(targetServer.getCacheManager().getCacheManagerConfiguration().defaultCacheName().get());
       Map<String, String> synchronizeResult = targetInterpreter.execute(targetSessionId, "upgrade --synchronize=hotrod;");
       checkNoErrors(synchronizeResult);
 

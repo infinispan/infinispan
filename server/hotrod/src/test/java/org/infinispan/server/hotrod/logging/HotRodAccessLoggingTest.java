@@ -37,7 +37,7 @@ public class HotRodAccessLoggingTest extends HotRodSingleNodeTest {
 
       server().getTransport().stop();
 
-      String logline = logAppender.getLog(0).toString();
+      String logline = logAppender.getLog(0);
       assertTrue(logline, logline.matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\w+\\] \"PUT /HotRodCache/\\[B0x6B6579 HOTROD/2\\.1\" OK \\d+ \\d+ \\d+$"));
    }
 }

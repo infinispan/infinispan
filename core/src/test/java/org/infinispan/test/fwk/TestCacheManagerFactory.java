@@ -237,6 +237,7 @@ public class TestCacheManagerFactory {
    }
 
    public static void amendGlobalConfiguration(GlobalConfigurationBuilder gcb, TransportFlags flags) {
+      amendDefaultCache(gcb);
       amendMarshaller(gcb);
       minimizeThreads(gcb);
       amendTransport(gcb, flags);
@@ -321,23 +322,31 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String cacheManagerName, String jmxDomain, boolean allowDuplicateDomains) {
-      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, true, allowDuplicateDomains, new ConfigurationBuilder(), new PerThreadMBeanServerLookup());
+      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, true, allowDuplicateDomains, GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), new PerThreadMBeanServerLookup());
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, ConfigurationBuilder builder) {
       return createClusteredCacheManagerEnforceJmxDomain(jmxDomain, true, false, builder);
    }
 
-   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
-         String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder) {
-      return createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain,
-            exposeGlobalJmx, allowDuplicateDomains, builder, new PerThreadMBeanServerLookup());
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String cacheManagerName, String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder, MBeanServerLookup mBeanServerLookup) {
+      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, exposeGlobalJmx, allowDuplicateDomains, GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, mBeanServerLookup);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
+      return createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain, true, false, globalBuilder, builder, new PerThreadMBeanServerLookup());
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
-         String cacheManagerName, String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder,
+         String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder) {
+      return createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain,
+            exposeGlobalJmx, allowDuplicateDomains, GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, new PerThreadMBeanServerLookup());
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
+         String cacheManagerName, String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder,
          MBeanServerLookup mBeanServerLookup) {
-      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+
       amendGlobalConfiguration(globalBuilder, new TransportFlags());
       globalBuilder.globalJmxStatistics()
             .jmxDomain(jmxDomain)
@@ -428,6 +437,12 @@ public class TestCacheManagerFactory {
       // Timeout thread pool is not configurable at all
    }
 
+   public static void amendDefaultCache(GlobalConfigurationBuilder builder) {
+      if (!builder.defaultCacheName().isPresent()) {
+         builder.defaultCacheName(TestResourceTracker.getCurrentTestShortName());
+      }
+   }
+
    public static void amendMarshaller(GlobalConfigurationBuilder builder) {
       if (MARSHALLER != null) {
          try {
@@ -440,6 +455,7 @@ public class TestCacheManagerFactory {
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c) {
+      amendDefaultCache(gc);
       setNodeName(gc);
       GlobalConfiguration globalConfiguration = gc.build();
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c.build(globalConfiguration), start);
@@ -448,6 +464,7 @@ public class TestCacheManagerFactory {
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
+      amendDefaultCache(holder.getGlobalConfigurationBuilder());
       setNodeName(holder.getGlobalConfigurationBuilder());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
@@ -466,5 +483,4 @@ public class TestCacheManagerFactory {
 
       return holder;
    }
-
 }

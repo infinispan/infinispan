@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.result.ResultKeys;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -132,12 +131,13 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
       Interpreter lonInterpreter = interpreter(LON, 0);
       String lonCache = cache(LON, 0).getName();
       String lonSessionId = lonInterpreter.createSessionId(lonCache);
+      String defaultCacheName = site(0).cacheManagers().get(0).getCacheManagerConfiguration().defaultCacheName().get();
 
       assertInterpreterOutput(lonInterpreter, lonSessionId, format("site --offlineall %s;", NYC), (output, error) -> {
          assertEquals(null, error);
          String outFormat = "%s: %s";
-         if (!output.contains(format(outFormat, BasicCacheContainer.DEFAULT_CACHE_NAME, XSiteAdminOperations.SUCCESS))) {
-            fail(format("Cache '%s' should be present in the output: %s", BasicCacheContainer.DEFAULT_CACHE_NAME, output));
+         if (!output.contains(format(outFormat, defaultCacheName, XSiteAdminOperations.SUCCESS))) {
+            fail(format("Cache '%s' should be present in the output: %s", defaultCacheName, output));
          }
          if (!output.contains(format(outFormat, "another-cache", XSiteAdminOperations.SUCCESS))) {
             fail(format("Cache '%s' should be present in the output: %s", "another-cache", output));
@@ -152,8 +152,8 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
       assertInterpreterOutput(lonInterpreter, lonSessionId, format("site --onlineall %s;", NYC), (output, error) -> {
          assertEquals(null, error);
          String outFormat = "%s: %s";
-         if (!output.contains(format(outFormat, BasicCacheContainer.DEFAULT_CACHE_NAME, XSiteAdminOperations.SUCCESS))) {
-            fail(format("Cache '%s' should be present in the output: %s", BasicCacheContainer.DEFAULT_CACHE_NAME, output));
+         if (!output.contains(format(outFormat, defaultCacheName, XSiteAdminOperations.SUCCESS))) {
+            fail(format("Cache '%s' should be present in the output: %s", defaultCacheName, output));
          }
          if (!output.contains(format(outFormat, "another-cache", XSiteAdminOperations.SUCCESS))) {
             fail(format("Cache '%s' should be present in the output: %s", "another-cache", output));
@@ -168,8 +168,8 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
       assertInterpreterOutput(lonInterpreter, lonSessionId, format("site --pushall %s;", NYC), (output, error) -> {
          assertEquals(null, error);
          String outFormat = "%s: %s";
-         if (!output.contains(format(outFormat, BasicCacheContainer.DEFAULT_CACHE_NAME, XSiteAdminOperations.SUCCESS))) {
-            fail(format("Cache '%s' should be present in the output: %s", BasicCacheContainer.DEFAULT_CACHE_NAME, output));
+         if (!output.contains(format(outFormat, defaultCacheName, XSiteAdminOperations.SUCCESS))) {
+            fail(format("Cache '%s' should be present in the output: %s", defaultCacheName, output));
          }
          if (!output.contains(format(outFormat, "another-cache", XSiteAdminOperations.SUCCESS))) {
             fail(format("Cache '%s' should be present in the output: %s", "another-cache", output));
@@ -182,8 +182,8 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
       assertInterpreterOutput(lonInterpreter, lonSessionId, format("site --cancelpushall %s;", NYC), (output, error) -> {
          assertEquals(null, error);
          String outFormat = "%s: %s";
-         if (!output.contains(format(outFormat, BasicCacheContainer.DEFAULT_CACHE_NAME, XSiteAdminOperations.SUCCESS))) {
-            fail(format("Cache '%s' should be present in the output: %s", BasicCacheContainer.DEFAULT_CACHE_NAME, output));
+         if (!output.contains(format(outFormat, defaultCacheName, XSiteAdminOperations.SUCCESS))) {
+            fail(format("Cache '%s' should be present in the output: %s", defaultCacheName, output));
          }
          if (!output.contains(format(outFormat, "another-cache", XSiteAdminOperations.SUCCESS))) {
             fail(format("Cache '%s' should be present in the output: %s", "another-cache", output));
