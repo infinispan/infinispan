@@ -7,18 +7,10 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
-import org.infinispan.test.hibernate.cache.commons.util.TestConfigurationHook;
-
-import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
 public class PartialFutureUpdateTest extends AbstractPartialUpdateTest {
-
-   @Override
-   public Class<? extends TestConfigurationHook> getInjectPartialFailure() {
-      return InjectPartialFailure.class;
-   }
 
    @Override
    protected boolean doUpdate() throws Exception {
@@ -31,17 +23,9 @@ public class PartialFutureUpdateTest extends AbstractPartialUpdateTest {
       return true;
    }
 
-   public static final class InjectPartialFailure extends AbstractInjectPartialFailure {
-
-      public InjectPartialFailure(Properties properties) {
-         super(properties);
-      }
-
-      @Override
-      Class<? extends AsyncInterceptor> getFailureInducingInterceptorClass() {
-         return FailureInducingInterceptor.class;
-      }
-
+   @Override
+   AsyncInterceptor getFailureInducingInterceptor() {
+      return new FailureInducingInterceptor();
    }
 
    public static class FailureInducingInterceptor extends BaseCustomAsyncInterceptor {

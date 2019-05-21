@@ -17,6 +17,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 
+import static org.junit.Assert.assertTrue;
 
 public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
    private final static Log log = LogFactory.getLog(ExpectingInterceptor.class);
@@ -31,7 +32,7 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
       }
       ExpectingInterceptor ei = new ExpectingInterceptor();
       // We are adding this after ICI because we want to handle silent failures, too
-      cache.getAsyncInterceptorChain().addInterceptorAfter(ei, InvocationContextInterceptor.class);
+      assertTrue(cache.getAsyncInterceptorChain().addInterceptorAfter(ei, InvocationContextInterceptor.class));
       return ei;
    }
 
