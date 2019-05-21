@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.testng.ISuite;
@@ -29,6 +30,9 @@ import org.testng.reporters.XMLStringBuffer;
  * @author <a href='mailto:afield[at]redhat[dot]com'>Alan Field</a>
  */
 public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListener {
+
+   private static final Logger LOGGER = Logger.getLogger(PolarionJUnitXMLReporter.class.getName());
+
    private static final Pattern ENTITY = Pattern.compile("&[a-zA-Z]+;.*");
    private static final Pattern LESS = Pattern.compile("<");
    private static final Pattern GREATER = Pattern.compile(">");
@@ -189,8 +193,11 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       document.pop();
 
       // Reset output directory
-      Utils.writeUtf8File(suite.getOutputDirectory().replaceAll(".Surefire suite", ""),
-            generateFileName(suite) + ".xml", document.toXML());
+      String outputDir = suite.getOutputDirectory();
+      LOGGER.info("Output Directory: " + outputDir);
+      outputDir = outputDir.replaceAll(".Surefire suite", "");
+      LOGGER.info("Output Directory without Surefire suite: " + outputDir);
+      Utils.writeUtf8File(outputDir, generateFileName(suite), document.toXML());
    }
 
    private void createElementFromTestResults(XMLStringBuffer document, Collection<List<ITestResult>> results) {
@@ -327,12 +334,11 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
                   name = packageName;
                }
             }
-         } else {
-            System.err.println(
-                  "[" + this.getClass().getSimpleName() + "] Test suite '" + name + "' results have no test methods");
          }
       }
-      return String.format("TEST-%s", name);
+      String fileName = String.format("TEST-%s", name) + ".xml";
+      LOGGER.info("File name: " + fileName);
+      return fileName;
    }
 
    private String testName(ITestResult res) {
@@ -355,19 +361,35 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
                   res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class).invocationCount())
                   .append(" times");
          }
-         // JCache tests are a special case
-         if (getModuleSuffix().contains("jcache")) {
-            if (result.indexOf("(") == -1) {
-               result.append("(");
-            } else {
-               result.append(", ");
-            }
-            if (getModuleSuffix().contains("infinispan-jcache-remote")) {
+      }
+      // There are some tests that are a special case
+      String moduleSuffix = getModuleSuffix();
+      if (moduleSuffix.contains("jcache") || moduleSuffix.contains("hibernate")) {
+         // begin
+         if (result.indexOf("(") == -1) {
+            result.append("(");
+         } else {
+            result.append(", ");
+         }
+
+         // test
+         if (moduleSuffix.contains("jcache")) {
+            if (moduleSuffix.contains("infinispan-jcache-remote")) {
                result.append("remote");
             } else {
                result.append("embedded");
             }
+         } else if (moduleSuffix.contains("hibernate")) {
+            if (moduleSuffix.endsWith("v51")) {
+               result.append("hibernate-51");
+            } else if (moduleSuffix.endsWith("v53")) {
+               result.append("hibernate-53");
+            } else {
+               throw new IllegalStateException("Cannot parse the hibernate submodule: " + moduleSuffix);
+            }
          }
+
+         // end
          if (result.indexOf("(") != -1) {
             result.append(")");
          }
