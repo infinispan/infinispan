@@ -1,5 +1,6 @@
 package org.infinispan.commons.test;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -342,7 +343,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
                .dataProvider();
          // Add parameters for methods that use a data provider only
          if (res.getParameters().length != 0 && (dataProviderName != null && !dataProviderName.isEmpty())) {
-            result.append("(").append(Arrays.deepToString(res.getParameters()));
+            result.append("(").append(deepToStringParameters(res.getParameters()));
          }
          // Add number of invocations to method name
          if (res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class).invocationCount() > 1) {
@@ -373,6 +374,20 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
          }
       }
       return result.toString();
+   }
+
+   private String deepToStringParameters(Object[] parameters) {
+      for (int i=0; i<parameters.length; i++) {
+         Object parameter = parameters[i];
+         if (parameter != null) {
+            if (parameter instanceof Path) {
+               parameters[i] = ((Path) parameter).getFileName().toString();
+            } else if (parameter.getClass().getSimpleName().contains("$$Lambda$")) {
+               parameters[i] = "$$Lambda$";
+            }
+         }
+      }
+      return Arrays.deepToString(parameters);
    }
 
    private void showProperties(XMLStringBuffer report) {
