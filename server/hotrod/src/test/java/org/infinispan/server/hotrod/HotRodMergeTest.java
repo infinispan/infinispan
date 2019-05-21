@@ -53,7 +53,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       ConfigurationBuilder dcc = hotRodCacheConfiguration();
       dcc.clustering().cacheMode(cacheMode).hash().numOwners(1);
       dcc.clustering().partitionHandling().whenSplit(partitionHandling);
-      createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
+      createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true), "merge");
       waitForClusterToForm();
 
       // Allow servers for both instances to run in parallel
@@ -64,7 +64,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
          nextServerPort += 1;
       }
 
-      client = new HotRodClient("127.0.0.1", servers.get(0).getPort(), "", 60, (byte) 21);
+      client = new HotRodClient("127.0.0.1", servers.get(0).getPort(), "merge", 60, (byte) 21);
       TestingUtil.waitForNoRebalance(cache(0), cache(1));
    }
 

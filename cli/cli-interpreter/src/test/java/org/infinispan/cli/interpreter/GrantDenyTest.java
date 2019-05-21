@@ -12,7 +12,6 @@ import java.util.Map;
 import javax.security.auth.Subject;
 
 import org.infinispan.cli.interpreter.result.ResultKeys;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
@@ -94,7 +93,7 @@ public class GrantDenyTest extends SingleCacheManagerTest {
 
    public void testGrantDeny() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId(cacheManager.getCacheManagerConfiguration().defaultCacheName().get());
       execute(interpreter, sessionId, "grant reader to jack;");
       assertTrue(cpm.list("jack").contains("reader"));
       execute(interpreter, sessionId, "grant reader to jill;");

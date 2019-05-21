@@ -114,11 +114,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    public static final int LISTENERS_CHECK_INTERVAL = 10;
 
-
-   public HotRodServer() {
-      super("HotRod");
-   }
-
+   private boolean hasDefaultCache;
    private Address clusterAddress;
    private ServerAddress address;
    private Cache<Address, ServerAddress> addressCache;
@@ -135,6 +131,14 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private ClientCounterManagerNotificationManager clientCounterNotificationManager;
    private HotRodAccessLogging accessLogging = new HotRodAccessLogging();
    private ScheduledExecutorService scheduledExecutor;
+
+   public HotRodServer() {
+      super("HotRod");
+   }
+
+   public boolean hasDefaultCache() {
+      return hasDefaultCache;
+   }
 
    public ServerAddress getAddress() {
       return address;
@@ -224,6 +228,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       this.configuration = configuration;
       this.cacheManager = cacheManager;
       this.iterationManager = new DefaultIterationManager(cacheManager.getGlobalComponentRegistry().getTimeService());
+      this.hasDefaultCache = configuration.defaultCacheName() != null || cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent();
 
       // populate the sasl factories based on the required mechs
       setupSasl();
@@ -301,7 +306,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    protected void startDefaultCache() {
-      getCacheInfo("", (byte) 0, 0, false);
+      if (hasDefaultCache) {
+         getCacheInfo("", (byte) 0, 0, false);
+      }
    }
 
    private void preStartCaches() {
@@ -426,8 +433,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          keep = false;
       } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
          throw new CacheNotFoundException(
-            String.format("Cache with name '%s' not found amongst the configured caches", cacheName),
-            hotRodVersion, messageId);
+               String.format("Cache with name '%s' not found amongst the configured caches", cacheName),
+               hotRodVersion, messageId);
+      } else if (cacheName.isEmpty() && !hasDefaultCache) {
+         throw new CacheNotFoundException("Default cache requested but not configured", hotRodVersion, messageId);
       } else {
          keep = true;
       }

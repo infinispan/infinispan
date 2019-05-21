@@ -27,11 +27,14 @@ public class TaskRequestProcessor extends BaseRequestProcessor {
    }
 
    public void exec(HotRodHeader header, Subject subject, String taskName, Map<String, byte[]> taskParams) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       TaskContext taskContext = new TaskContext()
-            .cache(cache)
             .parameters(taskParams)
             .subject(subject);
+      if (!header.cacheName.isEmpty() || server.hasDefaultCache()) {
+         AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
+         taskContext.cache(cache);
+      }
+
       // TODO: TaskManager API is already asynchronous, though we cannot be sure that it won't block anywhere
       taskManager.runTask(taskName, taskContext).whenComplete((result, throwable) -> handleExec(header, result, throwable));
    }
