@@ -2,7 +2,6 @@ package org.infinispan.server.hotrod.configuration;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -89,8 +88,7 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
          }
          Set<String> allMechs = new LinkedHashSet<String>();
          Collections.addAll(allMechs, ExternalSaslServerFactory.NAMES);
-         for (Iterator<SaslServerFactory> factories = SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true); factories.hasNext(); ) {
-            SaslServerFactory factory = factories.next();
+         for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true)) {
             for (String mech : factory.getMechanismNames(mechProperties)) {
                allMechs.add(mech);
             }

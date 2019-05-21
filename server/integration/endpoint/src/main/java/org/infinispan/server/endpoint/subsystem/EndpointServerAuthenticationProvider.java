@@ -57,7 +57,12 @@ public class EndpointServerAuthenticationProvider implements ServerAuthenticatio
          return new RealmAuthorizingCallbackHandler(realm.getAuthorizingCallbackHandler(AuthMechanism.PLAIN));
       } else if (DIGEST_MD5.equals(mechanismName)) {
          String realmStr = mechanismProperties.get(WildFlySasl.REALM_LIST);
-         realmList = realmStr == null ? new String[] {realm.getName()} : realmStr.split(" ");
+         if (realmStr == null) {
+            realmList = new String[] {realm.getName()};
+            mechanismProperties.put(WildFlySasl.REALM_LIST, realmList[0]);
+         } else {
+            realmList = realmStr.split(" ");
+         }
 
          Map<String, String> mechConfig = realm.getMechanismConfig(AuthMechanism.DIGEST);
          boolean plainTextDigest = true;
@@ -84,7 +89,7 @@ public class EndpointServerAuthenticationProvider implements ServerAuthenticatio
       }
 
       @Override
-      public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+      public void handle(Callback[] callbacks) {
          for (Callback callback : callbacks) {
             if (callback instanceof AvailableRealmsCallback) {
                ((AvailableRealmsCallback) callback).setRealmNames(realm.getName());

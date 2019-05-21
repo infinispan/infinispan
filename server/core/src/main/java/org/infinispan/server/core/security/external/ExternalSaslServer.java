@@ -1,13 +1,16 @@
 package org.infinispan.server.core.security.external;
 
+import static org.infinispan.server.core.security.SubjectSaslServer.SUBJECT;
+
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.Principal;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -17,10 +20,10 @@ import org.infinispan.commons.util.Util;
 final class ExternalSaslServer implements SaslServer {
    private final AtomicBoolean complete = new AtomicBoolean();
    private String authorizationID;
-   private final Principal peerPrincipal;
+   private final X500Principal peerPrincipal;
    private final CallbackHandler callbackHandler;
 
-   ExternalSaslServer(final CallbackHandler callbackHandler, final Principal peerPrincipal) {
+   ExternalSaslServer(final CallbackHandler callbackHandler, final X500Principal peerPrincipal) {
       this.callbackHandler = callbackHandler;
       this.peerPrincipal = peerPrincipal;
    }
@@ -33,12 +36,7 @@ final class ExternalSaslServer implements SaslServer {
       if (complete.getAndSet(true)) {
          throw new SaslException("Received response after complete");
       }
-      String userName;
-      try {
-         userName = new String(response, "UTF-8");
-      } catch (UnsupportedEncodingException e) {
-         throw new SaslException("Cannot convert user name from UTF-8", e);
-      }
+      String userName = new String(response, StandardCharsets.UTF_8);
       if (userName.length() == 0) {
          userName = peerPrincipal.getName();
       }
@@ -84,7 +82,17 @@ final class ExternalSaslServer implements SaslServer {
    }
 
    public Object getNegotiatedProperty(final String propName) {
-      return null;
+      if (SUBJECT.equals(propName)) {
+         if (isComplete()) {
+            Subject subject = new Subject();
+            subject.getPrincipals().add(peerPrincipal);
+            return subject;
+         } else {
+            throw new IllegalStateException("Authentication is not complete");
+         }
+      } else {
+         return null;
+      }
    }
 
    public void dispose() throws SaslException {

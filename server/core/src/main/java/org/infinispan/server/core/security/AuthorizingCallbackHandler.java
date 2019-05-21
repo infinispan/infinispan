@@ -14,6 +14,6 @@ import javax.security.auth.callback.CallbackHandler;
  */
 public interface AuthorizingCallbackHandler extends CallbackHandler {
 
-    public SubjectUserInfo getSubjectUserInfo(Collection<Principal> principals);
+    SubjectUserInfo getSubjectUserInfo(Collection<Principal> principals);
 
 }
