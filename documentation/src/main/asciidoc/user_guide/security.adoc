@@ -118,14 +118,14 @@ There are two levels of configuration: global and per-cache. The global configur
 [source,xml]
 ----
 <infinispan>
-   <cache-container default-cache="secured">
+   <cache-container default-cache="secured" name="secured">
       <security>
-         <authorization enabled="true">
+         <authorization>
             <identity-role-mapper />
             <role name="admin" permissions="ALL" />
             <role name="reader" permissions="READ" />
             <role name="writer" permissions="WRITE" />
-            <role name="supervisor" permissions="READ WRITE EXEC BULK"/>
+            <role name="supervisor" permissions="READ WRITE EXEC"/>
          </authorization>
       </security>
       <local-cache name="secured">
