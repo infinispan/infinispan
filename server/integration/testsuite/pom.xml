@@ -828,6 +828,7 @@
                     <forkMode>once</forkMode>
                     <failIfNoTests>false</failIfNoTests>
                     <excludedGroups>${groups.unstable}</excludedGroups>
+                    <disableXmlReport>false</disableXmlReport>
                     <systemPropertyVariables>
                         <server1.dist>${server1.dist}</server1.dist>
                         <server2.dist>${server2.dist}</server2.dist>
