@@ -222,6 +222,7 @@
                   <include>**/*Test.java</include>
                   <include>**/*TestCase.java</include>
                </includes>
+               <disableXmlReport>false</disableXmlReport>
                <systemPropertyVariables>
                   <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
                   <javax.management.builder.initial>${tck.mbean.builder}</javax.management.builder.initial>
@@ -249,6 +250,7 @@
                      <classpathDependencyExcludes>
                         <classpathDependencyExcludes>${project.groupId}:infinispan-jcache-remote</classpathDependencyExcludes>
                      </classpathDependencyExcludes>
+                     <disableXmlReport>false</disableXmlReport>
                      <systemPropertyVariables>
                         <ExcludeList>ExcludeList_embedded</ExcludeList>
                         <javax.cache.Cache>${embedded.CacheImpl}</javax.cache.Cache>
@@ -280,6 +282,7 @@
                      <classpathDependencyExcludes>
                         <classpathDependencyExcludes>${project.groupId}:infinispan-jcache</classpathDependencyExcludes>
                      </classpathDependencyExcludes>
+                     <disableXmlReport>false</disableXmlReport>
                      <systemPropertyVariables>
                         <ExcludeList>ExcludeList_remote</ExcludeList>
                         <javax.cache.Cache>${remote.CacheImpl}</javax.cache.Cache>
