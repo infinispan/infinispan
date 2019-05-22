@@ -49,6 +49,7 @@
             <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=${port.offset} -Djboss.node.name=${jboss.node.name}"/>
             <env key="JBOSS_HOME" value="${server.dist}"/>
             <env key="JAVA" value="${server.jvm}/bin/java"/>
+            <env key="STANDALONE_CONF" value="notfound.bat"/>
         </exec>
         <echo>Waiting for Infinispan server to start</echo>
         <waitfor maxwait="30" maxwaitunit="second" checkevery="1" checkeveryunit="second">
