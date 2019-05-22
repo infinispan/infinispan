@@ -13,7 +13,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -103,7 +102,7 @@ public class ConfigurationManager {
 
    public Collection<String> getDefinedCaches() {
       List<String> cacheNames = namedConfiguration.entrySet().stream()
-            .filter(entry -> !entry.getValue().isTemplate() && !entry.getKey().equals(CacheContainer.DEFAULT_CACHE_NAME))
+            .filter(entry -> !entry.getValue().isTemplate())
             .map(entry -> entry.getKey())
             .collect(Collectors.toList());
       return Collections.unmodifiableCollection(cacheNames);

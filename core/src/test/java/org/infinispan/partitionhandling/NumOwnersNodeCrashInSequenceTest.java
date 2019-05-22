@@ -12,7 +12,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
@@ -168,7 +167,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       log.debug("Changing partition availability mode back to AVAILABLE");
       cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, a0}, {a0, a1}, {a1, a0}});
       LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(a0), LocalTopologyManager.class);
-      ltm.setCacheAvailability(CacheContainer.DEFAULT_CACHE_NAME, AvailabilityMode.AVAILABLE);
+      ltm.setCacheAvailability(TestingUtil.getDefaultCacheName(manager(a0)), AvailabilityMode.AVAILABLE);
       TestingUtil.waitForNoRebalance(cache(a0), cache(a1));
       eventuallyEquals(AvailabilityMode.AVAILABLE, phm0::getAvailabilityMode);
    }

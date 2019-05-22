@@ -7,9 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
 
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
@@ -103,20 +100,20 @@ public class TestCacheManagerFactory {
       }
    }
 
-   public static EmbeddedCacheManager fromStream(InputStream is) throws IOException {
+   public static EmbeddedCacheManager fromStream(InputStream is) {
       return fromStream(is, false);
    }
 
-   public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName) throws IOException {
+   public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName) {
       return fromStream(is, keepJmxDomainName, true);
    }
 
-   public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName, boolean defaultParsersOnly) throws IOException {
+   public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName, boolean defaultParsersOnly) {
       return fromStream(is, keepJmxDomainName, defaultParsersOnly, true);
    }
 
-   public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName, boolean defaultParsersOnly, boolean start) throws IOException {
-      return createClusteredCacheManager(start, holderFromStream(is, defaultParsersOnly), keepJmxDomainName);
+   public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName, boolean defaultParsersOnly, boolean start) {
+      return createClusteredCacheManager(start, holderFromStream(is, defaultParsersOnly), keepJmxDomainName, new TransportFlags());
    }
 
    public static ConfigurationBuilderHolder holderFromXml(String xmlFile) throws IOException {
@@ -455,10 +452,12 @@ public class TestCacheManagerFactory {
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c) {
-      amendDefaultCache(gc);
+      if (c != null) {
+         amendDefaultCache(gc);
+      }
       setNodeName(gc);
       GlobalConfiguration globalConfiguration = gc.build();
-      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c.build(globalConfiguration), start);
+      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c == null ? null : c.build(globalConfiguration), start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
       return defaultCacheManager;
    }
@@ -469,18 +468,5 @@ public class TestCacheManagerFactory {
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
       return defaultCacheManager;
-   }
-
-   public static ConfigurationBuilderHolder buildAggregateHolder(String... xmls)
-         throws XMLStreamException, FactoryConfigurationError {
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      ParserRegistry registry = new ParserRegistry(cl);
-
-      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl);
-      for (String xml : xmls) {
-         registry.parse(new ByteArrayInputStream(xml.getBytes()), holder);
-      }
-
-      return holder;
    }
 }

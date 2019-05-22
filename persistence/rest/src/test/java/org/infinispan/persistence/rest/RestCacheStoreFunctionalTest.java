@@ -1,6 +1,5 @@
 package org.infinispan.persistence.rest;
 
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
@@ -31,7 +30,7 @@ public class RestCacheStoreFunctionalTest extends BaseStoreFunctionalTest {
       loaders.addStore(RestStoreConfigurationBuilder.class)
             .host("localhost")
             .port(restServer.getPort())
-            .path("/rest/"+BasicCacheContainer.DEFAULT_CACHE_NAME)
+            .path("/rest/" + getDefaultCacheName())
             .preload(preload);
       return loaders;
    }

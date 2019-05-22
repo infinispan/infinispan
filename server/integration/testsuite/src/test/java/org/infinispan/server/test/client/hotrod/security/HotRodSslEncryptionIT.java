@@ -52,26 +52,26 @@ public class HotRodSslEncryptionIT {
    }
 
    @Test
-   public void testViaDirectConfig() throws Exception {
+   public void testViaDirectConfig() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       String hostname = ispnServer.getHotrodEndpoint().getInetAddress().getHostName();
       builder.addServer().host(hostname).port(ispnServer.getHotrodEndpoint().getPort());
       builder.security().ssl().enable().trustStoreFileName(DEFAULT_TRUSTSTORE_PATH).trustStorePassword(DEFAULT_TRUSTSTORE_PASSWORD.toCharArray());
       remoteCacheManager = new RemoteCacheManager(builder.build());
-      remoteCache = remoteCacheManager.getCache(RemoteCacheManager.DEFAULT_CACHE_NAME);
+      remoteCache = remoteCacheManager.getCache();
       testPutGet(remoteCache);
       testSize(remoteCache);
    }
 
    @Test
-   public void testViaSslContextSetup() throws Exception {
+   public void testViaSslContextSetup() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       String hostname = ispnServer.getHotrodEndpoint().getInetAddress().getHostName();
       builder.addServer().host(hostname).port(ispnServer.getHotrodEndpoint().getPort());
       SSLContext cont = SslContextFactory.getContext(null, null, DEFAULT_TRUSTSTORE_PATH, DEFAULT_TRUSTSTORE_PASSWORD.toCharArray());
       builder.security().ssl().sslContext(cont).enable();
       remoteCacheManager = new RemoteCacheManager(builder.build());
-      remoteCache = remoteCacheManager.getCache(RemoteCacheManager.DEFAULT_CACHE_NAME);
+      remoteCache = remoteCacheManager.getCache();
       testPutGet(remoteCache);
       testSize(remoteCache);
    }

@@ -15,7 +15,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.jmx.annotations.DataType;
@@ -94,8 +93,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
          displayType = DisplayType.SUMMARY
    )
    public String getCacheName() {
-      String name = getName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
-      return name + "(" + getCacheConfiguration().clustering().cacheMode().toString().toLowerCase() + ")";
+      return getName() + "(" + getCacheConfiguration().clustering().cacheMode().toString().toLowerCase() + ")";
    }
 
    @Override

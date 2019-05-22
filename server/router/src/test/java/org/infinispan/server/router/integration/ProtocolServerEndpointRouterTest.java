@@ -72,10 +72,10 @@ public class ProtocolServerEndpointRouterTest {
      * The router should match properly SNI based routes and connect clients to proper server instances.
      */
     @Test
-    public void shouldRouteToProperHotRodServerBasedOnSniHostName() throws Exception {
+    public void shouldRouteToProperHotRodServerBasedOnSniHostName() {
         //given
-        hotrodServer1 = HotRodTestingUtil.startHotRodServerWithoutTransport();
-        hotrodServer2 = HotRodTestingUtil.startHotRodServerWithoutTransport();
+        hotrodServer1 = HotRodTestingUtil.startHotRodServerWithoutTransport("default");
+        hotrodServer2 = HotRodTestingUtil.startHotRodServerWithoutTransport("default");
 
         HotRodServerRouteDestination hotrod1Destination = new HotRodServerRouteDestination("HotRod1", hotrodServer1);
         SniNettyRouteSource hotrod1Source = new SniNettyRouteSource("hotrod1", KEYSTORE_LOCATION_FOR_HOTROD_1, "secret".toCharArray());
@@ -105,12 +105,12 @@ public class ProtocolServerEndpointRouterTest {
         hotrod1Client = HotRodClientTestingUtil.createWithSni(routerIp, routerPort, "hotrod1", TRUSTSTORE_LOCATION_FOR_HOTROD_1, "secret".toCharArray());
         hotrod2Client = HotRodClientTestingUtil.createWithSni(routerIp, routerPort, "hotrod2", TRUSTSTORE_LOCATION_FOR_HOTROD_2, "secret".toCharArray());
 
-        hotrod1Client.getCache().put("test", "hotrod1");
-        hotrod2Client.getCache().put("test", "hotrod2");
+        hotrod1Client.getCache("default").put("test", "hotrod1");
+        hotrod2Client.getCache("default").put("test", "hotrod2");
 
         //then
-        Cache<String, String> hotrod1Cache = hotrodServer1.getCacheManager().getCache();
-        Cache<String, String> hotrod2Cache = hotrodServer2.getCacheManager().getCache();
+        Cache<String, String> hotrod1Cache = hotrodServer1.getCacheManager().getCache("default");
+        Cache<String, String> hotrod2Cache = hotrodServer2.getCacheManager().getCache("default");
         assertThat(hotrod1Cache.size()).isEqualTo(1);
         assertThat(hotrod2Cache.size()).isEqualTo(1);
         assertThat(hotrod1Cache.get("test")).isEqualTo("hotrod1");

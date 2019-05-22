@@ -20,7 +20,6 @@ import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -115,7 +114,8 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       PerCacheInboundInvocationHandler handler = TestingUtil.extractComponent(cache(0), PerCacheInboundInvocationHandler.class);
       StateChunk stateChunk0 = new StateChunk(0, Arrays.asList(new ImmortalCacheEntry("k0", "v0")), true);
       StateChunk stateChunk1 = new StateChunk(1, Arrays.asList(new ImmortalCacheEntry("k0", "v0")), true);
-      StateResponseCommand stateResponseCommand = new StateResponseCommand(ByteString.fromString(CacheContainer.DEFAULT_CACHE_NAME),
+      String cacheName = manager(0).getCacheManagerConfiguration().defaultCacheName().get();
+      StateResponseCommand stateResponseCommand = new StateResponseCommand(ByteString.fromString(cacheName),
             address(1), initialTopologyId, Arrays.asList(stateChunk0, stateChunk1), true, false);
       // Call with preserveOrder = true to force the execution in the same thread
       stateResponseCommand.setOrigin(address(3));

@@ -38,6 +38,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.FooInterceptor;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -71,7 +72,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertNamedCacheFile(holder, false);
    }
 
-   public void testNoNamedCaches() throws Exception {
+   public void testNoNamedCaches() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <transport cluster=\"demoCluster\"/>\n" +
@@ -99,7 +100,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    @Test(expectedExceptions=CacheConfigurationException.class)
-   public void testDuplicateCacheNames() throws Exception {
+   public void testDuplicateCacheNames() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"duplicatename\">" +
             "   <transport cluster=\"demoCluster\"/>\n" +
@@ -114,7 +115,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       TestCacheManagerFactory.fromStream(is);
    }
 
-   public void testNoSchemaWithStuff() throws IOException {
+   public void testNoSchemaWithStuff() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
@@ -137,7 +138,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    }
 
-   public void testCompatibility() throws Exception {
+   public void testCompatibility() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
@@ -192,7 +193,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testOffHeap() throws Exception {
+   public void testOffHeap() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
@@ -297,7 +298,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       public void stop() { }
    }
 
-   public void testStoreWithNoConfigureBy() throws IOException {
+   public void testStoreWithNoConfigureBy() {
       String config = TestingUtil.wrapXMLWithoutSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
@@ -324,7 +325,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testCustomTransport() throws IOException {
+   public void testCustomTransport() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<jgroups transport=\"org.infinispan.configuration.XmlFileParsingTest$CustomTransport\"/>\n" +
             "<cache-container default-cache=\"default\">\n" +
@@ -344,7 +345,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testNoDefaultCache() throws Exception {
+   public void testNoDefaultCache() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container>" +
             "   <transport cluster=\"demoCluster\"/>\n" +
@@ -354,7 +355,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       );
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+      ConfigurationBuilderHolder holder = TestCacheManagerFactory.holderFromStream(is, false);
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager(holder, true)) {
 
          @Override
          public void call() {
@@ -368,7 +370,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000432:.*")
-   public void testNoDefaultCacheDeclaration() throws Exception {
+   public void testNoDefaultCacheDeclaration() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"non-existent\">" +
             "   <transport cluster=\"demoCluster\"/>\n" +
@@ -389,7 +391,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
 
-   public void testWildcards() throws IOException {
+   public void testWildcards() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container>" +
             "   <local-cache-configuration name=\"wildcache*\">\n" +
@@ -438,7 +440,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000484:.*")
-   public void testNoWildcardsInCacheName() throws Exception {
+   public void testNoWildcardsInCacheName() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container>" +
             "   <transport cluster=\"demoCluster\"/>\n" +

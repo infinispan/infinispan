@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
+
 import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -14,7 +15,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -52,10 +52,11 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
 
    public void testAvailabilityChange() throws Exception {
       final MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      final String cacheName = manager(0).getCacheManagerConfiguration().defaultCacheName().get();
       String domain0 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
-      final ObjectName cacheName0 = TestingUtil.getCacheObjectName(domain0, CacheContainer.DEFAULT_CACHE_NAME + "(dist_sync)");
+      final ObjectName cacheName0 = TestingUtil.getCacheObjectName(domain0, cacheName + "(dist_sync)");
       String domain1 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
-      final ObjectName cacheName1 = TestingUtil.getCacheObjectName(domain1, CacheContainer.DEFAULT_CACHE_NAME + "(dist_sync)");
+      final ObjectName cacheName1 = TestingUtil.getCacheObjectName(domain1, cacheName + "(dist_sync)");
 
       // Check initial state
       DistributionManager dm0 = advancedCache(0).getDistributionManager();

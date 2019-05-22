@@ -56,7 +56,6 @@ import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -79,6 +78,7 @@ import org.kohsuke.MetaInfServices;
 @Namespace(uri = "urn:infinispan:config:6.0", root = "infinispan")
 public class Parser60 implements ConfigurationParser {
    public static final String INFINISPAN_FACTORY = "infinispan-factory";
+   public static final String DEFAULT_CACHE_NAME = "___defaultcache";
 
    public Parser60() {
    }
@@ -137,7 +137,7 @@ public class Parser60 implements ConfigurationParser {
          builder = holder.newConfigurationBuilder(name);
       }
       // Apply old default inheritance semantics
-      ConfigurationBuilder defaultBuilder = holder.getNamedConfigurationBuilders().get(CacheContainer.DEFAULT_CACHE_NAME);
+      ConfigurationBuilder defaultBuilder = holder.getNamedConfigurationBuilders().get(DEFAULT_CACHE_NAME);
       if (defaultBuilder != null) {
          builder.read(defaultBuilder.build());
       }
@@ -148,9 +148,9 @@ public class Parser60 implements ConfigurationParser {
    private void parseDefaultCache(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
       ParseUtils.requireNoAttributes(reader);
       // Reuse the builder if it was made before
-      ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get(CacheContainer.DEFAULT_CACHE_NAME);
+      ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get(DEFAULT_CACHE_NAME);
       if (builder == null) {
-         holder.newConfigurationBuilder(CacheContainer.DEFAULT_CACHE_NAME);
+         holder.newConfigurationBuilder(DEFAULT_CACHE_NAME);
       }
       parseCache(reader, holder);
    }

@@ -58,11 +58,10 @@ public class AbstractEmbeddedCacheManagerFactory {
          }
 
          if (builder == null) {
-            if (logger.isDebugEnabled()) logger.debug("ConfigurationBuilder is null. Using default new instance.");
-            builder = new ConfigurationBuilder();
+            return new DefaultCacheManager(gcb.build());
+         } else {
+            return new DefaultCacheManager(gcb.build(), builder.build());
          }
-
-         return new DefaultCacheManager(gcb.build(), builder.build());
       }
    }
 

@@ -25,7 +25,7 @@ public class NoLifespanValidationTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp =
-         "ISPN(\\d)*: Lucene Directory for index 'testIndexAlpha' can not use Cache '___defaultcache': maximum lifespan enabled on the Cache configuration!")
+         "ISPN(\\d)*: Lucene Directory for index 'testIndexAlpha' can not use Cache 'NoLifespanValidationTest': maximum lifespan enabled on the Cache configuration!")
    public void failOnExpiry() {
       DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "testIndexAlpha").create();
    }

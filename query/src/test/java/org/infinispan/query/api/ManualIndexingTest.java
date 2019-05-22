@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -23,13 +22,6 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
    protected static final int NUM_NODES = 4;
    protected List<Cache<String, Car>> caches = new ArrayList<>(NUM_NODES);
 
-   protected static final String[] neededCacheNames = {
-         BasicCacheContainer.DEFAULT_CACHE_NAME,
-         "LuceneIndexesMetadata",
-         "LuceneIndexesData",
-         "LuceneIndexesLocking",
-   };
-
    @Override
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NUM_NODES; i++) {
@@ -38,7 +30,12 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
          Cache<String, Car> cache = cacheManager.getCache();
          caches.add(cache);
       }
-      waitForClusterToForm(neededCacheNames);
+      waitForClusterToForm(new String[] {
+            getDefaultCacheName(),
+            "LuceneIndexesMetadata",
+            "LuceneIndexesData",
+            "LuceneIndexesLocking",
+      });
    }
 
    public void testManualIndexing() throws Exception {

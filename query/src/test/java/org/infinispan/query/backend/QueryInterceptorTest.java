@@ -20,9 +20,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
@@ -34,7 +32,9 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -46,7 +46,7 @@ import org.testng.annotations.Test;
  * @since 7.0
  */
 @Test(groups = "functional", testName = "query.backend.QueryInterceptorTest")
-public class QueryInterceptorTest {
+public class QueryInterceptorTest extends AbstractInfinispanTest {
 
    private static final int MAX_CACHE_ENTRIES = 1;
    private File indexDir;
@@ -205,33 +205,27 @@ public class QueryInterceptorTest {
    }
 
    protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
-      return new DefaultCacheManager(
-              new GlobalConfigurationBuilder().build(),
-              new ConfigurationBuilder()
-                      .memory().evictionType(EvictionType.COUNT).size(maxEntries)
-                      .persistence().passivation(true)
-                      .addSingleFileStore().location(storeDir.getAbsolutePath()).preload(true)
-                      .indexing().index(Index.ALL)
-                      .addIndexedEntity(Person.class)
-                      .addIndexedEntity(Car.class)
-                      .addProperty("default.directory_provider", "filesystem")
-                      .addProperty("default.indexBase", indexDir.getAbsolutePath())
-                      .addProperty("lucene_version", "LUCENE_CURRENT")
-                      .build()
-      );
+      ConfigurationBuilder b = new ConfigurationBuilder();
+      b.memory().evictionType(EvictionType.COUNT).size(maxEntries)
+            .persistence().passivation(true)
+            .addSingleFileStore().location(storeDir.getAbsolutePath()).preload(true)
+            .indexing().index(Index.ALL)
+            .addIndexedEntity(Person.class)
+            .addIndexedEntity(Car.class)
+            .addProperty("default.directory_provider", "filesystem")
+            .addProperty("default.indexBase", indexDir.getAbsolutePath())
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+      return TestCacheManagerFactory.createCacheManager(b);
    }
 
-   protected EmbeddedCacheManager createVolatileCacheManager() throws Exception {
-      return new DefaultCacheManager(
-            new GlobalConfigurationBuilder().build(),
-            new ConfigurationBuilder()
-                  .indexing().index(Index.ALL)
-                  .addIndexedEntity(Person.class)
-                  .addIndexedEntity(Car.class)
-                  .addProperty("default.directory_provider", "local-heap")
-                  .addProperty("lucene_version", "LUCENE_CURRENT")
-                  .build()
-      );
+   protected EmbeddedCacheManager createVolatileCacheManager() {
+      ConfigurationBuilder b = new ConfigurationBuilder();
+      b.indexing().index(Index.ALL)
+            .addIndexedEntity(Person.class)
+            .addIndexedEntity(Car.class)
+            .addProperty("default.directory_provider", "local-heap")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+      return TestCacheManagerFactory.createCacheManager(b);
    }
 
    private int countIndex(Class<?> entityType, Cache<?, ?> cache) {

@@ -7,7 +7,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -26,12 +25,13 @@ public class BackupForConfigTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       lonGc.site().localSite("LON");
+      TestCacheManagerFactory.amendDefaultCache(lonGc);
       ConfigurationBuilder lon = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       lon.sites().addBackup()
             .site("NYC")
             .strategy(BackupConfiguration.BackupStrategy.SYNC);
       nycBackup = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
-      nycBackup.sites().backupFor().remoteSite("NYC").defaultRemoteCache();
+      nycBackup.sites().backupFor().remoteSite("NYC").remoteCache(lonGc.defaultCacheName().get());
 
       // Remember to not do nothing else other than
       // creating the cache manager in order to avoid leaks
@@ -43,8 +43,8 @@ public class BackupForConfigTest extends SingleCacheManagerTest {
       cacheManager.defineConfiguration("nycBackup", nycBackup.build());
       cacheManager.getCache("nycBackup");
       SitesConfiguration sitesConfig = cache("nycBackup").getCacheConfiguration().sites();
-      assertEquals(CacheContainer.DEFAULT_CACHE_NAME, sitesConfig.backupFor().remoteCache());
+      assertEquals(getDefaultCacheName(), sitesConfig.backupFor().remoteCache());
       assertEquals("NYC", sitesConfig.backupFor().remoteSite());
-      sitesConfig.backupFor().isBackupFor("NYC", CacheContainer.DEFAULT_CACHE_NAME);
+      sitesConfig.backupFor().isBackupFor("NYC", getDefaultCacheName());
    }
 }

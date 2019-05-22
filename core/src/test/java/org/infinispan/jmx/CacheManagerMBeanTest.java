@@ -1,5 +1,6 @@
 package org.infinispan.jmx;
 
+import static java.lang.String.format;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.existsObject;
@@ -57,8 +58,8 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    public void testJmxOperations() throws Exception {
       assertEquals("1", server.getAttribute(name, "CreatedCacheCount"));
-      assertEquals("0", server.getAttribute(name, "DefinedCacheCount"));
-      assertEquals("[]", server.getAttribute(name, "DefinedCacheNames"));
+      assertEquals("1", server.getAttribute(name, "DefinedCacheCount"));
+      assertEquals(format("[%s(created)]", getDefaultCacheName()), server.getAttribute(name, "DefinedCacheNames"));
       assertEquals("1", server.getAttribute(name, "RunningCacheCount"));
 
       //now define some new caches
@@ -66,7 +67,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       cacheManager.defineConfiguration("b", new ConfigurationBuilder().build());
       cacheManager.defineConfiguration("c", new ConfigurationBuilder().build());
       assertEquals("1", server.getAttribute(name, "CreatedCacheCount"));
-      assertEquals("3", server.getAttribute(name, "DefinedCacheCount"));
+      assertEquals("4", server.getAttribute(name, "DefinedCacheCount"));
       assertEquals("1", server.getAttribute(name, "RunningCacheCount"));
       String attribute = (String) server.getAttribute(name, "DefinedCacheConfigurationNames");
       String names[] = attribute.substring(1, attribute.length()-1).split(",");
@@ -78,7 +79,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       server.invoke(name, "startCache", new Object[]{"a"}, new String[]{String.class.getName()});
       server.invoke(name, "startCache", new Object[]{"b"}, new String[]{String.class.getName()});
       assertEquals("3", server.getAttribute(name, "CreatedCacheCount"));
-      assertEquals("3", server.getAttribute(name, "DefinedCacheCount"));
+      assertEquals("4", server.getAttribute(name, "DefinedCacheCount"));
       assertEquals("3", server.getAttribute(name, "RunningCacheCount"));
       attribute = (String) server.getAttribute(name, "DefinedCacheNames");
       assertTrue(attribute.contains("a("));

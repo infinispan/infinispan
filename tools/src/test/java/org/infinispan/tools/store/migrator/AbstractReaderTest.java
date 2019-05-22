@@ -16,14 +16,12 @@ import java.util.Properties;
 import org.infinispan.Cache;
 import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.commons.util.Features;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.DataContainerFactory;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tools.store.migrator.marshaller.MarshallerType;
 import org.testng.annotations.Test;
 
@@ -79,15 +77,13 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
       // Read from the legacy LevelDB store and populate the new RocksDBStore using latest marshaller
       new StoreMigrator(properties).run();
 
-      GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-            .serialization().addAdvancedExternalizer(256, new TestUtil.TestObjectExternalizer())
-            .build();
+      GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
+      globalConfig.serialization().addAdvancedExternalizer(256, new TestUtil.TestObjectExternalizer());
 
-      Configuration config = getTargetCacheConfig().build();
 
       // Create a new cache instance, with the required externalizers, to ensure that the new RocksDbStore can be
       // loaded and contains all of the expected values.
-      EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig, config);
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(globalConfig, getTargetCacheConfig());
       try {
          Cache cache = manager.getCache(TEST_CACHE_NAME);
          for (String key : TestUtil.TEST_MAP.keySet()) {

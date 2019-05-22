@@ -23,7 +23,6 @@ import java.util.function.Supplier;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
@@ -558,14 +557,10 @@ public class Parser implements ConfigurationParser {
    private void parseContainer(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       holder.pushScope(ParserScope.CACHE_CONTAINER);
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
-      if (!reader.getSchema().since(9, 0)) {
-         builder.defaultCacheName(BasicCacheContainer.DEFAULT_CACHE_NAME);
-      }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-
          switch (attribute) {
             case NAME: {
                builder.globalJmxStatistics().cacheManagerName(value);

@@ -14,6 +14,6 @@ import org.testng.annotations.Test;
 public class InvalidationStreamIteratorWithLoaderTest extends BaseStreamIteratorWithLoaderTest {
 
    public InvalidationStreamIteratorWithLoaderTest() {
-      super(false, CacheMode.INVALIDATION_SYNC, "InvalidationStreamIteratorWithLoaderTest");
+      super(false, CacheMode.INVALIDATION_SYNC);
    }
 }

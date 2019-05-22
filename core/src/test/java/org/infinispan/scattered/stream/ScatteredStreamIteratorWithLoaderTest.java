@@ -10,6 +10,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "scattered.stream.ScatteredStreamIteratorWithLoaderTest")
 public class ScatteredStreamIteratorWithLoaderTest extends BaseStreamIteratorWithLoaderTest {
    public ScatteredStreamIteratorWithLoaderTest() {
-      super(false, CacheMode.SCATTERED_SYNC, "ScatteredStreamIteratorWithLoaderTest");
+      super(false, CacheMode.SCATTERED_SYNC);
    }
 }

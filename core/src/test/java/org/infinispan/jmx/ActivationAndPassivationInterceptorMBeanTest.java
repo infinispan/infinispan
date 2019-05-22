@@ -39,10 +39,8 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
 
    AdvancedLoadWriteStore loader;
    MBeanServer threadMBeanServer;
-   final ObjectName activationInterceptorObjName =
-         getCacheObjectName(JMX_DOMAIN, "___defaultcache(local)", "Activation");
-   final ObjectName passivationInterceptorObjName =
-         getCacheObjectName(JMX_DOMAIN, "___defaultcache(local)", "Passivation");
+   ObjectName activationInterceptorObjName;
+   ObjectName passivationInterceptorObjName;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
@@ -68,7 +66,11 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    @Override
    protected void setup() throws Exception {
       super.setup();
-      loader = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);
+      activationInterceptorObjName =
+            getCacheObjectName(JMX_DOMAIN, getDefaultCacheName() + "(local)", "Activation");
+      passivationInterceptorObjName =
+            getCacheObjectName(JMX_DOMAIN, getDefaultCacheName() + "(local)", "Passivation");
+      loader = TestingUtil.getFirstLoader(cache);
    }
 
    @AfterMethod

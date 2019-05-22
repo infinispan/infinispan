@@ -23,7 +23,6 @@
 package org.jboss.as.clustering.infinispan;
 
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.infinispan.AdvancedCache;
@@ -64,7 +63,7 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
 
     @Override
     public Configuration defineConfiguration(String cacheName, Configuration configuration) {
-        return this.cm.defineConfiguration(this.getCacheName(cacheName), configuration);
+        return this.cm.defineConfiguration(cacheName, configuration);
     }
 
     /**
@@ -82,7 +81,7 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
      */
     @Override
     public <K, V> Cache<K, V> getCache(String cacheName) {
-        return this.getCache(cacheName, true);
+        return cacheName == null ? this.getCache() : this.getCache(cacheName, true);
     }
 
     /**
@@ -91,7 +90,7 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
      */
     @Override
     public <K, V> Cache<K, V> getCache(String cacheName, boolean start) {
-        Cache<K, V> cache = this.cm.getCache(this.getCacheName(cacheName), start);
+        Cache<K, V> cache = this.cm.getCache(cacheName, start);
         return (cache != null) ? new DelegatingCache<>(cache) : null;
     }
 
@@ -121,7 +120,7 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
      */
     @Override
     public boolean isRunning(String cacheName) {
-        return this.cm.isRunning(this.getCacheName(cacheName));
+        return cacheName == null ? isDefaultRunning() : this.cm.isRunning(cacheName);
     }
 
     /**
@@ -130,7 +129,7 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
      */
     @Override
     public boolean cacheExists(String cacheName) {
-        return this.cm.cacheExists(this.getCacheName(cacheName));
+        return this.cm.cacheExists(cacheName);
     }
 
     /**
@@ -139,21 +138,13 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
      */
     @Override
     public void removeCache(String cacheName) {
-        this.cm.removeCache(this.getCacheName(cacheName));
+        this.cm.removeCache(cacheName);
     }
 
     @Override
     public EmbeddedCacheManager startCaches(String... names) {
-        Set<String> cacheNames = new LinkedHashSet<>();
-        for (String name: names) {
-            cacheNames.add(this.getCacheName(name));
-        }
-        this.cm.startCaches(cacheNames.toArray(new String[cacheNames.size()]));
+        this.cm.startCaches(names);
         return this;
-    }
-
-    private String getCacheName(String name) {
-        return ((name == null) || name.equals(CacheContainer.DEFAULT_CACHE_NAME)) ? this.defaultCache : name;
     }
 
     /**

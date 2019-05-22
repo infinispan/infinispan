@@ -147,7 +147,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractInfin
       objectUnderTest.afterPropertiesSet();
 
       final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();
-      embeddedCacheManager.getCache(); // Implicitly starts EmbeddedCacheManager
+      embeddedCacheManager.defineConfiguration("cache", new ConfigurationBuilder().build());
+      embeddedCacheManager.getCache("cache"); // Implicitly starts EmbeddedCacheManager
       objectUnderTest.destroy();
 
       withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
@@ -167,6 +168,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractInfin
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
       try {
          GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+         gcb.defaultCacheName("default");
 
          // Now prepare a cache configuration.
          ConfigurationBuilder builder = new ConfigurationBuilder();

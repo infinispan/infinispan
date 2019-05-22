@@ -14,6 +14,6 @@ import org.testng.annotations.Test;
 public class LocalStreamIteratorWithLoaderTest extends BaseStreamIteratorWithLoaderTest {
 
    public LocalStreamIteratorWithLoaderTest() {
-      super(false, CacheMode.LOCAL, "LocalStreamIteratorWithLoaderTest");
+      super(false, CacheMode.LOCAL);
    }
 }

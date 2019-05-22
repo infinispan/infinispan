@@ -18,7 +18,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  *
  * @author Mircea.Markus@jboss.com
  */
-public class AbstractCacheTest extends AbstractInfinispanTest {
+public abstract class AbstractCacheTest extends AbstractInfinispanTest {
 
    public enum CleanupPhase {
       AFTER_METHOD, AFTER_TEST
@@ -83,5 +83,9 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
 
    public EmbeddedCacheManager manager(Cache c) {
       return c.getCacheManager();
+   }
+
+   public String getDefaultCacheName() {
+      throw new UnsupportedOperationException();
    }
 }

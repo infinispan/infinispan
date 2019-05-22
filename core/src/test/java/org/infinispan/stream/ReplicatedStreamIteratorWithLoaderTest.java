@@ -14,6 +14,6 @@ import org.testng.annotations.Test;
 public class ReplicatedStreamIteratorWithLoaderTest extends BaseStreamIteratorWithLoaderTest {
 
    public ReplicatedStreamIteratorWithLoaderTest() {
-      super(false, CacheMode.REPL_SYNC, "ReplicatedStreamIteratorWithLoaderTest");
+      super(false, CacheMode.REPL_SYNC);
    }
 }

@@ -31,7 +31,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       RestStoreConfiguration store = (RestStoreConfiguration) cacheLoaders.get(0);
       assertFalse(store.appendCacheNameToPath());
       assertEquals("localhost", store.host());
-      assertEquals("/rest/___defaultcache/", store.path());
+      assertEquals("/rest/default/", store.path());
       assertEquals(18212, store.port());
       assertEquals(15000000, store.maxContentLength());
       ConnectionPoolConfiguration connectionPool = store.connectionPool();

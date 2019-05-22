@@ -5,13 +5,12 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -52,8 +51,9 @@ public class ScriptingDataStoresTest extends AbstractScriptingTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration conf = new ConfigurationBuilder().memory().storageType(storageType).build();
-      return new DefaultCacheManager(conf);
+      ConfigurationBuilder conf = new ConfigurationBuilder();
+      conf.memory().storageType(storageType);
+      return TestCacheManagerFactory.createCacheManager(conf);
    }
 
    @Override

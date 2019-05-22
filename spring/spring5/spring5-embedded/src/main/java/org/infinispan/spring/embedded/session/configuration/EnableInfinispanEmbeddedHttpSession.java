@@ -41,7 +41,7 @@ import org.springframework.session.config.annotation.web.http.EnableSpringHttpSe
 @Configuration
 public @interface EnableInfinispanEmbeddedHttpSession {
 
-   public static final String DEFAULT_CACHE_NAME = "sessions";
+   String DEFAULT_CACHE_NAME = "sessions";
 
    /**
     * This is the session timeout in seconds. By default, it is set to 1800 seconds (30 minutes). This should be a

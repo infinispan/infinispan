@@ -48,8 +48,8 @@ public class ClusteredCacheMgmtInterceptorMBeanTest extends MultipleCacheManager
       Cache<String, String> cache2 = cache(1);
       cache1.put("k", "v");
       assertEquals("v", cache2.get("k"));
-      ObjectName stats1 = getCacheObjectName(JMX_1, "___defaultcache(repl_sync)", "Statistics");
-      ObjectName stats2 = getCacheObjectName(JMX_2, "___defaultcache(repl_sync)", "Statistics");
+      ObjectName stats1 = getCacheObjectName(JMX_1, getDefaultCacheName() + "(repl_sync)", "Statistics");
+      ObjectName stats2 = getCacheObjectName(JMX_2, getDefaultCacheName() + "(repl_sync)", "Statistics");
 
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       assertEquals((long) 1, mBeanServer.getAttribute(stats1, "Stores"));

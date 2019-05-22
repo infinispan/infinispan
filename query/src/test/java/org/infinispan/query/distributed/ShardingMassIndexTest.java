@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -47,7 +46,7 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
 
       List<Cache<Integer, Object>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
 
-      waitForClusterToForm(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      waitForClusterToForm(getDefaultCacheName());
 
       for (Cache cache : cacheList) {
          caches.add(cache);

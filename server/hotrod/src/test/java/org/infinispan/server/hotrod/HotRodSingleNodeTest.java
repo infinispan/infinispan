@@ -12,6 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 
 
 /**
@@ -21,7 +22,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  * @since 4.1
  */
 public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
-   protected static final String cacheName = "HotRodCache";
+   protected String cacheName;
 
    protected HotRodServer hotRodServer;
    protected HotRodClient hotRodClient;
@@ -38,6 +39,7 @@ public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
 
    @Override
    protected void setup() throws Exception {
+      cacheName = TestResourceTracker.getCurrentTestShortName();
       super.setup();
       hotRodServer = createStartHotRodServer(cacheManager);
       hotRodClient = connectClient();

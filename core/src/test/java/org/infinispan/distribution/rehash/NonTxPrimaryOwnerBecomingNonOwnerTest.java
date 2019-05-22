@@ -16,12 +16,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
@@ -46,9 +44,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distribution.rehash.NonTxPrimaryOwnerBecomingNonOwnerTest")
 @CleanupAfterMethod
 public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagersTest {
-
-   private static final String CACHE_NAME = BasicCacheContainer.DEFAULT_CACHE_NAME;
-
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getConfigurationBuilder();
@@ -92,13 +87,14 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
 
    private void doTest(final TestWriteOperation op) throws Exception {
       final String key = "testkey";
+      final String cacheName = manager(0).getCacheManagerConfiguration().defaultCacheName().get();
       if (op.getPreviousValue() != null) {
-         cache(0, CACHE_NAME).put(key, op.getPreviousValue());
+         cache(0, cacheName).put(key, op.getPreviousValue());
       }
 
       CheckPoint checkPoint = new CheckPoint();
       LocalTopologyManager ltm0 = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class);
-      int preJoinTopologyId = ltm0.getCacheTopology(CACHE_NAME).getTopologyId();
+      int preJoinTopologyId = ltm0.getCacheTopology(cacheName).getTopologyId();
 
       final AdvancedCache<Object, Object> cache0 = advancedCache(0);
       addBlockingLocalTopologyManager(manager(0), checkPoint, preJoinTopologyId);
@@ -124,7 +120,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       Stream.of(cache0, cache1, cache2).forEach(cache ->
             eventuallyEquals(3, () -> cache.getRpcManager().getMembers().size()));
 
-      CacheTopology duringJoinTopology = ltm0.getCacheTopology(CACHE_NAME);
+      CacheTopology duringJoinTopology = ltm0.getCacheTopology(cacheName);
       assertEquals(duringJoinTopologyId, duringJoinTopology.getTopologyId());
       assertNotNull(duringJoinTopology.getPendingCH());
       log.tracef("Rebalance started. Found key %s with current owners %s and pending owners %s", key,
@@ -215,7 +211,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
                   10, TimeUnit.SECONDS);
          }
          return invocation.callRealMethod();
-      }).when(spyLtm).handleTopologyUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
+      }).when(spyLtm).handleTopologyUpdate(eq(TestingUtil.getDefaultCacheName(manager)), any(CacheTopology.class),
                                               any(AvailabilityMode.class), anyInt(), any(Address.class));
       TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLtm, true);
    }

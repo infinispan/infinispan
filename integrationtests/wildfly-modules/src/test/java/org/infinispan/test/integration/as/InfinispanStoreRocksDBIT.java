@@ -71,7 +71,7 @@ public class InfinispanStoreRocksDBIT {
    @Test
    public void testCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-
+      gcb.defaultCacheName("default");
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence()
             .addStore(RocksDBStoreConfigurationBuilder.class)

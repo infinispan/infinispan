@@ -31,7 +31,7 @@ import org.junit.runner.RunWith;
  *
  * @author Sebastian Łaskawiec
  * @since 9.0
- * @see HotRodSniFunctionalTest
+ * @see HotRodSslWithSniEncryptionIT
  */
 @RunWith(Arquillian.class)
 @Category({Security.class})
@@ -52,25 +52,25 @@ public class HotRodSslWithSniEncryptionIT {
    }
 
    @Test
-   public void testUnauthorizedAccessToDefaultSSLContext() throws Exception {
+   public void testUnauthorizedAccessToDefaultSSLContext() {
       ConfigurationBuilder builder = new SecurityConfigurationHelper().withDefaultSsl();
       String hostname = ispnServer.getHotrodEndpoint().getInetAddress().getHostName();
       builder.addServer().host(hostname).port(ispnServer.getHotrodEndpoint().getPort());
       remoteCacheManager = new RemoteCacheManager(builder.build());
       try {
-         remoteCacheManager.getCache(RemoteCacheManager.DEFAULT_CACHE_NAME);
+         remoteCacheManager.getCache();
       } catch (TransportException e) {
          assertTrue(e.getCause() instanceof SSLHandshakeException);
       }
    }
 
    @Test
-   public void testAuthorizedAccessThroughSni() throws Exception {
+   public void testAuthorizedAccessThroughSni() {
       ConfigurationBuilder builder = new SecurityConfigurationHelper().withDefaultSsl().withSni("sni");
       String hostname = ispnServer.getHotrodEndpoint().getInetAddress().getHostName();
       builder.addServer().host(hostname).port(ispnServer.getHotrodEndpoint().getPort());
       remoteCacheManager = new RemoteCacheManager(builder.build());
-      remoteCache = remoteCacheManager.getCache(RemoteCacheManager.DEFAULT_CACHE_NAME);
+      remoteCache = remoteCacheManager.getCache();
       assertNotNull(remoteCache);
    }
 }

@@ -1,7 +1,6 @@
 package org.infinispan.test;
 
 import static java.io.File.separator;
-import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
 import static org.infinispan.commons.util.Util.EMPTY_OBJECT_ARRAY;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.testng.AssertJUnit.assertFalse;
@@ -439,10 +438,6 @@ public class TestingUtil {
 
    public static Set<String> getInternalAndUserCacheNames(EmbeddedCacheManager cacheManager) {
       Set<String> testCaches = new HashSet<>(cacheManager.getCacheNames());
-      if (cacheManager.isDefaultRunning()) {
-         String defaultCacheName = cacheManager.getCacheManagerConfiguration().defaultCacheName().orElse(CacheContainer.DEFAULT_CACHE_NAME);
-         testCaches.add(defaultCacheName);
-      }
       testCaches.addAll(getInternalCacheNames(cacheManager));
       return testCaches;
    }
@@ -891,7 +886,7 @@ public class TestingUtil {
       Set<String> running = new LinkedHashSet<>(getOrderedCacheNames(cacheContainer));
       extractGlobalComponent(cacheContainer, InternalCacheRegistry.class).filterPrivateCaches(running);
       running.addAll(cacheContainer.getCacheNames());
-      running.add(cacheContainer.getCacheManagerConfiguration().defaultCacheName().orElse(DEFAULT_CACHE_NAME));
+      cacheContainer.getCacheManagerConfiguration().defaultCacheName().ifPresent(n -> running.add(n));
 
       return running.stream()
               .map(s -> cacheContainer.getCache(s, false))
@@ -1429,10 +1424,6 @@ public class TestingUtil {
       }
    }
 
-   public static ObjectName getCacheObjectName(String jmxDomain) {
-      return getCacheObjectName(jmxDomain, DEFAULT_CACHE_NAME + "(local)");
-   }
-
    public static ObjectName getCacheObjectName(String jmxDomain, String cacheName) {
       return getCacheObjectName(jmxDomain, cacheName, "Cache");
    }
@@ -1593,6 +1584,10 @@ public class TestingUtil {
       } finally {
          TestingUtil.killCacheManagers(c.cms);
       }
+   }
+
+   public static String getDefaultCacheName(EmbeddedCacheManager cm) {
+      return cm.getCacheManagerConfiguration().defaultCacheName().get();
    }
 
 

@@ -9,7 +9,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestException;
@@ -57,7 +56,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    public static BlockingLocalTopologyManager replaceTopologyManagerDefaultCache(EmbeddedCacheManager cacheContainer) {
-      return replaceTopologyManager(cacheContainer, CacheContainer.DEFAULT_CACHE_NAME);
+      return replaceTopologyManager(cacheContainer, TestingUtil.getDefaultCacheName(cacheContainer));
    }
 
    public static void confirmTopologyUpdate(CacheTopology.Phase phase, BlockingLocalTopologyManager... topologyManagers)

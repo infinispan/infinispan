@@ -2,7 +2,6 @@ package org.infinispan.tx.recovery;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -31,8 +30,8 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
       manager(0).defineConfiguration(CUSTOM_CACHE, recoveryCache.build());
       manager(1).defineConfiguration(CUSTOM_CACHE, recoveryCache.build());
 
-      manager(0).startCaches(CacheContainer.DEFAULT_CACHE_NAME, CUSTOM_CACHE);
-      manager(1).startCaches(CacheContainer.DEFAULT_CACHE_NAME, CUSTOM_CACHE);
+      manager(0).startCaches(getDefaultCacheName(), CUSTOM_CACHE);
+      manager(1).startCaches(getDefaultCacheName(), CUSTOM_CACHE);
       waitForClusterToForm(CUSTOM_CACHE);
 
       assert manager(0).getCacheNames().contains(CUSTOM_CACHE);

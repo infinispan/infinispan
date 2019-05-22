@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
@@ -112,7 +111,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
       ConfigurationBuilder builder = buildRemoteConfiguration(configuration, marshaller);
       remoteCacheManager = new RemoteCacheManager(builder.build());
 
-      if (configuration.remoteCacheName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME))
+      if (configuration.remoteCacheName().isEmpty())
          remoteCache = remoteCacheManager.getCache();
       else
          remoteCache = remoteCacheManager.getCache(configuration.remoteCacheName());

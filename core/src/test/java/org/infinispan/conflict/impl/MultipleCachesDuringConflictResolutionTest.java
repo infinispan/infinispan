@@ -2,7 +2,6 @@ package org.infinispan.conflict.impl;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.MergePolicy;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.TestingUtil;
@@ -39,7 +38,6 @@ public class MultipleCachesDuringConflictResolutionTest extends BasePartitionHan
             .partitionHandling().whenSplit(PartitionHandling.ALLOW_READ_WRITES).mergePolicy(MergePolicy.PREFERRED_ALWAYS);
       String[] cacheNames = getCacheNames();
       createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true), cacheNames);
-      waitForClusterToForm(CacheContainer.DEFAULT_CACHE_NAME);
       waitForClusterToForm(cacheNames);
    }
 

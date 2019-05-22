@@ -245,8 +245,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          if (globalConfiguration.defaultCacheName().isPresent()) {
             defaultCacheName = globalConfiguration.defaultCacheName().get();
          } else {
-            log.defaultCacheConfigurationWithoutName();
-            defaultCacheName = DEFAULT_CACHE_NAME;
+            throw log.defaultCacheConfigurationWithoutName();
          }
          configurationManager.putConfiguration(defaultCacheName, defaultConfiguration);
       } else {
@@ -378,8 +377,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       if (name == null || configurations == null)
          throw new NullPointerException("Null arguments not allowed");
 
-      if (name.equals(DEFAULT_CACHE_NAME))
-         throw log.illegalCacheName(DEFAULT_CACHE_NAME);
       Configuration existing = configurationManager.getConfiguration(name, false);
       if (existing != null) {
          throw log.configAlreadyDefined(name);
@@ -401,8 +398,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public void undefineConfiguration(String configurationName) {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
-      if (configurationName.equals(DEFAULT_CACHE_NAME))
-         throw log.illegalCacheName(DEFAULT_CACHE_NAME);
       Configuration existing = configurationManager.getConfiguration(configurationName, false);
       if (existing != null) {
          for (CompletableFuture<Cache<?, ?>> cacheFuture : caches.values()) {
@@ -460,13 +455,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    public <K, V> Cache<K, V> getCache(String cacheName, String configurationName) {
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
-      if (DEFAULT_CACHE_NAME.equals(cacheName)) {
-         if (defaultCacheName == null) {
-            throw log.noDefaultCache();
-         }
-         cacheName = defaultCacheName;
-         log.deprecatedDefaultCache();
-      }
       return internalGetCache(cacheName, configurationName);
    }
 
@@ -863,7 +851,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       // Add the caches created dynamically without explicit config
       // Since caches could be modified dynamically, make a safe copy of keys
       names.addAll(Immutables.immutableSetConvert(caches.keySet()));
-      names.remove(DEFAULT_CACHE_NAME);
       InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.filterPrivateCaches(names);
       if (names.isEmpty())
@@ -876,7 +863,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    public Set<String> getCacheConfigurationNames() {
       // Get the XML/programmatically defined caches
       Set<String> names = new HashSet<>(configurationManager.getDefinedConfigurations());
-      names.remove(DEFAULT_CACHE_NAME);
       InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.filterPrivateCaches(names);
       if (names.isEmpty())
@@ -894,7 +880,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public boolean isDefaultRunning() {
-      return isRunning(DEFAULT_CACHE_NAME);
+      return isRunning(configurationManager.getGlobalConfiguration().defaultCacheName().get());
    }
 
    @ManagedAttribute(description = "The status of the cache manager instance.", displayName = "Cache manager status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)

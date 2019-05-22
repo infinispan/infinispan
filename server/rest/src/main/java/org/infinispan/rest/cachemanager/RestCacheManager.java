@@ -8,7 +8,6 @@ import java.util.function.Predicate;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -77,7 +76,7 @@ public class RestCacheManager<V> {
    }
 
    private void checkCacheAvailable(String cacheName) {
-      if (!BasicCacheContainer.DEFAULT_CACHE_NAME.equals(cacheName) && !instance.getCacheNames().contains(cacheName))
+      if (!instance.getCacheNames().contains(cacheName))
          throw logger.cacheNotFound(cacheName);
       if (icr.isPrivateCache(cacheName)) {
          throw logger.requestNotAllowedToInternalCaches(cacheName);

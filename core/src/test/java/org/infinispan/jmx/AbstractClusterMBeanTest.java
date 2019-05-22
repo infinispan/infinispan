@@ -18,28 +18,23 @@ import org.infinispan.test.fwk.TransportFlags;
  */
 abstract class AbstractClusterMBeanTest extends MultipleCacheManagersTest {
 
-   final String cachename;
    final String jmxDomain;
    final String jmxDomain2;
 
    AbstractClusterMBeanTest(String clusterName) {
-      this.cachename = clusterName;
       this.jmxDomain = clusterName;
       this.jmxDomain2 = clusterName + "2";
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder defaultConfig = new ConfigurationBuilder();
-      CacheContainer c1 = createManager(defaultConfig);
-      CacheContainer c2 = createManager(defaultConfig);
-      CacheContainer c3 = createManager(defaultConfig);
-      registerCacheManager(c1, c2, c3);
-
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.REPL_SYNC).jmxStatistics().enable();
-      defineConfigurationOnAllManagers(cachename, cb);
-      waitForClusterToForm(cachename);
+      CacheContainer c1 = createManager(cb);
+      CacheContainer c2 = createManager(cb);
+      CacheContainer c3 = createManager(cb);
+      registerCacheManager(c1, c2, c3);
+      waitForClusterToForm(getDefaultCacheName());
    }
 
    private CacheContainer createManager(ConfigurationBuilder builder) {

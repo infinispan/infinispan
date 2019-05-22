@@ -25,7 +25,6 @@ import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.cli.interpreter.session.SessionImpl;
 import org.infinispan.cli.interpreter.statement.Statement;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -176,7 +175,6 @@ public class Interpreter {
    @ManagedAttribute(description = "Retrieves a list of caches for the cache manager")
    public String[] getCacheNames() {
       Set<String> cacheNames = new HashSet<>(cacheManager.getCacheNames());
-      cacheNames.add(BasicCacheContainer.DEFAULT_CACHE_NAME);
       return cacheNames.toArray(new String[0]);
    }
 

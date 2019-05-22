@@ -6,7 +6,6 @@ import static org.testng.Assert.assertNotNull;
 import java.util.List;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -35,7 +34,7 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
       cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
       List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
 
-      waitForClusterToForm(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      waitForClusterToForm(getDefaultCacheName());
 
       for(Cache cache : cacheList) {
          caches.add(cache);

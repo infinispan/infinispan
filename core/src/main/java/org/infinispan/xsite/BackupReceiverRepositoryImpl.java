@@ -69,15 +69,6 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
       BackupReceiver backupManager = backupReceivers.get(toLookFor);
       if (backupManager != null) return backupManager;
 
-      //check the default cache first
-      Configuration dcc = cacheManager.getDefaultCacheConfiguration();
-      if (dcc != null && isBackupForRemoteCache(remoteSite, remoteCache, dcc, EmbeddedCacheManager.DEFAULT_CACHE_NAME)) {
-         Cache<Object, Object> cache = cacheManager.getCache();
-         backupReceivers.putIfAbsent(toLookFor, createBackupReceiver(cache));
-         toLookFor.setLocalCacheName(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
-         return backupReceivers.get(toLookFor);
-      }
-
       Set<String> cacheNames = cacheManager.getCacheNames();
       for (String name : cacheNames) {
          Configuration cacheConfiguration = cacheManager.getCacheConfiguration(name);

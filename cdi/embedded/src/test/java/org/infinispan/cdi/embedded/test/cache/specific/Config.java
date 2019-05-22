@@ -7,6 +7,7 @@ import javax.enterprise.inject.Produces;
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
@@ -59,9 +60,11 @@ public class Config {
    @ApplicationScoped
    @SuppressWarnings("unused")
    public EmbeddedCacheManager specificCacheManager() {
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.defaultCacheName("default");
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory().size(4000);
-      return new DefaultCacheManager(builder.build());
+      return new DefaultCacheManager(global.build(), builder.build());
    }
 
    /**

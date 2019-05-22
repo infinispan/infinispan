@@ -12,9 +12,6 @@ import java.util.Set;
  * @since 4.0
  */
 public interface BasicCacheContainer extends Lifecycle {
-   @Deprecated
-   String DEFAULT_CACHE_NAME = "___defaultcache";
-
    /**
     * Retrieves the default cache associated with this cache container.
     * <p/>

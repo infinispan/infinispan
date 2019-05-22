@@ -89,7 +89,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    private static final Log log = LogFactory.getLog(RemoteCacheManager.class);
 
-   public static final String DEFAULT_CACHE_NAME = "___defaultcache";
    public static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
    public static final String JSON_STRING_ARRAY_ELEMENT_REGEX = "(?:\")([^\"]*)(?:\",?)";
 
@@ -415,8 +414,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
             PingResponse pingResponse = result.resolveStorage();
             // If ping not successful assume that the cache does not exist
-            // Default cache is always started, so don't do for it
-            if (!cacheName.equals(RemoteCacheManager.DEFAULT_CACHE_NAME) && pingResponse.isCacheNotFound()) {
+            if (pingResponse.isCacheNotFound()) {
                return null;
             }
 
@@ -487,9 +485,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    public static byte[] cacheNameBytes(String cacheName) {
-      return cacheName.equals(DEFAULT_CACHE_NAME)
-            ? HotRodConstants.DEFAULT_CACHE_NAME_BYTES
-            : cacheName.getBytes(HotRodConstants.HOTROD_STRING_CHARSET);
+      return cacheName.getBytes(HotRodConstants.HOTROD_STRING_CHARSET);
    }
 
    public static byte[] cacheNameBytes() {

@@ -21,7 +21,7 @@ import org.junit.Test;
 public class IndexedEntityAutodetectTest extends LocalCacheTest {
    protected static EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcfg = new GlobalConfigurationBuilder();
-
+      gcfg.defaultCacheName("default");
       // this configuration does not declare any indexed types on purpose, so they are autodetected
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.transaction()
