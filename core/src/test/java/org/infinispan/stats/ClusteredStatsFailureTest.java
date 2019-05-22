@@ -2,7 +2,6 @@ package org.infinispan.stats;
 
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
@@ -66,7 +65,7 @@ public class ClusteredStatsFailureTest extends MultipleCacheManagersTest {
 
       Future<Void> future = fork(this::refreshClusterStats);
 
-      assertTrue(checkPoint.await(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS));
+      checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
 
       TestingUtil.killCacheManagers(manager(2));
 
