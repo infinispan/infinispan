@@ -52,6 +52,7 @@
                <parallel>classes</parallel>
                <groups combine.self="override">${defaultJUnitGroups}</groups>
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+               <disableXmlReport>false</disableXmlReport>
                <trimStackTrace>false</trimStackTrace>
                <properties>
                   <!-- Deactivate the default listeners which may cause OOME. Jenkins uses the surefire generated XML file. -->
