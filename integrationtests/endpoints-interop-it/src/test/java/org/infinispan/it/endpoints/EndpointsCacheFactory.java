@@ -20,7 +20,6 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -78,11 +77,11 @@ public class EndpointsCacheFactory<K, V> {
    }
 
    EndpointsCacheFactory(CacheMode cacheMode, int numOwners, boolean l1Enable) {
-      this("", null, cacheMode, numOwners, l1Enable, null, null);
+      this("test", null, cacheMode, numOwners, l1Enable, null, null);
    }
 
    EndpointsCacheFactory(CacheMode cacheMode, int numOwners, boolean l1Enable, Encoder encoder) {
-      this("", null, cacheMode, numOwners, l1Enable, null, encoder);
+      this("test", null, cacheMode, numOwners, l1Enable, null, encoder);
    }
 
    EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode) {
@@ -139,6 +138,7 @@ public class EndpointsCacheFactory<K, V> {
          globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       }
       globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+      globalBuilder.defaultCacheName(cacheName);
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder =
             new org.infinispan.configuration.cache.ConfigurationBuilder();
@@ -157,12 +157,7 @@ public class EndpointsCacheFactory<K, V> {
             ? TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder)
             : TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
 
-      if (!cacheName.isEmpty())
-         cacheManager.defineConfiguration(cacheName, builder.build());
-
-      embeddedCache = cacheName.isEmpty()
-            ? cacheManager.getCache()
-            : cacheManager.getCache(cacheName);
+      embeddedCache = cacheManager.getCache(cacheName);
 
       EncoderRegistry encoderRegistry = embeddedCache.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
 
@@ -280,8 +275,7 @@ public class EndpointsCacheFactory<K, V> {
    }
 
    public String getRestUrl() {
-      String restCacheName = cacheName.isEmpty() ? BasicCacheContainer.DEFAULT_CACHE_NAME : cacheName;
-      return String.format("http://localhost:%s/rest/%s", restPort, restCacheName);
+      return String.format("http://localhost:%s/rest/%s", restPort, cacheName);
    }
 
    HotRodServer getHotrodServer() {

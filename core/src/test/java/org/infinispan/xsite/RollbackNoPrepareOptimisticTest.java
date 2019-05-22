@@ -11,7 +11,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.manager.CacheContainer;
 import org.testng.annotations.Test;
 
 @Test(groups = "xsite", testName = "xsite.RollbackNoPrepareOptimisticTest")
@@ -28,9 +27,9 @@ public class RollbackNoPrepareOptimisticTest extends AbstractTwoSitesTest {
       ComponentRegistry cr = backup(LON).getAdvancedCache().getComponentRegistry();
       GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
       BackupReceiverRepositoryImpl brr = (BackupReceiverRepositoryImpl) gcr.getComponent(BackupReceiverRepository.class);
-      BackupReceiver backupCacheManager = brr.getBackupReceiver(LON, CacheContainer.DEFAULT_CACHE_NAME);
+      BackupReceiver backupCacheManager = brr.getBackupReceiver(LON, getDefaultCacheName());
       BackupReceiverWrapper brWrapper = new BackupReceiverWrapper(backupCacheManager);
-      brr.replace(LON, CacheContainer.DEFAULT_CACHE_NAME, brWrapper);
+      brr.replace(LON, getDefaultCacheName(), brWrapper);
 
       assertNull(brWrapper.received);
       cache(LON, 0).put(key, val);

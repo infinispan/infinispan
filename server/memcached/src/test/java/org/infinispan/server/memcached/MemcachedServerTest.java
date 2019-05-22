@@ -1,7 +1,7 @@
 package org.infinispan.server.memcached;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -12,7 +12,6 @@ import org.infinispan.server.core.test.Stoppable;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 /**
@@ -39,13 +38,14 @@ public class MemcachedServerTest extends AbstractInfinispanTest {
       config.expiration().lifespan(10);
       Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager(config), cm ->
             Stoppable.useServer(new MemcachedServer(), ms -> {
-               ms.start(new MemcachedServerConfigurationBuilder().defaultCacheName("memcachedCache").build(), cm);
+               ms.start(new MemcachedServerConfigurationBuilder().defaultCacheName(cm.getCacheManagerConfiguration().defaultCacheName().get()).build(), cm);
                fail("Server should not start when expiration is enabled");
             }));
    }
 
    public void testNoDefaultConfigurationLocal() {
-      Stoppable.useCacheManager(new DefaultCacheManager(), cm ->
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      Stoppable.useCacheManager(new DefaultCacheManager(global.build()), cm ->
             Stoppable.useServer(new MemcachedServer(), ms -> {
                ms.start(new MemcachedServerConfigurationBuilder().build(), cm);
                assertEquals(CacheMode.LOCAL, ms.getCache().getCacheConfiguration().clustering().cacheMode());
@@ -53,9 +53,8 @@ public class MemcachedServerTest extends AbstractInfinispanTest {
    }
 
    public void testNoDefaultConfigurationClustered() {
-      GlobalConfigurationBuilder gc = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      TestCacheManagerFactory.amendGlobalConfiguration(gc, new TransportFlags());
-      Stoppable.useCacheManager(new DefaultCacheManager(gc.build()), cm ->
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      Stoppable.useCacheManager(new DefaultCacheManager(global.build()), cm ->
             Stoppable.useServer(new MemcachedServer(), ms -> {
                ms.start(new MemcachedServerConfigurationBuilder().build(), cm);
                assertEquals(CacheMode.REPL_SYNC, ms.getCache().getCacheConfiguration().clustering().cacheMode());

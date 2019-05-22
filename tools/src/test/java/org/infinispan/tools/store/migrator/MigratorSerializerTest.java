@@ -34,15 +34,12 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -64,14 +61,11 @@ public class MigratorSerializerTest extends AbstractInfinispanTest {
    private static final String TABLE_TS_COL = "TIMESTAMP_COLUMN";
    private static final String TABLE_TS_TYPE = "BIGINT";
 
-   private static final GlobalConfiguration GLOBAL_CONFIG = new GlobalConfigurationBuilder().build();
-
    private StoreMigrator migrator;
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() {
-      Configuration config = createDatabaseConfig(true);
-      EmbeddedCacheManager cacheManager = new DefaultCacheManager(GLOBAL_CONFIG, config);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(createDatabaseConfig(true));
       Cache<Object, Object> cache = cacheManager.getCache(this.getClass().getName());
       cache.put(1, new TestEntry("1234"));
       cacheManager.stop();
@@ -86,17 +80,17 @@ public class MigratorSerializerTest extends AbstractInfinispanTest {
       migrator.run();
       // Ignore all threads, SerializationConfigUtil.getMarshaller() starts a cache manager and doesn't stop it
       ThreadLeakChecker.ignoreThreadsContaining("");
-      Configuration config = createDatabaseConfig(false);
-      EmbeddedCacheManager cm = new DefaultCacheManager(GLOBAL_CONFIG, config);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(createDatabaseConfig(false));
       Cache<Object, Object> cache = cm.getCache(this.getClass().getName());
       assertEquals(1, cache.size());
       assertNotNull(cache.get(1));
       cm.stop();
    }
 
-   private Configuration createDatabaseConfig(boolean source) {
+   private ConfigurationBuilder createDatabaseConfig(boolean source) {
       String tableName = source ? SOURCE.toString() : TARGET.toString();
-      return new ConfigurationBuilder().persistence()
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .dialect(DB_DIALECT)
             .table()
@@ -111,8 +105,8 @@ public class MigratorSerializerTest extends AbstractInfinispanTest {
             .connectionPool()
             .connectionUrl(DB_URL)
             .username(USER)
-            .driverClass(DRIVER)
-            .build();
+            .driverClass(DRIVER);
+      return builder;
    }
 
    private void createDatabaseConfigProperties(Properties props, boolean source) {

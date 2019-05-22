@@ -8,14 +8,13 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.infinispan.commons.api.BasicCacheContainer;
 
 public class RestClient {
 
    private final HttpClient client = HttpClientBuilder.create().build();
    // using URI won't do any good since we need to concatenate and there is no method to do this
    private final String baseUri;
-   private String cache = BasicCacheContainer.DEFAULT_CACHE_NAME;
+   private String cache;
 
    public RestClient(String uri) {
       this.baseUri = uri;

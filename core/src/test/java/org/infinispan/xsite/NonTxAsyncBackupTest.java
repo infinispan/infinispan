@@ -64,7 +64,7 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
       blockingInterceptor.reset();
    }
 
-   public void testSiteMasterPicked() throws NoSuchFieldException, IllegalAccessException {
+   public void testSiteMasterPicked() {
       for (TestSite testSite : sites) {
          for (EmbeddedCacheManager cacheManager : testSite.cacheManagers) {
             RELAY2 relay2 = getRELAY2(cacheManager);

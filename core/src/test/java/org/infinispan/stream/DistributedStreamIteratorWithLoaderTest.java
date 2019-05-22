@@ -13,6 +13,6 @@ import org.testng.annotations.Test;
 public class DistributedStreamIteratorWithLoaderTest extends BaseStreamIteratorWithLoaderTest {
 
    public DistributedStreamIteratorWithLoaderTest() {
-      super(false, CacheMode.DIST_SYNC, "DistributedStreamIteratorWithLoaderTest");
+      super(false, CacheMode.DIST_SYNC);
    }
 }

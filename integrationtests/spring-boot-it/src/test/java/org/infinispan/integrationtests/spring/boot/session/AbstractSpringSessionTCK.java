@@ -24,7 +24,7 @@ public class AbstractSpringSessionTCK {
    private int port;
 
    @Test
-   public void testCreatingSessionWhenUsingREST() throws Exception {
+   public void testCreatingSessionWhenUsingREST() {
       assertNull(httpSessionListener.getCreatedSession());
       assertNull(httpSessionListener.getDestroyedSession());
 

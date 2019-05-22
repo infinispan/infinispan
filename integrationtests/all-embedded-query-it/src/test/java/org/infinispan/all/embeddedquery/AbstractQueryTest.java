@@ -37,7 +37,7 @@ public abstract class AbstractQueryTest {
 
    protected static EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcfg = new GlobalConfigurationBuilder();
-
+      gcfg.defaultCacheName("default");
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.transaction()
           .transactionMode(TransactionMode.TRANSACTIONAL)

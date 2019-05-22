@@ -5,7 +5,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -31,7 +30,7 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
       hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
       persistence
          .addStore(RemoteStoreConfigurationBuilder.class)
-            .remoteCacheName(BasicCacheContainer.DEFAULT_CACHE_NAME)
+            .remoteCacheName("")
             .preload(preload)
             .addServer()
                .host("localhost")

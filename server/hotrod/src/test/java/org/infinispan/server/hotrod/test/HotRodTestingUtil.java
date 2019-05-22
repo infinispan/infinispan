@@ -25,11 +25,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -57,6 +54,9 @@ import org.infinispan.server.hotrod.transport.SingleByteFrameDecoderChannelIniti
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.KeyValuePair;
+
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
 
 /**
  * Test utils for Hot Rod tests.
@@ -127,7 +127,7 @@ public class HotRodTestingUtil {
 
       builder.startTransport(false);
 
-      DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfiguration.build(), cacheConfiguration);
+      DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfiguration.build());
       for (String cache : definedCaches) {
          cacheManager.defineConfiguration(cache, cacheConfiguration);
       }
@@ -138,13 +138,16 @@ public class HotRodTestingUtil {
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, int idleTimeout,
                                                 String proxyHost, int proxyPort, long delay, String defaultCacheName) {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
-      builder.proxyHost(proxyHost).proxyPort(proxyPort).idleTimeout(idleTimeout).defaultCacheName(defaultCacheName);
+      builder.proxyHost(proxyHost).proxyPort(proxyPort).idleTimeout(idleTimeout);
+      if (defaultCacheName != null) {
+         builder.defaultCacheName(defaultCacheName);
+      }
       return startHotRodServer(manager, port, delay, builder);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, int idleTimeout,
                                                 String proxyHost, int proxyPort, long delay) {
-      return startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort, delay, BasicCacheContainer.DEFAULT_CACHE_NAME);
+      return startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort, delay, TestResourceTracker.getCurrentTestShortName());
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, HotRodServerConfigurationBuilder builder) {

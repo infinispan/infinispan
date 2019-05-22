@@ -43,7 +43,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.junit.After;
@@ -100,7 +99,7 @@ public class DefaultEmbeddedCacheManagerTest {
         assertEquals(result, otherCache);
         assertSame(this.subject, result.getCacheManager());
 
-        result = this.subject.getCache(CacheContainer.DEFAULT_CACHE_NAME);
+        result = this.subject.getCache();
 
         assertNotSame(defaultCache, result);
         assertEquals(result, defaultCache);
@@ -279,7 +278,7 @@ public class DefaultEmbeddedCacheManagerTest {
 
         assertTrue(result);
 
-        result = this.subject.isRunning(CacheContainer.DEFAULT_CACHE_NAME);
+        result = this.subject.isDefaultRunning();
 
         assertTrue(result);
 
@@ -301,7 +300,7 @@ public class DefaultEmbeddedCacheManagerTest {
     public void startCaches() {
         when(this.manager.startCaches("other", "default")).thenReturn(this.manager);
 
-        EmbeddedCacheManager result = this.subject.startCaches("other", CacheContainer.DEFAULT_CACHE_NAME);
+        EmbeddedCacheManager result = this.subject.startCaches("other", "default");
 
         assertSame(this.subject, result);
     }

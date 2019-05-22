@@ -44,12 +44,12 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
    }
 
    public void testJmxOperationMetadata() throws Exception {
-      ObjectName name = getCacheObjectName(JMX_DOMAIN);
+      ObjectName name = getCacheObjectName(JMX_DOMAIN, getDefaultCacheName() + "(local)");
       checkMBeanOperationParameterNaming(name);
    }
 
    public void testStartStopManagedOperations() throws Exception {
-      ObjectName defaultOn = getCacheObjectName(JMX_DOMAIN);
+      ObjectName defaultOn = getCacheObjectName(JMX_DOMAIN, getDefaultCacheName() + "(local)");
       ObjectName managerON = getCacheManagerObjectName(JMX_DOMAIN);
       server.invoke(managerON, "startCache", new Object[]{}, new String[]{});
       assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
@@ -79,7 +79,7 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
 
    public void testManagerStopRemovesCacheMBean(Method m) throws Exception {
       final String otherJmxDomain = getMethodSpecificJmxDomain(m, JMX_DOMAIN);
-      ObjectName defaultOn = getCacheObjectName(otherJmxDomain);
+      ObjectName defaultOn = getCacheObjectName(otherJmxDomain, getDefaultCacheName() + "(local)");
       ObjectName galderOn = getCacheObjectName(otherJmxDomain, "galder(local)");
       ObjectName managerON = getCacheManagerObjectName(otherJmxDomain);
       EmbeddedCacheManager otherContainer = createCacheManagerEnforceJmxDomain(otherJmxDomain);
@@ -108,7 +108,7 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
    }
 
 
-   public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() throws Exception {
+   public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() {
       Exceptions.expectException(EmbeddedCacheManagerStartupException.class, JmxDomainConflictException.class,
                                  () -> createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true, false));
    }
@@ -118,9 +118,9 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       withCacheManager(new CacheManagerCallable(
             createCacheManagerEnforceJmxDomain(jmxDomain, false, false, true)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             cm.getCache();
-            ObjectName cacheObjectName = getCacheObjectName(jmxDomain);
+            ObjectName cacheObjectName = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(local)");
             assertTrue(cacheObjectName + " should be registered",
                   server.isRegistered(cacheObjectName));
             TestingUtil.killCacheManagers(cm);

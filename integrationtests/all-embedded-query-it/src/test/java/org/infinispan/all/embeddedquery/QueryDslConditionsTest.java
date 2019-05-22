@@ -77,7 +77,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
    protected static EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder gcfg = new GlobalConfigurationBuilder();
-
+      gcfg.defaultCacheName("default");
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)

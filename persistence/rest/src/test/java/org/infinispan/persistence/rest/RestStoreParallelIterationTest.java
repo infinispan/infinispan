@@ -3,7 +3,6 @@ package org.infinispan.persistence.rest;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -19,8 +18,8 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 6.0
  */
-@Test (groups = "functional", testName = "persistence.rest.RestStoreParallelIterationTest")
-public class RestStoreParallelIterationTest  extends ParallelIterationTest {
+@Test(groups = "functional", testName = "persistence.rest.RestStoreParallelIterationTest")
+public class RestStoreParallelIterationTest extends ParallelIterationTest {
 
    private EmbeddedCacheManager localCacheManager;
    private RestServer restServer;
@@ -34,7 +33,7 @@ public class RestStoreParallelIterationTest  extends ParallelIterationTest {
       cb.persistence().addStore(RestStoreConfigurationBuilder.class)
             .host("localhost")
             .port(restServer.getPort())
-            .path("/rest/"+ BasicCacheContainer.DEFAULT_CACHE_NAME)
+            .path("/rest/" + TestingUtil.getDefaultCacheName(localCacheManager))
             .preload(false);
    }
 

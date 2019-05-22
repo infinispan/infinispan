@@ -10,7 +10,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.transaction.LockingMode;
 
 /**
@@ -52,13 +51,13 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
 
       if (!implicitBackupCache) {
          ConfigurationBuilder nycBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-         nycBackup.sites().backupFor().remoteSite(NYC).defaultRemoteCache();
+         nycBackup.sites().backupFor().remoteSite(NYC).remoteCache(getDefaultCacheName());
          startCache(LON, "nycBackup", nycBackup);
          ConfigurationBuilder lonBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, isLonBackupTransactional);
-         lonBackup.sites().backupFor().remoteSite(LON).defaultRemoteCache();
+         lonBackup.sites().backupFor().remoteSite(LON).remoteCache(getDefaultCacheName());
          startCache(NYC, "lonBackup", lonBackup);
          Configuration lonBackupConfig = cache(NYC, "lonBackup", 0).getCacheConfiguration();
-         assertTrue(lonBackupConfig.sites().backupFor().isBackupFor(LON, CacheContainer.DEFAULT_CACHE_NAME));
+         assertTrue(lonBackupConfig.sites().backupFor().isBackupFor(LON, getDefaultCacheName()));
       }
       waitForSites(LON, NYC);
    }

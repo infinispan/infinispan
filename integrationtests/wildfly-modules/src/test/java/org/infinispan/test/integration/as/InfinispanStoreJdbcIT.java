@@ -58,7 +58,7 @@ public class InfinispanStoreJdbcIT {
    @Test
    public void testCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-
+      gcb.defaultCacheName("default");
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .table()

@@ -8,7 +8,6 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -39,20 +38,18 @@ public class PerfTest extends MultipleCacheManagersTest {
    private static final int LOG_ON_EACH = 2000;
    private static final int NUMBER_OF_ITERATIONS = 50;
 
-   private static final String[] neededCacheNames = {
-         BasicCacheContainer.DEFAULT_CACHE_NAME,
-         "LuceneIndexesMetadata",
-         "LuceneIndexesData",
-         "LuceneIndexesLocking",
-   };
-
    @Override
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NUM_NODES; i++) {
          EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml("indexing-perf.xml");
          registerCacheManager(cacheManager);
       }
-      waitForClusterToForm(neededCacheNames);
+      waitForClusterToForm(new String[] {
+            getDefaultCacheName(),
+            "LuceneIndexesMetadata",
+            "LuceneIndexesData",
+            "LuceneIndexesLocking",
+      });
    }
 
    public void testIndexing() throws Exception {

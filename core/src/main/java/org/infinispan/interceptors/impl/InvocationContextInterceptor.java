@@ -26,7 +26,6 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.InvocationExceptionFunction;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
@@ -150,10 +149,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
    private String getCacheNamePrefix() {
       String cacheName = componentRegistry.getCacheName();
-      String prefix = "Cache '" + cacheName + "'";
-      if (cacheName.equals(CacheContainer.DEFAULT_CACHE_NAME))
-         prefix = "Default cache";
-      return prefix;
+      return  "Cache '" + cacheName + "'";
    }
 
    /**

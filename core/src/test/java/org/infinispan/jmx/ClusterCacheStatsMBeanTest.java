@@ -25,9 +25,9 @@ public class ClusterCacheStatsMBeanTest extends AbstractClusterMBeanTest {
    }
 
    public void testClusterStats() throws Exception {
-      Cache<String, Serializable> cache1 = manager(0).getCache(cachename);
+      Cache<String, Serializable> cache1 = manager(0).getCache();
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName clusterStats = getCacheObjectName(jmxDomain, cachename + "(repl_sync)", "ClusterCacheStats");
+      ObjectName clusterStats = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "ClusterCacheStats");
 
       mBeanServer.setAttribute(clusterStats, new Attribute("StatisticsEnabled", false));
       assert !(boolean) mBeanServer.getAttribute(clusterStats, "StatisticsEnabled");

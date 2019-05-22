@@ -5,7 +5,6 @@ import java.io.File;
 import javax.inject.Inject;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -43,12 +42,12 @@ public class DuplicatedDomainsCdiIT {
    private AdvancedCache<Object, Object> greetingCache;
 
    /**
-    * Creates new {@link DefaultCacheManager} with default {@link org.infinispan.configuration.cache.Configuration}.
+    * Creates new {@link DefaultCacheManager}.
     * This test will fail if CDI Extension registers and won't set Cache Manager's name.
     */
    @Test
    public void testIfCreatingDefaultCacheManagerSucceeds() {
-      DefaultCacheManager cacheManager = new DefaultCacheManager(new ConfigurationBuilder().build());
+      DefaultCacheManager cacheManager = new DefaultCacheManager();
       cacheManager.stop();
    }
 }

@@ -215,7 +215,7 @@ public class InfinispanExtensionEmbedded implements Extension {
                public EmbeddedCacheManager create(Bean<EmbeddedCacheManager> bean,
                      CreationalContext<EmbeddedCacheManager> creationalContext) {
                   GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().globalJmxStatistics()
-                        .cacheManagerName(CACHE_NAME).build();
+                        .cacheManagerName(CACHE_NAME).defaultCacheName("default").build();
                   @SuppressWarnings("unchecked")
                   Bean<Configuration> configurationBean = (Bean<Configuration>) beanManager
                         .resolve(beanManager.getBeans(Configuration.class));

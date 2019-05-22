@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertSame;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -33,7 +34,8 @@ public class RestCacheStoreConfigTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void startUp() {
-      cacheManager = TestCacheManagerFactory.createServerModeCacheManager();
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().defaultCacheName("default");
+      cacheManager = TestCacheManagerFactory.createServerModeCacheManager(global);
       assertEquals(cacheManager.getCache().size(), 0);
       RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
       restServerConfigurationBuilder.port(18212);

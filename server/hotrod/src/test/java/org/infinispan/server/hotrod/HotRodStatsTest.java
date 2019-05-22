@@ -30,7 +30,6 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
       cfg.jmxStatistics().enable();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(jmxDomain(), cfg);
-      cm.defineConfiguration(cacheName, cm.getDefaultCacheConfiguration());
       return cm;
    }
 

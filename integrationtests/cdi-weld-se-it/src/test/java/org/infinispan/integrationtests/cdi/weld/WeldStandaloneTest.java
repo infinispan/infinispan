@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 @Test(groups="functional", testName="cdi.test.weld.WeldStandaloneTest")
 public class WeldStandaloneTest {
 
-   public void testWeldStandaloneInitialisation() throws Exception {
+   public void testWeldStandaloneInitialisation() {
       WeldContainer weld = null;
       try {
          //given

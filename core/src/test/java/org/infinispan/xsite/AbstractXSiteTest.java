@@ -13,7 +13,6 @@ import java.util.concurrent.locks.LockSupport;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
@@ -171,7 +170,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       TestSite site = site(siteName);
       for (EmbeddedCacheManager ecm : site.cacheManagers) {
          Configuration config = configurationBuilder.build();
-         ecm.defineConfiguration(cacheName, BasicCacheContainer.DEFAULT_CACHE_NAME, config);
+         ecm.defineConfiguration(cacheName, getDefaultCacheName(), config);
       }
       site.waitForClusterToForm(cacheName);
    }
@@ -340,4 +339,8 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
    }
 
+   @Override
+   public String getDefaultCacheName() {
+      return site(0).cacheManagers.get(0).getCacheManagerConfiguration().defaultCacheName().get();
+   }
 }

@@ -29,7 +29,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -90,6 +89,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -216,7 +216,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testReplicableCommandsMarshalling() throws Exception {
-      ByteString cacheName = ByteString.fromString(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
+      ByteString cacheName = ByteString.fromString(TestingUtil.getDefaultCacheName(cm));
       ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName, 0, EnumUtil.EMPTY_BIT_SET);
       marshallAndAssertEquality(c2);
 
@@ -284,9 +284,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testStateTransferControlCommand() throws Exception {
-      Cache<Object,Object> cache = cm.getCache();
-
-      ByteString cacheName = ByteString.fromString(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
+      ByteString cacheName = ByteString.fromString(TestingUtil.getDefaultCacheName(cm));
       ImmortalCacheEntry entry1 = (ImmortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
       Collection<InternalCacheEntry> state = new ArrayList<>();
       state.add(entry1);

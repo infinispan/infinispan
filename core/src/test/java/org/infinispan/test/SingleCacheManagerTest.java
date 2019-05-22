@@ -136,4 +136,9 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
          }
       });
    }
+
+   @Override
+   public String getDefaultCacheName() {
+      return cacheManager.getCacheManagerConfiguration().defaultCacheName().get();
+   }
 }

@@ -23,7 +23,7 @@ public class RestTestingUtil {
     public static RestServer createRest(RestServerConfigurationBuilder configuration, GlobalConfigurationBuilder globalConfigurationBuilder, ConfigurationBuilder cacheConfigurationBuilder, String... definedCaches) {
         RestServer nettyRestServer = new RestServer();
         Configuration cacheConfiguration = cacheConfigurationBuilder.build();
-        DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfigurationBuilder.build(), cacheConfiguration);
+        DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfigurationBuilder.build());
         for (String cache : definedCaches) {
             cacheManager.defineConfiguration(cache, cacheConfiguration);
         }

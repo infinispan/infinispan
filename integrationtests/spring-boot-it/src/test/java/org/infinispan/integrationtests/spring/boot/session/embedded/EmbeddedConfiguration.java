@@ -1,5 +1,6 @@
 package org.infinispan.integrationtests.spring.boot.session.embedded;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.integrationtests.spring.boot.session.configuration.WebConfig;
 import org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBean;
@@ -19,6 +20,7 @@ public class EmbeddedConfiguration {
    public SpringEmbeddedCacheManagerFactoryBean springCacheManager() {
       SpringEmbeddedCacheManagerFactoryBean cacheManagerFactoryBean = new SpringEmbeddedCacheManagerFactoryBean();
       cacheManagerFactoryBean.addCustomGlobalConfiguration(new GlobalConfigurationBuilder().defaultCacheName("sessions"));
+      cacheManagerFactoryBean.addCustomCacheConfiguration(new ConfigurationBuilder());
       return cacheManagerFactoryBean;
    }
 

@@ -109,7 +109,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractInfinispa
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
       builder.defaultCacheName("default");
       objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
-            .defaultBuilder().withGlobalConfiguration(builder).build();
+            .defaultBuilder().withGlobalConfiguration(builder).withConfigurationBuilder(new ConfigurationBuilder()).build();
 
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
       springEmbeddedCacheManager.getCache("default"); // Implicitly starts
@@ -170,7 +170,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractInfinispa
       objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
 
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-
+      gcb.defaultCacheName("default");
       // Now prepare a cache configuration.
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);

@@ -36,7 +36,6 @@ import org.infinispan.LockedStream;
 import org.infinispan.Version;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.time.TimeService;
@@ -678,8 +677,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          displayType = DisplayType.SUMMARY
    )
    public String getCacheName() {
-      String name = getName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
-      return name + "(" + getCacheConfiguration().clustering().cacheMode().toString().toLowerCase() + ")";
+      return getName() + "(" + getCacheConfiguration().clustering().cacheMode().toString().toLowerCase() + ")";
    }
 
    @Override

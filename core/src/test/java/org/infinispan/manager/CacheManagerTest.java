@@ -82,10 +82,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
       try {
          assertEquals(ComponentStatus.RUNNING, cm.getCache().getStatus());
-         assertTrue(cm.getCache().getName().equals(CacheContainer.DEFAULT_CACHE_NAME));
+         assertTrue(cm.getCache().getName().equals(TestingUtil.getDefaultCacheName(cm)));
 
-         expectException(IllegalArgumentException.class,
-                         () -> cm.defineConfiguration(CacheContainer.DEFAULT_CACHE_NAME,
+         expectException(CacheConfigurationException.class,
+                         () -> cm.defineConfiguration(TestingUtil.getDefaultCacheName(cm),
                                                       new ConfigurationBuilder().build()));
       } finally {
          TestingUtil.killCacheManagers(cm);
@@ -204,7 +204,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cm.defineConfiguration("three", new ConfigurationBuilder().build());
          cm.getCache("three");
          Set<String> cacheNames = cm.getCacheNames();
-         assertEquals(3, cacheNames.size());
+         assertEquals(4, cacheNames.size());
          assertTrue(cacheNames.contains("one"));
          assertTrue(cacheNames.contains("two"));
          assertTrue(cacheNames.contains("three"));

@@ -64,16 +64,16 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
    }
 
    public void testJmxOperationMetadata() throws Exception {
-      ObjectName rpcManager = getCacheObjectName(jmxDomain, cachename + "(repl_sync)", "RpcManager");
+      ObjectName rpcManager = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "RpcManager");
       checkMBeanOperationParameterNaming(rpcManager);
    }
 
    public void testEnableJmxStats() throws Exception {
-      Cache<String, String> cache1 = manager(0).getCache(cachename);
-      Cache cache2 = manager(1).getCache(cachename);
+      Cache<String, String> cache1 = manager(0).getCache();
+      Cache cache2 = manager(1).getCache();
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManager1 = getCacheObjectName(jmxDomain, cachename + "(repl_sync)", "RpcManager");
-      ObjectName rpcManager2 = getCacheObjectName(jmxDomain2, cachename + "(repl_sync)", "RpcManager");
+      ObjectName rpcManager1 = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "RpcManager");
+      ObjectName rpcManager2 = getCacheObjectName(jmxDomain2, getDefaultCacheName() + "(repl_sync)", "RpcManager");
       assert mBeanServer.isRegistered(rpcManager1);
       assert mBeanServer.isRegistered(rpcManager2);
 
@@ -110,10 +110,10 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
 
    @Test(dependsOnMethods = "testEnableJmxStats")
    public void testSuccessRatio() throws Exception {
-      Cache<MagicKey, Serializable> cache1 = manager(0).getCache(cachename);
-      Cache cache2 = manager(1).getCache(cachename);
+      Cache<MagicKey, Serializable> cache1 = manager(0).getCache();
+      Cache cache2 = manager(1).getCache();
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManager1 = getCacheObjectName(jmxDomain, cachename + "(repl_sync)", "RpcManager");
+      ObjectName rpcManager1 = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "RpcManager");
 
       // the previous test has reset the statistics
       assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 0);
@@ -156,7 +156,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
    @Test(dependsOnMethods = "testEnableJmxStats")
    public void testXsiteStats() throws Exception {
       ControlledTimeService timeService = new ControlledTimeService();
-      RpcManagerImpl rpcManager = (RpcManagerImpl) extractComponent(cache(0, cachename), RpcManager.class);
+      RpcManagerImpl rpcManager = (RpcManagerImpl) extractComponent(cache(0), RpcManager.class);
       replaceField(timeService, "timeService", rpcManager, RpcManagerImpl.class);
       Transport originalTransport = rpcManager.getTransport();
 
@@ -216,7 +216,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       asyncFutures.get(1).complete(null);
 
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManagerName = getCacheObjectName(jmxDomain, cachename + "(repl_sync)", "RpcManager");
+      ObjectName rpcManagerName = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "RpcManager");
       assertEquals(mBeanServer.getAttribute(rpcManagerName, "SyncXSiteCount"), (long) 2);
       assertEquals(mBeanServer.getAttribute(rpcManagerName, "AsyncXSiteCount"), (long) 2);
       assertEquals(mBeanServer.getAttribute(rpcManagerName, "AsyncXSiteAcksCount"), (long) 2);

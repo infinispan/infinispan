@@ -14,7 +14,7 @@ public class RestClient {
     private final HttpClient client = new DefaultHttpClient();
     // using URI won't do any good since we need to concatenate and there is no method to do this
     private final String baseUri;
-    private String cache = "___defaultcache";
+    private String cache;
 
     public RestClient(String uri) {
         this.baseUri = uri;

@@ -1,9 +1,6 @@
 package org.infinispan.rest.helper;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.RestServer;
@@ -11,6 +8,7 @@ import org.infinispan.rest.TestClass;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.impl.VoidAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 /**
  * A small utility class which helps managing REST server.
@@ -35,10 +33,7 @@ public class RestServerHelper {
    }
 
    public static RestServerHelper defaultRestServer(ConfigurationBuilder configuration, String... cachesDefined) {
-      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
-      globalConfigurationBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      GlobalConfigurationBuilder globalConfiguration = globalConfigurationBuilder.nonClusteredDefault();
-      DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfiguration.build(), configuration.build());
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(configuration);
       cacheManager.getClassWhiteList().addClasses(TestClass.class);
       for (String cacheConfiguration : cachesDefined) {
          cacheManager.defineConfiguration(cacheConfiguration, configuration.build());

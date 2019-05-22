@@ -10,7 +10,6 @@ import javax.management.ObjectName;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -35,11 +34,11 @@ public class CacheOpsTest extends SingleCacheManagerTest {
       dcc.memory().size(1000);
       dcc.jmxStatistics().enable();
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      return new DefaultCacheManager(gcb.build(), dcc.build());
+      return TestCacheManagerFactory.createCacheManager(gcb, dcc, true);
    }
 
    public void testClear() throws Exception {
-      ObjectName defaultOn = getCacheObjectName(JMX_DOMAIN);
+      ObjectName defaultOn = getCacheObjectName(JMX_DOMAIN, getDefaultCacheName() + "(local)");
       tm().begin();
       cache().put("k","v");
       tm().commit();

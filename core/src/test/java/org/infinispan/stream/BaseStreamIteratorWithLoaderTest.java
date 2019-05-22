@@ -5,8 +5,6 @@ import static org.testng.Assert.assertEquals;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -32,15 +30,13 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "stream.BaseStreamIteratorWithLoaderTest")
 public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheManagersTest {
-   protected String cacheName = "BaseStreamIteratorWithLoaderTest";
    protected ConfigurationBuilder builderUsed;
    protected final boolean tx;
    protected final CacheMode cacheMode;
 
-   public BaseStreamIteratorWithLoaderTest(boolean tx, CacheMode cacheMode, String cacheName) {
+   public BaseStreamIteratorWithLoaderTest(boolean tx, CacheMode cacheMode) {
       this.tx = tx;
       this.cacheMode = cacheMode;
-      this.cacheName = cacheName;
    }
 
    @Override
@@ -49,24 +45,24 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
       builderUsed.clustering().cacheMode(cacheMode);
       builderUsed.clustering().hash().numOwners(1);
       builderUsed.persistence().passivation(false).addStore(DummyInMemoryStoreConfigurationBuilder.class)
-            .storeName(cacheName);
+            .storeName(this.getClass().getSimpleName());
       if (tx) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
       if (cacheMode.isClustered()) {
-         createClusteredCaches(3, cacheName, builderUsed);
+         createClusteredCaches(3, builderUsed);
       } else {
-         createClusteredCaches(1, cacheName, builderUsed);
+         createClusteredCaches(1, builderUsed);
       }
    }
 
    private Map<Object, String> insertDefaultValues(boolean includeLoaderEntry) {
-      Cache<Object, String> cache0 = cache(0, cacheName);
+      Cache<Object, String> cache0 = cache(0);
       Map<Object, String> originalValues = new HashMap<>();
       Object loaderKey;
       if (cacheMode.needsStateTransfer()) {
-         Cache<Object, String> cache1 = cache(1, cacheName);
-         Cache<Object, String> cache2 = cache(2, cacheName);
+         Cache<Object, String> cache1 = cache(1);
+         Cache<Object, String> cache2 = cache(2);
          originalValues.put(new MagicKey(cache0), "cache0");
          originalValues.put(new MagicKey(cache1), "cache1");
          originalValues.put(new MagicKey(cache2), "cache2");
@@ -97,9 +93,9 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
    }
 
    @Test
-   public void testCacheLoader() throws InterruptedException, ExecutionException, TimeoutException {
+   public void testCacheLoader() {
       Map<Object, String> originalValues = insertDefaultValues(true);
-      Cache<Object, String> cache = cache(0, cacheName);
+      Cache<Object, String> cache = cache(0);
 
       Iterator<Map.Entry<Object, String>> iterator = cache.entrySet().stream().iterator();
 
@@ -116,9 +112,9 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
    }
 
    @Test
-   public void testCacheLoaderIgnored() throws InterruptedException, ExecutionException, TimeoutException {
+   public void testCacheLoaderIgnored() {
       Map<Object, String> originalValues = insertDefaultValues(false);
-      Cache<Object, String> cache = cache(0, cacheName);
+      Cache<Object, String> cache = cache(0);
 
       Iterator<Map.Entry<Object, String>> iterator = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).
               entrySet().stream().iterator();

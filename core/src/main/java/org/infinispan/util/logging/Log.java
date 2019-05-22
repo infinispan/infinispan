@@ -933,6 +933,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Error while processing prepare", id = 255)
    void errorProcessingPrepare(@Cause Throwable e);
 
+/*
    @LogMessage(level = ERROR)
    @Message(value = "Configurator SAXParse error", id = 256)
    void configuratorSAXParseError(@Cause Exception e);
@@ -944,6 +945,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Configurator general error", id = 258)
    void configuratorError(@Cause Exception e);
+ */
 
    @LogMessage(level = ERROR)
    @Message(value = "Async store executor did not stop properly", id = 259)
@@ -1495,9 +1497,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Direct usage of the ___defaultcache name to retrieve the default cache is deprecated", id = 434)
    void deprecatedDefaultCache();
 
-   @LogMessage(level = WARN)
    @Message(value = "Cache manager initialized with a default cache configuration but without a name for it. Set it in the GlobalConfiguration.", id = 435)
-   void defaultCacheConfigurationWithoutName();
+   CacheConfigurationException defaultCacheConfigurationWithoutName();
 
    @Message(value = "Cache '%s' has been requested, but no cache configuration exists with that name and no default cache has been set for this container", id = 436)
    CacheConfigurationException noSuchCacheConfiguration(String name);

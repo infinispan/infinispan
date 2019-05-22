@@ -97,7 +97,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
 
    private Thread doStuffWithCache(ConfigurationBuilder builder) {
       GlobalConfigurationBuilder globalBuilder =
-            new GlobalConfigurationBuilder().nonClusteredDefault();
+            new GlobalConfigurationBuilder().nonClusteredDefault().defaultCacheName("leak");
       final EmbeddedCacheManager[] cm = {new DefaultCacheManager(globalBuilder.build(), builder.build(),
             true)};
       Thread forkedThread = null;

@@ -52,10 +52,10 @@ public class RestEndpointRouterTest {
      * The router should match requests based on path and redirect them to proper server.
      */
     @Test
-    public void shouldRouteToProperRestServerBasedOnPath() throws Exception {
+    public void shouldRouteToProperRestServerBasedOnPath() {
         //given
-        restServer1 = RestTestingUtil.createDefaultRestServer();
-        restServer2 = RestTestingUtil.createDefaultRestServer();
+        restServer1 = RestTestingUtil.createDefaultRestServer("default");
+        restServer2 = RestTestingUtil.createDefaultRestServer("default");
 
         RestServerRouteDestination rest1Destination = new RestServerRouteDestination("rest1", restServer1);
         RestRouteSource rest1Source = new RestRouteSource("rest1");
@@ -79,8 +79,8 @@ public class RestEndpointRouterTest {
         int port = router.getRouter(EndpointRouter.Protocol.REST).get().getPort();
 
         //when
-        RestClient rest1Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest1");
-        RestClient rest2Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest2");
+        RestClient rest1Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest1").cache("default");
+        RestClient rest2Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest2").cache("default");
         rest1Client.put("test", "rest1");
         rest2Client.put("test", "rest2");
         String valueReturnedFromRest1 = rest1Client.get("test");

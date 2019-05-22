@@ -18,13 +18,13 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.JChannel;
@@ -113,7 +113,7 @@ public class ForkChannelRestartTest extends MultipleCacheManagersTest {
       gcb.transport().transport(new JGroupsTransport(fch));
       gcb.transport().distributedSyncTimeout(40, TimeUnit.SECONDS);
 
-      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), cacheCfg.build(), false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(false, gcb, cacheCfg, false);
       registerCacheManager(cm);
       return cm;
    }

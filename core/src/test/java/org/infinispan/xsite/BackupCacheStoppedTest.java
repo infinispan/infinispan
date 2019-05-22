@@ -8,7 +8,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +34,7 @@ public class BackupCacheStoppedTest extends AbstractTwoSitesTest {
          @Override
          public boolean isSatisfied() throws Exception {
             BackupReceiverRepositoryImpl component = (BackupReceiverRepositoryImpl) gcr.getComponent(BackupReceiverRepository.class);
-            return component.get(site, EmbeddedCacheManager.DEFAULT_CACHE_NAME) == null;
+            return component.get(site, getDefaultCacheName()) == null;
          }
       });
 

@@ -8,7 +8,6 @@ import java.util.List;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.ConfigurationInfo;
@@ -36,7 +35,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<Integer> VALUE_SIZE_ESTIMATE = AttributeDefinition.builder("valueSizeEstimate", ConfigurationProperties.DEFAULT_VALUE_SIZE).immutable().build();
    static final AttributeDefinition<String> MARSHALLER = AttributeDefinition.builder("marshaller", null, String.class).immutable().build();
    static final AttributeDefinition<ProtocolVersion> PROTOCOL_VERSION = AttributeDefinition.builder("protocolVersion", ProtocolVersion.DEFAULT_PROTOCOL_VERSION).immutable().build();
-   static final AttributeDefinition<String> REMOTE_CACHE_NAME = AttributeDefinition.builder("remoteCacheName", BasicCacheContainer.DEFAULT_CACHE_NAME).immutable().xmlName("cache").build();
+   static final AttributeDefinition<String> REMOTE_CACHE_NAME = AttributeDefinition.builder("remoteCacheName", "").immutable().xmlName("cache").build();
    static final AttributeDefinition<List<RemoteServerConfiguration>> SERVERS = AttributeDefinition.builder("servers", null, (Class<List<RemoteServerConfiguration>>)(Class<?>)List.class)
          .initializer(ArrayList::new).autoPersist(false).build();
    static final AttributeDefinition<Long> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", (long)ConfigurationProperties.DEFAULT_SO_TIMEOUT).build();

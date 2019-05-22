@@ -9,7 +9,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.Cache;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -59,7 +58,7 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
       ConfigurationBuilder targetConfigurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       targetConfigurationBuilder.persistence().addStore(RestStoreConfigurationBuilder.class).host("localhost").port(sourceServer.getPort())
-            .path("/rest/" + BasicCacheContainer.DEFAULT_CACHE_NAME).rawValues(true).locking().isolationLevel(IsolationLevel.NONE);
+            .path("/rest/" + TestingUtil.getDefaultCacheName(sourceContainer)).rawValues(true).locking().isolationLevel(IsolationLevel.NONE);
       targetConfigurationBuilder.encoding().key().mediaType(LEGACY_KEY_ENCODING);
 
       targetContainer = TestCacheManagerFactory.createServerModeCacheManager(targetConfigurationBuilder);
@@ -75,18 +74,18 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
       for (char ch = 'A'; ch <= 'Z'; ch++) {
          String s = Character.toString(ch);
-         PutMethod put = new PutMethod(String.format("http://localhost:%d/rest/%s/%s", sourceServer.getPort(), BasicCacheContainer.DEFAULT_CACHE_NAME, s));
+         PutMethod put = new PutMethod(String.format("http://localhost:%d/rest/%s/%s", sourceServer.getPort(), TestingUtil.getDefaultCacheName(sourceContainer), s));
          put.setRequestEntity(new StringRequestEntity(s, "text/plain", "UTF-8"));
          assertEquals(HttpStatus.SC_OK, client.executeMethod(put));
       }
 
       // Read a newly inserted entry
-      GetMethod getInserted = new GetMethod(String.format("http://localhost:%d/rest/%s/A", sourceServer.getPort(), BasicCacheContainer.DEFAULT_CACHE_NAME));
+      GetMethod getInserted = new GetMethod(String.format("http://localhost:%d/rest/%s/A", sourceServer.getPort(), TestingUtil.getDefaultCacheName(sourceContainer)));
       assertEquals(HttpStatus.SC_OK, client.executeMethod(getInserted));
       assertEquals("A", getInserted.getResponseBodyAsString());
 
       // Verify access to some of the data from the new cluster
-      GetMethod get = new GetMethod(String.format("http://localhost:%d/rest/%s/A", targetServer.getPort(), BasicCacheContainer.DEFAULT_CACHE_NAME));
+      GetMethod get = new GetMethod(String.format("http://localhost:%d/rest/%s/A", targetServer.getPort(), TestingUtil.getDefaultCacheName(targetContainer)));
       assertEquals(HttpStatus.SC_OK, client.executeMethod(get));
       assertEquals("A", get.getResponseBodyAsString());
 

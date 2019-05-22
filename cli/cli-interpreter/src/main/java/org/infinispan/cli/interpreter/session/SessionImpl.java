@@ -15,14 +15,13 @@ import org.infinispan.cli.interpreter.codec.NoneCodec;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 public class SessionImpl implements Session {
@@ -101,7 +100,7 @@ public class SessionImpl implements Session {
          }
       } else {
          configuration = cacheManager.getDefaultCacheConfiguration();
-         baseCacheName = BasicCacheContainer.DEFAULT_CACHE_NAME;
+         baseCacheName = cacheManager.getCacheManagerConfiguration().defaultCacheName().get();
       }
       if (cacheManager.cacheExists(cacheName)) {
          throw log.cacheAlreadyExists(cacheName);
@@ -113,7 +112,7 @@ public class SessionImpl implements Session {
 
          CreateCacheCommand ccc = factory.buildCreateCacheCommand(cacheName, baseCacheName);
          try {
-            rpc.invokeRemotely(null, ccc, rpc.getDefaultRpcOptions(true));
+            rpc.invokeRemotely(null, ccc, rpc.getSyncRpcOptions());
             ccc.init(cacheManager);
             ccc.invoke();
          } catch (Throwable e) {

@@ -12,7 +12,6 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -42,7 +41,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       startCache("c2");
       startCache("cache1");
       startCache("cache2");
-      startCache(CacheContainer.DEFAULT_CACHE_NAME);
+      startCache(getDefaultCacheName());
    }
 
    private void startCache(String c1) {

@@ -86,7 +86,7 @@ public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
 
       XSiteReplicateCommand command = mock(XSiteReplicateCommand.class);
       when(command.performInLocalSite(ArgumentMatchers.any(BackupReceiver.class))).thenReturn(null);
-      when(command.getCacheName()).thenReturn(ByteString.fromString(cachename));
+      when(command.getCacheName()).thenReturn(ByteString.fromString(getDefaultCacheName()));
 
       //check if it is collected
       Reply reply = response -> {
@@ -127,11 +127,11 @@ public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
 
 
    private ObjectName getObjectName() {
-      return getCacheObjectName(jmxDomain, cachename + "(repl_sync)", MBEAN_COMPONENT_NAME);
+      return getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", MBEAN_COMPONENT_NAME);
    }
 
    private PerCacheInboundInvocationHandler getHandler() {
-      return cache(0, cachename).getAdvancedCache().getComponentRegistry().getPerCacheInboundInvocationHandler();
+      return cache(0).getAdvancedCache().getComponentRegistry().getPerCacheInboundInvocationHandler();
    }
 
 }

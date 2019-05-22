@@ -8,8 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -35,7 +33,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "stream.DistributedStreamIteratorWithStoreAsBinaryTest")
 @InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCacheManagersTest {
-   protected final static String CACHE_NAME = "DistributedStreamIteratorWithStoreAsBinaryTest";
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -43,14 +40,14 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
       builderUsed.clustering().cacheMode(cacheMode);
       builderUsed.clustering().hash().numOwners(1);
       builderUsed.memory().storageType(StorageType.BINARY);
-      createClusteredCaches(3, CACHE_NAME, builderUsed);
+      createClusteredCaches(3, builderUsed);
    }
 
    @Test
-   public void testFilterWithStoreAsBinary() throws InterruptedException, ExecutionException, TimeoutException {
-      Cache<MagicKey, String> cache0 = cache(0, CACHE_NAME);
-      Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
-      Cache<MagicKey, String> cache2 = cache(2, CACHE_NAME);
+   public void testFilterWithStoreAsBinary() {
+      Cache<MagicKey, String> cache0 = cache(0);
+      Cache<MagicKey, String> cache1 = cache(1);
+      Cache<MagicKey, String> cache2 = cache(2);
 
       Map<MagicKey, String> originalValues = new HashMap<>();
       originalValues.put(new MagicKey(cache0), "cache0");
@@ -76,10 +73,10 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
    }
 
    @Test
-   public void testFilterWithStoreAsBinaryPartialKeys() throws InterruptedException, ExecutionException, TimeoutException {
-      Cache<MagicKey, String> cache0 = cache(0, CACHE_NAME);
-      Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
-      Cache<MagicKey, String> cache2 = cache(2, CACHE_NAME);
+   public void testFilterWithStoreAsBinaryPartialKeys() {
+      Cache<MagicKey, String> cache0 = cache(0);
+      Cache<MagicKey, String> cache1 = cache(1);
+      Cache<MagicKey, String> cache2 = cache(2);
 
       MagicKey findKey = new MagicKey(cache1);
       Map<MagicKey, String> originalValues = new HashMap<>();

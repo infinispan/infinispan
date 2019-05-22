@@ -66,7 +66,6 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
@@ -1351,8 +1350,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          displayType = DisplayType.SUMMARY
    )
    public String getCacheName() {
-      String name = getName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
-      return name + "(" + getCacheConfiguration().clustering().cacheMode().toString().toLowerCase() + ")";
+      return getName() + "(" + getCacheConfiguration().clustering().cacheMode().toString().toLowerCase() + ")";
    }
 
    /**

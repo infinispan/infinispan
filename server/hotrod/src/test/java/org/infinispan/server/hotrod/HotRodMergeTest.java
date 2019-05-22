@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod;
 
-import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
 import static org.infinispan.server.hotrod.Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertHashTopology20Received;
@@ -146,7 +145,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
          if (resp.topologyResponse == null || (resp.topologyResponse.topologyId < expectedTopologyId)) {
             return false;
          }
-         assertHashTopology20Received(resp.topologyResponse, servers, DEFAULT_CACHE_NAME, expectedTopologyId);
+         assertHashTopology20Received(resp.topologyResponse, servers, getDefaultCacheName(), expectedTopologyId);
          return true;
       });
    }
@@ -154,7 +153,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    private void expectCompleteTopology(HotRodClient c, int expectedTopologyId) {
       TestResponse resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0);
       assertStatus(resp, Success);
-      assertHashTopology20Received(resp.topologyResponse, servers, DEFAULT_CACHE_NAME, expectedTopologyId);
+      assertHashTopology20Received(resp.topologyResponse, servers, getDefaultCacheName(), expectedTopologyId);
    }
 
    private void eventuallyExpectPartialTopology(HotRodClient c, int expectedTopologyId) {
@@ -164,7 +163,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
          if (resp.topologyResponse == null || (resp.topologyResponse.topologyId < expectedTopologyId)) {
             return false;
          }
-         assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers.get(0)), DEFAULT_CACHE_NAME,
+         assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers.get(0)), getDefaultCacheName(),
                                       expectedTopologyId);
          return true;
       });
@@ -173,7 +172,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    private void expectPartialTopology(HotRodClient c, int expectedTopologyId) {
       TestResponse resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0);
       assertStatus(resp, Success);
-      assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers.get(0)), DEFAULT_CACHE_NAME,
+      assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers.get(0)), getDefaultCacheName(),
                                    expectedTopologyId);
    }
 

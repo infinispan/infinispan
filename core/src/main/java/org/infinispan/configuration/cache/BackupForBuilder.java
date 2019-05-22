@@ -5,7 +5,6 @@ import static org.infinispan.configuration.cache.BackupForConfiguration.REMOTE_S
 
 import java.lang.invoke.MethodHandles;
 
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -57,9 +56,11 @@ public class BackupForBuilder extends AbstractConfigurationChildBuilder implemen
 
    /**
     * Use this method if the remote cache that backups in this cache is the default cache.
+    * @deprecated Use a named cache with {@link #remoteCache(String)} instead.
     */
+   @Deprecated
    public BackupForBuilder defaultRemoteCache() {
-      attributes.attribute(REMOTE_CACHE).set(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      attributes.attribute(REMOTE_CACHE).set("");
       return this;
    }
 
