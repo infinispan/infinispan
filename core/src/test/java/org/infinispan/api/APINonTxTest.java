@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.LockedStream;
+import org.infinispan.commons.lambda.NamedLambdas;
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
@@ -789,11 +790,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    @DataProvider(name = "lockedStreamActuallyLocks")
    public Object[][] lockStreamActuallyLocks() {
-      return Arrays.stream(new BiConsumer[] {
+
+      List<BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>> biConsumers = Arrays.asList(
             // Put
-            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> assertEquals("value" + e.getKey(), c.put(e.getKey(), String.valueOf(e.getValue() + "-other"))),
+            NamedLambdas.of("put", (c, e) -> assertEquals("value" + e.getKey(), c.put(e.getKey(), String.valueOf(e.getValue() + "-other")))),
             // Functional Command
-            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> {
+            NamedLambdas.of("functional-command", (c, e) -> {
                FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(c.getAdvancedCache()));
                try {
                   assertEquals("value" + e.getKey(), rwMap.eval(e.getKey(), view -> {
@@ -804,25 +806,26 @@ public class APINonTxTest extends SingleCacheManagerTest {
                } catch (InterruptedException | ExecutionException e1) {
                   throw new AssertionError(e1);
                }
-            },
+            }),
             // Put all
-            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> c.putAll(Collections.singletonMap(e.getKey(), e.getValue() + "-other")),
+            NamedLambdas.of("put-all", (c, e) -> c.putAll(Collections.singletonMap(e.getKey(), e.getValue() + "-other"))),
             // Put Async
-            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> {
+            NamedLambdas.of("put-async", (c, e) -> {
                try {
                   c.putAsync(e.getKey(), e.getValue() + "-other").get(10, TimeUnit.SECONDS);
                } catch (InterruptedException | ExecutionException | TimeoutException e1) {
                   throw new AssertionError(e1);
                }
-            },
+            }),
             // Compute
-            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> c.compute(e.getKey(), (k, v) -> v + "-other"),
+            NamedLambdas.of("compute", (c, e) -> c.compute(e.getKey(), (k, v) -> v + "-other")),
             // Compute if present
-            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> c.computeIfPresent(e.getKey(), (k, v) -> v + "-other"),
+            NamedLambdas.of("compute-if-present", (c, e) -> c.computeIfPresent(e.getKey(), (k, v) -> v + "-other")),
             // Merge
-            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> c.merge(e.getKey(), "-other", (v1, v2) -> "" + v1 + v2)
-      }).flatMap(consumer ->
-         Stream.of(Boolean.TRUE, Boolean.FALSE).map(bool -> new Object[] { consumer, bool })
+            NamedLambdas.of("merge", (c, e) -> c.merge(e.getKey(), "-other", (v1, v2) -> "" + v1 + v2))
+      );
+      return biConsumers.stream().flatMap(consumer ->
+            Stream.of(Boolean.TRUE, Boolean.FALSE).map(bool -> new Object[] { consumer, bool })
       ).toArray(Object[][]::new);
    }
 

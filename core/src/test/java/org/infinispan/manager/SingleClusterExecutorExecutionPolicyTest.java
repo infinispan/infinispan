@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+import org.infinispan.commons.lambda.NamedLambdas;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -41,24 +42,24 @@ public class SingleClusterExecutorExecutionPolicyTest extends MultipleCacheManag
    @DataProvider(name = "params")
    public Object[][] dataProvider() {
       return new Object[][] {
-            { ClusterExecutionPolicy.ALL, 0, 0, 0, (Predicate<String>) v -> true },
-            { ClusterExecutionPolicy.ALL, 2, 1, 1, (Predicate<String>) v -> true },
-            { ClusterExecutionPolicy.DIFFERENT_MACHINE, 1, 0, 1, (Predicate<String>) v -> !v.equals("101") },
-            { ClusterExecutionPolicy.DIFFERENT_MACHINE, 0, 1, 0, (Predicate<String>) v -> !v.equals("010") },
-            { ClusterExecutionPolicy.SAME_MACHINE, 2, 1, 1, (Predicate<String>) v -> v.equals("211") },
-            { ClusterExecutionPolicy.SAME_MACHINE, 0, 0, 1, (Predicate<String>) v -> v.equals("001") },
-            { ClusterExecutionPolicy.DIFFERENT_RACK, 2, 2, 0, (Predicate<String>) v -> !v.startsWith("22") },
-            { ClusterExecutionPolicy.DIFFERENT_RACK, 1, 0, 1, (Predicate<String>) v -> !v.startsWith("10") },
-            { ClusterExecutionPolicy.DIFFERENT_RACK, 0, 1, 0, (Predicate<String>) v -> !v.startsWith("01") },
-            { ClusterExecutionPolicy.SAME_RACK, 2, 1, 1, (Predicate<String>) v -> v.startsWith("21") },
-            { ClusterExecutionPolicy.SAME_RACK, 1, 0, 1, (Predicate<String>) v -> v.startsWith("10") },
-            { ClusterExecutionPolicy.SAME_RACK, 0, 2, 0, (Predicate<String>) v -> v.startsWith("02") },
-            { ClusterExecutionPolicy.DIFFERENT_SITE, 2, 0, 0, (Predicate<String>) v -> !v.startsWith("2") },
-            { ClusterExecutionPolicy.DIFFERENT_SITE, 1, 0, 1, (Predicate<String>) v -> !v.startsWith("1") },
-            { ClusterExecutionPolicy.DIFFERENT_SITE, 0, 1, 0, (Predicate<String>) v -> !v.startsWith("0") },
-            { ClusterExecutionPolicy.SAME_SITE, 2, 0, 1, (Predicate<String>) v -> v.startsWith("2") },
-            { ClusterExecutionPolicy.SAME_SITE, 1, 0, 0, (Predicate<String>) v -> v.startsWith("1") },
-            { ClusterExecutionPolicy.SAME_SITE, 0, 1, 0, (Predicate<String>) v -> v.startsWith("0") },
+            { ClusterExecutionPolicy.ALL, 0, 0, 0, NamedLambdas.of("all_0", (Predicate<String>) v -> true) },
+            { ClusterExecutionPolicy.ALL, 2, 1, 1, NamedLambdas.of("all_2", (Predicate<String>) v -> true) },
+            { ClusterExecutionPolicy.DIFFERENT_MACHINE, 1, 0, 1, NamedLambdas.of("diff_machine_1", (Predicate<String>) v -> !v.equals("101")) },
+            { ClusterExecutionPolicy.DIFFERENT_MACHINE, 0, 1, 0, NamedLambdas.of("diff_machine_0", (Predicate<String>) v -> !v.equals("010")) },
+            { ClusterExecutionPolicy.SAME_MACHINE, 2, 1, 1, NamedLambdas.of("same_machine_2", (Predicate<String>) v -> v.equals("211")) },
+            { ClusterExecutionPolicy.SAME_MACHINE, 0, 0, 1, NamedLambdas.of("same_machine_0", (Predicate<String>) v -> v.equals("001")) },
+            { ClusterExecutionPolicy.DIFFERENT_RACK, 2, 2, 0, NamedLambdas.of("diff_rack_2", (Predicate<String>) v -> !v.startsWith("22")) },
+            { ClusterExecutionPolicy.DIFFERENT_RACK, 1, 0, 1, NamedLambdas.of("diff_rack_1", (Predicate<String>) v -> !v.startsWith("10")) },
+            { ClusterExecutionPolicy.DIFFERENT_RACK, 0, 1, 0, NamedLambdas.of("diff_rack_0", (Predicate<String>) v -> !v.startsWith("01")) },
+            { ClusterExecutionPolicy.SAME_RACK, 2, 1, 1, NamedLambdas.of("same_rack_2", (Predicate<String>) v -> v.startsWith("21")) },
+            { ClusterExecutionPolicy.SAME_RACK, 1, 0, 1, NamedLambdas.of("same_rack_1", (Predicate<String>) v -> v.startsWith("10")) },
+            { ClusterExecutionPolicy.SAME_RACK, 0, 2, 0, NamedLambdas.of("same_rack_0", (Predicate<String>) v -> v.startsWith("02")) },
+            { ClusterExecutionPolicy.DIFFERENT_SITE, 2, 0, 0, NamedLambdas.of("diff_site_2", (Predicate<String>) v -> !v.startsWith("2")) },
+            { ClusterExecutionPolicy.DIFFERENT_SITE, 1, 0, 1, NamedLambdas.of("diff_site_1", (Predicate<String>) v -> !v.startsWith("1")) },
+            { ClusterExecutionPolicy.DIFFERENT_SITE, 0, 1, 0, NamedLambdas.of("diff_site_0", (Predicate<String>) v -> !v.startsWith("0")) },
+            { ClusterExecutionPolicy.SAME_SITE, 2, 0, 1, NamedLambdas.of("same_site_2", (Predicate<String>) v -> v.startsWith("2")) },
+            { ClusterExecutionPolicy.SAME_SITE, 1, 0, 0, NamedLambdas.of("same_site_1", (Predicate<String>) v -> v.startsWith("1")) },
+            { ClusterExecutionPolicy.SAME_SITE, 0, 1, 0, NamedLambdas.of("same_site_0", (Predicate<String>) v -> v.startsWith("0")) },
       };
    }
 
