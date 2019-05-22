@@ -614,10 +614,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             for (Property storeEntry : cache.get(ModelKeys.STORE).asPropertyList()) {
                 ModelNode store = storeEntry.getValue();
                 writer.writeStartElement(Element.STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(storeEntry.getName());
-                StoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeRequired(writer, Attribute.CLASS, store, ModelKeys.CLASS);
                 this.writeStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);
@@ -630,10 +626,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             for (Property fileStoreEntry : cache.get(ModelKeys.FILE_STORE).asPropertyList()) {
                 ModelNode store = fileStoreEntry.getValue();
                 writer.writeStartElement(Element.FILE_STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(fileStoreEntry.getName());
-                FileStoreResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.MAX_ENTRIES, store, ModelKeys.MAX_ENTRIES);
                 this.writeOptional(writer, Attribute.RELATIVE_TO, store, ModelKeys.RELATIVE_TO);
                 this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
@@ -648,10 +640,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             for (Property stringKeyedJDBCStoreEntry : cache.get(ModelKeys.STRING_KEYED_JDBC_STORE).asPropertyList()) {
                 ModelNode store = stringKeyedJDBCStoreEntry.getValue();
                 writer.writeStartElement(Element.STRING_KEYED_JDBC_STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(stringKeyedJDBCStoreEntry.getName());
-                StringKeyedJDBCStoreResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeJdbcStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);
                 this.writeStoreProperties(writer, store);
@@ -664,10 +652,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             for (Property rocksDbStoreEntry : cache.get(ModelKeys.ROCKSDB_STORE).asPropertyList()) {
                 ModelNode store = rocksDbStoreEntry.getValue();
                 writer.writeStartElement(Element.ROCKSDB_STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(rocksDbStoreEntry.getName());
-                RocksDBStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.RELATIVE_TO, store, ModelKeys.RELATIVE_TO);
                 this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
                 this.writeOptional(writer, Attribute.BLOCK_SIZE, store, ModelKeys.BLOCK_SIZE);
@@ -686,10 +670,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             for (Property remoteStoreEntry : cache.get(ModelKeys.REMOTE_STORE).asPropertyList()) {
                 ModelNode store = remoteStoreEntry.getValue();
                 writer.writeStartElement(Element.REMOTE_STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(remoteStoreEntry.getName());
-                RemoteStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.CACHE, store, ModelKeys.CACHE);
                 this.writeOptional(writer, Attribute.HOTROD_WRAPPING, store, ModelKeys.HOTROD_WRAPPING);
                 this.writeOptional(writer, Attribute.RAW_VALUES, store, ModelKeys.RAW_VALUES);
@@ -746,10 +726,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             for (Property restStoreEntry : cache.get(ModelKeys.REST_STORE).asPropertyList()) {
                 ModelNode store = restStoreEntry.getValue();
                 writer.writeStartElement(Element.REST_STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(restStoreEntry.getName());
-                RestStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.APPEND_CACHE_NAME_TO_PATH, store, ModelKeys.APPEND_CACHE_NAME_TO_PATH);
                 this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
 
@@ -783,11 +759,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
           for (Property softIndexEntry : cache.get(ModelKeys.SOFT_INDEX_FILE_STORE).asPropertyList()) {
              ModelNode store = softIndexEntry.getValue();
              writer.writeStartElement(Element.SOFT_INDEX_FILE_STORE.getLocalName());
-
-             ModelNode name = new ModelNode();
-             name.get(ModelKeys.NAME).set(softIndexEntry.getName());
-             SoftIndexConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
-
              this.writeOptional(writer, Attribute.COMPACTION_THRESHOLD, store, ModelKeys.COMPACTION_THRESHOLD);
              this.writeOptional(writer, Attribute.OPEN_FILES_LIMIT, store, ModelKeys.OPEN_FILES_LIMIT);
              this.writeStoreAttributes(writer, store);
@@ -876,6 +847,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
     }
 
     private void writeStoreAttributes(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
+        this.writeOptional(writer, Attribute.NAME, store, ModelKeys.NAME);
         this.writeOptional(writer, Attribute.SHARED, store, ModelKeys.SHARED);
         this.writeOptional(writer, Attribute.PRELOAD, store, ModelKeys.PRELOAD);
         this.writeOptional(writer, Attribute.FETCH_STATE, store, ModelKeys.FETCH_STATE);
