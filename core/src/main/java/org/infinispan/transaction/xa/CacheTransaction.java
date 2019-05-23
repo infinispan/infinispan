@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.InvocationContext;
@@ -67,14 +66,6 @@ public interface CacheTransaction {
 
    int getTopologyId();
 
-   /**
-    * testing purpose only!
-    *
-    * @deprecated Since 9.3, please use {@link #forEachBackupLock(Consumer)}
-    */
-   @Deprecated
-   Set<Object> getBackupLockedKeys();
-
    void addBackupLockForKey(Object key);
 
    /**
@@ -82,56 +73,9 @@ public interface CacheTransaction {
     */
    void notifyOnTransactionFinished();
 
-   /**
-    * Checks if this transaction holds a lock on the given key and then waits until the transaction completes or until
-    * the timeout expires and returns <code>true</code> if the transaction is complete or <code>false</code> otherwise.
-    * If the key is not locked or if the transaction is already completed it returns <code>true</code> immediately.
-    * <p/>
-    * This method is subject to spurious returns in a way similar to {@link java.lang.Object#wait()}. It can sometimes return
-    * before the specified time has elapsed and without guaranteeing that this transaction is complete. The caller is
-    * responsible to call the method again if transaction completion was not reached and the time budget was not spent.
-    *
-    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#checkPendingAndLockKey(InvocationContext, Object, long)
-    */
-   @Deprecated
-   boolean waitForLockRelease(long lockAcquisitionTimeout) throws InterruptedException;
-
-   @Deprecated
-   boolean containsLockOrBackupLock(Object key);
-
-   @Deprecated
-   Object findAnyLockedOrBackupLocked(Collection<Object> keys);
-
-   @Deprecated
-   boolean areLocksReleased();
-
    EntryVersionsMap getUpdatedEntryVersions();
 
    void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions);
-
-   /**
-    * @deprecated since 9.0
-    */
-   @Deprecated
-   default void putLookedUpRemoteVersion(Object key, EntryVersion version) {}
-
-   /**
-    * @deprecated since 9.0
-    */
-   @Deprecated
-   default EntryVersion getLookedUpRemoteVersion(Object key) { return null; }
-
-   /**
-    * @deprecated  since 9.1 Use {@link MVCCEntry#isRead()} instead
-    */
-   @Deprecated
-   default boolean keyRead(Object key) { return false; }
-
-   /**
-    * @deprecated since 9.1 Use {@link MVCCEntry#setRead()} instead
-    */
-   @Deprecated
-   default void addReadKey(Object key) {}
 
    boolean isMarkedForRollback();
 
@@ -144,16 +88,6 @@ public interface CacheTransaction {
     * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
     */
    void addVersionRead(Object key, EntryVersion version);
-
-   /**
-    * Sets the version read fr this key, replacing the old version if it exists, i.e each invocation updates the version
-    * of the key. This method is used when a remote get is performed for the key.
-    * <p/>
-    * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
-    * @deprecated since 9.0
-    */
-   @Deprecated
-   default void replaceVersionRead(Object key, EntryVersion version) { addVersionRead(key, version);}
 
    /**
     * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.

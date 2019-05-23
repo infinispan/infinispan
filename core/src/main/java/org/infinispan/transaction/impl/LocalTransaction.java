@@ -15,7 +15,6 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.remoting.transport.Address;
@@ -151,24 +150,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
             ", topologyId=" + topologyId +
             ", stateTransferFlag=" + getStateTransferFlag() +
             "} " + super.toString();
-   }
-
-   @Override
-   public void addReadKey(Object key) {
-      CacheEntry entry = lookupEntry(key);
-      if (entry instanceof RepeatableReadEntry) {
-         ((RepeatableReadEntry) entry).setRead();
-      }
-   }
-
-   @Override
-   public boolean keyRead(Object key) {
-      CacheEntry entry = lookupEntry(key);
-      if (entry instanceof RepeatableReadEntry) {
-         return ((RepeatableReadEntry) entry).isRead();
-      } else {
-         return false;
-      }
    }
 
    public void setStateTransferFlag(Flag stateTransferFlag) {
