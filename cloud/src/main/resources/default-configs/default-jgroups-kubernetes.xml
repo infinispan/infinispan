@@ -46,7 +46,10 @@
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:5000}"
    />
-   <MFC max_credits="2m" 
+   <UFC max_credits="2m"
+        min_threshold="0.40"
+   />
+   <MFC max_credits="2m"
         min_threshold="0.40"
    />
    <FRAG3/>

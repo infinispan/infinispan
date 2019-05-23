@@ -23,6 +23,7 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
+                <protocol type="UFC" />
                 <protocol type="MFC" />
                 <?AUTH?>
             </stack>
@@ -43,6 +44,7 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
+                <protocol type="UFC" />
                 <protocol type="MFC" />
                 <protocol type="FRAG3" />
             </stack>
@@ -63,6 +65,7 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
+                <protocol type="UFC" />
                 <protocol type="MFC" />
                 <protocol type="FRAG3" />
             </stack>
@@ -83,6 +86,7 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
+                <protocol type="UFC" />
                 <protocol type="MFC" />
                 <protocol type="FRAG3" />
             </stack>
@@ -101,6 +105,7 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
+                <protocol type="UFC" />
                 <protocol type="MFC" />
                 <protocol type="FRAG3" />
             </stack>
@@ -121,6 +126,7 @@
                 <protocol type="UNICAST3"/>
                 <protocol type="pbcast.STABLE"/>
                 <protocol type="pbcast.GMS"/>
+                <protocol type="UFC" />
                 <protocol type="MFC"/>
                 <protocol type="FRAG3"/>
             </stack>
