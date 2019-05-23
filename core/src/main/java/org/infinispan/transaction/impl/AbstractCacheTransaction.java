@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -27,7 +26,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -199,11 +197,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public final boolean waitForLockRelease(long lockAcquisitionTimeout) throws InterruptedException {
-      return CompletableFutures.await(txCompleted, lockAcquisitionTimeout, TimeUnit.MILLISECONDS);
-   }
-
-   @Override
    public int getTopologyId() {
       return topologyId;
    }
@@ -229,8 +222,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       return keys == null ? Collections.emptySet() : keys;
    }
 
-   @Override
    public synchronized Set<Object> getBackupLockedKeys() {
+      //Testing and toString only!
       return backupKeyLocks == null ? Collections.emptySet() : new HashSet<>(backupKeyLocks.keySet());
    }
 
@@ -238,27 +231,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    public void clearLockedKeys() {
       if (trace) log.tracef("Clearing locked keys: %s", toStr(lockedKeys.get()));
       lockedKeys.set(null);
-   }
-
-   @Override
-   public boolean containsLockOrBackupLock(Object key) {
-      return getLockedKeys().contains(key) || getBackupLockedKeys().contains(key);
-   }
-
-   @Override
-   public Object findAnyLockedOrBackupLocked(Collection<Object> keys) {
-      Set<Object> lockedKeysCopy = getLockedKeys();
-      for (Object key : keys) {
-         if (lockedKeysCopy.contains(key) || containsBackupLock(key)) {
-            return key;
-         }
-      }
-      return null;
-   }
-
-   @Override
-   public boolean areLocksReleased() {
-      return txCompleted.isDone();
    }
 
    public Set<Object> getAffectedKeys() {
@@ -399,10 +371,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    final void internalSetStateTransferFlag(Flag stateTransferFlag) {
       this.stateTransferFlag = stateTransferFlag;
-   }
-
-   private synchronized boolean containsBackupLock(Object key) {
-      return backupKeyLocks != null && backupKeyLocks.containsKey(key);
    }
 
    private synchronized CompletableFuture<Void> findBackupLock(Object key) {
