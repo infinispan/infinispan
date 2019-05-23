@@ -73,16 +73,6 @@ public class JdbcStringBasedStoreFunctionalTest extends BaseStoreFunctionalTest 
    }
 
    @Test
-   public void testRestoreAtomicMap() throws Exception {
-      super.testRestoreAtomicMap(this.getClass().getMethod("testRestoreAtomicMap"));
-   }
-
-   @Test
-   public void testRestoreTransactionalAtomicMap() throws Exception {
-      super.testRestoreTransactionalAtomicMap(this.getClass().getMethod("testRestoreTransactionalAtomicMap"));
-   }
-
-   @Test
    public void testStoreByteArrays() throws Exception {
       super.testStoreByteArrays(this.getClass().getMethod("testStoreByteArrays"));
    }

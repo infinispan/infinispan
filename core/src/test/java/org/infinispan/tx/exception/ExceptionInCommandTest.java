@@ -2,8 +2,6 @@ package org.infinispan.tx.exception;
 
 import javax.transaction.Status;
 
-import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.DeltaAware;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -23,15 +21,8 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
 
    public void testPutThrowsLocalException() throws Exception {
       tm(0).begin();
-
-      Delta d = new Delta() {
-         public DeltaAware merge(DeltaAware d) {
-            throw new RuntimeException("Induced!");
-         }
-      };
-
       try {
-         cache(0).put("k", d);
+         cache(0).computeIfAbsent("k", (k) -> new RuntimeException());
          assert false;
       } catch (RuntimeException e) {
          assert tx(0).getStatus() == Status.STATUS_MARKED_ROLLBACK;

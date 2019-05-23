@@ -16,7 +16,6 @@ import java.util.function.Function;
 
 import javax.transaction.xa.Xid;
 
-import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
@@ -56,7 +55,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -449,18 +447,6 @@ public interface CommandsFactory {
     */
    TxCompletionNotificationCommand buildTxCompletionNotificationCommand(long internalId);
 
-
-   /**
-    * Builds a ApplyDeltaCommand used for applying Delta objects to DeltaAware containers stored in cache
-    *
-    * @return ApplyDeltaCommand instance
-    * @see ApplyDeltaCommand
-    * @deprecated since 9.1
-    */
-   @Deprecated
-   default ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
-      throw new UnsupportedOperationException();
-   }
 
    /**
     * Same as {@code buildCreateCacheCommand(cacheName, cacheConfigurationName, false, 0)}.

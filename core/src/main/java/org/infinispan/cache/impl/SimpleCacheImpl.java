@@ -34,7 +34,6 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.Version;
-import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -1263,11 +1262,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public boolean lock(Collection<? extends K> keys) {
       throw log.lockOperationsNotSupported();
-   }
-
-   @Override
-   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
-      throw new UnsupportedOperationException();
    }
 
    @Override

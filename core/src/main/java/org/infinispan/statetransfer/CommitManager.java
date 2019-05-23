@@ -7,18 +7,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -128,21 +126,10 @@ public class CommitManager {
    }
 
    private void commitEntry(CacheEntry entry, int segment, InvocationContext ctx) {
-      if (!entry.isEvicted() && !entry.isRemoved() && entry.getValue() instanceof MergeOnStore) {
-         PersistenceUtil.loadAndComputeInDataContainer(dataContainer, segment, persistenceManager, entry.getKey(), ctx,
-               timeService, (k, oldEntry, factory) -> {
-            Object newValue = ((MergeOnStore) entry.getValue()).merge(oldEntry == null ? null : oldEntry.getValue());
-            if (newValue == null) {
-               return null;
-            }
-            return factory.create(k, newValue, entry.getMetadata());
-         });
+      if (entry instanceof ReadCommittedEntry) {
+         ((ReadCommittedEntry) entry).commit(segment, dataContainer);
       } else {
-         if (entry instanceof ReadCommittedEntry) {
-            ((ReadCommittedEntry) entry).commit(segment, dataContainer);
-         } else {
-            entry.commit(dataContainer);
-         }
+         entry.commit(dataContainer);
       }
    }
 

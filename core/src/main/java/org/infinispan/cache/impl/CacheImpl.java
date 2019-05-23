@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -37,15 +36,11 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.Version;
-import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.DeltaAware;
-import org.infinispan.atomic.impl.ApplyDelta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
-import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.functions.MergeFunction;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -1081,30 +1076,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
-      if (locksToAcquire == null || locksToAcquire.length == 0) {
-         throw new IllegalArgumentException("Cannot lock empty list of keys");
-      } else if (locksToAcquire.length != 1) {
-         throw new IllegalArgumentException("Only one lock is permitted.");
-      } else if (!Objects.equals(locksToAcquire[0], deltaAwareValueKey)) {
-         throw new IllegalArgumentException("The delta aware key and locked key must match.");
-      }
-      assertKeyNotNull(deltaAwareValueKey);
-      InvocationContext ctx = invocationContextFactory.createInvocationContext(true, 1);
-      ReadWriteKeyValueCommand<K, Object, Object, Object> command = createApplyDelta(deltaAwareValueKey, delta, FlagBitSets.IGNORE_RETURN_VALUES);
-      checkLockOwner(ctx, command);
-      invoker.invoke(ctx, command);
-   }
-
-   private ReadWriteKeyValueCommand<K, Object, Object, Object> createApplyDelta(K deltaAwareValueKey, Delta delta, long explicitFlags) {
-      ReadWriteKeyValueCommand<K, Object, Object, Object> command = commandsFactory.buildReadWriteKeyValueCommand(
-            deltaAwareValueKey, delta, new ApplyDelta<>(marshaller), keyPartitioner.getSegment(deltaAwareValueKey),
-            Params.create(), getKeyDataConversion(), getValueDataConversion());
-      command.setFlagsBitSet(explicitFlags);
-      return command;
-   }
-
-   @Override
    @ManagedOperation(
          description = "Starts the cache.",
          displayName = "Starts cache."
@@ -1422,16 +1393,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final V put(K key, V value, Metadata metadata, long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyValueNotNull(key, value);
-      DataWriteCommand command;
-      // CACHE_MODE_LOCAL is used for example when preloading - the entry has empty changeset (unless it's better
-      // defined) and that wouldn't store the value properly.
-      if (value instanceof Delta) {
-         command = createApplyDelta(key, (Delta) value, explicitFlags);
-      } else if (value instanceof DeltaAware && (explicitFlags & FlagBitSets.CACHE_MODE_LOCAL) == 0) {
-         command = createApplyDelta(key, ((DeltaAware) value).delta(), explicitFlags);
-      } else {
-         command = createPutCommand(key, value, metadata, explicitFlags);
-      }
+      DataWriteCommand command = createPutCommand(key, value, metadata, explicitFlags);
       return executeCommandAndCommitIfNeeded(contextBuilder, command, 1);
    }
 
@@ -1465,14 +1427,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final V putIfAbsent(K key, V value, Metadata metadata, long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyValueNotNull(key, value);
-      DataWriteCommand command;
-      if (value instanceof Delta) {
-         command = createApplyDelta(key, (Delta) value, explicitFlags);
-      } else if (value instanceof DeltaAware && (explicitFlags & FlagBitSets.CACHE_MODE_LOCAL) == 0) {
-         command = createApplyDelta(key, ((DeltaAware) value).delta(), explicitFlags);
-      } else {
-         command = createPutIfAbsentCommand(key, value, metadata, explicitFlags);
-      }
+      DataWriteCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags);
       return executeCommandAndCommitIfNeeded(contextBuilder, command, 1);
    }
 
