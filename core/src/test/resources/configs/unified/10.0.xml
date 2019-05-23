@@ -51,6 +51,7 @@
          <pbcast.GMS print_local_addr="false"
                      join_timeout="${jgroups.join_timeout:2000}"
                      xmlns="urn:org:jgroups"/>
+         <UFC max_credits="2M" min_threshold="0.40" xmlns="urn:org:jgroups"/>
          <MFC max_credits="2M" min_threshold="0.40" xmlns="urn:org:jgroups"/>
          <FRAG3 xmlns="urn:org:jgroups"/>
       </stack>
