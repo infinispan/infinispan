@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -98,7 +99,7 @@ class TestCluster {
          private final Builder builder;
          private ConfigurationBuilder configurationBuilder;
          private String name;
-         private String protocolVersion = DEFAULT_PROTOCOL_VERSION.toString();
+         private ProtocolVersion protocolVersion = DEFAULT_PROTOCOL_VERSION;
          private Integer remotePort;
 
          CacheDefinitionBuilder(Builder builder) {
@@ -115,8 +116,8 @@ class TestCluster {
             return this;
          }
 
-         CacheDefinitionBuilder remoteProtocolVersion(String remoteVersion) {
-            this.protocolVersion = remoteVersion;
+         CacheDefinitionBuilder remoteProtocolVersion(ProtocolVersion version) {
+            this.protocolVersion = version;
             return this;
          }
 

@@ -17,8 +17,8 @@ public class HotRodMigratorHelper {
    static final ProtocolVersion ITERATOR_MINIMUM_VERSION = ProtocolVersion.PROTOCOL_VERSION_25;
    static final int DEFAULT_READ_BATCH_SIZE = 10000;
 
-   static boolean supportsIteration(String protocolVersion) {
-      return protocolVersion == null || ProtocolVersion.parseVersion(protocolVersion).compareTo(ITERATOR_MINIMUM_VERSION) >= 0;
+   static boolean supportsIteration(ProtocolVersion protocolVersion) {
+      return protocolVersion == null || protocolVersion.compareTo(ITERATOR_MINIMUM_VERSION) >= 0;
    }
 
    static List<Integer> range(int end) {

@@ -387,11 +387,9 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             .asyncExecutorFactory().factoryClass(configuration.asyncExecutorFactory().factory().getClass())
             .socketTimeout(socketTimeout.intValue())
             .tcpNoDelay(configuration.tcpNoDelay())
-            .valueSizeEstimate(configuration.valueSizeEstimate());
-      if (configuration.protocolVersion() != null)
-         builder.protocolVersion(configuration.protocolVersion());
-      else
-         builder.version(ProtocolVersion.DEFAULT_PROTOCOL_VERSION);
+            .valueSizeEstimate(configuration.valueSizeEstimate())
+            .version(configuration.protocol() == null ? ProtocolVersion.DEFAULT_PROTOCOL_VERSION : configuration.protocol());
+
       if (configuration.transportFactory() != null)
          builder.transportFactory(configuration.transportFactory());
       SslConfiguration ssl = configuration.security().ssl();
