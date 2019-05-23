@@ -15,6 +15,7 @@ import org.infinispan.commons.logging.LogFactory;
  * @author Galder Zamarreño
  */
 public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ExecutorService> {
+   public static final int DEFAULT_KEEP_ALIVE_MILLIS = 60000;
 
    private static final Log log = LogFactory.getLog(BlockingThreadPoolExecutorFactory.class);
 
@@ -90,7 +91,7 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
    public static BlockingThreadPoolExecutorFactory create(int maxThreads, int queueSize) {
       int coreThreads = queueSize == 0 ? 1 : maxThreads;
       return new BlockingThreadPoolExecutorFactory(
-            maxThreads, coreThreads, queueSize, 60000);
+         maxThreads, coreThreads, queueSize, DEFAULT_KEEP_ALIVE_MILLIS);
    }
 
 }
