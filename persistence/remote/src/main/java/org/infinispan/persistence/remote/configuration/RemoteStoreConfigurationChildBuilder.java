@@ -67,13 +67,6 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
 
    /**
     * This property defines the protocol version that this client should use. Defaults to {@link ProtocolVersion#DEFAULT_PROTOCOL_VERSION}
-    * @deprecated Use {@link #protocolVersion(ProtocolVersion)} instead
-    */
-   @Deprecated
-   RemoteStoreConfigurationBuilder protocolVersion(String protocolVersion);
-
-   /**
-    * This property defines the protocol version that this client should use. Defaults to {@link ProtocolVersion#DEFAULT_PROTOCOL_VERSION}
     */
    RemoteStoreConfigurationBuilder protocolVersion(ProtocolVersion protocolVersion);
 

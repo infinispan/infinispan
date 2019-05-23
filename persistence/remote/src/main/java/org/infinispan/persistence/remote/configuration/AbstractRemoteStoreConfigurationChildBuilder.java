@@ -74,11 +74,6 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    }
 
    @Override
-   public RemoteStoreConfigurationBuilder protocolVersion(String protocolVersion) {
-      return builder.protocolVersion(protocolVersion);
-   }
-
-   @Override
    public RemoteStoreConfigurationBuilder protocolVersion(ProtocolVersion protocolVersion) {
       return builder.protocolVersion(protocolVersion);
    }

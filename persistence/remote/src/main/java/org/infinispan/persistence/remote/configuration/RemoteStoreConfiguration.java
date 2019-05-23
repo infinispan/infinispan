@@ -139,11 +139,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       return marshaller.get();
    }
 
-   @Deprecated
-   public String protocolVersion() {
-      return protocolVersion.get().toString();
-   }
-
    public ProtocolVersion protocol() {
       return protocolVersion.get();
    }

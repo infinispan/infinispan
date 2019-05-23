@@ -821,7 +821,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(5000, remoteStoreConfiguration.connectionTimeout());
       assertFalse(remoteStoreConfiguration.hotRodWrapping());
       assertEquals("org.infinispan.commons.marshall.jboss.GenericJBossMarshaller", remoteStoreConfiguration.marshaller());
-      assertEquals("2.0", remoteStoreConfiguration.protocolVersion());
+      assertEquals("2.0", remoteStoreConfiguration.protocol().toString());
       assertTrue(remoteStoreConfiguration.rawValues());
       assertEquals("test", remoteStoreConfiguration.remoteCacheName());
       assertEquals(12500, remoteStoreConfiguration.socketTimeout());

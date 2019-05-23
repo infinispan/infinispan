@@ -1,6 +1,5 @@
 package org.infinispan.persistence.remote.upgrade;
 
-import static org.infinispan.client.hotrod.ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.anyInt;
@@ -13,6 +12,7 @@ import static org.testng.AssertJUnit.assertNull;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -32,8 +32,8 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    protected static final String OLD_CACHE = "old-cache";
    protected static final String TEST_CACHE = HotRodUpgradeSynchronizerTest.class.getName();
 
-   protected static final String OLD_PROTOCOL_VERSION = "2.0";
-   protected static final String NEW_PROTOCOL_VERSION = DEFAULT_PROTOCOL_VERSION.toString();
+   protected static final ProtocolVersion OLD_PROTOCOL_VERSION = ProtocolVersion.PROTOCOL_VERSION_20;
+   protected static final ProtocolVersion NEW_PROTOCOL_VERSION = ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
 
    @BeforeMethod
    public void setup() throws Exception {
