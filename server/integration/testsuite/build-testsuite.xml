@@ -17,12 +17,17 @@
     <property name="trace" value="none"/>
     <property name="new.server.schema.version" value="${new.server.schema.version}"/>
     <property name="hotrod.protocol.version" value="none"/>
+    <java jvm="${server.jvm}/bin/java" fork="true" outputproperty="jvm.banner" classname="not.needed">
+        <jvmarg value="-version"/>
+    </java>
     <condition property="jdk.vendor.qualifier" value="-ibm" else="">
-        <contains string="${java.vendor}" substring="IBM" />
+        <matches string="${jvm.banner}" pattern=".*IBM J9.*" />
     </condition>
+    <echo message="Vendor qualifier: ${jdk.vendor.qualifier}"/>
     <condition property="isJigsaw">
-        <matches string="${java.version}" pattern="(1.)?(9|1[0-9])" />
+        <matches string="${jvm.banner}" pattern=".* version &quot;(1.)?(9|1[0-9]).*" />
     </condition>
+    <echo message="Is Jigsaw ? ${isJigsaw}"/>
 
     <filterset id="commonFilters" begintoken="${" endtoken="}">
         <filter token="rocksdb.compression" value="${rocksdb.compression}" />
@@ -511,7 +516,7 @@
             <echo message="Updating vault '@{keystore}' entry '@{attribute}'..."/>
             <dirname property="vault.dir" file="@{keystore}"/>
             <mkdir dir="${vault.dir}" />
-            <java jar="${server1.dist}/jboss-modules.jar" fork="true" failonerror="true">
+            <java jar="${server1.dist}/jboss-modules.jar" fork="true" failonerror="true" jvm="${server.jvm}/bin/java">
                 <jvmarg value="--add-modules=java.se" if:set="isJigsaw"/>
                 <jvmarg value="-Djboss.modules.settings.xml.url=${jboss.modules.settings.xml.url}"/>
                 <arg value="-mp"/>
