@@ -4,7 +4,6 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
@@ -19,7 +18,6 @@ public class DeployedCacheStoreMetadata {
 
    private String loaderWriterInstanceName;
    private Object loaderWriterRawInstance;
-   private Class<? extends StoreConfiguration> storeConfigurationClass;
    private Class<? extends StoreConfigurationBuilder> storeBuilderClass;
 
    private DeployedCacheStoreMetadata(Object loaderWriterRawInstance) {
@@ -39,7 +37,7 @@ public class DeployedCacheStoreMetadata {
          if (configuredBy.value() == null) {
             throw new IllegalArgumentException("Cache Store's configuration class is incorrect");
          }
-         this.storeConfigurationClass = (Class<? extends StoreConfiguration>) configuredBy.value();
+         Class<? extends StoreConfiguration> storeConfigurationClass = (Class<? extends StoreConfiguration>) configuredBy.value();
          BuiltBy builtBy = storeConfigurationClass.getAnnotation(BuiltBy.class);
          if (builtBy != null) {
             if (builtBy.value() == null) {
@@ -50,7 +48,6 @@ public class DeployedCacheStoreMetadata {
             this.storeBuilderClass = CustomStoreConfigurationBuilder.class;
          }
       } else {
-         this.storeConfigurationClass = CustomStoreConfiguration.class;
          this.storeBuilderClass = CustomStoreConfigurationBuilder.class;
       }
    }
@@ -63,10 +60,6 @@ public class DeployedCacheStoreMetadata {
       return loaderWriterRawInstance;
    }
 
-   Class<? extends StoreConfiguration> getStoreConfigurationClass() {
-      return storeConfigurationClass;
-   }
-
    Class<? extends StoreConfigurationBuilder> getStoreBuilderClass() {
       return storeBuilderClass;
    }
@@ -76,7 +69,6 @@ public class DeployedCacheStoreMetadata {
       return "DeployedCacheStoreMetadata{" +
             "loaderWriterInstanceName='" + loaderWriterInstanceName + '\'' +
             ", loaderWriterRawInstance=" + loaderWriterRawInstance +
-            ", storeConfigurationClass=" + storeConfigurationClass +
             ", storeBuilderClass=" + storeBuilderClass +
             '}';
    }
