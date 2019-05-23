@@ -3,17 +3,15 @@ package org.infinispan.server.jgroups.security;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
 
-import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
@@ -44,7 +42,7 @@ public class SaslClientCallbackHandler implements CallbackHandler {
    }
 
    @Override
-   public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+   public void handle(Callback[] callbacks) {
       for (Callback callback : callbacks) {
          if (callback instanceof PasswordCallback) {
             ((PasswordCallback) callback).setPassword(credential.toCharArray());
@@ -60,15 +58,15 @@ public class SaslClientCallbackHandler implements CallbackHandler {
                   password = ClearPassword.createRaw(ALGORITHM_CLEAR, credential.toCharArray());
                   break;
                case ALGORITHM_DIGEST_MD5:
-                  byte[] decodedDigest = CodePointIterator.ofUtf8Bytes(credential.getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
+                  byte[] decodedDigest = ByteIterator.ofBytes(credential.getBytes(StandardCharsets.UTF_8)).asUtf8String().hexDecode().drain();
                   password = DigestPassword.createRaw(ALGORITHM_DIGEST_MD5, name, realm, decodedDigest);
                   break;
                default:
                   continue;
             }
             cb.setCredential(cb.getCredentialType().cast(new PasswordCredential(password)));
+
          }
       }
    }
-
 }

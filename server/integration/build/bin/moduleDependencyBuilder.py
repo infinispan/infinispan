@@ -1,4 +1,4 @@
-#!/usr/bin/python
+f#!/usr/bin/python
 
 import sys
 import xml.etree.ElementTree as ET
@@ -8,7 +8,7 @@ class Server:
 		doc = ET.parse(path)
 		self.path = path
 		self.extensions = []
-		extensions = doc.findall('{0}extensions/{0}extension'.format("{urn:jboss:domain:8.0}"))
+		extensions = doc.findall('{0}extensions/{0}extension'.format("{urn:jboss:domain:10.0}"))
 		for extension in extensions:
 			self.extensions.append(extension.get('module'))
 
@@ -33,7 +33,7 @@ class Module:
 		self.path = path
 		self.name = root.get('name')
 		self.dependencies = []
-		dependencies = doc.findall('{0}dependencies/{0}module'.format("{urn:jboss:module:1.5}"))
+		dependencies = doc.findall('{0}dependencies/{0}module'.format("{urn:jboss:module:1.8}"))
 		for dependency in dependencies:
 			self.dependencies.append(dependency.get('name'))
 
