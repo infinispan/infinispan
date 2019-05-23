@@ -505,8 +505,8 @@ The Infinispan XML configuration also allows you to embed JGroups configurations
       <RSVP />
       <pbcast.STABLE stability_delay="200" desired_avg_gossip="2000" max_bytes="1M" />
       <pbcast.GMS print_local_addr="false" join_timeout="${jgroups.join_timeout:2000}" />
-      <UFC max_credits="2M" min_threshold="0.40" />
-      <MFC max_credits="2M" min_threshold="0.40" />
+      <UFC_NB max_credits="2M" min_threshold="0.40" />
+      <MFC_NB max_credits="2M" min_threshold="0.40" />
       <FRAG3 />
     </stack>
   </jgroups>

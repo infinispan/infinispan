@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.Version;
@@ -151,8 +150,8 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     @Override
     protected Set<PathAddress> getIgnoredChildResourcesForRemovalTest() {
         String[] protocols = { "UDP", "TCP", "MPING", "MERGE2", "FD_SOCK", "FD", "VERIFY_SUSPECT", "BARRIER",
-                "pbcast.NAKACK", "pbcast.NAKACK2", "UNICAST2", "pbcast.STABLE", "pbcast.GMS", "UFC",
-                "MFC", "FRAG3", "pbcast.STATE_TRANSFER", "pbcast.FLUSH",  "RSVP", "relay.RELAY2" };
+                "pbcast.NAKACK", "pbcast.NAKACK2", "UNICAST2", "pbcast.STABLE", "pbcast.GMS", "UFC", "UFC_NB",
+                "MFC", "MFC_NB", "FRAG3", "pbcast.STATE_TRANSFER", "pbcast.FLUSH",  "RSVP", "relay.RELAY2" };
 
         Set<PathAddress> addresses = new HashSet<>();
 
@@ -234,7 +233,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
 
         ModelNode protocols = new ModelNode();
         String[] protocolList = {"PING", "MERGE3", "FD_SOCK", "FD", "VERIFY_SUSPECT", "BARRIER", "pbcast.NAKACK2", "UNICAST2",
-                          "pbcast.STABLE", "pbcast.GMS", "UFC", "MFC", "FRAG3", "RSVP"} ;
+                          "pbcast.STABLE", "pbcast.GMS", "UFC", "UFC_NB", "MFC", "MFC_NB", "FRAG3", "RSVP"} ;
 
         for (int i = 0; i < protocolList.length; i++) {
             ModelNode protocol = new ModelNode();

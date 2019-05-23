@@ -346,8 +346,8 @@
                     <protocol type="UNICAST3" module="org.jgroups:${infinispan.module.slot}"/>
                     <protocol type="pbcast.STABLE" module="org.jgroups:${infinispan.module.slot}"/>
                     <protocol type="pbcast.GMS" module="org.jgroups:${infinispan.module.slot}"/>
-                    <protocol type="UFC" module="org.jgroups:${infinispan.module.slot}"/>
-                    <protocol type="MFC" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="UFC_NB" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="MFC_NB" module="org.jgroups:${infinispan.module.slot}"/>
                     <protocol type="FRAG2" module="org.jgroups:${infinispan.module.slot}"/>
                 </stack>
             </stacks>
