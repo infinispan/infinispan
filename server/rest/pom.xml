@@ -116,13 +116,7 @@
                                   <attribute name="command"/>
                                   <element name="args"/>
                                   <sequential>
-                                      <condition property="keytool.classname" value="com.ibm.crypto.tools.KeyTool">
-                                          <available classname="com.ibm.crypto.tools.KeyTool"/>
-                                      </condition>
-                                      <condition property="keytool.classname" value="sun.security.tools.keytool.Main">
-                                          <available classname="sun.security.tools.keytool.Main"/>
-                                      </condition>
-                                      <java classname="${keytool.classname}" failonerror="true">
+                                      <exec executable="${server.jvm}/bin/keytool">
                                           <arg value="@{command}"/>
                                           <!-- common arguments -->
                                           <arg value="-validity"/>
@@ -140,7 +134,7 @@
                                           <arg value="pkcs12"/>
                                           <!-- additional arguments -->
                                           <args/>
-                                      </java>
+                                      </exec>
                                   </sequential>
                               </macrodef>
                               <delete quiet="true">
