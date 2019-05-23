@@ -15,7 +15,8 @@ set DEBUG_MODE=false
 set DEBUG_PORT_VAR=8787
 rem Set to all parameters by default
 set "SERVER_OPTS=%*"
-
+set USE_JMX_COLLECTORS=false
+set JMX_CONF=
 
 if NOT "x%DEBUG%" == "x" (
   set "DEBUG_MODE=%DEBUG%
@@ -50,6 +51,8 @@ if "%~1" == "" (
    goto READ-DEBUG-PORT
 ) else if "%~1" == "-secmgr" (
    set SECMGR=true
+) else if "%~1" == "--jmx" (
+   goto READ-JMX-CONF
 )
 shift
 goto READ-ARGS
@@ -61,6 +64,18 @@ if not %DEBUG_ARG% == "" (
    if x%DEBUG_ARG:-=%==x%DEBUG_ARG% (
       shift
       set DEBUG_PORT_VAR=%DEBUG_ARG%
+   )
+   shift
+   goto READ-ARGS
+)
+
+:READ-JMX-CONF
+set USE_JMX_COLLECTORS=true
+set JMX_ARG="%2"
+if not %JMX_ARG% == "" (
+   if x%JMX_ARG:-=%==x%JMX_ARG% (
+      shift
+      set JMX_CONF=%JMX_ARG%
    )
    shift
    goto READ-ARGS
@@ -107,6 +122,10 @@ if NOT "x%DEBUG_PORT%" == "x" (
 
 if NOT "x%GC_LOG%" == "x" (
   set "GC_LOG=%GC_LOG%
+)
+
+if "x%JMX_CONF%" == "x" (
+  set "JMX_CONF=9779:%DIRNAME%/prometheus_config.yaml"
 )
 
 rem Set debug settings if not already set
@@ -219,32 +238,46 @@ if "x%JBOSS_CONFIG_DIR%" == "x" (
   set  "JBOSS_CONFIG_DIR=%JBOSS_BASE_DIR%\configuration"
 )
 
-if not "%PRESERVE_JAVA_OPTS%" == "true" (
+setlocal EnableDelayedExpansion
+call "!DIRNAME!common.bat" :setModularJdk
+setlocal DisableDelayedExpansion
+
+if not "%PRESERVE_JAVA_OPT%" == "true" (
     if "%GC_LOG%" == "true" (
+        if not exist "%JBOSS_LOG_DIR%" > nul 2>&1 (
+            mkdir "%JBOSS_LOG_DIR%"
+        )
       rem Add rotating GC logs, if supported, and not already defined
-      echo "%JAVA_OPTS%" | findstr /I "\-verbose:gc" > nul
+      echo "%JAVA_OPTS%" | findstr /I "\-Xlog:*gc" > nul
       if errorlevel == 1 (
         rem Back up any prior logs
-        move /y "%JBOSS_LOG_DIR%\gc.log.1" "%JBOSS_LOG_DIR%\backupgc.log.1" > nul 2>&1
+        move /y "%JBOSS_LOG_DIR%\gc.log" "%JBOSS_LOG_DIR%\backupgc.log" > nul 2>&1
         move /y "%JBOSS_LOG_DIR%\gc.log.0" "%JBOSS_LOG_DIR%\backupgc.log.0" > nul 2>&1
+        move /y "%JBOSS_LOG_DIR%\gc.log.1" "%JBOSS_LOG_DIR%\backupgc.log.1" > nul 2>&1
         move /y "%JBOSS_LOG_DIR%\gc.log.2" "%JBOSS_LOG_DIR%\backupgc.log.2" > nul 2>&1
         move /y "%JBOSS_LOG_DIR%\gc.log.3" "%JBOSS_LOG_DIR%\backupgc.log.3" > nul 2>&1
         move /y "%JBOSS_LOG_DIR%\gc.log.4" "%JBOSS_LOG_DIR%\backupgc.log.4" > nul 2>&1
         move /y "%JBOSS_LOG_DIR%\gc.log.*.current" "%JBOSS_LOG_DIR%\backupgc.log.current" > nul 2>&1
 
-        "%JAVA%" -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -Xloggc:"%JBOSS_LOG_DIR%\gc.log" -XX:-TraceClassUnloading -version > nul 2>&1
-        if not errorlevel == 1 (
-          if not exist "%JBOSS_LOG_DIR" > nul 2>&1 (
-            mkdir "%JBOSS_LOG_DIR%"
-          )
-		set JAVA_OPTS=%JAVA_OPTS% -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -Xloggc:"%JBOSS_LOG_DIR%\gc.log" -XX:GCLogFileSize=3M -XX:-TraceClassUnloading
+            setlocal EnableDelayedExpansion
+            if "!MODULAR_JDK!" == "true" (
+                set TMP_PARAM=-Xlog:gc*:file="\"%JBOSS_LOG_DIR%\gc.log\"":time,uptimemillis:filecount=5,filesize=3M
+            ) else (
+                set TMP_PARAM=-verbose:gc -Xloggc:"%JBOSS_LOG_DIR%\gc.log" -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -XX:-TraceClassUnloading
+            )
+            "%JAVA%" !TMP_PARAM! -version > nul 2>&1
+            if not errorlevel == 1 (
+               set JAVA_OPTS=%JAVA_OPTS% !TMP_PARAM!
+            )
+            rem Remove the gc.log file from the -version check
+            del /F /Q "%JBOSS_LOG_DIR%\gc.log" > nul 2>&1
         )
-       )
+        setlocal DisableDelayedExpansion
     )
 
     rem set default modular jvm parameters
     setlocal EnableDelayedExpansion
-    call "!DIRNAME!common.bat" :setDefaultModularJvmOptions "!JAVA_OPTS!"
+    call "!DIRNAME!common.bat" :setDefaultModularJvmOptions !JAVA_OPTS!
     set "JAVA_OPTS=!JAVA_OPTS! !DEFAULT_MODULAR_JVM_OPTIONS!"
     setlocal DisableDelayedExpansion
 )
@@ -256,6 +289,10 @@ rem Set the module options
 set "MODULE_OPTS="
 if "%SECMGR%" == "true" (
     set "MODULE_OPTS=-secmgr"
+)
+
+if "%USE_JMX_COLLECTORS%" == "true" (
+    call "!DIRNAME!prometheus.bat" "%JMX_CONF%"
 )
 
 echo ===============================================================================

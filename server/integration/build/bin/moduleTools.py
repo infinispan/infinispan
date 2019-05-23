@@ -4,8 +4,8 @@ import sys
 import argparse
 import xml.etree.ElementTree as ET
 
-JBOSS_DOMAIN_NS = '{urn:jboss:domain:8.0}'
-JBOSS_MODULE_NS = '{urn:jboss:module:1.5}'
+JBOSS_DOMAIN_NS = '{urn:jboss:domain:10.0}'
+JBOSS_MODULE_NS = '{urn:jboss:module:1.8}'
 
 class Server:
     def __init__(self, path):
