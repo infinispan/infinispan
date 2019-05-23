@@ -23,8 +23,8 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
-                <protocol type="UFC" />
-                <protocol type="MFC" />
+                <protocol type="UFC_NB" />
+                <protocol type="MFC_NB" />
                 <?AUTH?>
             </stack>
             <stack name="azure">
@@ -44,8 +44,8 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
-                <protocol type="UFC" />
-                <protocol type="MFC" />
+                <protocol type="UFC_NB" />
+                <protocol type="MFC_NB" />
                 <protocol type="FRAG3" />
             </stack>
             <stack name="s3-private">
@@ -65,8 +65,8 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
-                <protocol type="UFC" />
-                <protocol type="MFC" />
+                <protocol type="UFC_NB" />
+                <protocol type="MFC_NB" />
                 <protocol type="FRAG3" />
             </stack>
             <stack name="s3-presigned">
@@ -85,8 +85,8 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
-                <protocol type="UFC" />
-                <protocol type="MFC" />
+                <protocol type="UFC_NB" />
+                <protocol type="MFC_NB" />
                 <protocol type="FRAG3" />
             </stack>
             <stack name="s3-public">
@@ -104,8 +104,8 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
-                <protocol type="UFC" />
-                <protocol type="MFC" />
+                <protocol type="UFC_NB" />
+                <protocol type="MFC_NB" />
                 <protocol type="FRAG3" />
             </stack>
             <stack name="google">
@@ -125,8 +125,8 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
-                <protocol type="UFC" />
-                <protocol type="MFC" />
+                <protocol type="UFC_NB" />
+                <protocol type="MFC_NB" />
                 <protocol type="FRAG3" />
             </stack>
             <stack name="kubernetes">
@@ -144,8 +144,8 @@
                 <protocol type="UNICAST3" />
                 <protocol type="pbcast.STABLE" />
                 <protocol type="pbcast.GMS" />
-                <protocol type="UFC" />
-                <protocol type="MFC" />
+                <protocol type="UFC_NB" />
+                <protocol type="MFC_NB" />
                 <protocol type="FRAG3" />
             </stack>
             <stack name="dns-ping">
@@ -165,8 +165,8 @@
                 <protocol type="UNICAST3"/>
                 <protocol type="pbcast.STABLE"/>
                 <protocol type="pbcast.GMS"/>
-                <protocol type="UFC" />
-                <protocol type="MFC"/>
+                <protocol type="UFC_NB" />
+                <protocol type="MFC_NB"/>
                 <protocol type="FRAG3"/>
             </stack>
         </stacks>

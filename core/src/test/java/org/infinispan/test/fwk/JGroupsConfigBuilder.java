@@ -6,10 +6,10 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_SOCK;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MERGE3;
-import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_RELAY2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP_NIO2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_PING;
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_RELAY2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.UDP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.VERIFY_SUSPECT;
 
@@ -281,7 +281,7 @@ public class JGroupsConfigBuilder {
       RSVP,
       STABLE,
       GMS,
-      UFC, MFC, FC,
+      UFC, MFC, FC, UFC_NB, MFC_NB,
       FRAG2, FRAG3,
       STREAMING_STATE_TRANSFER,
       TEST_RELAY2,

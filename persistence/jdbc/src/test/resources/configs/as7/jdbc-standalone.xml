@@ -166,11 +166,11 @@
                     <property name="max_bytes">1m</property>
                 </protocol>
                 <protocol type="pbcast.GMS"/>
-                <protocol type="UFC">
+                <protocol type="UFC_NB">
                     <property name="max_credits">2m</property>
                     <property name="min_threshold">0.40</property>
                 </protocol>
-                <protocol type="MFC">
+                <protocol type="MFC_NB">
                     <property name="max_credits">2m</property>
                     <property name="min_threshold">0.40</property>
                 </protocol>
@@ -205,11 +205,11 @@
                     <property name="max_bytes">1m</property>
                 </protocol>
                 <protocol type="pbcast.GMS"/>
-                <protocol type="UFC">
+                <protocol type="UFC_NB">
                   <property name="max_credits">2m</property>
                   <property name="min_threshold">0.40</property>
                 </protocol>
-                <protocol type="MFC">
+                <protocol type="MFC_NB">
                     <property name="max_credits">2m</property>
                     <property name="min_threshold">0.40</property>
                 </protocol>

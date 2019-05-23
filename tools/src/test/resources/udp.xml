@@ -52,8 +52,8 @@
                join_timeout="${jgroups.join_timeout:2000}"/>
    <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
 
-   <UFC max_credits="2m" min_threshold="0.40"/>
-   <MFC max_credits="2m" min_threshold="0.40"/>
+   <UFC_NB max_credits="2m" min_threshold="0.40"/>
+   <MFC_NB max_credits="2m" min_threshold="0.40"/>
    <FRAG3 frag_size="8000"  />
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
 
