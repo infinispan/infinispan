@@ -107,6 +107,7 @@
       <tempfile property="temp.file" destdir="${dist.dir}" prefix="list"/>
       <delete file="${temp.file}"/>
       <echo file="${temp.file}" message="${jar.fileset}"/>
+      <echo message="Merging licenses"/>
       <java classname="org.infinispan.tools.licenses.LicenseMerger">
          <arg line="-i"/>
          <arg line="-r"/>
@@ -119,7 +120,9 @@
             <pathelement path="${plugin_classpath}" />
          </classpath>
       </java>
-      <xslt in="${project.build.directory}/server/docs/licenses/server-licenses.xml" style="src/main/resources/template/licenses.xsl" out="${project.build.directory}/server/docs/licenses/server-licenses.html">
+      <rename src="${licenses.xml}"  dest="${project.build.directory}/server/docs/licenses/server.xml"/>
+      <rename src="${project.build.directory}/server/docs/licenses/server-licenses.xml" dest="${project.build.directory}/server/docs/licenses/licenses.xml"/>
+      <xslt in="${project.build.directory}/server/docs/licenses/licenses.xml" style="src/main/resources/template/licenses.xsl" out="${project.build.directory}/server/docs/licenses/licenses.html">
          <param name="product" expression="${infinispan.brand.name}" type="STRING"/>
          <param name="version" expression="${infinispan.brand.version}" type="STRING"/>
       </xslt>
