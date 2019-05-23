@@ -97,11 +97,6 @@
       </dependency>
 
       <dependency>
-        <groupId>org.kohsuke.metainf-services</groupId>
-        <artifactId>metainf-services</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>test</scope>
@@ -169,8 +164,7 @@
                      ${project.groupId}.tools.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <Include-Resource>
-                     {maven-resources},
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services
+                     {maven-resources}
                   </Include-Resource>
                </instructions>
             </configuration>
