@@ -9,8 +9,6 @@ import java.util.function.Function;
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
-import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.conflict.ConflictManagerFactory;
@@ -513,23 +511,6 @@ public class SecureCacheTestDriver {
       try {
          cache.getTransactionManager().begin();
          cache.lock("a");
-      } finally {
-         cache.getTransactionManager().rollback();
-      }
-   }
-
-   @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testApplyDelta_Object_Delta_ObjectArray(SecureCache<String, String> cache) throws Exception {
-      try {
-         cache.getTransactionManager().begin();
-
-         cache.applyDelta("deltakey", new Delta() {
-
-            @Override
-            public DeltaAware merge(DeltaAware d) {
-               return d;
-            }
-         }, "deltakey");
       } finally {
          cache.getTransactionManager().rollback();
       }

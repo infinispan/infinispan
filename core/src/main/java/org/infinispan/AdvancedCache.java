@@ -9,10 +9,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
-import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commons.api.TransactionalCache;
@@ -269,19 +269,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    boolean lock(Collection<? extends K> keys);
 
-
-   /**
-    * Applies the given Delta to the DeltaAware object stored under deltaAwareValueKey if and only if all locksToAcquire
-    * locks are successfully obtained
-    *
-    * @param deltaAwareValueKey the key for DeltaAware object
-    * @param delta              the delta to be applied to DeltaAware object
-    * @param locksToAcquire     keys to be locked in DeltaAware scope. Must contain only single key equal to
-    *                           <code>deltaAwareValueKey</code>
-    * @deprecated since 9.1
-    */
-   @Deprecated
-   void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire);
 
    /**
     * Returns the component in charge of communication with other caches in the cluster.  If the cache's {@link

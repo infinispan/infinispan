@@ -87,7 +87,7 @@ public enum Flag {
     * in the return value (i.e. the previous value of the key).
     * <br>
     * Note that the loader will be skipped even if that changes the meaning of the operation, e.g. for
-    * conditional or {@link org.infinispan.atomic.DeltaAware} write operations. If that is not intended,
+    * conditional write operations. If that is not intended,
     * you should use {@link #IGNORE_RETURN_VALUES} instead.
     */
    SKIP_CACHE_LOAD,
@@ -108,7 +108,7 @@ public enum Flag {
     * reducing remote calls.
     * <br>
     * Note that the remote lookup will be skipped even if that changes the meaning of the operation, e.g. for
-    * conditional or {@link org.infinispan.atomic.DeltaAware} write operations. If that is not intended,
+    * conditional write operations. If that is not intended,
     * you should use {@link #IGNORE_RETURN_VALUES} instead.
     */
    SKIP_REMOTE_LOOKUP,

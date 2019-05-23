@@ -23,8 +23,6 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockAssert;
-import org.infinispan.atomic.AtomicMapLookup;
-import org.infinispan.atomic.FineGrainedAtomicMap;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -203,28 +201,6 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       cache.remove(key);
       commit();
       assertFalse("Key " + key + " was not removed as expected.", cache.containsKey(key));
-   }
-
-   /**
-    * Verifies we can create a new AtomicMap, use it and then remove it while in the same transaction
-    * See also ISPN-2075.
-    */
-   public void testDontFailOnImmediateRemovalOfAtomicMaps() throws Exception {
-      final String key = "key1";
-      final String subKey = "subK";
-      TestingUtil.withTx(tm, () -> {
-         FineGrainedAtomicMap<String, String> fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
-         fineGrainedAtomicMap.put(subKey, "some value");
-         fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
-         fineGrainedAtomicMap.get(subKey);
-         fineGrainedAtomicMap.put(subKey, "v");
-         fineGrainedAtomicMap.put(subKey + 2, "v2");
-         fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
-         Object object = fineGrainedAtomicMap.get(subKey);
-         assertEquals("Wrong FGAM sub-key value.", "v", object);
-         AtomicMapLookup.removeAtomicMap(cache, key);
-         return null;
-      });
    }
 
    public void testNoWriteSkew() throws Exception {

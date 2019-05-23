@@ -52,16 +52,4 @@ public class JpaStoreFunctionalTest extends BaseStoreFunctionalTest {
    public void testStoreByteArrays(Method m) throws PersistenceException {
       // byte arrays are not entities  (no need to test how we can wrap them)
    }
-
-   @Test(enabled = false, description = "Not applicable")
-   @Override
-   public void testRestoreAtomicMap(Method m) {
-      // Atomic maps are not entities
-   }
-
-   @Test(enabled = false, description = "Not applicable")
-   @Override
-   public void testRestoreTransactionalAtomicMap(Method m) throws Exception {
-      // Atomic maps are not entities
-   }
 }

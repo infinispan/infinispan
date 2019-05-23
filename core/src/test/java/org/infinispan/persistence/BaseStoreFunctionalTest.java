@@ -14,12 +14,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
-import org.infinispan.atomic.AtomicMap;
-import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -177,36 +174,6 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
          return i;
       }
 
-   }
-
-   public void testRestoreAtomicMap(Method m) {
-      cacheManager.defineConfiguration(m.getName(), configureCacheLoader(null, false).build());
-      Cache<String, Object> cache = cacheManager.getCache(m.getName());
-      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, m.getName());
-      map.put("a", "b");
-
-      //evict from memory
-      cache.evict(m.getName());
-
-      // now re-retrieve the map
-      assertEquals("b", AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a"));
-   }
-
-   @Test
-   public void testRestoreTransactionalAtomicMap(final Method m) throws Exception {
-      cacheManager.defineConfiguration(m.getName(), configureCacheLoader(null, false).build());
-      Cache<String, Object> cache = cacheManager.getCache(m.getName());
-      TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
-      tm.begin();
-      final AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, m.getName());
-      map.put("a", "b");
-      tm.commit();
-
-      //evict from memory
-      cache.evict(m.getName());
-
-      // now re-retrieve the map and make sure we see the diffs
-      assertEquals("b", AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a"));
    }
 
    public void testStoreByteArrays(final Method m) throws PersistenceException {

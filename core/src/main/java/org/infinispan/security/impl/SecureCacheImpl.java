@@ -19,7 +19,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
-import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -683,12 +682,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.removeAsync(key, value);
-   }
-
-   @Override
-   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
-      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
-      delegate.applyDelta(deltaAwareValueKey, delta, locksToAcquire);
    }
 
    @Override

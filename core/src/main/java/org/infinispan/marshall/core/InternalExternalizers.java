@@ -2,10 +2,6 @@ package org.infinispan.marshall.core;
 
 import java.util.Set;
 
-import org.infinispan.atomic.DeltaCompositeKey;
-import org.infinispan.atomic.impl.ApplyDelta;
-import org.infinispan.atomic.impl.AtomicKeySetImpl;
-import org.infinispan.atomic.impl.AtomicMapProxyImpl;
 import org.infinispan.cache.impl.EncoderEntryMapper;
 import org.infinispan.cache.impl.EncoderKeyMapper;
 import org.infinispan.cache.impl.EncoderValueMapper;
@@ -144,10 +140,6 @@ final class InternalExternalizers {
 
       // Add the rest of stateless externalizers
       addInternalExternalizer(new AcceptAllKeyValueFilter.Externalizer(), exts);
-      addInternalExternalizer(new ApplyDelta.Externalizer(gcr), exts);
-      addInternalExternalizer(new AtomicKeySetImpl.Externalizer(gcr), exts);
-      addInternalExternalizer(new AtomicKeySetImpl.FunctionExternalizer(), exts);
-      addInternalExternalizer(new AtomicMapProxyImpl.Externalizer(), exts);
       addInternalExternalizer(new AvailabilityMode.Externalizer(), exts);
       addInternalExternalizer(new BiasRevocationResponse.Externalizer(), exts);
       addInternalExternalizer(new BiFunctionMapper.Externalizer(), exts);
@@ -170,7 +162,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new CompositeKeyValueFilter.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new DefaultConsistentHash.Externalizer(), exts);
       addInternalExternalizer(new DefaultConsistentHashFactory.Externalizer(), exts); // TODO: Untested in core
-      addInternalExternalizer(new DeltaCompositeKey.DeltaCompositeKeyExternalizer(), exts);
       addInternalExternalizer(new DldGlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new DoubleSummaryStatisticsExternalizer(), exts);
       addInternalExternalizer(new EmbeddedMetadata.Externalizer(), exts);

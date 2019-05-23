@@ -17,7 +17,6 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
-import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.Encoder;
@@ -287,11 +286,6 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public boolean lock(Collection<? extends K> keys) {
       return cache.lock(keys);
-   }
-
-   @Override
-   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
-      cache.applyDelta(deltaAwareValueKey, delta, locksToAcquire);
    }
 
    @Override

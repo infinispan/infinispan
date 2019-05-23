@@ -548,8 +548,7 @@ Collocation of keys is only provided by the link:#grouping_api[Grouping API].
 
 [[grouping_api]]
 ====  The Grouping API
-Complementary to link:#key_affinity_service[Key affinity service] and similar to
-link:{javadocroot}/org/infinispan/atomic/AtomicMap.html[AtomicMap],
+Complementary to link:#key_affinity_service[Key affinity service],
 the grouping API allows you to co-locate a group of entries on the same nodes, but without
 being able to select the actual nodes.
 
