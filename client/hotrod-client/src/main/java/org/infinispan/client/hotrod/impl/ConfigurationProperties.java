@@ -37,8 +37,6 @@ public class ConfigurationProperties {
    public static final String DEFAULT_EXECUTOR_FACTORY_THREADNAME_SUFFIX = ICH + "default_executor_factory.threadname_suffix";
    public static final String TCP_NO_DELAY = ICH + "tcp_no_delay";
    public static final String TCP_KEEP_ALIVE = ICH + "tcp_keep_alive";
-   @Deprecated
-   public static final String PING_ON_STARTUP = ICH + "ping_on_startup";
    public static final String REQUEST_BALANCING_STRATEGY = ICH + "request_balancing_strategy";
    public static final String KEY_SIZE_ESTIMATE = ICH + "key_size_estimate";
    public static final String VALUE_SIZE_ESTIMATE = ICH + "value_size_estimate";
