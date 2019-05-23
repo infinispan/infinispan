@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.cache.Cache.ValueWrapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.session.FindByIndexNameSessionRepository;
@@ -65,6 +66,9 @@ public abstract class AbstractInfinispanSessionRepository implements FindByIndex
 
    @Override
    public void save(MapSession session) {
+      if (!session.getId().equals(session.getOriginalId())) {
+         deleteById(session.getOriginalId());
+      }
       cache.put(session.getId(), session, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
    }
 
@@ -75,7 +79,11 @@ public abstract class AbstractInfinispanSessionRepository implements FindByIndex
 
    @Override
    public void deleteById(String sessionId) {
-      MapSession mapSession = (MapSession) cache.get(sessionId).get();
+      ValueWrapper valueWrapper = cache.get(sessionId);
+      if (valueWrapper == null) {
+         return;
+      }
+      MapSession mapSession = (MapSession) valueWrapper.get();
       if (mapSession != null) {
          applicationEventPublisher.emitSessionDeletedEvent(mapSession);
          cache.evict(sessionId);
