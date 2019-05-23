@@ -132,6 +132,29 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
       assertTrue(numberOfNonExistingUsers == 0);
    }
 
+   @Test
+   public void testChangeSessionId() throws Exception {
+      //given
+      MapSession session = sessionRepository.createSession();
+
+      //when
+      String originalId = session.getId();
+      sessionRepository.save(session);
+      session.changeSessionId();
+      String newId = session.getId();
+      sessionRepository.save(session);
+
+      //then
+      assertNotNull(sessionRepository.findById(newId));
+      assertNull(sessionRepository.findById(originalId));
+
+      // Save again to test that the deletion doesn't fail when the session isn't in the repo
+      sessionRepository.save(session );
+
+      assertNotNull(sessionRepository.findById(newId));
+      assertNull(sessionRepository.findById(originalId));
+   }
+
    protected void addEmptySessionWithPrincipal(AbstractInfinispanSessionRepository sessionRepository, String principalName) {
       MapSession session = sessionRepository.createSession();
       session.setAttribute(PRINCIPAL_NAME_INDEX_NAME, principalName);
