@@ -66,15 +66,21 @@ import org.infinispan.configuration.cache.CacheMode;
  */
 @RunWith(CustomParameterized.class)
 public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctionalTestCase {
-	protected static final Object[] TRANSACTIONAL = new Object[]{"transactional", JtaPlatformImpl.class, JtaTransactionCoordinatorBuilderImpl.class, XaConnectionProvider.class, AccessType.TRANSACTIONAL, CacheMode.INVALIDATION_SYNC, false };
-	protected static final Object[] READ_WRITE_INVALIDATION = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.INVALIDATION_SYNC, false };
-	protected static final Object[] READ_ONLY_INVALIDATION = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.INVALIDATION_SYNC, false };
-	protected static final Object[] READ_WRITE_REPLICATED = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.REPL_SYNC, false };
-	protected static final Object[] READ_ONLY_REPLICATED = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.REPL_SYNC, false };
-	protected static final Object[] READ_WRITE_DISTRIBUTED = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.DIST_SYNC, false };
-	protected static final Object[] READ_ONLY_DISTRIBUTED = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.DIST_SYNC, false };
-	protected static final Object[] NONSTRICT_REPLICATED = new Object[]{"nonstrict", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.NONSTRICT_READ_WRITE, CacheMode.REPL_SYNC, true };
-	protected static final Object[] NONSTRICT_DISTRIBUTED = new Object[]{"nonstrict", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.NONSTRICT_READ_WRITE, CacheMode.DIST_SYNC, true };
+	protected static final Object[] TRANSACTIONAL = new Object[]{"transactional", JtaPlatformImpl.class, JtaTransactionCoordinatorBuilderImpl.class, XaConnectionProvider.class, AccessType.TRANSACTIONAL, CacheMode.INVALIDATION_SYNC, false, false };
+	protected static final Object[] READ_WRITE_INVALIDATION = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.INVALIDATION_SYNC, false, false };
+	protected static final Object[] READ_ONLY_INVALIDATION = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.INVALIDATION_SYNC, false, false };
+	protected static final Object[] READ_WRITE_REPLICATED = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.REPL_SYNC, false, false };
+   protected static final Object[] READ_WRITE_REPLICATED_STATS = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.REPL_SYNC, false, true };
+	protected static final Object[] READ_ONLY_REPLICATED = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.REPL_SYNC, false, false };
+	protected static final Object[] READ_ONLY_REPLICATED_STATS = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.REPL_SYNC, false, true };
+	protected static final Object[] READ_WRITE_DISTRIBUTED = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.DIST_SYNC, false, false };
+	protected static final Object[] READ_WRITE_DISTRIBUTED_STATS = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.DIST_SYNC, false, true };
+	protected static final Object[] READ_ONLY_DISTRIBUTED = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.DIST_SYNC, false, false };
+	protected static final Object[] READ_ONLY_DISTRIBUTED_STATS = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.DIST_SYNC, false, true };
+	protected static final Object[] NONSTRICT_REPLICATED = new Object[]{"nonstrict", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.NONSTRICT_READ_WRITE, CacheMode.REPL_SYNC, true, false };
+   protected static final Object[] NONSTRICT_REPLICATED_STATS = new Object[]{"nonstrict", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.NONSTRICT_READ_WRITE, CacheMode.REPL_SYNC, true, true };
+	protected static final Object[] NONSTRICT_DISTRIBUTED = new Object[]{"nonstrict", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.NONSTRICT_READ_WRITE, CacheMode.DIST_SYNC, true, false };
+   protected static final Object[] NONSTRICT_DISTRIBUTED_STATS = new Object[]{"nonstrict", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.NONSTRICT_READ_WRITE, CacheMode.DIST_SYNC, true, true };
 
 	// We need to use @ClassRule here since in @BeforeClassOnce startUp we're preparing the session factory,
 	// constructing CacheManager along - and there we check that the test has the name already set
@@ -102,14 +108,17 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 	@Parameterized.Parameter(value = 6)
 	public boolean addVersions;
 
-	protected boolean useJta;
+   @Parameterized.Parameter(value = 7)
+   public boolean stats;
+
+   protected boolean useJta;
 	protected List<Runnable> cleanup = new ArrayList<>();
 
 	@CustomParameterized.Order(0)
-	@Parameterized.Parameters(name = "{0}, {5}")
+	@Parameterized.Parameters(name = "{0}, {5}, stats={7}")
 	public abstract List<Object[]> getParameters();
 
-	public List<Object[]> getParameters(boolean tx, boolean rw, boolean ro, boolean nonstrict) {
+	public List<Object[]> getParameters(boolean tx, boolean rw, boolean ro, boolean nonstrict, boolean stats) {
 		ArrayList<Object[]> parameters = new ArrayList<>();
 		if (tx) {
 			parameters.add(TRANSACTIONAL);
@@ -118,15 +127,27 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 			parameters.add(READ_WRITE_INVALIDATION);
 			parameters.add(READ_WRITE_REPLICATED);
 			parameters.add(READ_WRITE_DISTRIBUTED);
+         if (stats) {
+            parameters.add(READ_WRITE_REPLICATED_STATS);
+            parameters.add(READ_WRITE_DISTRIBUTED_STATS);
+         }
 		}
 		if (ro) {
 			parameters.add(READ_ONLY_INVALIDATION);
 			parameters.add(READ_ONLY_REPLICATED);
 			parameters.add(READ_ONLY_DISTRIBUTED);
+         if (stats) {
+            parameters.add(READ_ONLY_REPLICATED_STATS);
+            parameters.add(READ_ONLY_DISTRIBUTED_STATS);
+         }
 		}
 		if (nonstrict) {
 			parameters.add(NONSTRICT_REPLICATED);
 			parameters.add(NONSTRICT_DISTRIBUTED);
+         if (stats) {
+            parameters.add(NONSTRICT_REPLICATED_STATS);
+            parameters.add(NONSTRICT_DISTRIBUTED_STATS);
+         }
 		}
 		return parameters;
 	}
@@ -212,6 +233,7 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 		settings.put( Environment.CACHE_KEYS_FACTORY, SimpleCacheKeysFactory.SHORT_NAME );
 		settings.put( TestRegionFactory.TRANSACTIONAL, useTransactionalCache() );
 		settings.put( TestRegionFactory.CACHE_MODE, cacheMode);
+      settings.put( TestRegionFactory.STATS, stats);
 
 		settings.put( AvailableSettings.JTA_PLATFORM, jtaPlatformClass.getName() );
 		settings.put( Environment.TRANSACTION_COORDINATOR_STRATEGY, transactionCoordinatorBuilderClass.getName() );

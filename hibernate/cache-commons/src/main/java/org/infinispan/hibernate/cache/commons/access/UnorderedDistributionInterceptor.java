@@ -7,6 +7,7 @@
 package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -67,14 +68,24 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 
 		if (isReplicated) {
 			// local result is always ignored
-			return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) ->
-					invokeRemotelyAsync(null, rCtx, (WriteCommand) rCommand));
+         return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+            Object remoteInvocation = invokeRemotelyAsync(null, rCtx, (WriteCommand) rCommand);
+            if (remoteInvocation != null) {
+               return ((CompletionStage<?>) remoteInvocation).handle((responses, t) -> rv);
+            }
+            return rv;
+         });
 		}
 		else {
 			List<Address> owners = cacheTopology.getDistribution(command.getKey()).writeOwners();
 			if (owners.contains(rpcManager.getAddress())) {
-				return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) ->
-                  invokeRemotelyAsync(owners, rCtx, (WriteCommand) rCommand));
+            return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
+               Object remoteInvocation = invokeRemotelyAsync(owners, rCtx, (WriteCommand) rCommand);
+               if (remoteInvocation != null) {
+                  return ((CompletionStage<?>) remoteInvocation).handle((responses, t) -> rv);
+               }
+               return rv;
+            });
 			}
 			else {
 				log.tracef("Not invoking %s on %s since it is not an owner", command, rpcManager.getAddress());

@@ -23,7 +23,7 @@ public class LocalCacheTest extends SingleNodeTest {
    @Override
    public List<Object[]> getParameters() {
       return Collections.singletonList(new Object[]{
-            "local", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.LOCAL, false
+            "local", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.LOCAL, false, false
       });
    }
 

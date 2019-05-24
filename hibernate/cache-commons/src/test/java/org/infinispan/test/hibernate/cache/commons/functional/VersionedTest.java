@@ -54,7 +54,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
 
    @Override
    public List<Object[]> getParameters() {
-      return Arrays.asList(NONSTRICT_REPLICATED, NONSTRICT_DISTRIBUTED);
+      return Arrays.asList(NONSTRICT_REPLICATED, NONSTRICT_DISTRIBUTED, NONSTRICT_REPLICATED_STATS, NONSTRICT_DISTRIBUTED_STATS);
    }
 
    @Override
