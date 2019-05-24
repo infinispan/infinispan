@@ -33,7 +33,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -55,7 +54,6 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
-@Listener
 @Scope(Scopes.NAMED_CACHE)
 public class StateProviderImpl implements StateProvider {
 

@@ -90,6 +90,7 @@ final class SearchFactoryHandler {
          if (reducedSet.isEmpty()) {
             return;
          }
+         // TODO: may want to make this run on a different thread to make non blocking when invoking addClasses?
          final Class<?>[] newtypes = reducedSet.toArray(new Class<?>[reducedSet.size()]);
 
          Transaction tx = transactionHelper.suspendTxIfExists();

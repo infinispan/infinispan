@@ -3,6 +3,7 @@ package org.infinispan.globalstate.impl;
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -11,6 +12,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -42,6 +45,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    private ParserRegistry parserRegistry;
    private LocalConfigurationStorage localConfigurationManager;
    private LocalTopologyManager localTopologyManager;
+   @Inject @ComponentName(KnownComponentNames.PERSISTENCE_EXECUTOR)
+   private ExecutorService blockingExecutorService;
 
    @Inject
    public void inject(GlobalConfiguration globalConfiguration, EmbeddedCacheManager cacheManager, LocalTopologyManager ltm) {
@@ -80,7 +85,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             createCacheLocally(e.getKey().getName(), (CacheState) e.getValue());
       }
       // Install the listener
-      GlobalConfigurationStateListener stateCacheListener = new GlobalConfigurationStateListener(this);
+      GlobalConfigurationStateListener stateCacheListener = new GlobalConfigurationStateListener(this,
+            blockingExecutorService);
       getStateCache().addListener(stateCacheListener, new ScopeFilter(CACHE_SCOPE));
 
       // Tell the LocalConfigurationManager that it can load any persistent caches

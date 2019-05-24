@@ -5,6 +5,8 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXEC
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -68,6 +70,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
    private ShardAddress localShardAddress;
    private LuceneWorkDispatcher luceneWorkDispatcher;
    private WorkPartitioner workPartitioner;
+   private ExecutorService blockingExecutor;
 
    @Override
    public void initialize(String indexName, Properties properties, Similarity similarity,
@@ -90,11 +93,11 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
       searchIntegrator = componentRegistry.getComponent(SearchIntegrator.class);
       isAsync = !BackendFactory.isConfiguredAsSync(properties);
       localShardAddress = new ShardAddress(shardId, rpcManager != null ? rpcManager.getAddress() : LocalModeAddress.INSTANCE);
-      ExecutorService asyncExecutor = componentRegistry.getComponent(ExecutorService.class, ASYNC_OPERATIONS_EXECUTOR);
+      blockingExecutor = componentRegistry.getComponent(ExecutorService.class, ASYNC_OPERATIONS_EXECUTOR);
       luceneWorkDispatcher = new LuceneWorkDispatcher(this, rpcManager);
       workPartitioner = new WorkPartitioner(this, shardAllocatorManager);
       AffinityErrorHandler errorHandler = (AffinityErrorHandler) searchIntegrator.getErrorHandler();
-      errorHandler.initialize(rpcManager, asyncExecutor);
+      errorHandler.initialize(rpcManager, blockingExecutor);
       cache.addListener(this);
    }
 
@@ -226,13 +229,14 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
 
    @TopologyChanged
    @SuppressWarnings("unused")
-   public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
+   public CompletionStage<Void> onTopologyChange(TopologyChangedEvent<?, ?> tce) {
       log.debugf("Topology changed notification for %s: %s", this.getIndexName(), tce);
       boolean ownershipChanged = shardAllocatorManager.isOwnershipChanged(tce, this.getIndexName());
       log.debugf("Ownership changed? %s,", ownershipChanged);
       if (ownershipChanged) {
-         this.handleOwnershipLost();
+         return CompletableFuture.runAsync(this::handleOwnershipLost, blockingExecutor);
       }
+      return null;
    }
 
 }

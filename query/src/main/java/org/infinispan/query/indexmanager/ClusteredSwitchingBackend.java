@@ -116,6 +116,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
       final int viewId = e.getViewId();
       if (viewId > currentViewId) {
          if (lastSeenViewId.compareAndSet(currentViewId, viewId)) {
+            // TODO: it looks like this can be blocking - may need to offload
             applyViewChangedEvent(e);
          }
       }
