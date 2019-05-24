@@ -60,7 +60,7 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 
 	@Override
 	public List<Object[]> getParameters() {
-		return getParameters(true, true, true, true);
+		return getParameters(true, true, true, true, true);
 	}
 
 	@Override

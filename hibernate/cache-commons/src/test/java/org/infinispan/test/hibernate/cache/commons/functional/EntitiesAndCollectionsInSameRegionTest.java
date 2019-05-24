@@ -47,7 +47,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
    @Override
    public List<Object[]> getParameters() {
-      return getParameters(true, false, false, false);
+      return getParameters(true, false, false, false, false);
    }
 
    @Override
