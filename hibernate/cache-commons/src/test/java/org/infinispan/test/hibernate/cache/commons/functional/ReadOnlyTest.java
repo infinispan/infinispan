@@ -32,7 +32,7 @@ public class ReadOnlyTest extends SingleNodeTest {
 
 	@Override
 	public List<Object[]> getParameters() {
-		return getParameters(false, false, true, true);
+		return getParameters(false, false, true, true, true);
 	}
 
 	@Test

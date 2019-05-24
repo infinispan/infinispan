@@ -39,7 +39,7 @@ public class SessionRefreshTest extends DualNodeTest {
 
 	@Override
 	public List<Object[]> getParameters() {
-		return getParameters(true, true, false, true);
+		return getParameters(true, true, false, true, true);
 	}
 
 	@Override
