@@ -44,7 +44,7 @@ public class BulkOperationsTest extends SingleNodeTest {
 
 	@Override
 	public List<Object[]> getParameters() {
-		return getParameters(true, true, false, true);
+		return getParameters(true, true, false, true, true);
 	}
 
 	@ClassRule

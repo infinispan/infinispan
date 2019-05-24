@@ -19,11 +19,13 @@ public class TestConfigurationHook {
    private final boolean transactional;
    private final CacheMode cacheMode;
    private final boolean pendingPutsSimple;
+   private final boolean stats;
 
    public TestConfigurationHook(Properties properties) {
       transactional = (boolean) properties.getOrDefault(TestRegionFactory.TRANSACTIONAL, false);
       cacheMode = (CacheMode) properties.getOrDefault(TestRegionFactory.CACHE_MODE, null);
       pendingPutsSimple = (boolean) properties.getOrDefault(TestRegionFactory.PENDING_PUTS_SIMPLE, true);
+      stats = (boolean) properties.getOrDefault(TestRegionFactory.STATS, false);
    }
 
    public void amendConfiguration(ConfigurationBuilderHolder holder) {
@@ -57,6 +59,9 @@ public class TestConfigurationHook {
          if (configurationBuilder.clustering().cacheMode().isInvalidation()) {
             configurationBuilder.clustering().cacheMode(cacheMode);
          }
+      }
+      if (stats) {
+         configurationBuilder.jmxStatistics().available(true).enable();
       }
    }
 }

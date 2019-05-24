@@ -46,7 +46,7 @@ import org.junit.Test;
 public class ReadWriteTest extends ReadOnlyTest {
 	@Override
 	public List<Object[]> getParameters() {
-		return getParameters(true, true, false, true);
+		return getParameters(true, true, false, true, true);
 	}
 
 	@Override

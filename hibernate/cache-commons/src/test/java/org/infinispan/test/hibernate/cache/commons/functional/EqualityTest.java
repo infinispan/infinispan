@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 public class EqualityTest extends SingleNodeTest {
 	 @Override
 	 public List<Object[]> getParameters() {
-		  return getParameters(true, true, true, true);
+		  return getParameters(true, true, true, true, true);
 	 }
 
 	 @Override

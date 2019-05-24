@@ -20,6 +20,7 @@ public interface TestRegionFactory extends TimeSource {
    String AFTER_MANAGER_CREATED = PREFIX + "afterManagerCreated";
    String WRAP_CACHE = PREFIX + "wrap.cache";
    String CONFIGURATION_HOOK = PREFIX + "configuration.hook";
+   String STATS = PREFIX + "stats";
 
    void start(ServiceRegistry serviceRegistry, Properties p);
 
