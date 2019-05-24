@@ -2,16 +2,22 @@ package org.infinispan.query.indexmanager;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hibernate.search.backend.BackendFactory;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.GuardedBy;
@@ -79,6 +85,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
 
    private final String indexName;
    private final String cacheName;
+   private final Executor blockingExecutor;
 
    /**
     * Monotonically increasing view identification sequence:
@@ -108,17 +115,19 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
       this.localAddress = rpcManager.getAddress();
       this.currentBackend = new LazyInitializingBackend(this);
       this.async = !BackendFactory.isConfiguredAsSync(props);
+      this.blockingExecutor = componentsRegistry.getComponent(ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR);
    }
 
    @ViewChanged
-   public void viewChanged(final ViewChangedEvent e) {
+   public CompletionStage<Void> viewChanged(final ViewChangedEvent e) {
       final int currentViewId = lastSeenViewId.get();
       final int viewId = e.getViewId();
       if (viewId > currentViewId) {
          if (lastSeenViewId.compareAndSet(currentViewId, viewId)) {
-            applyViewChangedEvent(e);
+            return CompletableFuture.runAsync(() -> applyViewChangedEvent(e), blockingExecutor);
          }
       }
+      return CompletableFutures.completedNull();
    }
 
    @Override
