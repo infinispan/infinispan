@@ -1,13 +1,13 @@
 package org.infinispan.server.test.eviction;
 
 import static org.infinispan.test.TestingUtil.loadFileAsString;
+import static org.infinispan.util.concurrent.CompletableFutures.await;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
@@ -60,17 +60,18 @@ public class EvictionIT {
    }
 
    @Test
-   public void testPutAllAsyncEviction() {
+   public void testPutAllAsyncEviction() throws Exception {
       RemoteCache<String, String> rc = remoteCacheManager.getCache("binary");
       rc.clear();
+
       Map<String, String> entries = new HashMap<>();
       entries.put("keyA", "A");
       entries.put("keyB", "B");
       entries.put("keyC", "C");
       entries.put("keyD", "D");
+      await(rc.putAllAsync(entries));
 
-      CompletableFuture res = rc.putAllAsync(entries);
-      res.thenRun(() -> assertEquals(3, rc.size()));
+      assertEquals(3, rc.size());
    }
 
    @Test
