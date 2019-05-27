@@ -1,4 +1,4 @@
-package org.infinispan.context;
+package org.infinispan.context.impl;
 
 import java.util.Collections;
 import java.util.Map;
@@ -6,14 +6,13 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 
 /**
  * @author Mircea Markus
  * @author Sanne Grinovero
- * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
-@Deprecated
 public final class SingleKeyNonTxInvocationContext implements InvocationContext {
 
    /**

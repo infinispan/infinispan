@@ -8,6 +8,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.ClearInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
+import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;

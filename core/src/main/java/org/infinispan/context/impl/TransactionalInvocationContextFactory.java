@@ -1,4 +1,4 @@
-package org.infinispan.context;
+package org.infinispan.context.impl;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -6,9 +6,8 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.CacheException;
-import org.infinispan.context.impl.LocalTxInvocationContext;
-import org.infinispan.context.impl.NonTxInvocationContext;
-import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.context.AbstractInvocationContextFactory;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -22,9 +21,7 @@ import org.infinispan.transaction.impl.TransactionTable;
  * Invocation context to be used for transactional caches.
  *
  * @author Mircea.Markus@jboss.com
- * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
-@Deprecated
 @Scope(Scopes.NAMED_CACHE)
 public class TransactionalInvocationContextFactory extends AbstractInvocationContextFactory {
 
