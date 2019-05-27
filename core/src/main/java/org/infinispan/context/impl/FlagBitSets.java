@@ -27,7 +27,6 @@ public class FlagBitSets {
    public static final long PUT_FOR_STATE_TRANSFER = EnumUtil.bitSetOf(Flag.PUT_FOR_STATE_TRANSFER);
    public static final long PUT_FOR_X_SITE_STATE_TRANSFER = EnumUtil.bitSetOf(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
    public static final long SKIP_SHARED_CACHE_STORE = EnumUtil.bitSetOf(Flag.SKIP_SHARED_CACHE_STORE);
-   public static final long REMOVE_DATA_ON_STOP = EnumUtil.bitSetOf(Flag.REMOVE_DATA_ON_STOP);
    public static final long SKIP_OWNERSHIP_CHECK = EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK);
    @Deprecated
    public static final long DELTA_WRITE = EnumUtil.bitSetOf(Flag.DELTA_WRITE);
@@ -36,7 +35,9 @@ public class FlagBitSets {
    public static final long GUARANTEED_DELIVERY = EnumUtil.bitSetOf(Flag.GUARANTEED_DELIVERY);
    public static final long SKIP_LISTENER_NOTIFICATION = EnumUtil.bitSetOf(Flag.SKIP_LISTENER_NOTIFICATION);
    public static final long SKIP_STATISTICS = EnumUtil.bitSetOf(Flag.SKIP_STATISTICS);
+   @Deprecated
    public static final long OPERATION_HOTROD = EnumUtil.bitSetOf(Flag.OPERATION_HOTROD);
+   @Deprecated
    public static final long OPERATION_MEMCACHED = EnumUtil.bitSetOf(Flag.OPERATION_MEMCACHED);
    public static final long SKIP_INDEX_CLEANUP = EnumUtil.bitSetOf(Flag.SKIP_INDEX_CLEANUP);
    public static final long COMMAND_RETRY = EnumUtil.bitSetOf(Flag.COMMAND_RETRY);

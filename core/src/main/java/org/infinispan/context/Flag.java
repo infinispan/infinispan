@@ -147,16 +147,6 @@ public enum Flag {
     */
    SKIP_SHARED_CACHE_STORE,
    /**
-    * This flag has only effect when it's used before calling {@link
-    * org.infinispan.Cache#stop()} and its effect is that apart from stopping
-    * the cache, it removes all of its content from both memory and any backing
-    * cache store.
-    *
-    * @deprecated No longer in use.
-    */
-   @Deprecated
-   REMOVE_DATA_ON_STOP,
-   /**
     * Ignore current consistent hash and read from data container/commit the change no matter what (if the flag is set).
     */
    SKIP_OWNERSHIP_CHECK,
@@ -245,12 +235,16 @@ public enum Flag {
 
    /**
     * Flag to identify cache operations coming from the Hot Rod server.
+    * @deprecated Since 10.0, not in use.
     */
+   @Deprecated
    OPERATION_HOTROD,
 
    /**
     * Flag to identify cache operations coming from the Memcached server.
+    * @deprecated Since 10.0, not in use.
     */
+   @Deprecated
    OPERATION_MEMCACHED,
 
    /**
