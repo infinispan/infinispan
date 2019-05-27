@@ -1,9 +1,9 @@
 package org.infinispan.atomic.impl;
 
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -15,17 +15,17 @@ import java.util.stream.Stream;
 import org.infinispan.Cache;
 import org.infinispan.atomic.FineGrainedAtomicMap;
 import org.infinispan.commons.CacheException;
-import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.Param;
-import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.context.Flag;
+import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.Param;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -56,6 +56,7 @@ public class FineGrainedAtomicMapProxyImpl<K, V, MK> extends AbstractMap<K, V> i
    private final Cache<Object, Object> cache;
    private final FunctionalMap.ReadOnlyMap<Object, Object> ro;
    private final FunctionalMap.ReadWriteMap<Object, Object> rw;
+   private final FunctionalMap.WriteOnlyMap<Object, Object> wo;
    private final MK group;
    private final InvocationContextFactory icf;
    private final EntryFactory entryFactory;
@@ -64,11 +65,13 @@ public class FineGrainedAtomicMapProxyImpl<K, V, MK> extends AbstractMap<K, V> i
    public FineGrainedAtomicMapProxyImpl(Cache<Object, Object> cache,
                                         FunctionalMap.ReadOnlyMap<Object, Object> ro,
                                         FunctionalMap.ReadWriteMap<Object, Object> rw,
+                                        FunctionalMap.WriteOnlyMap<Object, Object> wo,
                                         MK group,
                                         InvocationContextFactory icf, EntryFactory entryFactory) {
       this.cache = cache;
       this.ro = ro;
       this.rw = rw;
+      this.wo = wo;
       this.group = group;
       this.icf = icf;
       this.entryFactory = entryFactory;
@@ -85,6 +88,7 @@ public class FineGrainedAtomicMapProxyImpl<K, V, MK> extends AbstractMap<K, V> i
       FunctionalMapImpl<Object, Object> fmap = FunctionalMapImpl.create(cache.getAdvancedCache());
       FunctionalMap.ReadOnlyMap<Object, Object> ro = ReadOnlyMapImpl.create(fmap);
       FunctionalMap.ReadWriteMap<Object, Object> rw = ReadWriteMapImpl.create(fmap).withParams(Param.LockingMode.SKIP);
+      FunctionalMap.WriteOnlyMap<Object, Object> wo = WriteOnlyMapImpl.create(fmap);
       InvocationContextFactory icf = cache.getAdvancedCache().getComponentRegistry().getComponent(InvocationContextFactory.class);
       EntryFactory entryFactory = cache.getAdvancedCache().getComponentRegistry().getComponent(EntryFactory.class);
       // We have to first check if the map is present, because touch acquires a lock on the entry and we don't
@@ -98,10 +102,10 @@ public class FineGrainedAtomicMapProxyImpl<K, V, MK> extends AbstractMap<K, V> i
             CacheEntry<MK, Object> entry = new ImmortalCacheEntry(group, AtomicKeySetImpl.create(cache.getName(), group, keys));
             entryFactory.wrapExternalEntry(ctx, group, entry, true, false);
          }
-         return new FineGrainedAtomicMapProxyImpl<>(cache, ro, rw, group, icf, entryFactory);
+         return new FineGrainedAtomicMapProxyImpl<>(cache, ro, rw, wo, group, icf, entryFactory);
       } else if (createIfAbsent) {
          wait(rw.eval(group, new AtomicKeySetImpl.Touch(ByteString.fromString(cache.getName()))));
-         return new FineGrainedAtomicMapProxyImpl<>(cache, ro, rw, group, icf, entryFactory);
+         return new FineGrainedAtomicMapProxyImpl<>(cache, ro, rw, wo, group, icf, entryFactory);
       } else {
          return null;
       }
@@ -113,11 +117,12 @@ public class FineGrainedAtomicMapProxyImpl<K, V, MK> extends AbstractMap<K, V> i
     */
    public static void removeMap(Cache<Object, Object> cache, Object group) {
       FunctionalMapImpl<Object, Object> fmap = FunctionalMapImpl.create(cache.getAdvancedCache());
-      FunctionalMap.ReadWriteMap<Object, Object> rw = ReadWriteMapImpl.create(fmap).withParams(Param.LockingMode.SKIP);
       new TransactionHelper(cache.getAdvancedCache()).run(() -> {
+         FunctionalMap.ReadWriteMap<Object, Object> rw = ReadWriteMapImpl.create(fmap).withParams(Param.LockingMode.SKIP);
          Set<Object> keys = wait(rw.eval(group, AtomicKeySetImpl.RemoveMap.instance()));
          if (keys != null) {
-            removeAll(cache, group, keys);
+            FunctionalMap.WriteOnlyMap<Object, Object> wo = WriteOnlyMapImpl.create(fmap);
+            removeAll(wo, group, keys);
          }
          return null;
       });
@@ -139,13 +144,13 @@ public class FineGrainedAtomicMapProxyImpl<K, V, MK> extends AbstractMap<K, V> i
       }
    }
 
-   private static <K> void removeAll(Cache<Object, Object> cache, Object group, Set<K> keys) {
-      ArrayList<CompletableFuture<?>> cfs = new ArrayList<>(keys.size());
-      Cache<Object, Object> noReturn = cache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
+   private static <K> void removeAll(FunctionalMap.WriteOnlyMap<Object, Object> wo, Object group, Set<K> keys) {
+      Set<Object> groupedKeys = new HashSet<>(keys.size());
       for (K key : keys) {
-         cfs.add(noReturn.removeAsync(new AtomicKeySetImpl.Key<>(group, key)));
+         groupedKeys.add(new AtomicKeySetImpl.Key<>(group, key));
       }
-      wait(CompletableFuture.allOf(cfs.toArray(new CompletableFuture[cfs.size()])));
+      CompletableFuture<Void> future = wo.evalMany(groupedKeys, AtomicKeySetImpl.PerformRemove.instance());
+      wait(future);
    }
 
    private Set<K> keys() {
@@ -212,7 +217,7 @@ public class FineGrainedAtomicMapProxyImpl<K, V, MK> extends AbstractMap<K, V> i
    public void clear() {
       txHelper.run(() -> {
          Set<K> keys = wait(rw.eval(group, AtomicKeySetImpl.RemoveAll.<K>instance()));
-         removeAll(cache, group, keys);
+         removeAll(wo, group, keys);
          return null;
       });
    }
