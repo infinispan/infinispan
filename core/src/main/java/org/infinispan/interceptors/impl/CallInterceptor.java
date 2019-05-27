@@ -21,6 +21,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import io.reactivex.Flowable;
+import io.reactivex.internal.functions.Functions;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
@@ -117,9 +119,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
-
-import io.reactivex.Flowable;
-import io.reactivex.internal.functions.Functions;
 
 /**
  * Always at the end of the chain, directly in front of the cache. Simply calls into the cache using reflection. If the
@@ -708,7 +707,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             e.setChanged(true);
             e.setRemoved(true);
             e.setCreated(false);
-            e.setValid(false);
             if (aggregateCompletionStage != null) {
                aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryInvalidated(key, e.getValue(),
                      e.getMetadata(), true, ctx, invalidateCommand));
@@ -739,7 +737,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
                e.setRemoved(true);
                e.setChanged(true);
                e.setCreated(false);
-               e.setValid(false);
                if (aggregateCompletionStage != null) {
                   aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryInvalidated(key, e.getValue(),
                         e.getMetadata(), true, ctx, invalidateL1Command));

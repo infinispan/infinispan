@@ -51,11 +51,6 @@ public class MortalCacheValue extends ImmortalCacheValue {
    }
 
    @Override
-   public boolean isExpired() {
-      return isExpired(System.currentTimeMillis());
-   }
-
-   @Override
    public final boolean canExpire() {
       return true;
    }

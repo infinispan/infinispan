@@ -106,27 +106,12 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public boolean isExpired() {
-         return entry.isExpired();
-      }
-
-      @Override
       public InternalCacheValue<V> toInternalCacheValue() {
          return new CoreImmutables.ImmutableInternalCacheValue(this);
       }
 
       @Override
-      public void touch() {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
       public void touch(long currentTimeMillis) {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void reincarnate() {
          throw new UnsupportedOperationException();
       }
 
@@ -261,11 +246,6 @@ public class CoreImmutables extends Immutables {
       @Override
       public boolean isExpired(long now) {
          return entry.isExpired(now);
-      }
-
-      @Override
-      public boolean isExpired() {
-         return entry.isExpired();
       }
 
       @Override

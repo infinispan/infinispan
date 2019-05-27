@@ -49,11 +49,6 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public final boolean isExpired() {
-      return isExpired(System.currentTimeMillis());
-   }
-
-   @Override
    public final boolean canExpire() {
       return true;
    }
@@ -88,18 +83,8 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public final void touch() {
-      // no-op
-   }
-
-   @Override
    public final void touch(long currentTimeMillis) {
       // no-op
-   }
-
-   @Override
-   public final void reincarnate() {
-      reincarnate(System.currentTimeMillis());
    }
 
    @Override

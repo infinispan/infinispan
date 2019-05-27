@@ -47,11 +47,6 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
    }
 
    @Override
-   public boolean isExpired() {
-      return false;
-   }
-
-   @Override
    public boolean canExpire() {
       return false;
    }

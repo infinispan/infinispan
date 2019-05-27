@@ -45,20 +45,10 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
    }
 
    @Override
-   public final void touch() {
-      touch(System.currentTimeMillis());
-   }
-
-   @Override
    public final void touch(long currentTimeMillis) {
       lastUsed = currentTimeMillis;
    }
 
-
-   @Override
-   public final void reincarnate() {
-      // no-op
-   }
 
    @Override
    public void reincarnate(long now) {
@@ -73,11 +63,6 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
    @Override
    public boolean isExpired(long now) {
       return ExpiryHelper.isExpiredTransient(metadata.maxIdle(), lastUsed, now);
-   }
-
-   @Override
-   public boolean isExpired() {
-      return isExpired(System.currentTimeMillis());
    }
 
    @Override

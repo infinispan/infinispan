@@ -34,13 +34,6 @@ public interface InternalCacheValue<V> {
    boolean isExpired(long now);
 
    /**
-    * @return true if the entry has expired; false otherwise
-    * @deprecated use {@link #isExpired(long)}
-    */
-   @Deprecated
-   boolean isExpired();
-
-   /**
     * @return true if the entry can expire, false otherwise
     */
    boolean canExpire();

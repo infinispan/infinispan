@@ -175,11 +175,6 @@ public class InternalMetadataTest {
       }
 
       @Override
-      public boolean isExpired() {
-         return false;
-      }
-
-      @Override
       public boolean canExpire() {
          return false;
       }
@@ -200,15 +195,7 @@ public class InternalMetadataTest {
       }
 
       @Override
-      public void touch() {
-      }
-
-      @Override
       public void touch(long currentTimeMillis) {
-      }
-
-      @Override
-      public void reincarnate() {
       }
 
       @Override

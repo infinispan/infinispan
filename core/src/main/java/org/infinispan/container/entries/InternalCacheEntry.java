@@ -20,13 +20,6 @@ public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
    boolean isExpired(long now);
 
    /**
-    * @return true if the entry has expired; false otherwise
-    * @deprecated use {@link #isExpired(long)}
-    */
-   @Deprecated
-   boolean isExpired();
-
-   /**
     * @return true if the entry can expire, false otherwise
     */
    boolean canExpire();
@@ -39,25 +32,11 @@ public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
    long getExpiryTime();
 
    /**
-    * Updates access timestamps on this instance
-    * @deprecated use {@link #touch(long)}
-    */
-   @Deprecated
-   void touch();
-
-   /**
     * Updates access timestamps on this instance to a specified time
     * @param currentTimeMillis the current time as defined by {@link System#currentTimeMillis()} or {@link
     *                          TimeService#wallClockTime()}
     */
    void touch(long currentTimeMillis);
-
-   /**
-    * "Reincarnates" an entry.  Essentially, resets the 'created' timestamp of the entry to the current time.
-    * @deprecated use {@link #reincarnate(long)}
-    */
-   @Deprecated
-   void reincarnate();
 
    /**
     * "Reincarnates" an entry.  Essentially, resets the 'created' timestamp of the entry to the current time.
