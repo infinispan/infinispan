@@ -1,10 +1,9 @@
-package org.infinispan.context;
+package org.infinispan.context.impl;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.context.impl.LocalTxInvocationContext;
-import org.infinispan.context.impl.NonTxInvocationContext;
-import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.context.AbstractInvocationContextFactory;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -16,9 +15,7 @@ import org.infinispan.transaction.impl.RemoteTransaction;
  * Invocation Context container to be used for non-transactional caches.
  *
  * @author Mircea Markus
- * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
-@Deprecated
 @Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 public class NonTransactionalInvocationContextFactory extends AbstractInvocationContextFactory {

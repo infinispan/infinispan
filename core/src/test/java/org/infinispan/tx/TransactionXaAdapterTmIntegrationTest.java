@@ -13,7 +13,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.context.TransactionalInvocationContextFactory;
+import org.infinispan.context.impl.TransactionalInvocationContextFactory;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionCoordinator;

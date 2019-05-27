@@ -6,7 +6,6 @@ import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
 
 import java.util.concurrent.atomic.AtomicReference;
-
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commands.CommandsFactory;
@@ -16,7 +15,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.context.SingleKeyNonTxInvocationContext;
+import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;

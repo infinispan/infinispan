@@ -17,7 +17,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.SingleKeyNonTxInvocationContext;
+import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
