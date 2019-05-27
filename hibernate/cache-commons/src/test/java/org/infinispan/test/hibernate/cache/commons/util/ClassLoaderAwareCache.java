@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.AbstractDelegatingAdvancedCache;
 import org.infinispan.AdvancedCache;
+import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
