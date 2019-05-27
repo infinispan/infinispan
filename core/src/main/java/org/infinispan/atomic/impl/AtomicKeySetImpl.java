@@ -9,24 +9,25 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.atomic.FineGrainedAtomicMap;
-import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.functional.EntryView;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.functional.EntryView;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -47,7 +48,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public final class AtomicKeySetImpl<K> implements MergeOnStore {
    private enum Type {
-      KEY, READ_ALL, TOUCH, ADD, ADD_ALL, REMOVE, REMOVE_ALL, REMOVE_MAP
+      KEY, READ_ALL, TOUCH, ADD, ADD_ALL, REMOVE, REMOVE_ALL, REMOVE_MAP, PERFORM_REMOVE
    }
 
    private static final Type[] TYPES = Type.values();
@@ -463,6 +464,34 @@ public final class AtomicKeySetImpl<K> implements MergeOnStore {
       }
    }
 
+   /**
+    * Actually remove an entry from the cache, not just from the keyset.
+    */
+   static class PerformRemove<K> implements Consumer<EntryView.WriteEntryView<Object, Object>>, Externalizable {
+      private static final PerformRemove INSTANCE = new PerformRemove();
+
+      public static <K> PerformRemove<K> instance() {
+         return INSTANCE;
+      }
+
+      public PerformRemove() {
+      }
+
+      @Override
+      public void accept(EntryView.WriteEntryView<Object, Object> entryView) {
+         entryView.remove();
+      }
+
+      @Override
+      public Type type() {
+         return Type.PERFORM_REMOVE;
+      }
+
+      @Override
+      public void writeTo(ObjectOutput output) throws IOException {
+      }
+   }
+
    public static class Externalizer implements AdvancedExternalizer<AtomicKeySetImpl> {
       private final GlobalComponentRegistry gcr;
 
@@ -515,7 +544,8 @@ public final class AtomicKeySetImpl<K> implements MergeOnStore {
    public static class FunctionExternalizer implements AdvancedExternalizer<Externalizable> {
       @Override
       public Set<Class<? extends Externalizable>> getTypeClasses() {
-         return Util.asSet(Key.class, ReadAll.class, Touch.class, Add.class, AddAll.class, Remove.class, RemoveAll.class, RemoveMap.class);
+         return Util.asSet(Key.class, ReadAll.class, Touch.class, Add.class, AddAll.class, Remove.class,
+                           RemoveAll.class, RemoveMap.class, PerformRemove.class);
       }
 
       @Override
@@ -549,6 +579,8 @@ public final class AtomicKeySetImpl<K> implements MergeOnStore {
                return RemoveAll.instance();
             case REMOVE_MAP:
                return RemoveMap.instance();
+            case PERFORM_REMOVE:
+               return PerformRemove.instance();
             default:
                throw new IllegalArgumentException();
          }
