@@ -50,11 +50,6 @@ public class TransientCacheValue extends ImmortalCacheValue {
    }
 
    @Override
-   public final boolean isExpired() {
-      return isExpired(System.currentTimeMillis());
-   }
-
-   @Override
    public boolean canExpire() {
       return true;
    }

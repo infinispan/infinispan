@@ -54,11 +54,6 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
    }
 
    @Override
-   public final boolean isExpired() {
-      return isExpired(System.currentTimeMillis());
-   }
-
-   @Override
    public boolean canExpire() {
       return true;
    }

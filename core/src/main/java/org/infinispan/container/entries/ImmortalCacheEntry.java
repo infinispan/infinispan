@@ -34,11 +34,6 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public final boolean isExpired() {
-      return false;
-   }
-
-   @Override
    public final boolean canExpire() {
       return false;
    }
@@ -69,17 +64,7 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public final void touch() {
-      // no-op
-   }
-
-   @Override
    public void touch(long currentTimeMillis) {
-      // no-op
-   }
-
-   @Override
-   public final void reincarnate() {
       // no-op
    }
 

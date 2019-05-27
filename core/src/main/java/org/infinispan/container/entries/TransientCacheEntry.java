@@ -45,20 +45,10 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public final void touch() {
-      touch(System.currentTimeMillis());
-   }
-
-   @Override
    public final void touch(long currentTimeMillis) {
       this.lastUsed = currentTimeMillis;
    }
 
-
-   @Override
-   public final void reincarnate() {
-      // no-op
-   }
 
    @Override
    public void reincarnate(long now) {
@@ -73,11 +63,6 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public boolean isExpired(long now) {
       return ExpiryHelper.isExpiredTransient(maxIdle, lastUsed, now);
-   }
-
-   @Override
-   public boolean isExpired() {
-      return isExpired(System.currentTimeMillis());
    }
 
    public void setMaxIdle(long maxIdle) {

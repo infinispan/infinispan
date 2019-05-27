@@ -52,11 +52,6 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
    }
 
    @Override
-   public boolean isExpired() {
-      return isExpired(System.currentTimeMillis());
-   }
-
-   @Override
    public long getExpiryTime() {
       long lifespan = metadata.lifespan();
       long lset = lifespan > -1 ? created + lifespan : -1;

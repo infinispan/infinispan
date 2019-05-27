@@ -76,11 +76,6 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public boolean isExpired() {
-      return isExpired(System.currentTimeMillis());
-   }
-
-   @Override
    public final long getExpiryTime() {
       long lset = lifespan > -1 ? created + lifespan : -1;
       long muet = maxIdle > -1 ? lastUsed + maxIdle : -1;
@@ -101,18 +96,8 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public final void touch() {
-      touch(System.currentTimeMillis());
-   }
-
-   @Override
    public final void touch(long currentTimeMillis) {
       this.lastUsed = currentTimeMillis;
-   }
-
-   @Override
-   public final void reincarnate() {
-      reincarnate(System.currentTimeMillis());
    }
 
    @Override

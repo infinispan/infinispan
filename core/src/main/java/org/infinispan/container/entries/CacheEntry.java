@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.metadata.MetadataAware;
-import org.infinispan.metadata.Metadata;
 
 /**
  * An entry that is stored in the data container
@@ -42,22 +41,6 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
     * @return true if this entry has been evicted since being read from the container, false otherwise.
     */
    boolean isEvicted();
-
-   /**
-    * @deprecated since 9.2
-    */
-   @Deprecated
-   default boolean isValid() {
-      throw new UnsupportedOperationException();
-   }
-
-   /**
-    * @deprecated since 8.1
-    */
-   @Deprecated
-   default boolean isLoaded() {
-      throw new UnsupportedOperationException();
-   }
 
    /**
     * Retrieves the key to this entry
@@ -117,27 +100,8 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
     * Commits changes
     *
     * @param container data container to commit to
-    * @deprecated since 9.1
-    */
-   @Deprecated
-   default void commit(DataContainer<K, V> container, Metadata metadata) {
-      commit(container);
-   }
-
-   /**
-    * Commits changes
-    *
-    * @param container data container to commit to
     */
    void commit(DataContainer<K, V> container);
-
-   /**
-    * Rolls back changes
-    *
-    * @deprecated since 9.0
-    */
-   @Deprecated
-   default void rollback() {}
 
    void setChanged(boolean changed);
 
@@ -148,33 +112,10 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
    void setEvicted(boolean evicted);
 
    /**
-    * @deprecated since 9.2
-    */
-   @Deprecated
-   default void setValid(boolean valid) {
-   }
-
-   /**
-    * @deprecated since 8.1
-    */
-   @Deprecated
-   default void setLoaded(boolean loaded) {
-   }
-
-   /**
     * See {@link #skipLookup()}.
     * @param skipLookup
     */
    void setSkipLookup(boolean skipLookup);
-
-   /**
-    * If the entry is marked as removed and doUndelete==true then the "valid" flag is set to true and "removed"
-    * flag is set to false.
-    */
-   @Deprecated
-   default boolean undelete(boolean doUndelete) {
-      return false;
-   }
 
    CacheEntry<K, V> clone();
 

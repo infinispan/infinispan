@@ -69,11 +69,6 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
    }
 
    @Override
-   public boolean isExpired() {
-      return isExpired(System.currentTimeMillis());
-   }
-
-   @Override
    public final long getExpiryTime() {
       long lifespan = metadata.lifespan();
       long lset = lifespan > -1 ? created + lifespan : -1;
@@ -95,18 +90,8 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
    }
 
    @Override
-   public final void touch() {
-      lastUsed = System.currentTimeMillis();
-   }
-
-   @Override
    public final void touch(long currentTimeMillis) {
       lastUsed = currentTimeMillis;
-   }
-
-   @Override
-   public final void reincarnate() {
-      reincarnate(System.currentTimeMillis());
    }
 
    @Override

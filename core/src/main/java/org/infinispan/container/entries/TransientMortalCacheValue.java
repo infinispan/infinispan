@@ -56,11 +56,6 @@ public class TransientMortalCacheValue extends MortalCacheValue {
    }
 
    @Override
-   public boolean isExpired() {
-      return isExpired(System.currentTimeMillis());
-   }
-
-   @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
       return new TransientMortalCacheEntry(key, value, maxIdle, lifespan, lastUsed, created);
    }
