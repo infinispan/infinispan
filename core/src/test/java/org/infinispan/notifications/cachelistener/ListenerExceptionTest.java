@@ -115,8 +115,11 @@ public class ListenerExceptionTest extends MultipleCacheManagersTest {
       ErrorInducingListenerAsync listenerAsync =
             new ErrorInducingListenerAsync(isInjectInPre, failLoc);
       cache.addListener(listenerAsync);
-
-      cache.put(k(m), v(m));
+      try {
+         cache.put(k(m), v(m));
+      } finally {
+         cache.removeListener(listenerAsync);
+      }
       assert cache.get(k(m)).equals(v(m));
       assert listenerAsync.caller != Thread.currentThread();
    }
