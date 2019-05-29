@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -673,26 +674,33 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       }
 
       @TopologyChanged
-      public void topologyChanged(TopologyChangedEvent<Address, ServerAddress> event) {
-         boolean success = false;
-         while (!success && addressCache.getStatus().allowInvocations()) {
-            try {
-               // No need for a timeout here, the cluster executor has a default timeout
-               CompletableFuture<Void> future = clusterExecutor.submitConsumer(new CheckAddressTask(addressCache.getName(),
-                     clusterAddress), (a, v, t) -> {
-                  if (t != null) {
-                     throw new CacheException(t);
-                  }
-                  if (!v) {
-                     log.debugf("Re-adding %s to the topology cache", clusterAddress);
-                     addressCache.putAsync(clusterAddress, address);
-                  }
-               });
-               future.get();
-               success = true;
-            } catch (Throwable e) {
-               log.debug("Error re-adding address to topology cache, retrying", e);
-            }
+      public CompletionStage<Void> topologyChanged(TopologyChangedEvent<Address, ServerAddress> event) {
+         CompletableFuture<Void> cf = new CompletableFuture<>();
+         recursionTopologyChanged(cf);
+         return cf;
+      }
+
+      private void recursionTopologyChanged(CompletableFuture<Void> cf) {
+         if (addressCache.getStatus().allowInvocations()) {
+            // No need for a timeout here, the cluster executor has a default timeout
+            clusterExecutor.submitConsumer(new CheckAddressTask(addressCache.getName(), clusterAddress), (a, v, t) -> {
+               if (t != null) {
+                  throw new CacheException(t);
+               }
+               if (!v) {
+                  log.debugf("Re-adding %s to the topology cache", clusterAddress);
+                  addressCache.putAsync(clusterAddress, address);
+               }
+            }).whenComplete((v, t) -> {
+               if (t != null) {
+                  log.debug("Error re-adding address to topology cache, retrying", t);
+                  recursionTopologyChanged(cf);
+               } else {
+                  cf.complete(null);
+               }
+            });
+         } else {
+            cf.complete(null);
          }
       }
    }
