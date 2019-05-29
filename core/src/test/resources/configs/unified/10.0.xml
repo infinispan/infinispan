@@ -51,8 +51,8 @@
          <pbcast.GMS print_local_addr="false"
                      join_timeout="${jgroups.join_timeout:2000}"
                      xmlns="urn:org:jgroups"/>
-         <UFC_NB max_credits="2M" min_threshold="0.40" xmlns="urn:org:jgroups"/>
-         <MFC_NB max_credits="2M" min_threshold="0.40" xmlns="urn:org:jgroups"/>
+         <UFC_NB max_credits="3m" min_threshold="0.40" xmlns="urn:org:jgroups"/>
+         <MFC_NB max_credits="3m" min_threshold="0.40" xmlns="urn:org:jgroups"/>
          <FRAG3 xmlns="urn:org:jgroups"/>
       </stack>
       <!-- Use the "tcp" stack but override some protocol attributes -->

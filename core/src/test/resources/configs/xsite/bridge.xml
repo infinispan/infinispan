@@ -50,9 +50,9 @@
     <pbcast.GMS print_local_addr="false"
                 join_timeout="${jgroups.join_timeout:2000}"/>
 
-    <UFC_NB max_credits="2m"
+    <UFC_NB max_credits="3m"
          min_threshold="0.40"/>
-    <MFC_NB max_credits="2M"
+    <MFC_NB max_credits="3m"
          min_threshold="0.40"/>
 
     <RSVP />

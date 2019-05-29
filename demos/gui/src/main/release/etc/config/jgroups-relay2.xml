@@ -48,9 +48,9 @@
     />
     <pbcast.GMS print_local_addr="true" join_timeout="${jgroups.join_timeout:5000}"
                 max_bundling_time="200"/>
-    <UFC_NB max_credits="2M"
+    <UFC_NB max_credits="3m"
           min_threshold="0.40"/>
-    <MFC_NB max_credits="2M"
+    <MFC_NB max_credits="3m"
           min_threshold="0.40"/>
     <FRAG3 frag_size="8000"/>
     <RELAY site="zrh" bridge_props="config-samples/jgroups-tcp.xml"  />
