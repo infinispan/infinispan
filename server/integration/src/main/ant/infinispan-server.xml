@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="testsuite">
+<project name="testsuite" xmlns:if="ant:if">
     <target name="-check.skipped">
         <condition property="tests.skipped">
             <or>
@@ -38,33 +38,33 @@
             <arg value="../bin"/>
             <arg value="standalone.sh"/>
         </exec>
-        <exec executable="${server.dist}/bin/standalone.sh" osfamily="unix" spawn="true">
-            <arg line="-c ${jboss.config.file}"/>
+        <exec executable="sh" osfamily="unix" spawn="true">
+            <arg value="-c"/>
+            <arg value="${server.dist}/bin/standalone.sh -c ${jboss.config.file} > ${server.dist}/console.log"/>
             <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=${port.offset} -Djboss.node.name=${jboss.node.name}"/>
             <env key="JBOSS_HOME" value="${server.dist}"/>
             <env key="JAVA" value="${server.jvm}/bin/java"/>
         </exec>
-        <exec executable="${server.dist}/bin/standalone.bat" osfamily="windows" spawn="true">
-            <arg line="-c ${jboss.config.file}"/>
+        <exec executable="cmd" osfamily="windows" spawn="true">
+            <arg value="/c"/>
+            <arg value="${server.dist}/bin/standalone.bat -c ${jboss.config.file} > ${server.dist}/console.log"/>
             <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=${port.offset} -Djboss.node.name=${jboss.node.name}"/>
             <env key="JBOSS_HOME" value="${server.dist}"/>
             <env key="JAVA" value="${server.jvm}/bin/java"/>
             <env key="STANDALONE_CONF" value="notfound.bat"/>
         </exec>
         <echo>Waiting for Infinispan server to start</echo>
-        <waitfor maxwait="30" maxwaitunit="second" checkevery="1" checkeveryunit="second">
+        <waitfor timeoutproperty="server.timeout" maxwait="30" maxwaitunit="second" checkevery="1" checkeveryunit="second">
             <and>
                 <socket server="127.0.0.1" port="${management.port}"/>
                 <socket server="127.0.0.1" port="${hotrod.port}"/>
             </and>
         </waitfor>
-        <fail message="Server did not start">
-            <condition>
-               <not>
-                  <socket server="127.0.0.1" port="${hotrod.port}"/>
-               </not>
-            </condition>
-        </fail>
+        <concat if:set="server.timeout">
+            <fileset file="${server.dist}/console.log"/>
+        </concat>
+        <antcall target="kill-server" if:set="server.timeout"/>
+        <fail message="Server did not start" if="server.timeout"/>
         <echo message="Infinispan server started"/>
     </target>
 
@@ -74,8 +74,7 @@
         <attribute name="output-property"/>
 
         <sequential>
-            <echo>@{run-property}: ${@{output-property}} --- ${@{exitcode-property}}</echo>
-            <condition property="@{run-property}" value="true" else="false">
+            <condition property="@{run-property}">
                 <and>
                     <equals arg1="${@{exitcode-property}}" arg2="0"/>
                     <isset property="@{output-property}"/>
@@ -84,6 +83,7 @@
                     </not>
                 </and>
             </condition>
+            <echo>@{run-property} = ${@{run-property}}: pid ${@{output-property}}, exit code ${@{exitcode-property}}</echo>
         </sequential>
     </macrodef>
     <target name="-do.kinit" depends="-check.skipped" unless="tests.skipped">
@@ -104,7 +104,8 @@
 
         <exec executable="bash" outputproperty="lsof.pid" resultproperty="lsof.result" failifexecutionfails="false" failonerror="false" osfamily="unix">
             <arg value="-c"/>
-            <arg value="lsof -t -i TCP:${hotrod.port}"/>
+            <!-- Sometimes the server opens the management port but not the hotrod port -->
+            <arg value="lsof -t -i TCP:${management.port} -i TCP:${hotrod.port}"/>
             <redirector>
                 <outputfilterchain>
                     <prefixlines prefix=" "/>
@@ -165,29 +166,29 @@
         </fail>
     </target>
 
-    <target name="-do.ps" if="${run.ps}">
+    <target name="-do.ps" if="run.ps">
         <exec executable="kill" osfamily="unix">
             <arg line="-9 ${ps.pid}"/>
         </exec>
     </target>
 
-    <target name="-do.lsof" if="${run.lsof}">
+    <target name="-do.lsof" if="run.lsof">
         <exec executable="kill" osfamily="unix">
             <arg line="-9 ${lsof.pid}"/>
         </exec>
     </target>
 
-    <target name="-do.jps" if="${run.jps}">
+    <target name="-do.jps" if="run.jps">
         <exec executable="kill" osfamily="unix">
             <arg line="-9 ${jps.pid}"/>
         </exec>
     </target>
 
-    <target name="-do.cmd" if="${run.cmd}">
+    <target name="-do.cmd" if="run.cmd">
         <exec executable="taskkill" osfamily="windows">
             <arg line="/F /T /PID ${cmd.pid}"/>
         </exec>
     </target>
 
-    <target name="kill-server" depends="-do.kinit, -do.lsof, -do.cmd"/>
+    <target name="kill-server" depends="-do.kinit, -do.ps, -do.lsof, -do.jps, -do.cmd"/>
 </project>
