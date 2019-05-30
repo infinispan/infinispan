@@ -425,7 +425,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
                   log.tracef("Enabling near-caching for cache '%s'", cacheName);
                }
                return new InvalidatedNearRemoteCache<>(this, cacheName, timeService,
-                     createNearCacheService(configuration.nearCache()));
+                     createNearCacheService(cacheName, configuration.nearCache()));
             }
             // else fallthrough
          case DISABLED:
@@ -434,6 +434,14 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
    }
 
+   protected <K, V> NearCacheService<K, V> createNearCacheService(String cacheName, NearCacheConfiguration cfg) {
+      return this.createNearCacheService(cfg);
+   }
+
+   /**
+    * @deprecated Replaced by {@code #createNearCacheService(String, NearCacheConfiguration)}.
+    */
+   @Deprecated
    protected <K, V> NearCacheService<K, V> createNearCacheService(NearCacheConfiguration cfg) {
       return NearCacheService.create(cfg, listenerNotifier);
    }
