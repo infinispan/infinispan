@@ -21,6 +21,7 @@ import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentAccessor;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -47,6 +48,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
  * @author Manik Surtani
  * @since 4.0
  */
+@Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 public class ComponentRegistry extends AbstractComponentRegistry {
    private static final Log log = LogFactory.getLog(ComponentRegistry.class);
@@ -77,7 +79,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<?, ?> cache,
                             GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
       super(globalComponents.componentMetadataRepo, globalComponents.moduleRepository,
-            Scopes.NAMED_CACHE, globalComponents.getComponent(BasicComponentRegistry.class));
+            false, globalComponents.getComponent(BasicComponentRegistry.class));
 
       if (cacheName == null) throw new CacheConfigurationException("Cache name cannot be null!");
 

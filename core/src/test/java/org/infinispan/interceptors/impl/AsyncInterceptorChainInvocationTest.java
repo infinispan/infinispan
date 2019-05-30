@@ -18,7 +18,6 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
 import org.infinispan.factories.impl.BasicComponentRegistryImpl;
-import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
@@ -383,7 +382,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
 
    private AsyncInterceptorChain newInterceptorChain(AsyncInterceptor... interceptors) {
       BasicComponentRegistryImpl basicComponentRegistry =
-         new BasicComponentRegistryImpl(TestModuleRepository.defaultModuleRepository(), Scopes.NAMED_CACHE, null);
+         new BasicComponentRegistryImpl(TestModuleRepository.defaultModuleRepository(), false, null);
       AsyncInterceptorChainImpl chain = new AsyncInterceptorChainImpl(basicComponentRegistry);
       for (AsyncInterceptor i : interceptors) {
          chain.appendInterceptor(i, false);

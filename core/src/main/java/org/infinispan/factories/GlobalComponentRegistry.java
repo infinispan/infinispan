@@ -98,7 +98,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public GlobalComponentRegistry(GlobalConfiguration configuration,
                                   EmbeddedCacheManager cacheManager,
                                   Set<String> createdCaches, ModuleRepository moduleRepository) {
-      super(new ComponentMetadataRepo(), moduleRepository, Scopes.GLOBAL, null);
+      super(new ComponentMetadataRepo(), moduleRepository, true, null);
 
       ClassLoader configuredClassLoader = configuration.classLoader();
       moduleLifecycles = moduleRepository.getModuleLifecycles();

@@ -70,11 +70,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    protected AbstractComponentRegistry(ComponentMetadataRepo componentMetadataRepo,
                                        ModuleRepository moduleRepository,
-                                       Scopes scope, BasicComponentRegistry nextBasicComponentRegistry) {
+                                       boolean isGlobal, BasicComponentRegistry nextBasicComponentRegistry) {
       this.componentMetadataRepo = componentMetadataRepo;
       this.moduleRepository = moduleRepository;
       this.basicComponentRegistry =
-         new BasicComponentRegistryImpl(moduleRepository, scope, nextBasicComponentRegistry);
+         new BasicComponentRegistryImpl(moduleRepository, isGlobal, nextBasicComponentRegistry);
    }
 
    /**

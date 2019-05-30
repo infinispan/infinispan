@@ -3,6 +3,8 @@ package org.infinispan.factories.scopes;
 /**
  * The different scopes that can be declared for a component.
  *
+ * <p>Must be kept in sync with {@code org.infinispan.factories.impl.Scopes}</p>
+ *
  * @author Manik Surtani
  * @see Scope
  * @since 4.0

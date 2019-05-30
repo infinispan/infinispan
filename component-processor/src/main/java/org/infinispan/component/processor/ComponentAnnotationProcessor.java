@@ -358,7 +358,6 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
          writer.printf("import org.infinispan.factories.components.JmxOperationParameter;\n");
          writer.printf("import org.infinispan.factories.impl.MBeanMetadata;\n");
          writer.printf("import org.infinispan.factories.impl.WireContext;\n");
-         writer.printf("import org.infinispan.factories.scopes.Scopes;\n");
          writer.printf("import org.infinispan.manager.ModuleRepository;\n");
          writer.printf("\n");
          writer.printf("@Generated(value = \"%s\", date = \"%s\")\n", getClass().getName(), Instant.now().toString());
@@ -492,6 +491,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       CharSequence binaryName = binaryName(c.typeElement);
 
       Scopes scope = getScope(c.typeElement);
+      String scopeLiteral = scope != null ? String.valueOf(scope.ordinal()) : "null";
       boolean survivesRestarts = getSurvivesRestarts(c.typeElement);
       boolean autoInstantiable = types().isAssignable(c.typeElement.asType(), autoInstantiableType);
       TypeElement superAccessorClass = getSuperClass(c.typeElement, Scope.class);
@@ -505,17 +505,17 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       if (!c.hasDependenciesOrLifecycle() && !autoInstantiable) {
          // Component doesn't need an anonymous class, eagerDependencies is always empty
          writer.printf("         new ComponentAccessor<%s>(\"%s\",\n" +
-                       "            Scopes.%s, %s, %s,\n" +
+                       "            %s, %s, %s,\n" +
                        "            %s));\n",
-                       simpleClassName, binaryName, scope, survivesRestarts,
+                       simpleClassName, binaryName, scopeLiteral, survivesRestarts,
                        superAccessor, eagerDependencies);
          return;
       }
 
       writer.printf("         new ComponentAccessor<%s>(\"%s\",\n" +
-                    "            Scopes.%s, %s, %s,\n" +
+                    "            %s, %s, %s,\n" +
                     "            %s) {\n",
-                    simpleClassName, binaryName, scope, survivesRestarts,
+                    simpleClassName, binaryName, scopeLiteral, survivesRestarts,
                     superAccessor, eagerDependencies);
 
       if (!c.injectFields.isEmpty() || !c.injectMethods.isEmpty()) {

@@ -2,8 +2,6 @@ package org.infinispan.factories.impl;
 
 import java.util.List;
 
-import org.infinispan.factories.scopes.Scopes;
-
 /**
  * Component lifecycle management
  *
@@ -12,22 +10,23 @@ import org.infinispan.factories.scopes.Scopes;
  */
 public class ComponentAccessor<T> {
    private final String className;
-   private final Scopes scope;
+   // Some modules will not have access to the Scopes enum at runtime
+   private final Integer scopeOrdinal;
    private final boolean survivesRestarts;
    private final String superAccessorName;
    private final List<String> eagerDependencies;
 
-   public ComponentAccessor(String className, Scopes scope, boolean survivesRestarts,
+   public ComponentAccessor(String className, Integer scopeOrdinal, boolean survivesRestarts,
                             String superAccessorName, List<String> eagerDependencies) {
       this.className = className;
-      this.scope = scope;
+      this.scopeOrdinal = scopeOrdinal;
       this.survivesRestarts = survivesRestarts;
       this.superAccessorName = superAccessorName;
       this.eagerDependencies = eagerDependencies;
    }
 
-   protected final Scopes getScope() {
-      return scope;
+   protected final Integer getScopeOrdinal() {
+      return scopeOrdinal;
    }
 
    protected final boolean getSurvivesRestarts() {
@@ -70,6 +69,6 @@ public class ComponentAccessor<T> {
     * Temporary, for ComponentRegistry.getLocalComponent
     */
    public boolean isGlobalScope() {
-      return scope == Scopes.GLOBAL;
+      return scopeOrdinal == 0;
    }
 }

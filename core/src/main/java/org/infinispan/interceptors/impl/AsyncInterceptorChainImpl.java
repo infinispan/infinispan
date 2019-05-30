@@ -13,11 +13,8 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ImmutableListCopy;
-import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -64,12 +61,12 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    }
 
    private void validateCustomInterceptor(Class<? extends AsyncInterceptor> i) {
-      if ((!ReflectionUtil.getAllMethodsShallow(i, Inject.class).isEmpty() ||
-            !ReflectionUtil.getAllMethodsShallow(i, Start.class).isEmpty() ||
-            !ReflectionUtil.getAllMethodsShallow(i, Stop.class).isEmpty()) &&
-          basicComponentRegistry.hasComponentAccessor(i.getName())) {
-         log.customInterceptorExpectsInjection(i.getName());
-      }
+//      if ((!ReflectionUtil.getAllMethodsShallow(i, Inject.class).isEmpty() ||
+//            !ReflectionUtil.getAllMethodsShallow(i, Start.class).isEmpty() ||
+//            !ReflectionUtil.getAllMethodsShallow(i, Stop.class).isEmpty()) &&
+//          basicComponentRegistry.hasComponentAccessor(i.getName())) {
+//         log.customInterceptorExpectsInjection(i.getName());
+//      }
    }
 
    /**

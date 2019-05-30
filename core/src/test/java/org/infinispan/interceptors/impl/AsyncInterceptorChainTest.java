@@ -11,7 +11,6 @@ import java.util.concurrent.Future;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.impl.BasicComponentRegistryImpl;
-import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
@@ -36,7 +35,7 @@ public class AsyncInterceptorChainTest extends AbstractInfinispanTest {
 
    public void testConcurrentAddRemove() throws Exception {
       BasicComponentRegistryImpl basicComponentRegistry =
-         new BasicComponentRegistryImpl(TestModuleRepository.defaultModuleRepository(), Scopes.NAMED_CACHE, null);
+         new BasicComponentRegistryImpl(TestModuleRepository.defaultModuleRepository(), false, null);
       AsyncInterceptorChainImpl ic = new AsyncInterceptorChainImpl(basicComponentRegistry);
       ic.addInterceptor(new DummyCallInterceptor(), 0);
       ic.addInterceptor(new DummyActivationInterceptor(), 1);

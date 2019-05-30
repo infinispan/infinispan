@@ -28,8 +28,8 @@ public class BasicComponentRegistryImplTest {
    public void setup() {
       ClassLoader classLoader = this.getClass().getClassLoader();
       moduleRepository = TestModuleRepository.defaultModuleRepository();
-      globalRegistry = new BasicComponentRegistryImpl(moduleRepository, Scopes.GLOBAL, null);
-      cacheRegistry = new BasicComponentRegistryImpl(moduleRepository, Scopes.NAMED_CACHE, globalRegistry);
+      globalRegistry = new BasicComponentRegistryImpl(moduleRepository, true, null);
+      cacheRegistry = new BasicComponentRegistryImpl(moduleRepository, false, globalRegistry);
    }
 
    @AfterMethod(alwaysRun = true)
