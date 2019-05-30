@@ -113,15 +113,13 @@
          <arg line="-r"/>
          <arg line="${temp.file}"/>
          <arg line="-o"/>
-         <arg line="${project.build.directory}/server/docs/licenses/server-licenses.xml"/>
-         <arg line="${licenses.xml}"/>
+         <arg line="${project.build.directory}/server/docs/licenses/licenses.xml"/>
+         <arg line="${server.dir}/docs/licenses/core-feature-pack-licenses.xml"/>
          <arg line="${server.dir}/docs/licenses/full-feature-pack-licenses.xml"/>
          <classpath>
             <pathelement path="${plugin_classpath}" />
          </classpath>
       </java>
-      <rename src="${licenses.xml}"  dest="${project.build.directory}/server/docs/licenses/server.xml"/>
-      <rename src="${project.build.directory}/server/docs/licenses/server-licenses.xml" dest="${project.build.directory}/server/docs/licenses/licenses.xml"/>
       <xslt in="${project.build.directory}/server/docs/licenses/licenses.xml" style="src/main/resources/template/licenses.xsl" out="${project.build.directory}/server/docs/licenses/licenses.html">
          <param name="product" expression="${infinispan.brand.name}" type="STRING"/>
          <param name="version" expression="${infinispan.brand.version}" type="STRING"/>
