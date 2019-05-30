@@ -26,11 +26,11 @@
          </includes>
       </fileSet>
       <fileSet>
-         <directory>src/main/release/server</directory>
+         <directory>target/server</directory>
          <outputDirectory/>
       </fileSet>
       <fileSet>
-         <directory>target/server</directory>
+         <directory>src/main/release/server</directory>
          <outputDirectory/>
       </fileSet>
    </fileSets>
