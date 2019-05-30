@@ -123,7 +123,7 @@ public final class TestModuleLifecycle implements ModuleLifecycle {
       private final TestGlobalConfiguration testGlobalConfiguration;
 
       GlobalFactoryComponentAccessor(TestGlobalConfiguration testGlobalConfiguration) {
-         super(TestGlobalComponentFactory.class.getName(), Scopes.GLOBAL, true, null,
+         super(TestGlobalComponentFactory.class.getName(), Scopes.GLOBAL.ordinal(), true, null,
                Collections.emptyList());
          this.testGlobalConfiguration = testGlobalConfiguration;
       }
@@ -140,7 +140,7 @@ public final class TestModuleLifecycle implements ModuleLifecycle {
 
       CacheFactoryComponentAccessor(TestGlobalConfiguration testGlobalConfiguration,
                                     HashMap<String, String> defaultFactoryNames) {
-         super(TestCacheComponentFactory.class.getName(), Scopes.NAMED_CACHE, true, null,
+         super(TestCacheComponentFactory.class.getName(), Scopes.NAMED_CACHE.ordinal(), true, null,
                Collections.emptyList());
          this.testGlobalConfiguration = testGlobalConfiguration;
          this.defaultFactoryNames = defaultFactoryNames;
