@@ -343,7 +343,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
                .dataProvider();
          // Add parameters for methods that use a data provider only
          if (res.getParameters().length != 0 && (dataProviderName != null && !dataProviderName.isEmpty())) {
-            result.append("(").append(deepToStringParameters(res.getParameters()));
+            result.append("(").append(deepToStringParameters(res));
          }
          // Add number of invocations to method name
          if (res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class).invocationCount() > 1) {
@@ -376,14 +376,16 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       return result.toString();
    }
 
-   private String deepToStringParameters(Object[] parameters) {
+   private String deepToStringParameters(ITestResult res) {
+      Object[] parameters = res.getParameters();
       for (int i=0; i<parameters.length; i++) {
          Object parameter = parameters[i];
          if (parameter != null) {
             if (parameter instanceof Path) {
                parameters[i] = ((Path) parameter).getFileName().toString();
             } else if (parameter.getClass().getSimpleName().contains("$$Lambda$")) {
-               parameters[i] = "$$Lambda$";
+               res.setStatus(ITestResult.FAILURE);
+               res.setThrowable(new IllegalStateException("Cannot identify which test is running. Use NamedLambdas.of static method"));
             }
          }
       }
