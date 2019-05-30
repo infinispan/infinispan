@@ -46,8 +46,8 @@ class AssertsNearCache<K, V> {
       final BlockingQueue<MockEvent> events = new ArrayBlockingQueue<>(128);
       RemoteCacheManager manager = new RemoteCacheManager(builder.build()) {
          @Override
-         protected NearCacheService<K, V> createNearCacheService(NearCacheConfiguration cfg) {
-            return new MockNearCacheService<K, V>(cfg, events, listenerNotifier);
+         protected <KK, VV> NearCacheService<KK, VV> createNearCacheService(String cacheName, NearCacheConfiguration cfg) {
+            return new MockNearCacheService<>(cfg, events, listenerNotifier);
          }
       };
 
