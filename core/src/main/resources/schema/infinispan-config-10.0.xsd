@@ -744,11 +744,6 @@
           <xs:documentation>The cache transaction configuration.</xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="eviction" type="tns:eviction" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>The cache eviction configuration.</xs:documentation>
-        </xs:annotation>
-      </xs:element>
       <xs:element name="expiration" type="tns:expiration" minOccurs="0">
         <xs:annotation>
           <xs:documentation>The cache expiration configuration.</xs:documentation>
@@ -767,20 +762,6 @@
       <xs:element name="persistence" type="tns:persistence" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Configures the cache's persistence layer.</xs:documentation>
-        </xs:annotation>
-      </xs:element>
-      <xs:element name="versioning" type="tns:versioning" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>
-            Controls whether entries are versioned.  Versioning is necessary, for example, when using optimistic transactions in a clustered environment, to be able to perform write-skew checks.
-          </xs:documentation>
-        </xs:annotation>
-      </xs:element>
-      <xs:element name="data-container" type="tns:data-container" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>
-            Controls the data container for the cache.
-          </xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="memory" type="tns:memory" minOccurs="0">
@@ -890,13 +871,6 @@
         <xs:documentation>If set to false, statistics gathering cannot be enabled during runtime. Keep disabled for optimal performance.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="deadlock-detection-spin" type="xs:long" default="${DeadlockDetection.spinDuration}">
-      <xs:annotation>
-        <xs:documentation>
-          Deprecated since 9.0, deadlock detection is always disabled.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute name="unreliable-return-values" type="xs:boolean" default="${Unsafe.unreliable-return-values}">
       <xs:annotation>
         <xs:documentation>
@@ -939,13 +913,6 @@
     <xs:attribute name="concurrency-level" type="xs:int" default="${Locking.concurrencyLevel}">
       <xs:annotation>
         <xs:documentation>Concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with Infinispan.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="write-skew" type="xs:boolean" default="${Locking.writeSkewCheck}">
-      <xs:annotation>
-        <xs:documentation>
-          (Deprecated) This setting is only applicable in the case of REPEATABLE_READ. When write skew check is set to false, if the writer at commit time discovers that the working entry and the underlying entry have different versions, the working entry will overwrite the underlying entry. If true, such version conflict - known as a write-skew - will throw an Exception. Defaults to false.
-        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
@@ -1048,41 +1015,6 @@
       <xs:element name="key" type="tns:keyEncodingType" minOccurs="1" maxOccurs="1"/>
       <xs:element name="value" type="tns:valueEncodingType" minOccurs="1" maxOccurs="1"/>
     </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="eviction">
-    <xs:annotation>
-      <xs:documentation>
-        DEPRECATED: please use memory element instead
-      </xs:documentation>
-    </xs:annotation>
-    <xs:attribute name="strategy" type="tns:eviction-strategy" default="${Eviction.strategy}">
-      <xs:annotation>
-        <xs:documentation>Sets the cache eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable eviction).</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="max-entries" type="xs:long" default="-1">
-      <xs:annotation>
-        <xs:documentation>Deprecated since 8.1. Use the size attribute instead.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="thread-policy" type="tns:eviction-thread-policy" default="${Eviction.threadPolicy}">
-      <xs:annotation>
-        <xs:documentation>
-          Threading policy for eviction. Defaults to using the DEFAULT eviction policy.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="type" type="tns:eviction-type" default="${Eviction.type}">
-      <xs:annotation>
-        <xs:documentation>Specifies whether to use entry count or memory-based approximation to decide when to evict entries.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="size" type="xs:long" default="${Eviction.size}">
-      <xs:annotation>
-        <xs:documentation>Maximum size to use for eviction. When using the COUNT type, this is the maximum number of entries in a cache instance. When using the MEMORY threshold policy, this is the maximum number of allocated bytes used by a cache's datacontainer. A value of -1 means no limit. This is currently limited to 2^48 - 1 in size.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="expiration">
@@ -1247,54 +1179,6 @@
         </xs:complexType>
       </xs:element>
     </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="versioning">
-    <xs:attribute name="scheme" type="tns:versioning-scheme" default="${Versioning.scheme}">
-      <xs:annotation>
-        <xs:documentation>
-          (Deprecated) The scheme to use when versioning entries. Can be either SIMPLE or NONE. Defaults to NONE
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
-
-  <xs:complexType name="data-container">
-    <xs:sequence>
-      <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
-        <xs:annotation>
-          <xs:documentation>Properties passed to the data container</xs:documentation>
-        </xs:annotation>
-      </xs:element>
-    </xs:sequence>
-    <xs:attribute name="class" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          DEPRECATED: this is to be removed in a future release
-          Fully qualified class name of the data container to use
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="key-equivalence" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          DEPRECATED: this is to be removed in a future release
-          Fully qualified class name of the Equivalence class to use
-          for keys stored in the cache, which provides with custom
-          ways to compare cached keys
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="value-equivalence" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>
-          DEPRECATED: this is to be removed in a future release
-          Fully qualified class name of the Equivalence class to use
-          for values stored in the cache, which provides with custom
-          ways to compare cached values
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="memory">

@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -52,11 +51,7 @@ public class ExpirationWithClusteredWriteSkewTest extends MultipleCacheManagersT
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.OPTIMISTIC)
             .locking()
-            .isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .writeSkewCheck(true)
-            .versioning()
-            .enable()
-            .scheme(VersioningScheme.SIMPLE);
+            .isolationLevel(IsolationLevel.REPEATABLE_READ);
 
       createCluster(builder, 2);
       TestingUtil.replaceComponent(manager(0), TimeService.class, timeService, true);

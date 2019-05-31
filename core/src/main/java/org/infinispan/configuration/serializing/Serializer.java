@@ -32,7 +32,6 @@ import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
-import org.infinispan.configuration.cache.DataContainerConfiguration;
 import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
@@ -505,7 +504,6 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          configuration.compatibility().attributes().write(writer, Element.COMPATIBILITY.getLocalName());
       writeMemory(writer, configuration);
       writePersistence(writer, configuration);
-      writeDataContainer(writer, configuration);
       writeIndexing(writer, configuration);
       writeCustomInterceptors(writer, configuration);
       writeSecurity(writer, configuration);
@@ -569,17 +567,6 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       }
    }
 
-   private void writeDataContainer(XMLExtendedStreamWriter writer, Configuration configuration) throws XMLStreamException {
-      DataContainerConfiguration dataContainer = configuration.dataContainer();
-      AttributeSet attributes = dataContainer.attributes();
-      if (attributes.isModified()) {
-         writer.writeStartElement(Element.DATA_CONTAINER);
-         attributes.write(writer, DataContainerConfiguration.DATA_CONTAINER, Attribute.CLASS);
-         writeTypedProperties(writer, dataContainer.properties());
-         writer.writeEndElement();
-      }
-   }
-
    private void writeMemory(XMLExtendedStreamWriter writer, Configuration configuration) throws XMLStreamException {
       MemoryConfiguration memory = configuration.memory();
       AttributeSet attributes = memory.attributes();
@@ -590,8 +577,10 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             case OFF_HEAP:
                attributes.write(writer, MemoryConfiguration.ADDRESS_COUNT, Attribute.ADDRESS_COUNT);
                attributes.write(writer, MemoryConfiguration.EVICTION_STRATEGY, Attribute.STRATEGY);
+               // fall through
             case BINARY:
                attributes.write(writer, MemoryConfiguration.EVICTION_TYPE, Attribute.EVICTION);
+               // fall through
             case OBJECT:
                attributes.write(writer, MemoryConfiguration.SIZE, Attribute.SIZE);
          }

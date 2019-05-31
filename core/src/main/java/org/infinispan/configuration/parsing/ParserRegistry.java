@@ -144,6 +144,7 @@ public class ParserRegistry implements NamespaceMappingParser {
    /**
     * Parses the supplied {@link InputStream} returning a new {@link ConfigurationBuilderHolder}
     * @param is an {@link InputStream} pointing to a configuration file
+    * @param resourceResolver an optional resolver for Xinclude
     * @return a new {@link ConfigurationBuilderHolder} which contains the parsed configuration
     */
    public ConfigurationBuilderHolder parse(InputStream is, XMLResourceResolver resourceResolver) {

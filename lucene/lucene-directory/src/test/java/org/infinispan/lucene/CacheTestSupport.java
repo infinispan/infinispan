@@ -65,8 +65,6 @@ public abstract class CacheTestSupport {
                .lockAcquisitionTimeout(10000)
             .invocationBatching()
                .disable()
-            .deadlockDetection()
-               .disable()
             .jmxStatistics()
                .disable()
             ;
@@ -88,8 +86,6 @@ public abstract class CacheTestSupport {
             .locking()
                .lockAcquisitionTimeout(10000)
             .invocationBatching()
-               .disable()
-            .deadlockDetection()
                .disable()
             .jmxStatistics()
                .disable()

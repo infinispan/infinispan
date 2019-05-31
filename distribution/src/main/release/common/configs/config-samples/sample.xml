@@ -126,10 +126,6 @@
    -->
    <!--
       Other cache attributes that can be configured:
-         deadlock-detection-spin :
-            Enables deadlock detection
-            http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_deadlock_detection
-
          batching :
             Used to enable invocation batching and allow the use of Cache.startBatch()/endBatch() methods.
             http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_batching
@@ -149,7 +145,6 @@
       -->
       <locking isolation="READ_COMMITTED"
          acquire-timeout="20000"
-         write-skew="false"
          concurrency-level="5000"
          striping="false"
       />

@@ -60,27 +60,6 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       indexedEntities = attributes.attribute(INDEXED_ENTITIES);
    }
 
-   /**
-    * Whether indexing is enabled. False by default.
-    *
-    * @deprecated Use {@link #index()} instead
-    */
-   @Deprecated
-   public boolean enabled() {
-      return index().isEnabled();
-   }
-
-   /**
-    * If true, only index changes made locally, ignoring remote changes. This is useful if indexes
-    * are shared across a cluster to prevent redundant indexing of updates.
-    *
-    * @deprecated Use {@link #index()} instead
-    */
-   @Deprecated
-   public boolean indexLocalOnly() {
-      return index().isLocalOnly();
-   }
-
    @Override
    public ElementDefinition getElementDefinition() {
       return ELEMENT_DEFINITION;

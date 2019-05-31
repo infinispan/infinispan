@@ -11,10 +11,7 @@ import org.infinispan.configuration.cache.CompatibilityModeConfigurationBuilder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationChildBuilder;
 import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
-import org.infinispan.configuration.cache.DataContainerConfigurationBuilder;
-import org.infinispan.configuration.cache.DeadlockDetectionConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfigurationBuilder;
-import org.infinispan.configuration.cache.EvictionConfigurationBuilder;
 import org.infinispan.configuration.cache.ExpirationConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InvocationBatchingConfigurationBuilder;
@@ -24,11 +21,9 @@ import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
 import org.infinispan.configuration.cache.SitesConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreAsBinaryConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.TransactionConfigurationBuilder;
 import org.infinispan.configuration.cache.UnsafeConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilder {
@@ -123,22 +118,7 @@ public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilde
    }
 
    @Override
-   public DataContainerConfigurationBuilder dataContainer() {
-      return null;
-   }
-
-   @Override
-   public DeadlockDetectionConfigurationBuilder deadlockDetection() {
-      return null;
-   }
-
-   @Override
    public EncodingConfigurationBuilder encoding() {
-      return null;
-   }
-
-   @Override
-   public EvictionConfigurationBuilder eviction() {
       return null;
    }
 
@@ -178,17 +158,7 @@ public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilde
    }
 
    @Override
-   public StoreAsBinaryConfigurationBuilder storeAsBinary() {
-      return null;
-   }
-
-   @Override
    public TransactionConfigurationBuilder transaction() {
-      return null;
-   }
-
-   @Override
-   public VersioningConfigurationBuilder versioning() {
       return null;
    }
 

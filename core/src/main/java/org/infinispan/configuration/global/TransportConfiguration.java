@@ -109,14 +109,6 @@ public class TransportConfiguration {
       return nodeName.get();
    }
 
-   /**
-    * @deprecated Since 6.0, strictPeerToPeer is ignored and asymmetric clusters are always allowed.
-    */
-   @Deprecated
-   public boolean strictPeerToPeer() {
-      return false;
-   }
-
    public TypedProperties properties() {
       return properties.get();
    }

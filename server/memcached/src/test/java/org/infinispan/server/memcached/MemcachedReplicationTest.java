@@ -13,7 +13,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -37,13 +36,7 @@ public class MemcachedReplicationTest extends MemcachedMultiNodeTest {
    @Override
    protected EmbeddedCacheManager createCacheManager(int index) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      // When replicating data, old append/prepend byte[] value in the cache
-      // is a different instance (but maybe same contents) to the one shipped
-      // by the replace command itself, hence for those tests to work, value
-      // equivalence needs to be configured to compare byte array contents
-      // and not instance reference pointers.
-      builder.clustering().cacheMode(CacheMode.REPL_SYNC)
-              .dataContainer().valueEquivalence(ByteArrayEquivalence.INSTANCE);
+      builder.clustering().cacheMode(CacheMode.REPL_SYNC);
       return TestCacheManagerFactory.createClusteredCacheManager(
             GlobalConfigurationBuilder.defaultClusteredBuilder().defaultCacheName(cacheName),
             builder);

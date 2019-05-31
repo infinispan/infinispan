@@ -25,7 +25,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final GlobalSecurityConfigurationBuilder security;
    private final ThreadPoolConfigurationBuilder expirationThreadPool;
    private final ThreadPoolConfigurationBuilder listenerThreadPool;
-   private final ThreadPoolConfigurationBuilder replicationQueueThreadPool;
    private final ThreadPoolConfigurationBuilder persistenceThreadPool;
    private final ThreadPoolConfigurationBuilder stateTransferThreadPool;
    private final ThreadPoolConfigurationBuilder asyncThreadPool;
@@ -52,7 +51,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.site = new SiteConfigurationBuilder(this);
       this.expirationThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.listenerThreadPool = new ThreadPoolConfigurationBuilder(this);
-      this.replicationQueueThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.persistenceThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.stateTransferThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.asyncThreadPool = new ThreadPoolConfigurationBuilder(this);
@@ -111,12 +109,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return serialization;
    }
 
-   @Deprecated
-   @Override
-   public ThreadPoolConfigurationBuilder evictionThreadPool() {
-      return expirationThreadPool;
-   }
-
    @Override
    public ThreadPoolConfigurationBuilder expirationThreadPool() {
       return expirationThreadPool;
@@ -125,12 +117,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    @Override
    public ThreadPoolConfigurationBuilder listenerThreadPool() {
       return listenerThreadPool;
-   }
-
-   @Deprecated
-   @Override
-   public ThreadPoolConfigurationBuilder replicationQueueThreadPool() {
-      return replicationQueueThreadPool;
    }
 
    @Override
@@ -225,7 +211,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       Arrays.asList(
             expirationThreadPool,
             listenerThreadPool,
-            replicationQueueThreadPool,
             persistenceThreadPool,
             stateTransferThreadPool,
             asyncThreadPool,
@@ -262,7 +247,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return new GlobalConfiguration(
             expirationThreadPool.create(),
             listenerThreadPool.create(),
-            replicationQueueThreadPool.create(),
             persistenceThreadPool.create(),
             stateTransferThreadPool.create(),
             asyncThreadPool.create(),
@@ -292,7 +276,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
       expirationThreadPool.read(template.expirationThreadPool());
       listenerThreadPool.read(template.listenerThreadPool());
-      replicationQueueThreadPool.read(template.replicationQueueThreadPool());
       persistenceThreadPool.read(template.persistenceThreadPool());
       stateTransferThreadPool.read(template.stateTransferThreadPool());
       asyncThreadPool.read(template.asyncThreadPool());
@@ -321,7 +304,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             ", transport=" + transport +
             ", globalJmxStatistics=" + globalJmxStatistics +
             ", serialization=" + serialization +
-            ", replicationQueueThreadPool=" + replicationQueueThreadPool +
             ", persistenceThreadPool=" + persistenceThreadPool +
             ", stateTransferThreadPool=" + stateTransferThreadPool +
             ", asyncThreadPool=" + asyncThreadPool +
@@ -342,8 +324,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       if (!expirationThreadPool.equals(that.expirationThreadPool))
          return false;
       if (!listenerThreadPool.equals(that.listenerThreadPool))
-         return false;
-      if (!replicationQueueThreadPool.equals(that.replicationQueueThreadPool))
          return false;
       if (!persistenceThreadPool.equals(that.persistenceThreadPool))
          return false;
@@ -379,7 +359,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       result = 31 * result + (serialization.hashCode());
       result = 31 * result + (expirationThreadPool.hashCode());
       result = 31 * result + (listenerThreadPool.hashCode());
-      result = 31 * result + (replicationQueueThreadPool.hashCode());
       result = 31 * result + (persistenceThreadPool.hashCode());
       result = 31 * result + (stateTransferThreadPool.hashCode());
       result = 31 * result + (asyncThreadPool.hashCode());

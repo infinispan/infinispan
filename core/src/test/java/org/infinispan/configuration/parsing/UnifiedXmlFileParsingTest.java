@@ -3,6 +3,7 @@ package org.infinispan.configuration.parsing;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
@@ -14,20 +15,18 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.infinispan.Version;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
-import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.configuration.QueryableDataContainer;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
@@ -44,7 +43,6 @@ import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -384,15 +382,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals("%G %i", threadFactory.threadNamePattern());
             assertEquals(5, threadFactory.initialPriority());
 
-            ThreadPoolExecutorFactory threadPoolExecutorFactory = getGlobalConfiguration(holder).replicationQueueThreadPool().threadPoolFactory();
-            if (threadPoolExecutorFactory != null) { // Removed on 9.0
-               assertTrue(threadPoolExecutorFactory instanceof ScheduledThreadPoolExecutorFactory);
-               threadFactory = getGlobalConfiguration(holder).replicationQueueThreadPool().threadFactory();
-               assertEquals("infinispan", threadFactory.threadGroup().getName());
-               assertEquals("%G %i", threadFactory.threadNamePattern());
-               assertEquals(5, threadFactory.initialPriority());
-            }
-
             threadFactory = getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadFactory();
             assertEquals("infinispan", threadFactory.threadGroup().getName());
             assertEquals("%G %i", threadFactory.threadNamePattern());
@@ -656,24 +645,17 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
             c = getConfiguration(holder, "write-skew");
             assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel());
-            assertTrue(c.versioning().enabled());
-            assertEquals(VersioningScheme.SIMPLE, c.versioning().scheme());
-            assertFalse(c.deadlockDetection().enabled());
 
             c = getConfiguration(holder, "compatibility");
             assertTrue(c.compatibility().enabled());
             assertTrue(c.compatibility().marshaller() instanceof GenericJBossMarshaller);
-            assertFalse(c.deadlockDetection().enabled());
-            assertEquals(-1, c.deadlockDetection().spinDuration());
 
-            c = getConfiguration(holder, "custom-container");
-            assertTrue(c.dataContainer().dataContainer() instanceof QueryableDataContainer);
-            assertTrue(c.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
-            assertTrue(c.dataContainer().<byte[]>valueEquivalence() instanceof AnyEquivalence);
+            // Ignore custom-container (if present)
 
-            c = getConfiguration(holder, "store-as-binary");
-            if (c != null)
-               assertTrue(c.memory().storageType() == StorageType.BINARY);
+            if (holder.getNamedConfigurationBuilders().containsKey("store-as-binary")) {
+               c = getConfiguration(holder, "store-as-binary");
+               assertSame(StorageType.BINARY, c.memory().storageType());
+            }
          }
 
       },
@@ -728,12 +710,12 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       String foo; // configured via XML
    }
 
-   static Configuration getConfiguration(ConfigurationBuilderHolder holder, String name) {
+   private static Configuration getConfiguration(ConfigurationBuilderHolder holder, String name) {
       ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get(name);
-      return builder != null ? builder.build() : null;
+      return Objects.requireNonNull(builder).build();
    }
 
-   static GlobalConfiguration getGlobalConfiguration(ConfigurationBuilderHolder holder) {
+   private static GlobalConfiguration getGlobalConfiguration(ConfigurationBuilderHolder holder) {
       return holder.getGlobalConfigurationBuilder().build();
    }
 

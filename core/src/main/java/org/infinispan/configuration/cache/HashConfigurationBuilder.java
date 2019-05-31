@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.HashConfiguration.CAPACITY_FACTOR;
 import static org.infinispan.configuration.cache.HashConfiguration.CONSISTENT_HASH_FACTORY;
-import static org.infinispan.configuration.cache.HashConfiguration.HASH;
 import static org.infinispan.configuration.cache.HashConfiguration.KEY_PARTITIONER;
 import static org.infinispan.configuration.cache.HashConfiguration.NUM_OWNERS;
 import static org.infinispan.configuration.cache.HashConfiguration.NUM_SEGMENTS;
@@ -15,7 +14,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -48,15 +46,6 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    }
 
    /**
-    * @deprecated Since 5.2, replaced by {@link #consistentHashFactory(ConsistentHashFactory)}.
-    */
-   @Deprecated
-   public HashConfigurationBuilder consistentHash(ConsistentHash consistentHash) {
-      log.consistentHashDeprecated();
-      return this;
-   }
-
-   /**
     * The consistent hash factory in use.
     */
    public HashConfigurationBuilder consistentHashFactory(ConsistentHashFactory<? extends ConsistentHash> consistentHashFactory) {
@@ -82,16 +71,6 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    }
 
    /**
-    * @deprecated No longer used since 5.2, replaced by {@link #numSegments(int)} (which works like a
-    *    {@code numVirtualNodes} value for the entire cluster).
-    */
-   @Deprecated
-   public HashConfigurationBuilder numVirtualNodes(int numVirtualNodes) {
-      log.hashNumVirtualNodesDeprecated();
-      return this;
-   }
-
-   /**
     * Controls the total number of hash space segments (per cluster).
     *
     * <p>A hash space segment is the granularity for key distribution in the cluster: a node can own
@@ -105,73 +84,6 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    public HashConfigurationBuilder numSegments(int numSegments) {
       if (numSegments < 1) throw new IllegalArgumentException("numSegments cannot be less than 1");
       attributes.attribute(NUM_SEGMENTS).set(numSegments);
-      return this;
-   }
-
-   /**
-    * Enable rebalancing and rehashing, which will take place when a new node joins the cluster or a
-    * node leaves
-    * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
-    */
-   @Deprecated
-   public HashConfigurationBuilder rehashEnabled() {
-      stateTransfer().fetchInMemoryState(true);
-      return this;
-   }
-
-   /**
-    * Enable rebalancing and rehashing, which will take place when a new node joins the cluster or a
-    * node leaves
-    * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
-    */
-   @Deprecated
-   public HashConfigurationBuilder rehashEnabled(boolean enabled) {
-      stateTransfer().fetchInMemoryState(enabled);
-      return this;
-   }
-
-   /**
-    * Disable rebalancing and rehashing, which would have taken place when a new node joins the
-    * cluster or a node leaves
-    * @deprecated Use {@link StateTransferConfigurationBuilder#fetchInMemoryState(boolean)} instead.
-    */
-   @Deprecated
-   public HashConfigurationBuilder rehashDisabled() {
-      stateTransfer().fetchInMemoryState(false);
-      return this;
-   }
-
-   /**
-    * Rehashing timeout
-    * @deprecated Use {@link StateTransferConfigurationBuilder#timeout(long)} instead.
-    */
-   @Deprecated
-   public HashConfigurationBuilder rehashRpcTimeout(long rehashRpcTimeout) {
-      stateTransfer().timeout(rehashRpcTimeout);
-      return this;
-   }
-
-   /**
-    * @deprecated No longer used.
-    */
-   @Deprecated
-   public HashConfigurationBuilder rehashWait(long rehashWait) {
-      return this;
-   }
-
-   /**
-    * The hash function in use. Used as a bit spreader and a general hash code generator. Typically
-    * used in conjunction with the many default
-    * {@link org.infinispan.distribution.ch.ConsistentHash} implementations shipped.
-    *
-    * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
-    * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
-    * constructor to any instance. This will be resolved in Infinispan 5.2.0
-    * @deprecated Since 8.2, use {@link #keyPartitioner(KeyPartitioner)} instead.
-    */
-   @Deprecated
-   public HashConfigurationBuilder hash(Hash hash) {
-      attributes.attribute(HASH).set(hash);
       return this;
    }
 
@@ -190,8 +102,8 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    /**
     * Key partitioner, controlling the mapping of keys to hash segments.
     * <p>
-    * The default implementation {@code org.infinispan.distribution.ch.impl.HashFunctionPartitioner},
-    * uses the hash function configured via {@link #hash(Hash)}. Future versions may ignore the hash function.
+    * The default implementation is {@code org.infinispan.distribution.ch.impl.HashFunctionPartitioner},
+    * uses {@link org.infinispan.commons.hash.MurmurHash3}.
     *
     * @since 8.2
     */
@@ -216,9 +128,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    @Override
    public HashConfiguration create() {
-      // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance. That's ok as long as none of the stateTransfer settings are modifiable at runtime.
-      return new HashConfiguration(attributes.protect(),
-            groupsConfigurationBuilder.create(), stateTransfer().create());
+      return new HashConfiguration(attributes.protect(), groupsConfigurationBuilder.create());
    }
 
    @Override

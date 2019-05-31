@@ -263,20 +263,12 @@
             </interceptor>
          </custom-interceptors>
       </local-cache>
-      <local-cache name="write-skew" deadlock-detection-spin="-1">
-         <locking isolation="REPEATABLE_READ" write-skew="true"/>
+      <local-cache name="write-skew">
+         <locking isolation="REPEATABLE_READ"/>
          <transaction locking="OPTIMISTIC"/>
-         <versioning scheme="SIMPLE"/>
       </local-cache>
-      <local-cache name="compatibility" deadlock-detection-spin="200">
+      <local-cache name="compatibility">
          <compatibility marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
-      </local-cache>
-      <local-cache name="custom-container">
-         <data-container class="org.infinispan.configuration.QueryableDataContainer"
-                         key-equivalence="org.infinispan.commons.equivalence.ByteArrayEquivalence"
-                         value-equivalence="org.infinispan.commons.equivalence.ByteArrayEquivalence">
-            <property name="foo">bar</property>
-         </data-container>
       </local-cache>
       <local-cache name="simple-cache" simple-cache="true">
          <transaction mode="NONE"/>

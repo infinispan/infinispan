@@ -185,15 +185,6 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return String.valueOf(attributes.attribute(PROPERTIES).get().get(key));
    }
 
-   /**
-    * @deprecated Since 6.0, strictPeerToPeer is ignored and asymmetric clusters are always allowed.
-    */
-   @Deprecated
-   public TransportConfigurationBuilder strictPeerToPeer(Boolean ignored) {
-      log.strictPeerToPeerDeprecated();
-      return this;
-   }
-
    public ThreadPoolConfigurationBuilder transportThreadPool() {
       return transportThreadPool;
    }

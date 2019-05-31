@@ -258,33 +258,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    ClassLoader getClassLoader();
 
    /**
-    * Using this operation, users can call any {@link AdvancedCache} operation with a given {@link ClassLoader}. This
-    * means that any {@link ClassLoader} happening as a result of the cache operation will be done using the {@link
-    * ClassLoader} given. For example:
-    * <p/>
-    * When users store POJO instances in caches configured with {@link org.infinispan.configuration.cache.StoreAsBinaryConfiguration},
-    * these instances are transformed into byte arrays. When these entries are read from the cache, a lazy unmarshalling
-    * process happens where these byte arrays are transformed back into POJO instances. Using {@link
-    * AdvancedCache#with(ClassLoader)} when reading that enables users to provide the class loader that should be used
-    * when trying to locate the classes that are constructed as a result of the unmarshalling process.
-    * <pre>
-    *    cache.with(classLoader).get(key);
-    * </pre>
-    * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned
-    * by this method.
-    * <p/>
-    * As an alternative to setting this on every invocation, users should also consider saving the decorated
-    * cache, as this allows for more readable code.  E.g.:
-    * <pre>
-    *    AdvancedCache classLoaderSpecificCache = cache.with(classLoader);
-    *    classLoaderSpecificCache.get(key1);
-    *    classLoaderSpecificCache.get(key2);
-    *    classLoaderSpecificCache.get(key3);
-    * </pre>
-    *
-    * @return an {@link AdvancedCache} instance upon which operations can be called with a particular {@link
-    * ClassLoader}.
-    * @deprecated Since 9.4, the classloader is ignored.
+    * @deprecated Since 9.4, unmarshalling always uses the classloader from the global configuration.
     */
    @Deprecated
    AdvancedCache<K, V> with(ClassLoader classLoader);

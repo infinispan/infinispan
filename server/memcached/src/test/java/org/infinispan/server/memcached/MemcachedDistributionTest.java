@@ -10,7 +10,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -33,8 +32,7 @@ public class MemcachedDistributionTest extends MemcachedMultiNodeTest {
 
    public EmbeddedCacheManager createCacheManager(int index) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1)
-              .dataContainer().valueEquivalence(ByteArrayEquivalence.INSTANCE);
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1);
       return TestCacheManagerFactory.createClusteredCacheManager(
             GlobalConfigurationBuilder.defaultClusteredBuilder().defaultCacheName(cacheName),
             builder);

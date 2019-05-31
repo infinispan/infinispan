@@ -13,8 +13,6 @@ import org.infinispan.Version;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.equivalence.IdentityEquivalence;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
@@ -58,7 +56,6 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder
             .unsafe().unreliableReturnValues(true)
-            .deadlockDetection().enabled(true).spinDuration(1, TimeUnit.HOURS)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(30, TimeUnit.MILLISECONDS).useLockStriping(true).concurrencyLevel(12)
             .clustering()
             .cacheMode(CacheMode.DIST_SYNC)
@@ -121,10 +118,6 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .interceptorClass(AsyncInterceptor2.class)
             .position(InterceptorConfiguration.Position.LAST)
             .invocationBatching().disable()
-            .dataContainer()
-            .addProperty("prop1", "value1")
-            .keyEquivalence(new IdentityEquivalence<>())
-            .valueEquivalence(new ByteArrayEquivalence())
             .memory().size(123).storageType(StorageType.OBJECT).addressCount(12).evictionStrategy(EvictionStrategy.FIFO);
 
       Configuration configuration = configurationBuilder.build();

@@ -33,6 +33,15 @@ From 10.0 we only provide a PooledConnectionFactory based upon the link:https://
 This means that it is no longer possible to utilise `c3p0.properties` and `hikari.properties` files to configure the pool,
 instead an agroal compatiblet properties file can be provided. See link:../user_guide/user_guide.html#jdbc_cache_store[Connection Management] for more details.
 
+=== XML configuration changes
+Several configuration elements and attributes that were deprecated since 9.0 have been removed:
+
+* `<eviction>` - replaced with `memory`
+* `<versioning>` - automatically enabled
+* `<data-container>` - no longer customizable
+* `deadlock-detection-spin` - always disabled
+* `write-skew` - enabled automatically
+
 === RemoteCache Changes
 
 ==== The getBulk methods have been removed

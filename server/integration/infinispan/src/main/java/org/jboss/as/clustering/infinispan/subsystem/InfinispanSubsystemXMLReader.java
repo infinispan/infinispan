@@ -341,10 +341,12 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     }
                 }
                 case REPLICATION_QUEUE_THREAD_POOL: {
-                    if (namespace.since(8, 0)) {
-                        this.parseScheduledThreadPool(ScheduledThreadPoolResource.REPLICATION_QUEUE, reader, containerAddress, operations);
-                        break;
+                    if (namespace.since(10, 0)) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    } else if (namespace.since(8, 0)) {
+                        ParseUtils.requireNoContent(reader);
                     }
+                    break;
                 }
                 case STATE_TRANSFER_THREAD_POOL: {
                     if (namespace.since(8, 0)) {

@@ -99,7 +99,6 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private final InjectedValue<ThreadPoolConfiguration> remoteCommandThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> stateTransferThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> transportThreadPool = new InjectedValue<>();
-    private final InjectedValue<ThreadPoolConfiguration> replicationQueueThreadPool = new InjectedValue<>();
     private final InjectedValue<PathManager> pathManager = new InjectedValue<>();
     private final InjectedValue<ModelController> modelController = new InjectedValue<>();
     private CounterManagerConfigurationBuilder counterManagerConfiguration;
@@ -126,7 +125,6 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 .addDependency(ThreadPoolResource.TRANSPORT.getServiceName(this.name), ThreadPoolConfiguration.class, this.transportThreadPool)
                 .addDependency(ThreadPoolResource.PERSISTENCE.getServiceName(this.name), ThreadPoolConfiguration.class, this.persistenceThreadPool)
                 .addDependency(ScheduledThreadPoolResource.EXPIRATION.getServiceName(this.name), ThreadPoolConfiguration.class, this.expirationThreadPool)
-                .addDependency(ScheduledThreadPoolResource.REPLICATION_QUEUE.getServiceName(this.name), ThreadPoolConfiguration.class, this.replicationQueueThreadPool)
         ;
         if (module != null) {
             if (!module.getName().equals(InfinispanExtension.MODULE_NAME)) {
@@ -265,7 +263,6 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         builder.listenerThreadPool().read(this.listenerThreadPool.getValue());
         builder.stateTransferThreadPool().read(this.stateTransferThreadPool.getValue());
         builder.persistenceThreadPool().read(this.persistenceThreadPool.getValue());
-        builder.replicationQueueThreadPool().read(this.replicationQueueThreadPool.getValue());
 
         builder.globalJmxStatistics()
                 .enabled(this.statisticsEnabled)

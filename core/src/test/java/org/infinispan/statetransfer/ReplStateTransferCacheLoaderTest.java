@@ -7,6 +7,7 @@ import java.io.File;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -49,7 +50,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
             .locking().lockAcquisitionTimeout(20000)
             .concurrencyLevel(5000) // lowering this to 50 makes the test pass also on 5.2 but it's just a temporary workaround
             .useLockStriping(false).isolationLevel(IsolationLevel.READ_COMMITTED)
-            .dataContainer().storeAsBinary()
+            .memory().storageType(StorageType.BINARY)
             .clustering().remoteTimeout(20000)
             .stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(10000)
             .persistence().passivation(false).addSingleFileStore().location(new File(tmpDir, "store0").getAbsolutePath()).shared(false).preload(false)
