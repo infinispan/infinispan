@@ -996,7 +996,7 @@
     <xs:attribute name="protocol" type="tns:transaction-protocol">
       <xs:annotation>
         <xs:documentation>
-          Configures the commit protocol to use.
+          (Deprecated, Total Order will be removed) Configures the commit protocol to use.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -2210,7 +2210,7 @@
   <xs:simpleType name="transaction-protocol">
     <xs:annotation>
       <xs:documentation>
-        Enumeration containing the available commit protocols
+        (Deprecated since 10.0. It is going to be removed) Enumeration containing the available commit protocols
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">

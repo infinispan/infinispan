@@ -22,7 +22,9 @@ import org.infinispan.util.logging.LogFactory;
  * order based protocol is enabled
  *
  * @author Pedro Ruivo
+ * @deprecated since 10.0. Total Order will be removed.
  */
+@Deprecated
 public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderDistributionInterceptor.class);

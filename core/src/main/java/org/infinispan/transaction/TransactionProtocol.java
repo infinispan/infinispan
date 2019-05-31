@@ -5,7 +5,9 @@ package org.infinispan.transaction;
  *
  * @author Pedro Ruivo
  * @since 5.3
+ * @deprecated since 10.0. Total Order will be removed.
  */
+@Deprecated
 public enum TransactionProtocol {
    /**
     * uses the 2PC protocol

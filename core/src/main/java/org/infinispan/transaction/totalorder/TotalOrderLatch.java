@@ -8,7 +8,9 @@ package org.infinispan.transaction.totalorder;
  *
  * @author Pedro Ruivo
  * @since 5.3
+ * @deprecated since 10.0. Total Order will be removed.
  */
+@Deprecated
 public interface TotalOrderLatch {
 
    /**

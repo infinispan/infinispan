@@ -1,5 +1,10 @@
 == Upgrading from 9.4 to 10.0
 
+=== Total Order transaction protocol is deprecated
+
+Total Order transaction protocol is going to be removed in a future release.
+Use the default protocol (2PC).
+
 === Removed AtomicMap and FineGrainedAtomicMap
 
 AtomicMapLookup, AtomicMap and FineGrainedAtomicMap have been removed. Please see FunctionalMaps or Cache#Merge for

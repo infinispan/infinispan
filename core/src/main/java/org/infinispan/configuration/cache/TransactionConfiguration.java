@@ -296,7 +296,9 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
 
    /**
     * @return the transaction protocol in use (2PC or Total Order)
+    * @deprecated since 10.0. Total Order will be removed.
     */
+   @Deprecated
    public TransactionProtocol transactionProtocol() {
       return transactionProtocol.get();
    }

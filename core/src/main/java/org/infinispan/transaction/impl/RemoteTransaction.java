@@ -142,7 +142,9 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    /**
     * @return  get (or create if needed) the {@code TotalOrderRemoteTransactionState} associated to this remote transaction
+    * @deprecated since 10.0. Total Order will be removed.
     */
+   @Deprecated
    public final TotalOrderRemoteTransactionState getTransactionState() {
       if (transactionState != null) {
          return transactionState;

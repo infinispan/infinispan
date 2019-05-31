@@ -266,6 +266,10 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   /**
+    * @deprecated Since 10.0. Total Order will be removed.
+    */
+   @Deprecated
    public TransactionConfigurationBuilder transactionProtocol(TransactionProtocol transactionProtocol) {
       attributes.attribute(TRANSACTION_PROTOCOL).set(transactionProtocol);
       return this;
