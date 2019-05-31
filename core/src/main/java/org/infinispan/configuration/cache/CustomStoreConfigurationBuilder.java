@@ -19,7 +19,7 @@ public class CustomStoreConfigurationBuilder extends
 
    @Override
    public CustomStoreConfiguration create() {
-      return new CustomStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
+      return new CustomStoreConfiguration(attributes.protect(), async.create());
    }
 
    public CustomStoreConfigurationBuilder customStoreClass(Class<?> customStoreClass) {

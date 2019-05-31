@@ -9,7 +9,6 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.persistence.jdbc.DatabaseType;
 
 public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
@@ -31,8 +30,8 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
 
    private final List<ConfigurationInfo> subElements;
 
-   protected AbstractJdbcStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, ConnectionFactoryConfiguration connectionFactory) {
-      super(attributes, async, singletonStore);
+   protected AbstractJdbcStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, ConnectionFactoryConfiguration connectionFactory) {
+      super(attributes, async);
       this.connectionFactory = connectionFactory;
       manageConnectionFactory = attributes.attribute(MANAGE_CONNECTION_FACTORY);
       dialect = attributes.attribute(DIALECT);

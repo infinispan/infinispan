@@ -21,7 +21,7 @@ public class DeployedStoreConfigurationBuilder extends AbstractStoreConfiguratio
 
    @Override
    public DeployedStoreConfiguration create() {
-      return new DeployedStoreConfiguration(attributes.protect(), async.create(), singletonStore.create(), persistenceConfigurationBuilder);
+      return new DeployedStoreConfiguration(attributes.protect(), async.create(), persistenceConfigurationBuilder);
    }
 
    @Override

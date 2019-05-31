@@ -6,7 +6,6 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.lucene.cacheloader.LuceneCacheLoader;
 
 /**
@@ -22,8 +21,8 @@ public class LuceneLoaderConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<Integer> AFFINITY_SEGMENT_ID = AttributeDefinition.builder("affinitySegmentId", Integer.valueOf(-1)).immutable().build();
    static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-IndexStore").immutable().build();
 
-   public LuceneLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-      super(attributes, async, singletonStore);
+   public LuceneLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+      super(attributes, async);
    }
 
    public static AttributeSet attributeDefinitionSet() {
@@ -58,7 +57,7 @@ public class LuceneLoaderConfiguration extends AbstractStoreConfiguration {
 
    @Override
    public String toString() {
-      return "LuceneLoaderConfiguration [attributes=" + attributes + ", async=" + async() + ", singletonStore=" + singletonStore() + "]";
+      return "LuceneLoaderConfiguration [attributes=" + attributes + ", async=" + async() + "]";
    }
 
 }

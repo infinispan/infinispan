@@ -110,7 +110,8 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
 
    @Override
    public JdbcStringBasedStoreConfiguration create() {
-      return new JdbcStringBasedStoreConfiguration(attributes.protect(), async.create(), singletonStore.create(), connectionFactory != null ? connectionFactory.create() : null,
+      return new JdbcStringBasedStoreConfiguration(attributes.protect(), async.create(),
+                                                   connectionFactory != null ? connectionFactory.create() : null,
             table.create());
    }
 
@@ -146,8 +147,8 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
 
    @Override
    public String toString() {
-      return "JdbcStringBasedStoreConfigurationBuilder [table=" + table + ", connectionFactory=" + connectionFactory + ", attributes=" + attributes + ", async=" + async
-            + ", singletonStore=" + singletonStore + "]";
+      return "JdbcStringBasedStoreConfigurationBuilder [table=" + table + ", connectionFactory=" + connectionFactory +
+             ", attributes=" + attributes + ", async=" + async + "]";
    }
 
 }

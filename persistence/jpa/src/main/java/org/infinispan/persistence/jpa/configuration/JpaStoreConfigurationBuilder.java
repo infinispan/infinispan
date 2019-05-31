@@ -56,7 +56,7 @@ public class JpaStoreConfigurationBuilder
 
    @Override
    public JpaStoreConfiguration create() {
-      return new JpaStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
+      return new JpaStoreConfiguration(attributes.protect(), async.create());
    }
 
    @Override

@@ -41,7 +41,7 @@ This is the configuration of a custom(not shipped with infinispan) store:
          <store
             class="org.acme.CustomStore"
             fetch-state="false" preload="true" shared="false"
-            purge="true" read-only="false" singleton="false" segmented="true">
+            purge="true" read-only="false" segmented="true">
 
             <write-behind modification-queue-size="123" thread-pool-size="23" />
 
@@ -61,7 +61,7 @@ This is the configuration of a custom(not shipped with infinispan) store:
          <store
             class="org.acme.CustomStore"
             fetch-state="false" preload="true" shared="false"
-            purge="true" read-only="false" singleton="false">
+            purge="true" read-only="false">
 
             <write-behind modification-queue-size="123" thread-pool-size="23" />
 
@@ -172,20 +172,6 @@ Asynchronously persists data to the cache store. The default value is `false`
 (boolean). See link:#write_behind_asynchronous[Asynchronous Write-Behind] for
 more information.
 
-`singleton`::
-Enables one node in the cluster, the coordinator, to store modifications. The
-default value is `false` (boolean).
-+
-Whenever data enters a node, it is replicated or distributed to keep the
-in-memory state of the caches synchronized. The coordinator is responsible for
-pushing that state to disk.
-+
-If `true` you must set this property on all nodes in the cluster. Only the
-coordinator of the cluster persists data. However, all nodes must have this
-property enabled to prevent other nodes from persisting data.
-+
-You cannot enable the `singleton` property if the cache store is shared.
-
 [NOTE]
 ====
 You can define additional attributes in the `properties` section to configure
@@ -233,10 +219,6 @@ The same configuration can be achieved programmatically:
             .async()
                .enabled(true)
                .threadPoolSize(5)
-            .singleton()
-               .enabled(true)
-               .pushStateWhenCoordinator(true)
-               .pushStateTimeout(20000);
 ----
 
 [[cache_passivation]]

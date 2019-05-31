@@ -124,8 +124,7 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
 
    @Override
    public RestStoreConfiguration create() {
-      return new RestStoreConfiguration(attributes.protect(), async.create(),
-                                             singletonStore.create(), connectionPool.create());
+      return new RestStoreConfiguration(attributes.protect(), async.create(), connectionPool.create());
    }
 
    @Override

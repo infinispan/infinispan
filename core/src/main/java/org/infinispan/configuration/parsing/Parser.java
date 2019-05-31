@@ -19,7 +19,6 @@ import java.util.Properties;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -2293,7 +2292,11 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case SINGLETON: {
-            storeBuilder.singleton().enabled(Boolean.parseBoolean(value));
+            if (reader.getSchema().since(10, 0)) {
+               throw ParseUtils.unexpectedAttribute(reader, index);
+            } else {
+               log.ignoreXmlAttribute(attribute);
+            }
             break;
          }
          case TRANSACTIONAL: {
@@ -2440,8 +2443,6 @@ public class Parser implements ConfigurationParser {
                sfs.preload(preload);
             if (shared != null)
                sfs.shared(shared);
-            if (singleton != null)
-               sfs.singleton().enabled(singleton);
             if (transactional != null)
                sfs.transactional(transactional);
             parseStoreElements(reader, sfs);

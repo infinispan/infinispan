@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -40,7 +39,6 @@ import org.infinispan.jmx.JmxDomainConflictException;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -270,10 +268,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Unexpected error in AsyncStoreCoordinator thread. AsyncCacheWriter is dead!", id = 55)
    void unexpectedErrorInAsyncStoreCoordinator(@Cause Throwable t);
 
-   @SuppressWarnings("deprecation")
-   @LogMessage(level = ERROR)
-   @Message(value = "Exception reported changing cache active status", id = 58)
-   void errorChangingSingletonStoreStatus(@Cause SingletonCacheWriter.PushStateException e);
+//   @SuppressWarnings("deprecation")
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Exception reported changing cache active status", id = 58)
+//   void errorChangingSingletonStoreStatus(@Cause SingletonCacheWriter.PushStateException e);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Had problems removing file %s", id = 59)
@@ -1521,8 +1519,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unsupported async cache mode '%s' for transactional caches", id = 441)
    CacheConfigurationException unsupportedAsyncCacheMode(CacheMode cacheMode);
 
-   @Message(value = "Invalid cache loader configuration for '%s'.  If a cache loader is configured as a singleton, the cache loader cannot be shared in a cluster!", id = 442)
-   CacheConfigurationException singletonStoreCannotBeShared(String name);
+//   @Message(value = "Invalid cache loader configuration for '%s'.  If a cache loader is configured as a singleton  , the cache loader cannot be shared in a cluster!", id = 442)
+//   CacheConfigurationException singletonStoreCannotBeShared(String name);
 
    @Message(value = "Invalid cache loader configuration for '%s'. In order for a cache loader to be transactional, it must also be shared.", id = 443)
    CacheConfigurationException clusteredTransactionalStoreMustBeShared(String simpleName);

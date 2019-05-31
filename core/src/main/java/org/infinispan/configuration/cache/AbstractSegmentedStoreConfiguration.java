@@ -10,9 +10,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @since 9.4
  */
 public abstract class AbstractSegmentedStoreConfiguration<T extends AbstractStoreConfiguration> extends AbstractStoreConfiguration {
-   public AbstractSegmentedStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
-         SingletonStoreConfiguration singletonStore) {
-      super(attributes, async, singletonStore);
+   public AbstractSegmentedStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+      super(attributes, async);
    }
 
    /**
@@ -28,7 +27,7 @@ public abstract class AbstractSegmentedStoreConfiguration<T extends AbstractStor
     * do is append a segment to the name of the directory. If the provided location is a directory, that is that it is
     * terminated by in {@link File#separatorChar}, it will add a new directory onto that that is the segment. If the
     * location is a file, that is that it is not terminated by {@link File#separatorChar}, this will treat the location
-    * as a directory and append a segment file in it. The underlying store may or may not preseve this and could still
+    * as a directory and append a segment file in it. The underlying store may or may not preserve this and could still
     * turn the segment into a directory.
     * @param location original file location
     * @param segment the segment to append

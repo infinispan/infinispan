@@ -14,13 +14,12 @@ public class CustomCacheWriterConfigurationBuilder extends AbstractStoreConfigur
    private String location;
 
    public CustomCacheWriterConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, CustomCacheWriterConfiguration.attributeDefinitionSet());
    }
 
    @Override
    public CustomCacheWriterConfiguration create() {
-      return new CustomCacheWriterConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
-                                                singletonStore.create(), preload, shared, properties, someProperty);
+      return new CustomCacheWriterConfiguration(attributes.protect(), async.create(), someProperty, location);
    }
 
    @Override

@@ -20,18 +20,6 @@ public interface StoreConfiguration extends ConfigurationInfo {
    AsyncStoreConfiguration async();
 
    /**
-    * SingletonStore is a delegating cache store used for situations when only one instance in a
-    * cluster should interact with the underlying store. The coordinator of the cluster will be
-    * responsible for the underlying CacheStore. SingletonStore is a simply facade to a real
-    * CacheStore implementation. It always delegates reads to the real CacheStore.
-    *
-    * @deprecated Singleton writers will be removed in 10.0. If it is desirable that all nodes don't write to the underlying store
-    * then a shared store should be used instead, as this only performs store writes at a key's primary owner.
-    */
-   @Deprecated
-   SingletonStoreConfiguration singletonStore();
-
-   /**
     * If true, purges this cache store when it starts up.
     */
    boolean purgeOnStartup();

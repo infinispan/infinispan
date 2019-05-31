@@ -13,13 +13,12 @@ public class CustomCacheLoaderConfigurationBuilder extends AbstractStoreConfigur
    private String location;
 
    public CustomCacheLoaderConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, CustomCacheLoaderConfiguration.attributeDefinitionSet());
    }
 
    @Override
    public CustomCacheLoaderConfiguration create() {
-      return new CustomCacheLoaderConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
-                                                singletonStore.create(), preload, shared, properties, location);
+      return new CustomCacheLoaderConfiguration(attributes.protect(), async.create(), location);
    }
 
    @Override

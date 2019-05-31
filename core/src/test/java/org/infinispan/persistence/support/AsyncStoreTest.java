@@ -27,7 +27,6 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
@@ -446,8 +445,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    @ConfigurationFor(LockableStore.class)
    public static class LockableStoreConfiguration extends DummyInMemoryStoreConfiguration {
 
-      public LockableStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-         super(attributes, async, singletonStore);
+      public LockableStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+         super(attributes, async);
       }
    }
 
@@ -459,7 +458,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
       @Override
       public LockableStoreConfiguration create() {
-         return new LockableStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
+         return new LockableStoreConfiguration(attributes.protect(), async.create());
       }
    }
 

@@ -1244,11 +1244,6 @@
                 <xs:documentation>If true, purges this cache store when it starts up.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="singleton" type="xs:boolean" default="${Server.BaseStore.singleton}">
-            <xs:annotation>
-                <xs:documentation>If true, the singleton store cache store is enabled. SingletonStore is a delegating cache store used for situations when only one instance in a cluster should interact with the underlying store. Deprecated: A shared store should be used instead, as this limits store writes to the primary owner of a key</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="read-only" type="xs:boolean" default="${Server.BaseStore.read-only}">
             <xs:annotation>
                 <xs:documentation>If true, the cache store will only be used to load entries. Any modifications made to the caches will not be applied to the store.</xs:documentation>

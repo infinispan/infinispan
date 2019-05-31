@@ -7,7 +7,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 
 /**
  * Configuration which operates only on class names instead of class objects.
@@ -32,9 +31,9 @@ public class DeployedStoreConfiguration extends AbstractStoreConfiguration {
             NAME, CUSTOM_STORE_CLASS_NAME);
    }
 
-   DeployedStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
+   DeployedStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
                                      PersistenceConfigurationBuilder persistenceConfigurationBuilder) {
-      super(attributes, async, singletonStore);
+      super(attributes, async);
       this.persistenceConfigurationBuilder = persistenceConfigurationBuilder;
       this.name = attributes.attribute(NAME);
       this.customStoreClassName = attributes.attribute(CUSTOM_STORE_CLASS_NAME);

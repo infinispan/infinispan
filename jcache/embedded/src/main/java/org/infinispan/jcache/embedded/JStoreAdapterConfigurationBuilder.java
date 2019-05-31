@@ -1,13 +1,12 @@
 package org.infinispan.jcache.embedded;
 
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 
 public class JStoreAdapterConfigurationBuilder extends AbstractStoreConfigurationBuilder<JStoreAdapterConfiguration, JStoreAdapterConfigurationBuilder> {
 
    public JStoreAdapterConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, JStoreAdapterConfiguration.attributeDefinitionSet());
    }
 
    @Override
@@ -16,8 +15,7 @@ public class JStoreAdapterConfigurationBuilder extends AbstractStoreConfiguratio
 
    @Override
    public JStoreAdapterConfiguration create() {
-      return new JStoreAdapterConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
-                                            singletonStore.create(), preload, shared, TypedProperties.toTypedProperties(properties));
+      return new JStoreAdapterConfiguration(attributes.protect(), async.create());
    }
 
    @Override

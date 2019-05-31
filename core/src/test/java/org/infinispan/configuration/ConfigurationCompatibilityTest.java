@@ -20,11 +20,7 @@ public class ConfigurationCompatibilityTest {
             .async()
                .enabled(true)
                .flushLockTimeout(15000)
-               .threadPoolSize(5)
-            .singleton()
-              .enabled(true)
-              .pushStateWhenCoordinator(true)
-              .pushStateTimeout(20000);
+               .threadPoolSize(5);
    }
 
 }

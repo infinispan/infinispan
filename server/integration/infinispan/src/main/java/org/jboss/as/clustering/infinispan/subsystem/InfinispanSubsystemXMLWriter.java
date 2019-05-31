@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.globalstate.ConfigurationStorage;
@@ -853,7 +852,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         this.writeOptional(writer, Attribute.FETCH_STATE, store, ModelKeys.FETCH_STATE);
         this.writeOptional(writer, Attribute.PURGE, store, ModelKeys.PURGE);
         this.writeOptional(writer, Attribute.READ_ONLY, store, ModelKeys.READ_ONLY);
-        this.writeOptional(writer, Attribute.SINGLETON, store, ModelKeys.SINGLETON);
         this.writeOptional(writer, Attribute.MAX_BATCH_SIZE, store, ModelKeys.MAX_BATCH_SIZE);
     }
 

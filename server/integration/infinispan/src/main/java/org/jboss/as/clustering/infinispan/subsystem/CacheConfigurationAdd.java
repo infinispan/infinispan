@@ -38,7 +38,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
 
@@ -1031,11 +1030,6 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
       ModelNode purge = store.get(ModelKeys.PURGE);
       if (purge != null && purge.isDefined()) {
          storeConfigurationBuilder.purgeOnStartup(purge.asBoolean());
-      }
-      ModelNode singleton = store.get(ModelKeys.SINGLETON);
-      if (singleton != null && singleton.isDefined()) {
-         if (singleton.asBoolean())
-            storeConfigurationBuilder.singleton().enable();
       }
       ModelNode readOnly = store.get(ModelKeys.READ_ONLY);
       if (readOnly != null && readOnly.isDefined()) {

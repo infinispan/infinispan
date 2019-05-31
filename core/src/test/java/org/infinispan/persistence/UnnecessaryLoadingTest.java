@@ -13,7 +13,6 @@ import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -241,8 +240,8 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
    @ConfigurationFor(CountingStore.class)
    public static class CountingStoreConfiguration extends AbstractStoreConfiguration {
 
-      public CountingStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-         super(attributes, async, singletonStore);
+      public CountingStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+         super(attributes, async);
       }
    }
 
@@ -254,7 +253,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
       @Override
       public CountingStoreConfiguration create() {
-         return new CountingStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
+         return new CountingStoreConfiguration(attributes.protect(), async.create());
       }
 
       @Override

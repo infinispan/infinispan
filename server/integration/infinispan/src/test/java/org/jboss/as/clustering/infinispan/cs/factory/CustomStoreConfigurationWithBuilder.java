@@ -4,7 +4,6 @@ import java.util.Properties;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 
 @BuiltBy(CustomStoreConfigurationBuilder.class)
@@ -12,11 +11,6 @@ public class CustomStoreConfigurationWithBuilder implements StoreConfiguration {
 
    @Override
    public AsyncStoreConfiguration async() {
-      return null;
-   }
-
-   @Override
-   public SingletonStoreConfiguration singletonStore() {
       return null;
    }
 

@@ -80,7 +80,7 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
 
    @Override
    public RocksDBStoreConfiguration create() {
-      return new RocksDBStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
+      return new RocksDBStoreConfiguration(attributes.protect(), async.create());
    }
 
    @Override

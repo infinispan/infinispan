@@ -18,7 +18,6 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.remote.RemoteStore;
 
@@ -68,10 +67,10 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
    private final SecurityConfiguration security;
 
-   public RemoteStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
+   public RemoteStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
                                    ExecutorFactoryConfiguration asyncExecutorFactory, ConnectionPoolConfiguration connectionPool,
                                    SecurityConfiguration security) {
-      super(attributes, async, singletonStore);
+      super(attributes, async);
       balancingStrategy = attributes.attribute(BALANCING_STRATEGY);
       connectionTimeout = attributes.attribute(CONNECTION_TIMEOUT);
       forceReturnValues = attributes.attribute(FORCE_RETURN_VALUES);

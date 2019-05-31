@@ -21,11 +21,6 @@ public abstract class AbstractStoreConfigurationChildBuilder<S> extends Abstract
    }
 
    @Override
-   public SingletonStoreConfigurationBuilder<S> singleton() {
-      return (SingletonStoreConfigurationBuilder<S>) builder.singleton();
-   }
-
-   @Override
    public S fetchPersistentState(boolean b) {
       return (S)builder.fetchPersistentState(b);
    }

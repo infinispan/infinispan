@@ -93,12 +93,10 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.StoreUnavailableException;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
-import org.infinispan.persistence.support.AdvancedSingletonCacheWriter;
 import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
-import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -965,8 +963,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (writer != null) {
          if(cfg.ignoreModifications()) {
             writer = null;
-         } else if (cfg.singletonStore().enabled()) {
-            writer = createSingletonWriter(cfg, writer);
          } else if (cfg.async().enabled()) {
             writer = createAsyncWriter(writer);
          }
@@ -979,12 +975,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       loader = (loader instanceof AdvancedCacheLoader) ?
             new AdvancedAsyncCacheLoader(loader, state) : new AsyncCacheLoader(loader, state);
       return loader;
-   }
-
-   private SingletonCacheWriter createSingletonWriter(StoreConfiguration cfg, CacheWriter writer) {
-      return (writer instanceof AdvancedCacheWriter) ?
-            new AdvancedSingletonCacheWriter(writer, cfg.singletonStore()) :
-            new SingletonCacheWriter(writer, cfg.singletonStore());
    }
 
    private void initializeWriter(StoreConfiguration cfg, CacheWriter writer, InitializationContextImpl ctx) {

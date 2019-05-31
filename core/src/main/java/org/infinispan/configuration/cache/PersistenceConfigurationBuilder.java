@@ -201,9 +201,6 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
          b.validate();
          StoreConfiguration storeConfiguration = b.create();
          if (storeConfiguration.shared()) {
-            if (storeConfiguration.singletonStore().enabled()) {
-               throw log.singletonStoreCannotBeShared(storeConfiguration.getClass().getSimpleName());
-            }
             if (b.persistence().passivation()) {
                throw log.passivationStoreCannotBeShared(storeConfiguration.getClass().getSimpleName());
             }

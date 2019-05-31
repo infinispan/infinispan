@@ -6,7 +6,6 @@ import static org.infinispan.server.test.util.ITestUtils.startContainer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
@@ -20,7 +19,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 /**
- * Tests fetch-state and singleton attributes of a string-based jdbc cache store.
+ * Tests fetch-state attribute of a string-based jdbc cache store.
  *
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>
  */
@@ -29,9 +28,6 @@ public class StringBasedStoreMultinodeIT extends AbstractJdbcStoreMultinodeIT {
 
     private final String CONFIG_FETCH_STATE_1 = "testsuite/jdbc-string-multinode-fetch-state1.xml";
     private final String CONFIG_FETCH_STATE_2 = "testsuite/jdbc-string-multinode-fetch-state2.xml";
-
-    private final String CONFIG_SINGLETON_1 = "testsuite/jdbc-string-multinode-singleton1.xml";
-    private final String CONFIG_SINGLETON_2 = "testsuite/jdbc-string-multinode-singleton2.xml";
 
     private static final String MANAGER_NAME = "clustered";
     private final String CACHE_NAME = "memcachedCache";
@@ -72,39 +68,6 @@ public class StringBasedStoreMultinodeIT extends AbstractJdbcStoreMultinodeIT {
             evictedKey = keys.get(0);
             assertEquals("v" + evictedKey.charAt(1), mc2.get(evictedKey));
             assertNull(dbServer2.stringTable.getValueByKey(evictedKey));
-            assertCleanCacheAndStore2();
-        } finally {
-            controller.stop(CONTAINER2);
-        }
-    }
-
-    /**
-     * The singleton attribute ensures that only a coordinator in a cluster works with
-     * its underlying cache store. So even if a key is stored to a cache on server2
-     * only server1 should store it into its underlying cache store as server1 is the coordinator.
-     */
-    @Test
-    @WithRunningServer({@RunningServer(name = CONTAINER1, config = CONFIG_SINGLETON_1)})
-    public void testSingleton() throws Exception {
-        try {
-            mc1 = createMemcachedClient(server1);
-            assertCleanCacheAndStore1();
-            mc1.set("k1", "v1");
-            mc1.set("k2", "v2");
-            assertEquals(2, dbServer1.stringTable.getAllRows().size());
-            assertNotNull(dbServer1.stringTable.getValueByByteArrayKey("k1"));
-            assertNotNull(dbServer1.stringTable.getValueByByteArrayKey("k2"));
-            startContainer(controller, CONTAINER2, CONFIG_SINGLETON_2);
-            assertEquals(2, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
-            //the cache store should NOT fetch state from the others as there is a singleton defined
-            assertTrue(dbServer2.stringTable.getAllRows().isEmpty());
-            mc2 = createMemcachedClient(server2);
-            mc2.set("k3", "v3");
-            assertEquals(3, server1.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
-            assertEquals(3, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
-            //keys do not go to store2 but to store1
-            assertTrue(dbServer2.stringTable.getAllRows().isEmpty());
-            assertEquals(3, dbServer1.stringTable.getAllRows().size());
             assertCleanCacheAndStore2();
         } finally {
             controller.stop(CONTAINER2);

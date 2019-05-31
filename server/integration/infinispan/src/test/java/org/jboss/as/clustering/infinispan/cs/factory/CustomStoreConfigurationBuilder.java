@@ -23,7 +23,6 @@ import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
-import org.infinispan.configuration.cache.SingletonStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.SitesConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreAsBinaryConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
@@ -60,11 +59,6 @@ public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilde
 
    @Override
    public AsyncStoreConfigurationBuilder async() {
-      return null;
-   }
-
-   @Override
-   public SingletonStoreConfigurationBuilder singleton() {
       return null;
    }
 

@@ -123,7 +123,6 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
          AbstractStoreConfiguration beforeASC = (AbstractStoreConfiguration) beforeStore;
          AbstractStoreConfiguration afterASC = (AbstractStoreConfiguration) afterStore;
          compareAttributeSets(name, beforeASC.attributes(), afterASC.attributes());
-         compareAttributeSets(name, beforeASC.singletonStore().attributes(), afterASC.singletonStore().attributes());
          compareAttributeSets(name, beforeASC.async().attributes(), afterASC.async().attributes());
       } else {
          throw new IllegalArgumentException("Cannot compare stores of type: " + beforeStore.getClass().getName());

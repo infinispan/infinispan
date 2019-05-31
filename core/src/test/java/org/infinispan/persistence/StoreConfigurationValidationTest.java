@@ -11,7 +11,6 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -98,8 +97,8 @@ public class StoreConfigurationValidationTest {
          return new AttributeSet(NonSharedDummyStoreConfiguration.class, DummyInMemoryStoreConfiguration.attributeDefinitionSet());
       }
 
-      NonSharedDummyStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-         super(attributes, async, singletonStore);
+      NonSharedDummyStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+         super(attributes, async);
       }
    }
 
@@ -112,7 +111,7 @@ public class StoreConfigurationValidationTest {
 
       @Override
       public NonSharedDummyStoreConfiguration create() {
-         return new NonSharedDummyStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
+         return new NonSharedDummyStoreConfiguration(attributes.protect(), async.create());
       }
 
       @Override

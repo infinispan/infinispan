@@ -1,7 +1,6 @@
 package org.infinispan.configuration.cache;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -42,48 +41,15 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
 
    protected final AttributeSet attributes;
    private final AsyncStoreConfiguration async;
-   private final SingletonStoreConfiguration singletonStore;
-
-   /**
-    * @deprecated Use {@link AbstractStoreConfiguration#AbstractStoreConfiguration(AttributeSet, AsyncStoreConfiguration, SingletonStoreConfiguration) instead
-    */
-   @Deprecated
-   public AbstractStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
-                                     AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties) {
-      attributes = attributeDefinitionSet();
-      attributes.attribute(PURGE_ON_STARTUP).set(purgeOnStartup);
-      attributes.attribute(FETCH_PERSISTENT_STATE).set(fetchPersistentState);
-      attributes.attribute(IGNORE_MODIFICATIONS).set(ignoreModifications);
-      attributes.attribute(PRELOAD).set(preload);
-      attributes.attribute(SHARED).set(shared);
-      attributes.attribute(TRANSACTIONAL).set(false);
-      attributes.attribute(SEGMENTED).set(false);
-      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(properties));
-
-      this.async = async;
-      this.singletonStore = singletonStore;
-      this.fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE);
-      this.purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP);
-      this.ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS);
-      this.preload = attributes.attribute(PRELOAD);
-      this.shared = attributes.attribute(SHARED);
-      this.transactional = attributes.attribute(TRANSACTIONAL);
-      this.maxBatchSize = attributes.attribute(MAX_BATCH_SIZE);
-      this.segmented = attributes.attribute(SEGMENTED);
-      this.properties = attributes.attribute(PROPERTIES);
-      this.subElements.addAll(Arrays.asList(async, singletonStore));
-   }
 
    @Override
    public List<ConfigurationInfo> subElements() {
       return subElements;
    }
 
-   public AbstractStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
-                                     SingletonStoreConfiguration singletonStore) {
+   public AbstractStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
       this.attributes = attributes.checkProtection();
       this.async = async;
-      this.singletonStore = singletonStore;
       this.fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE);
       this.purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP);
       this.ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS);
@@ -93,7 +59,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
       this.maxBatchSize = attributes.attribute(MAX_BATCH_SIZE);
       this.segmented = attributes.attribute(SEGMENTED);
       this.properties = attributes.attribute(PROPERTIES);
-      this.subElements.addAll(Arrays.asList(async, singletonStore));
+      this.subElements.add(async);
    }
 
    /**
@@ -103,17 +69,6 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
    @Override
    public AsyncStoreConfiguration async() {
       return async;
-   }
-
-   /**
-    * SingletonStore is a delegating store used for situations when only one instance in a cluster
-    * should interact with the underlying store. The coordinator of the cluster will be responsible
-    * for the underlying CacheStore. SingletonStore is a simply facade to a real CacheStore
-    * implementation. It always delegates reads to the real CacheStore.
-    */
-   @Override
-   public SingletonStoreConfiguration singletonStore() {
-      return singletonStore;
    }
 
    /**
@@ -182,8 +137,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
 
    @Override
    public String toString() {
-      return "AbstractStoreConfiguration [attributes=" + attributes + ", async=" + async + ", singletonStore="
-            + singletonStore + "]";
+      return "AbstractStoreConfiguration [attributes=" + attributes + ", async=" + async + "]";
    }
 
    @Override
@@ -192,7 +146,6 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
       int result = 1;
       result = prime * result + ((async == null) ? 0 : async.hashCode());
       result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      result = prime * result + ((singletonStore == null) ? 0 : singletonStore.hashCode());
       return result;
    }
 
@@ -214,11 +167,6 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
          if (other.attributes != null)
             return false;
       } else if (!attributes.equals(other.attributes))
-         return false;
-      if (singletonStore == null) {
-         if (other.singletonStore != null)
-            return false;
-      } else if (!singletonStore.equals(other.singletonStore))
          return false;
       return true;
    }
