@@ -27,7 +27,9 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Pedro Ruivo
  * @since 7.1
+ * @deprecated since 10.0. Total Order will be removed.
  */
+@Deprecated
 public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler {
 
    private static final Log log = LogFactory.getLog(TotalOrderTxPerCacheInboundInvocationHandler.class);

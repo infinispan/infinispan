@@ -38,8 +38,10 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Pedro Ruivo
  * @since 5.3
+ * @deprecated since 10.0. Total Order will be removed.
  */
 @Scope(Scopes.NAMED_CACHE)
+@Deprecated
 public class TotalOrderManager {
 
    private static final Log log = LogFactory.getLog(TotalOrderManager.class);

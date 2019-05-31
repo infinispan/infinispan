@@ -24,7 +24,9 @@ import org.infinispan.util.logging.LogFactory;
  * (i.e., the write skew check passes in all keys owners)
  *
  * @author Pedro Ruivo
+ * @deprecated since 10.0. Total Order will be removed.
  */
+@Deprecated
 public class TotalOrderVersionedDistributionInterceptor extends VersionedDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderVersionedDistributionInterceptor.class);

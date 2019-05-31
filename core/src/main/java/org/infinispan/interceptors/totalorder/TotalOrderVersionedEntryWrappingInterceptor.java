@@ -27,7 +27,9 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Mircea.Markus@jboss.com
  * @author Pedro Ruivo
+ * @deprecated @deprecated since 10.0. Total Order will be removed.
  */
+@Deprecated
 public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryWrappingInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderVersionedEntryWrappingInterceptor.class);

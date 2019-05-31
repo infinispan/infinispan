@@ -33,7 +33,9 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Pedro Ruivo
  * @author Mircea.Markus@jboss.com
+ * @deprecated since 10.0. Total Order will be removed.
  */
+@Deprecated
 public class TotalOrderInterceptor extends DDAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderInterceptor.class);

@@ -16,7 +16,9 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Pedro Ruivo
  * @since 5.3
+ * @deprecated since 10.0. Total Order will be removed.
  */
+@Deprecated
 public class TotalOrderRemoteTransactionState {
 
    private static final Log log = LogFactory.getLog(TotalOrderRemoteTransactionState.class);
