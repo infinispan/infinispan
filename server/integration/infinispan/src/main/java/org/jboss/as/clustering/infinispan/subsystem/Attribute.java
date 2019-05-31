@@ -24,7 +24,6 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.xml.XMLConstants;
 
 /**

@@ -37,7 +37,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
    protected final AttributeSet attributes;
    protected final AsyncStoreConfigurationBuilder<S> async;
-   protected final SingletonStoreConfigurationBuilder<S> singletonStore;
 
    @Deprecated
    protected boolean preload;
@@ -54,22 +53,12 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
    private final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
 
-   /**
-    * @deprecated Use {@link AbstractStoreConfigurationBuilder#AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder, AttributeSet)} instead
-    */
-   @Deprecated
-   public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      this(builder, AbstractStoreConfiguration.attributeDefinitionSet());
-   }
-
    public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes) {
       super(builder);
       this.attributes = attributes;
       this.async = new AsyncStoreConfigurationBuilder(this);
-      this.singletonStore = new SingletonStoreConfigurationBuilder(this);
       initCompatibilitySettings();
       subElements.add(async);
-      subElements.add(singletonStore);
    }
 
    @Deprecated
@@ -98,14 +87,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Override
    public AsyncStoreConfigurationBuilder<S> async() {
       return async;
-   }
-
-   /**
-    * {@inheritDoc}
-    */
-   @Override
-   public SingletonStoreConfigurationBuilder<S> singleton() {
-      return singletonStore;
    }
 
    /**
@@ -222,7 +203,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
    private void validateStoreAttributes() {
       async.validate();
-      singletonStore.validate();
       boolean shared = attributes.attribute(SHARED).get();
       boolean fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE).get();
       boolean purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP).get();
@@ -292,14 +272,12 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       }
       initCompatibilitySettings();
       async.read(template.async());
-      singletonStore.read(template.singletonStore());
 
       return this;
    }
 
    @Override
    public String toString() {
-      return "AbstractStoreConfigurationBuilder [attributes=" + attributes + ", async=" + async + ", singletonStore="
-            + singletonStore + "]";
+      return "AbstractStoreConfigurationBuilder [attributes=" + attributes + ", async=" + async + "]";
    }
 }

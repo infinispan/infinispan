@@ -33,9 +33,8 @@ public class ClusterLoaderConfiguration extends AbstractStoreConfiguration imple
 
    private final Attribute<Long> remoteCallTimeout;
 
-   public ClusterLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
-         SingletonStoreConfiguration singletonStore) {
-      super(attributes, async, singletonStore);
+   public ClusterLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+      super(attributes, async);
       remoteCallTimeout = attributes.attribute(REMOTE_CALL_TIMEOUT);
    }
 

@@ -72,7 +72,7 @@
       </local-cache>
       <local-cache name="withFileStore">
          <persistence passivation="false">
-            <file-store path="/tmp/FileCacheStore-Location" singleton="true" fetch-state="true" preload="true" purge="true" read-only="true">
+            <file-store path="/tmp/FileCacheStore-Location" fetch-state="true" preload="true" purge="true" read-only="true">
                <write-behind modification-queue-size="700" thread-pool-size="5" />
             </file-store>
          </persistence>

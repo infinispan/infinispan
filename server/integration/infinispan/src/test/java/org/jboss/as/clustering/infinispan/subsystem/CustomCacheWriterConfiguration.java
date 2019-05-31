@@ -1,11 +1,9 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.Properties;
-
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 
 /**
  * @author Mircea Markus
@@ -15,16 +13,20 @@ import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 public class CustomCacheWriterConfiguration extends AbstractStoreConfiguration {
 
    private String someProperty;
+   private final String location;
 
-   public CustomCacheWriterConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
-                                         AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
-                                         boolean preload, boolean shared, Properties properties, String someProperty) {
-      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
+   public CustomCacheWriterConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, String someProperty,
+                                         String location) {
+      super(attributes, async);
       this.someProperty = someProperty;
+      this.location = location;
    }
 
    public String someProperty() {
       return someProperty;
    }
 
+   public String getLocation() {
+      return location;
+   }
 }

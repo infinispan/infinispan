@@ -20,7 +20,7 @@
                                 preload="false"
                                 purge="false"
                                 shared="false"
-                                singleton="false" name="FETCH_STATE">
+                                name="FETCH_STATE">
                             <string-keyed-table prefix="${table.prefix}">
                                 <id-column name="id" type="${id.column.type}"/>
                                 <data-column name="datum" type="${data.column.type}"/>

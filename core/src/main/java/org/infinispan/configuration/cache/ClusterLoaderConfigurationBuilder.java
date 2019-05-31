@@ -50,7 +50,7 @@ public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfiguratio
 
    @Override
    public ClusterLoaderConfiguration create() {
-      return new ClusterLoaderConfiguration(attributes.protect(), async.create(), singletonStore.create());
+      return new ClusterLoaderConfiguration(attributes.protect(), async.create());
    }
 
    @Override

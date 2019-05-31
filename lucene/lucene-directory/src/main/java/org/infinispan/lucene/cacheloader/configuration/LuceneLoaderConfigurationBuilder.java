@@ -64,7 +64,7 @@ public class LuceneLoaderConfigurationBuilder extends
 
    @Override
    public LuceneLoaderConfiguration create() {
-      return new LuceneLoaderConfiguration(attributes.protect(), async.create(), singletonStore.create());
+      return new LuceneLoaderConfiguration(attributes.protect(), async.create());
    }
 
    @Override
@@ -80,6 +80,6 @@ public class LuceneLoaderConfigurationBuilder extends
 
    @Override
    public String toString() {
-      return "LuceneLoaderConfigurationBuilder [attributes=" + attributes + ", async=" + async + ", singletonStore=" + singletonStore + "]";
+      return "LuceneLoaderConfigurationBuilder [attributes=" + attributes + ", async=" + async + "]";
    }
 }

@@ -1,7 +1,6 @@
 package org.infinispan.persistence.jdbc.configuration;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -33,7 +32,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "      <distributed-cache name=\"default\">\n" +
             "     <persistence>\n" +
             "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:"+ Version.getSchemaVersion() + "\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
-            "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" purge=\"true\" singleton=\"false\" dialect=\"H2\">\n" +
+            "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" purge=\"true\" dialect=\"H2\">\n" +
             "         <connection-pool connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n" +
             "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\" >\n" +
             "           <id-column name=\"id\" type=\"VARCHAR\" />\n" +
@@ -68,6 +67,5 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(store.ignoreModifications());
       assertTrue(store.fetchPersistentState());
       assertTrue(store.purgeOnStartup());
-      assertFalse(store.singletonStore().enabled());
    }
 }

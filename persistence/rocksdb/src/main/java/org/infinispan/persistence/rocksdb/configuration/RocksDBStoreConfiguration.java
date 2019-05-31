@@ -15,7 +15,6 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.rocksdb.RocksDBStore;
 
@@ -54,8 +53,8 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implem
    private final Attribute<Integer> expiryQueueSize;
    private final Attribute<Integer> clearThreshold;
 
-   public RocksDBStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-      super(attributes, async, singletonStore);
+   public RocksDBStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+      super(attributes, async);
       location = attributes.attribute(LOCATION);
       expiredLocation = attributes.attribute(EXPIRED_LOCATION);
       compressionType = attributes.attribute(COMPRESSION_TYPE);

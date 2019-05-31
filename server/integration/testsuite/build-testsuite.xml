@@ -275,16 +275,6 @@
                 <configure-jdbc in="@{in}" tablePrefix="STRING_MULTINODEy" jndiName="java:jboss/datasources/JdbcDSOther"/>
             </jdbc-conf>
         </transform>
-        <transform in="clustered.xml" out="testsuite/jdbc-string-multinode-singleton1.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-multinode-singleton.xml" modifyDataSource="${datasource.parts}/${datasource.file}" infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml" filtering="true">
-            <jdbc-conf>
-                <configure-jdbc in="@{in}" tablePrefix="STRING_MULTINODEx"/>
-            </jdbc-conf>
-        </transform>
-        <transform in="clustered.xml" out="testsuite/jdbc-string-multinode-singleton2.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-multinode-singleton.xml" modifyDataSource="${datasource.parts}/${datasource.file}" infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml" filtering="true">
-            <jdbc-conf>
-                <configure-jdbc in="@{in}" tablePrefix="STRING_MULTINODEy" jndiName="java:jboss/datasources/JdbcDSOther"/>
-            </jdbc-conf>
-        </transform>
         <transform in="clustered.xml" out="testsuite/jdbc-string-invalidation.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-invalidation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml" filtering="true">
             <jdbc-conf>
                 <configure-jdbc in="@{in}" tablePrefix="STRING_INVALIDATION"/>

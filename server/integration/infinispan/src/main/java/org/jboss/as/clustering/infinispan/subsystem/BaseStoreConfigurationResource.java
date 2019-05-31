@@ -80,16 +80,8 @@ public class BaseStoreConfigurationResource extends BaseLoaderConfigurationResou
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(AbstractStoreConfiguration.IGNORE_MODIFICATIONS.getDefaultValue()))
                     .build();
-    static final SimpleAttributeDefinition SINGLETON =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.SINGLETON, ModelType.BOOLEAN, true)
-                    .setXmlName(Attribute.SINGLETON.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
-                    .setDeprecated(ModelVersion.create(9, 0))
-                    .build();
 
-    static final AttributeDefinition[] BASE_STORE_ATTRIBUTES = {PASSIVATION, FETCH_STATE, PURGE, READ_ONLY, SINGLETON, MAX_BATCH_SIZE};
+    static final AttributeDefinition[] BASE_STORE_ATTRIBUTES = {PASSIVATION, FETCH_STATE, PURGE, READ_ONLY, MAX_BATCH_SIZE};
 
 
     public BaseStoreConfigurationResource(PathElement path, String resourceKey, CacheConfigurationResource parent,

@@ -204,7 +204,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
          remoteServers.add(server.create());
       }
       attributes.attribute(SERVERS).set(remoteServers);
-      return new RemoteStoreConfiguration(attributes.protect(), async.create(), singletonStore.create(),
+      return new RemoteStoreConfiguration(attributes.protect(), async.create(),
             asyncExecutorFactory.create(), connectionPool.create(), security.create());
    }
 

@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -2660,7 +2659,11 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case SINGLETON: {
-                BaseStoreConfigurationResource.SINGLETON.parseAndSetParameter(value, store, reader);
+               if (namespace.since(10, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, index);
+               } else {
+                  ROOT_LOGGER.deprecatedAttribute(attribute.getLocalName());
+               }
                 break;
             }
             case READ_ONLY: {

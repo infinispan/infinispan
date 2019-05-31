@@ -37,9 +37,8 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
    private final Attribute<Integer> maxEntries;
    private final Attribute<Float> fragmentationFactor;
 
-   public SingleFileStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
-                                       SingletonStoreConfiguration singletonStore) {
-      super(attributes, async, singletonStore);
+   public SingleFileStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+      super(attributes, async);
       location = attributes.attribute(LOCATION);
       maxEntries = attributes.attribute(MAX_ENTRIES);
       fragmentationFactor = attributes.attribute(FRAGMENTATION_FACTOR);
@@ -53,7 +52,7 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
 
    @Override
    public List<ConfigurationInfo> subElements() {
-      return Arrays.asList(async(), singletonStore());
+      return Arrays.asList(async());
    }
 
    @Override
@@ -62,7 +61,7 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
       set.read(attributes);
       String location = set.attribute(LOCATION).get();
       set.attribute(LOCATION).set(fileLocationTransform(location, segment));
-      return new SingleFileStoreConfiguration(set.protect(), async(), singletonStore());
+      return new SingleFileStoreConfiguration(set.protect(), async());
    }
 
    public String location() {

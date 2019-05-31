@@ -9,7 +9,6 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 
 @BuiltBy(DummyInMemoryStoreConfigurationBuilder.class)
 @ConfigurationFor(DummyInMemoryStore.class)
@@ -43,8 +42,8 @@ public class DummyInMemoryStoreConfiguration extends AbstractSegmentedStoreConfi
       }
    };
 
-   public DummyInMemoryStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-      super(attributes, async, singletonStore);
+   public DummyInMemoryStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+      super(attributes, async);
    }
 
    @Override
@@ -60,7 +59,7 @@ public class DummyInMemoryStoreConfiguration extends AbstractSegmentedStoreConfi
       if (storeName != null) {
          set.attribute(STORE_NAME).set(storeName + "-" + segment);
       }
-      return new DummyInMemoryStoreConfiguration(set.protect(), async(), singletonStore());
+      return new DummyInMemoryStoreConfiguration(set.protect(), async());
    }
 
    public boolean slow() {

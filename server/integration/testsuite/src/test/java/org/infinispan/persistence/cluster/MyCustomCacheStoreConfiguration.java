@@ -5,7 +5,6 @@ import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 
 /**
  * Test configuration for MyCustomCacheStore.
@@ -17,8 +16,8 @@ import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 @BuiltBy(MyCustomCacheStoreConfigurationBuilder.class)
 public class MyCustomCacheStoreConfiguration extends AbstractStoreConfiguration {
 
-    MyCustomCacheStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-        super(attributes, async, singletonStore);
+    MyCustomCacheStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+        super(attributes, async);
     }
 
     @Override

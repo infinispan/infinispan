@@ -12,8 +12,8 @@ public class CustomStoreConfiguration extends AbstractStoreConfiguration {
 
    private final Attribute<Class> customStoreClass;
 
-   public CustomStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-      super(attributes, async, singletonStore);
+   public CustomStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+      super(attributes, async);
       this.customStoreClass = attributes.attribute(CUSTOM_STORE_CLASS);
    }
 

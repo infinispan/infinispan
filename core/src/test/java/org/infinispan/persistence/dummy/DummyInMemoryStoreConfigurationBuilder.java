@@ -51,7 +51,7 @@ public class DummyInMemoryStoreConfigurationBuilder extends
 
    @Override
    public DummyInMemoryStoreConfiguration create() {
-      return new DummyInMemoryStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
+      return new DummyInMemoryStoreConfiguration(attributes.protect(), async.create());
    }
 
    @Override

@@ -47,12 +47,6 @@ public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
       disableWithConfiguration(builder);
    }
 
-   public void testSingletonStoreDisabling() {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).singleton().enable();
-      disableWithConfiguration(builder);
-   }
-
    public void testChainingStoreDisabling() {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).async().enable();

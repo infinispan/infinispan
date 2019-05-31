@@ -20,7 +20,6 @@ import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
@@ -64,9 +63,8 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
    @ConfigurationFor(SimpleLoader.class)
    public static class SimpleLoaderConfiguration extends AbstractStoreConfiguration {
 
-      public SimpleLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
-            SingletonStoreConfiguration singletonStore) {
-         super(attributes, async, singletonStore);
+      public SimpleLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+         super(attributes, async);
       }
    }
 
@@ -78,7 +76,7 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
 
       @Override
       public SimpleLoaderConfiguration create() {
-         return new SimpleLoaderConfiguration(attributes.protect(), async.create(), singletonStore.create());
+         return new SimpleLoaderConfiguration(attributes.protect(), async.create());
       }
 
       @Override

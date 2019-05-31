@@ -6,7 +6,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 public class MyCustomCacheStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<MyCustomCacheStoreConfiguration, MyCustomCacheStoreConfigurationBuilder> {
 
     public MyCustomCacheStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-        super(builder);
+        super(builder, MyCustomCacheStoreConfiguration.attributeDefinitionSet());
     }
 
     @Override
@@ -20,6 +20,6 @@ public class MyCustomCacheStoreConfigurationBuilder extends AbstractStoreConfigu
 
     @Override
     public MyCustomCacheStoreConfiguration create() {
-        return new MyCustomCacheStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
+        return new MyCustomCacheStoreConfiguration(attributes.protect(), async.create());
     }
 }

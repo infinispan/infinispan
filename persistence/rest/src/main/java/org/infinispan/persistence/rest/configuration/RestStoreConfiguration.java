@@ -17,7 +17,6 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.keymappers.WrappedByteArrayOrPrimitiveMapper;
 import org.infinispan.persistence.rest.RestStore;
@@ -63,8 +62,8 @@ public class RestStoreConfiguration extends AbstractStoreConfiguration {
    private final ConnectionPoolConfiguration connectionPool;
 
    public RestStoreConfiguration(AttributeSet attributes,
-                                 AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, ConnectionPoolConfiguration connectionPool) {
-      super(attributes, async, singletonStore);
+                                 AsyncStoreConfiguration async, ConnectionPoolConfiguration connectionPool) {
+      super(attributes, async);
       key2StringMapper = attributes.attribute(KEY2STRING_MAPPER);
       metadataHelper = attributes.attribute(METADATA_HELPER);
       host = attributes.attribute(HOST);

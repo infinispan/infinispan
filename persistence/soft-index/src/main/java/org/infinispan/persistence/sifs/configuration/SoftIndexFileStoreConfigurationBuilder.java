@@ -91,8 +91,7 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
 
    @Override
    public SoftIndexFileStoreConfiguration create() {
-      return new SoftIndexFileStoreConfiguration(attributes.protect(),
-            async.create(), singletonStore.create());
+      return new SoftIndexFileStoreConfiguration(attributes.protect(), async.create());
    }
 
    @Override
@@ -124,6 +123,6 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
 
    @Override
    public String toString() {
-      return "SoftIndexFileStoreConfigurationBuilder [attributes=" + attributes + ", async=" + async + ", singletonStore=" + singletonStore + "]";
+      return "SoftIndexFileStoreConfigurationBuilder [attributes=" + attributes + ", async=" + async + "]";
    }
 }

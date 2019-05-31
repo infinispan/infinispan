@@ -86,7 +86,7 @@ public class SingleFileStoreConfigurationBuilder
 
    @Override
    public SingleFileStoreConfiguration create() {
-      return new SingleFileStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
+      return new SingleFileStoreConfiguration(attributes.protect(), async.create());
    }
 
    @Override

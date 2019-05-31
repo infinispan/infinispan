@@ -39,6 +39,9 @@ getBulk methods have been removed in favor of them.
 
 * The CLI loader (`infinispan-persistence-cli`) has been removed.
 * The LevelDB store (`infinispan-cachestore-leveldb`) has been removed. Use the RocksDB store instead, as it is fully backwards compatible.
+* The deprecated `singleton` store configuration option and the wrapper class `SingletonCacheWriter` have been removed.
++
+Using `shared=true` is enough, as only the primary owner of each key will write to a shared store.
 
 === Client/Server changes
 

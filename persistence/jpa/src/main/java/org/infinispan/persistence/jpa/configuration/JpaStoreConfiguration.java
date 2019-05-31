@@ -11,7 +11,6 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
-import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.jpa.JpaStore;
 
@@ -40,8 +39,8 @@ public class JpaStoreConfiguration extends AbstractStoreConfiguration {
    private final Attribute<Class> entityClass;
    private final Attribute<Boolean> storeMetadata;
 
-   protected JpaStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
-      super(attributes, async, singletonStore);
+   protected JpaStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+      super(attributes, async);
       persistenceUnitName = attributes.attribute(PERSISTENCE_UNIT_NAME);
       entityClass = attributes.attribute(ENTITY_CLASS);
       storeMetadata = attributes.attribute(STORE_METADATA);

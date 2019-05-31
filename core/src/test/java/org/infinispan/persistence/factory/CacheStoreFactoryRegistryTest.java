@@ -119,7 +119,7 @@ public class CacheStoreFactoryRegistryTest {
 
    private DummyInMemoryStoreConfiguration createDummyConfiguration() {
       AttributeSet protectedAttributesSet = DummyInMemoryStoreConfiguration.attributeDefinitionSet().protect();
-      return new DummyInMemoryStoreConfiguration(protectedAttributesSet, null, null);
+      return new DummyInMemoryStoreConfiguration(protectedAttributesSet, null);
    }
 
    private Object loadWithCustomClassLoader(String className) throws Exception {
