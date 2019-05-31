@@ -50,6 +50,9 @@
       <module dir="${output.dir}" target="modules/tools" module="tools" artifact="infinispan-tools" />
       <module dir="${output.dir}" target="modules/tree" module="tree" artifact="infinispan-tree" />
 
+      <!-- Generate the licenses for all included JARs -->
+      <base-distribution-licenses dir="${output.dir}"/>
+
       <!-- Demos -->
       <mkdir dir="${output.dir}/demos" />
       <demo target="${output.dir}" demo="gui" />
@@ -70,9 +73,14 @@
          <base-distribution-lib-remote dir="${output.dir}" />
          <base-distribution-common-files dir="${output.dir}" type="remote" />
          <base-distribution-javadocs dir="${output.dir}" type="remote" />
-         <base-distribution-licenses dir="${output.dir}"/>
+
+         <!-- Modules -->
          <module dir="${output.dir}" target="modules/spring4" module="spring4" artifact="infinispan-spring4-remote" />
          <module dir="${output.dir}" target="modules/spring5" module="spring5" artifact="infinispan-spring5-remote" />
+
+         <!-- Generate the licenses for all included JARs -->
+         <base-distribution-licenses dir="${output.dir}"/>
+
          <delete dir="${output.dir}/bin" />
          <delete dir="${output.dir}/configs" />
          <delete file="${output.dir}/README-GUI-Demo.txt" />
@@ -109,6 +117,7 @@
       <echo file="${temp.file}" message="${jar.fileset}"/>
       <echo message="Merging licenses"/>
       <java classname="org.infinispan.tools.licenses.LicenseMerger">
+         <arg line="-v"/>
          <arg line="-i"/>
          <arg line="-r"/>
          <arg line="${temp.file}"/>
@@ -144,7 +153,6 @@
          <base-distribution-schema dir="@{dir}" />
          <base-distribution-javadocs dir="@{dir}" type="@{javadocs}"/>
          <base-distribution-configdocs dir="@{dir}" />
-         <base-distribution-licenses dir="@{dir}"/>
       </sequential>
    </macrodef>
 
@@ -155,7 +163,7 @@
       <sequential>
          <mkdir dir="@{dir}/docs/licenses" />
          <copy todir="@{dir}/docs/licenses">
-            <fileset dir="target/docs/licenses" />
+            <fileset dir="${project.build.directory}/docs/licenses" />
          </copy>
          <path id="jar.fileset.path">
             <fileset casesensitive="yes" dir="@{dir}">
@@ -169,6 +177,7 @@
          <delete file="${temp.file}"/>
          <echo file="${temp.file}" message="${jar.fileset}"/>
          <java classname="org.infinispan.tools.licenses.LicenseMerger">
+            <arg line="-v"/>
             <arg line="-i" if:true="@{inclusive}"/>
             <arg line="-r"/>
             <arg line="${temp.file}"/>
