@@ -338,7 +338,6 @@
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
       <versionx.org.antlr.antlr4-runtime>4.7</versionx.org.antlr.antlr4-runtime>
       <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
-      <versionx.org.apache.ant.ant-launcher>${version.ant}</versionx.org.apache.ant.ant-launcher>
       <versionx.org.apache.avro.avro>1.7.7</versionx.org.apache.avro.avro>
       <versionx.org.apache.commons.commons-compress>1.18</versionx.org.apache.commons.commons-compress>
       <versionx.org.apache.commons.commons-lang3>3.6</versionx.org.apache.commons.commons-lang3>
@@ -426,7 +425,6 @@
       <versionx.org.apache.tomcat.embed.tomcat-embed-websocket>${version.tomcat85}</versionx.org.apache.tomcat.embed.tomcat-embed-websocket>
       <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
       <versionx.org.assertj.assertj-core>3.12.1</versionx.org.assertj.assertj-core>
-      <versionx.org.beanshell.bsh>2.0b5</versionx.org.beanshell.bsh>
       <versionx.org.checkerframework.checker-compat-qual>2.0.0</versionx.org.checkerframework.checker-compat-qual>
       <versionx.org.codehaus.groovy.groovy>${version.groovy}</versionx.org.codehaus.groovy.groovy>
       <versionx.org.codehaus.groovy.groovy-xml>${version.groovy}</versionx.org.codehaus.groovy.groovy-xml>
@@ -461,7 +459,6 @@
       <versionx.org.elasticsearch.securesm>1.2</versionx.org.elasticsearch.securesm>
       <versionx.org.fusesource.jansi.jansi>1.16</versionx.org.fusesource.jansi.jansi>
       <versionx.org.glassfish.javax.enterprise.concurrent>1.0</versionx.org.glassfish.javax.enterprise.concurrent>
-      <versionx.org.glassfish.jaxb.jaxb-core>2.3.0</versionx.org.glassfish.jaxb.jaxb-core>
       <versionx.org.glassfish.jaxb.jaxb-runtime>${version.glassfish.jaxb}</versionx.org.glassfish.jaxb.jaxb-runtime>
       <versionx.org.glassfish.jaxb.txw2>${version.glassfish.jaxb}</versionx.org.glassfish.jaxb.txw2>
       <versionx.org.hamcrest.hamcrest-core>${version.hamcrest}</versionx.org.hamcrest.hamcrest-core>
@@ -548,7 +545,6 @@
       <versionx.org.jboss.remoting.jboss-remoting>5.0.8.Final</versionx.org.jboss.remoting.jboss-remoting>
       <versionx.org.jboss.remotingjmx.remoting-jmx>3.0.0.Final</versionx.org.jboss.remotingjmx.remoting-jmx>
       <versionx.org.jboss.resteasy.jaxrs-api>3.0.10.Final</versionx.org.jboss.resteasy.jaxrs-api>
-      <versionx.org.jboss.sasl.jboss-sasl>1.0.5.Final</versionx.org.jboss.sasl.jboss-sasl>
       <versionx.org.jboss.security.jboss-negotiation-common>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-common>
       <versionx.org.jboss.security.jboss-negotiation-extras>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-extras>
       <versionx.org.jboss.security.jboss-negotiation-spnego>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-spnego>
@@ -725,7 +721,6 @@
 
       <versionx.org.syslog4j.syslog4j>0.9.30</versionx.org.syslog4j.syslog4j>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
-      <versionx.org.tukaani.xz>1.0</versionx.org.tukaani.xz>
       <versionx.org.twdata.maven.mojo-executor>2.2.0</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.arquillian.wildfly-arquillian-common>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-common>
       <versionx.org.wildfly.arquillian.wildfly-arquillian-common-domain>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-common-domain>
@@ -771,14 +766,12 @@
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.0.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.wildfly.security.elytron-web.undertow-server>1.2.3.Final</versionx.org.wildfly.security.elytron-web.undertow-server>
       <versionx.org.wildfly.security.wildfly-elytron>1.6.1.Final</versionx.org.wildfly.security.wildfly-elytron>
-      <versionx.org.wildfly.security.wildfly-security-manager>1.1.2.Final</versionx.org.wildfly.security.wildfly-security-manager>
       <versionx.org.wildfly.transaction.wildfly-transaction-client>1.1.2.Final</versionx.org.wildfly.transaction.wildfly-transaction-client>
       <versionx.org.wildfly.wildfly-clustering-common>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-common>
       <versionx.org.wildfly.wildfly-clustering-infinispan-spi>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-infinispan-spi>
       <versionx.org.wildfly.wildfly-clustering-marshalling-api>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-marshalling-api>
       <versionx.org.wildfly.wildfly-clustering-marshalling-spi>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-marshalling-spi>
       <versionx.org.wildfly.wildfly-clustering-service>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-service>
-      <versionx.org.wildfly.wildfly-dist>${version.org.wildfly}</versionx.org.wildfly.wildfly-dist>
       <versionx.org.wildfly.wildfly-ee>${version.org.wildfly}</versionx.org.wildfly.wildfly-ee>
       <versionx.org.wildfly.wildfly-feature-pack>${version.org.wildfly}</versionx.org.wildfly.wildfly-feature-pack>
       <versionx.org.wildfly.wildfly-http-client.wildfly-http-client-common>1.0.12.Final</versionx.org.wildfly.wildfly-http-client.wildfly-http-client-common>
@@ -790,9 +783,6 @@
       <versionx.org.wildfly.wildfly-security>${version.org.wildfly}</versionx.org.wildfly.wildfly-security>
       <versionx.org.wildfly.wildfly-transactions>${version.org.wildfly}</versionx.org.wildfly.wildfly-transactions>
       <versionx.org.yaml.snakeyaml>1.18</versionx.org.yaml.snakeyaml>
-      <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
-      <versionx.xalan.serializer>${version.xalan}</versionx.xalan.serializer>
-      <versionx.xalan.xalan>${version.xalan}</versionx.xalan.xalan>
       <versionx.xerces.xercesImpl>${version.xerces}</versionx.xerces.xercesImpl>
       <versionx.xml-apis.xml-apis>1.4.01</versionx.xml-apis.xml-apis>
       <versionx.xmlpull.xmlpull>1.1.3.1</versionx.xmlpull.xmlpull>
@@ -1488,12 +1478,6 @@
             <scope>provided</scope>
          </dependency>
          <dependency>
-            <groupId>org.apache.ant</groupId>
-            <artifactId>ant-launcher</artifactId>
-            <version>${versionx.org.apache.ant.ant-launcher}</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
             <version>${versionx.org.apache.avro.avro}</version>
@@ -1990,12 +1974,6 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>org.beanshell</groupId>
-            <artifactId>bsh</artifactId>
-            <version>${versionx.org.beanshell.bsh}</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker-compat-qual</artifactId>
             <version>${versionx.org.checkerframework.checker-compat-qual}</version>
@@ -2182,11 +2160,6 @@
             <groupId>org.glassfish</groupId>
             <artifactId>javax.enterprise.concurrent</artifactId>
             <version>${versionx.org.glassfish.javax.enterprise.concurrent}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.glassfish.jaxb</groupId>
-            <artifactId>jaxb-core</artifactId>
-            <version>${versionx.org.glassfish.jaxb.jaxb-core}</version>
          </dependency>
          <dependency>
             <groupId>org.glassfish.jaxb</groupId>
@@ -2881,11 +2854,6 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>org.jboss.sasl</groupId>
-            <artifactId>jboss-sasl</artifactId>
-            <version>${versionx.org.jboss.sasl.jboss-sasl}</version>
-         </dependency>
-         <dependency>
             <groupId>org.jboss.security</groupId>
             <artifactId>jboss-negotiation-common</artifactId>
             <version>${versionx.org.jboss.security.jboss-negotiation-common}</version>
@@ -3541,11 +3509,6 @@
             <scope>provided</scope>
          </dependency>
          <dependency>
-            <groupId>org.tukaani</groupId>
-            <artifactId>xz</artifactId>
-            <version>${versionx.org.tukaani.xz}</version>
-         </dependency>
-         <dependency>
             <groupId>org.twdata.maven</groupId>
             <artifactId>mojo-executor</artifactId>
             <version>${versionx.org.twdata.maven.mojo-executor}</version>
@@ -3574,12 +3537,6 @@
             <groupId>${appserver.groupId}</groupId>
             <artifactId>wildfly-clustering-service</artifactId>
             <version>${versionx.org.wildfly.wildfly-clustering-service}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-dist</artifactId>
-            <version>${versionx.org.wildfly.wildfly-dist}</version>
-            <type>zip</type>
          </dependency>
          <dependency>
             <groupId>${appserver.groupId}</groupId>
@@ -3840,11 +3797,6 @@
             <version>${versionx.org.wildfly.security.wildfly-elytron}</version>
          </dependency>
          <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-security-manager</artifactId>
-            <version>${versionx.org.wildfly.security.wildfly-security-manager}</version>
-         </dependency>
-         <dependency>
             <groupId>org.wildfly.security.elytron-web</groupId>
             <artifactId>undertow-server</artifactId>
             <version>${versionx.org.wildfly.security.elytron-web.undertow-server}</version>
@@ -3873,23 +3825,6 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>${versionx.org.yaml.snakeyaml}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>sun.jdk</groupId>
-            <artifactId>jconsole</artifactId>
-            <version>${versionx.sun.jdk.jconsole}</version>
-         </dependency>
-         <dependency>
-            <groupId>xalan</groupId>
-            <artifactId>serializer</artifactId>
-            <version>${versionx.xalan.serializer}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>xalan</groupId>
-            <artifactId>xalan</artifactId>
-            <version>${versionx.xalan.xalan}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -4015,29 +3950,8 @@
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-help-plugin</artifactId>
-               <version>2.1.1</version>
-            </plugin>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-deploy-plugin</artifactId>
                <version>2.8.1</version>
-            </plugin>
-            <plugin>
-               <artifactId>maven-scm-plugin</artifactId>
-               <version>1.9.5</version>
-               <configuration>
-                  <tag>${project.version}</tag>
-               </configuration>
-            </plugin>
-            <plugin>
-               <groupId>org.codehaus.mojo</groupId>
-               <artifactId>versions-maven-plugin</artifactId>
-               <version>2.5</version>
-               <configuration>
-                  <generateBackupPoms>false</generateBackupPoms>
-                  <processAllModules>true</processAllModules>
-               </configuration>
             </plugin>
             <plugin>
                <groupId>org.sonatype.plugins</groupId>
@@ -4169,11 +4083,6 @@
                <configuration>
                   <attachClasses>false</attachClasses>
                </configuration>
-            </plugin>
-            <plugin>
-               <groupId>org.codehaus.mojo</groupId>
-               <artifactId>appassembler-maven-plugin</artifactId>
-               <version>1.0</version>
             </plugin>
             <plugin>
                <groupId>org.codehaus.mojo</groupId>

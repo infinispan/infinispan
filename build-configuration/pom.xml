@@ -224,7 +224,6 @@
       <version.spring4>4.3.4.RELEASE</version.spring4>
       <version.spring5>5.1.5.RELEASE</version.spring5>
       <version.tomcat85>8.5.31</version.tomcat85>
-      <version.xalan>2.7.2</version.xalan>
       <version.xerces>2.12.0.SP02</version.xerces>
       <version.xpp3>1.1.4c</version.xpp3>
 
