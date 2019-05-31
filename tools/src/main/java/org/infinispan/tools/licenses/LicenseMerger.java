@@ -33,12 +33,17 @@ public class LicenseMerger {
    private final DocumentBuilder docBuilder;
    private final Map<String, Document> xmls = new LinkedHashMap<>();
    private final Document emptyDocument;
+   private boolean verbose;
 
    LicenseMerger() throws Exception {
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
       dbf.setNamespaceAware(true);
       docBuilder = dbf.newDocumentBuilder();
       emptyDocument = docBuilder.newDocument();
+   }
+
+   private void setVerbose(boolean verbose) {
+      this.verbose = verbose;
    }
 
    private void loadLicenseFromJar(String fileName) throws Exception {
@@ -48,9 +53,15 @@ public class LicenseMerger {
             try (InputStream inputStream = jar.getInputStream(entry)) {
                Document doc = docBuilder.parse(inputStream);
                xmls.put(ToolUtils.getBaseFileName(fileName), doc);
+               if (verbose) {
+                  System.out.printf("Loaded license from JAR %s\n", fileName);
+               }
             }
          } else {
             xmls.put(ToolUtils.getBaseFileName(fileName), emptyDocument);
+            if (verbose) {
+               System.out.printf("Empty license for JAR %s\n", fileName);
+            }
          }
       }
    }
@@ -58,6 +69,9 @@ public class LicenseMerger {
    private void loadLicenseFromXML(String fileName) throws Exception {
       Document doc = docBuilder.parse(new File(fileName));
       xmls.put(ToolUtils.getBaseFileName(fileName), doc);
+      if (verbose) {
+         System.out.printf("Loaded license from XML %s\n", fileName);
+      }
    }
 
    void loadLicense(String filename) throws Exception {
@@ -80,11 +94,15 @@ public class LicenseMerger {
    }
 
    public void write(boolean inclusiveMode, OutputStream os) throws IOException, TransformerException {
+      if (verbose) {
+         System.out.printf("Inclusive mode %s\n", Boolean.toString(inclusiveMode));
+      }
       Document aggregated = docBuilder.newDocument();
       Element aggregatedDependencies = (Element) aggregated
             .appendChild(aggregated.createElement("licenseSummary"))
             .appendChild(aggregated.createElement("dependencies"));
       Map<String, Node> artifacts = new ConcurrentHashMap<>();
+      // Loop through all of the collected licenses.xml files
       for (Map.Entry<String, Document> l : xmls.entrySet()) {
          Document doc = l.getValue();
          if (doc == emptyDocument) continue;
@@ -108,15 +126,21 @@ public class LicenseMerger {
             .sorted(Map.Entry.comparingByKey())
             .forEach(entry ->  aggregatedDependencies.appendChild(entry.getValue()));
       ToolUtils.printDocument(aggregated, os);
+
    }
 
    public static void main(String argv[]) throws Exception {
       LicenseMerger licenseMerger = new LicenseMerger();
       File outputFile = new File(System.getProperty("user.dir"), "licenses.xml");
       boolean inclusiveMode = false;
-      Getopt opts = new Getopt("license-merger", argv, "io:r:");
+      boolean verbose = false;
+      Getopt opts = new Getopt("license-merger", argv, "vio:r:");
       for (int opt = opts.getopt(); opt > -1; opt = opts.getopt()) {
          switch (opt) {
+            case 'v':
+               verbose = true;
+               licenseMerger.setVerbose(true);
+               break;
             case 'i':
                inclusiveMode = true;
                break;
@@ -135,8 +159,11 @@ public class LicenseMerger {
       for (int i = opts.getOptind(); i < argv.length; i++) {
          licenseMerger.loadLicense(argv[i]);
       }
-      try (OutputStream os =new FileOutputStream(outputFile)) {
+      try (OutputStream os = new FileOutputStream(outputFile)) {
          licenseMerger.write(inclusiveMode, os);
+         if (verbose) {
+            System.out.printf("Wrote merged licenses to %s\n",  outputFile);
+         }
       }
    }
 }
