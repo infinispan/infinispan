@@ -27,18 +27,6 @@ public interface GlobalConfigurationChildBuilder {
    ThreadPoolConfigurationBuilder listenerThreadPool();
 
    /**
-    * @deprecated Since 9.0, no longer used.
-    */
-   @Deprecated
-   ThreadPoolConfigurationBuilder replicationQueueThreadPool();
-
-   /**
-    * Please use {@link GlobalConfigurationChildBuilder#expirationThreadPool()}
-    */
-   @Deprecated
-   ThreadPoolConfigurationBuilder evictionThreadPool();
-
-   /**
     * Configuration for the expiration thread pool
     */
    ThreadPoolConfigurationBuilder expirationThreadPool();

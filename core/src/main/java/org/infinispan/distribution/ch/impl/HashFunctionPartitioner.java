@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -26,7 +27,7 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
    @Override
    public void init(HashConfiguration configuration) {
       Objects.requireNonNull(configuration);
-      init(configuration.hash(), configuration.numSegments());
+      init(MurmurHash3.getInstance(), configuration.numSegments());
    }
 
    private void init(Hash hashFunction, int numSegments) {

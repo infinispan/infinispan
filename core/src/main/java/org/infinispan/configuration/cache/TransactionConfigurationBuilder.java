@@ -122,46 +122,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
-    * synchronous, so Infinispan will wait for responses from all nodes to which the commit was
-    * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
-    * performance of 2PC transactions, but it can lead to inconsistencies when a backup owner
-    * only commits the transaction after the primary owner released the lock.
-    *
-    * @deprecated since 9.0. no longer supported
-    */
-   @Deprecated
-   public TransactionConfigurationBuilder syncCommitPhase(boolean b) {
-      return this;
-   }
-
-   /**
-    * See {@link #syncCommitPhase(boolean)}
-    *
-    * @return {@code true} if sync commit phase is enabled
-    * @deprecated since 9.0. no longer supported
-    */
-   @Deprecated
-   boolean syncCommitPhase() {
-      return true;
-   }
-
-   /**
-    * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
-    * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
-    * sent. Otherwise, the rollback phase will be asynchronous.
-    *
-    * Keeping it as false can lead to inconsistencies when a transaction is rolled back because of
-    * a commit timeout, as a backup owner could commit the transaction after the primary released the lock.
-    *
-    * @deprecated since 9.0. no longer supported
-    */
-   @Deprecated
-   public TransactionConfigurationBuilder syncRollbackPhase(boolean b) {
-      return this;
-   }
-
-   /**
     * Configure Transaction manager lookup directly using an instance of TransactionManagerLookup.
     * Calling this method marks the cache as transactional.
     */

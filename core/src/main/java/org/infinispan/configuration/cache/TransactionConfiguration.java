@@ -165,73 +165,11 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
    }
 
    /**
-    * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
-    * synchronous, so Infinispan will wait for responses from all nodes to which the commit was
-    * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
-    * performance of 2PC transactions, but it can lead to inconsistencies when the primary owner releases
-    * the lock before the backup commits the change.
-    *
-    * @deprecated since 9.0. no longer supported
-    */
-   @Deprecated
-   public boolean syncCommitPhase() {
-      return true;
-   }
-
-   /**
-    * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
-    * synchronous, so Infinispan will wait for responses from all nodes to which the commit was
-    * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
-    * performance of 2PC transactions, but it can lead to inconsistencies when the primary owner releases
-    * the lock before the backup commits the change.
-    *
-    * @deprecated The syncRollbackPhase setting can no longer be modified at runtime. It must be the same on all nodes.
-    */
-   @Deprecated
-   public TransactionConfiguration syncCommitPhase(boolean b) {
-      return this;
-   }
-
-   /**
-    * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
-    * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
-    * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
-    * performance of 2PC transactions.
-    *
-    * @deprecated since 9.0. no longer supported
-    */
-   @Deprecated
-   public boolean syncRollbackPhase() {
-      return true;
-   }
-
-   /**
-    * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
-    * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
-    * sent.
-    *
-    * @deprecated The syncRollbackPhase setting can no longer be modified at runtime. It must be the same on all nodes.
-    */
-   @Deprecated
-   public TransactionConfiguration syncRollbackPhase(boolean b) {
-      return this;
-   }
-
-   /**
     * Configure Transaction manager lookup directly using an instance of TransactionManagerLookup.
     * Calling this method marks the cache as transactional.
     */
    public TransactionManagerLookup transactionManagerLookup() {
       return transactionManagerLookup.get();
-   }
-
-   /**
-    * @deprecated since 9.0. The transaction manager is only looked up once, during cache startup.
-    */
-   @Deprecated
-   public TransactionConfiguration transactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
-      this.transactionManagerLookup.set(transactionManagerLookup);
-      return this;
    }
 
    /**

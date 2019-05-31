@@ -1,18 +1,7 @@
 package org.infinispan.persistence;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.Collections;
-import java.util.Spliterators;
-
 import org.infinispan.api.APINonTxTest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.DataContainer.ComputeAction;
-import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.testng.annotations.Test;
 
@@ -26,23 +15,8 @@ import org.testng.annotations.Test;
 public class APINonTxPersistenceTest extends APINonTxTest {
    @Override
    protected void configure(ConfigurationBuilder builder) {
-      // We use a mocked container, so nothing is written
-      DataContainer mockContainer = mock(DataContainer.class);
-      when(mockContainer.iterator()).thenReturn(Collections.emptyIterator());
-      when(mockContainer.iteratorIncludingExpired()).thenReturn(Collections.emptyIterator());
-      when(mockContainer.spliterator()).thenReturn(Spliterators.emptySpliterator());
-      when(mockContainer.entrySet()).thenReturn(Collections.emptySet());
-      when(mockContainer.keySet()).thenReturn(Collections.emptySet());
-      when(mockContainer.values()).thenReturn(Collections.emptyList());
-      InternalEntryFactory factory = new InternalEntryFactoryImpl();
-      when(mockContainer.compute(any(), any())).then(invocation -> {
-         Object key = invocation.getArgument(0);
-         ComputeAction action = invocation.getArgument(1);
-         return action.compute(key, null, factory);
-      });
       builder
-            .dataContainer()
-               .dataContainer(mockContainer)
+            .memory().size(0)
             .persistence()
                .addStore(DummyInMemoryStoreConfigurationBuilder.class)
                   .storeName(getClass().getName())

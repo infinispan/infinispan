@@ -71,18 +71,6 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    /**
-    * @see org.infinispan.configuration.cache.LockingConfiguration#supportsConcurrentUpdates()
-    * @deprecated
-    */
-   @Deprecated
-   public LockingConfigurationBuilder supportsConcurrentUpdates(boolean itDoes) {
-      if (!itDoes) {
-         log.warnConcurrentUpdateSupportCannotBeConfigured();
-      }
-      return this;
-   }
-
-   /**
     * Maximum time to attempt a particular lock acquisition
     */
    public LockingConfigurationBuilder lockAcquisitionTimeout(long l) {
@@ -104,18 +92,6 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
     */
    public LockingConfigurationBuilder useLockStriping(boolean b) {
       attributes.attribute(USE_LOCK_STRIPING).set(b);
-      return this;
-   }
-
-   /**
-    * This setting is only applicable in the case of REPEATABLE_READ. When write skew check is set
-    * to false, if the writer at commit time discovers that the working entry and the underlying
-    * entry have different versions, the working entry will overwrite the underlying entry. If true,
-    * such version conflict - known as a write-skew - will throw an Exception.
-    * @deprecated since 9.0. It will be automatically enabled for OPTIMISTIC and REPEATABLE_READ transactions
-    */
-   @Deprecated
-   public LockingConfigurationBuilder writeSkewCheck(boolean b) {
       return this;
    }
 

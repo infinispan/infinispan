@@ -19,7 +19,6 @@ public class ConfigurationCompatibilityTest {
             .location(System.getProperty("java.io.tmpdir"))
             .async()
                .enabled(true)
-               .flushLockTimeout(15000)
                .threadPoolSize(5);
    }
 

@@ -25,11 +25,6 @@ public class GlobalSecurityConfigurationBuilder extends AbstractGlobalConfigurat
    }
 
    @Override
-   public GlobalSecurityConfigurationBuilder securityCacheTimeout(long securityCacheTimeout) {
-      return securityCacheTimeout(securityCacheTimeout, TimeUnit.MILLISECONDS);
-   }
-
-   @Override
    public GlobalSecurityConfigurationBuilder securityCacheTimeout(long securityCacheTimeout, TimeUnit unit) {
       this.securityCacheTimeout = unit.toMillis(securityCacheTimeout);
       return this;

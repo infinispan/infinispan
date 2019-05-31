@@ -504,8 +504,6 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       lcscsBuilder.async()
             .modificationQueueSize(10)
             .threadPoolSize(3);
-      lcscsBuilder.async()
-            .shutdownTimeout(50);
 
       writer = new AdvancedAsyncCacheWriter(underlying);
       InitializationContext ctx =

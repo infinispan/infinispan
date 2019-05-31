@@ -14,7 +14,9 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  *
  * @author Galder Zamarreño
  * @since 5.3
+ * @deprecated Since 9.4
  */
+@Deprecated
 public class CompatibilityModeConfigurationBuilder
       extends AbstractConfigurationChildBuilder implements Builder<CompatibilityModeConfiguration>, ConfigurationBuilderInfo {
 

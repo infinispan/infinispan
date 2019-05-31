@@ -16,21 +16,7 @@ public interface ConfigurationChildBuilder {
    @Deprecated
    CustomInterceptorsConfigurationBuilder customInterceptors();
 
-   DataContainerConfigurationBuilder dataContainer();
-
-   /**
-    * @deprecated Since 9.0, deadlock detection is always disabled.
-    */
-   @Deprecated
-   DeadlockDetectionConfigurationBuilder deadlockDetection();
-
    EncodingConfigurationBuilder encoding();
-
-   /**
-    * @deprecated Use {@link ConfigurationBuilder#memory()} instead
-    */
-   @Deprecated
-   EvictionConfigurationBuilder eviction();
 
    ExpirationConfigurationBuilder expiration();
 
@@ -46,15 +32,7 @@ public interface ConfigurationChildBuilder {
 
    SecurityConfigurationBuilder security();
 
-   StoreAsBinaryConfigurationBuilder storeAsBinary();
-
    TransactionConfigurationBuilder transaction();
-
-   /**
-    * @deprecated since 9.0. Infinispan automatically enables versioning when needed.
-    */
-   @Deprecated
-   VersioningConfigurationBuilder versioning();
 
    UnsafeConfigurationBuilder unsafe();
 

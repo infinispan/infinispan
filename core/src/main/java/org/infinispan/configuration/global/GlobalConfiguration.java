@@ -53,7 +53,6 @@ public class GlobalConfiguration {
    private final ClassLoader cl;
    private final ThreadPoolConfiguration expirationThreadPool;
    private final ThreadPoolConfiguration listenerThreadPool;
-   private final ThreadPoolConfiguration replicationQueueThreadPool;
    private final ThreadPoolConfiguration persistenceThreadPool;
    private final ThreadPoolConfiguration stateTransferThreadPool;
    private final ThreadPoolConfiguration asyncThreadPool;
@@ -63,7 +62,6 @@ public class GlobalConfiguration {
 
    GlobalConfiguration(ThreadPoolConfiguration expirationThreadPool,
                        ThreadPoolConfiguration listenerThreadPool,
-                       ThreadPoolConfiguration replicationQueueThreadPool,
                        ThreadPoolConfiguration persistenceThreadPool,
                        ThreadPoolConfiguration stateTransferThreadPool,
                        ThreadPoolConfiguration asyncThreadPool,
@@ -77,7 +75,6 @@ public class GlobalConfiguration {
                        boolean zeroCapacityNode) {
       this.expirationThreadPool = expirationThreadPool;
       this.listenerThreadPool = listenerThreadPool;
-      this.replicationQueueThreadPool = replicationQueueThreadPool;
       this.persistenceThreadPool = persistenceThreadPool;
       this.stateTransferThreadPool = stateTransferThreadPool;
       this.asyncThreadPool = asyncThreadPool;
@@ -99,75 +96,12 @@ public class GlobalConfiguration {
       this.zeroCapacityNode = features.isAvailable(ZERO_CAPACITY_NODE_FEATURE) ? zeroCapacityNode : false;
    }
 
-   /**
-    * @deprecated This method always returns null now.
-    * Look for a thread pool named as {@link #listenerThreadPool()} instead.
-    */
-   @Deprecated
-   public ExecutorFactoryConfiguration asyncListenerExecutor() {
-      return null;
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Look for a thread pool named as {@link #persistenceThreadPool()} instead.
-    */
-   @Deprecated
-   public ExecutorFactoryConfiguration persistenceExecutor() {
-      return null;
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Look for a thread pool named as {@link TransportConfiguration#transportThreadPool()}
-    * instead.
-    */
-   @Deprecated
-   public ExecutorFactoryConfiguration asyncTransportExecutor() {
-      return null;
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Look for a thread pool named as
-    * {@link TransportConfiguration#remoteCommandThreadPool()} instead.
-    */
-   @Deprecated
-   public ExecutorFactoryConfiguration remoteCommandsExecutor() {
-      return null;
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Look for a thread pool named as {@link #expirationThreadPool()} instead.
-    */
-   @Deprecated
-   public ScheduledExecutorFactoryConfiguration evictionScheduledExecutor() {
-      return null;
-   }
-
    public ThreadPoolConfiguration expirationThreadPool() {
-      return expirationThreadPool;
-   }
-
-   /**
-    * @deprecated Use {@link #expirationThreadPool} instead
-    */
-   @Deprecated
-   public ThreadPoolConfiguration evictionThreadPool() {
       return expirationThreadPool;
    }
 
    public ThreadPoolConfiguration listenerThreadPool() {
       return listenerThreadPool;
-   }
-
-   /**
-    * @deprecated Since 9.0, no longer used.
-    */
-   @Deprecated
-   public ThreadPoolConfiguration replicationQueueThreadPool() {
-      return replicationQueueThreadPool;
    }
 
    public ThreadPoolConfiguration persistenceThreadPool() {
@@ -241,7 +175,6 @@ public class GlobalConfiguration {
             ", expirationThreadPool=" + expirationThreadPool +
             ", persistenceThreadPool=" + persistenceThreadPool +
             ", stateTransferThreadPool=" + stateTransferThreadPool +
-            ", replicationQueueThreadPool=" + replicationQueueThreadPool +
             ", globalJmxStatistics=" + globalJmxStatistics +
             ", transport=" + transport +
             ", security=" + security +

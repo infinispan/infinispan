@@ -231,6 +231,6 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public String toString() {
-      return "DataContainerConfigurationBuilder [attributes=" + attributes + "]";
+      return "MemoryConfigurationBuilder [attributes=" + attributes + "]";
    }
 }

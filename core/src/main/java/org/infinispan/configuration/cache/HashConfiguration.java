@@ -8,15 +8,11 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ClassAttributeSerializer;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.commons.configuration.attributes.SimpleInstanceAttributeCopier;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.parsing.Element;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
@@ -28,7 +24,6 @@ import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
  */
 public class HashConfiguration implements Matchable<HashConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<ConsistentHashFactory> CONSISTENT_HASH_FACTORY = AttributeDefinition.builder("consistentHashFactory", null, ConsistentHashFactory.class).serializer(ClassAttributeSerializer.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Hash> HASH = AttributeDefinition.builder("hash", (Hash)MurmurHash3.getInstance()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    public static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder("numOwners" , 2).xmlName("owners").immutable().build();
    // Because it assigns owners randomly, SyncConsistentHashFactory doesn't work very well with a low number
    // of segments. (With DefaultConsistentHashFactory, 60 segments was ok up to 6 nodes.)
@@ -45,28 +40,23 @@ public class HashConfiguration implements Matchable<HashConfiguration>, Configur
    private final List<ConfigurationInfo> elements;
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(HashConfiguration.class, CONSISTENT_HASH_FACTORY, HASH, NUM_OWNERS,
+      return new AttributeSet(HashConfiguration.class, CONSISTENT_HASH_FACTORY, NUM_OWNERS,
             NUM_SEGMENTS, CAPACITY_FACTOR, KEY_PARTITIONER);
    }
 
    private final Attribute<ConsistentHashFactory> consistentHashFactory;
-   private final Attribute<Hash> hash;
    private final Attribute<Integer> numOwners;
    private final Attribute<Integer> numSegments;
    private final Attribute<Float> capacityFactor;
    private final Attribute<KeyPartitioner> keyPartitioner;
 
    private final GroupsConfiguration groupsConfiguration;
-   private final StateTransferConfiguration stateTransferConfiguration;
    private final AttributeSet attributes;
 
-   HashConfiguration(AttributeSet attributes, GroupsConfiguration groupsConfiguration,
-                     StateTransferConfiguration stateTransferConfiguration) {
+   HashConfiguration(AttributeSet attributes, GroupsConfiguration groupsConfiguration) {
       this.attributes = attributes.checkProtection();
       this.groupsConfiguration = groupsConfiguration;
-      this.stateTransferConfiguration = stateTransferConfiguration;
       consistentHashFactory = attributes.attribute(CONSISTENT_HASH_FACTORY);
-      hash = attributes.attribute(HASH);
       numOwners = attributes.attribute(NUM_OWNERS);
       numSegments = attributes.attribute(NUM_SEGMENTS);
       capacityFactor = attributes.attribute(CAPACITY_FACTOR);
@@ -75,29 +65,10 @@ public class HashConfiguration implements Matchable<HashConfiguration>, Configur
    }
 
    /**
-    * @deprecated Since 5.2, replaced by {@link #consistentHashFactory()}.
-    */
-   @Deprecated
-   public ConsistentHash consistentHash() {
-      return null;
-   }
-
-   /**
     * The consistent hash factory in use.
     */
    public ConsistentHashFactory<?> consistentHashFactory() {
        return consistentHashFactory.get();
-   }
-
-   /**
-    * The hash function in use. Used as a bit spreader and a general hash code generator.
-    * Typically one of the the many default {@link org.infinispan.distribution.ch.ConsistentHash}
-    * implementations shipped.
-    * @deprecated Since 8.2, use {@link #keyPartitioner()} instead.
-    */
-   @Deprecated
-   public Hash hash() {
-      return hash.get();
    }
 
    /**
@@ -118,33 +89,6 @@ public class HashConfiguration implements Matchable<HashConfiguration>, Configur
     */
    public int numSegments() {
       return numSegments.get();
-   }
-
-   /**
-    * If false, no rebalancing or rehashing will take place when a new node joins the cluster or a
-    * node leaves
-    * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#fetchInMemoryState()} instead.
-    */
-   @Deprecated
-   public boolean rehashEnabled() {
-      return stateTransferConfiguration.fetchInMemoryState();
-   }
-
-   /**
-    * Rehashing timeout
-    * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} instead.
-    */
-   @Deprecated
-   public long rehashRpcTimeout() {
-      return stateTransferConfiguration.timeout();
-   }
-
-   /**
-    * @deprecated Use {@link org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} instead.
-    */
-   @Deprecated
-   public long rehashWait() {
-      return stateTransferConfiguration.timeout();
    }
 
    /**

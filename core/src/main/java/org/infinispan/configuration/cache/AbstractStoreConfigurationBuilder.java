@@ -38,37 +38,13 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    protected final AttributeSet attributes;
    protected final AsyncStoreConfigurationBuilder<S> async;
 
-   @Deprecated
-   protected boolean preload;
-   @Deprecated
-   protected boolean shared;
-   @Deprecated
-   protected boolean ignoreModifications;
-   @Deprecated
-   protected Properties properties;
-   @Deprecated
-   protected boolean purgeOnStartup;
-   @Deprecated
-   protected boolean fetchPersistentState;
-
    private final List<ConfigurationBuilderInfo> subElements = new ArrayList<>();
 
    public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes) {
       super(builder);
       this.attributes = attributes;
       this.async = new AsyncStoreConfigurationBuilder(this);
-      initCompatibilitySettings();
       subElements.add(async);
-   }
-
-   @Deprecated
-   private void initCompatibilitySettings() {
-      fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE).get();
-      preload = attributes.attribute(PRELOAD).get();
-      purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP).get();
-      shared = attributes.attribute(SHARED).get();
-      ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS).get();
-      properties = attributes.attribute(PROPERTIES).get();
    }
 
    @Override
@@ -95,7 +71,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Override
    public S fetchPersistentState(boolean b) {
       attributes.attribute(FETCH_PERSISTENT_STATE).set(b);
-      fetchPersistentState = b;
       return self();
    }
 
@@ -105,7 +80,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Override
    public S ignoreModifications(boolean b) {
       attributes.attribute(IGNORE_MODIFICATIONS).set(b);
-      ignoreModifications = b;
       return self();
    }
 
@@ -115,13 +89,11 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Override
    public S purgeOnStartup(boolean b) {
       attributes.attribute(PURGE_ON_STARTUP).set(b);
-      purgeOnStartup = b;
       return self();
    }
 
    public S properties(Properties properties) {
       attributes.attribute(PROPERTIES).set(new TypedProperties(properties));
-      this.properties = properties;
       return self();
    }
 
@@ -134,7 +106,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       properties.put(key, value);
       attributes.attribute(PROPERTIES).set(properties);
       XmlConfigHelper.setAttributes(attributes, properties, false, false);
-      this.properties = properties;
       return self();
    }
 
@@ -145,7 +116,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    public S withProperties(Properties props) {
       XmlConfigHelper.showUnrecognizedAttributes(XmlConfigHelper.setAttributes(attributes, props, false, false));
       attributes.attribute(PROPERTIES).set(new TypedProperties(props));
-      this.properties = props;
       return self();
    }
 
@@ -155,7 +125,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Override
    public S preload(boolean b) {
       attributes.attribute(PRELOAD).set(b);
-      preload = b;
       return self();
    }
 
@@ -165,7 +134,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Override
    public S shared(boolean b) {
       attributes.attribute(SHARED).set(b);
-      shared = b;
       return self();
    }
 
@@ -246,7 +214,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
                   !AbstractSegmentedStoreConfiguration.class.isAssignableFrom(configKlass)) {
                throw log.storeNotSegmented(storeKlass);
             }
-            if (!storeProps.shared() && shared) {
+            if (!storeProps.shared() && attributes.attribute(SHARED).get()) {
                throw log.nonSharedStoreConfiguredAsShared(storeKlass.getSimpleName());
             }
          } else {
@@ -270,7 +238,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       } catch (Exception e) {
          throw new CacheConfigurationException(e);
       }
-      initCompatibilitySettings();
       async.read(template.async());
 
       return this;

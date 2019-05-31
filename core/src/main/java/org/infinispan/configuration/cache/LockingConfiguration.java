@@ -24,10 +24,9 @@ public class LockingConfiguration implements Matchable<LockingConfiguration>, Co
    public static final AttributeDefinition<IsolationLevel> ISOLATION_LEVEL  = AttributeDefinition.builder("isolationLevel", IsolationLevel.REPEATABLE_READ).xmlName("isolation").immutable().build();
    public static final AttributeDefinition<Long> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder("lockAcquisitionTimeout", TimeUnit.SECONDS.toMillis(10)).xmlName("acquire-timeout").build();
    public static final AttributeDefinition<Boolean> USE_LOCK_STRIPING = AttributeDefinition.builder("striping", false).immutable().build();
-   public static final AttributeDefinition<Boolean> WRITE_SKEW_CHECK = AttributeDefinition.builder("writeSkewCheck", true).xmlName("write-skew").immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(LockingConfiguration.class, CONCURRENCY_LEVEL, ISOLATION_LEVEL, LOCK_ACQUISITION_TIMEOUT, USE_LOCK_STRIPING, WRITE_SKEW_CHECK);
+      return new AttributeSet(LockingConfiguration.class, CONCURRENCY_LEVEL, ISOLATION_LEVEL, LOCK_ACQUISITION_TIMEOUT, USE_LOCK_STRIPING);
    }
 
    static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(LOCKING.getLocalName());
@@ -63,18 +62,6 @@ public class LockingConfiguration implements Matchable<LockingConfiguration>, Co
    }
 
    /**
-    * This option applies to non-transactional caches only (both clustered and local): if set to true(default value) the cache
-    * keeps data consistent in the case of concurrent updates. For clustered caches this comes at the cost of an additional RPC, so if you don't expect your
-    * application to write data concurrently, disabling this flag increases performance.
-    *
-    * @deprecated this option is always <code>true</code> and cannot be modified since version 5.3
-    */
-   @Deprecated
-   public boolean supportsConcurrentUpdates() {
-      return true;
-   }
-
-   /**
     * Cache isolation level. Infinispan only supports READ_COMMITTED or REPEATABLE_READ isolation
     * levels. See <a href=
     * 'http://en.wikipedia.org/wiki/Isolation_level'>http://en.wikipedia.org/wiki/Isolation_level</a
@@ -103,18 +90,6 @@ public class LockingConfiguration implements Matchable<LockingConfiguration>, Co
     */
    public boolean useLockStriping() {
       return useLockStriping.get();
-   }
-
-   /**
-    * This setting is only applicable in the case of REPEATABLE_READ. When write skew check is set
-    * to false, if the writer at commit time discovers that the working entry and the underlying
-    * entry have different versions, the working entry will overwrite the underlying entry. If true,
-    * such version conflict - known as a write-skew - will throw an Exception.
-    * @deprecated since 9.0.
-    */
-   @Deprecated
-   public boolean writeSkewCheck() {
-      return true;
    }
 
    public AttributeSet attributes() {

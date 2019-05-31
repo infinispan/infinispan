@@ -87,7 +87,7 @@ public class RestStoreConfigurationParser implements ConfigurationParser {
                builder.port(Integer.parseInt(value));
                break;
             case OUTBOUND_SOCKET_BINDING:
-               log.ignoreXmlAttribute(attribute);
+               log.ignoreXmlAttribute(attribute, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

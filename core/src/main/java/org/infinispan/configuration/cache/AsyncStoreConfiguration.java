@@ -56,22 +56,6 @@ public class AsyncStoreConfiguration implements ConfigurationInfo {
    }
 
    /**
-    * Unused
-    */
-   @Deprecated
-   public long flushLockTimeout() {
-      return 0;
-   }
-
-   /**
-    * Unused
-    */
-   @Deprecated
-   public AsyncStoreConfiguration flushLockTimeout(long l) {
-      return this;
-   }
-
-   /**
     * Sets the size of the modification queue for the async store. If updates are made at a rate
     * that is faster than the underlying cache store can process this queue, then the async store
     * behaves like a synchronous store for that period, blocking until the queue can accept more
@@ -79,22 +63,6 @@ public class AsyncStoreConfiguration implements ConfigurationInfo {
     */
    public int modificationQueueSize() {
       return modificationQueueSize.get();
-   }
-
-   /**
-    * Unused
-    */
-   @Deprecated
-   public long shutdownTimeout() {
-      return 0;
-   }
-
-   /**
-    * Unused
-    */
-   @Deprecated
-   public AsyncStoreConfiguration shutdownTimeout(long l) {
-      return this;
    }
 
    /**

@@ -140,11 +140,9 @@ public class PutFromLoadValidator {
 		if (cacheManager.getCacheConfiguration(pendingPutsName) != null) {
 			log.pendingPutsCacheAlreadyDefined(pendingPutsName);
 		} else {
-			Configuration cacheConfiguration = cache.getCacheConfiguration();
 			ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 			configurationBuilder.read(pendingPutsConfiguration);
 			configurationBuilder.template(false);
-			configurationBuilder.dataContainer().keyEquivalence(cacheConfiguration.dataContainer().keyEquivalence());
 			cacheManager.defineConfiguration(pendingPutsName, configurationBuilder.build());
 		}
 
@@ -163,8 +161,7 @@ public class PutFromLoadValidator {
 		CacheMode cacheMode = cache.getCacheConfiguration().clustering().cacheMode();
 		// Since we need to intercept both invalidations of entries that are in the cache and those
 		// that are not, we need to use custom interceptor, not listeners (which fire only for present entries).
-		NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor = null;
-		if (cacheMode.isClustered()) {
+      if (cacheMode.isClustered()) {
 			if (!cacheMode.isInvalidation()) {
 				throw new IllegalArgumentException("PutFromLoadValidator in clustered caches requires invalidation mode.");
 			}

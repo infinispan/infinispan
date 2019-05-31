@@ -37,23 +37,8 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
-   public DataContainerConfigurationBuilder dataContainer() {
-      return builder.dataContainer();
-   }
-
-   @Override
-   public DeadlockDetectionConfigurationBuilder deadlockDetection() {
-      return builder.deadlockDetection();
-   }
-
-   @Override
    public EncodingConfigurationBuilder encoding() {
       return builder.encoding();
-   }
-
-   @Override
-   public EvictionConfigurationBuilder eviction() {
-      return builder.eviction();
    }
 
    @Override
@@ -92,19 +77,8 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
-   @Deprecated
-   public StoreAsBinaryConfigurationBuilder storeAsBinary() {
-      return builder.storeAsBinary();
-   }
-
-   @Override
    public TransactionConfigurationBuilder transaction() {
       return builder.transaction();
-   }
-
-   @Override
-   public VersioningConfigurationBuilder versioning() {
-     return builder.versioning();
    }
 
    @Override

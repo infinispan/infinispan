@@ -12,7 +12,6 @@ import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.TypedProperties;
@@ -35,60 +34,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       attributes = IndexingConfiguration.attributeDefinitionSet();
    }
 
-   /**
-    * Enable indexing.
-    *
-    * @deprecated Use {@link #index(Index)} instead
-    */
-   @Deprecated
-   public IndexingConfigurationBuilder enable() {
-      Attribute<Index> index = attributes.attribute(INDEX);
-      if (index.get() == Index.NONE)
-         index.set(Index.ALL);
-      return this;
-   }
-
-   /**
-    * Disable indexing.
-    *
-    * @deprecated Use {@link #index(Index)} instead
-    */
-   @Deprecated
-   public IndexingConfigurationBuilder disable() {
-      attributes.attribute(INDEX).set(Index.NONE);
-      return this;
-   }
-
-   /**
-    * Enable or disable indexing.
-    *
-    * @deprecated Use {@link #index(Index)} instead
-    */
-   @Deprecated
-   public IndexingConfigurationBuilder enabled(boolean enabled) {
-      Attribute<Index> index = attributes.attribute(INDEX);
-      if (index.get() == Index.NONE & enabled)
-         index.set(Index.ALL);
-      else if (!enabled)
-         index.set(Index.NONE);
-      return this;
-   }
-
    boolean enabled() {
       return attributes.attribute(INDEX).get().isEnabled();
-   }
-
-   /**
-    * If true, only index changes made locally, ignoring remote changes. This is useful if indexes
-    * are shared across a cluster to prevent redundant indexing of updates.
-    * @deprecated Use {@link #index(Index)} instead
-    */
-   @Deprecated
-   public IndexingConfigurationBuilder indexLocalOnly(boolean b) {
-      if (b)
-         attributes.attribute(INDEX).set(Index.LOCAL);
-
-      return this;
    }
 
    @Deprecated

@@ -5,8 +5,6 @@ import static org.infinispan.configuration.cache.AsyncStoreConfiguration.FAIL_SI
 import static org.infinispan.configuration.cache.AsyncStoreConfiguration.MODIFICATION_QUEUE_SIZE;
 import static org.infinispan.configuration.cache.AsyncStoreConfiguration.THREAD_POOL_SIZE;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -57,22 +55,6 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    }
 
    /**
-    * Unused.
-    */
-   @Deprecated
-   public AsyncStoreConfigurationBuilder<S> flushLockTimeout(long l) {
-      return this;
-   }
-
-   /**
-    * Unused.
-    */
-   @Deprecated
-   public AsyncStoreConfigurationBuilder<S> flushLockTimeout(long l, TimeUnit unit) {
-      return this;
-   }
-
-   /**
     * Sets the size of the modification queue for the async store. If updates are made at a rate
     * that is faster than the underlying cache store can process this queue, then the async store
     * behaves like a synchronous store for that period, blocking until the queue can accept more
@@ -80,22 +62,6 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
     */
    public AsyncStoreConfigurationBuilder<S> modificationQueueSize(int i) {
       attributes.attribute(MODIFICATION_QUEUE_SIZE).set(i);
-      return this;
-   }
-
-   /**
-    * Unused.
-    */
-   @Deprecated
-   public AsyncStoreConfigurationBuilder<S> shutdownTimeout(long l) {
-      return this;
-   }
-
-   /**
-    * Unused.
-    */
-   @Deprecated
-   public AsyncStoreConfigurationBuilder<S> shutdownTimeout(long l, TimeUnit unit) {
       return this;
    }
 
