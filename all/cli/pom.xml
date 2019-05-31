@@ -42,7 +42,6 @@
                   </goals>
                   <configuration>
                      <createSourcesJar>${createSourcesJar}</createSourcesJar>
-
                      <artifactSet>
                         <excludes>
                            <exclude>org.infinispan:infinispan-cli</exclude>
@@ -65,6 +64,7 @@
                               <exclude>META-INF/LICENSE.txt</exclude>
                               <exclude>META-INF/NOTICE</exclude>
                               <exclude>META-INF/NOTICE.txt</exclude>
+                              <exclude>META-INF/licenses.xml</exclude>
                            </excludes>
                         </filter>
                      </filters>
@@ -78,6 +78,10 @@
                               <resource>blueprint.xml</resource>
                               <resource>features.xml</resource>
                            </resources>
+                        </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                           <resource>META-INF/licenses.xml</resource>
+                           <file>${project.build.outputDirectory}/META-INF/licenses.xml</file>
                         </transformer>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                      </transformers>
