@@ -22,7 +22,9 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
    public void testPutThrowsLocalException() throws Exception {
       tm(0).begin();
       try {
-         cache(0).computeIfAbsent("k", (k) -> new RuntimeException());
+         cache(0).computeIfAbsent("k", (k) -> {
+            throw new RuntimeException();
+         });
          assert false;
       } catch (RuntimeException e) {
          assert tx(0).getStatus() == Status.STATUS_MARKED_ROLLBACK;
