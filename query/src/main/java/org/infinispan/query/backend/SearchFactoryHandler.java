@@ -2,6 +2,9 @@ package org.infinispan.query.backend;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.transaction.Transaction;
@@ -29,16 +32,18 @@ final class SearchFactoryHandler {
    private final SearchIntegrator searchFactory;
    private final QueryKnownClasses queryKnownClasses;
    private final TransactionHelper transactionHelper;
+   private final Executor listenerExecutor;
    private final Object cacheListener = new CacheListener();
 
    private final ReentrantLock mutating = new ReentrantLock();
 
    SearchFactoryHandler(final SearchIntegrator searchFactory,
                         final QueryKnownClasses queryKnownClasses,
-                        final TransactionHelper transactionHelper) {
+                        final TransactionHelper transactionHelper, Executor executor) {
       this.searchFactory = searchFactory;
       this.queryKnownClasses = queryKnownClasses;
       this.transactionHelper = transactionHelper;
+      this.listenerExecutor = executor;
    }
 
    boolean updateKnownTypesIfNeeded(final Object value) {
@@ -67,7 +72,7 @@ final class SearchFactoryHandler {
       if (!reducedSet.isEmpty()) {
          if (queryKnownClasses.isAutodetectEnabled()) {
             Class<?>[] toAdd = reducedSet.toArray(new Class[reducedSet.size()]);
-            updateSearchFactory(toAdd);
+            updateSearchFactoryInCallingThread(toAdd);
             for (Class<?> c : toAdd) {
                queryKnownClasses.put(c, hasIndex(c));
             }
@@ -77,7 +82,11 @@ final class SearchFactoryHandler {
       }
    }
 
-   private void updateSearchFactory(final Class<?>... classes) {
+   private CompletionStage<Void> updateSearchFactory(final Class<?>... classes) {
+      return CompletableFuture.runAsync(() -> updateSearchFactoryInCallingThread(classes), listenerExecutor);
+   }
+
+   private void updateSearchFactoryInCallingThread(final Class<?>... classes) {
       mutating.lock();
       try {
          //Need to re-filter the new types while holding the lock
@@ -90,7 +99,6 @@ final class SearchFactoryHandler {
          if (reducedSet.isEmpty()) {
             return;
          }
-         // TODO: may want to make this run on a different thread to make non blocking when invoking addClasses?
          final Class<?>[] newtypes = reducedSet.toArray(new Class<?>[reducedSet.size()]);
 
          Transaction tx = transactionHelper.suspendTxIfExists();
@@ -120,11 +128,11 @@ final class SearchFactoryHandler {
       return searchFactory.getIndexBindings().get(c) != null;
    }
 
-   private void handleClusterRegistryRegistration(final Class<?> clazz) {
+   private CompletionStage<Void> handleClusterRegistryRegistration(final Class<?> clazz) {
       if (hasIndex(clazz)) {
-         return;
+         return null;
       }
-      updateSearchFactory(clazz);
+      return updateSearchFactory(clazz);
    }
 
    void enableClasses(Class[] classes) {
@@ -142,17 +150,19 @@ final class SearchFactoryHandler {
    final class CacheListener {
 
       @CacheEntryCreated
-      public void created(CacheEntryCreatedEvent<KeyValuePair<String, Class>, Boolean> e) {
+      public CompletionStage<Void> created(CacheEntryCreatedEvent<KeyValuePair<String, Class>, Boolean> e) {
          if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
-            handleClusterRegistryRegistration(e.getKey().getValue());
+            return handleClusterRegistryRegistration(e.getKey().getValue());
          }
+         return null;
       }
 
       @CacheEntryModified
-      public void modified(CacheEntryModifiedEvent<KeyValuePair<String, Class>, Boolean> e) {
+      public CompletionStage<Void> modified(CacheEntryModifiedEvent<KeyValuePair<String, Class>, Boolean> e) {
          if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
-            handleClusterRegistryRegistration(e.getKey().getValue());
+            return handleClusterRegistryRegistration(e.getKey().getValue());
          }
+         return null;
       }
    }
 }

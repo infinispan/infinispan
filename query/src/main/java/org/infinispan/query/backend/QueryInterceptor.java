@@ -128,7 +128,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       Set<Class<?>> indexedEntities = cacheConfiguration.indexing().indexedEntities();
       this.indexedEntities = indexedEntities.isEmpty() ? null : indexedEntities.toArray(new Class<?>[indexedEntities.size()]);
       queryKnownClasses = indexedEntities.isEmpty() ? new QueryKnownClasses(cache.getName(), cache.getCacheManager(), internalCacheRegistry) : new QueryKnownClasses(cache.getName(), indexedEntities);
-      searchFactoryHandler = new SearchFactoryHandler(searchFactory, queryKnownClasses, new TransactionHelper(cache.getTransactionManager()));
+      searchFactoryHandler = new SearchFactoryHandler(searchFactory, queryKnownClasses, new TransactionHelper(cache.getTransactionManager()), asyncExecutor);
       if (this.indexedEntities == null) {
          queryKnownClasses.start(searchFactoryHandler);
          Set<Class<?>> classes = queryKnownClasses.keys();

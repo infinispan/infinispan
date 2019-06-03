@@ -251,6 +251,10 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
          startCoordinating(missingCoordinatorSites, newMembers);
       }
 
+      // Don't use thread if no sites to notify
+      if (siteCollector.isEmpty()) {
+         return null;
+      }
       if (stateTransferManager.isStateTransferInProgress()) {
          return CompletableFuture.runAsync(() -> {
             //cancel all the x-site state transfer until the local site is rebalanced
