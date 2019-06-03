@@ -15,10 +15,10 @@ public interface XSiteAsyncAckListener {
     * If an exception is received (could be a network exception or an exception from the remote site), the {@code
     * throwable} is set to a non {@code null} value.
     *
-    * @param sendTimestamp The timestamp when the request was sent to the remote site (nanoseconds).
-    * @param siteName      The remote site name.
-    * @param throwable     The exception received (including timeouts and site unreachable) or {@code null}.
+    * @param sendTimestampNanos The timestamp when the request was sent to the remote site (nanoseconds).
+    * @param siteName           The remote site name.
+    * @param throwable          The exception received (including timeouts and site unreachable) or {@code null}.
     */
-   void onAckReceived(long sendTimestamp, String siteName, Throwable throwable);
+   void onAckReceived(long sendTimestampNanos, String siteName, Throwable throwable);
 
 }

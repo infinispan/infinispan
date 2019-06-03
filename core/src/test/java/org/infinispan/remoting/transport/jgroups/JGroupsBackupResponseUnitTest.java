@@ -220,8 +220,8 @@ public class JGroupsBackupResponseUnitTest extends AbstractInfinispanTest {
       private final BlockingDeque<ListenerData> queue = new LinkedBlockingDeque<>();
 
       @Override
-      public void onAckReceived(long sendTimestamp, String siteName, Throwable throwable) {
-         queue.add(new ListenerData(sendTimestamp, siteName, throwable));
+      public void onAckReceived(long sendTimestampNanos, String siteName, Throwable throwable) {
+         queue.add(new ListenerData(sendTimestampNanos, siteName, throwable));
       }
 
       @Override
