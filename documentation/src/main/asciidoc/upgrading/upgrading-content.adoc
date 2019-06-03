@@ -63,6 +63,11 @@ Listeners in the past that were sync, always ran in the thread that caused the e
 be non-blocking in that it will still fire in the original thread, under the assumption that it will return immediately.
 Please read the Listener Javadoc for information and examples on this.
 
+=== Distributed Streams operations no longer support null values
+Distributed Streams has parts rewritten to utilize non blocking reactive streams based operations. As such null values
+are not supported as values from operations as per the reactive streams spec. Please utilize other means to denote
+a null value.
+
 == Upgrading from 9.3 to 9.4
 
 === Client/Server changes

@@ -3,6 +3,7 @@ package org.infinispan.reactive;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -54,6 +55,19 @@ public class RxJavaInterop {
    }
 
    /**
+    * Transforms a {@link Stream} to a {@link Flowable}. Note that the resulting Flowable can only be subscribed to
+    * once as a Stream only allows a single terminal operation performed upon it. When the Flowable is completed,
+    * either exceptionally or normally, the Stream is also closed
+    * @param stream the stream to transform to a Flowable
+    * @param <E> inner type
+    * @return Flowable that can only be subscribed to once
+    */
+   public static <E> Flowable<E> fromStream(Stream<E> stream) {
+      return Flowable.fromIterable(stream::iterator)
+            .doOnTerminate(stream::close);
+   }
+
+   /**
     * Provides a {@link Function} that can be used to convert from an instance of {@link java.util.Map.Entry} to
     * the key of the entry. This is useful for the instance passed to a method like {@link Flowable#map(Function)}.
     * @param <K> key type
@@ -82,7 +96,9 @@ public class RxJavaInterop {
          if (t != null) {
             asyncProcessor.onError(t);
          } else {
-            asyncProcessor.onNext(value);
+            if (value != null) {
+               asyncProcessor.onNext(value);
+            }
             asyncProcessor.onComplete();
          }
       });

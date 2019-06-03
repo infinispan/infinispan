@@ -5,6 +5,8 @@ import java.util.stream.Stream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs boxed operation on a {@link IntStream}
  */
@@ -19,5 +21,10 @@ public class BoxedIntOperation implements IntermediateOperation<Integer, IntStre
    @Override
    public Stream<Integer> perform(IntStream stream) {
       return stream.boxed();
+   }
+
+   @Override
+   public Flowable<Integer> mapFlowable(Flowable<Integer> input) {
+      return input;
    }
 }

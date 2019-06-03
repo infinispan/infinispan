@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
 import org.reactivestreams.Publisher;
 
 /**
@@ -17,13 +18,13 @@ import org.reactivestreams.Publisher;
  */
 public interface ClusterPublisherManager<K, V> {
    /**
-    * Same as {@link #entryReduction(boolean, IntSet, Set, Set, boolean, DeliveryGuarantee, Function, Function)}
+    * Same as {@link #entryReduction(boolean, IntSet, Set, InvocationContext, boolean, DeliveryGuarantee, Function, Function)}
     * except that the source publisher provided to the <b>transformer</b> is made up of keys only.
     * @param <R> return value type
     * @return CompletionStage that contains the resulting value when complete
     */
    <R> CompletionStage<R> keyReduction(boolean parallelPublisher, IntSet segments,
-         Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         Set<K> keysToInclude, InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 
@@ -37,7 +38,7 @@ public interface ClusterPublisherManager<K, V> {
     * @param parallelPublisher Whether on each node the publisher should be parallelized remotely and locally
     * @param segments determines what entries should be evaluated by only using ones that map to the given segments
     * @param keysToInclude set of keys that should only be used. If null all entries for the given segments will be evaluated
-    * @param keysToExclude set of keys that should not be used. May be null, in which case all provided entries will be evaluated
+    * @param invocationContext context of the invoking operation
     * @param includeLoader whether to include entries from the underlying cache loader if any
     * @param deliveryGuarantee delivery guarantee for given entries
     * @param transformer reduces the given publisher of data eventually into a single value. Must not be null.
@@ -45,7 +46,7 @@ public interface ClusterPublisherManager<K, V> {
     * @return CompletionStage that contains the resulting value when complete
     */
    <R> CompletionStage<R> entryReduction(boolean parallelPublisher, IntSet segments,
-         Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         Set<K> keysToInclude, InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 }

@@ -5,6 +5,8 @@ import java.util.stream.IntStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs peek operation on a {@link IntStream}
  */
@@ -22,5 +24,10 @@ public class PeekIntOperation implements IntermediateOperation<Integer, IntStrea
 
    public IntConsumer getConsumer() {
       return consumer;
+   }
+
+   @Override
+   public Flowable<Integer> mapFlowable(Flowable<Integer> input) {
+      return input.doOnNext(consumer::accept);
    }
 }

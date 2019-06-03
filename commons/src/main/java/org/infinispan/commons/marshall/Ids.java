@@ -208,6 +208,8 @@ public interface Ids {
 
    int MARSHALLED_VALUE = 142;
 
+   int CACHE_STREAM_INTERMEDIATE_REDUCER = 143;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

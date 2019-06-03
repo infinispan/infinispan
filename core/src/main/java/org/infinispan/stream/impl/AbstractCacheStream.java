@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.PrimitiveIterator;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +43,8 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.stream.StreamMarshalling;
@@ -51,6 +54,7 @@ import org.infinispan.stream.impl.termop.SegmentRetryingOperation;
 import org.infinispan.stream.impl.termop.SingleRunOperation;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.jboss.marshalling.util.IdentityIntMap;
@@ -71,6 +75,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
    protected final DistributionManager dm;
    protected final Supplier<CacheStream<Original>> supplier;
    protected final ClusterStreamManager csm;
+   protected final ClusterPublisherManager cpm;
    protected final Executor executor;
    protected final ComponentRegistry registry;
    protected final PartitionHandlingManager partition;
@@ -114,6 +119,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       this.partition = registry.getComponent(PartitionHandlingManager.class);
       this.keyPartitioner = registry.getComponent(KeyPartitioner.class);
       this.stateTransferLock = registry.getComponent(StateTransferLock.class);
+      this.cpm = registry.getComponent(ClusterPublisherManager.class);
       intermediateOperations = new ArrayDeque<>();
    }
 
@@ -130,6 +136,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       this.partition = other.partition;
       this.keyPartitioner = other.keyPartitioner;
       this.stateTransferLock = other.stateTransferLock;
+      this.cpm = other.cpm;
 
       this.closeRunnable = other.closeRunnable;
 
@@ -260,6 +267,27 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       } finally {
          csm.forgetOperation(id);
       }
+   }
+
+   <R> R performPublisherOperation(Function<? super Publisher<T>, ? extends CompletionStage<R>> transformer,
+         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+      Function usedTransformer;
+      if (intermediateOperations.isEmpty()) {
+         usedTransformer = transformer;
+      } else {
+         usedTransformer = new CacheStreamIntermediateReducer(intermediateOperations, transformer);
+      }
+
+      DeliveryGuarantee guarantee = rehashAware ? DeliveryGuarantee.EXACTLY_ONCE : DeliveryGuarantee.AT_MOST_ONCE;
+      CompletionStage<R> stage;
+      if (toKeyFunction == null) {
+         stage = cpm.keyReduction(parallel, segmentsToFilter, keysToFilter, csm.getContext(), includeLoader, guarantee,
+               usedTransformer, finalizer);
+      } else {
+         stage = cpm.entryReduction(parallel, segmentsToFilter, keysToFilter, csm.getContext(), includeLoader, guarantee,
+               usedTransformer, finalizer);
+      }
+      return CompletionStages.join(stage);
    }
 
    <R> R performOperationRehashAware(Function<? super S2, ? extends R> function, boolean retryOnRehash,
@@ -701,6 +729,12 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
          // We assume the resulting stream contains objects (this is because we also box all primitives). If this
          // changes we need to change this code to handle primitives as well (most likely add MAP_DOUBLE etc.)
          return (OutputStream) ((Stream) stream).map(r -> new KeyValuePair<>(key.get(), r));
+      }
+
+      @Override
+      public Flowable<OutputType> mapFlowable(Flowable<Object> input) {
+         // This is not used except for iteration - which is not yet supported with distributed publisher
+         throw new UnsupportedOperationException("Not implemented");
       }
    }
 

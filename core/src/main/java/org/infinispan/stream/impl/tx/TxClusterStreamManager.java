@@ -11,7 +11,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
+import org.infinispan.commons.util.AbstractDelegatingMap;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
@@ -19,7 +21,6 @@ import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
 import org.infinispan.stream.impl.TerminalOperation;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
-import org.infinispan.commons.util.AbstractDelegatingMap;
 
 /**
  * This is a delegating cluster stream manager that sends all calls to the underlying cluster stream manager.  However
@@ -106,7 +107,7 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
          Supplier<Map.Entry<Address, IntSet>> segments, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
          boolean includeLoader, boolean entryStream, Iterable<IntermediateOperation> intermediateOperations) {
 
-      if (ctx.lookedUpEntriesCount() != 0) {
+      if (ctx.lookedUpEntriesCount() == 0) {
          return manager.remoteIterationPublisher(parallelStream, segments, keysToInclude, keysToExclude, includeLoader,
                entryStream, intermediateOperations);
       } else {
@@ -186,5 +187,10 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
       public boolean isEmpty() {
          return ctxMap.isEmpty() && super.isEmpty();
       }
+   }
+
+   @Override
+   public InvocationContext getContext() {
+      return ctx;
    }
 }

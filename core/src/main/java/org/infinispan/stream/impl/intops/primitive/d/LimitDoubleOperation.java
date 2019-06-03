@@ -4,6 +4,8 @@ import java.util.stream.DoubleStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs limit operation on a {@link DoubleStream}
  */
@@ -24,5 +26,10 @@ public class LimitDoubleOperation implements IntermediateOperation<Double, Doubl
 
    public long getLimit() {
       return limit;
+   }
+
+   @Override
+   public Flowable<Double> mapFlowable(Flowable<Double> input) {
+      return input.limit(limit);
    }
 }

@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
@@ -218,4 +219,6 @@ public interface ClusterStreamManager<Original, K> {
          subscribe(s, completedSegments -> { }, lostSegments -> { });
       }
    }
+
+   InvocationContext getContext();
 }

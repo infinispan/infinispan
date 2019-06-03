@@ -9,10 +9,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 
@@ -24,6 +26,7 @@ public class PublisherRequestCommand<K> extends BaseRpcCommand implements Topolo
    public static final byte COMMAND_ID = 31;
 
    private LocalPublisherManager lpm;
+   private ComponentRegistry componentRegistry;
 
    private boolean parallelStream;
    private DeliveryGuarantee deliveryGuarantee;
@@ -68,12 +71,19 @@ public class PublisherRequestCommand<K> extends BaseRpcCommand implements Topolo
       this.finalizer = finalizer;
    }
 
-   public void inject(LocalPublisherManager lpm) {
+   public void inject(LocalPublisherManager lpm, ComponentRegistry componentRegistry) {
       this.lpm = lpm;
+      this.componentRegistry = componentRegistry;
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
+      if (transformer instanceof InjectableComponent) {
+         ((InjectableComponent) transformer).inject(componentRegistry);
+      }
+      if (finalizer instanceof InjectableComponent) {
+         ((InjectableComponent) finalizer).inject(componentRegistry);
+      }
       if (entryStream) {
          return (CompletableFuture<Object>) lpm.entryReduction(parallelStream, segments, keys, excludedKeys,
                includeLoader, deliveryGuarantee, transformer, finalizer);
@@ -98,7 +108,13 @@ public class PublisherRequestCommand<K> extends BaseRpcCommand implements Topolo
       MarshallUtil.marshallCollection(excludedKeys, output);
       output.writeBoolean(includeLoader);
       output.writeBoolean(entryStream);
-      output.writeObject(transformer);
+      if (transformer == finalizer) {
+         output.writeBoolean(true);
+      } else {
+         output.writeBoolean(false);
+         output.writeObject(transformer);
+      }
+
       output.writeObject(finalizer);
    }
 
@@ -112,8 +128,14 @@ public class PublisherRequestCommand<K> extends BaseRpcCommand implements Topolo
       excludedKeys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       includeLoader = input.readBoolean();
       entryStream = input.readBoolean();
-      transformer = (Function) input.readObject();
-      finalizer = (Function) input.readObject();
+      boolean same = input.readBoolean();
+      if (same) {
+         transformer = (Function) input.readObject();
+         finalizer = transformer;
+      } else {
+         transformer = (Function) input.readObject();
+         finalizer = (Function) input.readObject();
+      }
    }
 
    @Override

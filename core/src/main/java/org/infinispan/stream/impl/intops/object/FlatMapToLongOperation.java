@@ -4,7 +4,10 @@ import java.util.function.Function;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
+
+import io.reactivex.Flowable;
 
 /**
  * Performs flat map to long operation on a regular {@link Stream}
@@ -29,5 +32,10 @@ public class FlatMapToLongOperation<I> implements FlatMappingOperation<I, Stream
    @Override
    public Stream<LongStream> map(Stream<I> iStream) {
       return iStream.map(function);
+   }
+
+   @Override
+   public Flowable<Long> mapFlowable(Flowable<I> input) {
+      return input.flatMap(o -> RxJavaInterop.fromStream(function.apply(o).boxed()));
    }
 }

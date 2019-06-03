@@ -4,6 +4,8 @@ import java.util.stream.LongStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs sorted operation on a {@link LongStream}
  */
@@ -18,5 +20,10 @@ public class SortedLongOperation implements IntermediateOperation<Long, LongStre
    @Override
    public LongStream perform(LongStream stream) {
       return stream.sorted();
+   }
+
+   @Override
+   public Flowable<Long> mapFlowable(Flowable<Long> input) {
+      return input.sorted();
    }
 }

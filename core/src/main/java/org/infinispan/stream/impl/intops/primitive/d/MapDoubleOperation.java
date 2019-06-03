@@ -5,6 +5,8 @@ import java.util.stream.DoubleStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs map operation on a {@link DoubleStream}
  */
@@ -22,5 +24,10 @@ public class MapDoubleOperation implements IntermediateOperation<Double, DoubleS
 
    public DoubleUnaryOperator getOperator() {
       return operator;
+   }
+
+   @Override
+   public Flowable<Double> mapFlowable(Flowable<Double> input) {
+      return input.map(operator::applyAsDouble);
    }
 }

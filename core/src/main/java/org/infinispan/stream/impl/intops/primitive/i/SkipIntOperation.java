@@ -4,6 +4,8 @@ import java.util.stream.IntStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs skip operation on a {@link IntStream}
  */
@@ -17,5 +19,10 @@ public class SkipIntOperation implements IntermediateOperation<Integer, IntStrea
    @Override
    public IntStream perform(IntStream stream) {
       return stream.skip(n);
+   }
+
+   @Override
+   public Flowable<Integer> mapFlowable(Flowable<Integer> input) {
+      return input.skip(n);
    }
 }

@@ -4,7 +4,9 @@ import java.util.stream.DoubleStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
- /**
+import io.reactivex.Flowable;
+
+/**
  * Performs distinct operation on a {@link DoubleStream}
  */
 public class DistinctDoubleOperation implements IntermediateOperation<Double, DoubleStream, Double, DoubleStream> {
@@ -18,5 +20,10 @@ public class DistinctDoubleOperation implements IntermediateOperation<Double, Do
    @Override
    public DoubleStream perform(DoubleStream stream) {
       return stream.distinct();
+   }
+
+   @Override
+   public Flowable<Double> mapFlowable(Flowable<Double> input) {
+      return input.distinct();
    }
 }

@@ -70,9 +70,11 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       // in some fashion
       shouldStopSegments = configuration.clustering().cacheMode().isDistributed();
 
-      notExpiredPredicate = ice ->
-            // TODO: should we optimize wallClockTime per entry invocation?
-            !ice.canExpire() || !ice.isExpired(timeService.wallClockTime());
+      notExpiredPredicate = ice -> {
+         // TODO: should we optimize wallClockTime per entry invocation?
+         long currentTime = timeService.wallClockTime();
+         return !ice.canExpire() || !(ice.isExpired(currentTime) && expirationManager.entryExpiredInMemoryFromIteration(ice, currentTime).join() == Boolean.TRUE);
+      };
    }
 
    // Priority has to be higher than the clear priority - which is currently 999

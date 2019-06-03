@@ -104,6 +104,7 @@ import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.AbstractCacheStream;
+import org.infinispan.stream.impl.CacheStreamIntermediateReducer;
 import org.infinispan.stream.impl.EndIterator;
 import org.infinispan.stream.impl.IteratorResponses;
 import org.infinispan.stream.impl.intops.IntermediateOperationExternalizer;
@@ -263,6 +264,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new AdminFlagExternalizer(), exts);
       addInternalExternalizer(new SegmentPublisherResult.Externalizer(), exts);
       addInternalExternalizer(new PublisherReducers.PublisherReducersExternalizer(), exts);
+      addInternalExternalizer(new CacheStreamIntermediateReducer.ReducerExternalizer(), exts);
 
       return exts;
    }
