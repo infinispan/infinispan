@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.LongConsumer;
 
@@ -378,7 +379,7 @@ public class BackupSenderImpl implements BackupSender {
       return eventLogManager.getEventLogger().context(cacheName).scope(rpcManager.getAddress());
    }
 
-   private void notifyAsyncAckReceived(long sendTime, String siteName, Throwable throwable) {
+   private void notifyAsyncAckReceived(long sendTimeNanos, String siteName, Throwable throwable) {
       log.debugf("Async ack received from %s. Throwable=%s", siteName, throwable);
       OfflineStatus status = offlineStatus.get(siteName);
       if (status == null) {
@@ -395,7 +396,7 @@ public class BackupSenderImpl implements BackupSender {
       }
 
       if (isCommunicationError(throwable)) {
-         status.updateOnCommunicationFailure(sendTime);
+         status.updateOnCommunicationFailure(TimeUnit.NANOSECONDS.toMillis(sendTimeNanos));
       }
    }
 

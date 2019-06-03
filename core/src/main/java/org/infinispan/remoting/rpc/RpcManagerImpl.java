@@ -430,8 +430,8 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       syncXSiteReplicationTime.record(durationMillis);
    }
 
-   private void registerAsyncXSiteReplicationTime(long sendTime, String siteNameIgnored, Throwable throwable) {
-      long durationMillis = timeService.timeDuration(sendTime, TimeUnit.MILLISECONDS);
+   private void registerAsyncXSiteReplicationTime(long sendTimeNanos, String siteNameIgnored, Throwable throwable) {
+      long durationMillis = timeService.timeDuration(sendTimeNanos, TimeUnit.MILLISECONDS);
       asyncXSiteReplicationTime.record(durationMillis);
    }
 
