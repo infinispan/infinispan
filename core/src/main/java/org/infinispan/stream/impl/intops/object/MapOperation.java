@@ -7,6 +7,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.impl.intops.MappingOperation;
 import org.infinispan.util.function.SerializableFunction;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs map to operation on a regular {@link Stream}
  * @param <I> the type of the input stream
@@ -35,5 +37,10 @@ public class MapOperation<I, O> implements MappingOperation<I, Stream<I>, O, Str
 
    public Function<? super I, ? extends O> getFunction() {
       return function;
+   }
+
+   @Override
+   public Flowable<O> mapFlowable(Flowable<I> input) {
+      return input.map(function::apply);
    }
 }

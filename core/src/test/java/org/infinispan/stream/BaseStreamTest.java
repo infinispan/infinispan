@@ -2190,6 +2190,18 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
                   Integer.valueOf(e2.substring(0, 1)))).get());
    }
 
+   // Tests to make sure when max returns an empty result that it works
+   public void testObjMaxEmpty() {
+      Cache<Integer, String> cache = getCache(0);
+      assertEquals(0, cache.size());
+      CacheCollection<String> keySet = cache.values();
+
+      assertFalse(
+            createStream(keySet).max((e1, e2) -> Integer.compare(
+                  Integer.valueOf(e1.substring(0, 1)),
+                  Integer.valueOf(e2.substring(0, 1)))).isPresent());
+   }
+
    public void testObjValuesIterator() {
       Cache<Integer, String> cache = getCache(0);
       int range = 10;

@@ -5,6 +5,8 @@ import java.util.stream.LongStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs map operation on a {@link LongStream}
  */
@@ -22,5 +24,10 @@ public class MapLongOperation implements IntermediateOperation<Long, LongStream,
 
    public LongUnaryOperator getOperator() {
       return operator;
+   }
+
+   @Override
+   public Flowable<Long> mapFlowable(Flowable<Long> input) {
+      return input.map(operator::applyAsLong);
    }
 }

@@ -1,23 +1,18 @@
 package org.infinispan.stream.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -48,8 +43,6 @@ import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
@@ -63,6 +56,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.object.DistinctOperation;
@@ -268,27 +262,21 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
    @Override
    public R reduce(R identity, BinaryOperator<R> accumulator) {
-      return performOperation(TerminalFunctions.reduceFunction(identity, accumulator), true, accumulator, null);
+      return performPublisherOperation(PublisherReducers.reduce(identity, accumulator),
+            PublisherReducers.reduce(accumulator));
    }
 
    @Override
    public Optional<R> reduce(BinaryOperator<R> accumulator) {
-      R value = performOperation(TerminalFunctions.reduceFunction(accumulator), true,
-              (e1, e2) -> {
-                 if (e1 != null) {
-                    if (e2 != null) {
-                       return accumulator.apply(e1, e2);
-                    }
-                    return e1;
-                 }
-                 return e2;
-              }, null);
+      Function<Publisher<R>, CompletionStage<R>> function = PublisherReducers.reduce(accumulator);
+      R value = performPublisherOperation(function, function);
       return Optional.ofNullable(value);
    }
 
    @Override
    public <U> U reduce(U identity, BiFunction<U, ? super R, U> accumulator, BinaryOperator<U> combiner) {
-      return performOperation(TerminalFunctions.reduceFunction(identity, accumulator, combiner), true, combiner, null);
+      return performPublisherOperation(PublisherReducers.reduce(identity, accumulator),
+            PublisherReducers.reduce(combiner));
    }
 
    /**
@@ -305,126 +293,49 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
     */
    @Override
    public <R1> R1 collect(Supplier<R1> supplier, BiConsumer<R1, ? super R> accumulator, BiConsumer<R1, R1> combiner) {
-      return performOperation(TerminalFunctions.collectFunction(supplier, accumulator, combiner), true,
-              (e1, e2) -> {
-                 combiner.accept(e1, e2);
-                 return e1;
-              }, null);
-   }
-
-   @SerializeWith(value = IdentifyFinishCollector.IdentityFinishCollectorExternalizer.class)
-   private static final class IdentifyFinishCollector<T, A> implements Collector<T, A, A> {
-      private final Collector<T, A, ?> realCollector;
-
-      IdentifyFinishCollector(Collector<T, A, ?> realCollector) {
-         this.realCollector = realCollector;
-      }
-
-      @Override
-      public Supplier<A> supplier() {
-         return realCollector.supplier();
-      }
-
-      @Override
-      public BiConsumer<A, T> accumulator() {
-         return realCollector.accumulator();
-      }
-
-      @Override
-      public BinaryOperator<A> combiner() {
-         return realCollector.combiner();
-      }
-
-      @Override
-      public Function<A, A> finisher() {
-         return null;
-      }
-
-      @Override
-      public Set<Characteristics> characteristics() {
-         Set<Characteristics> characteristics = realCollector.characteristics();
-         if (characteristics.size() == 0) {
-            return EnumSet.of(Characteristics.IDENTITY_FINISH);
-         } else {
-            Set<Characteristics> tweaked = EnumSet.copyOf(characteristics);
-            tweaked.add(Characteristics.IDENTITY_FINISH);
-            return tweaked;
-         }
-      }
-
-      public static final class IdentityFinishCollectorExternalizer implements Externalizer<IdentifyFinishCollector> {
-         @Override
-         public void writeObject(ObjectOutput output, IdentifyFinishCollector object) throws IOException {
-            output.writeObject(object.realCollector);
-         }
-
-         @Override
-         public IdentifyFinishCollector readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return new IdentifyFinishCollector((Collector) input.readObject());
-         }
-      }
+      return performPublisherOperation(PublisherReducers.collect(supplier, accumulator),
+            PublisherReducers.accumulate(combiner));
    }
 
    @Override
    public <R1, A> R1 collect(Collector<? super R, A, R1> collector) {
-      // If it is not an identify finish we have to prevent the remote finisher, and apply locally only after
-      // everything is combined.
+      A intermediateResult = performPublisherOperation(PublisherReducers.collectorReducer(collector),
+            PublisherReducers.collectorFinalizer(collector));
+      // Identify finish means we can just ignore the finisher method
       if (collector.characteristics().contains(Collector.Characteristics.IDENTITY_FINISH)) {
-         return performOperation(TerminalFunctions.collectorFunction(collector), true,
-                 (BinaryOperator<R1>) collector.combiner(), null);
+         return (R1) intermediateResult;
       } else {
-         // Need to wrap collector to force identity finish
-         A intermediateResult = performOperation(TerminalFunctions.collectorFunction(
-                 new IdentifyFinishCollector<>(collector)), true, collector.combiner(), null);
          return collector.finisher().apply(intermediateResult);
       }
    }
 
    @Override
    public Optional<R> min(Comparator<? super R> comparator) {
-      R value = performOperation(TerminalFunctions.minFunction(comparator), false,
-              (e1, e2) -> {
-                 if (e1 != null) {
-                    if (e2 != null) {
-                       return comparator.compare(e1, e2) > 0 ? e2 : e1;
-                    } else {
-                       return e1;
-                    }
-                 }
-                 return e2;
-              }, null);
+      Function<Publisher<R>, CompletionStage<R>> function = PublisherReducers.min(comparator);
+      R value = performPublisherOperation(function, function);
       return Optional.ofNullable(value);
    }
 
    @Override
    public Optional<R> max(Comparator<? super R> comparator) {
-      R value = performOperation(TerminalFunctions.maxFunction(comparator), false,
-              (e1, e2) -> {
-                 if (e1 != null) {
-                    if (e2 != null) {
-                       return comparator.compare(e1, e2) > 0 ? e1 : e2;
-                    } else {
-                       return e1;
-                    }
-                 }
-                 return e2;
-              }, null);
+      Function<Publisher<R>, CompletionStage<R>> function = PublisherReducers.max(comparator);
+      R value = performPublisherOperation(function, function);
       return Optional.ofNullable(value);
    }
 
    @Override
    public boolean anyMatch(Predicate<? super R> predicate) {
-      return performOperation(TerminalFunctions.anyMatchFunction(predicate), false, Boolean::logicalOr, b -> b);
+      return performPublisherOperation(PublisherReducers.anyMatch(predicate), PublisherReducers.or());
    }
 
    @Override
    public boolean allMatch(Predicate<? super R> predicate) {
-      return performOperation(TerminalFunctions.allMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
+      return performPublisherOperation(PublisherReducers.allMatch(predicate), PublisherReducers.and());
    }
 
    @Override
    public boolean noneMatch(Predicate<? super R> predicate) {
-      return performOperation(TerminalFunctions.noneMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
+      return performPublisherOperation(PublisherReducers.noneMatch(predicate), PublisherReducers.and());
    }
 
    @Override
@@ -435,14 +346,14 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
    @Override
    public Optional<R> findAny() {
-      R value = performOperation(TerminalFunctions.findAnyFunction(), false, (r1, r2) -> r1 == null ? r2 : r1,
-              Objects::nonNull);
+      Function<Publisher<R>, CompletionStage<R>> function = PublisherReducers.findFirst();
+      R value = performPublisherOperation(function, function);
       return Optional.ofNullable(value);
    }
 
    @Override
    public long count() {
-      return performOperation(TerminalFunctions.countFunction(), true, (l1, l2) -> l1 + l2, null);
+      return performPublisherOperation(PublisherReducers.count(), PublisherReducers.add());
    }
 
 
@@ -775,23 +686,17 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
    @Override
    public Object[] toArray() {
-      return performOperation(TerminalFunctions.toArrayFunction(), false,
-              (v1, v2) -> {
-                 Object[] array = Arrays.copyOf(v1, v1.length + v2.length);
-                 System.arraycopy(v2, 0, array, v1.length, v2.length);
-                 return array;
-              }, null);
+      return performPublisherOperation(PublisherReducers.toArrayReducer(), PublisherReducers.toArrayFinalizer());
    }
 
    @Override
    public <A> A[] toArray(IntFunction<A[]> generator) {
-      return performOperation(TerminalFunctions.toArrayFunction(generator), false,
-              (v1, v2) -> {
-                 A[] array = generator.apply(v1.length + v2.length);
-                 System.arraycopy(v1, 0, array, 0, v1.length);
-                 System.arraycopy(v2, 0, array, v1.length, v2.length);
-                 return array;
-              }, null);
+      // The types are really Function<Publisher<R>, CompletionStage<A[]>> but to help users call toArrayReducer with
+      // proper compile type checks it forces a type restriction that the generated array must be a super class
+      // of the stream type. Unfortunately Stream API does not have that restriction and thus only throws
+      // a RuntimeException instead.
+      Function function = PublisherReducers.toArrayReducer(generator);
+      return (A[]) performPublisherOperation(function, PublisherReducers.toArrayFinalizer(generator));
    }
 
    // These are the custom added methods for cache streams

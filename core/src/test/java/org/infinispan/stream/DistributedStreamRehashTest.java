@@ -1,8 +1,6 @@
 package org.infinispan.stream;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
@@ -13,26 +11,21 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.stream.impl.LocalStreamManager;
-import org.infinispan.stream.impl.TerminalOperation;
-import org.infinispan.stream.impl.termop.SegmentRetryingOperation;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.mockito.AdditionalAnswers;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
+import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
 
 /**
@@ -76,39 +69,19 @@ public class DistributedStreamRehashTest extends MultipleCacheManagersTest {
       LocalStreamManager<Map.Entry<MagicKey, Object>, MagicKey> spiedManager = spy(localStreamManager);
 
       CheckPoint checkPoint = new CheckPoint();
-      // Let the supplier supply the stream, but don't let it process it yet
+      // Always let it process the publisher
       checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
+      // Block on the publisher
+      InternalDataContainer internalDataContainer = TestingUtil.extractComponent(nodeToBlockBeforeProcessing, InternalDataContainer.class);
+      InternalDataContainer spy = spy(internalDataContainer);
 
       doAnswer(invocation -> {
-         Object[] arguments = invocation.getArguments();
-         int offset = 8;
-         TerminalOperation<Map.Entry<MagicKey, Object>, MagicKey> terminalOperation = (TerminalOperation) arguments[offset];
+         Publisher result = (Publisher) invocation.callRealMethod();
+         return Mocks.blockingPublisher(result, checkPoint);
+         // Cache2 owns segment 1 primary and 2 as backup
+      }).when(spy).publisher(eq(1));
 
-         Answer opAnswer = AdditionalAnswers.delegatesTo(terminalOperation);
-
-         TerminalOperation<Map.Entry<MagicKey, Object>, MagicKey> mockOperation = Mockito.mock(TerminalOperation.class, opAnswer);
-
-         // Make sure to provide a supplier that we can control the blocking
-         doAnswer(opInvocation -> {
-            Answer supplierAnswer = AdditionalAnswers.delegatesTo(opInvocation.getArgument(0));
-
-            Supplier<Stream<Map.Entry<MagicKey, Object>>> mockSupplier = Mockito.mock(Supplier.class, supplierAnswer);
-
-            Answer blockingAnswer = Mocks.blockingAnswer(supplierAnswer, checkPoint);
-            doAnswer(blockingAnswer).when(mockSupplier).get();
-
-            return opInvocation.getMethod().invoke(terminalOperation, mockSupplier);
-         }).when(mockOperation).setSupplier(any());
-
-         // Replace the argument so they get our spy who will block
-         arguments[offset] = mockOperation;
-
-
-         return Mocks.invokeAndReturnMock(invocation, localStreamManager);
-      }).when(spiedManager).streamOperationRehashAware(any(), any(), anyBoolean(), any(), any(), any(), anyBoolean(),
-            anyBoolean(), isA(SegmentRetryingOperation.class));
-
-      TestingUtil.replaceComponent(nodeToBlockBeforeProcessing, LocalStreamManager.class, spiedManager, true);
+      TestingUtil.replaceComponent(nodeToBlockBeforeProcessing, InternalDataContainer.class, spy, true);
 
       Future<List<Map.Entry<MagicKey, Object>>> future = fork(() ->
             originator.entrySet().stream().collect(() -> Collectors.toList()));

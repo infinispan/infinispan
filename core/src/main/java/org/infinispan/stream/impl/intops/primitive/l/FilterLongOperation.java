@@ -5,6 +5,8 @@ import java.util.stream.LongStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs filter operation on a {@link LongStream}
  */
@@ -22,5 +24,10 @@ public class FilterLongOperation<S> implements IntermediateOperation<Long, LongS
 
    public LongPredicate getPredicate() {
       return predicate;
+   }
+
+   @Override
+   public Flowable<Long> mapFlowable(Flowable<Long> input) {
+      return input.filter(predicate::test);
    }
 }

@@ -153,7 +153,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    private static Function<Object, PublisherResult<Object>> ignoreSegmentsFunction  = value ->
          new SegmentPublisherResult<>(IntSets.immutableEmptySet(), value);
 
-   private static <R> Function<R, PublisherResult<R>> ignoreSegmentsFunction() {
+   static <R> Function<R, PublisherResult<R>> ignoreSegmentsFunction() {
       return (Function) ignoreSegmentsFunction;
    }
 
@@ -356,6 +356,9 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          CompletableFuture<R> future = stage.toCompletableFuture();
          if (future.isDone()) {
             R value = future.join();
+            if (value == null) {
+               return Flowable.empty();
+            }
             return Flowable.just(value);
          }
          return RxJavaInterop.<R>completionStageToPublisher().apply(stage);

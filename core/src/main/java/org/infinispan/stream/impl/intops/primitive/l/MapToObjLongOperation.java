@@ -6,6 +6,8 @@ import java.util.stream.Stream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs map to object operation on a {@link LongStream}
  */
@@ -23,5 +25,10 @@ public class MapToObjLongOperation<R> implements IntermediateOperation<Long, Lon
 
    public LongFunction<? extends R> getFunction() {
       return function;
+   }
+
+   @Override
+   public Flowable<R> mapFlowable(Flowable<Long> input) {
+      return input.map(function::apply);
    }
 }

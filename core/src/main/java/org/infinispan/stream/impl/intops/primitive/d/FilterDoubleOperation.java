@@ -5,6 +5,8 @@ import java.util.stream.DoubleStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs filter operation on a {@link DoubleStream}
  */
@@ -22,5 +24,10 @@ public class FilterDoubleOperation implements IntermediateOperation<Double, Doub
 
    public DoublePredicate getPredicate() {
       return predicate;
+   }
+
+   @Override
+   public Flowable<Double> mapFlowable(Flowable<Double> input) {
+      return input.filter(predicate::test);
    }
 }

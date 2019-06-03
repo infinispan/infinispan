@@ -537,7 +537,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case PublisherRequestCommand.COMMAND_ID:
             PublisherRequestCommand publisherRequestCommand = (PublisherRequestCommand) c;
-            publisherRequestCommand.inject(localPublisherManager.running());
+            publisherRequestCommand.inject(localPublisherManager.running(), componentRegistry);
             break;
 
          // === Functional commands ====

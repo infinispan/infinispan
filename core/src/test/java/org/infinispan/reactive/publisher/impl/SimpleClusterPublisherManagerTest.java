@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -14,11 +15,17 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.NullCacheEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
+import org.mockito.Mockito;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -67,10 +74,10 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       CompletionStage<Long> stageCount;
       if (isEntry) {
          stageCount = cpm.entryReduction(parallel, null, null, null, false, deliveryGuarantee,
-               PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+               PublisherReducers.count(), PublisherReducers.add());
       } else {
          stageCount = cpm.keyReduction(parallel, null, null, null, false, deliveryGuarantee,
-               PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+               PublisherReducers.count(), PublisherReducers.add());
       }
 
       Long actualCount = stageCount.toCompletableFuture().join();
@@ -92,14 +99,14 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       CompletionStage<Long> stageCount;
       if (isEntry) {
          stageCount = cpm.entryReduction(parallel, targetSegments, null, null, false, deliveryGuarantee,
-               PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+               PublisherReducers.count(), PublisherReducers.add());
       } else {
          stageCount = cpm.keyReduction(parallel, targetSegments, null, null, false, deliveryGuarantee,
-               PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+               PublisherReducers.count(), PublisherReducers.add());
       }
 
       Long actualCount = stageCount.toCompletableFuture().join();
-      int expected = findHowManyInSegments(insertAmount, targetSegments, cache);
+      int expected = findHowManyInSegments(insertAmount, targetSegments, TestingUtil.extractComponent(cache, KeyPartitioner.class));
       assertEquals(expected, actualCount.intValue());
    }
 
@@ -120,10 +127,10 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       CompletionStage<Long> stageCount;
       if (isEntry) {
          stageCount = cpm.entryReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
-               PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+               PublisherReducers.count(), PublisherReducers.add());
       } else {
          stageCount = cpm.keyReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
-               PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+               PublisherReducers.count(), PublisherReducers.add());
       }
 
       Long actualCount = stageCount.toCompletableFuture().join();
@@ -133,35 +140,38 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
    }
 
    @Test(dataProvider = "GuaranteeParallelEntry")
-   public void testCountExcludedKeys(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
+   public void testCountWithContext(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
       Cache<Integer, String> cache = cache(0);
       int insertAmount = insert(cache);
 
-      Set<Integer> keysToExclude = new HashSet<>();
-      keysToExclude.add(0);
-      keysToExclude.add(insertAmount - 2);
+      InvocationContext ctx = new NonTxInvocationContext(null);
 
-      // This one won't work as it isn't in the cache
-      keysToExclude.add(insertAmount + 1);
+      // These elements are removed or null - so aren't counted
+      ctx.putLookedUpEntry(0, NullCacheEntry.getInstance());
+      ctx.putLookedUpEntry(insertAmount - 2, Mockito.when(Mockito.mock(CacheEntry.class).isRemoved()).thenReturn(true).getMock());
+
+      // This is an extra entry only in this context
+      ctx.putLookedUpEntry(insertAmount + 1, new ImmortalCacheEntry(insertAmount + 1, insertAmount + 1));
+
 
       ClusterPublisherManager<Integer, String> cpm = cpm(cache);
       CompletionStage<Long> stageCount;
       if (isEntry) {
-         stageCount = cpm.entryReduction(parallel, null, null, keysToExclude, false, deliveryGuarantee,
-               PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+         stageCount = cpm.entryReduction(parallel, null, null, ctx, false, deliveryGuarantee,
+               PublisherReducers.count(), PublisherReducers.add());
       } else {
-         stageCount = cpm.keyReduction(parallel, null, null, keysToExclude, false, deliveryGuarantee,
-               PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+         stageCount = cpm.keyReduction(parallel, null, null, ctx, false, deliveryGuarantee,
+               PublisherReducers.count(), PublisherReducers.add());
       }
 
       Long actualCount = stageCount.toCompletableFuture().join();
-      // We exclude 3 keys, but only 2 are in the cache
-      int expected = insertAmount - 2;
+      // We exclude 2 keys and add 1
+      int expected = insertAmount - 1;
       assertEquals(expected, actualCount.intValue());
    }
 
    @Test(dataProvider = "GuaranteeParallelEntry")
-   public void testCountExcludedKeySegments(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
+   public void testCountWithContextSegments(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
       Cache<Integer, String> cache = cache(0);
       int insertAmount = insert(cache);
 
@@ -173,42 +183,40 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
 
       KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache, KeyPartitioner.class);
 
-      boolean includedNonSegmentKey = false;
+      AtomicInteger contextChange = new AtomicInteger();
 
-      // We create an exclusion set that has at least 3 entries, one of which is always not part of the segments
-      // This means the count will have (keysToExclude - 1) less count
-      Set<Integer> keysToExclude = new HashSet<>();
-      for (int i = 0; i < insertAmount; ++i) {
-         int segment = keyPartitioner.getSegment(i);
-         if (targetSegments.contains(segment)) {
-            keysToExclude.add(i);
-         } else if (!includedNonSegmentKey) {
-            includedNonSegmentKey = true;
-            keysToExclude.add(i);
-         } else if (keysToExclude.size() >= 2) {
-            break;
+      InvocationContext ctx = new NonTxInvocationContext(null);
+
+      // These elements are removed or null - so aren't counted
+      ctx.putLookedUpEntry(0, NullCacheEntry.getInstance());
+      ctx.putLookedUpEntry(insertAmount - 2, Mockito.when(Mockito.mock(CacheEntry.class).isRemoved()).thenReturn(true).getMock());
+
+      // This is an extra entry only in this context
+      ctx.putLookedUpEntry(insertAmount + 1, new ImmortalCacheEntry(insertAmount + 1, insertAmount + 1));
+
+      // For every entry that is in the context, we only count values that are in the segments that were provided
+      ctx.forEachEntry((o, e) -> {
+         if (targetSegments.contains(keyPartitioner.getSegment(o))) {
+            contextChange.addAndGet((e.isRemoved() || e.isNull()) ? -1 : 1);
          }
-      }
+      });
 
       ClusterPublisherManager<Integer, String> cpm = cpm(cache);
       CompletionStage<Long> stageCount;
       if (isEntry) {
-         stageCount = cpm.entryReduction(parallel, targetSegments, null, keysToExclude, false, deliveryGuarantee,
-               PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+         stageCount = cpm.entryReduction(parallel, targetSegments, null, ctx, false, deliveryGuarantee,
+               PublisherReducers.count(), PublisherReducers.add());
       } else {
-         stageCount = cpm.keyReduction(parallel, targetSegments, null, keysToExclude, false, deliveryGuarantee,
-               PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+         stageCount = cpm.keyReduction(parallel, targetSegments, null, ctx, false, deliveryGuarantee,
+               PublisherReducers.count(), PublisherReducers.add());
       }
 
       Long actualCount = stageCount.toCompletableFuture().join();
-      // One of the excluded keys wasn't present
-      int expected = findHowManyInSegments(insertAmount, targetSegments, cache) - keysToExclude.size() + 1;
-      assertEquals(expected, actualCount.intValue());
+      // Two keys are removed and another is new
+      assertEquals(insertAmount + contextChange.get(), actualCount.intValue());
    }
 
-   private int findHowManyInSegments(int insertAmount, IntSet targetSegments, Cache<Integer, String> cache) {
-      KeyPartitioner kp = TestingUtil.extractComponent(cache, KeyPartitioner.class);
-
+   private int findHowManyInSegments(int insertAmount, IntSet targetSegments, KeyPartitioner kp) {
       int count = 0;
       for (int i = 0; i < insertAmount; ++i) {
          int segment = kp.getSegment(i);

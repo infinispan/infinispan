@@ -4,6 +4,8 @@ import java.util.stream.IntStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs limit operation on a {@link IntStream}
  */
@@ -24,5 +26,10 @@ public class LimitIntOperation implements IntermediateOperation<Integer, IntStre
 
    public long getLimit() {
       return limit;
+   }
+
+   @Override
+   public Flowable<Integer> mapFlowable(Flowable<Integer> input) {
+      return input.limit(limit);
    }
 }

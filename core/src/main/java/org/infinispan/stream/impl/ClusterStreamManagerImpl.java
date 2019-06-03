@@ -29,6 +29,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -724,5 +725,10 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
          }
          callback.onSegmentsLost(segments);
       }
+   }
+
+   @Override
+   public InvocationContext getContext() {
+      return null;
    }
 }

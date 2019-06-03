@@ -5,6 +5,8 @@ import java.util.stream.LongStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs peek operation on a {@link LongStream}
  */
@@ -22,5 +24,10 @@ public class PeekLongOperation implements IntermediateOperation<Long, LongStream
 
    public LongConsumer getConsumer() {
       return consumer;
+   }
+
+   @Override
+   public Flowable<Long> mapFlowable(Flowable<Long> input) {
+      return input.doOnNext(consumer::accept);
    }
 }

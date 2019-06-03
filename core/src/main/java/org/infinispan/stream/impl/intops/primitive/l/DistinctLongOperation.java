@@ -4,6 +4,8 @@ import java.util.stream.LongStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs distinct operation on a {@link LongStream}
  */
@@ -18,5 +20,10 @@ public class DistinctLongOperation implements IntermediateOperation<Long, LongSt
    @Override
    public LongStream perform(LongStream stream) {
       return stream.distinct();
+   }
+
+   @Override
+   public Flowable<Long> mapFlowable(Flowable<Long> input) {
+      return input.distinct();
    }
 }

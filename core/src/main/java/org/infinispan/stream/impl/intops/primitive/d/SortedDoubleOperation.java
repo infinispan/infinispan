@@ -4,6 +4,8 @@ import java.util.stream.DoubleStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs sorted operation on a {@link DoubleStream}
  */
@@ -18,5 +20,10 @@ public class SortedDoubleOperation implements IntermediateOperation<Double, Doub
    @Override
    public DoubleStream perform(DoubleStream stream) {
       return stream.sorted();
+   }
+
+   @Override
+   public Flowable<Double> mapFlowable(Flowable<Double> input) {
+      return input.sorted();
    }
 }

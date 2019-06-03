@@ -4,6 +4,8 @@ import java.util.stream.IntStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs distinct operation on a {@link IntStream}
  */
@@ -18,5 +20,10 @@ public class DistinctIntOperation implements IntermediateOperation<Integer, IntS
    @Override
    public IntStream perform(IntStream stream) {
       return stream.distinct();
+   }
+
+   @Override
+   public Flowable<Integer> mapFlowable(Flowable<Integer> input) {
+      return input.distinct();
    }
 }

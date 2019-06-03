@@ -1,6 +1,7 @@
 package org.infinispan.reactive.publisher.impl;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -21,6 +22,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -39,6 +41,7 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.processors.FlowableProcessor;
 import io.reactivex.processors.PublishProcessor;
+import io.reactivex.processors.UnicastProcessor;
 
 /**
  * ClusterPublisherManager that determines targets for the given segments and/or keys and then sends to local and
@@ -82,7 +85,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    @Override
    public <R> CompletionStage<R> keyReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-         Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         InvocationContext ctx, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       // Needs to be serialized processor as we can write to it from different threads
@@ -94,10 +97,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             requiresFinalizer(parallelPublisher, keysToInclude, deliveryGuarantee) ? finalizer : null;
 
       if (keysToInclude != null) {
-         startKeyPublisher(parallelPublisher, segments, keysToInclude, keysToExclude, includeLoader, deliveryGuarantee,
+         startKeyPublisher(parallelPublisher, segments, keysToInclude, ctx, includeLoader, deliveryGuarantee,
                keyComposedType(), transformer, finalizerToUse, flowableProcessor);
       } else {
-         startSegmentPublisher(parallelPublisher, segments, keysToExclude, includeLoader,
+         startSegmentPublisher(parallelPublisher, segments, ctx, includeLoader,
                deliveryGuarantee, keyComposedType(), transformer, finalizerToUse, flowableProcessor);
       }
       return stage;
@@ -105,7 +108,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    @Override
    public <R> CompletionStage<R> entryReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-         Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         InvocationContext ctx, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       // Needs to be serialized processor as we can write to it from different threads
@@ -117,10 +120,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             requiresFinalizer(parallelPublisher, keysToInclude, deliveryGuarantee) ? finalizer : null;
 
       if (keysToInclude != null) {
-         startKeyPublisher(parallelPublisher, segments, keysToInclude, keysToExclude, includeLoader, deliveryGuarantee,
+         startKeyPublisher(parallelPublisher, segments, keysToInclude, ctx, includeLoader, deliveryGuarantee,
                entryComposedType(), transformer, finalizerToUse, flowableProcessor);
       } else {
-         startSegmentPublisher(parallelPublisher, segments, keysToExclude, includeLoader,
+         startSegmentPublisher(parallelPublisher, segments, ctx, includeLoader,
                deliveryGuarantee, entryComposedType(), transformer, finalizerToUse, flowableProcessor);
       }
       return stage;
@@ -139,16 +142,40 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             keysToInclude == null && deliveryGuarantee == DeliveryGuarantee.EXACTLY_ONCE;
    }
 
-   private <I, R> void startKeyPublisher(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude, Set<K> keysToExclude,
+   private <I, R> void handleContextInvocation(IntSet segments, Set<K> keysToInclude, InvocationContext ctx, ComposedType<K, I, R> composedType,
+         Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+         BiConsumer<PublisherResult<R>, Throwable> biConsumer) {
+      CompletionStage<PublisherResult<R>> localStage = composedType.contextInvocation(segments, keysToInclude, ctx,
+            transformer);
+
+      if (trace) {
+         // Make sure the trace occurs before response is processed
+         localStage = localStage.whenComplete((results, t) ->
+               log.tracef("Result result was: %s for context %s", results.getResult(), ctx)
+         );
+      }
+
+      // Finally report the result to the BiConsumer so it knows the result
+      localStage.whenComplete(biConsumer);
+   }
+
+   private <I, R> void startKeyPublisher(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude, InvocationContext ctx,
          boolean includeLoader, DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
          Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer,
          FlowableProcessor<R> flowableProcessor) {
       LocalizedCacheTopology topology = distributionManager.getCacheTopology();
       Address localAddress = topology.getLocalAddress();
-      Map<Address, Set<K>> keyTargets = determineKeyTargets(topology, keysToInclude, localAddress, segments, keysToExclude);
+      // This excludes the keys from the various address targets
+      Map<Address, Set<K>> keyTargets = determineKeyTargets(topology, keysToInclude, localAddress, segments, ctx);
 
-      AtomicInteger parallelCount = new AtomicInteger(keyTargets.size());
+      AtomicInteger parallelCount;
+      boolean useContext = ctx != null && ctx.lookedUpEntriesCount() > 0;
+      if (useContext) {
+         parallelCount = new AtomicInteger(keyTargets.size() + 1);
+      } else {
+         parallelCount = new AtomicInteger(keyTargets.size());
+      }
 
       // This way we only have to allocate 1 per request chain
       BiConsumer<PublisherResult<R>, Throwable> biConsumer = new KeyBiConsumer<>(flowableProcessor,
@@ -160,11 +187,11 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       if (!keyTargets.isEmpty()) {
          // We submit the remote ones first as they will not block at all, just to send remote tasks
          for (Map.Entry<Address, Set<K>> remoteTarget : keyTargets.entrySet()) {
+            Address remoteAddress = remoteTarget.getKey();
             Set<K> remoteKeys = remoteTarget.getValue();
             PublisherRequestCommand<K> command = composedType.remoteInvocation(parallelPublisher, null, remoteKeys,
-                  keysToExclude, includeLoader, deliveryGuarantee, transformer, finalizer);
+                  null, includeLoader, deliveryGuarantee, transformer, finalizer);
             command.setTopologyId(topology.getTopologyId());
-            Address remoteAddress = remoteTarget.getKey();
             CompletionStage<PublisherResult<R>> stage = rpcManager.invokeCommand(remoteAddress, command,
                   new KeyPublisherResultCollector<>(remoteKeys), rpcManager.getSyncRpcOptions());
             stage.whenComplete(biConsumer);
@@ -173,7 +200,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       if (localKeys != null) {
          CompletionStage<PublisherResult<R>> localStage = composedType.localInvocation(parallelPublisher, null,
-               localKeys, keysToExclude, includeLoader, deliveryGuarantee, transformer, finalizer);
+               localKeys, null, includeLoader, deliveryGuarantee, transformer, finalizer);
 
          if (trace) {
             // Make sure the trace occurs before response is processed
@@ -186,10 +213,14 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          // Map to the same collector, so we can reuse the same BiConsumer
          localStage.whenComplete(biConsumer);
       }
+
+      if (useContext) {
+         handleContextInvocation(segments, keysToInclude, ctx, composedType, transformer, biConsumer);
+      }
    }
 
    private <I, R> void startSegmentPublisher(boolean parallelPublisher, IntSet segments,
-         Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
+         InvocationContext ctx, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
          Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer,
          FlowableProcessor<R> flowableProcessor) {
@@ -198,24 +229,34 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       Map<Address, IntSet> targets = determineSegmentTargets(topology, segments, localAddress);
 
       // used to determine that last parallel completion, to either complete or retry
-      AtomicInteger parallelCount = new AtomicInteger(targets.size());
+      AtomicInteger parallelCount;
+      boolean useContext = ctx != null && ctx.lookedUpEntriesCount() > 0;
+      Map<Address, Set<K>> keysToExcludeByAddress;
+      if (useContext) {
+         parallelCount = new AtomicInteger(targets.size() + 1);
+         keysToExcludeByAddress = determineKeyTargets(topology, (Set<K>) ctx.getLookedUpEntries().keySet(), localAddress,
+               segments, null);
+      } else {
+         parallelCount = new AtomicInteger(targets.size());
+         keysToExcludeByAddress = Collections.emptyMap();
+      }
 
       IntSet localSegments = targets.remove(localAddress);
 
       // This way we only have to allocate 1 per request chain
       BiConsumer<PublisherResult<R>, Throwable> biConsumer = new SegmentSpecificConsumer<>(flowableProcessor,
-            parallelCount, topology.getTopologyId(), parallelPublisher, keysToExclude, includeLoader, deliveryGuarantee,
+            parallelCount, topology.getTopologyId(), parallelPublisher, ctx, includeLoader, deliveryGuarantee,
             composedType, transformer, finalizer);
 
       // If any targets left, they are all remote
       if (!targets.isEmpty()) {
          // We submit the remote ones first as they will not block at all, just to send remote tasks
          for (Map.Entry<Address, IntSet> remoteTarget : targets.entrySet()) {
+            Address remoteAddress = remoteTarget.getKey();
             IntSet remoteSegments = remoteTarget.getValue();
             PublisherRequestCommand<K> command = composedType.remoteInvocation(parallelPublisher, remoteSegments, null,
-                  keysToExclude, includeLoader, deliveryGuarantee, transformer, finalizer);
+                  keysToExcludeByAddress.get(remoteAddress), includeLoader, deliveryGuarantee, transformer, finalizer);
             command.setTopologyId(topology.getTopologyId());
-            Address remoteAddress = remoteTarget.getKey();
             CompletionStage<PublisherResult<R>> stage = rpcManager.invokeCommand(remoteAddress, command,
                   new SegmentPublisherResultCollector<>(remoteSegments), rpcManager.getSyncRpcOptions());
             stage.whenComplete(biConsumer);
@@ -224,7 +265,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       if (localSegments != null) {
          CompletionStage<PublisherResult<R>> localStage = composedType.localInvocation(parallelPublisher, localSegments,
-               null, keysToExclude, includeLoader, deliveryGuarantee, transformer, finalizer);
+               null, keysToExcludeByAddress.get(localAddress), includeLoader, deliveryGuarantee, transformer, finalizer);
 
          if (trace) {
             // Make sure the trace occurs before response is processed
@@ -237,6 +278,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          // Map to the same collector, so we can reuse the same BiConsumer
          localStage.whenComplete(biConsumer);
       }
+
+      if (useContext) {
+         handleContextInvocation(segments, null, ctx, composedType, transformer, biConsumer);
+      }
    }
 
    private class SegmentSpecificConsumer<I, R> implements BiConsumer<PublisherResult<R>, Throwable> {
@@ -247,7 +292,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       private final int currentTopologyId;
       private final boolean parallelPublisher;
-      private final Set<K> keysToExclude;
+      private final InvocationContext ctx;
       private final boolean includeLoader;
       private final DeliveryGuarantee deliveryGuarantee;
       private final ComposedType<K, I, R> composedType;
@@ -255,7 +300,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       private final Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer;
 
       SegmentSpecificConsumer(FlowableProcessor<R> flowableProcessor, AtomicInteger parallelCount,
-            int currentTopologyId, boolean parallelPublisher, Set<K> keysToExclude, boolean includeLoader,
+            int currentTopologyId, boolean parallelPublisher, InvocationContext ctx, boolean includeLoader,
             DeliveryGuarantee deliveryGuarantee, ComposedType<K, I, R> composedType,
             Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
             Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
@@ -264,7 +309,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
          this.currentTopologyId = currentTopologyId;
          this.parallelPublisher = parallelPublisher;
-         this.keysToExclude = keysToExclude;
+         this.ctx = ctx;
          this.includeLoader = includeLoader;
          this.deliveryGuarantee = deliveryGuarantee;
          this.composedType = composedType;
@@ -318,7 +363,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                   flowableProcessor.onError(innerT);
                } else {
                   // Restart with the missing segments
-                  startSegmentPublisher(parallelPublisher, segmentsToRetry, keysToExclude, includeLoader, deliveryGuarantee,
+                  startSegmentPublisher(parallelPublisher, segmentsToRetry, ctx, includeLoader, deliveryGuarantee,
                         composedType, transformer, finalizer, flowableProcessor);
                }
             });
@@ -510,15 +555,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    private void handleSegment(int segment, LocalizedCacheTopology topology, Address localAddress,
          Map<Address, IntSet> targets) {
-      Address owner;
       DistributionInfo distributionInfo = topology.getSegmentDistribution(segment);
-      // Prioritize local node even if it is backup when we don't have a shared write behind store
-      if (!writeBehindShared && distributionInfo.isReadOwner()) {
-         owner = localAddress;
-      } else {
-         owner = distributionInfo.primary();
-      }
-      addToMap(targets, owner, segment);
+
+      addToMap(targets, determineOwnerToReadFrom(distributionInfo, localAddress), segment);
    }
 
    private void addToMap(Map<Address, IntSet> map, Address owner, int segment) {
@@ -530,27 +569,27 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       set.set(segment);
    }
 
+   private Address determineOwnerToReadFrom(DistributionInfo distributionInfo, Address localAddress) {
+      // Prioritize local node even if it is backup when we don't have a shared write behind store
+      if (!writeBehindShared && distributionInfo.isReadOwner()) {
+         return localAddress;
+      } else {
+         return distributionInfo.primary();
+      }
+   }
+
    private Map<Address, Set<K>> determineKeyTargets(LocalizedCacheTopology topology, Set<K> keys, Address localAddress,
-         IntSet segments, Set<K> keysToExclude) {
-      Map<Address, Set<K>> filteredKeys = null;
-      if (keys != null) {
-         filteredKeys = new HashMap<>();
-         for (K key : keys) {
-            if (keysToExclude != null && keysToExclude.contains(key)) {
-               continue;
-            }
-            DistributionInfo distributionInfo = topology.getDistribution(key);
-            if (segments != null && !segments.contains(distributionInfo.segmentId())) {
-               continue;
-            }
-            Address targetAddress;
-            if (!writeBehindShared && distributionInfo.isReadOwner()) {
-               targetAddress = localAddress;
-            } else {
-               targetAddress = distributionInfo.primary();
-            }
-            addToMap(filteredKeys, targetAddress, key);
+         IntSet segments, InvocationContext ctx) {
+      Map<Address, Set<K>> filteredKeys = new HashMap<>();
+      for (K key : keys) {
+         if (ctx != null && ctx.lookupEntry(key) != null) {
+            continue;
          }
+         DistributionInfo distributionInfo = topology.getDistribution(key);
+         if (segments != null && !segments.contains(distributionInfo.segmentId())) {
+            continue;
+         }
+         addToMap(filteredKeys, determineOwnerToReadFrom(distributionInfo, localAddress), key);
       }
       return filteredKeys;
    }
@@ -574,6 +613,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
             Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
             Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
+
+      CompletionStage<PublisherResult<R>> contextInvocation(IntSet segments, Set<K> keysToInclude, InvocationContext ctx,
+            Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer);
    }
 
    private class KeyComposedType<R> implements ComposedType<K, K, R> {
@@ -595,6 +637,22 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          return commandsFactory.buildKeyPublisherCommand(parallelPublisher, deliveryGuarantee, segments, keysToInclude,
                keysToExclude, includeLoader, transformer, finalizer);
       }
+
+      @Override
+      public CompletionStage<PublisherResult<R>> contextInvocation(IntSet segments, Set<K> keysToInclude,
+            InvocationContext ctx, Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer) {
+         UnicastProcessor<K> unicastProcessor = UnicastProcessor.create(ctx.lookedUpEntriesCount());
+         ctx.forEachValue((o, cacheEntry) -> {
+            K key = (K) o;
+            if (keysToInclude == null || keysToInclude.contains(key)) {
+               unicastProcessor.onNext(key);
+            }
+         });
+         unicastProcessor.onComplete();
+
+         return transformer.apply(unicastProcessor)
+               .thenApply(LocalPublisherManagerImpl.ignoreSegmentsFunction());
+      }
    }
 
    private class EntryComposedType<R> implements ComposedType<K, CacheEntry<K, V>, R> {
@@ -615,6 +673,21 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
          return commandsFactory.buildEntryPublisherCommand(parallelPublisher, deliveryGuarantee, segments, keysToInclude,
                keysToExclude, includeLoader, transformer, finalizer);
+      }
+
+      @Override
+      public CompletionStage<PublisherResult<R>> contextInvocation(IntSet segments, Set<K> keysToInclude,
+            InvocationContext ctx, Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer) {
+         UnicastProcessor<CacheEntry<K, V>> unicastProcessor = UnicastProcessor.create(ctx.lookedUpEntriesCount());
+         ctx.forEachValue((o, cacheEntry) -> {
+            if (keysToInclude == null || keysToInclude.contains(o)) {
+               unicastProcessor.onNext(cacheEntry);
+            }
+         });
+         unicastProcessor.onComplete();
+
+         return transformer.apply(unicastProcessor)
+               .thenApply(LocalPublisherManagerImpl.ignoreSegmentsFunction());
       }
    }
 

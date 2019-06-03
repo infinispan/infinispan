@@ -6,6 +6,8 @@ import java.util.stream.IntStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs map to int operation on a {@link DoubleStream}
  */
@@ -23,5 +25,10 @@ public class MapToIntDoubleOperation implements IntermediateOperation<Double, Do
 
    public DoubleToIntFunction getFunction() {
       return function;
+   }
+
+   @Override
+   public Flowable<Integer> mapFlowable(Flowable<Double> input) {
+      return input.map(function::applyAsInt);
    }
 }

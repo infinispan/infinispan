@@ -5,6 +5,8 @@ import java.util.stream.Stream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs boxed operation on a {@link DoubleStream}
  */
@@ -19,5 +21,10 @@ public class BoxedDoubleOperation implements IntermediateOperation<Double, Doubl
    @Override
    public Stream<Double> perform(DoubleStream stream) {
       return stream.boxed();
+   }
+
+   @Override
+   public Flowable<Double> mapFlowable(Flowable<Double> input) {
+      return input;
    }
 }

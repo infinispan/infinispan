@@ -239,10 +239,10 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
          CompletionStage<Long> stageCount;
          if (isEntry) {
             stageCount = cpm.entryReduction(parallel, null, keys, null, false, deliveryGuarantee,
-                  PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+                  PublisherReducers.count(), PublisherReducers.add());
          } else {
             stageCount = cpm.keyReduction(parallel, null, keys, null, false, deliveryGuarantee,
-                  PublisherReducers.sumReducer(), PublisherReducers.sumFinalizer());
+                  PublisherReducers.count(), PublisherReducers.add());
          }
          return stageCount;
       });

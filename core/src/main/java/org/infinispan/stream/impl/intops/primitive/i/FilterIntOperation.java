@@ -5,6 +5,8 @@ import java.util.stream.IntStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
+import io.reactivex.Flowable;
+
 /**
  * Performs filter operation on a {@link IntStream}
  */
@@ -22,5 +24,10 @@ public class FilterIntOperation<S> implements IntermediateOperation<Integer, Int
 
    public IntPredicate getPredicate() {
       return predicate;
+   }
+
+   @Override
+   public Flowable<Integer> mapFlowable(Flowable<Integer> input) {
+      return input.filter(predicate::test);
    }
 }
