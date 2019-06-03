@@ -37,13 +37,13 @@ public class DefaultTimeService implements TimeService {
    }
 
    @Override
-   public long timeDuration(long startTime, TimeUnit outputTimeUnit) {
-      return timeDuration(startTime, time(), outputTimeUnit);
+   public long timeDuration(long startTimeNanos, TimeUnit outputTimeUnit) {
+      return timeDuration(startTimeNanos, time(), outputTimeUnit);
    }
 
    @Override
-   public long timeDuration(long startTime, long endTime, TimeUnit outputTimeUnit) {
-      long remaining = endTime - startTime;
+   public long timeDuration(long startTimeNanos, long endTimeNanos, TimeUnit outputTimeUnit) {
+      long remaining = endTimeNanos - startTimeNanos;
       if (remaining <= 0) {
          return 0;
       }
@@ -51,13 +51,13 @@ public class DefaultTimeService implements TimeService {
    }
 
    @Override
-   public boolean isTimeExpired(long endTime) {
-      return time() - endTime >= 0;
+   public boolean isTimeExpired(long endTimeNanos) {
+      return time() - endTimeNanos >= 0;
    }
 
    @Override
-   public long remainingTime(long endTime, TimeUnit outputTimeUnit) {
-      long remaining = endTime - time();
+   public long remainingTime(long endTimeNanos, TimeUnit outputTimeUnit) {
+      long remaining = endTimeNanos - time();
       return remaining <= 0 ? 0 : outputTimeUnit.convert(remaining, TimeUnit.NANOSECONDS);
    }
 

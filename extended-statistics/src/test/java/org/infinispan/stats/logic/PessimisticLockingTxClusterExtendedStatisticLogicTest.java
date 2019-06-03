@@ -79,16 +79,16 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
       }
 
       @Override
-      public long timeDuration(long startTime, TimeUnit outputTimeUnit) {
-         assertEquals(startTime, 0, "Start timestamp must be zero!");
+      public long timeDuration(long startTimeNanos, TimeUnit outputTimeUnit) {
+         assertEquals(startTimeNanos, 0, "Start timestamp must be zero!");
          assertEquals(outputTimeUnit, NANOSECONDS, "TimeUnit is different from expected");
          return 1;
       }
 
       @Override
-      public long timeDuration(long startTime, long endTime, TimeUnit outputTimeUnit) {
-         assertEquals(startTime, 0, "Start timestamp must be zero!");
-         assertEquals(endTime, 0, "End timestamp must be zero!");
+      public long timeDuration(long startTimeNanos, long endTimeNanos, TimeUnit outputTimeUnit) {
+         assertEquals(startTimeNanos, 0, "Start timestamp must be zero!");
+         assertEquals(endTimeNanos, 0, "End timestamp must be zero!");
          assertEquals(outputTimeUnit, NANOSECONDS, "TimeUnit is different from expected");
          return 1;
       }
@@ -318,7 +318,7 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
       private volatile boolean triggerTimeout = false;
 
       @Override
-      public boolean isTimeExpired(long endTime) {
+      public boolean isTimeExpired(long endTimeNanos) {
          return triggerTimeout;
       }
    }
