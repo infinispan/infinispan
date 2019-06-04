@@ -278,6 +278,10 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
+      if (!ctx.isOriginLocal()) {
+         return invokeNext(ctx, command);
+      }
+
       final Map<Object, Object> map = command.getMap();
 
       FileDescriptorSource source = new FileDescriptorSource();
