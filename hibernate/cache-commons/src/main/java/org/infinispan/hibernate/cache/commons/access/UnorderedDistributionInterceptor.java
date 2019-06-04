@@ -69,9 +69,9 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 		if (isReplicated) {
 			// local result is always ignored
          return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
-            Object remoteInvocation = invokeRemotelyAsync(null, rCtx, (WriteCommand) rCommand);
+            CompletionStage<?> remoteInvocation = invokeRemotelyAsync(null, rCtx, (WriteCommand) rCommand);
             if (remoteInvocation != null) {
-               return ((CompletionStage<?>) remoteInvocation).handle((responses, t) -> rv);
+               return remoteInvocation.thenApply(responses -> rv);
             }
             return rv;
          });
@@ -80,9 +80,9 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 			List<Address> owners = cacheTopology.getDistribution(command.getKey()).writeOwners();
 			if (owners.contains(rpcManager.getAddress())) {
             return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
-               Object remoteInvocation = invokeRemotelyAsync(owners, rCtx, (WriteCommand) rCommand);
+               CompletionStage<?> remoteInvocation = invokeRemotelyAsync(owners, rCtx, (WriteCommand) rCommand);
                if (remoteInvocation != null) {
-                  return ((CompletionStage<?>) remoteInvocation).handle((responses, t) -> rv);
+                  return remoteInvocation.thenApply(responses -> rv);
                }
                return rv;
             });
@@ -106,7 +106,7 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 
 	}
 
-   public Object invokeRemotelyAsync(List<Address> finalOwners, InvocationContext rCtx, WriteCommand writeCmd) {
+   private CompletionStage<?> invokeRemotelyAsync(List<Address> finalOwners, InvocationContext rCtx, WriteCommand writeCmd) {
       if (rCtx.isOriginLocal() && writeCmd.isSuccessful()) {
          // This is called with the entry locked. In order to avoid deadlocks we must not wait for RPC while
          // holding the lock, therefore we'll return a future and wait for it in LockingInterceptor after
