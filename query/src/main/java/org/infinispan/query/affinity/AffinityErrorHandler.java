@@ -29,15 +29,15 @@ public class AffinityErrorHandler extends WrappingErrorHandler {
    private static final Log log = LogFactory.getLog(AffinityErrorHandler.class, Log.class);
 
    private RpcManager rpcManager;
-   private ExecutorService asyncExecutor;
+   private ExecutorService blockingExecutor;
 
    public AffinityErrorHandler(ErrorHandler handler) {
       super(handler);
    }
 
-   public void initialize(RpcManager rpcManager, ExecutorService asyncExecutor) {
+   public void initialize(RpcManager rpcManager, ExecutorService blockingExecutor) {
       this.rpcManager = rpcManager;
-      this.asyncExecutor = asyncExecutor;
+      this.blockingExecutor = blockingExecutor;
    }
 
    @Override
@@ -54,10 +54,9 @@ public class AffinityErrorHandler extends WrappingErrorHandler {
       this.clearLockIfNeeded(affinityIndexManager);
 
       log.debugf("Retrying operations %s at %s", failed, affinityIndexManager.getLocalShardAddress());
-      CompletableFuture.supplyAsync(() -> {
-         affinityIndexManager.performOperations(failed, null, true, true);
-         return null;
-      }, asyncExecutor).whenComplete((aVoid, error) -> {
+      CompletableFuture.runAsync(() ->
+                  affinityIndexManager.performOperations(failed, null, true, true)
+      , blockingExecutor).whenComplete((aVoid, error) -> {
          if (error == null) {
             log.debugf("Operation %s completed at %s", failed, localShardAddress);
          } else {

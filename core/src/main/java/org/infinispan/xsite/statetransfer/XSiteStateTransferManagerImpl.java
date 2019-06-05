@@ -1,7 +1,7 @@
 package org.infinispan.xsite.statetransfer;
 
 import static java.lang.String.format;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.MaxRetriesPolicy;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.NO_RETRY;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.RetryPolicy;
@@ -73,8 +73,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    @Inject Configuration configuration;
    @Inject CommandsFactory commandsFactory;
    @Inject ResponseGenerator responseGenerator;
-   @Inject @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR)
-   ExecutorService asyncExecutor;
+   @Inject @ComponentName(value = PERSISTENCE_EXECUTOR)
+   ExecutorService blockingExecutor;
    @Inject StateTransferManager stateTransferManager;
    @Inject DistributionManager distributionManager;
    @Inject CacheNotifier cacheNotifier;
@@ -267,7 +267,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
                   log.debugf(e, "Unable to cancel x-site state transfer for site %s", siteName);
                }
             }
-         }, asyncExecutor);
+         }, blockingExecutor);
       } else {
          return CompletableFuture.runAsync(() -> {
             //it is balanced
@@ -280,7 +280,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
                   log.failedToRestartXSiteStateTransfer(entry.getKey(), e);
                }
             }
-         }, asyncExecutor);
+         }, blockingExecutor);
       }
    }
 
