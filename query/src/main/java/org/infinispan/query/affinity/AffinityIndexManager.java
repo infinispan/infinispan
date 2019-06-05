@@ -1,6 +1,6 @@
 package org.infinispan.query.affinity;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 
 import java.util.List;
 import java.util.Map;
@@ -93,7 +93,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
       searchIntegrator = componentRegistry.getComponent(SearchIntegrator.class);
       isAsync = !BackendFactory.isConfiguredAsSync(properties);
       localShardAddress = new ShardAddress(shardId, rpcManager != null ? rpcManager.getAddress() : LocalModeAddress.INSTANCE);
-      blockingExecutor = componentRegistry.getComponent(ExecutorService.class, ASYNC_OPERATIONS_EXECUTOR);
+      blockingExecutor = componentRegistry.getComponent(ExecutorService.class, PERSISTENCE_EXECUTOR);
       luceneWorkDispatcher = new LuceneWorkDispatcher(this, rpcManager);
       workPartitioner = new WorkPartitioner(this, shardAllocatorManager);
       AffinityErrorHandler errorHandler = (AffinityErrorHandler) searchIntegrator.getErrorHandler();
