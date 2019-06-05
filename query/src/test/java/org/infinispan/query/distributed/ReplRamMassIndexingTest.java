@@ -63,7 +63,7 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
    }
 
    @Override
-   protected void rebuildIndexes() throws Exception {
+   protected void rebuildIndexes() {
       for (Cache cache : caches) {
          Search.getSearchManager(cache).getMassIndexer().start();
       }

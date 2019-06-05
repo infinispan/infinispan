@@ -34,6 +34,8 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @SerializeWith(value = MediaType.MediaTypeExternalizer.class)
 public final class MediaType {
 
+   // OpenMetrics aka Prometheus content type
+   public static final String APPLICATION_OPENMETRICS_TYPE = "application/openmetrics-text";
    public static final String APPLICATION_JSON_TYPE = "application/json";
    public static final String APPLICATION_OCTET_STREAM_TYPE = "application/octet-stream";
    public static final String APPLICATION_OBJECT_TYPE = "application/x-java-object";
@@ -59,6 +61,8 @@ public final class MediaType {
    public static final String APPLICATION_KRYO_TYPE = "application/x-kryo";
    public static final String MATCH_ALL_TYPE = "*/*";
 
+   // OpenMetrics aka Prometheus content type
+   public static MediaType APPLICATION_OPENMETRICS = fromString(APPLICATION_OPENMETRICS_TYPE);
    public static MediaType APPLICATION_JSON = fromString(APPLICATION_JSON_TYPE);
    public static MediaType APPLICATION_OCTET_STREAM = fromString(APPLICATION_OCTET_STREAM_TYPE);
    public static MediaType APPLICATION_OBJECT = fromString(APPLICATION_OBJECT_TYPE);

@@ -15,6 +15,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -31,6 +32,7 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementScanner8;
 import javax.lang.model.util.Elements;
@@ -371,15 +373,20 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
             String name = extractAttributeName(methodName);
             boolean is = methodName.startsWith("is");
             String type;
+            String boxedType;
             if (methodName.startsWith("set")) {
-               type = types().erasure(e.getParameters().get(0).asType()).toString();
+               TypeMirror t = e.getParameters().get(0).asType();
+               type = types().erasure(t).toString();
+               boxedType = t.getKind().isPrimitive() ? types().boxedClass((PrimitiveType) t).toString() : type;
             } else if (methodName.startsWith("get") || is) {
-               type = types().erasure(e.getReturnType()).toString();
+               TypeMirror t = e.getReturnType();
+               type = types().erasure(t).toString();
+               boxedType = t.getKind().isPrimitive() ? types().boxedClass((PrimitiveType) t).toString() : type;
             } else {
                error(e, "Method annotated with @ManagedAttribute does not start with `set`, `get`, or `is`");
-               type = "";
+               type = boxedType = "";
             }
-            currentType.mComponent.attributes.add(new Model.MAttribute(name, attribute, true, type, is));
+            currentType.mComponent.attributes.add(new Model.MAttribute(name, methodName, attribute, true, type, boxedType, is));
          }
 
          if (e.getAnnotation(ManagedOperation.class) != null)
@@ -463,8 +470,10 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
          if (attribute != null) {
             if (isValidMComponent(e, ManagedAttribute.class)) {
                String name = e.getSimpleName().toString();
-               String type = e.asType().toString();
-               currentType.mComponent.attributes.add(new Model.MAttribute(name, attribute, false, type, false));
+               TypeMirror t =  e.asType();
+               String type = types().erasure(t).toString();
+               String boxedType = t.getKind().isPrimitive() ? types().boxedClass((PrimitiveType) t).toString() : type;
+               currentType.mComponent.attributes.add(new Model.MAttribute(name, name, attribute, false, type, boxedType, false));
             }
          }
 

@@ -69,6 +69,18 @@ public interface RestClient extends Closeable {
     */
    RestClientConfiguration getConfiguration();
 
+   CompletionStage<RestResponse> metrics();
+
+   CompletionStage<RestResponse> metrics(String path);
+
+   CompletionStage<RestResponse> metrics(boolean openMetrics);
+
+   CompletionStage<RestResponse> metrics(String path, boolean openMetrics);
+
+   CompletionStage<RestResponse> metricsMetadata();
+
+   CompletionStage<RestResponse> metricsMetadata(String path);
+
    /**
     * Creates a {@link RestClient} instance based on the supplied configuration
     *

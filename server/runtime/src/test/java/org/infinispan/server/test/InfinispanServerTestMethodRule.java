@@ -7,6 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -45,8 +46,7 @@ public class InfinispanServerTestMethodRule implements TestRule {
    private List<Closeable> resources;
 
    public InfinispanServerTestMethodRule(InfinispanServerRule infinispanServerRule) {
-      assert infinispanServerRule != null;
-      this.infinispanServerRule = infinispanServerRule;
+      this.infinispanServerRule = Objects.requireNonNull(infinispanServerRule);
    }
 
    public <T extends Closeable> T registerResource(T resource) {
@@ -75,8 +75,10 @@ public class InfinispanServerTestMethodRule implements TestRule {
    }
 
    private void after() {
-      resources.forEach(closeable -> Util.close(closeable));
-      resources.clear();
+      if (resources != null) {
+         resources.forEach(Util::close);
+         resources.clear();
+      }
    }
 
    public String getMethodName() {

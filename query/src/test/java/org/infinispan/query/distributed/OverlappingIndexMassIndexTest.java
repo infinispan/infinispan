@@ -91,7 +91,7 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected void runMassIndexer() throws Exception {
+   protected void runMassIndexer() {
       Cache cache = caches.get(0);
       SearchManager searchManager = Search.getSearchManager(cache);
       searchManager.getMassIndexer().start();

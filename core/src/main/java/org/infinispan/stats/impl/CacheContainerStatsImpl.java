@@ -481,7 +481,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    }
 
    @ManagedAttribute(
-         description = "Cache container total number of cache attribute put operations",
+         description = "Cache container total number of cache put operations",
          displayName = "Cache container total number of cache puts",
          measurementType = MeasurementType.TRENDSUP
    )

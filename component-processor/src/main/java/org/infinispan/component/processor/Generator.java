@@ -233,8 +233,17 @@ public class Generator {
 
       int i = 0;
       for (Model.MAttribute attribute : attributes) {
+         String accessorFunction = "null";
+         // provide accessor function only for a select list of types that are interesting for metrics
+         if (attribute.boxedType.equals("java.lang.Integer") || attribute.boxedType.equals("java.lang.Long") ||
+               attribute.boxedType.equals("java.lang.Short") || attribute.boxedType.equals("java.lang.Byte") ||
+               attribute.boxedType.equals("java.lang.Float") || attribute.boxedType.equals("java.lang.Double") ||
+               attribute.boxedType.equals("java.math.BigDecimal") || attribute.boxedType.equals("java.math.BigInteger")) {
+            accessorFunction = "(java.util.function.Function<" + c.qualifiedName + ", " + attribute.boxedType + ">)"
+                  + (attribute.useSetter ? c.qualifiedName + "::" : " _x -> _x.") + attribute.propertyAccessor;
+         }
          writeManagedAttribute(writer, attribute.name, attribute.attribute, attribute.useSetter, attribute.type,
-                               attribute.is, optionalComma(i++, count));
+               attribute.is, accessorFunction, optionalComma(i++, count));
       }
       for (Model.MOperation method : operations) {
          ManagedOperation operation = method.operation;
@@ -257,10 +266,10 @@ public class Generator {
    }
 
    private void writeManagedAttribute(PrintWriter writer, CharSequence name, ManagedAttribute attribute,
-                                      boolean useSetter, String type, boolean is, String comma) {
-      // AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is)
-      writer.printf("            new AttributeMetadata(\"%s\", \"%s\", %b, %b, \"%s\", %s)%s\n",
-                    name, attribute.description(), attribute.writable(), useSetter, type, is, comma);
+                                      boolean useSetter, String type, boolean is, String accessorFunction, String comma) {
+      // AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is, Function<?, ?> accessorFunction)
+      writer.printf("            new AttributeMetadata(\"%s\", \"%s\", %b, %b, \"%s\", %s, %s)%s\n",
+            name, attribute.description(), attribute.writable(), useSetter, type, is, accessorFunction, comma);
    }
 
    public void writeModuleClass(TypeElement[] sourceElements) throws IOException {

@@ -3,6 +3,7 @@ package org.infinispan.component.processor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import javax.lang.model.element.TypeElement;
 
 import org.infinispan.factories.annotations.InfinispanModule;
@@ -156,16 +157,20 @@ public class Model {
 
    static class MAttribute {
       final String name;
+      final String propertyAccessor;
       final ManagedAttribute attribute;
       final boolean useSetter;
       final String type;
+      final String boxedType;
       final boolean is;
 
-      MAttribute(String name, ManagedAttribute attribute, boolean useSetter, String type, boolean is) {
+      MAttribute(String name, String propertyAccessor, ManagedAttribute attribute, boolean useSetter, String type, String boxedType, boolean is) {
          this.name = name;
+         this.propertyAccessor = propertyAccessor;
          this.attribute = attribute;
          this.useSetter = useSetter;
          this.type = type;
+         this.boxedType = boxedType;
          this.is = is;
       }
    }
