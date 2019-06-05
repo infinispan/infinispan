@@ -90,8 +90,6 @@ public enum Element {
     SECURITY,
     SERIALIZATION,
     SHUTDOWN,
-    @Deprecated
-    SINGLETON_STORE("singleton"),
     SITE,
     SITES,
     STATE_TRANSFER,
