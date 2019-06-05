@@ -74,7 +74,7 @@ public class JGroupsBackupResponse implements BackupResponse {
             timeout -= deductFromTimeout;
             timeout -= elapsedTime;
             if (timeout <= 0 && !entry.getValue().isDone() ) {
-               log.tracef("Timeout period %ld exhausted with site %s", xSiteBackup.getTimeout(), siteName);
+               log.tracef("Timeout period %d exhausted with site %s", xSiteBackup.getTimeout(), siteName);
                errors.put(siteName, newTimeoutException(xSiteBackup.getTimeout(), xSiteBackup));
                addCommunicationError(siteName);
                continue;
