@@ -2392,7 +2392,6 @@ public class Parser implements ConfigurationParser {
       Boolean purgeOnStartup = null;
       Boolean preload = null;
       Boolean shared = null;
-      Boolean singleton = null;
       Boolean transactional = null;
       CacheLoader store = null;
 
@@ -2420,7 +2419,11 @@ public class Parser implements ConfigurationParser {
                shared = Boolean.parseBoolean(value);
                break;
             case SINGLETON:
-               singleton = Boolean.parseBoolean(value);
+               if (reader.getSchema().since(10, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               } else {
+                  log.ignoreXmlAttribute(attribute);
+               }
                break;
             case TRANSACTIONAL:
                transactional = Boolean.parseBoolean(value);
