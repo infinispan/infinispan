@@ -29,7 +29,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -720,7 +719,7 @@ public class JGroupsTransport implements Transport {
                                               .collect(Collectors.toList()));
    }
 
-   @Stop(priority = 120)
+   @Stop
    @Override
    public void stop() {
       running = false;

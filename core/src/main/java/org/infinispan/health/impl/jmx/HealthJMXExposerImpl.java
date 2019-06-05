@@ -2,6 +2,8 @@ package org.infinispan.health.impl.jmx;
 
 import java.util.List;
 
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.Health;
 import org.infinispan.health.jmx.HealthJMXExposer;
@@ -15,6 +17,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
  * @since 9.0
  */
 @MBean(objectName = HealthJMXExposer.OBJECT_NAME, description = "Health Check API")
+@Scope(Scopes.GLOBAL)
 public class HealthJMXExposerImpl implements HealthJMXExposer {
 
     private final Health health;

@@ -10,10 +10,14 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
 
+@Scope(Scopes.NAMED_CACHE)
 public class QueryableDataContainer implements DataContainer<Object, Object> {
 
    // Since this static field is here, we can't use generic types properly
@@ -87,6 +91,7 @@ public class QueryableDataContainer implements DataContainer<Object, Object> {
       return delegate.sizeIncludingExpired();
    }
 
+   @Stop
    @Override
    public void clear() {
       loggedOperations.add("clear()" );

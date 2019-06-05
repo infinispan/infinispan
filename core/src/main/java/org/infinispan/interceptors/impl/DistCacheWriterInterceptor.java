@@ -17,7 +17,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -52,8 +51,6 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       return log;
    }
 
-   @Start(priority = 25) // after the distribution manager!
-   @SuppressWarnings("unused")
    protected void start() {
       super.start();
       this.isUsingLockDelegation = !cacheConfiguration.transaction().transactionMode().isTransactional();

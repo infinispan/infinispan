@@ -26,7 +26,6 @@ import org.infinispan.commons.util.ConcatIterator;
 import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.reactivestreams.Publisher;
 
@@ -56,7 +55,6 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       this.mapSupplier = Objects.requireNonNull(mapSupplier);
    }
 
-   @Start
    public void start() {
       super.start();
       // Local (invalidation), replicated and scattered cache we just instantiate all the maps immediately
@@ -76,9 +74,9 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       };
    }
 
-   // Priority has to be higher than the clear priority - which is currently 999
-   @Stop(priority = 9999)
+   @Stop
    public void stop() {
+      clear();
       for (int i = 0; i < maps.length(); ++i) {
          stopMap(i, false);
       }
@@ -203,7 +201,6 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       return size;
    }
 
-   @Stop
    @Override
    public void clear() {
       for (int i = 0; i < maps.length(); ++i) {

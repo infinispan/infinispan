@@ -13,7 +13,6 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listener;
@@ -53,7 +52,6 @@ public class PartitionAwareClusterStreamManager<Original, K> extends ClusterStre
       }
    }
 
-   @Start
    public void start() {
       super.start();
       partitionHandling = configuration.clustering().partitionHandling().whenSplit();

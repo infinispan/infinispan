@@ -25,6 +25,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
@@ -41,6 +43,8 @@ import org.infinispan.util.logging.LogFactory;
  * @author gustavonalle
  * @since 7.1
  */
+@MBean(objectName = "MassIndexer",
+       description = "Component that rebuilds the index from the cached data")
 public class DistributedExecutorMassIndexer implements MassIndexer {
 
    private static final Log LOG = LogFactory.getLog(DistributedExecutorMassIndexer.class, Log.class);
@@ -58,6 +62,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       this.executor = cache.getCacheManager().executor();
    }
 
+   @ManagedOperation(description = "Starts rebuilding the index", displayName = "Rebuild index")
    @Override
    public void start() {
       CompletableFuture<?> executionResult = executeInternal(false);

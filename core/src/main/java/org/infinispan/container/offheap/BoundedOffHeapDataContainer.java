@@ -16,7 +16,6 @@ import org.infinispan.container.impl.InternalDataContainerAdapter;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -34,7 +33,6 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
    }
 
    @Override
-   @Start
    public void start() {
       super.start();
       // Force the start up of segment 0

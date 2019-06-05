@@ -24,6 +24,10 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -47,6 +51,7 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  * @author Dan Berindei
  * @since 9.2
  */
+@Scope(Scopes.GLOBAL)
 public class MockTransport implements Transport {
    private static final Log log = LogFactory.getLog(MockTransport.class);
 
@@ -236,11 +241,13 @@ public class MockTransport implements Transport {
       return true;
    }
 
+   @Start
    @Override
    public void start() {
 
    }
 
+   @Stop
    @Override
    public void stop() {
 

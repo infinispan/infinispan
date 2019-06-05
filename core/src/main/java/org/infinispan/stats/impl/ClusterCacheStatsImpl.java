@@ -44,7 +44,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -92,7 +91,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       this.statisticsEnabled = configuration.jmxStatistics().enabled();
    }
 
-   @Start
    public void start() {
       this.clusterExecutor = SecurityActions.getClusterExecutor(cache);
    }

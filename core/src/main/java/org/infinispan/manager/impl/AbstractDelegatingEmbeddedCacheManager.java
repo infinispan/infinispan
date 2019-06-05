@@ -9,6 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.health.Health;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ClusterExecutor;
@@ -29,6 +30,7 @@ import org.infinispan.stats.CacheContainerStats;
  * @see org.infinispan.cache.impl.AbstractDelegatingCache
  * @see org.infinispan.cache.impl.AbstractDelegatingAdvancedCache
  */
+@SurvivesRestarts
 public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheManager {
 
    protected EmbeddedCacheManager cm;
