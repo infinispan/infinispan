@@ -13,7 +13,6 @@ import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.ServiceFinder;
-import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -40,15 +39,6 @@ public final class ModuleProperties {
    @Deprecated
    public static Collection<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
       return ServiceFinder.load(ModuleLifecycle.class, cl);
-   }
-
-   /**
-    * Retrieves an Iterable containing metadata file finders declared by each module.
-    * @param cl class loader to use
-    * @return an Iterable of ModuleMetadataFileFinders
-    */
-   public static Iterable<ModuleMetadataFileFinder> getModuleMetadataFiles(ClassLoader cl) {
-      return ServiceFinder.load(ModuleMetadataFileFinder.class, cl);
    }
 
    public void loadModuleCommandHandlers(ClassLoader cl) {

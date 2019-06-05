@@ -93,7 +93,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.jmx.annotations.MBean;
@@ -766,7 +765,6 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    @Override
-   @Start(priority = 11) //it is going to replace LockManager and RpcManager. set to 11 because DeadlockDetectingLockManager has default priority of 10 and RpcManagerImpl has priority 9.
    protected void start() {
       super.start();
       log.startExtendedStatisticInterceptor();

@@ -21,12 +21,14 @@
  */
 package org.infinispan.server.infinispan.spi;
 
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Extends Infinispan's {@link EmbeddedCacheManager} exposing the name of the default cache.
  * @author Paul Ferraro
  */
+@SurvivesRestarts
 public interface CacheContainer extends EmbeddedCacheManager {
     /**
      * Returns the name of the default cache.

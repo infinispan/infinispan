@@ -69,6 +69,6 @@ public class ComponentAccessor<T> {
     * Temporary, for ComponentRegistry.getLocalComponent
     */
    public boolean isGlobalScope() {
-      return scopeOrdinal == 0;
+      return scopeOrdinal == Scopes.GLOBAL.ordinal();
    }
 }

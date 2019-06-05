@@ -5,15 +5,12 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.AbstractPassivationManager;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 public class PassivationManagerStub extends AbstractPassivationManager {
    @Override

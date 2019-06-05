@@ -8,7 +8,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.CheckTopologyAction;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
@@ -49,7 +48,6 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
    }
 
    @Override
-   @Start
    public void start() {
       super.start();
       this.pessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;

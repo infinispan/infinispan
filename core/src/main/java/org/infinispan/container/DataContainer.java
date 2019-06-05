@@ -9,7 +9,6 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyFilter;
@@ -113,7 +112,6 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    /**
     * Removes all entries in the container
     */
-   @Stop(priority = 999)
    void clear();
 
    /**

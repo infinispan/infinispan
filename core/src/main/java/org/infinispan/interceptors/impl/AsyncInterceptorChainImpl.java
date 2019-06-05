@@ -61,12 +61,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    }
 
    private void validateCustomInterceptor(Class<? extends AsyncInterceptor> i) {
-//      if ((!ReflectionUtil.getAllMethodsShallow(i, Inject.class).isEmpty() ||
-//            !ReflectionUtil.getAllMethodsShallow(i, Start.class).isEmpty() ||
-//            !ReflectionUtil.getAllMethodsShallow(i, Stop.class).isEmpty()) &&
-//          basicComponentRegistry.hasComponentAccessor(i.getName())) {
-//         log.customInterceptorExpectsInjection(i.getName());
-//      }
+      // Do nothing, custom interceptors extending internal interceptors no longer "inherit" the annotations
    }
 
    /**

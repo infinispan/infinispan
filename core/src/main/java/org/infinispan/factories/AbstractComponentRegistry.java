@@ -14,14 +14,11 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistryImpl;
 import org.infinispan.factories.impl.ComponentRef;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ModuleRepository;
 import org.infinispan.util.logging.Log;
@@ -56,8 +53,6 @@ import org.infinispan.util.logging.Log;
  * @since 4.0
  * @deprecated Since 9.4, please use {@link BasicComponentRegistry} instead.
  */
-@SurvivesRestarts
-@Scope(Scopes.NONE)
 @Deprecated
 public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable {
    // Not used

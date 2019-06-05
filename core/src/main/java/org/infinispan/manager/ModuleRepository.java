@@ -5,9 +5,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.impl.ComponentAccessor;
 import org.infinispan.factories.impl.MBeanMetadata;
@@ -74,7 +74,8 @@ public class ModuleRepository {
        * Package-private
        */
       Builder(ClassLoader classLoader) {
-         ServiceLoader<ModuleMetadataBuilder> serviceLoader = ServiceLoader.load(ModuleMetadataBuilder.class, classLoader);
+         Collection<ModuleMetadataBuilder> serviceLoader =
+            ServiceFinder.load(ModuleMetadataBuilder.class, ModuleRepository.class.getClassLoader(), classLoader);
          Map<String, ModuleMetadataBuilder> modules = new HashMap<>();
          for (ModuleMetadataBuilder module : serviceLoader) {
             ModuleMetadataBuilder existing = modules.put(module.getModuleName(), module);
@@ -122,8 +123,7 @@ public class ModuleRepository {
                }
             }
             return sortedBuilders;
-         } catch (
-              CyclicDependencyException e) {
+         } catch (CyclicDependencyException e) {
             throw new CacheConfigurationException(e);
          }
       }

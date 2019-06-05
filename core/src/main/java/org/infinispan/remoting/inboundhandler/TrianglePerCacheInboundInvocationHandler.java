@@ -24,7 +24,6 @@ import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.inboundhandler.action.Action;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.ActionStatus;
@@ -71,7 +70,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private boolean syncCache;
 
    @Override
-   @Start
    public void start() {
       super.start();
       lockTimeout = configuration.locking().lockAcquisitionTimeout();

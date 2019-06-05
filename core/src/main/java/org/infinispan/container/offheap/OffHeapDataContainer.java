@@ -15,7 +15,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.AbstractInternalDataContainer;
 import org.infinispan.container.impl.InternalDataContainerAdapter;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 
 /**
@@ -39,16 +38,15 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
             Util.findNextHighestPowerOfTwo(ProcessorInfo.availableProcessors() << 1));
    }
 
-   @Start
    public void start() {
       super.start();
       map = new OffHeapConcurrentMap(desiredSize, allocator, offHeapEntryFactory, null);
       map.start();
    }
 
-   // Priority has to be higher than the clear priority - which is currently 999
-   @Stop(priority = 9999)
+   @Stop
    public void stop() {
+      clear();
       map.stop();
    }
 
@@ -125,7 +123,6 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
       return map.size();
    }
 
-   @Stop
    @Override
    public void clear() {
       map.clear();

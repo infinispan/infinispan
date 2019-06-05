@@ -9,6 +9,9 @@ import java.util.function.Consumer;
 
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
@@ -18,6 +21,7 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 9.3
  */
+@Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractDelegatingDataContainer<K, V> implements DataContainer<K, V> {
 
    abstract DataContainer<K, V> delegate();
@@ -57,6 +61,7 @@ public abstract class AbstractDelegatingDataContainer<K, V> implements DataConta
       return delegate().sizeIncludingExpired();
    }
 
+   @Stop
    @Override
    public void clear() {
       delegate().clear();
