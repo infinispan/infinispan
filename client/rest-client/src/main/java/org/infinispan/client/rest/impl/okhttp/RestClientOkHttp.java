@@ -1,5 +1,8 @@
 package org.infinispan.client.rest.impl.okhttp;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OPENMETRICS_TYPE;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -54,6 +57,7 @@ public class RestClientOkHttp implements RestClient {
    private final RestClientConfiguration configuration;
    private final OkHttpClient httpClient;
    private final String baseURL;
+   private final String baseMetricsURL;
 
    public RestClientOkHttp(RestClientConfiguration configuration) {
       this.configuration = configuration;
@@ -111,6 +115,7 @@ public class RestClientOkHttp implements RestClient {
       httpClient = builder.build();
       ServerConfiguration server = configuration.servers().get(0);
       baseURL = String.format("%s://%s:%d", sslContext == null ? "http" : "https", server.host(), server.port()).replaceAll("//", "/");
+      baseMetricsURL = String.format("%s%s/v2/metrics", baseURL, configuration.contextPath()).replaceAll("//", "/");
    }
 
    @Override
@@ -192,6 +197,48 @@ public class RestClientOkHttp implements RestClient {
       return builder;
    }
 
+   @Override
+   public CompletionStage<RestResponse> metrics() {
+      return metricsGet("", false);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> metrics(String path) {
+      return metricsGet(path, false);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> metrics(boolean openMetricsFormat) {
+      return metricsGet("", openMetricsFormat);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> metrics(String path, boolean openMetricsFormat) {
+      return metricsGet(path, openMetricsFormat);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> metricsMetadata() {
+      return metricsOptions("");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> metricsMetadata(String path) {
+      return metricsOptions(path);
+   }
+
+   private CompletionStage<RestResponse> metricsGet(String path, boolean openMetricsFormat) {
+      Request.Builder builder = new Request.Builder()
+            .addHeader("ACCEPT", openMetricsFormat ? APPLICATION_OPENMETRICS_TYPE : APPLICATION_JSON_TYPE);
+      return execute(builder, baseURL, configuration.contextPath(), "v2", "metrics", path);
+   }
+
+   private CompletionStage<RestResponse> metricsOptions(String path) {
+      Request.Builder builder = new Request.Builder()
+            .method("OPTIONS", null);
+      return execute(builder, baseURL, configuration.contextPath(), "v2", "metrics", path);
+   }
+
    CompletionStage<RestResponse> execute(Request.Builder request) {
       CompletableFuture<RestResponse> response = new CompletableFuture<>();
       httpClient.newCall(request.build()).enqueue(new Callback() {
@@ -209,7 +256,10 @@ public class RestClientOkHttp implements RestClient {
    }
 
    CompletionStage<RestResponse> execute(String basePath, String... subPaths) {
-      Request.Builder builder = new Request.Builder();
+      return execute(new Request.Builder(), basePath, subPaths);
+   }
+
+   CompletionStage<RestResponse> execute(Request.Builder builder, String basePath, String... subPaths) {
       if (subPaths != null) {
          StringBuilder sb = new StringBuilder(basePath);
          for (String subPath : subPaths) {

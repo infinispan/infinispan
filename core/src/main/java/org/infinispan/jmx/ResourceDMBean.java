@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -163,7 +165,7 @@ public final class ResourceDMBean implements DynamicMBean {
          if (field != null) {
             return new InvokableFieldBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
                   attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-                  attributeMetadata.isIs(), field);
+                  attributeMetadata.isIs(), field, attributeMetadata.accessorFunction());
          }
       }
 
@@ -171,7 +173,7 @@ public final class ResourceDMBean implements DynamicMBean {
       Method getter = findGetter(objectClass, attributeMetadata.getName());
       return new InvokableSetterBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
             attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-            attributeMetadata.isIs(), getter, setter);
+            attributeMetadata.isIs(), getter, setter, attributeMetadata.accessorFunction());
    }
 
    private MBeanOperationInfo toJmxInfo(MBeanMetadata.OperationMetadata operationMetadata) {
@@ -223,6 +225,17 @@ public final class ResourceDMBean implements DynamicMBean {
          }
       }
       return al;
+   }
+
+   public Supplier<?> getAttributeValueSupplier(String attributeName) throws AttributeNotFoundException {
+      InvokableMBeanAttributeInfo i = atts.get(attributeName);
+      if (i == null) {
+         throw new AttributeNotFoundException("Unknown attribute '" + attributeName + "'");
+      }
+      if (i.attributeAccessor == null) {
+         throw new AttributeNotFoundException("Attribute '" + attributeName + "' does not have an accessor function.");
+      }
+      return () -> i.attributeAccessor.apply(obj);
    }
 
    @Override
@@ -360,9 +373,11 @@ public final class ResourceDMBean implements DynamicMBean {
    private static abstract class InvokableMBeanAttributeInfo {
 
       final MBeanAttributeInfo attributeInfo;
+      final Function<Object, ?> attributeAccessor;
 
-      InvokableMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs) {
+      InvokableMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Function<?, ?> attributeAccessor) {
          attributeInfo = new MBeanAttributeInfo(name, type, description, isReadable, isWritable, isIs);
+         this.attributeAccessor = (Function<Object, ?>) attributeAccessor;
       }
 
       abstract Object invoke(Attribute a) throws IllegalAccessException, InvocationTargetException;
@@ -371,8 +386,8 @@ public final class ResourceDMBean implements DynamicMBean {
    private final class InvokableFieldBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
       private final Field field;
 
-      InvokableFieldBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Field field) {
-         super(name, type, description, isReadable, isWritable, isIs);
+      InvokableFieldBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Field field, Function<?, ?> attributeAccessor) {
+         super(name, type, description, isReadable, isWritable, isIs, attributeAccessor);
          this.field = field;
       }
 
@@ -392,8 +407,8 @@ public final class ResourceDMBean implements DynamicMBean {
       private final Method setter;
       private final Method getter;
 
-      InvokableSetterBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Method getter, Method setter) {
-         super(name, type, description, isReadable, isWritable, isIs);
+      InvokableSetterBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Method getter, Method setter, Function<?, ?> attributeAccessor) {
+         super(name, type, description, isReadable, isWritable, isIs, attributeAccessor);
          this.setter = setter;
          this.getter = getter;
       }

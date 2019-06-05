@@ -292,7 +292,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       return getStatAsLong(REMOVE_MISSES);
    }
 
-   @ManagedAttribute(description = "Cluster wide total number of cache attribute put operations",
+   @ManagedAttribute(description = "Cluster wide total number of cache put operations",
          displayName = "Cluster wide total number of cache puts",
          measurementType = MeasurementType.TRENDSUP
    )

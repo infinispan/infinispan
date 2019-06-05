@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -87,14 +88,16 @@ public final class MBeanMetadata {
       private final boolean useSetter;
       private final String type;
       private final boolean is;
+      private final Function<?, ?> accessorFunction;  //optional
 
-      public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is) {
+      public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is, Function<?, ?> accessorFunction) {
          this.name = name;
          this.description = description;
          this.writable = writable;
          this.useSetter = useSetter;
          this.type = type;
          this.is = is;
+         this.accessorFunction = accessorFunction;
       }
 
       public String getName() {
@@ -121,6 +124,10 @@ public final class MBeanMetadata {
          return is;
       }
 
+      public Function<?, ?> accessorFunction() {
+         return accessorFunction;
+      }
+
       @Override
       public String toString() {
          return "AttributeMetadata{" +
@@ -129,6 +136,7 @@ public final class MBeanMetadata {
                ", writable=" + writable +
                ", type='" + type + '\'' +
                ", is=" + is +
+               ", accessorFunction=" + accessorFunction +
                '}';
       }
    }

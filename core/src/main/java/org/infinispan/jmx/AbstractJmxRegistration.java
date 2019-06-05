@@ -21,6 +21,7 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metrics.impl.ApplicationMetricsRegistry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -40,6 +41,9 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
 
    @Inject
    BasicComponentRegistry basicComponentRegistry;
+
+   @Inject
+   ApplicationMetricsRegistry applicationMetricsRegistry;
 
    volatile MBeanServer mBeanServer;
 
@@ -81,6 +85,9 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
                ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
                JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
                resourceDMBean.setObjectName(objectName);
+               if (applicationMetricsRegistry != null) {
+                  applicationMetricsRegistry.register(resourceDMBean);
+               }
             }
          } catch (Exception e) {
             throw new CacheException("Failure while registering MBeans", e);
@@ -98,6 +105,9 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
             for (ResourceDMBean resourceDMBean : resourceDMBeans) {
                if (resourceDMBean.getObjectName() != null) {
                   JmxUtil.unregisterMBean(resourceDMBean.getObjectName(), mBeanServer);
+                  if (applicationMetricsRegistry != null) {
+                     applicationMetricsRegistry.unregister(resourceDMBean);
+                  }
                }
             }
             resourceDMBeans = null;
@@ -208,6 +218,9 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
       ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
       JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
       resourceDMBean.setObjectName(objectName);
+      if (applicationMetricsRegistry != null) {
+         applicationMetricsRegistry.register(resourceDMBean);
+      }
       return objectName;
    }
 
@@ -235,6 +248,9 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
          JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
          resourceDMBean.setObjectName(objectName);
          resourceDMBeans.add(resourceDMBean);
+         if (applicationMetricsRegistry != null) {
+            applicationMetricsRegistry.register(resourceDMBean);
+         }
       } catch (Exception e) {
          throw new CacheException("Failure while registering MBeans", e);
       }

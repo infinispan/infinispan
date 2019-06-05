@@ -10,7 +10,6 @@ import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.InfinispanServerRule;
@@ -38,7 +37,8 @@ import org.junit.runners.Suite;
       HotRodCacheQueries.class,
       HotRodCacheContinuousQueries.class,
       HotRodListenerWithDslFilter.class,
-      IgnoreCaches.class
+      IgnoreCaches.class,
+      RestMetricsResource.class
 })
 public class ClusteredIT {
 
@@ -48,7 +48,7 @@ public class ClusteredIT {
                .numServers(2)
    );
 
-   static RemoteCache<Integer, User> createQueryableCache(InfinispanServerTestMethodRule testMethodRule, boolean indexed) {
+   static <K, V> RemoteCache<K, V> createQueryableCache(InfinispanServerTestMethodRule testMethodRule, boolean indexed) {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.marshaller(new ProtoStreamMarshaller());
 
@@ -61,7 +61,7 @@ public class ClusteredIT {
                .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
       }
 
-      RemoteCache<Integer, User> cache = testMethodRule.hotrod().withClientConfiguration(config).withServerConfiguration(builder).create();
+      RemoteCache<K, V> cache = testMethodRule.hotrod().withClientConfiguration(config).withServerConfiguration(builder).create();
       RemoteCacheManager remoteCacheManager = cache.getRemoteCacheManager();
 
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
@@ -72,5 +72,12 @@ public class ClusteredIT {
       Exceptions.unchecked(() -> MarshallerRegistration.registerMarshallers(MarshallerUtil.getSerializationContext(remoteCacheManager)));
 
       return cache;
+   }
+
+   static <K, V> RemoteCache<K, V> createStatsEnabledCache(InfinispanServerTestMethodRule testMethodRule) {
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true).hash().numOwners(2);
+      builder.jmxStatistics().enable();
+      return testMethodRule.hotrod().withClientConfiguration(new ConfigurationBuilder()).withServerConfiguration(builder).create();
    }
 }
