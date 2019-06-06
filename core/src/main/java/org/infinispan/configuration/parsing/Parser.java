@@ -1041,7 +1041,7 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               relativeTo = (String)reader.getProperty(reader.getAttributeValue(i));
+               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
                break;
             }
             case PATH: {
@@ -2237,7 +2237,7 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               relativeTo = (String) reader.getProperty(value);
+               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
                break;
             }
             case PATH: {

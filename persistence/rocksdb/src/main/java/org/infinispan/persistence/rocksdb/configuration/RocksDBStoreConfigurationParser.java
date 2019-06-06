@@ -60,7 +60,7 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
                break;
             }
             case RELATIVE_TO: {
-               relativeTo = (String) reader.getProperty(value);
+               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
                break;
             }
             case CLEAR_THRESHOLD: {
