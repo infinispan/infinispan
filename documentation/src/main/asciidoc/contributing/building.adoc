@@ -218,7 +218,7 @@ Make your changes, add your test, prove that it fails even on {brandname}'s upst
 If you have written any new code, it is highly recommended to validate formatting before submitting a Pull Request.
 This might be done by invoking:
 
- $ mvn checktyle:check
+ $ mvn checkstyle:check
 
 ===== Versions
 The archetypes generate poms with dependencies to specific versions of {brandname}.

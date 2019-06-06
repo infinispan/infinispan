@@ -4197,7 +4197,7 @@
                   <dependency>
                      <groupId>com.puppycrawl.tools</groupId>
                      <artifactId>checkstyle</artifactId>
-                     <version>${version.checkstyle}</version>
+                     <version>${versionx.com.puppycrawl.tools.checkstyle}</version>
                   </dependency>
                   <dependency>
                      <groupId>org.infinispan</groupId>
@@ -4385,7 +4385,7 @@
                   <id>checkstyle</id>
                   <phase>verify</phase>
                   <goals>
-                     <goal>checkstyle</goal>
+                     <goal>check</goal>
                   </goals>
                </execution>
             </executions>
