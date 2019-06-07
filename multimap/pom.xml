@@ -60,9 +60,9 @@
                         <Export-Package>
                             ${project.groupId}.multimap.*;version=${project.version};-split-package:=error
                         </Export-Package>
-                        <Include-Resources>
+                        <Include-Resource>
                             {maven-resources}
-                        </Include-Resources>
+                        </Include-Resource>
                     </instructions>
                 </configuration>
             </plugin>
