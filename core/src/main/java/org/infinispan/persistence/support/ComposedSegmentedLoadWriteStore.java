@@ -193,13 +193,15 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    @Override
    public void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> marshalledEntries) {
       Flowable.fromIterable(marshalledEntries)
-            // Separate out batches by segment
             .groupBy(me -> keyPartitioner.getSegment(me.getKey()))
-            .blockingForEach(groupedFlowable ->
+            .flatMap(groupedFlowable ->
                   groupedFlowable
                         .buffer(configuration.maxBatchSize())
-                        .blockingForEach(batch -> stores.get(groupedFlowable.getKey()).writeBatch(batch))
-            );
+                        .flatMap(batch -> {
+                           stores.get(groupedFlowable.getKey()).writeBatch(batch);
+                           return Flowable.empty();
+                        }), stores.length())
+            .blockingSubscribe();
    }
 
    @Override
