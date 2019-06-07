@@ -27,7 +27,7 @@ public class PassivationCacheLoaderInterceptor<K, V> extends CacheLoaderIntercep
    private static final boolean trace = log.isTraceEnabled();
 
    @Inject @ComponentName(PERSISTENCE_EXECUTOR)
-   private ExecutorService persistenceExecutor;
+   ExecutorService persistenceExecutor;
 
    static <K, V> CompletionStage<Void> asyncLoad(ExecutorService persistenceExecutor, CacheLoaderInterceptor<K, V> interceptor,
          Object key, FlagAffectedCommand cmd, InvocationContext ctx) {

@@ -145,7 +145,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    private boolean passivation;
 
    @Start
-   private void start() {
+   void start() {
       passivation = cacheConfiguration.persistence().usingStores() && cacheConfiguration.persistence().passivation();
    }
 

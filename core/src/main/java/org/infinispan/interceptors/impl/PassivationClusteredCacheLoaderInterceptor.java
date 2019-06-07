@@ -18,7 +18,7 @@ public class PassivationClusteredCacheLoaderInterceptor<K, V> extends ClusteredC
 
    @Inject
    @ComponentName(PERSISTENCE_EXECUTOR)
-   private ExecutorService persistenceExecutor;
+   ExecutorService persistenceExecutor;
 
    @Override
    protected CompletionStage<Void> loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {

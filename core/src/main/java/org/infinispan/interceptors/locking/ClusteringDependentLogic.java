@@ -190,9 +190,9 @@ public interface ClusteringDependentLogic {
       @Inject protected KeyPartitioner keyPartitioner;
 
       @Inject @ComponentName(ASYNC_OPERATIONS_EXECUTOR)
-      private ExecutorService cpuExecutor;
+      ExecutorService cpuExecutor;
       @Inject @ComponentName(PERSISTENCE_EXECUTOR)
-      private ExecutorService persistenceExecutor;
+      ExecutorService persistenceExecutor;
 
       protected boolean totalOrder;
       private WriteSkewHelper.KeySpecificLogic keySpecificLogic;
