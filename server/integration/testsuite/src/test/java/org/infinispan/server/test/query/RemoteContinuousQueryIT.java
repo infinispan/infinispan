@@ -136,7 +136,7 @@ public class RemoteContinuousQueryIT extends RemoteQueryBaseIT {
       }
       try {
          // no more elements expected here
-         Object e = queue.poll(5, TimeUnit.SECONDS);
+         Object e = queue.poll(500, TimeUnit.MILLISECONDS);
          assertNull("No more elements expected in queue!", e);
       } catch (InterruptedException e) {
          throw new AssertionError("Interrupted while waiting for condition", e);
