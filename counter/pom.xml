@@ -33,9 +33,10 @@
                         <Export-Package>
                             ${project.groupId}.counter.*;version=${project.version};-split-package:=error
                         </Export-Package>
-                        <Include-Resources>
-                            {maven-resources}
-                        </Include-Resources>
+                        <Include-Resource>
+                            {maven-resources},
+                            /META-INF/services=${project.basedir}/target/classes/META-INF/services
+                        </Include-Resource>
                     </instructions>
                 </configuration>
             </plugin>
