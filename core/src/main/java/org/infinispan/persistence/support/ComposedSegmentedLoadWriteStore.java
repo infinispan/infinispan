@@ -1,7 +1,6 @@
 package org.infinispan.persistence.support;
 
 import java.util.PrimitiveIterator;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -25,11 +24,11 @@ import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.reactive.RxJavaInterop;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
-import io.reactivex.internal.functions.Functions;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -198,16 +197,17 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
 
    @Override
    public CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
-      CompletableFuture<Void> future = new CompletableFuture<>();
-
-      Flowable.fromPublisher(publisher)
+      return Flowable.fromPublisher(publisher)
             .groupBy(me -> keyPartitioner.getSegment(me.getKey()))
             .flatMap(groupedFlowable ->
                   groupedFlowable
                         .buffer(configuration.maxBatchSize())
-                        .doOnNext(batch -> stores.get(groupedFlowable.getKey()).bulkUpdate(Flowable.fromIterable(batch))))
-            .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
-      return future;
+                        .flatMap(batch -> {
+                           CompletionStage<Void> stage = stores.get(groupedFlowable.getKey()).bulkUpdate(Flowable.fromIterable(batch));
+                           return RxJavaInterop.<Void>completionStageToPublisher().apply(stage);
+                           // Make sure to set the parallelism level to how many groups will be created
+                        }), stores.length())
+            .to(RxJavaInterop.flowableToCompletionStage());
    }
 
    @Override
