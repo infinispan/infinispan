@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.TYPE})
 @Inherited
 public @interface MBean {

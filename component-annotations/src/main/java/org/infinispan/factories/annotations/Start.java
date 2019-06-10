@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  * @since 4.0
  */
 @Target(METHOD)
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 public @interface Start {
    /**
     * Optional parameter which defines the order in which this method will be called when a component has more than

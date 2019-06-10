@@ -1,6 +1,5 @@
 package org.infinispan.stats.logic;
 
-import static java.util.concurrent.ForkJoinPool.commonPool;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.infinispan.stats.CacheStatisticCollector.convertNanosToMicro;
 import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
@@ -57,10 +56,9 @@ import org.infinispan.util.EmbeddedTimeService;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
-import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
-import org.infinispan.util.concurrent.locks.impl.StripedLockContainer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -165,11 +163,7 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
          if (i == 0) {
             LockManager actualLockManager = lockManager.getActual();
             LockContainer container = extractField(actualLockManager, "lockContainer");
-            if (container instanceof PerKeyLockContainer) {
-               ((PerKeyLockContainer) container).inject(commonPool(), lockManagerTimeService);
-            } else if (container instanceof StripedLockContainer) {
-               ((StripedLockContainer) container).inject(commonPool(), lockManagerTimeService);
-            }
+            TestingUtil.inject(container, new WithinThreadExecutor(), lockManagerTimeService);
          }
       }
    }

@@ -1,7 +1,6 @@
 package org.infinispan.test;
 
 import static java.io.File.separator;
-import static org.infinispan.commons.util.Util.EMPTY_OBJECT_ARRAY;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.fail;
@@ -13,12 +12,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
-import java.lang.reflect.Type;
 import java.security.Principal;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -28,7 +24,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -56,7 +51,6 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
@@ -66,6 +60,7 @@ import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
+import io.reactivex.Flowable;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.Version;
@@ -77,7 +72,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -94,12 +88,9 @@ import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.impl.TestComponentAccessors;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -143,8 +134,6 @@ import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.AssertJUnit;
-
-import io.reactivex.Flowable;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -1842,109 +1831,27 @@ public class TestingUtil {
     * Named setters are not handled either.
     */
    public static void inject(Object instance, Object... components) {
-      List<Field> fields = ReflectionUtil.getAllFields(instance.getClass(), Inject.class);
-      Map<Object, Object> unmatchedComponents = new IdentityHashMap<>();
-      for (Object component : components) {
-         unmatchedComponents.put(component, component);
-      }
-      for (Field f : fields) {
-         boolean lazy = f.getType() == ComponentRef.class;
-         Class<?> componentType = getFieldComponentType(f, lazy);
-
-         Object previousMatch = null;
-         for (Object component : components) {
-            Object currentMatch = null;
-            Object componentInstance = null;
-            String componentName = null;
-            if (component instanceof NamedComponent) {
-               NamedComponent nc = (NamedComponent) component;
-               ComponentName nameAnnotation = f.getAnnotation(ComponentName.class);
-               if (nameAnnotation != null && nameAnnotation.value().equals(nc.name)) {
-                  currentMatch = nc;
-                  componentInstance = nc.component;
-                  componentName = nc.name;
-               }
-            } else {
-               if (componentType.isInstance(component)) {
-                  currentMatch = component;
-                  componentInstance = component;
-                  componentName = componentType.getName();
-               }
-            }
-            if (currentMatch != null) {
-               if (previousMatch != null) {
-                  throw new IllegalArgumentException(
-                     "Two components match the field " + f.getName() + ": " + previousMatch + " and " + component);
-               }
-               Object value = lazy ? new RunningComponentRef(componentName, componentType, componentInstance) : componentInstance;
-               ReflectionUtil.setAccessibly(instance, f, value);
-               previousMatch = currentMatch;
-               unmatchedComponents.remove(currentMatch);
-            }
-         }
-      }
-      if (!unmatchedComponents.isEmpty()) {
-         throw new IllegalArgumentException("No fields match components " + unmatchedComponents.values());
-      }
-   }
-
-   private static Class<?> getFieldComponentType(Field f, boolean lazy) {
-      Class<?> componentType;
-      if (lazy) {
-         Type lazyType = ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0];
-         String typeName;
-         if (lazyType instanceof ParameterizedType) {
-            // Ignore any generic parameters on the component type
-            typeName = ((ParameterizedType) lazyType).getRawType().getTypeName();
-         } else {
-            typeName = lazyType.getTypeName();
-         }
-         try {
-            componentType = Class.forName(typeName);
-         } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Field class cannot be loaded: " + f, e);
-         }
-      } else {
-         componentType = f.getType();
-      }
-      return componentType;
+      TestComponentAccessors.wire(instance, components);
    }
 
    public static void startComponent(Object component) {
-      invokeLifecycle(component, Start.class);
+      try {
+         TestComponentAccessors.start(component);
+      } catch (Exception e) {
+         throw new TestException(e);
+      }
    }
 
    public static void stopComponent(Object component) {
-      invokeLifecycle(component, Stop.class);
-   }
-
-   public static void invokeLifecycle(Object component, Class<? extends Annotation> lifecycle) {
-      List<Method> methods = ReflectionUtil.getAllMethods(component.getClass(), lifecycle);
-      for (Method m : methods) {
-         ReflectionUtil.invokeAccessibly(component, m, EMPTY_OBJECT_ARRAY);
+      try {
+         TestComponentAccessors.stop(component);
+      } catch (Exception e) {
+         throw new TestException(e);
       }
    }
 
    public static Object named(String name, Object instance) {
-      return new NamedComponent(name, instance);
-   }
-
-   private static class NamedComponent {
-      private final String name;
-      private final Object component;
-
-      private NamedComponent(String name, Object component) {
-         this.name = name;
-         this.component = component;
-      }
-
-      @Override
-      public String toString() {
-         return "NamedComponent{" +
-                "name='" + name + '\'' +
-                ", component=" + component +
-                '}';
-      }
+      return new TestComponentAccessors.NamedComponent(name, instance);
    }
 
    public static void cleanUpDataContainerForCache(Cache<?, ?> cache) {

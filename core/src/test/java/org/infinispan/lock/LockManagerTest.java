@@ -1,6 +1,8 @@
 package org.infinispan.lock;
 
-import static java.util.concurrent.ForkJoinPool.commonPool;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+import static org.infinispan.test.TestingUtil.named;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -18,6 +20,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -27,6 +30,7 @@ import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.concurrent.locks.impl.DefaultLockManager;
@@ -44,63 +48,66 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "lock.LockManagerTest")
 public class LockManagerTest extends AbstractInfinispanTest {
 
-   private final ScheduledExecutorService mockExecutor;
+   private final ExecutorService asyncExecutor;
+   private final ScheduledExecutorService mockScheduledExecutor;
 
    public LockManagerTest() {
-      mockExecutor = mock(ScheduledExecutorService.class);
+      asyncExecutor = new WithinThreadExecutor();
+      mockScheduledExecutor = mock(ScheduledExecutorService.class);
       ScheduledFuture future = mock(ScheduledFuture.class);
       when(future.cancel(anyBoolean())).thenReturn(true);
       //noinspection unchecked
-      when(mockExecutor.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class))).thenReturn(future);
+      when(mockScheduledExecutor.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class))).thenReturn(future);
       //noinspection unchecked
-      when(mockExecutor.schedule(any(Callable.class), anyLong(), any(TimeUnit.class))).thenReturn(future);
+      when(mockScheduledExecutor.schedule(any(Callable.class), anyLong(), any(TimeUnit.class))).thenReturn(future);
    }
 
    public void testSingleCounterPerKey() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
-      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, mockExecutor);
+      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockManager, lockContainer, named(ASYNC_OPERATIONS_EXECUTOR, asyncExecutor),
+                         named(TIMEOUT_SCHEDULE_EXECUTOR, mockScheduledExecutor));
       doSingleCounterTest(lockManager);
    }
 
    public void testSingleCounterStripped() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       StripedLockContainer lockContainer = new StripedLockContainer(16);
-      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, mockExecutor);
+      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
       doSingleCounterTest(lockManager);
    }
 
    public void testMultipleCounterPerKey() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
-      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, mockExecutor);
+      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
       doMultipleCounterTest(lockManager);
    }
 
    public void testMultipleCounterStripped() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       StripedLockContainer lockContainer = new StripedLockContainer(16);
-      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, mockExecutor);
+      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
       doMultipleCounterTest(lockManager);
    }
 
    public void testTimeoutPerKey() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
-      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, mockExecutor);
+      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
       doTestWithFailAcquisition(lockManager);
    }
 
    public void testTimeoutStripped() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       StripedLockContainer lockContainer = new StripedLockContainer(16);
-      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, mockExecutor);
+      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
       doTestWithFailAcquisition(lockManager);
    }
 

@@ -1,12 +1,10 @@
-package org.infinispan.test;
+package org.infinispan.factories.impl;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.factories.impl.BasicComponentRegistry;
-import org.infinispan.factories.impl.ComponentRef;
-import org.infinispan.factories.impl.MBeanMetadata;
+import org.infinispan.test.RunningComponentRef;
 import org.mockito.Mockito;
 
 public class MockBasicComponentRegistry implements BasicComponentRegistry {

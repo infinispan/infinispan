@@ -1,22 +1,26 @@
 package org.infinispan.lock;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.testng.annotations.Test;
 
 @Test (groups = "functional", testName = "lock.SimpleLockContainerTest")
 public class SimpleLockContainerTest extends AbstractInfinispanTest {
 
+   private final ExecutorService executor = new WithinThreadExecutor();
    PerKeyLockContainer lc = new PerKeyLockContainer();
 
    public void simpleTest() throws Exception {
-      lc.inject(ForkJoinPool.commonPool(), TIME_SERVICE);
+      TestingUtil.inject(lc, executor, AbstractCacheTest.TIME_SERVICE);
       final String k1 = ab();
       final String k2 = ab2();
       assert k1 != k2 && k1.equals(k2);

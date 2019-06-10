@@ -45,8 +45,7 @@ import java.lang.annotation.Target;
  * @since 4.0
  */
 // ensure this annotation is available at runtime.
-@Retention(RetentionPolicy.RUNTIME)
-// only applies to methods and fields.
+@Retention(RetentionPolicy.CLASS)
 @Target({ ElementType.METHOD, ElementType.FIELD })
 public @interface Inject {
 }

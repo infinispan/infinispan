@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @since 4.0
  */
 @Target({ ElementType.PARAMETER, ElementType.FIELD })
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 public @interface ComponentName {
    String value();
 }
