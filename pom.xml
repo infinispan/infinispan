@@ -83,12 +83,12 @@
    <modules>
       <module>build-configuration</module>
       <module>checkstyle</module>
+      <module>component-annotations</module>
+      <module>component-processor</module>
       <module>commons</module>
       <module>commons-test</module>
       <module>plugins/infinispan-defaults-maven-plugin</module>
       <module>plugins/protocol-parser-generator-maven-plugin</module>
-      <module>component-annotations</module>
-      <module>component-processor</module>
       <module>core</module>
       <module>cloud</module>
       <module>extended-statistics</module>
@@ -2301,6 +2301,13 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-component-processor</artifactId>
+            <version>${version.infinispan}</version>
+            <!-- compile-only dependency -->
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
@@ -2722,6 +2729,8 @@
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
             <version>${versionx.org.jboss.logging.jboss-logging-processor}</version>
+            <!-- compile-only dependency -->
+            <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.logging</groupId>
@@ -3186,6 +3195,8 @@
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
             <version>${versionx.org.kohsuke.metainf-services.metainf-services}</version>
+            <!-- compile-only dependency -->
+            <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.latencyutils</groupId>
@@ -3631,7 +3642,7 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${versionx.org.testng.testng}</version>
-            <scope>provided</scope>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.tukaani</groupId>
@@ -3714,27 +3725,31 @@
             <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-common</artifactId>
             <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-common}</version>
-            <scope>provided</scope>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-common-domain</artifactId>
             <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-common-domain}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-container-managed</artifactId>
             <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-protocol-jmx</artifactId>
             <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-protocol-jmx}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-testenricher-msc</artifactId>
             <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-testenricher-msc}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.wildfly.client</groupId>
@@ -4016,6 +4031,12 @@
 
    <dependencies>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-component-annotations</artifactId>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
          <groupId>org.apache.logging.log4j</groupId>
          <artifactId>log4j-core</artifactId>
          <scope>test</scope>
@@ -4038,7 +4059,6 @@
       <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging-processor</artifactId>
-         <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>javax.annotation</groupId>

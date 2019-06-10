@@ -16,6 +16,10 @@
     <description>Infinispan Server - Infinispan Server Event Logger</description>
 
     <dependencies>
+       <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-component-processor</artifactId>
+       </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
@@ -32,13 +36,10 @@
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
-            <scope>provided</scope>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
-            <optional>true</optional>
         </dependency>
        <dependency>
           <groupId>org.infinispan</groupId>

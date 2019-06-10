@@ -26,11 +26,6 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-component-annotations</artifactId>
-      </dependency>
-      <!-- TODO remove dependency and only reference in annotation processor path -->
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-processor</artifactId>
       </dependency>
 
@@ -127,7 +122,6 @@
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
-         <optional>true</optional>
       </dependency>
 
       <dependency>
