@@ -97,6 +97,11 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-component-processor</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
@@ -135,7 +140,6 @@
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
-         <optional>true</optional>
       </dependency>
 
       <dependency>

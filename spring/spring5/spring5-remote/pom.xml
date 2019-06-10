@@ -29,6 +29,11 @@
             <artifactId>spring-session-core</artifactId>
             <scope>provided</scope>
         </dependency>
+       <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-component-processor</artifactId>
+          <scope>test</scope>
+       </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>

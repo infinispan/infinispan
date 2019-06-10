@@ -41,6 +41,10 @@
          <groupId>org.infinispan</groupId>
           <artifactId>infinispan-commons</artifactId>
       </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-component-processor</artifactId>
+      </dependency>
        <dependency>
            <groupId>org.infinispan</groupId>
            <artifactId>infinispan-multimap</artifactId>
@@ -70,7 +74,6 @@
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
-         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.testng</groupId>
