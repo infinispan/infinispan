@@ -322,7 +322,7 @@ public class JGroupsTransport implements Transport {
       for (XSiteBackup xsb : backups) {
          Address recipient = JGroupsAddressCache.fromJGroupsAddress(new SiteMaster(xsb.getSiteName()));
          long requestId = requests.newRequestId();
-         logRequest(requestId, command, recipient);
+         logRequest(requestId, command, recipient, "backup");
          SingleSiteRequest<ValidResponse> request =
                new SingleSiteRequest<>(SingleResponseCollector.validOnly(), requestId, requests, xsb.getSiteName());
          addRequest(request);
@@ -850,7 +850,7 @@ public class JGroupsTransport implements Transport {
          return CompletableFuture.completedFuture(collector.finish());
       }
       long requestId = requests.newRequestId();
-      logRequest(requestId, command, target);
+      logRequest(requestId, command, target, "single");
       SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, target);
       addRequest(request);
       boolean invalidTarget = request.onNewView(clusterView.getMembersSet());
@@ -868,7 +868,7 @@ public class JGroupsTransport implements Transport {
                                                ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
-      logRequest(requestId, command, targets);
+      logRequest(requestId, command, targets, "multi");
       if (targets.isEmpty()) {
          return CompletableFuture.completedFuture(collector.finish());
       }
@@ -897,7 +897,7 @@ public class JGroupsTransport implements Transport {
    public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
                                                     DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
-      logRequest(requestId, command, "all");
+      logRequest(requestId, command, null, "broadcast");
       Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
       MultiTargetRequest<T> request =
             new MultiTargetRequest<>(collector, requestId, requests, clusterView.getMembers(), excludedTarget);
@@ -924,7 +924,7 @@ public class JGroupsTransport implements Transport {
                                                     ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                     long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
-      logRequest(requestId, command, "all-required");
+      logRequest(requestId, command, requiredTargets, "broadcast");
       Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
       MultiTargetRequest<T> request =
          new MultiTargetRequest<>(collector, requestId, requests, requiredTargets, excludedTarget);
@@ -951,7 +951,7 @@ public class JGroupsTransport implements Transport {
                                                         ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                         long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
-      logRequest(requestId, command, "staggered " + targets);
+      logRequest(requestId, command, targets, "staggered");
       StaggeredRequest<T> request =
             new StaggeredRequest<>(collector, requestId, requests, targets, getAddress(), command, deliverOrder,
                                    timeout, unit, this);
@@ -986,7 +986,7 @@ public class JGroupsTransport implements Transport {
          for (Address target : targets) {
             ReplicableCommand command = commandGenerator.apply(target);
             boolean rsvp = isRsvpCommand(command);
-            logRequest(requestId, command, target);
+            logRequest(requestId, command, target, "mixed");
             sendCommand(target, command, requestId, deliverOrder, rsvp, true, checkView);
          }
       } catch (Throwable t) {
@@ -1191,9 +1191,9 @@ public class JGroupsTransport implements Transport {
       send(message);
    }
 
-   private void logRequest(long requestId, ReplicableCommand command, Object targets) {
+   private void logRequest(long requestId, ReplicableCommand command, Object targets, String type) {
       if (trace)
-         log.tracef("%s sending request %d to %s: %s", address, requestId, targets, command);
+         log.tracef("%s sending %s request %d to %s: %s", address, type, requestId, targets, command);
    }
 
    private void logCommand(ReplicableCommand command, Object targets) {
