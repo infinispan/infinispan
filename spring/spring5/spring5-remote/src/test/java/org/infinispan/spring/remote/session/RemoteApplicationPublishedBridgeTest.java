@@ -84,6 +84,11 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
       super.testUnregistration();
    }
 
+   @Override
+   public void testEventBridgeWithSessionIdChange() throws Exception {
+      super.testEventBridgeWithSessionIdChange();
+   }
+
    public void testReadEventWithoutValue() {
       RemoteApplicationPublishedBridge remoteApplicationPublishedBridge = new RemoteApplicationPublishedBridge(createSpringCache());
       String id = "1234";
