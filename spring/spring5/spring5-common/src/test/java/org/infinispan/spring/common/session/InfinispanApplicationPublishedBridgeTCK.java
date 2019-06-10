@@ -66,6 +66,23 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       EventsWaiter.assertSessionContent(() -> eventsCollector.getEvents(), SessionDeletedEvent.class, sessionToBeDeleted.getId(), "foo", "bar", 2, TimeUnit.SECONDS);
    }
 
+   @Test
+   public void testEventBridgeWithSessionIdChange() throws Exception {
+      EventsCollector eventsCollector = new EventsCollector();
+      sessionRepository.setApplicationEventPublisher(eventsCollector);
+
+      MapSession session = sessionRepository.createSession();
+
+      sessionRepository.save(session);
+      session.changeSessionId();
+      sessionRepository.save(session);
+
+      EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionCreatedEvent.class, 2, 2, TimeUnit.SECONDS);
+      EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDeletedEvent.class, 0, 2, TimeUnit.SECONDS);
+      EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionDestroyedEvent.class, 0, 2, TimeUnit.SECONDS);
+      EventsWaiter.assertNumberOfEvents(() -> eventsCollector.getEvents(), SessionExpiredEvent.class, 0, 2, TimeUnit.SECONDS);
+   }
+
    protected void init() throws Exception {
       springCache = createSpringCache();
       sessionRepository = createRepository(springCache);

@@ -1,5 +1,7 @@
 package org.infinispan.spring.embedded.session;
 
+import org.infinispan.Cache;
+import org.infinispan.context.Flag;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository;
 
@@ -18,5 +20,11 @@ public class InfinispanEmbeddedSessionRepository extends AbstractInfinispanSessi
     */
    public InfinispanEmbeddedSessionRepository(SpringCache cache) {
       super(cache, new EmbeddedApplicationPublishedBridge(cache));
+   }
+
+   @Override
+   protected void removeFromCacheWithoutNotifications(String originalId) {
+      Cache nativeCache = (Cache) cache.getNativeCache();
+      nativeCache.getAdvancedCache().withFlags(Flag.SKIP_LISTENER_NOTIFICATION).remove(originalId);
    }
 }
