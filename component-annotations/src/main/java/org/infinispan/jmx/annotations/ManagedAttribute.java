@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.FIELD})
 public @interface ManagedAttribute {
    String description() default "";

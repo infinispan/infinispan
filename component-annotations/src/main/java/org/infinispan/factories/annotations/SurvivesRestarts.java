@@ -18,10 +18,7 @@ import java.lang.annotation.Target;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-// ensure this annotation is available at runtime.
-@Retention(RetentionPolicy.RUNTIME)
-
-// only applies to classes.
+@Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
 @Inherited
 public @interface SurvivesRestarts {

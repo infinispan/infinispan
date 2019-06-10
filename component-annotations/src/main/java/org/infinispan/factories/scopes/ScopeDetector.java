@@ -7,7 +7,7 @@ import java.lang.annotation.Annotation;
  *
  * @author Manik Surtani
  * @since 4.0
- * @deprecated Since 10.0, no longer used
+ * @deprecated Since 10.0, does not work because
  */
 @Deprecated
 public class ScopeDetector {

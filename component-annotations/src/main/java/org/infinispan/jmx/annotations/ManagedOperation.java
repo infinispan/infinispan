@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * @author (various)
  * @since 4.0
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD})
 public @interface ManagedOperation {
    String description() default "";

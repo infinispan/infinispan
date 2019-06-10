@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  * @since 4.0
  */
 @Target(TYPE)
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 public @interface DefaultFactoryFor {
    /**
     * Components that may be constructed by a factory annotated with this annotation.

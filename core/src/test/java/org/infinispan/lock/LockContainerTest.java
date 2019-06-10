@@ -1,7 +1,5 @@
 package org.infinispan.lock;
 
-import static java.util.concurrent.ForkJoinPool.commonPool;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -10,12 +8,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
@@ -31,28 +32,29 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "unit", testName = "lock.LockContainerTest")
 public class LockContainerTest extends AbstractInfinispanTest {
+   private final ExecutorService executor = new WithinThreadExecutor();
 
    public void testSingleLockWithPerEntry() throws InterruptedException {
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
-      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockContainer, executor, AbstractCacheTest.TIME_SERVICE);
       doSingleLockTest(lockContainer, -1);
    }
 
    public void testSingleCounterTestPerEntry() throws ExecutionException, InterruptedException {
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
-      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockContainer, executor, AbstractCacheTest.TIME_SERVICE);
       doSingleCounterTest(lockContainer, -1);
    }
 
    public void testSingleLockWithStriped() throws InterruptedException {
       StripedLockContainer lockContainer = new StripedLockContainer(16);
-      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockContainer, executor, AbstractCacheTest.TIME_SERVICE);
       doSingleLockTest(lockContainer, 16);
    }
 
    public void testSingleCounterWithStriped() throws ExecutionException, InterruptedException {
       StripedLockContainer lockContainer = new StripedLockContainer(16);
-      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockContainer, executor, AbstractCacheTest.TIME_SERVICE);
       doSingleCounterTest(lockContainer, 16);
    }
 

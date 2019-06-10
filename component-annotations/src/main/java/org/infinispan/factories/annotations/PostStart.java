@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  * @deprecated Since 9.4, please use {@link Start} instead.
  */
 @Target(METHOD)
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 @Deprecated
 public @interface PostStart {
    /**
