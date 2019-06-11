@@ -382,6 +382,12 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public void notifyCacheEntryCreated(K key, V value, Metadata metadata, boolean pre,
                                        InvocationContext ctx, FlagAffectedCommand command) {
+      if (isNotificationAllowed(command, cacheEntryCreatedListeners)) {
+         doNotifyCreated(key, value, metadata, pre, ctx, command);
+      }
+   }
+
+   private void doNotifyCreated(K key, V value, Metadata metadata, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (!cacheEntryCreatedListeners.isEmpty() &&
           clusteringDependentLogic.running().commitType(command, ctx, extractSegment(command, key), false).isLocal()) {
          if (command != null && command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) return;
@@ -409,6 +415,12 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public void notifyCacheEntryModified(K key, V value, Metadata metadata, V previousValue, Metadata previousMetadata, boolean pre, InvocationContext ctx,
                                         FlagAffectedCommand command) {
+      if (isNotificationAllowed(command, cacheEntryModifiedListeners)) {
+         doNotifyModified(key, value, metadata, previousValue, previousMetadata, pre, ctx, command);
+      }
+   }
+
+   private void doNotifyModified(K key, V value, Metadata metadata, V previousValue, Metadata previousMetadata, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (!cacheEntryModifiedListeners.isEmpty() &&
           clusteringDependentLogic.running().commitType(command, ctx, extractSegment(command, key), false).isLocal()) {
          if (command != null && command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) return;

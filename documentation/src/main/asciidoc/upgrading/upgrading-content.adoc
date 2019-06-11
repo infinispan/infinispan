@@ -2,6 +2,13 @@
 
 === Client/Server changes
 
+==== SKIP_LISTENER_NOTIFICATION flag
+
+`SKIP_LISTENER_NOTIFICATION` notification flag has been added in the hotrod client.
+This flag only works when the client and the server version is 9.4.15 or higher.
+Spring Session integration uses this flag when a session id has changed.
+If you are using Spring Session with Infinispan 9.4, consider upgrading the client and the server.
+
 ==== Compatibility mode deprecation
 
 Compatibility mode has been deprecated and will be removed in the next {brandname} version.
