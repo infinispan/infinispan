@@ -20,6 +20,7 @@ package org.infinispan.client.hotrod;
  *                                      {@link org.infinispan.persistence.spi.CacheLoader}s.</li>
  *    <li>{@link #SKIP_INDEXING}        Used by the Query module only, it will prevent the indexes to be updated as a result
  *                                      of the current operations.
+ *    <li>{@link #SKIP_LISTENER_NOTIFICATION}   Used when an operation wants to skip notifications to the registered listeners
  * </ul>
  *
  * @author Mircea.Markus@jboss.com
@@ -54,7 +55,12 @@ public enum Flag {
    /**
     * Used by the Query module only, it will prevent the indexes to be updated as a result of the current operations.
     */
-   SKIP_INDEXING(0x0010)
+   SKIP_INDEXING(0x0010),
+   /**
+    * It will skip client listeners to be notified.
+    * @since 9.4.15
+    */
+   SKIP_LISTENER_NOTIFICATION(0x0020)
    ;
 
    private int flagInt;

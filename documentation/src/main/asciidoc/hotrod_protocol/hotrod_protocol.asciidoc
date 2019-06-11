@@ -3136,3 +3136,7 @@ Response (0x18):
 | ...                 | ...        | ...
 | opRequestCodeN      | 1 short    | Request opcode of the nth operation
 |==============================================================================
+
+A new flag has been added:
+
++0x0020+  = used when an operation wants to skip notifications to the registered listeners

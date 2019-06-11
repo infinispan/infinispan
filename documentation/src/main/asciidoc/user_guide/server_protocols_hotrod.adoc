@@ -805,6 +805,20 @@ even if the even is generated in a different node to where the listener is
 registered. To make them marshallable, either make them extend `Serializable`,
 `Externalizable`, or provide a custom `Externalizer` for them.
 
+[[skipping_notifications]]
+==== Skipping Notifications
+
+Include the `SKIP_LISTENER_NOTIFICATION` flag when calling remote API methods to
+perform operations without getting event notifications from the server.
+For example, to prevent listener notifications when creating or modifying values,
+set the flag as follows:
+
+[source,java]
+----
+remoteCache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).put(1, "one");
+----
+
+
 [[customizing_events]]
 ==== Customizing Events
 
