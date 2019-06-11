@@ -54,7 +54,11 @@ public enum Flag {
    /**
     * Used by the Query module only, it will prevent the indexes to be updated as a result of the current operations.
     */
-   SKIP_INDEXING(0x0010)
+   SKIP_INDEXING(0x0010),
+   /**
+    * It will skip client listeners to be notified.
+    */
+   SKIP_LISTENER_NOTIFICATION(0x0020)
    ;
 
    private int flagInt;
