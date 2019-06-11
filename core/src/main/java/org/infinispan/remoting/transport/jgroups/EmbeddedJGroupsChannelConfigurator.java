@@ -11,7 +11,9 @@ import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
 import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.config.RelayConfig;
+import org.jgroups.stack.Configurator;
 import org.jgroups.stack.Protocol;
+import org.jgroups.util.StackType;
 
 /**
  * A JGroups {@link ProtocolStackConfigurator} which
@@ -54,11 +56,18 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
 
    @Override
    public JChannel createChannel() throws Exception {
+      StackType stackType = org.jgroups.util.Util.getIpStackType();
       List<Protocol> protocols = new ArrayList<>(stack.size());
       for(ProtocolConfiguration c : stack) {
-         String className = ProtocolConfiguration.protocol_prefix + "." + c.getProtocolName();
-         Protocol protocol = Util.getInstanceStrict(className, this.getClass().getClassLoader());
-         protocol.setProperties(c.getProperties());
+         Protocol protocol;
+         try {
+            String className = ProtocolConfiguration.protocol_prefix + "." + c.getProtocolName();
+            protocol = Util.getInstanceStrict(className, this.getClass().getClassLoader());
+         } catch (ClassNotFoundException e) {
+            protocol = Util.getInstanceStrict(c.getProtocolName(), this.getClass().getClassLoader());
+         }
+         ProtocolConfiguration configuration = new ProtocolConfiguration(protocol.getName(), c.getProperties());
+         Configurator.initializeAttrs(protocol, configuration, stackType);
          protocols.add(protocol);
 
          if (protocol instanceof RELAY2) {
@@ -74,6 +83,7 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
                   siteConfig.addBridge(new RelayConfig.BridgeConfig(remoteSiteChannel.getName()) {
                      @Override
                      public JChannel createChannel() throws Exception {
+                        // TODO The bridge channel is created lazily, and Infinispan doesn't see any errors
                         return remoteSiteChannel.createChannel();
                      }
                   });

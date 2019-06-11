@@ -2,15 +2,11 @@ package org.infinispan.configuration.parsing;
 
 import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
-import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -23,7 +19,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.BeanUtils;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
@@ -34,22 +29,6 @@ import org.w3c.dom.Element;
  */
 public class XmlConfigHelper {
    private static final Log log = LogFactory.getLog(XmlConfigHelper.class);
-
-   /**
-    * Converts a String representing an XML snippet into an {@link org.w3c.dom.Element}.
-    *
-    * @param xml snippet as a string
-    * @return a DOM Element
-    * @throws Exception if unable to parse the String or if it doesn't contain valid XML.
-    */
-   public static Element stringToElement(String xml) throws Exception {
-      ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes("utf8"));
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-      DocumentBuilder builder = factory.newDocumentBuilder();
-      Document d = builder.parse(bais);
-      bais.close();
-      return d.getDocumentElement();
-   }
 
    public static Object valueConverter(@SuppressWarnings("rawtypes") Class klass, String value) {
       if (klass == Integer.class) {

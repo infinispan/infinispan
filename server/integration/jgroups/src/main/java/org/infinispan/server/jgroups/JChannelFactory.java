@@ -21,6 +21,26 @@
  */
 package org.infinispan.server.jgroups;
 
+import static org.infinispan.server.jgroups.logging.JGroupsLogger.ROOT_LOGGER;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Supplier;
+
 import org.infinispan.server.jgroups.logging.JGroupsLogger;
 import org.infinispan.server.jgroups.security.RealmAuthorizationCallbackHandler;
 import org.infinispan.server.jgroups.security.SaslClientCallbackHandler;
@@ -41,7 +61,6 @@ import org.jgroups.annotations.Property;
 import org.jgroups.blocks.RequestCorrelator;
 import org.jgroups.blocks.RequestCorrelator.Header;
 import org.jgroups.conf.ClassConfigurator;
-import org.jgroups.conf.PropertyConverters;
 import org.jgroups.conf.ProtocolStackConfigurator;
 import org.jgroups.fork.UnknownForkHandler;
 import org.jgroups.protocols.FORK;
@@ -54,28 +73,9 @@ import org.jgroups.protocols.relay.config.RelayConfig;
 import org.jgroups.stack.Configurator;
 import org.jgroups.stack.Protocol;
 import org.jgroups.stack.ProtocolStack;
+import org.jgroups.util.StackType;
 import org.jgroups.util.Util;
 import org.wildfly.security.manager.WildFlySecurityManager;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.function.Supplier;
-
-import static org.infinispan.server.jgroups.logging.JGroupsLogger.ROOT_LOGGER;
 
 /**
  * Factory for creating fork-able channels.
@@ -111,6 +111,7 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
 
         // Relay protocol is added to stack programmatically, not via ProtocolStackConfigurator
         RelayConfiguration relayConfig = this.configuration.getRelay();
+        StackType ipStackType = Util.getIpStackType();
         if (relayConfig != null) {
             String localSite = relayConfig.getSiteName();
             List<RemoteSiteConfiguration> remoteSites = this.configuration.getRelay().getRemoteSites();
@@ -144,8 +145,9 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
                     }
                 }
             }
-            Configurator.resolveAndAssignFields(relay, relayConfig.getProperties());
-            Configurator.resolveAndInvokePropertyMethods(relay, relayConfig.getProperties());
+            org.jgroups.conf.ProtocolConfiguration relayProtocolConfig =
+               new org.jgroups.conf.ProtocolConfiguration(relay.getName(), relayConfig.getProperties());
+            Configurator.initializeAttrs(relay, relayProtocolConfig, ipStackType);
             stack.addProtocol(relay);
             relay.init();
         }
@@ -209,13 +211,12 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
             } else {
                 props.put("client_password", ""); // HACKY
             }
-            Map<String, String> saslProps = props.containsKey("sasl_props")
-                    ? Util.parseCommaDelimitedProps(props.get("sasl_props")) : new HashMap<>();
+            org.jgroups.conf.ProtocolConfiguration protocolConfiguration =
+                new org.jgroups.conf.ProtocolConfiguration(sasl.getName(), props);
+            Configurator.initializeAttrs(sasl, protocolConfiguration, ipStackType);
             sasl.setServerCallbackHandler(new RealmAuthorizationCallbackHandler(securityRealm, mech,
-                    clusterRole != null ? clusterRole : id, saslProps));
-            props.put("sasl_props", new PropertyConverters.StringProperties().toString(saslProps));
-            Configurator.resolveAndAssignFields(sasl, props);
-            Configurator.resolveAndInvokePropertyMethods(sasl, props);
+                                                                                clusterRole != null ? clusterRole : id,
+                                                                                sasl.getSaslProps()));
             channel.getProtocolStack().insertProtocol(sasl, ProtocolStack.Position.BELOW, GMS.class);
             sasl.init();
         }
@@ -331,12 +332,7 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
         final Map<String, String> properties = new HashMap<>(stack.getDefaultProperties(protocolName));
         properties.putAll(protocol.getProperties());
         try {
-            return new org.jgroups.conf.ProtocolConfiguration(protocol.getProtocolClassName(), properties, stack.getModuleLoader().loadModule(module).getClassLoader()) {
-                @Override
-                public Map<String, String> getOriginalProperties() {
-                    return properties;
-                }
-            };
+            return new org.jgroups.conf.ProtocolConfiguration(protocol.getProtocolClassName(), properties, stack.getModuleLoader().loadModule(module).getClassLoader());
         } catch (ModuleLoadException e) {
             throw new IllegalArgumentException(e);
         }
@@ -362,7 +358,7 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
 
     private static void setSocketBindingProperty(Introspector introspector, org.jgroups.conf.ProtocolConfiguration config, String name, String value) {
         try {
-            Map<String, String> properties = config.getOriginalProperties();
+            Map<String, String> properties = config.getProperties();
             if (properties.containsKey(name)) {
                 ROOT_LOGGER.unableToOverrideSocketBindingValue(name, config.getProtocolName(), value, properties.get(name));
             }
