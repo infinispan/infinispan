@@ -6,6 +6,7 @@ import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManagerImpl;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManagerImpl;
+import org.infinispan.reactive.publisher.impl.NonSegmentedLocalPublisherManagerImpl;
 
 /**
  * Factory that allows creation of a {@link LocalPublisherManager} or {@link ClusterPublisherManager} based on the provided
@@ -19,6 +20,9 @@ public class PublisherManagerFactory extends AbstractNamedCacheComponentFactory 
    @Override
    public Object construct(String componentName) {
       if (componentName.equals(LocalPublisherManager.class.getName())) {
+         if (configuration.persistence().usingStores() && !configuration.persistence().usingSegmentedStore()) {
+            return new NonSegmentedLocalPublisherManagerImpl<>();
+         }
          return new LocalPublisherManagerImpl<>();
       }
       CacheMode cacheMode = configuration.clustering().cacheMode();

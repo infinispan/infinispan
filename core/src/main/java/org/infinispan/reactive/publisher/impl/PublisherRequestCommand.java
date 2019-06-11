@@ -145,10 +145,8 @@ public class PublisherRequestCommand<K> extends BaseRpcCommand implements Topolo
 
    @Override
    public boolean canBlock() {
-      // When the stream isn't parallel the data container iteration is done by the calling thread - and the user
-      // provides the transformation, so it could block - this technically slows down sequential for some cases, but
-      // is much safer
-      return !parallelStream;
+      // This command is guaranteed to only use CPU now - stores are done in a blocking thread pool
+      return false;
    }
 
    @Override

@@ -6,6 +6,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
@@ -120,30 +121,38 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    }
 
    @Override
-   public Flowable<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
-      return PersistenceUtil.parallelizePublisher(segments, scheduler, i -> {
+   public Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
+      IntFunction<Publisher<K>> publisherFunction = i -> {
          AdvancedLoadWriteStore<K, V> alws = stores.get(i);
          if (alws != null) {
             return alws.publishKeys(filter);
          }
          return Flowable.empty();
-      });
+      };
+      if (segments.size() == 1) {
+         return publisherFunction.apply(segments.iterator().nextInt());
+      }
+      return PersistenceUtil.parallelizePublisher(segments, scheduler, publisherFunction);
    }
 
    @Override
-   public Flowable<K> publishKeys(Predicate<? super K> filter) {
+   public Publisher<K> publishKeys(Predicate<? super K> filter) {
       return publishKeys(IntSets.immutableRangeSet(stores.length()), filter);
    }
 
    @Override
    public Publisher<MarshallableEntry<K, V>> entryPublisher(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
-      return PersistenceUtil.parallelizePublisher(segments, scheduler, i -> {
+      IntFunction<Publisher<MarshallableEntry<K, V>>> publisherFunction = i -> {
          AdvancedLoadWriteStore<K, V> alws = stores.get(i);
          if (alws != null) {
             return alws.entryPublisher(filter, fetchValue, fetchMetadata);
          }
          return Flowable.empty();
-      });
+      };
+      if (segments.size() == 1) {
+         return publisherFunction.apply(segments.iterator().nextInt());
+      }
+      return PersistenceUtil.parallelizePublisher(segments, scheduler, publisherFunction);
    }
 
    @Override

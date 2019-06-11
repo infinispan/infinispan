@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.impl;
 
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.NOT_ASYNC;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
 
@@ -53,6 +54,8 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
@@ -704,6 +707,26 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return new LocalCacheStream<>(new PersistenceEntryStreamSupplier<>(cache, iceFactory, partitioner::getSegment,
                cacheSet.stream(), persistenceManager), parallel, cache.getAdvancedCache().getComponentRegistry());
       }
+
+      @Override
+      public Publisher<CacheEntry<K, V>> localPublisher(int segment) {
+         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+         Flowable<CacheEntry<K, V>> inMemoryFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segment))
+               .doOnNext(ce -> seenKeys.add(ce.getKey()));
+         Flowable<CacheEntry<K, V>> loaderFlowable = Flowable.fromPublisher(persistenceManager.<K, V>publishEntries(IntSets.immutableSet(segment), k -> !seenKeys.contains(k), true, true, BOTH))
+               .map(me -> PersistenceUtil.convert(me, iceFactory));
+         return Flowable.concat(inMemoryFlowable, loaderFlowable);
+      }
+
+      @Override
+      public Publisher<CacheEntry<K, V>> localPublisher(IntSet segments) {
+         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+         Flowable<CacheEntry<K, V>> inMemoryFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segments))
+               .doOnNext(ce -> seenKeys.add(ce.getKey()));
+         Flowable<CacheEntry<K, V>> loaderFlowable = Flowable.fromPublisher(persistenceManager.<K, V>publishEntries(segments, k -> !seenKeys.contains(k), true, true, BOTH))
+               .map(me -> PersistenceUtil.convert(me, iceFactory));
+         return Flowable.concat(inMemoryFlowable, loaderFlowable);
+      }
    }
 
    private class WrappedKeySet extends AbstractLoaderSet<K> implements CacheSet<K> {
@@ -769,6 +792,25 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       protected CacheStream<K> getStream(boolean parallel) {
          return new LocalCacheStream<>(new PersistenceKeyStreamSupplier<>(cache, partitioner::getSegment,
                cacheSet.stream(), persistenceManager), parallel, cache.getAdvancedCache().getComponentRegistry());
+      }
+
+
+      @Override
+      public Publisher<K> localPublisher(int segment) {
+         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+         Flowable<K> inMemoryFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segment))
+               .doOnNext(seenKeys::add);
+         Publisher<K> loaderPublisher = persistenceManager.publishKeys(IntSets.immutableSet(segment), k -> !seenKeys.contains(k), BOTH);
+         return Flowable.concat(inMemoryFlowable, loaderPublisher);
+      }
+
+      @Override
+      public Publisher<K> localPublisher(IntSet segments) {
+         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+         Flowable<K> inMemoryFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segments))
+               .doOnNext(seenKeys::add);
+         Publisher<K> loaderPublisher = persistenceManager.publishKeys(segments, k -> !seenKeys.contains(k), BOTH);
+         return Flowable.concat(inMemoryFlowable, loaderPublisher);
       }
    }
 }

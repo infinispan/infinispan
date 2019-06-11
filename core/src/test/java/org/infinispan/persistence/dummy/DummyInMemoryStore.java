@@ -182,6 +182,9 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
          if (filter != null) {
             f = f.filter(e -> filter.test(e.getKey()));
          }
+         if (configuration.slow()) {
+            f = f.doOnNext(ignore -> Thread.sleep(SLOW_STORE_WAIT));
+         }
          return f.map(entry -> deserialize(entry.getKey(), entry.getValue()))
                .filter(me -> !isExpired(me, currentTimeMillis));
       });
