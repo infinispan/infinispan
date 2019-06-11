@@ -18,7 +18,6 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import io.reactivex.Flowable;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -28,6 +27,8 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
 import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * DataContainer implementation that internally stores entries in an array of maps. This array is indexed by
@@ -68,9 +69,12 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       shouldStopSegments = configuration.clustering().cacheMode().isDistributed();
 
       notExpiredPredicate = ice -> {
+         if (!ice.canExpire()) {
+            return true;
+         }
          // TODO: should we optimize wallClockTime per entry invocation?
          long currentTime = timeService.wallClockTime();
-         return !ice.canExpire() || !(ice.isExpired(currentTime) && expirationManager.entryExpiredInMemoryFromIteration(ice, currentTime).join() == Boolean.TRUE);
+         return !(ice.isExpired(currentTime) && expirationManager.entryExpiredInMemoryFromIteration(ice, currentTime).join() == Boolean.TRUE);
       };
    }
 

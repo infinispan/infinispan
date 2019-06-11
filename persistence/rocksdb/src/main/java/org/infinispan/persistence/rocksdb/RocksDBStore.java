@@ -1073,17 +1073,26 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
 
         @Override
         Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
-            return PersistenceUtil.parallelizePublisher(segments == null ? IntSets.immutableRangeSet(handles.length()) : segments,
-                  scheduler, i -> publish(i, it -> Flowable.fromIterable(() -> new RocksKeyIterator(it, filter))));
+            Function<RocksIterator, Flowable<K>> function = it -> Flowable.fromIterable(() -> new RocksKeyIterator(it, filter));
+            return handleIteratorFunction(function, segments);
         }
 
         @Override
         Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+            Function<RocksIterator, Flowable<MarshallableEntry<K, V>>> function = it -> Flowable.fromIterable(() -> {
+                long now = timeService.wallClockTime();
+                return new RocksEntryIterator(it, filter, fetchValue, fetchMetadata, now);
+            });
+            return handleIteratorFunction(function, segments);
+        }
+
+        <R> Publisher<R> handleIteratorFunction(Function<RocksIterator, Flowable<R>> function, IntSet segments) {
+            // Short circuit if only a single segment - assumed to be invoked from persistence thread
+            if (segments != null && segments.size() == 1) {
+                return publish(segments.iterator().nextInt(), function);
+            }
             return PersistenceUtil.parallelizePublisher(segments == null ? IntSets.immutableRangeSet(handles.length()) : segments,
-                  scheduler, i -> publish(i, it -> Flowable.fromIterable(() -> {
-                      long now = timeService.wallClockTime();
-                      return new RocksEntryIterator(it, filter, fetchValue, fetchMetadata, now);
-                  })));
+                  scheduler, i -> publish(i,  function));
         }
 
         @Override
