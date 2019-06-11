@@ -101,18 +101,23 @@ public class HotRodHeader {
 
    AdvancedCache<byte[], byte[]> getOptimizedCache(AdvancedCache<byte[], byte[]> c,
                                                    boolean transactional, boolean clustered) {
+      AdvancedCache<byte[], byte[]> optCache = c;
+
+      if (hasFlag(ProtocolFlag.SkipListenerNotification)) {
+         optCache = c.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
+      }
+
       if (version < 20) {
          if (!hasFlag(ProtocolFlag.ForceReturnPreviousValue)) {
             switch (op) {
                case PUT:
                case PUT_IF_ABSENT:
-                  return c.withFlags(Flag.IGNORE_RETURN_VALUES);
+                  return optCache.withFlags(Flag.IGNORE_RETURN_VALUES);
             }
          }
-         return c;
+         return optCache;
       }
 
-      AdvancedCache<byte[], byte[]> optCache = c;
       if (clustered && !transactional && op.isConditional()) {
          log.warnConditionalOperationNonTransactional(op.toString());
       }
