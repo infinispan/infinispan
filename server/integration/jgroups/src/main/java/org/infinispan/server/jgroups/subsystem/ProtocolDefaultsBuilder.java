@@ -56,7 +56,7 @@ public class ProtocolDefaultsBuilder implements Builder<ProtocolDefaults>, Value
         URL url = find(resource, JGroupsExtension.class.getClassLoader());
         ROOT_LOGGER.debugf("Loading JGroups protocol defaults from %s", url.toString());
         try {
-            return XmlConfigurator.getInstance(url);
+            return XmlConfigurator.getInstance(url.openStream());
         } catch (IOException e) {
             throw new IllegalArgumentException(JGroupsLogger.ROOT_LOGGER.parserFailure(url));
         }

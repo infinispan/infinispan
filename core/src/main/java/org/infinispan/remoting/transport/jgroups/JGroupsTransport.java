@@ -49,7 +49,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
-import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -591,7 +590,8 @@ public class JGroupsTransport implements Transport {
                log.ambiguousConfigurationFiles(Util.toStr(confs));
             }
             try {
-               channel = new JChannel(confs.iterator().next());
+               URL url = confs.iterator().next();
+               channel = new JChannel(url.openStream());
             } catch (Exception e) {
                throw log.errorCreatingChannelFromConfigFile(cfg, e);
             }
@@ -600,7 +600,7 @@ public class JGroupsTransport implements Transport {
          if (channel == null && props.containsKey(CONFIGURATION_XML)) {
             cfg = props.getProperty(CONFIGURATION_XML);
             try {
-               channel = new JChannel(XmlConfigHelper.stringToElement(cfg));
+               channel = new JChannel(new ByteArrayInputStream(cfg.getBytes()));
             } catch (Exception e) {
                throw log.errorCreatingChannelFromXML(cfg, e);
             }
@@ -619,8 +619,8 @@ public class JGroupsTransport implements Transport {
       if (channel == null) {
          log.unableToUseJGroupsPropertiesProvided(props);
          try {
-            channel = new JChannel(
-                  fileLookup.lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.classLoader()));
+            URL url = fileLookup.lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.classLoader());
+            channel = new JChannel(url.openStream());
          } catch (Exception e) {
             throw log.errorCreatingChannelFromConfigFile(DEFAULT_JGROUPS_CONFIGURATION_FILE, e);
          }
