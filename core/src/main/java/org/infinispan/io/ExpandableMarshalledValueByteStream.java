@@ -6,7 +6,9 @@ package org.infinispan.io;
  *
  * @author Manik Surtani
  * @since 5.1
+ * @deprecated since 10.0
  */
+@Deprecated
 public final class ExpandableMarshalledValueByteStream extends MarshalledValueByteStream {
    /**
     * The buffer where data is stored.

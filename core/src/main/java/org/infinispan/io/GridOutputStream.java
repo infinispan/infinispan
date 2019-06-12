@@ -9,7 +9,9 @@ import org.infinispan.Cache;
  * @author Bela Ban
  * @author Marko Luksa
  * @author Manik Surtani
+ * @deprecated since 10.0
  */
+@Deprecated
 public class GridOutputStream extends OutputStream {
 
    private int index;                     // index into the file for writing

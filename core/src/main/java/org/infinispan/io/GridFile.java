@@ -26,7 +26,9 @@ import org.jgroups.util.Util;
  *
  * @author Bela Ban
  * @author Marko Luksa
+ * @deprecated since 10.0
  */
+@Deprecated
 public class GridFile extends File {
    private static final long serialVersionUID = 552534285862004134L;
    private static final Metadata ROOT_DIR_METADATA = new Metadata(0, 0, 0, Metadata.DIR);

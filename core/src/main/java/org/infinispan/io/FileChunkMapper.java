@@ -10,7 +10,9 @@ import org.jgroups.logging.LogFactory;
  * is either chunkSize bytes long or less than that in the case of the last chunk.
  *
  * @author Marko Luksa
+ * @deprecated since 10.0
  */
+@Deprecated
 class FileChunkMapper {
 
    private static final Log log = LogFactory.getLog(FileChunkMapper.class);

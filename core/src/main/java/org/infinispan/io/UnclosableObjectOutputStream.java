@@ -9,7 +9,9 @@ import java.io.ObjectOutput;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @deprecated since 10.0
  */
+@Deprecated
 public class UnclosableObjectOutputStream implements ObjectOutput {
 
    private final ObjectOutput delegate;
