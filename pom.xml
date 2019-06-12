@@ -158,6 +158,7 @@
       <bnd.consumer.policy>$&lt;range;[==,+)&gt;</bnd.consumer.policy>
       <bnd.provider.policy>$&lt;range;[==,=+)&gt;</bnd.provider.policy>
       <buildDirectory>target</buildDirectory>
+      <commitProtoLockChanges>false</commitProtoLockChanges>
       <defaultExcludedJUnitGroups>org.infinispan.commons.test.categories.Unstable,org.infinispan.commons.test.categories.Stress,org.infinispan.commons.test.categories.Profiling</defaultExcludedJUnitGroups>
       <!-- unstable and stress because we can have them inside a functional class, for example -->
       <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
@@ -4365,6 +4366,14 @@
                <groupId>kr.motd.maven</groupId>
                <artifactId>os-maven-plugin</artifactId>
                <version>1.4.1.Final</version>
+            </plugin>
+            <plugin>
+               <groupId>org.infinispan.maven-plugins</groupId>
+               <artifactId>proto-schema-compatibility</artifactId>
+               <version>${version.infinispan.maven-plugins}</version>
+               <configuration>
+                  <commitProtoLock>${commitProtoLockChanges}</commitProtoLock>
+               </configuration>
             </plugin>
          </plugins>
       </pluginManagement>
