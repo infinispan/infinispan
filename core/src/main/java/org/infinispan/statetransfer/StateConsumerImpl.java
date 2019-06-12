@@ -303,7 +303,7 @@ public class StateConsumerImpl implements StateConsumer {
       IntSet newWriteSegments = getOwnedSegments(newWriteCh);
       // Owned segments
       dataContainer.addSegments(newWriteSegments);
-      persistenceManager.addSegments(newWriteSegments);
+      CompletionStages.join(persistenceManager.addSegments(newWriteSegments));
 
       // We need to track changes so that user puts during conflict resolution are prioritised over MergePolicy updates
       // Tracking is stopped once the subsequent rebalance completes
