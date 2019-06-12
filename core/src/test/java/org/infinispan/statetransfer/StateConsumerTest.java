@@ -156,6 +156,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       LocalPublisherManager localPublisherManager = mock(LocalPublisherManager.class);
 
       when(persistenceManager.removeSegments(any())).thenReturn(CompletableFuture.completedFuture(false));
+      when(persistenceManager.addSegments(any())).thenReturn(CompletableFuture.completedFuture(false));
       when(persistenceManager.publishKeys(any(), any())).thenReturn(Flowable.empty());
 
       when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(SmallIntSet.class)))
