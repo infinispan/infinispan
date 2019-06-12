@@ -346,6 +346,39 @@ Example:
 }
 ----
 
+===== Cluster
+
+====== `GET /v2/cluster`
+
+Exposes information about the cluster.
+
+Example response:
+
+[source,json]
+----
+{
+   "clusterName":"ISPN",
+   "healthStatus":"HEALTHY",
+   "numberOfNodes":2,
+   "nodeNames":[
+      "NodeA",
+      "NodeB"
+   ]
+}
+----
+
+* _clusterName_: The name of the cluster as defined in the configuration
+* _healthStatus_:
+   ** UNHEALTHY in case any of the caches are in degraded mode
+   ** REBALANCING if any cache is in rebalancing state
+   ** HEALTHY otherwise
+* _numberOfNodes_: total number of members in the cluster. For non-clustered (standalone) servers, it will return 0
+* _nodeNames_: array containing all members, or empty for standalone servers.
+
+====== `HEAD /v2/cluster`
+
+Check for existence of the cluster. A successful response code can be used to check if the REST server is started and serving requests
+
 ===== Counters
 
 ====== `POST /v2/counters/{counterName}`
