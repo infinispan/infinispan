@@ -8,7 +8,9 @@ import java.io.ObjectInput;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @deprecated since 10.0
  */
+@Deprecated
 public class UnclosableObjectInputStream implements ObjectInput {
    private final ObjectInput delegate;
 

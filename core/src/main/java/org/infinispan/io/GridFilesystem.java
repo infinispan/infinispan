@@ -16,7 +16,9 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Bela Ban
  * @author Marko Luksa
+ * @deprecated since 10.0
  */
+@Deprecated
 public class GridFilesystem {
 
    private static final Log log = LogFactory.getLog(GridFilesystem.class);

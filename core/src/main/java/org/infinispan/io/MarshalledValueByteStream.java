@@ -14,7 +14,9 @@ import org.jboss.marshalling.ByteOutput;
  * @author Manik Surtani
  * @author Sanne Grinovero
  * @since 5.1
+ * @deprecated since 10.0
  */
+@Deprecated
 public abstract class MarshalledValueByteStream extends OutputStream implements ByteOutput {
 
    public abstract int size();

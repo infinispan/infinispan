@@ -2,7 +2,7 @@
 ==  Grid File System
 {brandname}'s GridFileSystem is an experimental API that exposes an {brandname}-backed data grid as a file system.
 
-WARNING: This is an _experimental_ API.  Use at your own risk.
+WARNING: This is a deprecated API that will be removed in a future version.
 
 Specifically, the API works as an extension to the JDK's link:{jdkdocroot}/java/io/File.html[File] , link:{jdkdocroot}/java/io/InputStream.html[InputStream] and link:{jdkdocroot}/java/io/OutputStream.html[OutputStream] classes: specifically, link:{javadocroot}/org/infinispan/io/GridFile.html[GridFile], link:{javadocroot}/org/infinispan/io/GridInputStream.html[GridInputStream] and link:{javadocroot}/org/infinispan/io/GridOutputStream.html[GridOutputStream].
 A helper class, link:{javadocroot}/org/infinispan/io/GridFilesystem.html[GridFilesystem], is also included.

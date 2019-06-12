@@ -4,7 +4,9 @@ package org.infinispan.io;
  * For compatibility
  *
  * @author Manik Surtani
+ * @deprecated since 10.0
  */
+@Deprecated
 public class ModularArithmetic {
    public static final boolean CANNOT_ASSUME_DENOM_IS_POWER_OF_TWO = Boolean.getBoolean("infinispan.compat");
 

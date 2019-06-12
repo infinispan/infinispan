@@ -10,7 +10,9 @@ import org.infinispan.Cache;
 
 /**
  * @author Marko Luksa
+ * @deprecated since 10.0
  */
+@Deprecated
 public class WritableGridFileChannel implements WritableByteChannel {
 
    private final GridOutputStream gridOutputStream;
