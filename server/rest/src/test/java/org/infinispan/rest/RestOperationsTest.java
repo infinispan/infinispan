@@ -482,4 +482,19 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       assertEquals(0, Long.parseLong(response.getContentAsString()));
    }
 
+   @Test
+   public void testCluster() throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/cluster", restServer().getPort());
+      ContentResponse response = client.newRequest(url).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      JsonNode jsonNode = new ObjectMapper().readTree(response.getContent());
+      assertEquals(jsonNode.get("healthStatus").asText(), "HEALTHY");
+      assertEquals(jsonNode.get("nodeNames").size(), 2);
+
+      response = client.newRequest(url).method(HttpMethod.HEAD).send();
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasNoContent();
+   }
+
 }

@@ -12,6 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 public class HealthImpl implements Health {
 
     private final EmbeddedCacheManager embeddedCacheManager;
+    private final HostInfo hostInfoImpl = new HostInfoImpl();
 
     public HealthImpl(EmbeddedCacheManager embeddedCacheManager) {
         this.embeddedCacheManager = embeddedCacheManager;
@@ -31,6 +32,6 @@ public class HealthImpl implements Health {
 
     @Override
     public HostInfo getHostInfo() {
-        return new HostInfoImpl();
+        return hostInfoImpl;
     }
 }
