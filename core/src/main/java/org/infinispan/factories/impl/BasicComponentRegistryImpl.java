@@ -1,10 +1,5 @@
 package org.infinispan.factories.impl;
 
-import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
-import static org.infinispan.commons.util.ReflectionUtil.setAccessibly;
-
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -306,12 +301,8 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          Object value = getDependency(name, parameterComponentTypes[i], parameterLazy, startDependencies);
          params[i] = value;
       }
-      if (System.getSecurityManager() == null) {
-         invokeAccessibly(target, injectMethodMetadata.getMethod(), params);
-      } else {
-         AccessController.doPrivileged(
-            (PrivilegedAction<Object>) () -> invokeAccessibly(target, injectMethodMetadata.getMethod(), params));
-      }
+      SecurityActions.setAccessible(injectMethodMetadata.getMethod());
+      ReflectionUtil.invokeMethod(target, injectMethodMetadata.getMethod(), params);
    }
 
    private void setInjectionField(Object target, ComponentMetadata.InjectFieldMetadata injectFieldMetadata,
@@ -320,14 +311,8 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       boolean lazy = injectFieldMetadata.isLazy();
       Class<?> componentType = injectFieldMetadata.getComponentClass();
       Object value = getDependency(name, componentType, lazy, startDependencies);
-      if (System.getSecurityManager() == null) {
-         setAccessibly(target, injectFieldMetadata.getField(), value);
-      } else {
-         AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-            setAccessibly(target, injectFieldMetadata.getField(), value);
-            return null;
-         });
-      }
+      SecurityActions.setAccessible(injectFieldMetadata.getField());
+      ReflectionUtil.setField(target, injectFieldMetadata.getField(), value);
    }
 
    private Object getDependency(String name, Class<?> componentType, boolean lazy, boolean startDependencies) {
@@ -531,10 +516,12 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
 
       try {
          for (ComponentMetadata.PrioritizedMethodMetadata method : wrapper.metadata.getStartMethods()) {
-            ReflectionUtil.invokeAccessibly(wrapper.instance, method.getMethod(), null);
+            SecurityActions.setAccessible(method.getMethod());
+            ReflectionUtil.invokeMethod(wrapper.instance, method.getMethod(), null);
          }
          for (ComponentMetadata.PrioritizedMethodMetadata method : wrapper.metadata.getPostStartMethods()) {
-            ReflectionUtil.invokeAccessibly(wrapper.instance, method.getMethod(), null);
+            SecurityActions.setAccessible(method.getMethod());
+            ReflectionUtil.invokeMethod(wrapper.instance, method.getMethod(), null);
          }
 
          commitWrapperStateChange(wrapper, WrapperState.STARTING, WrapperState.STARTED);
@@ -605,7 +592,8 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
 
       try {
          for (ComponentMetadata.PrioritizedMethodMetadata method : wrapper.metadata.getStopMethods()) {
-            ReflectionUtil.invokeAccessibly(wrapper.instance, method.getMethod(), null);
+            SecurityActions.setAccessible(method.getMethod());
+            ReflectionUtil.invokeMethod(wrapper.instance, method.getMethod(), null);
          }
       } catch (Exception e) {
          log.error("Error stopping component " + wrapper.name, e);
