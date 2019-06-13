@@ -180,26 +180,36 @@ public class ReflectionUtil {
     * @param parameters parameters
     */
    public static Object invokeAccessibly(Object instance, Method method, Object[] parameters) {
+      method.setAccessible(true);
+      return invokeMethod(instance, method, parameters);
+   }
+
+   public static Object invokeMethod(Object instance, Method method, Object[] parameters) {
       try {
-         method.setAccessible(true);
          return method.invoke(instance, parameters);
       } catch (InvocationTargetException e) {
          Throwable cause = e.getCause() != null ? e.getCause() : e;
-         throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance.getClass().getSimpleName()) +
+         throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance
+                                                                                                                                .getClass().getSimpleName()) +
                                   (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), cause);
       } catch (Exception e) {
-         throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance.getClass().getSimpleName()) +
+         throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance
+                                                                                                                                .getClass().getSimpleName()) +
                                   (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e);
       }
    }
 
    public static void setAccessibly(Object instance, Field field, Object value) {
+      field.setAccessible(true);
+      setField(instance, field, value);
+   }
+
+   public static void setField(Object instance, Field field, Object value) {
       try {
-         field.setAccessible(true);
          field.set(instance, value);
       } catch (Exception e) {
          throw new CacheException("Unable to set field " + field.getName() + " on object of type " +
-               (instance == null ? "null" : instance.getClass().getName()) + " to " + value, e);
+                                  (instance == null ? "null" : instance.getClass().getName()) + " to " + value, e);
       }
    }
 
@@ -302,7 +312,6 @@ public class ReflectionUtil {
     * @param ann   annotation to search for.  Must be a class-level annotation.
     * @return the annotation instance, or null
     */
-   @SuppressWarnings("unchecked")
    public static <T extends Annotation> T getAnnotation(Class<?> clazz, Class<T> ann) {
       while (true) {
          // first check class
