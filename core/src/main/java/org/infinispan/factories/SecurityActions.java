@@ -21,6 +21,14 @@ import org.infinispan.util.logging.LogFactory;
 final class SecurityActions {
    private static final Log log = LogFactory.getLog(SecurityActions.class);
 
+    static <T> T doPrivileged(PrivilegedAction<T> action) {
+      if (System.getSecurityManager() != null) {
+         return AccessController.doPrivileged(action);
+      } else {
+         return action.run();
+      }
+   }
+
    private static Field findFieldRecursively(Class<?> c, String fieldName) {
       Field f = null;
       try {

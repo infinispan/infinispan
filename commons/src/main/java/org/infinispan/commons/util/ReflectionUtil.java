@@ -6,6 +6,7 @@ import org.infinispan.commons.logging.LogFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -161,8 +162,19 @@ public class ReflectionUtil {
     * @param method     method to execute
     * @param parameters parameters
     */
-   public static Object invokeAccessibly(Object instance, Method method, Object[] parameters) {
-      return SecurityActions.invokeAccessibly(instance, method, parameters);
+   public static Object invokeMethod(Object instance, Method method, Object[] parameters) {
+      try {
+         return method.invoke(instance, parameters);
+      } catch (InvocationTargetException e) {
+         Throwable cause = e.getCause() != null ? e.getCause() : e;
+         throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance
+                 .getClass().getSimpleName()) +
+                 (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), cause);
+      } catch (Exception e) {
+         throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance
+                 .getClass().getSimpleName()) +
+                 (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e);
+      }
    }
 
    public static Method findGetterForField(Class<?> c, String fieldName) {
@@ -260,7 +272,6 @@ public class ReflectionUtil {
     * @param ann   annotation to search for.  Must be a class-level annotation.
     * @return the annotation instance, or null
     */
-   @SuppressWarnings("unchecked")
    public static <T extends Annotation> T getAnnotation(Class<?> clazz, Class<T> ann) {
       while (true) {
          // first check class

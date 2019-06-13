@@ -1,6 +1,6 @@
 package org.infinispan.distribution.group;
 
-import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
+import static org.infinispan.commons.util.ReflectionUtil.invokeMethod;
 
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ReflectionUtil;
@@ -50,13 +50,15 @@ public class GroupManagerImpl implements GroupManager {
 
         @Override
         public String getGroup(Object instance) {
-            Object object;
             if (System.getSecurityManager() == null) {
-                object = invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY);
+                method.setAccessible(true);
             } else {
-                object = AccessController.doPrivileged((PrivilegedAction<Object>) () -> invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY));
+                AccessController.doPrivileged((PrivilegedAction<List<Method>>) () -> {
+                    method.setAccessible(true);
+                    return null;
+                });
             }
-            return String.class.cast(object);
+            return String.class.cast(invokeMethod(instance, method, Util.EMPTY_OBJECT_ARRAY));
         }
         
     }
