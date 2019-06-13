@@ -21,7 +21,6 @@ import org.infinispan.util.logging.Log;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,8 +33,6 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
 
 /**
  * A registry where components which have been created are stored.  Components are stored as singletons, registered
@@ -245,11 +242,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             boolean nameIsFQCN = !injectMetadata.isParameterNameSet(i);
             params[i] = getOrCreateComponent(dependencies[i], name, nameIsFQCN);
          }
-         if (System.getSecurityManager() == null) {
-            invokeAccessibly(o, injectMetadata.getMethod(), params);
-         } else {
-            AccessController.doPrivileged((PrivilegedAction<Object>) () -> invokeAccessibly(o, injectMetadata.getMethod(), params));
-         }
+         invokeAccessibly(o, injectMetadata.getMethod(), params);
       }
    }
 
@@ -463,6 +456,13 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          // inject dependencies for this component
          c.injectDependencies();
       }
+   }
+
+   private static Object invokeAccessibly(Object instance, Method method, Object[] parameters) {
+      return SecurityActions.doPrivileged(() -> {
+         method.setAccessible(true);
+         return ReflectionUtil.invokeMethod(instance, method, parameters);
+      });
    }
 
    /**
