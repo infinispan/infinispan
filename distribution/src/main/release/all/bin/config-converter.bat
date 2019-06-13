@@ -7,7 +7,7 @@ set ISPN_HOME="%ISPN_HOME%.."
 set CP=
 for %%i in (%ISPN_HOME%\*.jar) do call :append_to_cp %%i
 for %%i in (%ISPN_HOME%\modules\tools\*.jar) do call :append_to_cp %%i
-for %%i in (%ISPN_HOME%\lib\jboss-transactions-api*.jar) do call :append_to_cp %%i
+for %%i in (%ISPN_HOME%\lib\jboss-transaction-api*.jar) do call :append_to_cp %%i
 rem echo libs: %CP%
 
 java -classpath "%CP%" org.infinispan.tools.config.ConfigurationConverter %*
