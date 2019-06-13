@@ -343,7 +343,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
       final ClassLoader originalContextClassLoader = currentThread.getContextClassLoader();
       try {
          currentThread.setContextClassLoader( infinispanClassLoader );
-         ConfigurationBuilderHolder builderHolder = configurationParser.parse( is );
+         ConfigurationBuilderHolder builderHolder = configurationParser.parse(is, null);
          // Workaround Infinispan's ClassLoader strategies to bend to our will:
          builderHolder.getGlobalConfigurationBuilder().classLoader( infinispanClassLoader );
          return builderHolder;

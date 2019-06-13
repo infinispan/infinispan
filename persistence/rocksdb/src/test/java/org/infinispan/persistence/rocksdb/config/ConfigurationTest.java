@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
@@ -63,8 +63,8 @@ public class ConfigurationTest extends AbstractInfinispanTest {
    }
 
    public void testXmlConfig() throws IOException {
-      InputStream configSTream = ConfigurationTest.class.getResourceAsStream("/config/rocksdb-config.xml");
-      ConfigurationBuilderHolder configHolder = new ParserRegistry().parse(configSTream);
+      URL config = ConfigurationTest.class.getResource("/config/rocksdb-config.xml");
+      ConfigurationBuilderHolder configHolder = new ParserRegistry().parse(config);
 
       // check persistence attributes
       Configuration cacheConfig = configHolder.getNamedConfigurationBuilders().get("testCache").build();

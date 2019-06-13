@@ -4,6 +4,7 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_DEPENDENCY_GRAP
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -323,7 +324,20 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * @throws java.io.IOException if there is a problem reading the configuration stream
     */
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
-      this(new ParserRegistry().parse(configurationStream), start);
+      this(new ParserRegistry().parse(configurationStream, null), start);
+   }
+
+   /**
+    * Constructs a new instance of the CacheManager, using the input stream passed in to read configuration file
+    * contents.
+    *
+    * @param configurationURL    stream containing configuration file contents, to use as a template for all caches
+    *                            created
+    * @param start               if true, the cache manager is started
+    * @throws java.io.IOException if there is a problem reading the configuration stream
+    */
+   public DefaultCacheManager(URL configurationURL, boolean start) throws IOException {
+      this(new ParserRegistry().parse(configurationURL), start);
    }
 
    /**

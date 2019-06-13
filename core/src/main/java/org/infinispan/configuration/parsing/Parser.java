@@ -9,8 +9,8 @@ import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUT
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.shortened;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +19,7 @@ import java.util.Properties;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -462,10 +463,11 @@ public class Parser implements ConfigurationParser {
       }
    }
 
-   private void addJGroupsStackFile(ConfigurationBuilderHolder holder, String name, String path, Properties properties) {
-      try (InputStream xml = FileLookupFactory.newInstance().lookupFileStrict(path, holder.getClassLoader())) {
+   private void addJGroupsStackFile(ConfigurationBuilderHolder holder, String name, String path, Properties properties, XMLResourceResolver resourceResolver) {
+      URL url = FileLookupFactory.newInstance().lookupFileLocation(path, holder.getClassLoader());
+      try (InputStream xml = (url != null ? url : resourceResolver.resolveResource(path)).openStream()) {
          holder.addJGroupsStack(new FileJGroupsChannelConfigurator(name, path, xml, properties));
-      } catch (IOException e) {
+      } catch (Exception e) {
          throw log.jgroupsConfigurationNotFound(path);
       }
    }
@@ -550,7 +552,7 @@ public class Parser implements ConfigurationParser {
       String attributes[] = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.PATH);
       ParseUtils.requireNoContent(reader);
 
-      addJGroupsStackFile(holder, attributes[0], attributes[1], reader.getProperties());
+      addJGroupsStackFile(holder, attributes[0], attributes[1], reader.getProperties(), reader.getResourceResolver());
    }
 
    private void parseContainer(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {

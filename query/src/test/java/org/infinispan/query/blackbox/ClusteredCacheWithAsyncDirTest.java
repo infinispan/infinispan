@@ -1,6 +1,6 @@
 package org.infinispan.query.blackbox;
 
-import java.io.InputStream;
+import java.net.URL;
 
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -31,12 +31,11 @@ public class ClusteredCacheWithAsyncDirTest extends ClusteredCacheTest {
    }
 
    private EmbeddedCacheManager createCacheManager(int nodeIndex) throws Exception {
-      InputStream is = FileLookupFactory.newInstance().lookupFileStrict("async-jdbc-store-config.xml",
+      URL is = FileLookupFactory.newInstance().lookupFileLocation("async-jdbc-store-config.xml",
             Thread.currentThread().getContextClassLoader());
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
 
       ConfigurationBuilderHolder holder = parserRegistry.parse(is);
-      is.close();
 
       for (ConfigurationBuilder builder : holder.getNamedConfigurationBuilders().values()) {
          for (StoreConfigurationBuilder storeBuilder : builder.persistence().stores()) {

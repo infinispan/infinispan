@@ -2,9 +2,7 @@ package org.infinispan.configuration.module;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -64,9 +62,8 @@ public class ExtendedParserTest extends AbstractInfinispanTest {
    }
 
    private ConfigurationBuilderHolder parseToHolder(String config) {
-      InputStream is = new ByteArrayInputStream(config.getBytes());
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
-      return parserRegistry.parse(is);
+      return parserRegistry.parse(config);
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: WRONG SCOPE")

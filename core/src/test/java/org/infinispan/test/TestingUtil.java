@@ -1797,7 +1797,7 @@ public class TestingUtil {
       for (;;) {
          if (c.isAssignableFrom(t.getClass())) {
             if (messageRegex != null && !Pattern.matches(messageRegex, t.getMessage())) {
-               throw new RuntimeException(String.format("Exception message '%s' does not match regex '%s'", t.getMessage(), messageRegex));
+               throw new RuntimeException(String.format("Exception message '%s' does not match regex '%s'", t.getMessage(), messageRegex), t);
             }
             return;
          }

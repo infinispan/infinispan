@@ -53,4 +53,10 @@ public interface XMLExtendedStreamReader extends XMLStreamReader {
     */
    Properties getProperties();
 
+   /**
+    * Returns the {@link XMLResourceResolver} used to resolve resources
+    * @return the resource resolver used by this instance
+    */
+   XMLResourceResolver getResourceResolver();
+
 }

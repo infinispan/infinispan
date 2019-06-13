@@ -4,9 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +24,7 @@ import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.configuration.parsing.URLXMLResourceResolver;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
@@ -143,12 +142,12 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testResourcesConfiguration() throws FileNotFoundException {
+   public void testResourcesConfiguration() throws IOException {
       ParserRegistry parserRegistry = new ParserRegistry();
       File[] resourceConfigs = getResourceConfigs();
       for (File f : resourceConfigs) {
          if (f.isDirectory()) continue;
-         ConfigurationBuilderHolder builderHolder = parserRegistry.parse(new FileInputStream(f));
+         ConfigurationBuilderHolder builderHolder = parserRegistry.parse(new FileInputStream(f), new URLXMLResourceResolver(f.toURI().toURL()));
          testConfigurations(builderHolder);
       }
    }
@@ -180,7 +179,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       return new File(url.getPath()).listFiles();
    }
 
-   private InputStream loadLatestVersionTest() throws IOException {
+   private URL loadLatestVersionTest() throws IOException {
       String majorMinor = Version.getMajorMinor();
       ClassLoader loader = this.getClass().getClassLoader();
       String testFile = "configs/unified/" + majorMinor + ".xml";
@@ -188,7 +187,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       if (resource == null) {
          Assert.fail(String.format("Unable to find test configuration file '%s'", testFile));
       }
-      return resource.openStream();
+      return resource;
    }
 
    static class AsyncInterceptor1 extends BaseAsyncInterceptor {

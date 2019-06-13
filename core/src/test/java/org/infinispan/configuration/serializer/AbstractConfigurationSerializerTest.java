@@ -4,7 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,8 +35,8 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       Properties properties = new Properties();
       properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
       ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
-      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(config.toString(), Thread.currentThread().getContextClassLoader());
-      ConfigurationBuilderHolder holderBefore = registry.parse(is);
+      URL url = FileLookupFactory.newInstance().lookupFileLocation(config.toString(), Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holderBefore = registry.parse(url);
       Map<String, Configuration> configurations = new HashMap<>();
       for(Map.Entry<String, ConfigurationBuilder> configuration : holderBefore.getNamedConfigurationBuilders().entrySet()) {
          configurations.put(configuration.getKey(), configuration.getValue().build());
@@ -45,7 +45,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       registry.serialize(baos, holderBefore.getGlobalConfigurationBuilder().build(), configurations);
 
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      ConfigurationBuilderHolder holderAfter = registry.parse(bais);
+      ConfigurationBuilderHolder holderAfter = registry.parse(bais, null);
       GlobalConfiguration globalConfigurationBefore = holderBefore.getGlobalConfigurationBuilder().build();
       GlobalConfiguration globalConfigurationAfter = holderAfter.getGlobalConfigurationBuilder().build();
 
@@ -92,8 +92,8 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       Properties properties = new Properties();
       properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
       ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
-      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(config.toString(), Thread.currentThread().getContextClassLoader());
-      ConfigurationBuilderHolder holderBefore = registry.parse(is);
+      URL url = FileLookupFactory.newInstance().lookupFileLocation(config.toString(), Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holderBefore = registry.parse(url);
       JsonReader jsonReader = new JsonReader();
       for (Map.Entry<String, ConfigurationBuilder> configuration : holderBefore.getNamedConfigurationBuilders().entrySet()) {
          Configuration confBefore = configuration.getValue().build();
