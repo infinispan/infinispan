@@ -1,0 +1,3 @@
+<local-cache name="another-included" xmlns:xi="http://www.w3.org/2001/XInclude">
+   <xi:include href="include-expiration.xml"/>
+</local-cache>

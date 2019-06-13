@@ -9,6 +9,7 @@ import org.infinispan.server.test.ServerTestMethodRule;
 import org.infinispan.server.test.ServerTestConfiguration;
 import org.infinispan.server.test.ServerTestRule;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -36,6 +37,7 @@ public class ClusteredServerTest {
    }
 
    @Test
+   @Ignore
    public void testCluster2() {
       RestClient restClient = serverTestRule.restClient();
       restClient.put("k2", "v2");

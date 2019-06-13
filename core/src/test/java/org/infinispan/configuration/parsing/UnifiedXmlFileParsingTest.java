@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -104,12 +103,11 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
 
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
-      try (InputStream is = FileLookupFactory.newInstance().lookupFileStrict(config.toString(), Thread.currentThread().getContextClassLoader())) {
-         ConfigurationBuilderHolder holder = parserRegistry.parse(is);
-         for (ParserVersionCheck check : ParserVersionCheck.values()) {
-            if (check.isIncludedBy(major, minor)) {
-               check.check(holder);
-            }
+      URL url = FileLookupFactory.newInstance().lookupFileLocation(config.toString(), Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = parserRegistry.parse(url);
+      for (ParserVersionCheck check : ParserVersionCheck.values()) {
+         if (check.isIncludedBy(major, minor)) {
+            check.check(holder);
          }
       }
    }

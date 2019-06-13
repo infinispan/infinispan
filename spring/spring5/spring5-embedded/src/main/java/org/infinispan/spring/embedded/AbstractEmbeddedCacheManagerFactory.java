@@ -36,7 +36,7 @@ public class AbstractEmbeddedCacheManagerFactory {
       if (configurationFileLocation != null) {
          ConfigurationBuilderHolder configurationBuilderHolder =
                new ParserRegistry(Thread.currentThread().getContextClassLoader())
-                     .parse(configurationFileLocation.getInputStream());
+                     .parse(configurationFileLocation.getURL());
 
          if(gcb != null) {
             configurationBuilderHolder.getGlobalConfigurationBuilder().read(gcb.build());

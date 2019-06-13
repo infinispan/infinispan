@@ -62,8 +62,8 @@ import org.testng.annotations.Test;
 public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions=FileNotFoundException.class)
-   public void testFailOnUnexpectedConfigurationFile() throws IOException {
-      TestCacheManagerFactory.fromXml("does-not-exist.xml");
+   public void testFailOnMissingConfigurationFile() throws IOException {
+      new DefaultCacheManager("does-not-exist.xml");
    }
 
    public void testNamedCacheFile() throws IOException {

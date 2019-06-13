@@ -11,6 +11,7 @@ import java.io.IOException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -105,6 +106,18 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
          assertTrue(c.getCacheConfiguration().invocationBatching().enabled());
          Cache c2 = cm.getCache("tml");
          assertTrue(c2.getCacheConfiguration().transaction().transactionMode().isTransactional());
+      } finally {
+         cm.stop();
+      }
+   }
+
+   public void testXInclude() throws Exception {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/include.xml");
+      try {
+         assertEquals("included", cm.getCacheManagerConfiguration().defaultCacheName().get());
+         assertNotNull(cm.getCacheConfiguration("included"));
+         assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration("included").clustering().cacheMode());
+         assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration("another-included").clustering().cacheMode());
       } finally {
          cm.stop();
       }

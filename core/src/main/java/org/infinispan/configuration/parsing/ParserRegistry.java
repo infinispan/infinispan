@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
@@ -105,18 +106,24 @@ public class ParserRegistry implements NamespaceMappingParser {
       }
    }
 
-   public ConfigurationBuilderHolder parseFile(String filename) throws IOException {
-      FileLookup fileLookup = FileLookupFactory.newInstance();
-      InputStream is = fileLookup.lookupFile(filename, cl.get());
-      if (is == null) {
-         throw new FileNotFoundException(filename);
-      }
-      try {
-         return parse(is);
-      } finally {
-         Util.close(is);
+   public ConfigurationBuilderHolder parse(URL url) throws IOException {
+      try (InputStream is = url.openStream()) {
+         return parse(is, new URLXMLResourceResolver(url));
       }
    }
+
+   public ConfigurationBuilderHolder parseFile(String filename) throws IOException {
+      FileLookup fileLookup = FileLookupFactory.newInstance();
+      URL url = fileLookup.lookupFileLocation(filename, cl.get());
+      if (url == null) {
+         throw new FileNotFoundException(filename);
+      }
+      try (InputStream is = url.openStream()) {
+         return parse(is, new URLXMLResourceResolver(url));
+      }
+   }
+
+
 
    public ConfigurationBuilderHolder parseFile(File file) throws IOException {
       InputStream is = new FileInputStream(file);
@@ -124,14 +131,14 @@ public class ParserRegistry implements NamespaceMappingParser {
          throw new FileNotFoundException(file.getAbsolutePath());
       }
       try {
-         return parse(is);
+         return parse(is, new URLXMLResourceResolver(file.toURI().toURL()));
       } finally {
          Util.close(is);
       }
    }
 
    public ConfigurationBuilderHolder parse(String s) {
-      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)));
+      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), null);
    }
 
    /**
@@ -139,10 +146,10 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param is an {@link InputStream} pointing to a configuration file
     * @return a new {@link ConfigurationBuilderHolder} which contains the parsed configuration
     */
-   public ConfigurationBuilderHolder parse(InputStream is) {
+   public ConfigurationBuilderHolder parse(InputStream is, XMLResourceResolver resourceResolver) {
       try {
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl.get());
-         parse(is, holder);
+         parse(is, holder, resourceResolver);
          holder.validate();
          return holder;
       } catch (CacheConfigurationException e) {
@@ -158,13 +165,19 @@ public class ParserRegistry implements NamespaceMappingParser {
       }
    }
 
-   public ConfigurationBuilderHolder parse(InputStream is, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   public ConfigurationBuilderHolder parse(URL url, ConfigurationBuilderHolder holder) throws IOException, XMLStreamException {
+      try(InputStream is = url.openStream()) {
+         return parse(is, holder, new URLXMLResourceResolver(url));
+      }
+   }
+
+   public ConfigurationBuilderHolder parse(InputStream is, ConfigurationBuilderHolder holder, XMLResourceResolver resourceResolver) throws XMLStreamException {
       BufferedInputStream input = new BufferedInputStream(is);
       XMLInputFactory factory = XMLInputFactory.newInstance();
       setIfSupported(factory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
       setIfSupported(factory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
       XMLStreamReader subReader = factory.createXMLStreamReader(input);
-      XMLExtendedStreamReader reader = new XMLExtendedStreamReaderImpl(this, subReader, properties);
+      XMLExtendedStreamReader reader = new XMLExtendedStreamReaderImpl(factory, resourceResolver, this, subReader, properties);
       parse(reader, holder);
       subReader.close();
       // Fire all parsingComplete events if any

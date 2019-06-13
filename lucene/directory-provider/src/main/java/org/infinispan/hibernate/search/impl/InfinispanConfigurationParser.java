@@ -2,12 +2,12 @@ package org.infinispan.hibernate.search.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Properties;
 
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
@@ -51,24 +51,21 @@ public class InfinispanConfigurationParser {
    }
 
    private ConfigurationBuilderHolder parseFile(ClassLoaderService classLoaderService, String filename, String transportOverrideResource) throws IOException {
-      InputStream is = classLoaderService.locateResourceStream(filename);
+      URL url = classLoaderService.locateResource(filename);
+
+      //Infinispan requires the context ClassLoader to have full visibility on all
+      //its components and eventual extension points even *during* configuration parsing.
+      final Thread currentThread = Thread.currentThread();
+      final ClassLoader originalContextClassLoader = currentThread.getContextClassLoader();
       try {
-         //Infinispan requires the context ClassLoader to have full visibility on all
-         //its components and eventual extension points even *during* configuration parsing.
-         final Thread currentThread = Thread.currentThread();
-         final ClassLoader originalContextClassLoader = currentThread.getContextClassLoader();
-         try {
-            currentThread.setContextClassLoader(ispnClassLoadr);
-            ConfigurationBuilderHolder builderHolder = configurationParser.parse(is);
-            //Workaround Infinispan's ClassLoader strategies to bend to our will:
-            fixClassLoaders(builderHolder);
-            patchTransportConfiguration(builderHolder, transportOverrideResource);
-            return builderHolder;
-         } finally {
-            currentThread.setContextClassLoader(originalContextClassLoader);
-         }
+         currentThread.setContextClassLoader(ispnClassLoadr);
+         ConfigurationBuilderHolder builderHolder = configurationParser.parse(url);
+         //Workaround Infinispan's ClassLoader strategies to bend to our will:
+         fixClassLoaders(builderHolder);
+         patchTransportConfiguration(builderHolder, transportOverrideResource);
+         return builderHolder;
       } finally {
-         Util.close(is);
+         currentThread.setContextClassLoader(originalContextClassLoader);
       }
    }
 

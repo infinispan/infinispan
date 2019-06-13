@@ -1,6 +1,6 @@
 package org.infinispan.query.jmx;
 
-import java.io.InputStream;
+import java.net.URL;
 
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -8,10 +8,10 @@ import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.distributed.DistributedMassIndexingTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -33,12 +33,12 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
    protected void createCacheManagers() throws Throwable {
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       for (int i = 0; i < NUM_NODES; i++) {
-         InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
+         URL url = FileLookupFactory.newInstance().lookupFileLocation(
                "dynamic-indexing-distribution.xml",
                Thread.currentThread().getContextClassLoader());
          ParserRegistry parserRegistry = new ParserRegistry(
                Thread.currentThread().getContextClassLoader());
-         ConfigurationBuilderHolder holder = parserRegistry.parse(is);
+         ConfigurationBuilderHolder holder = parserRegistry.parse(url);
          // Each cache manager should use a different jmx domain and
          // a parallel-testsuite friendly mbean server
          holder.getGlobalConfigurationBuilder().globalJmxStatistics()

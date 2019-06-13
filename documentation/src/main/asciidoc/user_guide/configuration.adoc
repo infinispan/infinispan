@@ -166,6 +166,30 @@ be applied when retrieving undefined caches programmatically.
 
 NOTE: If a cache name matches multiple wildcards, i.e. it is ambiguous, an exception will be thrown.
 
+[[cache_configuration_xinclude]]
+===== XInclude support
+
+The configuration parser supports link:https://www.w3.org/TR/xinclude/[XInclude] which means you can split your XML configuration across multiple files:
+
+.infinispan.xml
+[source,xml]
+----
+<infinispan xmlns:xi="http://www.w3.org/2001/XInclude">
+    <cache-container>
+        <local-cache name="cache-1"/>
+        <xi:include href="included.xml" />
+    </cache-container>
+</infinispan>
+----
+
+.included.xml
+[source,xml]
+----
+<local-cache name="cache-1"/>
+----
+
+NOTE: the parser supports a minimal subset of the XInclude spec (no support for XPointer, fallback, text processing and content negotiation).
+
 [[cache_configuration_declarative_ref]]
 ===== Declarative configuration reference
 

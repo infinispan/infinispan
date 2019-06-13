@@ -1,5 +1,10 @@
 package org.infinispan.configuration.parsing;
 
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Properties;
@@ -7,10 +12,12 @@ import java.util.Properties;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+import org.infinispan.commons.util.Util;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -18,18 +25,28 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
  * @since 6.0
  */
 final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
-
+   private final XMLInputFactory factory;
+   final XMLResourceResolver resourceResolver;
    private final NamespaceMappingParser parser;
-   private final XMLStreamReader streamReader;
-   private final Deque<Context> stack = new ArrayDeque<Context>();
+   private XMLStreamReader streamReader;
+   private final Deque<Included> includeStack;
+   private final Deque<Context> stack;
    private Schema schema;
    private Properties properties;
 
-   XMLExtendedStreamReaderImpl(final NamespaceMappingParser parser, final XMLStreamReader streamReader, Properties properties) {
+   XMLExtendedStreamReaderImpl(XMLInputFactory factory, XMLResourceResolver resourceResolver, final NamespaceMappingParser parser, final XMLStreamReader streamReader, Properties properties) {
+      this(factory, resourceResolver, parser, streamReader, properties, new ArrayDeque<>());
+      stack.push(new Context());
+   }
+
+   XMLExtendedStreamReaderImpl(XMLInputFactory factory, XMLResourceResolver resourceResolver, final NamespaceMappingParser parser, final XMLStreamReader streamReader, Properties properties, Deque<Context> stack) {
+      this.factory = factory;
+      this.resourceResolver = resourceResolver;
       this.parser = parser;
       this.streamReader = streamReader;
+      this.includeStack = new ArrayDeque<>();
       this.properties = properties;
-      stack.push(new Context());
+      this.stack = stack;
    }
 
    @Override
@@ -68,8 +85,18 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
          final int next = streamReader.next();
          if (next == END_ELEMENT) {
             context.depth--;
+            if ("include".equals(getLocalName())) {
+               return next(); // recurse
+            }
          } else if (next == START_ELEMENT) {
             context.depth++;
+            if ("include".equals(getLocalName())) {
+               include();
+               return next(); // recurse
+            }
+         } else if (next == END_DOCUMENT && !includeStack.isEmpty()) {
+            closeInclude();
+            return next();
          }
          return next;
       } else {
@@ -96,11 +123,21 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
    public int nextTag() throws XMLStreamException {
       final Context context = stack.getFirst();
       if (context.depth > 0) {
-         final int next = streamReader.nextTag();
+         final int next = nextTag(streamReader);
          if (next == END_ELEMENT) {
             context.depth--;
+            if ("include".equals(getLocalName())) {
+               return nextTag(); // recurse
+            }
          } else if (next == START_ELEMENT) {
             context.depth++;
+            if ("include".equals(getLocalName())) {
+               include();
+               return nextTag(); // recurse
+            }
+         } else if (next == END_DOCUMENT && !includeStack.isEmpty()) {
+            closeInclude();
+            return nextTag(); // recurse
          }
          return next;
       } else {
@@ -112,9 +149,42 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
       }
    }
 
+   private int nextTag(XMLStreamReader reader) throws XMLStreamException {
+      if (includeStack.isEmpty()) {
+         return streamReader.nextTag();
+      } else {
+         // Special handling that allows an END_DOCUMENT to be
+         int eventType = reader.next();
+         while ((eventType == XMLStreamConstants.CHARACTERS && isWhiteSpace()) // skip whitespace
+               || (eventType == XMLStreamConstants.CDATA && isWhiteSpace())
+               // skip whitespace
+               || eventType == XMLStreamConstants.SPACE
+               || eventType == XMLStreamConstants.PROCESSING_INSTRUCTION
+               || eventType == XMLStreamConstants.COMMENT) {
+            eventType = next();
+         }
+         if (eventType != START_ELEMENT && eventType != END_ELEMENT && eventType != END_DOCUMENT) {
+            throw new XMLStreamException("found: " + eventType + ", expected 1, 2 or 8",
+                  getLocation());
+         }
+         return eventType;
+      }
+   }
+
    @Override
    public boolean hasNext() throws XMLStreamException {
-      return stack.getFirst().depth > 0 && streamReader.hasNext();
+      if (stack.getFirst().depth > 0) {
+         if (streamReader.hasNext()) {
+            return true;
+         } else if (!includeStack.isEmpty()) {
+            closeInclude();
+            return hasNext();
+         } else {
+            return false;
+         }
+      } else {
+         return false;
+      }
    }
 
    @Override
@@ -334,10 +404,25 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
       return properties;
    }
 
+   @Override
+   public XMLResourceResolver getResourceResolver() {
+      return resourceResolver;
+   }
+
    // private members
 
    private static final class Context {
       int depth = 1;
+   }
+
+   private static final class Included {
+      InputStream inputStream;
+      XMLStreamReader reader;
+
+      Included(InputStream inputStream, XMLStreamReader reader) {
+         this.inputStream = inputStream;
+         this.reader = reader;
+      }
    }
 
    private void safeClose() {
@@ -346,6 +431,25 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
       } catch (Exception e) {
          // ignore
       }
+   }
+
+   private void include() throws XMLStreamException {
+      String href = getAttributeValue(null, "href");
+      try {
+         URL url = resourceResolver.resolveResource(href);
+         InputStream inputStream = url.openStream();
+         XMLStreamReader subReader = factory.createXMLStreamReader(inputStream);
+         includeStack.push(new Included(inputStream, streamReader));
+         streamReader = new XMLExtendedStreamReaderImpl(factory, new URLXMLResourceResolver(url), parser, subReader, properties, stack);
+      } catch (IOException e) {
+         throw new XMLStreamException(e);
+      }
+   }
+
+   private void closeInclude() {
+      Included removed = includeStack.pop();
+      Util.close(removed.inputStream);
+      streamReader = removed.reader;
    }
 
    private static XMLStreamException readPastEnd(final Location location) {

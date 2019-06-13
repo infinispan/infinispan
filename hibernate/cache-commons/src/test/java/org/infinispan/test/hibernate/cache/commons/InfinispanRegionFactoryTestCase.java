@@ -17,7 +17,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.InputStream;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Properties;
 import java.util.function.Consumer;
 
@@ -300,11 +301,11 @@ public class InfinispanRegionFactoryTestCase  {
 	}
 
 	@Test
-	public void testTimestampValidation() {
+	public void testTimestampValidation() throws IOException {
 		final String timestamps = "org.hibernate.cache.spi.UpdateTimestampsCache";
 		Properties p = createProperties();
-      InputStream configStream = FileLookupFactory.newInstance().lookupFile(DEF_INFINISPAN_CONFIG_RESOURCE, getClass().getClassLoader());
-      ConfigurationBuilderHolder cbh = new ParserRegistry().parse(configStream);
+      URL url = FileLookupFactory.newInstance().lookupFileLocation(DEF_INFINISPAN_CONFIG_RESOURCE, getClass().getClassLoader());
+      ConfigurationBuilderHolder cbh = new ParserRegistry().parse(url);
       ConfigurationBuilder builder = cbh.getNamedConfigurationBuilders().get( DEF_TIMESTAMPS_RESOURCE );
 		builder.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
       DefaultCacheManager manager = new DefaultCacheManager(cbh, true);

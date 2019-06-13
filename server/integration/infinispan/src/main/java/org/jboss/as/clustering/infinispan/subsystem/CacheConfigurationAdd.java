@@ -26,7 +26,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.AccessController;
@@ -38,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
 
@@ -152,17 +152,8 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         URL url = find(resource, CacheConfigurationAdd.class.getClassLoader());
         log.debugf("Loading Infinispan defaults from %s", url.toString());
         try {
-            InputStream input = url.openStream();
             ParserRegistry parser = new ParserRegistry(InfinispanExtension.class.getClassLoader());
-            try {
-                return parser.parse(input);
-            } finally {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    log.warn(e.getLocalizedMessage(), e);
-                }
-            }
+            return parser.parse(url);
         } catch (IOException e) {
             throw new IllegalStateException(String.format("Failed to parse %s", url), e);
         }

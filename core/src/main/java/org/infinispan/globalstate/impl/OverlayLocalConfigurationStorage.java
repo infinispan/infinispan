@@ -62,7 +62,7 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
 
       try (FileInputStream fis = new FileInputStream(getPersistentFile())) {
          Map<String, Configuration> configurations = new HashMap<>();
-         ConfigurationBuilderHolder holder = parserRegistry.parse(fis);
+         ConfigurationBuilderHolder holder = parserRegistry.parse(fis, null);
          for (Map.Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
             String name = entry.getKey();
             Configuration configuration = entry.getValue().build();

@@ -1,9 +1,8 @@
 package org.infinispan.server;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -91,8 +90,8 @@ public class Server {
       if (!configuration.isAbsolute()) {
          configuration = new File(serverConf, configuration.getPath());
       }
-      try (InputStream is = new FileInputStream(configuration)) {
-         parseConfiguration(is);
+      try {
+         parseConfiguration(configuration.toURI().toURL());
       } catch (IOException e) {
          throw new CacheConfigurationException(e);
       }
@@ -114,10 +113,11 @@ public class Server {
       this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG));
    }
 
-   private void parseConfiguration(InputStream config) {
+   private void parseConfiguration(URL config) {
       ParserRegistry parser = new ParserRegistry(this.getClass().getClassLoader(), false, properties);
-      try (InputStream defaults = this.getClass().getClassLoader().getResourceAsStream(SERVER_DEFAULTS)) {
+      try {
          // load the defaults first
+         URL defaults = this.getClass().getClassLoader().getResource(SERVER_DEFAULTS);
          defaultsHolder = parser.parse(defaults);
 
          // base the global configuration to the default
