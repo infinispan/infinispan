@@ -1948,7 +1948,8 @@ public class TestingUtil {
    public static void invokeLifecycle(Object component, Class<? extends Annotation> lifecycle) {
       List<Method> methods = ReflectionUtil.getAllMethods(component.getClass(), lifecycle);
       for (Method m : methods) {
-         ReflectionUtil.invokeAccessibly(component, m, EMPTY_OBJECT_ARRAY);
+         m.setAccessible(true);
+         ReflectionUtil.invokeMethod(component, m, EMPTY_OBJECT_ARRAY);
       }
    }
 
