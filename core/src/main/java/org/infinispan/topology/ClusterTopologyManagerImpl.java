@@ -72,6 +72,7 @@ import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -145,9 +146,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          for (int i = INITIAL_CONNECTION_ATTEMPTS - 1; i >= 0; i--) {
             try {
                coordinator = transport.getCoordinator();
-               Map<Address, Response> responseMap = transport
-                     .invokeRemotely(Collections.singleton(coordinator), command, ResponseMode.SYNCHRONOUS,
-                           getGlobalTimeout() / INITIAL_CONNECTION_ATTEMPTS, null, DeliverOrder.NONE, false);
+               Map<Address, Response> responseMap = CompletionStages.join(transport
+                     .invokeRemotelyAsync(Collections.singleton(coordinator), command, ResponseMode.SYNCHRONOUS,
+                           getGlobalTimeout() / INITIAL_CONNECTION_ATTEMPTS, null, DeliverOrder.NONE, false));
                response = responseMap.get(coordinator);
                break;
             } catch (Exception e) {
@@ -594,9 +595,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       // first invoke remotely
 
       if (totalOrder) {
-         Map<Address, Response> responseMap = transport.invokeRemotely(transport.getMembers(), command,
+         Map<Address, Response> responseMap = CompletionStages.join(transport.invokeRemotelyAsync(transport.getMembers(), command,
                                                                        ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
-                                                                       timeout, filter, DeliverOrder.TOTAL, distributed);
+                                                                       timeout, filter, DeliverOrder.TOTAL, distributed));
          return extractResponseValues(responseMap, null);
       }
 
@@ -638,8 +639,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       // invoke remotely
       try {
          DeliverOrder deliverOrder = totalOrder ? DeliverOrder.TOTAL : DeliverOrder.NONE;
-         transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS, timeout, null,
-                                  deliverOrder, distributed);
+         CompletionStages.join(transport.invokeRemotelyAsync(null, command, ResponseMode.ASYNCHRONOUS, timeout, null,
+                                  deliverOrder, distributed));
       } catch (Exception e) {
          throw Util.rewrapAsCacheException(e);
       }

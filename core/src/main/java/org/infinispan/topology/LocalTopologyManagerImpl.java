@@ -17,6 +17,7 @@ import org.infinispan.Version;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.eviction.PassivationManager;
@@ -47,7 +48,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
@@ -697,8 +697,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       } else {
          // this node is not the coordinator
          Address coordinator = transport.getCoordinator();
-         Map<Address, Response> responseMap = transport.invokeRemotely(Collections.singleton(coordinator),
-               command, ResponseMode.SYNCHRONOUS, timeout, null, DeliverOrder.NONE, false);
+         Map<Address, Response> responseMap = CompletionStages.join(transport.invokeRemotelyAsync(Collections.singleton(coordinator),
+               command, ResponseMode.SYNCHRONOUS, timeout, null, DeliverOrder.NONE, false));
          response = responseMap.get(coordinator);
       }
       if (response == null || !response.isSuccessful()) {
@@ -724,7 +724,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       } else {
          Address coordinator = transport.getCoordinator();
          // ignore the responses
-         transport.invokeRemotely(Collections.singleton(coordinator), command,
+         transport.invokeRemotelyAsync(Collections.singleton(coordinator), command,
                                   ResponseMode.ASYNCHRONOUS, 0, null, DeliverOrder.NONE, false);
       }
    }
@@ -735,9 +735,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       // first invoke remotely
 
       if (totalOrder) {
-         Map<Address, Response> responseMap = transport.invokeRemotely(null, command,
+         Map<Address, Response> responseMap = CompletionStages.join(transport.invokeRemotelyAsync(null, command,
                ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
-               timeout, null, DeliverOrder.TOTAL, distributed);
+               timeout, null, DeliverOrder.TOTAL, distributed));
          return parseResponses(responseMap);
       }
 

@@ -38,23 +38,6 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
-      beforeInvokeRemotely(rpcCommand);
-      Map<Address, Response> result = actual.invokeRemotely(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
-      return afterInvokeRemotely(rpcCommand, result);
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
-      return actual.invokeRemotely(rpcCommands, mode, timeout, usePriorityQueue, responseFilter, totalOrder, anycast);
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
-      return actual.invokeRemotely(rpcCommands, mode, timeout, responseFilter, deliverOrder, anycast);
-   }
-
-   @Override
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                         ReplicableCommand rpcCommand,
                                                                         ResponseMode mode, long timeout,
@@ -141,11 +124,6 @@ public abstract class AbstractDelegatingTransport implements Transport {
    @Override
    public CompletableFuture<Void> withView(int expectedViewId) {
       return actual.withView(expectedViewId);
-   }
-
-   @Override
-   public void waitForView(int viewId) throws InterruptedException {
-      actual.waitForView(viewId);
    }
 
    @Override

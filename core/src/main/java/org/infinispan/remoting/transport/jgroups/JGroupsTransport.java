@@ -20,7 +20,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +28,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -85,7 +85,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.logging.TraceException;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.jgroups.AnycastAddress;
@@ -276,40 +275,6 @@ public class JGroupsTransport implements Transport {
       } else {
          logCommand(command, targets);
          sendCommand(targets, command, Request.NO_REQUEST_ID, deliverOrder, false, true);
-      }
-   }
-
-   @Override
-   @Deprecated
-   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> commands, ResponseMode mode,
-                                                long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder,
-                                                boolean anycast)
-         throws Exception {
-      if (commands == null || commands.isEmpty()) {
-         // don't send if recipients list is empty
-         log.trace("Destination list is empty: no need to send message");
-         return Collections.emptyMap();
-      }
-
-      if (mode.isSynchronous()) {
-         MapResponseCollector collector = MapResponseCollector.validOnly(commands.size());
-         CompletionStage<Map<Address, Response>> request =
-               invokeCommands(commands.keySet(), commands::get, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
-
-         try {
-            return CompletableFutures.await(request.toCompletableFuture());
-         } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            cause.addSuppressed(new TraceException());
-            throw Util.rewrapAsCacheException(cause);
-         }
-      } else {
-         commands.forEach(
-               (a, command) -> {
-                  logCommand(command, a);
-                  sendCommand(a, command, Request.NO_REQUEST_ID, deliverOrder, isRsvpCommand(command), true, true);
-               });
-         return Collections.emptyMap();
       }
    }
 
@@ -800,23 +765,6 @@ public class JGroupsTransport implements Transport {
             return CompletableFutures.completedNull();
          } else {
             return nextViewFuture.thenCompose(nil -> withView(expectedViewId));
-         }
-      } finally {
-         viewUpdateLock.unlock();
-      }
-   }
-
-   @Override
-   public void waitForView(int viewId) throws InterruptedException {
-      if (channel == null)
-         return;
-
-      log.tracef("Waiting on view %d being accepted", viewId);
-      long remainingNanos = Long.MAX_VALUE;
-      viewUpdateLock.lock();
-      try {
-         while (channel != null && getViewId() < viewId && remainingNanos > 0) {
-            remainingNanos = viewUpdateCondition.awaitNanos(remainingNanos);
          }
       } finally {
          viewUpdateLock.unlock();
