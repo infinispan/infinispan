@@ -478,7 +478,11 @@ public class JGroupsTransport implements Transport {
       }
    }
 
-   private void startJGroupsChannelIfNeeded() {
+   /**
+    * When overwriting this method, it allows third-party libraries to create a new behavior like:
+    * After {@link JChannel} has been created and before it is connected.
+    */
+   protected void startJGroupsChannelIfNeeded() {
       String clusterName = configuration.transport().clusterName();
       if (connectChannel) {
          try {
