@@ -24,20 +24,27 @@ for FAILURES_LOG in $(find "$ROOT_DIR" -name 'test-failures*.log'); do
   LOG_DIR=$(dirname "$FAILURES_LOG")
 
   # Find the failed tests in this failures log and move them
-  FAILED_TESTS=$(sed -n -r 's/.*TestSuiteProgress.*[^[:alnum:]]([[:alnum:]]+Test).*/\1/ p' "$FAILURES_LOG" | sort -u)
+  FAILED_TESTS=$(sed -n -r 's/.*TestSuiteProgress.*[^[:alnum:]]([[:alnum:]]+Test)\..*/\1/ p' "$FAILURES_LOG" | sort -u)
   for TEST in $FAILED_TESTS; do
-    for LOG in ${LOG_DIR}/*${TEST}*; do
-      BASENAME=$(basename "$LOG")
-      echo "${DEST_PREFIX}${BASENAME}"
-      mv "$LOG" "${DEST_PREFIX}${BASENAME}"
-    done
+    echo ls -ld ${LOG_DIR}/*${TEST}*
+    ls -l ${LOG_DIR}/*${TEST}*
+
+    if test -n "$(find ${LOG_DIR} -maxdepth 1 -name "*${TEST}*" -print -quit)"; then
+      for LOG in ${LOG_DIR}/*${TEST}*; do
+        echo $LOG
+        BASENAME=$(basename "$LOG")
+        mv "$LOG" "${DEST_PREFIX}${BASENAME}"
+      done
+    else
+      echo "Log missing: ${LOG_DIR}/*${TEST}*"
+    fi
   done
 
   # Remove the tests that didn't fail
-  rm -f ${LOG_DIR}/*Test*.log.gz
+  find ${LOG_DIR} -name '*Test*.log.gz' -delete
 
   # Move any remaining logs
-  for LOG in ${LOG_DIR}/*.log.gz; do
+  for LOG in $(find ${LOG_DIR} -maxdepth 1 -name '*.log.gz'); do
     BASENAME=$(basename "$LOG")
     echo "${DEST_PREFIX}${BASENAME}"
     mv "$LOG" "${DEST_PREFIX}${BASENAME}"
