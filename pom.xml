@@ -153,6 +153,7 @@
       <module>integrationtests/spring-boot-it</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
+       <module>foo</module>
    </modules>
    <properties>
       <!-- Semantic versioning defaults. -->

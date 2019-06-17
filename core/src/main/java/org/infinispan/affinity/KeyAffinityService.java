@@ -32,6 +32,8 @@ import org.infinispan.remoting.transport.Address;
  */
 public interface KeyAffinityService<K> extends Lifecycle {
 
+   // The performance should be the same
+
    /**
     * Returns a key that will be distributed on the cluster node identified by address.
     * @param address identifying the cluster node.
