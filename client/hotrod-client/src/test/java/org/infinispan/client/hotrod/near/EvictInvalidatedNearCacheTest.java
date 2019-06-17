@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.near;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
@@ -36,9 +38,8 @@ public class EvictInvalidatedNearCacheTest extends SingleHotRodServerTest {
       assertClient.get(2, "v1").expectNearGetNull(2).expectNearPutIfAbsent(2, "v1");
       assertClient.put(3, "v1").expectNearPreemptiveRemove(3);
       assertClient.get(3, "v1").expectNearGetNull(3).expectNearPutIfAbsent(3, "v1");
-      assertClient.get(2, "v1").expectNearGetValue(2, "v1");
-      assertClient.get(3, "v1").expectNearGetValue(3, "v1");
+
+      // Caffeine is not deterministic as to which one it evicts - so we just verify size
+      assertEquals(2, assertClient.nearCacheSize());
    }
-
-
 }
