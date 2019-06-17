@@ -12,8 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
 import org.hibernate.search.engine.spi.EntityIndexBinding;
@@ -25,6 +24,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.ClusterExecutor;
@@ -36,6 +36,7 @@ import org.infinispan.query.impl.massindex.MassIndexStrategy.IndexingExecutionMo
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.LogFactory;
 
@@ -53,6 +54,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    private final SearchIntegrator searchIntegrator;
    private final IndexUpdater indexUpdater;
    private final ClusterExecutor executor;
+   private final ExecutorService localExecutor;
 
    public DistributedExecutorMassIndexer(AdvancedCache cache, SearchIntegrator searchIntegrator,
                                          KeyTransformationHandler keyTransformationHandler, TimeService timeService) {
@@ -60,32 +62,19 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       this.searchIntegrator = searchIntegrator;
       this.indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
       this.executor = cache.getCacheManager().executor();
+      this.localExecutor = cache.getCacheManager().getGlobalComponentRegistry()
+                                .getComponent(ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR);
    }
 
    @ManagedOperation(description = "Starts rebuilding the index", displayName = "Rebuild index")
    @Override
    public void start() {
-      CompletableFuture<?> executionResult = executeInternal(false);
-      executionResult.join();
+      CompletionStages.join(executeInternal());
    }
 
    @Override
    public CompletableFuture<Void> startAsync() {
-      return executeInternal(true);
-   }
-
-   private void addFutureListToFutures(List<CompletableFuture<Void>> futures, List<CompletableFuture<Void>> futureList) {
-      futureList.forEach(f -> futures.add(f.exceptionally(t -> {
-         if (t instanceof InterruptedException) {
-            Thread.currentThread().interrupt();
-            return null;
-         } else if (t instanceof CompletionException) {
-            Throwable cause = t.getCause();
-            throw LOG.errorExecutingMassIndexer(cause);
-         } else {
-            throw LOG.errorExecutingMassIndexer(t);
-         }
-      })));
+      return executeInternal();
    }
 
    @Override
@@ -166,7 +155,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       return future != null ? future : CompletableFutures.completedNull();
    }
 
-   private CompletableFuture<Void> executeInternal(boolean asyncFlush) {
+   private CompletableFuture<Void> executeInternal() {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
       Deque<IndexedTypeIdentifier> toFlush = new LinkedList<>();
 
@@ -196,16 +185,11 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       }
       CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(
             new CompletableFuture[0]));
-      BiConsumer<Void, Throwable> consumer = (v, t) -> {
+      BiConsumer<Void, Throwable> flushIfNeeded = (v, t) -> {
          for (IndexedTypeIdentifier type : toFlush) {
             indexUpdater.flush(type);
          }
       };
-      if (asyncFlush) {
-         compositeFuture = compositeFuture.whenCompleteAsync(consumer, Executors.newSingleThreadExecutor());
-      } else {
-         compositeFuture = compositeFuture.whenComplete(consumer);
-      }
-      return compositeFuture;
+      return compositeFuture.whenCompleteAsync(flushIfNeeded, localExecutor);
    }
 }
