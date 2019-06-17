@@ -710,22 +710,27 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       @Override
       public Publisher<CacheEntry<K, V>> localPublisher(int segment) {
-         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-         Flowable<CacheEntry<K, V>> inMemoryFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segment))
-               .doOnNext(ce -> seenKeys.add(ce.getKey()));
-         Flowable<CacheEntry<K, V>> loaderFlowable = Flowable.fromPublisher(persistenceManager.<K, V>publishEntries(IntSets.immutableSet(segment), k -> !seenKeys.contains(k), true, true, BOTH))
-               .map(me -> PersistenceUtil.convert(me, iceFactory));
-         return Flowable.concat(inMemoryFlowable, loaderFlowable);
+         Publisher<CacheEntry<K, V>> inMemorySource = cacheSet.localPublisher(segment);
+         IntSet segments = IntSets.immutableSet(segment);
+         return getCacheEntryPublisher(inMemorySource, segments);
       }
 
       @Override
       public Publisher<CacheEntry<K, V>> localPublisher(IntSet segments) {
-         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-         Flowable<CacheEntry<K, V>> inMemoryFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segments))
-               .doOnNext(ce -> seenKeys.add(ce.getKey()));
-         Flowable<CacheEntry<K, V>> loaderFlowable = Flowable.fromPublisher(persistenceManager.<K, V>publishEntries(segments, k -> !seenKeys.contains(k), true, true, BOTH))
-               .map(me -> PersistenceUtil.convert(me, iceFactory));
-         return Flowable.concat(inMemoryFlowable, loaderFlowable);
+         Publisher<CacheEntry<K, V>> inMemorySource = cacheSet.localPublisher(segments);
+         return getCacheEntryPublisher(inMemorySource, segments);
+      }
+
+      private Publisher<CacheEntry<K, V>> getCacheEntryPublisher(Publisher<CacheEntry<K, V>> inMemorySource,
+                                                                 IntSet segments) {
+         Set<K> seenKeys = new HashSet<>(dataContainer.sizeIncludingExpired(segments));
+         Publisher<MarshallableEntry<K, V>> loaderSource =
+               persistenceManager.publishEntries(segments, k -> !seenKeys.contains(k), true, true, BOTH);
+         return Flowable.concat(
+               Flowable.fromPublisher(inMemorySource)
+                     .doOnNext(ce -> seenKeys.add(ce.getKey())),
+               Flowable.fromPublisher(loaderSource)
+                     .map(me -> PersistenceUtil.convert(me, iceFactory)));
       }
    }
 
@@ -797,20 +802,23 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       @Override
       public Publisher<K> localPublisher(int segment) {
-         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-         Flowable<K> inMemoryFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segment))
-               .doOnNext(seenKeys::add);
-         Publisher<K> loaderPublisher = persistenceManager.publishKeys(IntSets.immutableSet(segment), k -> !seenKeys.contains(k), BOTH);
-         return Flowable.concat(inMemoryFlowable, loaderPublisher);
+         Publisher<K> inMemorySource = cacheSet.localPublisher(segment);
+         IntSet segments = IntSets.immutableSet(segment);
+         return getKeyPublisher(inMemorySource, segments);
       }
 
       @Override
       public Publisher<K> localPublisher(IntSet segments) {
-         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-         Flowable<K> inMemoryFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segments))
-               .doOnNext(seenKeys::add);
-         Publisher<K> loaderPublisher = persistenceManager.publishKeys(segments, k -> !seenKeys.contains(k), BOTH);
-         return Flowable.concat(inMemoryFlowable, loaderPublisher);
+         Publisher<K> inMemorySource = cacheSet.localPublisher(segments);
+         return getKeyPublisher(inMemorySource, segments);
+      }
+
+      private Publisher<K> getKeyPublisher(Publisher<K> inMemorySource, IntSet segments) {
+         Set<K> seenKeys = new HashSet<>(dataContainer.sizeIncludingExpired(segments));
+         return Flowable.concat(
+               Flowable.fromPublisher(inMemorySource)
+                     .doOnNext(seenKeys::add),
+               persistenceManager.publishKeys(segments, k -> !seenKeys.contains(k), BOTH));
       }
    }
 }

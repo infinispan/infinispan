@@ -76,7 +76,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       assertTrue(before.await(30, TimeUnit.SECONDS));
       Future<Void> stopFuture = fork(persistenceManager::stop);
       //stop is unable to proceed while the process isn't finish - note that with slow store the publisher should take 300+ ms
-      expectException(TimeoutException.class, () -> stopFuture.get(150, TimeUnit.MILLISECONDS));
+      expectException(TimeoutException.class, () -> stopFuture.get(50, TimeUnit.MILLISECONDS));
       after.countDown();
       Integer count = c.get(30, TimeUnit.SECONDS);
       stopFuture.get(30, TimeUnit.SECONDS);
