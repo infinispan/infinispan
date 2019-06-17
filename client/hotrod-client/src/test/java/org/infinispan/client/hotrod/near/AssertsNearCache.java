@@ -17,6 +17,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -33,25 +34,31 @@ class AssertsNearCache<K, V> {
    final BlockingQueue<MockEvent> events;
    final RemoteCacheManager manager;
    final NearCacheMode nearCacheMode;
+   final AtomicReference<NearCacheService<K, V>> nearCacheService;
 
-   private AssertsNearCache(RemoteCacheManager manager, Cache<byte[], ?> server, BlockingQueue<MockEvent> events) {
+   private AssertsNearCache(RemoteCacheManager manager, Cache<byte[], ?> server, BlockingQueue<MockEvent> events,
+                            AtomicReference<NearCacheService<K, V>> nearCacheService) {
       this.manager = manager;
       this.remote = manager.getCache();
       this.server = server;
       this.events = events;
       this.nearCacheMode = manager.getConfiguration().nearCache().mode();
+      this.nearCacheService = nearCacheService;
    }
 
    static <K, V> AssertsNearCache<K, V> create(Cache<byte[], ?> server, ConfigurationBuilder builder) {
       final BlockingQueue<MockEvent> events = new ArrayBlockingQueue<>(128);
+      AtomicReference<NearCacheService<K, V>> nearCacheServiceRef = new AtomicReference<>();
       RemoteCacheManager manager = new RemoteCacheManager(builder.build()) {
          @Override
          protected <KK, VV> NearCacheService<KK, VV> createNearCacheService(String cacheName, NearCacheConfiguration cfg) {
-            return new MockNearCacheService<>(cfg, events, listenerNotifier);
+            MockNearCacheService nearCacheService = new MockNearCacheService<>(cfg, events, listenerNotifier);
+            nearCacheServiceRef.set(nearCacheService);
+            return nearCacheService;
          }
       };
 
-      return new AssertsNearCache<>(manager, server, events);
+      return new AssertsNearCache<K, V>(manager, server, events, nearCacheServiceRef);
    }
 
    AssertsNearCache<K, V> get(K key, V expected) {
@@ -234,5 +241,9 @@ class AssertsNearCache<K, V> {
       MockGetEvent get = assertGetKey(key);
       assertEquals(value, get.value == null ? null : get.value.getValue());
       return get;
+   }
+
+   public int nearCacheSize() {
+      return this.nearCacheService.get().size();
    }
 }
