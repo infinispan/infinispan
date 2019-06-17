@@ -23,6 +23,8 @@ import io.reactivex.Flowable;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class NonSegmentedLocalPublisherManagerImpl<K, V> extends LocalPublisherManagerImpl<K, V> {
+   static final int PARALLEL_BATCH_SIZE = 1024;
+
    @Override
    protected <I, R> Flowable<R> exactlyOnceParallel(CacheSet<I> set,
          Set<K> keysToExclude, Function<I, K> toKeyFunction, IntSet segments,
@@ -34,7 +36,7 @@ public class NonSegmentedLocalPublisherManagerImpl<K, V> extends LocalPublisherM
          flowable = flowable.filter(i -> !keysToExclude.contains(toKeyFunction.apply(i)));
       }
 
-      return combineStages(flowable.buffer(1024)
+      return combineStages(flowable.buffer(PARALLEL_BATCH_SIZE)
             .parallel()
             .runOn(asyncScheduler)
             .map(buffer -> transformer.apply(Flowable.fromIterable(buffer)))
