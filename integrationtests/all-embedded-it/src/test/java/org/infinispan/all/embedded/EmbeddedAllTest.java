@@ -2,6 +2,7 @@ package org.infinispan.all.embedded;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
@@ -10,10 +11,10 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.junit.TmpDir;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -29,6 +30,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
@@ -41,6 +43,9 @@ public class EmbeddedAllTest {
    private static final Log log = LogFactory.getLog(EmbeddedAllTest.class);
    private static EmbeddedCacheManager manager;
    private static EmbeddedCacheManager manager2;
+
+   @ClassRule
+   public static TmpDir tmpDir = new TmpDir();
 
    @BeforeClass
    public static void beforeTest() throws Exception {
@@ -123,12 +128,12 @@ public class EmbeddedAllTest {
    }
 
    @Test
-   public void testAllEmbeddedFileStore() {
+   public void testAllEmbeddedFileStore() throws IOException {
 
       ConfigurationBuilder builderFcsLocalCache = new ConfigurationBuilder();
       builderFcsLocalCache.clustering().cacheMode(CacheMode.LOCAL)
             .persistence().passivation(true)
-            .addSingleFileStore().location("/tmp/").purgeOnStartup(false);
+            .addSingleFileStore().location(tmpDir.newFolder("fcs").getAbsolutePath()).purgeOnStartup(false);
 
       manager.defineConfiguration("fcs-local-cache", builderFcsLocalCache.build());
       Cache<Object, Object> fcsLocalCache = manager.getCache("fcs-local-cache");
@@ -160,14 +165,14 @@ public class EmbeddedAllTest {
    }
 
    @Test
-   public void testAllEmbeddedRocksDbStore() {
+   public void testAllEmbeddedRocksDbStore() throws IOException {
 
       ConfigurationBuilder builderRocksDbLocalCache = new ConfigurationBuilder();
       builderRocksDbLocalCache.clustering().cacheMode(CacheMode.LOCAL)
             .persistence().passivation(true)
             .addStore(RocksDBStoreConfigurationBuilder.class)
-            .location("/tmp/rocksdb/data")
-            .expiredLocation("/tmp/rocksdb/expired").build();
+            .location(tmpDir.newFolder("rocksdb", "data").toString())
+            .expiredLocation(tmpDir.newFolder("rocksdb", "expired").toString()).build();
 
       manager.defineConfiguration("rocksdb-local-cache", builderRocksDbLocalCache.build());
       Cache<Object, Object> rocksDbLocalCache = manager.getCache("rocksdb-local-cache");
