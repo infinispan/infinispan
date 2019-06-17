@@ -1,4 +1,4 @@
-package org.infinispan.api.collections.reactive;
+package org.infinispan.api.reactive;
 
 public class CreatedKeyValueEntry<K, V> extends KeyValueEntry {
    public CreatedKeyValueEntry(Object key, Object value) {

@@ -2,18 +2,16 @@ package org.infinispan.api.collections.reactive.client.impl;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Flow;
 
-import org.infinispan.api.collections.reactive.KeyValueEntry;
-import org.infinispan.api.collections.reactive.KeyValueStore;
 import org.infinispan.api.exception.InfinispanException;
-import org.infinispan.api.search.reactive.ContinuousQueryPublisher;
-import org.infinispan.api.search.reactive.QueryPublisher;
+import org.infinispan.api.reactive.ContinuousQueryPublisher;
+import org.infinispan.api.reactive.KeyValueEntry;
+import org.infinispan.api.reactive.KeyValueStore;
+import org.infinispan.api.reactive.QueryPublisher;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.dsl.QueryFactory;
-import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
@@ -47,12 +45,6 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    @Override
    public CompletionStage<V> getAndRemove(K key) {
       return cacheReturnValues.removeAsync(key);
-   }
-
-   @Override
-   public CompletionStage<Void> putMany(Flow.Publisher<KeyValueEntry<K, V>> pairs) {
-      Publisher<KeyValueEntry<K, V>> rsPairs = FlowAdapters.toPublisher(pairs);
-      return putManyAdapted(rsPairs);
    }
 
    @Override

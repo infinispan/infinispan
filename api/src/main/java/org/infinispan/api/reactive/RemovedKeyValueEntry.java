@@ -1,4 +1,4 @@
-package org.infinispan.api.collections.reactive;
+package org.infinispan.api.reactive;
 
 public class RemovedKeyValueEntry<K, V> extends KeyValueEntry {
    public RemovedKeyValueEntry(K key, V value) {

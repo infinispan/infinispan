@@ -2,15 +2,15 @@ package org.infinispan.api.client.impl;
 
 import static org.infinispan.api.client.impl.SearchUtil.EDOIA;
 import static org.infinispan.api.client.impl.SearchUtil.MIREN;
-import static org.infinispan.api.client.impl.SearchUtil.PEOPLE;
 import static org.infinispan.api.client.impl.SearchUtil.OIHANA;
+import static org.infinispan.api.client.impl.SearchUtil.PEOPLE;
 import static org.infinispan.api.client.impl.SearchUtil.UNAI;
 
 import org.infinispan.api.Infinispan;
-import org.infinispan.api.collections.reactive.KeyValueStore;
-import org.infinispan.api.collections.reactive.KeyValueStoreConfig;
-import org.infinispan.api.search.reactive.QueryParameters;
-import org.infinispan.api.search.reactive.QueryPublisher;
+import org.infinispan.api.reactive.KeyValueStore;
+import org.infinispan.api.reactive.KeyValueStoreConfig;
+import org.infinispan.api.reactive.QueryParameters;
+import org.infinispan.api.reactive.QueryPublisher;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
@@ -67,12 +67,12 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
 
    @Test
    public void search_api_with_params() throws Exception {
-      QueryPublisher<Person> queryPublisher = store.find();
-      queryPublisher.query("FROM org.infinispan.Person p where p.lastName = :lastName and p.address.number = :number")
-            .withQueryParameters(QueryParameters.init("lastName", "Bilbao").append("number", "12"));
-
       TestSubscriber<Person> personTestSubscriber = new TestSubscriber<>();
-      queryPublisher.subscribe(personTestSubscriber);
+      store.find()
+            .query("FROM org.infinispan.Person p where p.lastName = :lastName and p.address.number = :number")
+            .withQueryParameters(QueryParameters.init("lastName", "Bilbao").append("number", "12"))
+            .subscribe(personTestSubscriber);
+
       personTestSubscriber.await();
 
       personTestSubscriber.assertComplete();
@@ -84,8 +84,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
    public void search_skip() throws Exception {
       QueryPublisher<Person> queryPublisher = store.find();
       queryPublisher.query("FROM org.infinispan.Person p where p.lastName = :lastName order by p.firstName")
-            .withQueryParameter("lastName", "Bilbao")
-            .skip(1);
+            .withQueryParameter("lastName", "Bilbao");
 
       TestSubscriber<Person> personTestSubscriber = new TestSubscriber<>();
       queryPublisher.subscribe(personTestSubscriber);
@@ -100,8 +99,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
    public void search_limit() throws Exception {
       QueryPublisher<Person> queryPublisher = store.find();
       queryPublisher.query("FROM org.infinispan.Person p where p.lastName = :lastName order by p.firstName")
-            .withQueryParameter("lastName", "Bilbao")
-            .limit(1);
+            .withQueryParameter("lastName", "Bilbao");
 
       TestSubscriber<Person> personTestSubscriber = new TestSubscriber<>();
       queryPublisher.subscribe(personTestSubscriber);

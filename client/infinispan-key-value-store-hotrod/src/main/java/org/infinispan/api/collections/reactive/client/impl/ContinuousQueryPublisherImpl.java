@@ -2,25 +2,22 @@ package org.infinispan.api.collections.reactive.client.impl;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Flow;
-import java.util.concurrent.TimeUnit;
 
-import org.infinispan.api.collections.reactive.CreatedKeyValueEntry;
-import org.infinispan.api.collections.reactive.KeyValueEntry;
-import org.infinispan.api.collections.reactive.RemovedKeyValueEntry;
-import org.infinispan.api.collections.reactive.UpdatedKeyValueEntry;
-import org.infinispan.api.search.reactive.ContinuousQueryPublisher;
-import org.infinispan.api.search.reactive.QueryParameters;
+import org.infinispan.api.reactive.ContinuousQueryPublisher;
+import org.infinispan.api.reactive.CreatedKeyValueEntry;
+import org.infinispan.api.reactive.KeyValueEntry;
+import org.infinispan.api.reactive.QueryParameters;
+import org.infinispan.api.reactive.RemovedKeyValueEntry;
+import org.infinispan.api.reactive.UpdatedKeyValueEntry;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Subscriber;
 
-import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
+import io.reactivex.processors.FlowableProcessor;
+import io.reactivex.processors.UnicastProcessor;
 
 /**
  * Implements the {@link ContinuousQueryPublisher} using RXJava and Flowable API.
@@ -33,13 +30,10 @@ public class ContinuousQueryPublisherImpl<K, V> implements ContinuousQueryPublis
    private final ContinuousQuery<K, V> continuousQuery;
    private final QueryFactory queryFactory;
    private Query query;
-   private long timeout;
-   private TimeUnit timeUnit;
    private boolean all = true;
    private boolean created;
    private boolean updated;
    private boolean removed;
-   private ContinuousQueryListener listener;
    private Flowable flowable;
    private Set<Subscriber<? super KeyValueEntry<K, V>>> subscribers = ConcurrentHashMap.newKeySet();
 
@@ -88,18 +82,6 @@ public class ContinuousQueryPublisherImpl<K, V> implements ContinuousQueryPublis
    }
 
    @Override
-   public ContinuousQueryPublisher<K, V> withTimeout(long timeout, TimeUnit timeUnit) {
-      this.timeout = timeout;
-      this.timeUnit = timeUnit;
-      return this;
-   }
-
-   @Override
-   public void subscribe(Flow.Subscriber<? super KeyValueEntry<K, V>> subscriber) {
-      subscribeRs(FlowAdapters.toSubscriber(subscriber));
-   }
-
-   @Override
    public void subscribe(Subscriber<? super KeyValueEntry<K, V>> subscriber) {
       subscribeRs(subscriber);
    }
@@ -112,40 +94,31 @@ public class ContinuousQueryPublisherImpl<K, V> implements ContinuousQueryPublis
       flowable.subscribe(subscriber);
    }
 
-   private Flowable createContinuousQueryFlowable() {
-      return Flowable.create(e -> {
-         this.listener = createContinuousQueryListener(e);
-         continuousQuery.addContinuousQueryListener(query, listener);
-      }, BackpressureStrategy.BUFFER);
+   private FlowableProcessor createContinuousQueryFlowable() {
+      UnicastProcessor unicastProcessor = UnicastProcessor.create();
+      ContinuousQueryListener continuousQueryListener = createContinuousQueryListener(unicastProcessor);
+      continuousQuery.addContinuousQueryListener(query, continuousQueryListener);
+      return unicastProcessor;
    }
 
-   @Override
-   public void dispose() {
-      continuousQuery.removeContinuousQueryListener(listener);
-      subscribers.forEach(Subscriber::onComplete);
-      subscribers.clear();
-      listener = null;
-      flowable = null;
-   }
-
-   private ContinuousQueryListener createContinuousQueryListener(FlowableEmitter<Object> e) {
+   private ContinuousQueryListener createContinuousQueryListener(UnicastProcessor processor) {
       return new ContinuousQueryListener<K, V>() {
          @Override
          public void resultJoining(K key, V value) {
             if (all || created)
-               e.onNext(new CreatedKeyValueEntry<>(key, value));
+               processor.onNext(new CreatedKeyValueEntry<>(key, value));
          }
 
          @Override
          public void resultUpdated(K key, V value) {
             if (all || updated)
-               e.onNext(new UpdatedKeyValueEntry<>(key, value));
+               processor.onNext(new UpdatedKeyValueEntry<>(key, value));
          }
 
          @Override
          public void resultLeaving(K key) {
             if (all || removed)
-               e.onNext(new RemovedKeyValueEntry<>(key, null));
+               processor.onNext(new RemovedKeyValueEntry<>(key, null));
          }
       };
    }

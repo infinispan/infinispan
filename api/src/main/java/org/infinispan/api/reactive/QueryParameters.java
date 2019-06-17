@@ -1,4 +1,4 @@
-package org.infinispan.api.search.reactive;
+package org.infinispan.api.reactive;
 
 import java.util.HashMap;
 import java.util.Map;

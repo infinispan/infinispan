@@ -1,4 +1,4 @@
-package org.infinispan.api.collections.reactive;
+package org.infinispan.api.reactive;
 
 import java.util.HashSet;
 import java.util.Set;

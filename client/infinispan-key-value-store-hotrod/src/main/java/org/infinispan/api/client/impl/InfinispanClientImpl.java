@@ -7,9 +7,9 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.api.ClientConfig;
 import org.infinispan.api.Infinispan;
-import org.infinispan.api.collections.reactive.KeyValueStore;
-import org.infinispan.api.collections.reactive.KeyValueStoreConfig;
 import org.infinispan.api.collections.reactive.client.impl.KeyValueStoreImpl;
+import org.infinispan.api.reactive.KeyValueStore;
+import org.infinispan.api.reactive.KeyValueStoreConfig;
 import org.infinispan.api.marshalling.Marshaller;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;

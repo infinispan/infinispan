@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.api.Infinispan;
-import org.infinispan.api.collections.reactive.KeyValueEntry;
-import org.infinispan.api.collections.reactive.KeyValueStore;
-import org.infinispan.api.collections.reactive.KeyValueStoreConfig;
-import org.infinispan.api.search.reactive.ContinuousQueryPublisher;
+import org.infinispan.api.reactive.ContinuousQueryPublisher;
+import org.infinispan.api.reactive.KeyValueEntry;
+import org.infinispan.api.reactive.KeyValueStore;
+import org.infinispan.api.reactive.KeyValueStoreConfig;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
@@ -96,8 +96,6 @@ public class ContinuousQueryKeyValueStoreTest extends SingleHotRodServerTest {
             .collect(Collectors.toList());
 
       assertEquals(11, personNames.size());
-
-      continuousQueryPublisher.dispose();
    }
 
    @Test
@@ -112,7 +110,6 @@ public class ContinuousQueryKeyValueStoreTest extends SingleHotRodServerTest {
 
       updateOneValue();
 
-      continuousQueryPublisher.dispose();
       personTestSubscriber.assertComplete();
       personTestSubscriber.assertValueCount(6);
    }
@@ -133,7 +130,6 @@ public class ContinuousQueryKeyValueStoreTest extends SingleHotRodServerTest {
 
       personTestSubscriber.await(1, TimeUnit.SECONDS);
       await(store.remove(OIHANA.id));
-      continuousQueryPublisher.dispose();
       personTestSubscriber.assertValueCount(1);
    }
 
@@ -153,7 +149,6 @@ public class ContinuousQueryKeyValueStoreTest extends SingleHotRodServerTest {
       personTestSubscriber.await(1, TimeUnit.SECONDS);
       personTestSubscriber.assertValueCount(6);
 
-      continuousQueryPublisher.dispose();
       personTestSubscriber.assertComplete();
    }
 

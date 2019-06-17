@@ -70,10 +70,10 @@ import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
 import org.infinispan.counter.api.CounterManager;
 
 /**
- * <p>Factory for {@link org.infinispan.client.hotrod.RemoteCache}s.</p>
- * <p>In order to be able to use a {@link org.infinispan.client.hotrod.RemoteCache}, the
- * {@link org.infinispan.client.hotrod.RemoteCacheManager} must be started first: this instantiates connections to
- * Hot Rod server(s). Starting the {@link org.infinispan.client.hotrod.RemoteCacheManager} can be done either at
+ * <p>Factory for {@link RemoteCache}s.</p>
+ * <p>In order to be able to use a {@link RemoteCache}, the
+ * {@link RemoteCacheManager} must be started first: this instantiates connections to
+ * Hot Rod server(s). Starting the {@link RemoteCacheManager} can be done either at
  * creation by passing start==true to the constructor or by using a constructor that does that for you; or after
  * construction by calling {@link #start()}.</p>
  * <p><b>NOTE:</b> this is an "expensive" object, as it manages a set of persistent TCP connections to the Hot Rod
@@ -109,6 +109,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private final XaModeTransactionTable xaTransactionTable;
    private ObjectName mbeanObjectName;
    private TimeService timeService = DefaultTimeService.INSTANCE;
+   private ExecutorService asyncExecutorService;
 
    /**
     * Create a new RemoteCacheManager using the supplied {@link Configuration}.
@@ -310,7 +311,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       if (executorFactory == null) {
          executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
       }
-      ExecutorService asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
+      asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
       channelFactory.start(codec, configuration, defaultCacheTopologyId, marshaller, asyncExecutorService,
             listenerNotifier, Collections.singletonList(listenerNotifier::failoverListeners), marshallerRegistry);
       counterManager.start(channelFactory, codec, configuration, listenerNotifier);
@@ -609,6 +610,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          ClientStatistics stats) {
       return new OperationsFactory(channelFactory, cacheName, forceReturnValue, codec, listenerNotifier, configuration,
             stats);
+   }
+
+   public ExecutorService getAsyncExecutorService() {
+      return asyncExecutorService;
    }
 
    private static class RemoteCacheKey {

@@ -3,13 +3,11 @@ package org.infinispan.api.collections.reactive.client.impl;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Flow;
 
-import org.infinispan.api.search.reactive.QueryParameters;
-import org.infinispan.api.search.reactive.QueryPublisher;
+import org.infinispan.api.reactive.QueryParameters;
+import org.infinispan.api.reactive.QueryPublisher;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Subscriber;
 
 import io.reactivex.Flowable;
@@ -47,24 +45,6 @@ public class QueryPublisherImpl<T> implements QueryPublisher<T> {
    public QueryPublisher<T> withQueryParameters(QueryParameters params) {
       query.setParameters(params.asMap());
       return this;
-   }
-
-   @Override
-   public QueryPublisher<T> limit(int limit) {
-      query.maxResults(limit);
-      return this;
-   }
-
-   @Override
-   public QueryPublisher<T> skip(int skip) {
-      query.startOffset(skip);
-      return this;
-   }
-
-   @Override
-   public void subscribe(Flow.Subscriber<? super T> subscriber) {
-      Subscriber<? super T> rsSubscriber = FlowAdapters.toSubscriber(subscriber);
-      queryPublisherSubscriber(rsSubscriber);
    }
 
    @Override

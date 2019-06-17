@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.query.Search;
 
 @ProtoDoc("@Indexed")
 public final class Person {
