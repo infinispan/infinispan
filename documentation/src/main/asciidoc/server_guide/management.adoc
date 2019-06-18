@@ -72,7 +72,7 @@ ifndef::productized[]
 endif::productized[]
 ifdef::productized[]
 * `service:jmx:remote+http://hostname:9990` for plain connections through the management interface
-* `service:jmx:remote+https://hostname:9990` for TLS connections through the management interface (although this requires having the appropriate keys available)
+* `service:jmx:remote+https://hostname:9993` for TLS connections through the management interface (although this requires having the appropriate keys available)
 endif::productized[]
 
 The JMX subsystem registers a service with the Remoting endpoint so that remote access to JMX can be obtained over the exposed Remoting connector.
