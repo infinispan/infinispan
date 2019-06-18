@@ -7,14 +7,13 @@ import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.util.ByteString;
 
 /**
@@ -23,7 +22,7 @@ import org.infinispan.util.ByteString;
  * @author gustavonalle
  * @since 7.0
  */
-public abstract class AbstractUpdateCommand extends BaseRpcCommand implements ReplicableCommand, CustomQueryCommand {
+public abstract class AbstractUpdateCommand extends BaseRpcCommand implements ReplicableCommand, InitializableCommand {
 
    protected SearchIntegrator searchFactory;
    protected String indexName;
@@ -39,6 +38,13 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
 
    @Override
    public abstract byte getCommandId();
+
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      Cache cache = componentRegistry.getCache().wired();
+      searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
+      queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
+   }
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
@@ -63,21 +69,6 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   /**
-    * This is invoked only on the receiving node, before {@link #perform(org.infinispan.context.InvocationContext)}.
-    */
-   @Override
-   public void setCacheManager(EmbeddedCacheManager cm) {
-      String name = cacheName.toString();
-      if (cm.cacheExists(name)) {
-         Cache cache = cm.getCache(name);
-         searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
-         queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
-      } else {
-         throw new CacheException("Cache named '" + name + "' does not exist on this CacheManager, or was not started");
-      }
    }
 
    @Override

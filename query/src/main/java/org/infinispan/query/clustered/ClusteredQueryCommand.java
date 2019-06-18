@@ -8,11 +8,11 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.clustered.commandworkers.CQCommandType;
-import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.util.ByteString;
@@ -26,7 +26,7 @@ import org.infinispan.util.ByteString;
  * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
-public final class ClusteredQueryCommand extends BaseRpcCommand implements CustomQueryCommand {
+public final class ClusteredQueryCommand extends BaseRpcCommand implements InitializableCommand {
 
    public static final byte COMMAND_ID = ModuleCommandIds.CLUSTERED_QUERY;
 
@@ -48,17 +48,17 @@ public final class ClusteredQueryCommand extends BaseRpcCommand implements Custo
       this.commandType = commandType;
    }
 
+   @Override
+   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+      this.cache = componentRegistry.getCache().wired();
+   }
+
    /**
     * For CommandFactory only. To create a ClusteredQueryCommand, use createLazyIterator(), destroyLazyQuery(),
     * getResultSize() or retrieveKeyFromLazyQuery()
     */
    public ClusteredQueryCommand(ByteString cacheName) {
       super(cacheName);
-   }
-
-   @Override
-   public void setCacheManager(EmbeddedCacheManager cm) {
-      this.cache = cm.getCache(cacheName.toString()).getAdvancedCache();
    }
 
    static ClusteredQueryCommand createLazyIterator(QueryDefinition queryDefinition, Cache<?, ?> cache, UUID queryId) {
