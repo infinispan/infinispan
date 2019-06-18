@@ -12,7 +12,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -77,7 +77,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
       assertEquals(countInDoubtTx(recoveryOps(1).showInDoubtTransactions()), 1);
    }
 
-   public static class ForceFailureInterceptor extends CommandInterceptor {
+   public static class ForceFailureInterceptor extends DDAsyncInterceptor {
 
       public boolean fail = true;
 

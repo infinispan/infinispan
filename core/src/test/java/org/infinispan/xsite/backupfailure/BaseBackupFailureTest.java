@@ -12,7 +12,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.testng.annotations.BeforeMethod;
 
@@ -36,7 +36,7 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
       failureInterceptor.reset();
    }
 
-   public static class FailureInterceptor extends CommandInterceptor {
+   public static class FailureInterceptor extends DDAsyncInterceptor {
 
       protected volatile boolean isFailing = false;
 
@@ -64,7 +64,7 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
             logFailure.run();
             throw new CacheException("Induced failure");
          } else {
-            return invokeNextInterceptor(ctx, command);
+            return invokeNext(ctx, command);
          }
       }
 

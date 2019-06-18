@@ -19,7 +19,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -246,7 +246,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, cache(cacheIndex).get(key));
    }
 
-   static class LatchInterceptor extends CommandInterceptor {
+   static class LatchInterceptor extends BaseAsyncInterceptor {
       private final CountDownLatch applyStateStartedLatch;
       private final CountDownLatch applyStateProceedLatch;
 
@@ -256,7 +256,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
          // are performed first and create opportunity for inconsistencies
          if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
@@ -267,7 +267,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
                throw new TimeoutException();
             }
          }
-         return super.handleDefault(ctx, cmd);
+         return invokeNext(ctx, cmd);
       }
    }
 }

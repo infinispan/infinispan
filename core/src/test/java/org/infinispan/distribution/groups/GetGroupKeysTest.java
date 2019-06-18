@@ -10,6 +10,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import io.reactivex.Flowable;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -20,18 +21,16 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.logging.Log;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import io.reactivex.Flowable;
 
 /**
  * It tests the grouping advanced interface.
@@ -245,7 +244,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
       return interceptor;
    }
 
-   static class BlockCommandInterceptor extends CommandInterceptor {
+   static class BlockCommandInterceptor extends DDAsyncInterceptor {
 
       private volatile CheckPoint checkPoint;
       private volatile boolean open;
@@ -263,7 +262,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
             checkPoint.trigger("before");
             checkPoint.awaitStrict("after", 30, TimeUnit.SECONDS);
          }
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       public final void awaitCommandBlock() throws TimeoutException, InterruptedException {

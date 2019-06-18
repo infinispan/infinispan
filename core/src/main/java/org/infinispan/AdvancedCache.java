@@ -2,14 +2,12 @@ package org.infinispan;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
@@ -23,14 +21,12 @@ import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
@@ -129,66 +125,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    AdvancedCache<K, V> withSubject(Subject subject);
 
    /**
-    * Adds a custom interceptor to the interceptor chain, at specified position, where the first interceptor in the
-    * chain is at position 0 and the last one at NUM_INTERCEPTORS - 1.
-    *
-    * @param i        the interceptor to add
-    * @param position the position to add the interceptor
-    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
-    */
-   @Deprecated
-   void addInterceptor(CommandInterceptor i, int position);
-
-   /**
-    * Adds a custom interceptor to the interceptor chain, after an instance of the specified interceptor type. Throws a
-    * cache exception if it cannot find an interceptor of the specified type.
-    *
-    * @param i                interceptor to add
-    * @param afterInterceptor interceptor type after which to place custom interceptor
-    * @return true if successful, false otherwise.
-    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
-    */
-   @Deprecated
-   boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor);
-
-   /**
-    * Adds a custom interceptor to the interceptor chain, before an instance of the specified interceptor type. Throws a
-    * cache exception if it cannot find an interceptor of the specified type.
-    *
-    * @param i                 interceptor to add
-    * @param beforeInterceptor interceptor type before which to place custom interceptor
-    * @return true if successful, false otherwise.
-    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
-    */
-   @Deprecated
-   boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor);
-
-   /**
-    * Removes the interceptor at a specified position, where the first interceptor in the chain is at position 0 and the
-    * last one at getInterceptorChain().size() - 1.
-    *
-    * @param position the position at which to remove an interceptor
-    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
-    */
-   @Deprecated
-   void removeInterceptor(int position);
-
-   /**
-    * Removes the interceptor of specified type.
-    *
-    * @param interceptorType type of interceptor to remove
-    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
-    */
-   @Deprecated
-   void removeInterceptor(Class<? extends CommandInterceptor> interceptorType);
-
-   /**
-    * @deprecated Since 9.0, use {@link #getAsyncInterceptorChain()} instead.
-    */
-   @Deprecated
-   List<CommandInterceptor> getInterceptorChain();
-
-   /**
     * Allows the modification of the interceptor chain.
     *
     * @deprecated Since 10.0, will be removed without a replacement
@@ -282,16 +218,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @return the batching component associated with this cache instance
     */
    BatchContainer getBatchContainer();
-
-   /**
-    * Returns the component in charge of managing the interactions between the cache operations and the context
-    * information associated with them.
-    *
-    * @return the invocation context container component
-    * @deprecated No longer in use, implementations might return null.
-    */
-   @Deprecated
-   InvocationContextContainer getInvocationContextContainer();
 
    /**
     * Returns the container where data is stored in the cache. Users should interact with this component with care

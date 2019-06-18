@@ -23,8 +23,8 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.BiasedEntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -360,7 +360,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals("myValue", value);
    }
 
-   static class RemoveLatchInterceptor extends CommandInterceptor {
+   static class RemoveLatchInterceptor extends BaseAsyncInterceptor {
       private final CountDownLatch removeStartedLatch;
       private final CountDownLatch removeProceedLatch;
 
@@ -370,7 +370,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          if (cmd instanceof RemoveCommand) {
             // signal we encounter a REMOVE
             removeStartedLatch.countDown();
@@ -379,11 +379,11 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                throw new TimeoutException();
             }
          }
-         return super.handleDefault(ctx, cmd);
+         return invokeNext(ctx, cmd);
       }
    }
 
-   static class PutLatchInterceptor extends CommandInterceptor {
+   static class PutLatchInterceptor extends BaseAsyncInterceptor {
       private final CountDownLatch putStartedLatch;
       private final CountDownLatch putProceedLatch;
 
@@ -393,7 +393,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          if (cmd instanceof PutKeyValueCommand &&
              !((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
             // signal we encounter a (non-state-transfer) PUT
@@ -403,11 +403,11 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                throw new TimeoutException();
             }
          }
-         return super.handleDefault(ctx, cmd);
+         return invokeNext(ctx, cmd);
       }
    }
 
-   static class ReplaceLatchInterceptor extends CommandInterceptor {
+   static class ReplaceLatchInterceptor extends BaseAsyncInterceptor {
       private final CountDownLatch replaceStartedLatch;
       private final CountDownLatch replaceProceedLatch;
 
@@ -417,7 +417,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          if (cmd instanceof ReplaceCommand) {
             // signal we encounter a REPLACE
             replaceStartedLatch.countDown();
@@ -426,11 +426,11 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                throw new TimeoutException();
             }
          }
-         return super.handleDefault(ctx, cmd);
+         return invokeNext(ctx, cmd);
       }
    }
 
-   static class StateTransferLatchInterceptor extends CommandInterceptor {
+   static class StateTransferLatchInterceptor extends BaseAsyncInterceptor {
       private final CountDownLatch applyStateStartedLatch;
       private final CountDownLatch applyStateProceedLatch;
 
@@ -441,7 +441,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          // if this 'put' command is caused by state transfer we block until GET begins
          if (cmd instanceof PutKeyValueCommand &&
              ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
@@ -452,11 +452,11 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                throw new TimeoutException();
             }
          }
-         return super.handleDefault(ctx, cmd);
+         return invokeNext(ctx, cmd);
       }
    }
 
-   static class GetLatchInterceptor extends CommandInterceptor {
+   static class GetLatchInterceptor extends BaseAsyncInterceptor {
       private final CountDownLatch getKeyStartedLatch;
       private final CountDownLatch getKeyProceedLatch;
 
@@ -466,7 +466,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          if (cmd instanceof GetKeyValueCommand) {
             // Only block the first get to come here - they are not concurrent so this check is fine
             if (getKeyStartedLatch.getCount() != 0) {
@@ -478,7 +478,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                }
             }
          }
-         return super.handleDefault(ctx, cmd);
+         return invokeNext(ctx, cmd);
       }
    }
 }

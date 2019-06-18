@@ -1,5 +1,6 @@
 package org.infinispan.lock;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertEquals;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -30,7 +31,7 @@ public class CheckNoRemoteCallForLocalKeyTest extends MultipleCacheManagersTest 
       waitForClusterToForm();
       key = new MagicKey(cache(0));
       controlInterceptor = new CheckRemoteLockAcquiredOnlyOnceTest.ControlInterceptor();
-      cache(1).getAdvancedCache().addInterceptor(controlInterceptor, 1);
+      extractInterceptorChain(cache(1)).addInterceptor(controlInterceptor, 1);
    }
 
    public void testLocalPut() throws Exception {

@@ -8,7 +8,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -28,7 +27,6 @@ public class CustomInterceptorInjectionTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.customInterceptors().addInterceptor().index(0).interceptor(new SomeAsyncInterceptor());
-      builder.customInterceptors().addInterceptor().index(1).interceptor(new SomeInterceptor());
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
@@ -41,29 +39,7 @@ public class CustomInterceptorInjectionTest extends SingleCacheManagerTest {
       assertSame(cache.getAdvancedCache().getDataContainer(), someAsyncInterceptor.dc);
    }
 
-   public void testBaseCustomInterceptorInjection() {
-      AsyncInterceptor interceptor = cache.getAdvancedCache().getInterceptorChain().get(0);
-      assertEquals(SomeInterceptor.class, interceptor.getClass());
-
-      SomeInterceptor someInterceptor = (SomeInterceptor) interceptor;
-      assertSame(cache.getAdvancedCache().getLockManager(), someInterceptor.lm);
-      assertSame(cache.getAdvancedCache().getDataContainer(), someInterceptor.dc);
-   }
-
    static class SomeAsyncInterceptor extends BaseCustomAsyncInterceptor {
-
-      @Inject
-      LockManager lm;
-
-      DataContainer dc;
-
-      @Override
-      protected void start() {
-         dc = cache.getAdvancedCache().getDataContainer();
-      }
-   }
-
-   static class SomeInterceptor extends BaseCustomInterceptor {
 
       @Inject
       LockManager lm;

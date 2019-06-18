@@ -1,5 +1,6 @@
 package org.infinispan.xsite;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -21,7 +22,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.SiteMasterPickerImpl;
 import org.infinispan.test.TestingUtil;
@@ -46,7 +47,7 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
    protected void createSites() {
       super.createSites();
       blockingInterceptor = new BlockingInterceptor();
-      backup(LON).getAdvancedCache().addInterceptor(blockingInterceptor, 1);
+      extractInterceptorChain(backup(LON)).addInterceptor(blockingInterceptor, 1);
    }
 
    @Override
@@ -138,7 +139,7 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
       blockingInterceptor.isActive = true;
    }
 
-   public static class BlockingInterceptor extends CommandInterceptor {
+   public static class BlockingInterceptor extends DDAsyncInterceptor {
 
       public volatile CountDownLatch invocationReceivedLatch = new CountDownLatch(1);
 

@@ -1,5 +1,6 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertEquals;
 
 import org.infinispan.commands.tx.CommitCommand;
@@ -7,7 +8,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -26,9 +27,9 @@ public class Use1PcForInducedTransactionTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
 
       ic0 = new InvocationCountInterceptor();
-      advancedCache(0).addInterceptor(ic0, 1);
+      extractInterceptorChain(cache(0)).addInterceptor(ic0, 1);
       ic1 = new InvocationCountInterceptor();
-      advancedCache(1).addInterceptor(ic1, 1);
+      extractInterceptorChain(cache(1)).addInterceptor(ic1, 1);
    }
 
    public void testSinglePhaseCommit() {
@@ -45,7 +46,7 @@ public class Use1PcForInducedTransactionTest extends MultipleCacheManagersTest {
    }
 
 
-   public static class InvocationCountInterceptor extends CommandInterceptor {
+   public static class InvocationCountInterceptor extends DDAsyncInterceptor {
 
       volatile int prepareInvocations;
       volatile int commitInvocations;

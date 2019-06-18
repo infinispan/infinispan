@@ -1,5 +1,6 @@
 package org.infinispan.lock;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertEquals;
 
 import java.util.Collections;
@@ -9,7 +10,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
@@ -35,7 +36,7 @@ public class CheckRemoteLockAcquiredOnlyOnceTest extends MultipleCacheManagersTe
       createCluster(c, 2);
       waitForClusterToForm();
       controlInterceptor = new ControlInterceptor();
-      cache(0).getAdvancedCache().addInterceptor(controlInterceptor, 1);
+      extractInterceptorChain(cache(0)).addInterceptor(controlInterceptor, 1);
       key = new MagicKey("k", cache(0));
    }
 
@@ -158,7 +159,7 @@ public class CheckRemoteLockAcquiredOnlyOnceTest extends MultipleCacheManagersTe
       controlInterceptor.remoteInvocations = 0;
    }
 
-   public static class ControlInterceptor extends CommandInterceptor {
+   public static class ControlInterceptor extends DDAsyncInterceptor {
 
       volatile int remoteInvocations = 0;
 

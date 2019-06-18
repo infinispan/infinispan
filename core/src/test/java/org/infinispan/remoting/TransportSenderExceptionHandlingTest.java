@@ -1,5 +1,7 @@
 package org.infinispan.remoting;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import java.io.EOFException;
 import java.io.Externalizable;
 import java.io.IOException;
@@ -13,7 +15,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.MarshallingException;
@@ -64,7 +66,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
    private void induceInterceptorMalfunctioning(FailureType failureType) throws Throwable {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
-      cache2.getAdvancedCache().addInterceptorAfter(
+      extractInterceptorChain(cache2).addInterceptorAfter(
             new ErrorInducingInterceptor(), NonTransactionalLockingInterceptor.class);
 
       log.info("Before put.");
@@ -77,7 +79,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
          else
             throw cause.getCause();
       } finally {
-         cache2.getAdvancedCache().removeInterceptor(ErrorInducingInterceptor.class);
+         extractInterceptorChain(cache2).removeInterceptor(ErrorInducingInterceptor.class);
       }
    }
 
@@ -129,7 +131,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       EXCEPTION_FROM_INTERCEPTOR, ERROR_FROM_INTERCEPTOR
    }
 
-   static class ErrorInducingInterceptor extends CommandInterceptor {
+   static class ErrorInducingInterceptor extends DDAsyncInterceptor {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          Object k = command.getKey();

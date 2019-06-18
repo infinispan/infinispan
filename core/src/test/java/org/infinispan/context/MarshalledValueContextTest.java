@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.Serializable;
-
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
@@ -12,7 +11,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.impl.LocalTxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
@@ -74,12 +73,12 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       assertEquals("v2", c.get(new Key("k")));
    }
 
-   static class ContextExtractingInterceptor extends CommandInterceptor {
+   static class ContextExtractingInterceptor extends BaseAsyncInterceptor {
       InvocationContext ctx;
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          this.ctx = ctx;
-         return super.invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
    }
 

@@ -12,9 +12,10 @@ import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.EmptyAsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.BiasedScatteredDistributionInterceptor;
 import org.infinispan.interceptors.distribution.DistributionBulkInterceptor;
 import org.infinispan.interceptors.distribution.L1LastChanceInterceptor;
@@ -74,29 +75,27 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Factory class that builds an interceptor chain based on cache configuration.
  *
- * For backwards compatibility, the factory will register both a {@link AsyncInterceptorChain} and
- * a {@link InterceptorChain} before initializing the interceptors.
- *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
  * @author Marko Luksa
  * @author Pedro Ruivo
  * @since 4.0
  */
-@DefaultFactoryFor(classes = {AsyncInterceptorChain.class, InterceptorChain.class})
+@DefaultFactoryFor(classes = {AsyncInterceptorChain.class})
 public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    private static final Log log = LogFactory.getLog(InterceptorChainFactory.class);
 
    private AsyncInterceptor createInterceptor(AsyncInterceptor interceptor,
          Class<? extends AsyncInterceptor> interceptorType) {
-      AsyncInterceptor chainedInterceptor = componentRegistry.getComponent(interceptorType);
-      if (chainedInterceptor == null) {
-         // TODO Dan: could use wireDependencies, as dependencies on interceptors won't trigger a call to the chain factory anyway
-         register(interceptorType, interceptor);
-         chainedInterceptor = interceptor;
+      ComponentRef<? extends AsyncInterceptor> chainedInterceptor = basicComponentRegistry.getComponent(interceptorType);
+      if (chainedInterceptor != null) {
+         return chainedInterceptor.wired();
       }
-      return chainedInterceptor;
+
+      // TODO Dan: could use wireDependencies, as dependencies on interceptors won't trigger a call to the chain factory anyway
+      register(interceptorType, interceptor);
+      return interceptor;
    }
 
 
@@ -110,7 +109,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
    }
 
-   public AsyncInterceptorChain buildInterceptorChain() {
+   private AsyncInterceptorChain buildInterceptorChain() {
       TransactionMode transactionMode = configuration.transaction().transactionMode();
       boolean needsVersionAwareComponents = transactionMode.isTransactional() &&
               Configurations.isTxVersioned(configuration);
@@ -384,14 +383,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    public Object construct(String componentName) {
       try {
          if (configuration.simpleCache())
-            return null;
+            return EmptyAsyncInterceptorChain.INSTANCE;
 
-         if (componentName.equals(AsyncInterceptorChain.class.getName())) {
-            AsyncInterceptorChain asyncInterceptorChain = buildInterceptorChain();
-            return asyncInterceptorChain;
-         } else {
-            return new InterceptorChain();
-         }
+         return buildInterceptorChain();
       } catch (CacheException ce) {
          throw ce;
       } catch (Exception e) {

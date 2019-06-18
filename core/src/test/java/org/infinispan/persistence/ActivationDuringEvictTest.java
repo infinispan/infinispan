@@ -14,7 +14,7 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.PassivationCacheLoaderInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -24,6 +24,8 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -106,9 +108,8 @@ public class ActivationDuringEvictTest extends SingleCacheManagerTest {
       assertEquals(expected, se.getValue());
    }
 
-   static class SlowDownInterceptor extends CommandInterceptor implements Cloneable {
-
-      private static final long serialVersionUID = 8790944676490291484L;
+   static class SlowDownInterceptor extends DDAsyncInterceptor {
+      private static final Log log = LogFactory.getLog(SlowDownInterceptor.class);
 
       volatile boolean enabled = false;
       CountDownLatch getLatch = new CountDownLatch(1);
@@ -118,11 +119,11 @@ public class ActivationDuringEvictTest extends SingleCacheManagerTest {
       public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
          if (enabled) {
             evictLatch.countDown();
-            getLog().trace("Wait for get to finish...");
+            log.trace("Wait for get to finish...");
             if (!getLatch.await(10, TimeUnit.SECONDS))
                throw new TimeoutException("Didn't see evict!");
          }
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
    }
 }

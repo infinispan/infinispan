@@ -1,5 +1,6 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
 
@@ -9,7 +10,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
@@ -40,8 +41,7 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
       createCluster(config, 3);
       waitForClusterToForm();
       failPrepareInterceptor = new FailPrepareInterceptor();
-      advancedCache(2).addInterceptor(failPrepareInterceptor, 1);
-
+      extractInterceptorChain(advancedCache(2)).addInterceptor(failPrepareInterceptor, 1);
    }
 
 
@@ -92,7 +92,7 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
       Thread.sleep(REPL_TIMEOUT * 15);
    }
 
-   public static class FailPrepareInterceptor extends CommandInterceptor {
+   public static class FailPrepareInterceptor extends DDAsyncInterceptor {
 
       CountDownLatch failureFinish = new CountDownLatch(1);
 

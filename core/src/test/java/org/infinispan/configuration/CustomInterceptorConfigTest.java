@@ -9,7 +9,7 @@ import java.io.InputStream;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -55,8 +55,8 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
       });
    }
 
-   public static final class CustomInterceptor1 extends CommandInterceptor {}
-   public static final class CustomInterceptor2 extends CommandInterceptor {}
+   public static final class CustomInterceptor1 extends BaseCustomAsyncInterceptor {}
+   public static final class CustomInterceptor2 extends BaseCustomAsyncInterceptor {}
 
 
    public void testCustomInterceptorsProgramatically() {
@@ -88,7 +88,7 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
 
    }
 
-   public static class DummyInterceptor extends CommandInterceptor {
+   public static class DummyInterceptor extends BaseCustomAsyncInterceptor {
 
    }
 }

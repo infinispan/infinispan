@@ -28,7 +28,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
@@ -570,7 +570,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       public abstract void evicted(CacheEntriesEvictedEvent event);
    }
 
-   protected abstract class ControlledCommandInterceptor extends BaseCustomInterceptor {
+   protected abstract class ControlledCommandInterceptor extends DDAsyncInterceptor {
       volatile Runnable beforeGet;
       volatile Runnable afterGet;
       volatile Runnable beforePut;
@@ -596,11 +596,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          if (before != null) {
             before.run();
          }
-         Object retVal = invokeNextInterceptor(ctx, command);
-         if (after != null) {
-            after.run();
-         }
-         return retVal;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            if (after != null) {
+               after.run();
+            }
+         });
       }
    }
 

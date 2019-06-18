@@ -21,8 +21,6 @@ import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -81,15 +79,6 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
     */
    public InterceptorConfigurationBuilder interceptorClass(Class<? extends AsyncInterceptor> interceptorClass) {
       attributes.attribute(INTERCEPTOR_CLASS).set(interceptorClass);
-      return this;
-   }
-
-   /**
-    * @deprecated Since 9.0, please use {@link #interceptor(AsyncInterceptor)} instead.
-    */
-   @Deprecated
-   public InterceptorConfigurationBuilder interceptor(CommandInterceptor interceptor) {
-      attributes.attribute(INTERCEPTOR).set(interceptor);
       return this;
    }
 
@@ -180,8 +169,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
          interceptorClass = interceptorAttribute.get().getClass();
       }
 
-      if (!BaseCustomInterceptor.class.isAssignableFrom(interceptorClass) &&
-            !BaseCustomAsyncInterceptor.class.isAssignableFrom(interceptorClass)) {
+      if (!BaseCustomAsyncInterceptor.class.isAssignableFrom(interceptorClass)) {
          final String className = interceptorClass.getName();
          //Suppress noisy warnings if the interceptor is one of our own (like one of those from Query):
          if (! className.startsWith("org.infinispan.")) {

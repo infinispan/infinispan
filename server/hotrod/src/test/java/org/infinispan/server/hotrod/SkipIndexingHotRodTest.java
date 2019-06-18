@@ -3,17 +3,17 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
 import java.lang.reflect.Method;
-import java.util.Iterator;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.testng.annotations.Test;
 
 /**
@@ -155,16 +155,14 @@ public class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
    }
 
    private SkipIndexingFlagCheckCommandInterceptor init() {
-      Iterator<CommandInterceptor> iterator =
-            cacheManager.getCache(cacheName).getAdvancedCache().getInterceptorChain().iterator();
-      while (iterator.hasNext()) {
-         CommandInterceptor commandInterceptor = iterator.next();
-         if (commandInterceptor instanceof SkipIndexingFlagCheckCommandInterceptor)
-            return (SkipIndexingFlagCheckCommandInterceptor) commandInterceptor;
-      }
+      AsyncInterceptorChain interceptorChain = extractInterceptorChain(cacheManager.getCache(cacheName));
+      SkipIndexingFlagCheckCommandInterceptor interceptor =
+         interceptorChain.findInterceptorExtending(SkipIndexingFlagCheckCommandInterceptor.class);
+      if (interceptor != null)
+         return interceptor;
 
       SkipIndexingFlagCheckCommandInterceptor ci = new SkipIndexingFlagCheckCommandInterceptor();
-      cacheManager.getCache(cacheName).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(ci, 1);
+      interceptorChain.addInterceptor(ci, 1);
       return ci;
    }
 
@@ -173,12 +171,12 @@ public class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
    }
 }
 
-class SkipIndexingFlagCheckCommandInterceptor extends BaseCustomInterceptor {
+class SkipIndexingFlagCheckCommandInterceptor extends BaseAsyncInterceptor {
 
    volatile boolean expectSkipIndexingFlag = false;
 
-   protected @Override
-   Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   @Override
+   public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (command instanceof FlagAffectedCommand) {
          FlagAffectedCommand flagAffectedCommand = (FlagAffectedCommand) command;
          boolean hasFlag = flagAffectedCommand.hasAnyFlag(FlagBitSets.SKIP_INDEXING);
@@ -188,6 +186,6 @@ class SkipIndexingFlagCheckCommandInterceptor extends BaseCustomInterceptor {
             throw new CacheException("SKIP_INDEXING flag is *not* expected!");
          }
       }
-      return super.handleDefault(ctx, command);
+      return invokeNext(ctx, command);
    }
 }

@@ -1,5 +1,6 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
@@ -23,7 +24,7 @@ public class TxCompletionForRolledBackTxOptTest extends MultipleCacheManagersTes
       dcc.clustering().hash().numOwners(1).transaction().lockingMode(LockingMode.OPTIMISTIC);
       createCluster(dcc, 3);
       waitForClusterToForm();
-      advancedCache(2).addInterceptor(new RollbackBeforePrepareTest.FailPrepareInterceptor(), 1);
+      extractInterceptorChain(advancedCache(2)).addInterceptor(new RollbackBeforePrepareTest.FailPrepareInterceptor(), 1);
    }
 
    public void testTxCompletionNotSentForRollback() throws Throwable {

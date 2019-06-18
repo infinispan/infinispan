@@ -10,7 +10,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 
 /**
  * SkipIndexingGuaranteed is an interceptor to verify all write operations are using the org.infinispan.context.Flag.SKIP_INDEXING
@@ -20,7 +20,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  * @author Sanne Grinovero &lt;sanne@infinispan.org&gt; (C) 2012 Red Hat Inc.
  * @since 5.2
  */
-public class SkipIndexingGuaranteed extends CommandInterceptor {
+public class SkipIndexingGuaranteed extends DDAsyncInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
@@ -61,7 +61,7 @@ public class SkipIndexingGuaranteed extends CommandInterceptor {
       if (! command.hasAnyFlag(FlagBitSets.SKIP_INDEXING)) {
          throw new AssertionError("A write operation was detected which is not using SKIP_INDEXING flag");
       }
-      return super.invokeNextInterceptor(ctx, command);
+      return super.invokeNext(ctx, command);
    }
 
 }

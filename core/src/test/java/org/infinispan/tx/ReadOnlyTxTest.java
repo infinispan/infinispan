@@ -1,7 +1,8 @@
 package org.infinispan.tx;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.transaction.Transaction;
 
 import org.infinispan.commands.tx.CommitCommand;
@@ -9,7 +10,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -77,13 +78,13 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
    public void testSingleCommitCommand() throws Exception {
       cache.put("k", "v");
       CommitCommandCounterInterceptor counterInterceptor = new CommitCommandCounterInterceptor();
-      cache.getAdvancedCache().addInterceptor(counterInterceptor, 0);
+      extractInterceptorChain(cache).addInterceptor(counterInterceptor, 0);
       try {
          tm().begin();
          AssertJUnit.assertEquals("Wrong value for key k.", "v", cache.get("k"));
          tm().commit();
       } finally {
-         cache.getAdvancedCache().getAdvancedCache().removeInterceptor(counterInterceptor.getClass());
+         extractInterceptorChain(cache).removeInterceptor(counterInterceptor.getClass());
       }
       AssertJUnit.assertEquals("Wrong number of CommitCommand.", numberCommitCommand(), counterInterceptor.counter.get());
    }
@@ -97,14 +98,14 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
       return TestingUtil.getTransactionTable(cache);
    }
 
-   class CommitCommandCounterInterceptor extends BaseCustomInterceptor {
+   class CommitCommandCounterInterceptor extends DDAsyncInterceptor {
 
       public final AtomicInteger counter = new AtomicInteger(0);
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
          counter.incrementAndGet();
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
    }
 }

@@ -1,5 +1,6 @@
 package org.infinispan.api;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -16,7 +17,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
@@ -135,20 +136,19 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
 
    private CommandInterceptorController injectController(Cache cache) {
       CommandInterceptorController commandInterceptorController = new CommandInterceptorController();
-      cache.getAdvancedCache().addInterceptorBefore(commandInterceptorController, VersionedDistributionInterceptor.class);
+      extractInterceptorChain(cache).addInterceptorBefore(commandInterceptorController, VersionedDistributionInterceptor.class);
       return commandInterceptorController;
    }
 
    private void removeController(Cache cache) {
-      cache.getAdvancedCache().removeInterceptor(CommandInterceptorController.class);
+      extractInterceptorChain(cache).removeInterceptor(CommandInterceptorController.class);
    }
 
    private enum Operation {
       PUT, REPLACE, REMOVE
    }
 
-   class CommandInterceptorController extends BaseCustomInterceptor {
-
+   class CommandInterceptorController extends DDAsyncInterceptor {
       private final ReclosableLatch blockRemoteGet = new ReclosableLatch(true);
       private final ReclosableLatch blockCommit = new ReclosableLatch(true);
       private final ReclosableLatch awaitPrepare = new ReclosableLatch(true);
@@ -157,59 +157,54 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
          try {
-            return invokeNextInterceptor(ctx, command);
+            return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+               log.debug("visit GetKeyValueCommand");
+               if (!ctx.isOriginLocal() && blockRemoteGet != null) {
+                  log.debug("Remote Get Received... blocking...");
+                  blockRemoteGet.await(30, TimeUnit.SECONDS);
+               }
+            });
          } finally {
-            getLog().debug("visit GetKeyValueCommand");
-            if (!ctx.isOriginLocal() && blockRemoteGet != null) {
-               getLog().debug("Remote Get Received... blocking...");
-               blockRemoteGet.await(30, TimeUnit.SECONDS);
-            }
          }
       }
 
       @Override
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-         try {
-            return invokeNextInterceptor(ctx, command);
-         } finally {
-            getLog().debug("visit GetCacheEntryCommand");
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+            log.debug("visit GetCacheEntryCommand");
             if (!ctx.isOriginLocal() && blockRemoteGet != null) {
-               getLog().debug("Remote Get Received... blocking...");
+               log.debug("Remote Get Received... blocking...");
                blockRemoteGet.await(30, TimeUnit.SECONDS);
             }
-         }
+         });
       }
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         try {
-            return invokeNextInterceptor(ctx, command);
-         } finally {
-            getLog().debug("visit Prepare");
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+            log.debug("visit Prepare");
             if (awaitPrepare != null) {
-               getLog().debug("Prepare Received... unblocking");
+               log.debug("Prepare Received... unblocking");
                awaitPrepare.open();
             }
-         }
+         });
       }
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         try {
-            return invokeNextInterceptor(ctx, command);
-         } finally {
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
             if (ctx.isOriginLocal()) {
-               getLog().debug("visit Commit");
+               log.debug("visit Commit");
                if (awaitCommit != null) {
-                  getLog().debug("Commit Received... unblocking...");
+                  log.debug("Commit Received... unblocking...");
                   awaitCommit.open();
                }
                if (blockCommit != null) {
-                  getLog().debug("Commit Received... blocking...");
+                  log.debug("Commit Received... blocking...");
                   blockCommit.await(30, TimeUnit.SECONDS);
                }
             }
-         }
+         });
       }
 
       public void reset() {

@@ -14,7 +14,7 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -25,6 +25,8 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -99,9 +101,8 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       assert !TestingUtil.extractComponent(cache, InternalDataContainer.class).containsKey("a");
    }
 
-   public static class SlowDownInterceptor extends CommandInterceptor implements Cloneable {
-
-      private static final long serialVersionUID = 8790944676490291484L;
+   public static class SlowDownInterceptor extends DDAsyncInterceptor {
+      private static final Log log = LogFactory.getLog(SlowDownInterceptor.class);
 
       volatile boolean enabled = false;
       transient CountDownLatch getLatch = new CountDownLatch(1);
@@ -110,35 +111,25 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
          if (enabled) {
-            getLog().trace("Wait for evict to give go ahead...");
+            log.trace("Wait for evict to give go ahead...");
             if (!evictLatch.await(60000, TimeUnit.MILLISECONDS))
                throw new TimeoutException("Didn't see get after 60 seconds!");
          }
-         try {
-            return invokeNextInterceptor(ctx, command);
-         } finally {
-            getLog().trace("After get, now let evict go through");
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+            log.trace("After get, now let evict go through");
             if (enabled) getLatch.countDown();
-         }
+         });
       }
 
       @Override
       public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
          if (enabled) {
             evictLatch.countDown();
-            getLog().trace("Wait for get to finish...");
+            log.trace("Wait for get to finish...");
             if (!getLatch.await(60000, TimeUnit.MILLISECONDS))
                throw new TimeoutException("Didn't see evict after 60 seconds!");
          }
-         return invokeNextInterceptor(ctx, command);
-      }
-      @Override
-      public SlowDownInterceptor clone(){
-         try {
-            return (SlowDownInterceptor) super.clone();
-         } catch (CloneNotSupportedException e) {
-            throw new RuntimeException("Should not happen", e);
-         }
+         return invokeNext(ctx, command);
       }
    }
 }

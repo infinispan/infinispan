@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -23,7 +22,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -55,7 +53,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
@@ -69,7 +66,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.EmptyAsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -1189,11 +1185,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return this; // NO-OP
    }
 
-   @Override
-   public void addInterceptor(CommandInterceptor i, int position) {
-      throw log.interceptorStackNotSupported();
-   }
-
    /**
     * @deprecated Since 10.0, will be removed without a replacement
     */
@@ -1201,31 +1192,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return EmptyAsyncInterceptorChain.INSTANCE;
-   }
-
-   @Override
-   public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      throw log.interceptorStackNotSupported();
-   }
-
-   @Override
-   public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      throw log.interceptorStackNotSupported();
-   }
-
-   @Override
-   public void removeInterceptor(int position) {
-      throw log.interceptorStackNotSupported();
-   }
-
-   @Override
-   public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
-      throw log.interceptorStackNotSupported();
-   }
-
-   @Override
-   public List<CommandInterceptor> getInterceptorChain() {
-      return Collections.emptyList();
    }
 
    @Override
@@ -1275,11 +1241,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public BatchContainer getBatchContainer() {
-      return null;
-   }
-
-   @Override
-   public InvocationContextContainer getInvocationContextContainer() {
       return null;
    }
 

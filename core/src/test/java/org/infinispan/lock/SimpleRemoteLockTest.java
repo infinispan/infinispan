@@ -10,7 +10,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -53,13 +54,15 @@ public class SimpleRemoteLockTest extends MultipleCacheManagersTest {
       eventually(() -> !lockManager.isLocked(key));
    }
 
-   public static class ExceptionInRemotePutInterceptor extends BaseCustomInterceptor {
+   public static class ExceptionInRemotePutInterceptor extends DDAsyncInterceptor {
+      @Inject LockManager lockManager;
+
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (ctx.isOriginLocal()) {
-            return invokeNextInterceptor(ctx, command);
+            return invokeNext(ctx, command);
          }
-         assertTrue(TestingUtil.extractLockManager(cache).isLocked(command.getKey()));
+         assertTrue(lockManager.isLocked(command.getKey()));
          throw new RuntimeException("Induced Exception!");
       }
    }

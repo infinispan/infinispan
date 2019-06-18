@@ -1,11 +1,13 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -29,7 +31,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
 
    public void testLockCleanup() throws Exception {
       final DelayInterceptor interceptor = new DelayInterceptor();
-      advancedCache(0).addInterceptor(interceptor, 1);
+      extractInterceptorChain(advancedCache(0)).addInterceptor(interceptor, 1);
       final Object k = getKeyForCache(0);
 
       fork(() -> {
@@ -54,7 +56,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
    }
 
 
-   static public class DelayInterceptor extends CommandInterceptor {
+   static public class DelayInterceptor extends DDAsyncInterceptor {
 
       volatile boolean receivedReplRequest = false;
 

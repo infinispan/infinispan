@@ -12,7 +12,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.testng.annotations.Test;
 
 /**
@@ -171,17 +171,17 @@ public class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 }
 
-class FlagCheckCommandInterceptor extends BaseCustomInterceptor {
+class FlagCheckCommandInterceptor extends BaseAsyncInterceptor {
 
    volatile boolean expectSkipLoadFlag = false;
 
-   protected @Override
-   Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   @Override
+   public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (command instanceof FlagAffectedCommand) {
          FlagAffectedCommand flagAffectedCommand = (FlagAffectedCommand) command;
          if (flagAffectedCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
             // this is the fast non-blocking read
-            return super.handleDefault(ctx, command);
+            return invokeNext(ctx, command);
          }
          boolean hasFlag = flagAffectedCommand.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
          if (expectSkipLoadFlag && !hasFlag) {
@@ -190,6 +190,6 @@ class FlagCheckCommandInterceptor extends BaseCustomInterceptor {
             throw new CacheException("SKIP_CACHE_LOAD flag is *not* expected!");
          }
       }
-      return super.handleDefault(ctx, command);
+      return invokeNext(ctx, command);
    }
 }

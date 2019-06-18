@@ -16,7 +16,6 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.FooInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -30,7 +29,7 @@ public class SecureCacheTestDriver {
 
    private Metadata metadata;
    private NullListener listener;
-   private CommandInterceptor interceptor;
+   private FooInterceptor interceptor;
    private KeyFilter<String> keyFilter;
    private CacheEventConverter<String, String, String> converter;
    private CacheEventFilter<String, String> keyValueFilter;
@@ -273,11 +272,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testReplace_Object_Object_Object_long_TimeUnit(SecureCache<String, String> cache) {
       cache.replace("a", "a", "b", 1000, TimeUnit.MILLISECONDS);
-   }
-
-   @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testGetInvocationContextContainer(SecureCache<String, String> cache) {
-      cache.getInvocationContextContainer();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
@@ -631,11 +625,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testGetConflictResolutionManager(SecureCache<String, String> cache) {
       ConflictManagerFactory.get(cache);
-   }
-
-   @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testGetInterceptorChain(SecureCache<String, String> cache) {
-      cache.getInterceptorChain();
    }
 
    @TestCachePermission(AuthorizationPermission.ADMIN)

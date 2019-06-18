@@ -10,7 +10,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.jgroups.SuspectedException;
 import org.testng.annotations.Test;
@@ -71,7 +71,7 @@ public class ServerFailureRetryTest extends AbstractRetryTest {
    // depending on primary owner considerations, even for replicated caches.
    // Using an interceptor gives more flexibility by being able to put it
    // at the top of the interceptor stack, before remote/local separation
-   public static class ErrorInducingInterceptor extends CommandInterceptor {
+   public static class ErrorInducingInterceptor extends DDAsyncInterceptor {
       volatile boolean suspectExceptionThrown;
       boolean throwJGroupsException;
 

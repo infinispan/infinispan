@@ -11,7 +11,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.transaction.Status;
 
 import org.infinispan.Cache;
@@ -27,7 +26,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -167,7 +166,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       assertFalse("Expected a remote transaction.", table.getRemoteTransactions().isEmpty());
    }
 
-   static class CountingInterceptor extends CommandInterceptor {
+   static class CountingInterceptor extends DDAsyncInterceptor {
       private static Log log = LogFactory.getLog(CountingInterceptor.class);
 
       //counters
@@ -181,7 +180,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
             log.debugf("Received remote prepare for transaction %s", command.getGlobalTransaction());
             numberPrepares.incrementAndGet();
          }
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       @Override
@@ -190,7 +189,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
             log.debugf("Received remote commit for transaction %s", command.getGlobalTransaction());
             numberCommits.incrementAndGet();
          }
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       @Override
@@ -199,7 +198,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
             log.debugf("Received remote rollback for transaction %s", command.getGlobalTransaction());
             numberRollbacks.incrementAndGet();
          }
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       public static CountingInterceptor inject(Cache cache) {

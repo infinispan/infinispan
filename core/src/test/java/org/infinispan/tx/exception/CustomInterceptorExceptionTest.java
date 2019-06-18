@@ -1,5 +1,6 @@
 package org.infinispan.tx.exception;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertEquals;
 
 import javax.transaction.Status;
@@ -26,7 +27,7 @@ public class CustomInterceptorExceptionTest extends SingleCacheManagerTest {
       EmbeddedCacheManager eCm =
             TestCacheManagerFactory.createCacheManager(getDefaultClusteredCacheConfig(CacheMode.LOCAL, true));
       // Custom interceptor must be after TxInterceptor
-      eCm.getCache().getAdvancedCache().addInterceptor(new CustomInterceptorConfigTest.DummyInterceptor() {
+      extractInterceptorChain(eCm.getCache()).addInterceptor(new CustomInterceptorConfigTest.DummyInterceptor() {
          @Override
          public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
             throw new IllegalStateException("Induce failure!");

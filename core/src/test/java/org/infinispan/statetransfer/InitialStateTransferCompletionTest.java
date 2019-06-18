@@ -18,7 +18,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -100,7 +100,7 @@ public class InitialStateTransferCompletionTest extends MultipleCacheManagersTes
       }
    }
 
-   static class CountInterceptor extends CommandInterceptor {
+   static class CountInterceptor extends BaseAsyncInterceptor {
       private final AtomicBoolean ignoreFurtherStateTransfer;
       private final AtomicInteger transferredKeys;
 
@@ -110,18 +110,18 @@ public class InitialStateTransferCompletionTest extends MultipleCacheManagersTes
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          if (cmd instanceof PutKeyValueCommand &&
              ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
             if (ignoreFurtherStateTransfer.get()) {
                return null;
             }
-            Object result = super.handleDefault(ctx, cmd);
-            transferredKeys.incrementAndGet();
-            return result;
+            return invokeNextThenAccept(ctx, cmd, (rCtx, rCommand, rv) -> {
+               transferredKeys.incrementAndGet();
+            });
          }
 
-         return super.handleDefault(ctx, cmd);
+         return invokeNext(ctx, cmd);
       }
    }
 }

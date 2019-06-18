@@ -1,5 +1,6 @@
 package org.infinispan.replication;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
@@ -17,7 +18,7 @@ import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -108,7 +109,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
    public void testSyncReplTimeout() {
       AdvancedCache<Object, Object> cache1 = advancedCache(0, "syncReplCache");
       AdvancedCache<Object, Object> cache2 = advancedCache(1, "syncReplCache");
-      cache2.addInterceptor(new DelayInterceptor(), 0);
+      extractInterceptorChain(cache2).addInterceptor(new DelayInterceptor(), 0);
 
       cache1.getCacheConfiguration().clustering().remoteTimeout(10);
       cache2.getCacheConfiguration().clustering().remoteTimeout(10);
@@ -149,13 +150,12 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       }
    }
 
-   static class DelayInterceptor extends CommandInterceptor {
+   static class DelayInterceptor extends BaseAsyncInterceptor {
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd)
-               throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          // Add a delay
          Thread.sleep(100);
-         return super.handleDefault(ctx, cmd);
+         return invokeNext(ctx, command);
       }
    }
 }

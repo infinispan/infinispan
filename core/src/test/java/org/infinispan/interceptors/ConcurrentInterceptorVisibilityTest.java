@@ -2,7 +2,6 @@ package org.infinispan.interceptors;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -11,7 +10,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -66,13 +64,9 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
                   break;
             }
 
-            Future<Void> ignore = ConcurrentInterceptorVisibilityTest
-                     .this.fork(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  cache.put(key, value);
-                  return null;
-               }
+            Future<Void> ignore = fork(() -> {
+               cache.put(key, value);
+               return null;
             });
 
             try {
@@ -104,9 +98,8 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
       SIZE, GET
    }
 
-   public static class EntryCreatedInterceptor extends BaseCustomInterceptor {
-
-      Log log = LogFactory.getLog(EntryCreatedInterceptor.class);
+   public static class EntryCreatedInterceptor extends BaseCustomAsyncInterceptor {
+      private static final Log log = LogFactory.getLog(EntryCreatedInterceptor.class);
 
       final CountDownLatch latch;
       volatile boolean assertKeySet;
@@ -119,14 +112,14 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
       public Object visitPutKeyValueCommand(InvocationContext ctx,
                PutKeyValueCommand command) throws Throwable {
          // First execute the operation itself
-         Object ret = super.visitPutKeyValueCommand(ctx, command);
-         assertKeySet = (cache.keySet().size() == 1);
-         // After entry has been committed to the container
-         log.info("Cache entry created, now check in different thread");
-         latch.countDown();
-         // Force a bit of delay in the listener
-         TestingUtil.sleepThread(3000);
-         return ret;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            assertKeySet = (cache.keySet().size() == 1);
+            // After entry has been committed to the container
+            log.info("Cache entry created, now check in different thread");
+            latch.countDown();
+            // Force a bit of delay in the listener
+            TestingUtil.sleepThread(3000);
+         });
       }
 
    }

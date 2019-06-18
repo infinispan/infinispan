@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -8,7 +9,6 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
@@ -24,7 +24,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -70,8 +70,8 @@ public class GetWithForceWriteLockRetryTest extends MultipleCacheManagersTest {
 
       EmbeddedCacheManager cm3 = manager(2);
       Cache c3 = cm3.getCache();
-      DelayInterceptor di3 = new DelayInterceptor(LockControlCommand.class);
-      c3.getAdvancedCache().addInterceptorBefore(di3, PessimisticLockingInterceptor.class);
+      DelayInterceptor di3 = new DelayInterceptor(LockControlCommand.class, c3);
+      extractInterceptorChain(c3).addInterceptorBefore(di3, PessimisticLockingInterceptor.class);
 
       Object key = new MagicKey(c3);
       TransactionManager tm1 = tm(c1);
@@ -101,13 +101,15 @@ public class GetWithForceWriteLockRetryTest extends MultipleCacheManagersTest {
       di3.unblock(1);
    }
 
-   class DelayInterceptor extends BaseCustomInterceptor {
+   class DelayInterceptor extends DDAsyncInterceptor {
       private final AtomicInteger counter = new AtomicInteger(0);
       private final CheckPoint checkPoint = new CheckPoint();
       private final Class<?> commandToBlock;
+      private final Cache<?, ?> cache;
 
-      public DelayInterceptor(Class<?> commandToBlock) {
+      public DelayInterceptor(Class<?> commandToBlock, Cache<?, ?> cache) {
          this.commandToBlock = commandToBlock;
+         this.cache = cache;
       }
 
       public int getCounter() {
@@ -128,39 +130,39 @@ public class GetWithForceWriteLockRetryTest extends MultipleCacheManagersTest {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
             throws Throwable {
-         Object result = super.visitPutKeyValueCommand(ctx, command);
-         if (!ctx.isInTxScope() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-            doBlock(ctx, command);
-         }
-         return result;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!ctx.isInTxScope() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+               doBlock(ctx, command);
+            }
+         });
       }
 
       @Override
       public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
             throws Throwable {
-         Object result = super.visitLockControlCommand(ctx, command);
-         if (!ctx.getCacheTransaction().isFromStateTransfer()) {
-            doBlock(ctx, command);
-         }
-         return result;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!ctx.getCacheTransaction().isFromStateTransfer()) {
+               doBlock(ctx, command);
+            }
+         });
       }
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         Object result = super.visitPrepareCommand(ctx, command);
-         if (!ctx.getCacheTransaction().isFromStateTransfer()) {
-            doBlock(ctx, command);
-         }
-         return result;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!ctx.getCacheTransaction().isFromStateTransfer()) {
+               doBlock(ctx, command);
+            }
+         });
       }
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         Object result = super.visitCommitCommand(ctx, command);
-         if (!ctx.getCacheTransaction().isFromStateTransfer()) {
-            doBlock(ctx, command);
-         }
-         return result;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!ctx.getCacheTransaction().isFromStateTransfer()) {
+               doBlock(ctx, command);
+            }
+         });
       }
 
       private void doBlock(InvocationContext ctx, ReplicableCommand command)

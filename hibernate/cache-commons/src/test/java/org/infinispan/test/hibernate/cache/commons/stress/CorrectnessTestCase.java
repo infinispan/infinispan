@@ -46,7 +46,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 import javax.transaction.RollbackException;
@@ -65,10 +64,6 @@ import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.spi.InfinispanProperties;
-import org.infinispan.hibernate.cache.commons.access.InvalidationCacheAccessDelegate;
-import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.RegionAccessStrategy;
 import org.hibernate.cfg.Environment;
@@ -84,18 +79,29 @@ import org.hibernate.mapping.RootClass;
 import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorBuilderImpl;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorBuilderImpl;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
-
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.jta.JtaAwareConnectionProviderImpl;
 import org.hibernate.testing.jta.TestingJtaPlatformImpl;
 import org.hibernate.testing.junit4.CustomParameterized;
-import org.infinispan.test.hibernate.cache.commons.util.TestConfigurationHook;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.hibernate.cache.commons.access.InvalidationCacheAccessDelegate;
+import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
+import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.remoting.RemoteException;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Address;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Person;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.test.hibernate.cache.commons.util.TestConfigurationHook;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -103,15 +109,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.remoting.RemoteException;
 
 /**
  * Tries to execute random operations for {@link #EXECUTION_TIME} and then verify the log for correctness.
@@ -304,9 +301,9 @@ public abstract class CorrectnessTestCase {
       }
    }
 
-   public static class FailureInducingInterceptor extends BaseCustomInterceptor {
+   public static class FailureInducingInterceptor extends BaseAsyncInterceptor {
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          // Failure in CommitCommand/RollbackCommand keeps some locks closed, therefore blocking the test
          if (!(command instanceof CommitCommand || command instanceof RollbackCommand)) {
             /* Introduce 5 % probability of failure */
@@ -314,7 +311,7 @@ public abstract class CorrectnessTestCase {
                throw new InducedException("Simulating failure somewhere");
             }
          }
-         return super.handleDefault(ctx, command);
+         return invokeNext(ctx, command);
       }
    }
 

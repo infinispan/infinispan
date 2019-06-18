@@ -18,7 +18,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CheckPoint;
@@ -177,7 +177,7 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       }
    }
 
-   static class BlockCommandInterceptor extends CommandInterceptor {
+   static class BlockCommandInterceptor extends DDAsyncInterceptor {
 
       private volatile CheckPoint checkPoint;
       private volatile boolean open;
@@ -192,7 +192,7 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
             checkPoint.trigger("before");
             checkPoint.awaitStrict("after", 30, TimeUnit.SECONDS);
          }
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       public final void awaitCommandBlock() throws TimeoutException, InterruptedException {

@@ -11,7 +11,6 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 
 /**
  * Describes a custom interceptor
@@ -76,32 +75,12 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
       return before.get();
    }
 
-   /**
-    * @deprecated Since 9.0, please use {@link #asyncInterceptor()} instead.
-    */
-   @Deprecated
-   public CommandInterceptor interceptor() {
-      if (interceptor.isNull()) {
-         return (CommandInterceptor) Util.getInstance(interceptorClass.get());
-      } else {
-         return (CommandInterceptor) interceptor.get();
-      }
-   }
-
    public AsyncInterceptor asyncInterceptor() {
       if (interceptor.isNull()) {
          return (AsyncInterceptor) Util.getInstance(interceptorClass.get());
       } else {
          return interceptor.get();
       }
-   }
-
-   /**
-    * @deprecated Since 9.0, please use {@link #sequentialInterceptorClass()} instead.
-    */
-   @Deprecated
-   public Class<? extends CommandInterceptor> interceptorClass() {
-      return interceptorClass.get();
    }
 
    public Class<? extends AsyncInterceptor> sequentialInterceptorClass() {
