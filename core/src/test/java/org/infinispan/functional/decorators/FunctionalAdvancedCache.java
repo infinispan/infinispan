@@ -9,7 +9,6 @@ import static org.infinispan.marshall.core.MarshallableFunctions.setValueMetasRe
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -19,7 +18,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -41,7 +39,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
@@ -57,7 +54,6 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -257,11 +253,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      return cache.addInterceptorBefore(i, beforeInterceptor);
-   }
-
-   @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
       return cache.withFlags(flags);
    }
@@ -288,11 +279,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    ////////////////////////////////////////////////////////////////////////////
 
-   @Override
-   public void addInterceptor(CommandInterceptor i, int position) {
-      cache.addInterceptor(i, position);
-   }
-
    /**
     * @deprecated Since 10.0, will be removed without a replacement
     */
@@ -300,26 +286,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return cache.getAsyncInterceptorChain();
-   }
-
-   @Override
-   public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      return cache.addInterceptorAfter(i, afterInterceptor);
-   }
-
-   @Override
-   public void removeInterceptor(int position) {
-      cache.removeInterceptor(position);
-   }
-
-   @Override
-   public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
-      cache.removeInterceptor(interceptorType);
-   }
-
-   @Override
-   public List<CommandInterceptor> getInterceptorChain() {
-      return cache.getInterceptorChain();
    }
 
    @Override
@@ -359,11 +325,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public BatchContainer getBatchContainer() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public InvocationContextContainer getInvocationContextContainer() {
       return null;  // TODO: Customise this generated block
    }
 

@@ -6,6 +6,8 @@
  */
 package org.infinispan.test.hibernate.cache.commons.util;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
@@ -23,7 +25,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -45,8 +47,8 @@ public class ClassLoaderAwareCache<K, V> extends AbstractDelegatingAdvancedCache
    public ClassLoaderAwareCache(AdvancedCache<K, V> cache, ClassLoader classLoader) {
       super(cache);
       this.classLoaderRef = new WeakReference<ClassLoader>(classLoader);
-      cache.removeInterceptor(ClassLoaderAwareCommandInterceptor.class);
-      cache.addInterceptor(new ClassLoaderAwareCommandInterceptor(), 0);
+      extractInterceptorChain(cache).removeInterceptor(ClassLoaderAwareCommandInterceptor.class);
+      extractInterceptorChain(cache).addInterceptor(new ClassLoaderAwareCommandInterceptor(), 0);
    }
 
    @Override
@@ -76,17 +78,15 @@ public class ClassLoaderAwareCache<K, V> extends AbstractDelegatingAdvancedCache
       AccessController.doPrivileged(action);
    }
 
-   class ClassLoaderAwareCommandInterceptor extends CommandInterceptor {
+   class ClassLoaderAwareCommandInterceptor extends BaseAsyncInterceptor {
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+         // FIXME The listener is not guaranteed to run on the same thread
          ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
          ClassLoaderAwareCache.this.setContextClassLoader(ClassLoaderAwareCache.this.classLoaderRef.get());
-         try {
-            return super.handleDefault(ctx, command);
-         }
-         finally {
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
             ClassLoaderAwareCache.this.setContextClassLoader(classLoader);
-         }
+         });
       }
    }
 

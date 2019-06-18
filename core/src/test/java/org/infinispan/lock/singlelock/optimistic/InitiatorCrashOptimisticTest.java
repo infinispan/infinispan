@@ -1,5 +1,7 @@
 package org.infinispan.lock.singlelock.optimistic;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +26,7 @@ public class InitiatorCrashOptimisticTest extends AbstractInitiatorCrashTest {
    public void testInitiatorNodeCrashesBeforePrepare() throws Exception {
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
-      advancedCache(1).addInterceptor(txControlInterceptor, 1);
+      extractInterceptorChain(advancedCache(1)).addInterceptor(txControlInterceptor, 1);
       Object k = getKeyForCache(2);
 
       //prepare is sent, but is not precessed on other nodes because of the txControlInterceptor.preparedReceived

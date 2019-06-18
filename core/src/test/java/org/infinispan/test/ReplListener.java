@@ -1,5 +1,6 @@
 package org.infinispan.test;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -29,7 +30,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -88,7 +89,7 @@ public class ReplListener {
    public ReplListener(Cache<?, ?> cache, boolean recordCommandsEagerly, boolean watchLocal) {
       this.cache = cache;
       this.watchLocal = watchLocal;
-      this.cache.getAdvancedCache().addInterceptor(new ReplListenerInterceptor(), 1);
+      extractInterceptorChain(cache).addInterceptor(new ReplListenerInterceptor(), 1);
    }
 
    /**
@@ -260,36 +261,33 @@ public class ReplListener {
       }
    }
 
-   protected class ReplListenerInterceptor extends CommandInterceptor {
+   protected class ReplListenerInterceptor extends DDAsyncInterceptor {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-         try {
-            if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) {
-               debugf("Delaying command %s", cmd);
-               TestingUtil.sleepRandom(10);
-            }
-            // pass up chain
-            return invokeNextInterceptor(ctx, cmd);
-         } finally {//make sure we do mark this command as received even in the case of exceptions(e.g. timeouts)
+         if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) {
+            debugf("Delaying command %s", cmd);
+            TestingUtil.sleepRandom(10);
+         }
+         // pass up chain
+         return invokeNextAndFinally(ctx, cmd, (rCtx, rCommand, rv, throwable) -> {
+            //make sure we do mark this command as received even in the case of exceptions(e.g. timeouts)
             if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) {
                logCommand(cmd);
             } else {
                debugf("Not logging command (watchLocal=%b) %s", watchLocal, cmd);
             }
-         }
+         });
       }
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand cmd) throws Throwable {
-         try {
-            // first pass up chain
-            return invokeNextInterceptor(ctx, cmd);
-         } finally {
+         // first pass up chain
+         return invokeNextAndFinally(ctx, cmd, (rCtx, rCommand, rv, throwable) -> {
             if (!ctx.isOriginLocal() || watchLocal) {
                logCommand(cmd);
                for (WriteCommand mod : cmd.getModifications()) logCommand(mod);
             }
-         }
+         });
       }
 
       private void logCommand(VisitableCommand cmd) {

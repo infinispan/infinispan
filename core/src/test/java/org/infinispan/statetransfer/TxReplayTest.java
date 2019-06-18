@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.transaction.Status;
 
 import org.infinispan.Cache;
@@ -19,7 +18,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -98,7 +97,7 @@ public class TxReplayTest extends MultipleCacheManagersTest {
       assertFalse("Expected a remote transaction.", table.getRemoteTransactions().isEmpty());
    }
 
-   static class TxCommandInterceptor extends CommandInterceptor {
+   static class TxCommandInterceptor extends DDAsyncInterceptor {
       //counters
       private final AtomicInteger numberPrepares = new AtomicInteger(0);
       private final AtomicInteger numberCommits = new AtomicInteger(0);
@@ -109,7 +108,7 @@ public class TxReplayTest extends MultipleCacheManagersTest {
          if (!ctx.isOriginLocal()) {
             numberPrepares.incrementAndGet();
          }
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       @Override
@@ -117,7 +116,7 @@ public class TxReplayTest extends MultipleCacheManagersTest {
          if (!ctx.isOriginLocal()) {
             numberCommits.incrementAndGet();
          }
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       @Override
@@ -125,7 +124,7 @@ public class TxReplayTest extends MultipleCacheManagersTest {
          if (!ctx.isOriginLocal()) {
             numberRollbacks.incrementAndGet();
          }
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       public static TxCommandInterceptor inject(Cache cache) {

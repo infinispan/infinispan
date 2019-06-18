@@ -10,12 +10,10 @@ import static org.infinispan.context.Flag.ZERO_LOCK_ACQUISITION_TIMEOUT;
 import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -24,7 +22,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.security.auth.Subject;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -78,7 +75,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -98,9 +94,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -1144,23 +1138,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
    }
 
-   @Override
-   public List<CommandInterceptor> getInterceptorChain() {
-      List<AsyncInterceptor> interceptors = invoker.getInterceptors();
-      ArrayList<CommandInterceptor> list = new ArrayList<>(interceptors.size());
-      interceptors.forEach(interceptor -> {
-         if (interceptor instanceof CommandInterceptor) {
-            list.add((CommandInterceptor) interceptor);
-         }
-      });
-      return list;
-   }
-
-   @Override
-   public void addInterceptor(CommandInterceptor i, int position) {
-      invoker.addInterceptor(i, position);
-   }
-
    /**
     * @deprecated Since 10.0, will be removed without a replacement
     */
@@ -1168,26 +1145,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return invoker;
-   }
-
-   @Override
-   public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      return invoker.addInterceptorAfter(i, afterInterceptor);
-   }
-
-   @Override
-   public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      return invoker.addInterceptorBefore(i, beforeInterceptor);
-   }
-
-   @Override
-   public void removeInterceptor(int position) {
-      invoker.removeInterceptor(position);
-   }
-
-   @Override
-   public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
-      invoker.removeInterceptor(interceptorType);
    }
 
    @Override
@@ -1353,11 +1310,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public BatchContainer getBatchContainer() {
       return batchContainer;
-   }
-
-   @Override
-   public InvocationContextContainer getInvocationContextContainer() {
-      return null;
    }
 
    @Override

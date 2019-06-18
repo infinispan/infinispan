@@ -54,7 +54,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.globalstate.ConfigurationStorage;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.jmx.CustomMBeanServerPropertiesTest;
 import org.infinispan.marshall.AdvancedExternalizerTest;
@@ -641,16 +641,16 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             c = getConfiguration(holder, "custom-interceptors");
             List<InterceptorConfiguration> interceptors = c.customInterceptors().interceptors();
             InterceptorConfiguration interceptor = interceptors.get(0);
-            assertTrue(interceptor.interceptor() instanceof CustomInterceptor1);
+            assertTrue(interceptor.asyncInterceptor() instanceof CustomInterceptor1);
             assertEquals(InvocationContextInterceptor.class, interceptor.after());
             interceptor = interceptors.get(1);
             assertEquals(InvocationContextInterceptor.class, interceptor.before());
-            assertTrue(interceptor.interceptor() instanceof CustomInterceptor2);
+            assertTrue(interceptor.asyncInterceptor() instanceof CustomInterceptor2);
             interceptor = interceptors.get(2);
-            assertTrue(interceptor.interceptor() instanceof CustomInterceptor3);
+            assertTrue(interceptor.asyncInterceptor() instanceof CustomInterceptor3);
             assertEquals(1, interceptor.index());
             interceptor = interceptors.get(3);
-            assertTrue(interceptor.interceptor() instanceof CustomInterceptor4);
+            assertTrue(interceptor.asyncInterceptor() instanceof CustomInterceptor4);
             assertEquals(InterceptorConfiguration.Position.LAST, interceptor.position());
             assertTrue(c.unsafe().unreliableReturnValues());
 
@@ -715,16 +715,16 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       throw new NoSuchElementException("There is no store of type " + configurationClass);
    }
 
-   public static final class CustomInterceptor1 extends CommandInterceptor {
+   public static final class CustomInterceptor1 extends BaseCustomAsyncInterceptor {
    }
 
-   public static final class CustomInterceptor2 extends CommandInterceptor {
+   public static final class CustomInterceptor2 extends BaseCustomAsyncInterceptor {
    }
 
-   public static final class CustomInterceptor3 extends CommandInterceptor {
+   public static final class CustomInterceptor3 extends BaseCustomAsyncInterceptor {
    }
 
-   public static final class CustomInterceptor4 extends CommandInterceptor {
+   public static final class CustomInterceptor4 extends BaseCustomAsyncInterceptor {
       String foo; // configured via XML
    }
 

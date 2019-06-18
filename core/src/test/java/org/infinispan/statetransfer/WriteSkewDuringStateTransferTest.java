@@ -1,6 +1,9 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.infinispan.test.TestingUtil.withTx;
 import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -27,15 +30,14 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.BlockingLocalTopologyManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -157,7 +159,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
 
    private void assertKeyVersionInDataContainer(Object key, Cache... owners) {
       for (Cache cache : owners) {
-         DataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
+         DataContainer dataContainer = extractComponent(cache, InternalDataContainer.class);
          InternalCacheEntry entry = dataContainer.get(key);
          assertNotNull("Entry cannot be null in " + address(cache) + ".", entry);
          assertNotNull("Version cannot be null.", entry.getMetadata().version());
@@ -173,7 +175,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    private Future<Object> executeTransaction(final Cache<Object, Object> cache, final Object key) {
-      return fork(() -> TestingUtil.withTx(cache.getAdvancedCache().getTransactionManager(), () -> cache.put(key, "value")));
+      return fork(() -> withTx(cache.getAdvancedCache().getTransactionManager(), () -> cache.put(key, "value")));
    }
 
    private NewNode addNode(final int currentTopologyId) throws InterruptedException {
@@ -337,16 +339,18 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       }
    }
 
-   public static class ControlledCommandInterceptor extends BaseCustomInterceptor {
+   public static class ControlledCommandInterceptor extends BaseAsyncInterceptor {
 
       private final List<Action> actionList;
+      private Cache<Object, Object> cache;
+      private EmbeddedCacheManager embeddedCacheManager;
 
       public ControlledCommandInterceptor(Cache<Object, Object> cache) {
          actionList = new ArrayList<>(3);
          this.cache = cache;
          this.cacheConfiguration = cache.getCacheConfiguration();
          this.embeddedCacheManager = cache.getCacheManager();
-         cache.getAdvancedCache().addInterceptor(this, 0);
+         extractInterceptorChain(cache).addInterceptor(this, 0);
       }
 
       public ControlledCommandInterceptor() {
@@ -358,19 +362,19 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          List<Action> actions = extractActions(ctx, command);
          if (actions.isEmpty()) {
-            return invokeNextInterceptor(ctx, command);
+            return invokeNext(ctx, command);
          }
          for (Action action : actions) {
             action.before(ctx, command, cache);
          }
-         Object retVal = invokeNextInterceptor(ctx, command);
-         for (Action action : actions) {
-            action.after(ctx, command, cache);
-         }
-         return retVal;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            for (Action action : actions) {
+               action.after(ctx, command, cache);
+            }
+         });
       }
 
       private List<Action> extractActions(InvocationContext context, VisitableCommand command) {

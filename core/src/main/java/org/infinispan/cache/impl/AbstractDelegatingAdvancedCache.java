@@ -2,14 +2,12 @@ package org.infinispan.cache.impl;
 
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -25,14 +23,12 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.metadata.Metadata;
@@ -65,11 +61,6 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       this.wrapper = wrapper;
    }
 
-   @Override
-   public void addInterceptor(CommandInterceptor i, int position) {
-      cache.getAsyncInterceptorChain().addInterceptor(i, position);
-   }
-
    /**
     * @deprecated Since 10.0, will be removed without a replacement
     */
@@ -80,35 +71,10 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
-   public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      return cache.getAsyncInterceptorChain().addInterceptorAfter(i, afterInterceptor);
-   }
-
-   @Override
-   public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      return cache.getAsyncInterceptorChain().addInterceptorBefore(i, beforeInterceptor);
-   }
-
-   @Override
-   public void removeInterceptor(int position) {
-      cache.getAsyncInterceptorChain().removeInterceptor(position);
-   }
-
-   @Override
-   public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
-      cache.getAsyncInterceptorChain().removeInterceptor(interceptorType);
-   }
-
-   @Override
    public AdvancedCache<K, V> getAdvancedCache() {
       //We need to override the super implementation which returns to the decorated cache;
       //otherwise the current operation breaks out of the selected ClassLoader.
       return this;
-   }
-
-   @Override
-   public List<CommandInterceptor> getInterceptorChain() {
-      return cache.getInterceptorChain();
    }
 
    @Override
@@ -154,11 +120,6 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public BatchContainer getBatchContainer() {
       return cache.getBatchContainer();
-   }
-
-   @Override
-   public InvocationContextContainer getInvocationContextContainer() {
-      return cache.getInvocationContextContainer();
    }
 
    @Override

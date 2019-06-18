@@ -2,7 +2,6 @@ package org.infinispan.security.impl;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -10,7 +9,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -26,7 +24,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
@@ -34,7 +31,6 @@ import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -242,12 +238,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
       return delegate.putAllAsync(data, lifespan, unit);
    }
 
-   @Override
-   public void addInterceptor(CommandInterceptor i, int position) {
-      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
-      delegate.addInterceptor(i, position);
-   }
-
    /**
     * @deprecated Since 10.0, will be removed without a replacement
     */
@@ -265,12 +255,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
-      return delegate.addInterceptorAfter(i, afterInterceptor);
-   }
-
-   @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit,
                                               long maxIdle, TimeUnit maxIdleUnit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
@@ -281,12 +265,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       delegate.putAll(map, lifespan, unit);
-   }
-
-   @Override
-   public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
-      return delegate.addInterceptorBefore(i, beforeInterceptor);
    }
 
    @Override
@@ -308,33 +286,15 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public void removeInterceptor(int position) {
-      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
-      delegate.removeInterceptor(position);
-   }
-
-   @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.putIfAbsentAsync(key, value);
    }
 
    @Override
-   public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
-      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
-      delegate.removeInterceptor(interceptorType);
-   }
-
-   @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.replace(key, oldValue, value, lifespan, unit);
-   }
-
-   @Override
-   public List<CommandInterceptor> getInterceptorChain() {
-      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
-      return delegate.getInterceptorChain();
    }
 
    @Override
@@ -740,12 +700,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public EmbeddedCacheManager getCacheManager() {
       authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
       return delegate.getCacheManager();
-   }
-
-   @Override
-   public InvocationContextContainer getInvocationContextContainer() {
-      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
-      return delegate.getInvocationContextContainer();
    }
 
    @Override

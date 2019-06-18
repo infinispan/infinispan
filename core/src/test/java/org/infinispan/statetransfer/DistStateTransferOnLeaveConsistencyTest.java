@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -18,7 +19,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -144,10 +145,10 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
 
       final CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
       final CountDownLatch applyStateStartedLatch1 = new CountDownLatch(1);
-      advancedCache(0).addInterceptor(new LatchInterceptor(applyStateStartedLatch1, applyStateProceedLatch), 0);
+      extractInterceptorChain(advancedCache(0)).addInterceptor(new LatchInterceptor(applyStateStartedLatch1, applyStateProceedLatch), 0);
 
       final CountDownLatch applyStateStartedLatch2 = new CountDownLatch(1);
-      advancedCache(2).addInterceptor(new LatchInterceptor(applyStateStartedLatch2, applyStateProceedLatch), 0);
+      extractInterceptorChain(advancedCache(2)).addInterceptor(new LatchInterceptor(applyStateStartedLatch2, applyStateProceedLatch), 0);
 
       // The indexes will only be used after node 1 is killed
       consistentHashFactory.setOwnerIndexes(new int[][]{{0, 1}, {1, 0}});
@@ -265,7 +266,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       }
    }
 
-   static class LatchInterceptor extends CommandInterceptor {
+   static class LatchInterceptor extends BaseAsyncInterceptor {
       private final CountDownLatch startedLatch;
       private final CountDownLatch proceedLatch;
 
@@ -275,7 +276,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
          // are performed first and create opportunity for inconsistencies
          if (cmd instanceof PutKeyValueCommand &&
@@ -287,7 +288,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
                throw new TimeoutException();
             }
          }
-         return super.handleDefault(ctx, cmd);
+         return invokeNext(ctx, cmd);
       }
    }
 }

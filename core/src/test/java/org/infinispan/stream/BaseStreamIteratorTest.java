@@ -1,5 +1,6 @@
 package org.infinispan.stream;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -28,7 +29,7 @@ import org.infinispan.filter.CompositeKeyValueFilterConverter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.Exceptions;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -49,7 +50,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
    protected Map<Object, String> putValuesInCache() {
       // This is linked to keep insertion order
-      Map<Object, String> valuesInserted = new LinkedHashMap<Object, String>();
+      Map<Object, String> valuesInserted = new LinkedHashMap<>();
       Cache<Object, String> cache = cache(0, CACHE_NAME);
       Object key = getKeyTiedToCache(cache);
       cache.put(key, key.toString());
@@ -157,7 +158,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
+      extractInterceptorChain(cache).addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       for (Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).keySet().iterator();
            it.hasNext();) {
@@ -174,7 +175,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
+      extractInterceptorChain(cache).addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE)
             .keySet()
@@ -192,7 +193,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
+      extractInterceptorChain(cache).addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       for (Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).values().iterator();
            it.hasNext();) {
@@ -209,7 +210,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
+      extractInterceptorChain(cache).addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE)
             .values()
@@ -227,7 +228,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
+      extractInterceptorChain(cache).addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       for (Iterator<Map.Entry<Object, Object>> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(
               Flag.SKIP_CACHE_STORE).entrySet().iterator(); it.hasNext();) {
@@ -246,7 +247,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
       final Cache<Object, Object> cache = cache(0, CACHE_NAME);
 
-      cache.getAdvancedCache().addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
+      extractInterceptorChain(cache).addInterceptor(new AssertSkipCacheStoreInterceptor(), 0);
 
       Iterator<Map.Entry<Object, Object>> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(
               Flag.SKIP_CACHE_STORE)
@@ -262,7 +263,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
    Exceptions.expectException(UnsupportedOperationException.class, it::remove);
    }
 
-   static class AssertSkipCacheStoreInterceptor extends BaseCustomInterceptor {
+   static class AssertSkipCacheStoreInterceptor extends DDAsyncInterceptor {
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          assertTrue(command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE));

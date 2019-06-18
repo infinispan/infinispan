@@ -4,6 +4,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.container.versioning.InequalVersionComparisonResult.EQUAL;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -28,7 +31,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
@@ -39,7 +42,6 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.AbstractDelegatingRpcManager;
@@ -58,9 +60,9 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
    public void testValidationOnlyInPrimaryOwner() throws Exception {
       final Object key = new MagicKey(cache(1), cache(0));
-      final DataContainer primaryOwnerDataContainer = TestingUtil.extractComponent(cache(1), InternalDataContainer.class);
-      final DataContainer backupOwnerDataContainer = TestingUtil.extractComponent(cache(0), InternalDataContainer.class);
-      final VersionGenerator versionGenerator = TestingUtil.extractComponent(cache(1), VersionGenerator.class);
+      final DataContainer primaryOwnerDataContainer = extractComponent(cache(1), InternalDataContainer.class);
+      final DataContainer backupOwnerDataContainer = extractComponent(cache(0), InternalDataContainer.class);
+      final VersionGenerator versionGenerator = extractComponent(cache(1), VersionGenerator.class);
 
       injectReorderResponseRpcManager(cache(3), cache(0));
       cache(1).put(key, 1);
@@ -149,14 +151,14 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
    private BackupOwnerInterceptor injectBackupOwnerInterceptor(Cache cache) {
       BackupOwnerInterceptor ownerInterceptor = new BackupOwnerInterceptor();
-      cache.getAdvancedCache().addInterceptor(ownerInterceptor, 1);
+      extractInterceptorChain(cache).addInterceptor(ownerInterceptor, 1);
       return ownerInterceptor;
    }
 
    private ReorderResponsesRpcManager injectReorderResponseRpcManager(Cache toInject, Cache lastResponse) {
-      RpcManager rpcManager = TestingUtil.extractComponent(toInject, RpcManager.class);
+      RpcManager rpcManager = extractComponent(toInject, RpcManager.class);
       ReorderResponsesRpcManager newRpcManager = new ReorderResponsesRpcManager(address(lastResponse), rpcManager);
-      TestingUtil.replaceComponent(toInject, RpcManager.class, newRpcManager, true);
+      replaceComponent(toInject, RpcManager.class, newRpcManager, true);
       return newRpcManager;
    }
 
@@ -164,7 +166,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       assertTrue(message, v0.compareTo(v1) == result);
    }
 
-   class BackupOwnerInterceptor extends BaseCustomInterceptor {
+   class BackupOwnerInterceptor extends DDAsyncInterceptor {
 
       private final Object blockCommitLock = new Object();
       private final Object prepareProcessedLock = new Object();
@@ -174,16 +176,14 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
          blockIfNeeded();
-         return invokeNextInterceptor(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         try {
-            return invokeNextInterceptor(ctx, command);
-         } finally {
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
             notifyPrepareProcessed();
-         }
+         });
       }
 
       public void blockCommit(boolean blockCommit) {

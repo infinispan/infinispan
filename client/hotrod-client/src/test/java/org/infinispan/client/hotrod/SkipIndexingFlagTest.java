@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.Flag.FORCE_RETURN_VALUE;
 import static org.infinispan.client.hotrod.Flag.SKIP_INDEXING;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +15,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -125,15 +125,9 @@ public class SkipIndexingFlagTest extends SingleCacheManagerTest {
       if (remoteCache == null) {
          return;
       }
-      for (CommandInterceptor commandInterceptor : cache.getAdvancedCache().getInterceptorChain()) {
-         if (commandInterceptor instanceof FlagCheckCommandInterceptor) {
-            this.commandInterceptor = (FlagCheckCommandInterceptor) commandInterceptor;
-         }
-
-      }
 
       this.commandInterceptor = new FlagCheckCommandInterceptor();
-      cache.getAdvancedCache().addInterceptor(commandInterceptor, 1);
+      extractInterceptorChain(cache).addInterceptor(commandInterceptor, 1);
    }
 
    @AfterClass(alwaysRun = true)
@@ -221,12 +215,12 @@ public class SkipIndexingFlagTest extends SingleCacheManagerTest {
       abstract void execute(RemoteCache<String, String> cache);
    }
 
-   static class FlagCheckCommandInterceptor extends BaseCustomInterceptor {
+   static class FlagCheckCommandInterceptor extends BaseAsyncInterceptor {
 
       private volatile boolean expectSkipIndexingFlag;
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          if (command instanceof FlagAffectedCommand) {
             boolean hasFlag = ((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.SKIP_INDEXING);
             if (expectSkipIndexingFlag && !hasFlag) {
@@ -235,7 +229,7 @@ public class SkipIndexingFlagTest extends SingleCacheManagerTest {
                throw new CacheException("SKIP_INDEXING flag is *not* expected!");
             }
          }
-         return super.handleDefault(ctx, command);
+         return invokeNext(ctx, command);
       }
    }
 

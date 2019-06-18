@@ -1,5 +1,10 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
@@ -9,17 +14,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.infinispan.commands.functional.ReadWriteKeyCommand;
-import org.infinispan.hibernate.cache.commons.util.Tombstone;
-
-import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.hibernate.testing.TestForIssue;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.hibernate.cache.commons.util.Tombstone;
+import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -322,7 +322,7 @@ public class TombstoneTest extends AbstractNonInvalidationTest {
    private Future<?> blockedPutFromLoad(CyclicBarrier putFromLoadBarrier) throws InterruptedException, BrokenBarrierException, TimeoutException {
       BlockingInterceptor blockingInterceptor = new BlockingInterceptor(putFromLoadBarrier, ReadWriteKeyCommand.class, false, true);
       entityCache.getAsyncInterceptorChain().addInterceptor(blockingInterceptor, 0);
-      cleanup.add(() -> entityCache.removeInterceptor(BlockingInterceptor.class));
+      cleanup.add(() -> extractInterceptorChain(entityCache).removeInterceptor(BlockingInterceptor.class));
       // the putFromLoad should be blocked in the interceptor
       Future<?> putFromLoad = executor.submit(() -> withTxSessionApply(s -> {
          assertEquals("Original item", s.load(Item.class, itemId).getDescription());

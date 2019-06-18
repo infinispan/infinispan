@@ -13,11 +13,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -160,18 +160,16 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       }
    }
 
-   class ExceptionTrackerInterceptor extends CommandInterceptor {
+   class ExceptionTrackerInterceptor extends BaseAsyncInterceptor {
 
       private volatile int exceptionsCaught = 0;
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-         try {
-            return invokeNextInterceptor(ctx, command);
-         } catch (Throwable throwable) {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+         return invokeNextAndExceptionally(ctx, command, (rCtx, rCommand, throwable) -> {
             exceptionsCaught++;
             throw throwable;
-         }
+         });
       }
    }
 

@@ -6,6 +6,7 @@
  */
 package org.infinispan.test.hibernate.cache.commons.functional.cluster;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -43,7 +44,7 @@ import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
@@ -247,7 +248,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 		HookInterceptor hookInterceptor = new HookInterceptor(getException);
 		AdvancedCache remotePPCache = remoteCustomerCache.getCacheManager().getCache(
 				remoteCustomerCache.getName() + "-" + InfinispanProperties.DEF_PENDING_PUTS_RESOURCE).getAdvancedCache();
-		remotePPCache.getAdvancedCache().addInterceptor(hookInterceptor, 0);
+      extractInterceptorChain(remotePPCache).addInterceptor(hookInterceptor, 0);
 
 		IdContainer idContainer = new IdContainer();
 		withTxSession(localFactory, s -> {
@@ -515,7 +516,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 		Set<Integer> contactIds;
 	}
 
-	static class HookInterceptor extends BaseCustomInterceptor {
+	static class HookInterceptor extends DDAsyncInterceptor {
 		final AtomicReference<Exception> failure;
 		Phaser phaser;
 		Thread thread;

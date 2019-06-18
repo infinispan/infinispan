@@ -1,5 +1,6 @@
 package org.infinispan.lock.singlelock;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertEquals;
 
 import java.util.List;
@@ -13,7 +14,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
@@ -47,8 +48,8 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
       assert advancedCache(0).getDistributionManager().locate(k0_2).containsAll(members);
       TxCountInterceptor interceptor0 = new TxCountInterceptor();
       TxCountInterceptor interceptor1 = new TxCountInterceptor();
-      advancedCache(0).addInterceptor(interceptor0, 1);
-      advancedCache(1).addInterceptor(interceptor1, 2);
+      extractInterceptorChain(advancedCache(0)).addInterceptor(interceptor0, 1);
+      extractInterceptorChain(advancedCache(1)).addInterceptor(interceptor1, 2);
 
       tm(2).begin();
       cache(2).put(k0_1, "v");
@@ -65,7 +66,7 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
    }
 
 
-   public static class TxCountInterceptor extends CommandInterceptor {
+   public static class TxCountInterceptor extends DDAsyncInterceptor {
 
       public volatile int prepareCount;
       public volatile int commitCount;

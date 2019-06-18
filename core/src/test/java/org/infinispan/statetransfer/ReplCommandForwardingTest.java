@@ -22,7 +22,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -122,7 +122,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       }
    }
 
-   class DelayInterceptor extends BaseCustomInterceptor {
+   class DelayInterceptor extends BaseCustomAsyncInterceptor {
       private final AtomicInteger counter = new AtomicInteger(0);
       private final CheckPoint checkPoint = new CheckPoint();
       private final Class<?> commandToBlock;
@@ -148,38 +148,38 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         Object result = super.visitPutKeyValueCommand(ctx, command);
-         if (!ctx.isInTxScope() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-            doBlock(ctx, command);
-         }
-         return result;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!ctx.isInTxScope() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+               doBlock(ctx, command);
+            }
+         });
       }
 
       @Override
       public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-         Object result = super.visitLockControlCommand(ctx, command);
-         if (!ctx.getCacheTransaction().isFromStateTransfer()) {
-            doBlock(ctx, command);
-         }
-         return result;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!ctx.getCacheTransaction().isFromStateTransfer()) {
+               doBlock(ctx, command);
+            }
+         });
       }
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         Object result = super.visitPrepareCommand(ctx, command);
-         if (!ctx.getCacheTransaction().isFromStateTransfer()) {
-            doBlock(ctx, command);
-         }
-         return result;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!ctx.getCacheTransaction().isFromStateTransfer()) {
+               doBlock(ctx, command);
+            }
+         });
       }
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         Object result = super.visitCommitCommand(ctx, command);
-         if (!ctx.getCacheTransaction().isFromStateTransfer()) {
-            doBlock(ctx, command);
-         }
-         return result;
+         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!ctx.getCacheTransaction().isFromStateTransfer()) {
+               doBlock(ctx, command);
+            }
+         });
       }
 
       private void doBlock(InvocationContext ctx, ReplicableCommand command) throws InterruptedException,

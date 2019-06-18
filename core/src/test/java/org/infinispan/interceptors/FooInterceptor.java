@@ -2,9 +2,8 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
 
-public class FooInterceptor extends BaseCustomInterceptor {
+public class FooInterceptor extends BaseCustomAsyncInterceptor {
 
    public volatile boolean putInvoked;
 

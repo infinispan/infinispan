@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +14,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -45,7 +46,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       cache = cacheManager.getCache();
 
       // make sure all operations take at least 100 msecs
-      cache.getAdvancedCache().addInterceptor(new ConstantDelayTransportInterceptor(100), 0);
+      extractInterceptorChain(cache).addInterceptor(new ConstantDelayTransportInterceptor(100), 0);
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
@@ -109,7 +110,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       });
    }
 
-   public static class ConstantDelayTransportInterceptor extends CommandInterceptor {
+   public static class ConstantDelayTransportInterceptor extends BaseAsyncInterceptor {
 
       private int millis;
 
@@ -118,9 +119,9 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          Thread.sleep(millis);
-         return super.handleDefault(ctx, command);
+         return invokeNext(ctx, command);
       }
    }
 }

@@ -13,7 +13,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import javax.transaction.Transaction;
 
 import org.infinispan.Cache;
@@ -24,7 +23,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -120,7 +119,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       }
    }
 
-   abstract class TransactionalTask extends CommandInterceptor implements Runnable {
+   abstract class TransactionalTask extends DDAsyncInterceptor implements Runnable {
       Cache<Object, Object> cache;
       CountDownLatch txsStarted, txsReady, joinEnded, rehashStarted;
       volatile Transaction tx;
@@ -236,11 +235,11 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext tcx, PrepareCommand cc) throws Throwable {
-         Object o = super.visitPrepareCommand(tcx, cc);
-         if (tx.equals(tcx.getTransaction())) {
-            txsReady.countDown();
-         }
-         return o;
+         return invokeNextThenAccept(tcx, cc, (rCtx, rCommand, rv) -> {
+            if (tx.equals(tcx.getTransaction())) {
+               txsReady.countDown();
+            }
+         });
       }
 
       @Override

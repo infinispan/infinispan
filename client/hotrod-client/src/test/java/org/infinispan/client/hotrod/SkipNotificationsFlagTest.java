@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.Flag.SKIP_LISTENER_NOTIFICATION;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +14,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -103,15 +103,9 @@ public class SkipNotificationsFlagTest extends SingleCacheManagerTest {
       if (remoteCache == null) {
          return;
       }
-      for (CommandInterceptor commandInterceptor : cache.getAdvancedCache().getInterceptorChain()) {
-         if (commandInterceptor instanceof FlagCheckCommandInterceptor) {
-            this.commandInterceptor = (FlagCheckCommandInterceptor) commandInterceptor;
-         }
-
-      }
 
       this.commandInterceptor = new FlagCheckCommandInterceptor();
-      cache.getAdvancedCache().addInterceptor(commandInterceptor, 1);
+      extractInterceptorChain(cache).addInterceptor(commandInterceptor, 1);
    }
 
    @AfterClass(alwaysRun = true)
@@ -161,7 +155,7 @@ public class SkipNotificationsFlagTest extends SingleCacheManagerTest {
       PUT_ALL {
          @Override
          void execute(RemoteCache<String, String> cache) {
-            Map<String, String> data = new HashMap<String, String>();
+            Map<String, String> data = new HashMap<>();
             data.put(KEY, VALUE);
             cache.putAll(data);
          }
@@ -171,12 +165,12 @@ public class SkipNotificationsFlagTest extends SingleCacheManagerTest {
       abstract void execute(RemoteCache<String, String> cache);
    }
 
-   static class FlagCheckCommandInterceptor extends BaseCustomInterceptor {
+   static class FlagCheckCommandInterceptor extends BaseAsyncInterceptor {
 
       private volatile boolean expectSkipIndexingFlag;
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) {
          if (command instanceof FlagAffectedCommand) {
             boolean hasFlag = ((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION);
             if (expectSkipIndexingFlag && !hasFlag) {
@@ -185,7 +179,7 @@ public class SkipNotificationsFlagTest extends SingleCacheManagerTest {
                throw new CacheException("SKIP_LISTENER_NOTIFICATION flag is *not* expected!");
             }
          }
-         return super.handleDefault(ctx, command);
+         return invokeNext(ctx, command);
       }
    }
 

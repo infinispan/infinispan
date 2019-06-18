@@ -11,7 +11,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -97,7 +97,7 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
       }
    }
 
-   static class BlowUpInterceptor extends CommandInterceptor {
+   static class BlowUpInterceptor extends DDAsyncInterceptor {
 
       private final AtomicBoolean injectFailures;
 

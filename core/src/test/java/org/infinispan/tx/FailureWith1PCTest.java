@@ -1,12 +1,13 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertNull;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -29,8 +30,7 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
    }
 
    public void testInducedFailureOn1pc() throws Exception {
-
-      cache(1).getAdvancedCache().addInterceptor(new FailInterceptor(), 1);
+      extractInterceptorChain(cache(1)).addInterceptor(new FailInterceptor(), 1);
 
       tm(0).begin();
       cache(0).put("k", "v");
@@ -57,14 +57,14 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
       assert TestingUtil.getTransactionTable(cache(index)).getRemoteTxCount() == 0;
    }
 
-   class FailInterceptor extends CommandInterceptor {
+   class FailInterceptor extends DDAsyncInterceptor {
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
          if (fail)
             throw new RuntimeException("Induced exception");
          else
-            return invokeNextInterceptor(ctx, command);
+            return invokeNext(ctx, command);
       }
    }
 }

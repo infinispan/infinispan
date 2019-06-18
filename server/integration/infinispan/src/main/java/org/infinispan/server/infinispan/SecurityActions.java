@@ -18,7 +18,6 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -254,7 +253,7 @@ public final class SecurityActions {
     public static <T extends JmxStatisticsExposer> Void resetStatistics(AdvancedCache<?, ?> cache,
                                                                         Class<T> jmxClass) {
         PrivilegedAction<Void> action;
-        if (jmxClass.isAssignableFrom(CommandInterceptor.class)) {
+        if (jmxClass.isAssignableFrom(AsyncInterceptor.class)) {
             action = new ResetInterceptorJmxStatisticsAction(cache, jmxClass);
         } else {
            action = new ResetComponentJmxStatisticsAction(cache, jmxClass);

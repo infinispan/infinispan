@@ -1,5 +1,6 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertEquals;
 
 import javax.transaction.NotSupportedException;
@@ -11,7 +12,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
@@ -41,7 +42,7 @@ public class FailureDuringPrepareTest extends MultipleCacheManagersTest {
    }
 
    private void runTest(boolean multipleResources) throws NotSupportedException, SystemException, RollbackException {
-      advancedCache(1).addInterceptor(new FailInterceptor(), 2);
+      extractInterceptorChain(advancedCache(1)).addInterceptor(new FailInterceptor(), 2);
 
       tm(0).begin();
 
@@ -68,15 +69,13 @@ public class FailureDuringPrepareTest extends MultipleCacheManagersTest {
    }
 
 
-   static class FailInterceptor extends CommandInterceptor {
+   static class FailInterceptor extends DDAsyncInterceptor {
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         try {
-            return super.visitPrepareCommand(ctx, command);
-         } finally {
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
             //allow the prepare to succeed then crash
             throw new RuntimeException("Induced fault!");
-         }
+         });
       }
    }
 }

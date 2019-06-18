@@ -1,5 +1,7 @@
 package org.infinispan.lock.singlelock.replicated.optimistic;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +32,7 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
       txControlInterceptor.prepareProgress.countDown();
-      advancedCache(1).addInterceptor(txControlInterceptor, 1);
+      extractInterceptorChain(advancedCache(1)).addInterceptor(txControlInterceptor, 1);
 
       Future<Void> future = beginAndCommitTx("k", 1);
       txControlInterceptor.commitReceived.await();
@@ -78,7 +80,7 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
    public void testInitiatorNodeCrashesBeforePrepare() throws Exception {
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
-      advancedCache(1).addInterceptor(txControlInterceptor, 1);
+      extractInterceptorChain(advancedCache(1)).addInterceptor(txControlInterceptor, 1);
 
       //prepare is sent, but is not precessed on other nodes because of the txControlInterceptor.preparedReceived
       Future<Void> future = beginAndPrepareTx("k", 1);

@@ -16,7 +16,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -89,9 +90,9 @@ public class IndexedCacheRestartTest extends AbstractInfinispanTest {
       });
    }
 
-   private void assertCacheHasCustomInterceptor(Cache<?, ?> cache, CommandInterceptor interceptor) {
+   private void assertCacheHasCustomInterceptor(Cache<?, ?> cache, AsyncInterceptor interceptor) {
       for (InterceptorConfiguration interceptorConfig : cache.getCacheConfiguration().customInterceptors().interceptors()) {
-         if (interceptor == interceptorConfig.interceptor()) {
+         if (interceptor == interceptorConfig.asyncInterceptor()) {
             return;
          }
       }
@@ -108,7 +109,7 @@ public class IndexedCacheRestartTest extends AbstractInfinispanTest {
       assertEquals(1, list.size());
    }
 
-   static class NoOpInterceptor extends CommandInterceptor {
+   static class NoOpInterceptor extends DDAsyncInterceptor {
 
    }
 }

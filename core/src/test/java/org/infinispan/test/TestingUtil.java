@@ -65,9 +65,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
-import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
@@ -79,8 +77,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -94,7 +90,6 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.impl.TestComponentAccessors;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.CacheContainer;
@@ -1052,27 +1047,6 @@ public class TestingUtil {
    }
 
    /**
-    * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor instance passed
-    * as parameter.
-    *
-    * @param replacingInterceptor        the interceptor to add to the interceptor chain
-    * @param toBeReplacedInterceptorType the type of interceptor that should be swapped with the new one
-    *
-    * @return true if the interceptor was replaced
-    */
-   public static boolean replaceInterceptor(Cache cache, CommandInterceptor replacingInterceptor, Class<? extends CommandInterceptor> toBeReplacedInterceptorType) {
-      ComponentRegistry cr = extractComponentRegistry(cache);
-      // make sure all interceptors here are wired.
-      CommandInterceptor i = replacingInterceptor;
-      do {
-         cr.wireDependencies(i);
-      }
-      while ((i = i.getNext()) != null);
-      AsyncInterceptorChain inch = cache.getAdvancedCache().getAsyncInterceptorChain();
-      return inch.replaceInterceptor(replacingInterceptor, toBeReplacedInterceptorType);
-   }
-
-   /**
     * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor
     * instance passed
     * as parameter.
@@ -1090,18 +1064,6 @@ public class TestingUtil {
    }
 
    /**
-    * Retrieves the remote delegate for a given cache.  It is on this remote delegate that the JGroups RPCDispatcher
-    * invokes remote methods.
-    *
-    * @param cache cache instance for which a remote delegate is to be retrieved
-    *
-    * @return remote delegate, or null if the cacge is not configured for replication.
-    */
-   public static CacheImpl getInvocationDelegate(Cache cache) {
-      return (CacheImpl) cache;
-   }
-
-   /**
     * Blocks until the cache has reached a specified state.
     *
     * @param cache       cache to watch
@@ -1116,14 +1078,6 @@ public class TestingUtil {
          sleepThread(50);
       }
       throw new RuntimeException("Timed out waiting for condition");
-   }
-
-   public static void replicateCommand(Cache cache, VisitableCommand command) throws Throwable {
-      ComponentRegistry cr = extractComponentRegistry(cache);
-      AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class);
-      InvocationContextFactory icf = cr.getComponent(InvocationContextFactory.class);
-      InvocationContext ctxt = icf.createInvocationContext(true, -1);
-      ic.invoke(ctxt, command);
    }
 
    public static void blockUntilViewsReceived(int timeout, Collection caches) {

@@ -11,7 +11,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -197,13 +197,13 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       assertEventuallyNotLocked(c1, k2);
    }
 
-   static class DelayCommandInterceptor extends CommandInterceptor {
+   static class DelayCommandInterceptor extends BaseAsyncInterceptor {
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          if (command instanceof CommitCommand) {
             Thread.sleep(3000);
          }
-         return super.handleDefault(ctx, command);
+         return invokeNext(ctx, command);
       }
    }
 }

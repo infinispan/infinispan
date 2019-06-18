@@ -1,5 +1,6 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -24,7 +25,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class InvalidationTest extends SingleNodeTest {
       HookInterceptor hook = new HookInterceptor();
 
       AdvancedCache pendingPutsCache = getPendingPutsCache(Item.class);
-      pendingPutsCache.addInterceptor(hook, 0);
+      extractInterceptorChain(pendingPutsCache).addInterceptor(hook, 0);
       AtomicBoolean getThreadBlockedInDB = new AtomicBoolean(false);
 
       Thread deleteThread = new Thread(() -> {
@@ -239,7 +240,7 @@ public class InvalidationTest extends SingleNodeTest {
       }
    }
 
-   static class HookInterceptor extends BaseCustomInterceptor {
+   static class HookInterceptor extends DDAsyncInterceptor {
       Phaser phaser;
       Thread thread;
 

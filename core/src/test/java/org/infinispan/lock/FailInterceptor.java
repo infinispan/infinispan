@@ -7,7 +7,9 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Interceptor that can selectively fail or skip executing commands.
@@ -19,7 +21,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  *
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
  */
-class FailInterceptor extends CommandInterceptor {
+class FailInterceptor extends BaseAsyncInterceptor {
 
    private enum ActionType {
       EXEC, SKIP, FAIL
@@ -39,13 +41,14 @@ class FailInterceptor extends CommandInterceptor {
       }
    }
 
+   private static final Log log = LogFactory.getLog(FailInterceptor.class);
    public Queue<Action> actions = new LinkedBlockingQueue<Action>();
 
    @Override
-   protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       Action action = actions.peek();
       if (action == null || !command.getClass().equals(action.commandClass))
-         return super.handleDefault(ctx, command);
+         return invokeNext(ctx, command);
 
       action.count--;
       if (action.count <= 0)
@@ -53,9 +56,9 @@ class FailInterceptor extends CommandInterceptor {
 
       switch (action.type) {
          case EXEC:
-            return super.handleDefault(ctx, command);
+            return invokeNext(ctx, command);
          case SKIP:
-            getLog().debugf("Skipped executing command %s", command);
+            log.debugf("Skipped executing command %s", command);
             return action.returnValue;
          case FAIL:
             throw new CacheException("Forced failure executing command " + command);
