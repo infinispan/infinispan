@@ -8,9 +8,7 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -21,11 +19,17 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.hibernate.cache.commons.util.BeginInvalidationCommand;
+import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.LocalModeAddress;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
@@ -43,7 +47,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
 public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
-	@Inject CacheCommandInitializer commandInitializer;
+	@Inject Transport transport;
 
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInterceptor.class);
    private static final Log ispnLog = LogFactory.getLog(NonTxInvalidationInterceptor.class);
@@ -98,8 +102,8 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 		InvalidateCommand invalidateCommand;
 		if (!isLocalModeForced(command)) {
 			if (isTransactional) {
-				invalidateCommand = commandInitializer.buildBeginInvalidationCommand(
-               EnumUtil.EMPTY_BIT_SET, new Object[] { key }, keyLockOwner);
+				Address address = transport != null ? transport.getAddress() : LocalModeAddress.INSTANCE;
+				invalidateCommand = new BeginInvalidationCommand(EnumUtil.EMPTY_BIT_SET, CommandInvocationId.generateId(address), new Object[] {key}, keyLockOwner);
 			}
 			else {
             invalidateCommand = commandsFactory.buildInvalidateCommand(EnumUtil.EMPTY_BIT_SET, new Object[] {key });

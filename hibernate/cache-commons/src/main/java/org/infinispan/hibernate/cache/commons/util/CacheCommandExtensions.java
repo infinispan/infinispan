@@ -8,7 +8,6 @@ package org.infinispan.hibernate.cache.commons.util;
 
 import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commands.module.ModuleCommandFactory;
-import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -20,16 +19,9 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(ModuleCommandExtensions.class)
 public class CacheCommandExtensions implements ModuleCommandExtensions {
 	final CacheCommandFactory cacheCommandFactory = new CacheCommandFactory();
-	final CacheCommandInitializer cacheCommandInitializer = new CacheCommandInitializer();
 
 	@Override
 	public ModuleCommandFactory getModuleCommandFactory() {
 		return cacheCommandFactory;
 	}
-
-	@Override
-	public ModuleCommandInitializer getModuleCommandInitializer() {
-		return cacheCommandInitializer;
-	}
-
 }

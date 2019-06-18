@@ -11,12 +11,13 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 
-import org.infinispan.commons.util.Util;
-import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
-
+import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.util.ByteString;
 
 /**
@@ -25,7 +26,7 @@ import org.infinispan.util.ByteString;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class EndInvalidationCommand extends BaseRpcCommand {
+public class EndInvalidationCommand extends BaseRpcCommand implements InitializableCommand {
 	private Object[] keys;
 	private Object lockOwner;
 	private PutFromLoadValidator putFromLoadValidator;
@@ -41,6 +42,11 @@ public class EndInvalidationCommand extends BaseRpcCommand {
 		super(cacheName);
 		this.keys = keys;
 		this.lockOwner = lockOwner;
+	}
+
+	@Override
+	public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+		this.putFromLoadValidator = componentRegistry.getComponent(PutFromLoadValidator.class);
 	}
 
 	@Override
