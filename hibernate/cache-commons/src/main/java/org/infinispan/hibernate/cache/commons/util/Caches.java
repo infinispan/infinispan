@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
@@ -223,14 +224,9 @@ public class Caches {
 	public static void broadcastEvictAll(AdvancedCache cache) {
 		final RpcManager rpcManager = cache.getRpcManager();
 		if ( rpcManager != null ) {
-			// Only broadcast evict all if it's clustered
-			final CacheCommandInitializer factory = cache.getComponentRegistry()
-					.getComponent( CacheCommandInitializer.class );
-			final boolean isSync = isSynchronousCache( cache );
-
-			final EvictAllCommand cmd = factory.buildEvictAllCommand(ByteString.fromString(cache.getName()));
-			final RpcOptions options = rpcManager.getDefaultRpcOptions( isSync );
-			rpcManager.invokeRemotely( null, cmd, options );
+			final EvictAllCommand cmd = new EvictAllCommand(ByteString.fromString(cache.getName()));
+			final RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronousCache(cache));
+			rpcManager.invokeRemotely(null, cmd, options);
 		}
 	}
 

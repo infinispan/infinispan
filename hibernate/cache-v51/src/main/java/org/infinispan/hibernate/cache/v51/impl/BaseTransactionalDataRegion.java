@@ -37,7 +37,6 @@ import org.infinispan.hibernate.cache.commons.access.TombstoneAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.TxInvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.UnorderedDistributionInterceptor;
 import org.infinispan.hibernate.cache.commons.access.UnorderedReplicationLogic;
-import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
@@ -156,15 +155,10 @@ public abstract class BaseTransactionalDataRegion
       // Besides, any cache interceptor initialization should only be done once.
       // Synchronizes on the cache instance since it's shared between regions with same name.
       synchronized (cache) {
-         PutFromLoadValidator found = findValidator(cache);
+         PutFromLoadValidator found = cache.getComponentRegistry().getComponent(PutFromLoadValidator.class);
          validator = found != null ? found : new PutFromLoadValidator(cache, factory, factory.getPendingPutsCacheConfiguration());
          strategy = Strategy.VALIDATION;
       }
-   }
-
-   private PutFromLoadValidator findValidator(AdvancedCache cache) {
-      CacheCommandInitializer cmdInit = cache.getComponentRegistry().getComponent(CacheCommandInitializer.class);
-      return cmdInit.findPutFromLoadValidator(cache.getName());
    }
 
 	private void prepareForVersionedEntries(CacheMode cacheMode) {

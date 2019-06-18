@@ -24,7 +24,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
 import org.infinispan.hibernate.cache.commons.util.EndInvalidationCommand;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.interceptors.impl.BaseRpcInterceptor;
@@ -53,7 +52,6 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 	private final ByteString cacheName;
 
 	@Inject RpcManager rpcManager;
-	@Inject CacheCommandInitializer cacheCommandInitializer;
 	@Inject InternalDataContainer dataContainer;
 	@Inject DistributionManager distributionManager;
 
@@ -159,8 +157,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 					}
 
 					GlobalTransaction globalTransaction = ctx.getGlobalTransaction();
-					EndInvalidationCommand commitCommand = cacheCommandInitializer.buildEndInvalidationCommand(
-							cacheName, keys, globalTransaction);
+					EndInvalidationCommand commitCommand = new EndInvalidationCommand(cacheName, keys, globalTransaction);
 					List<Address> members = distributionManager.getCacheTopology().getMembers();
 					rpcManager.invokeRemotely(members, commitCommand, asyncUnordered);
 

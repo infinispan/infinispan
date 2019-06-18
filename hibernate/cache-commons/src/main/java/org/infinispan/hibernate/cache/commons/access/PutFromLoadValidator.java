@@ -16,19 +16,17 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.hibernate.engine.spi.SessionImplementor;
-import org.infinispan.factories.impl.BasicComponentRegistry;
-import org.infinispan.hibernate.cache.spi.InfinispanProperties;
-import org.infinispan.hibernate.cache.commons.TimeSource;
-import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.cache.spi.RegionFactory;
-
+import org.hibernate.engine.spi.SessionImplementor;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.hibernate.cache.commons.TimeSource;
+import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -230,9 +228,11 @@ public class PutFromLoadValidator {
 		}
 		log.debugf("New interceptor chain is: ", cache.getAsyncInterceptorChain());
 
-      CacheCommandInitializer cacheCommandInitializer =
-         componentRegistry.getComponent(CacheCommandInitializer.class).running();
-		cacheCommandInitializer.addPutFromLoadValidator(cache.getName(), validator);
+		if (componentRegistry.getComponent(PutFromLoadValidator.class) == null) {
+			componentRegistry.registerComponent(PutFromLoadValidator.class, validator, false);
+		} else{
+			componentRegistry.replaceComponent(PutFromLoadValidator.class.getName(), validator, false);
+		}
 	}
 
 	/**
@@ -266,8 +266,8 @@ public class PutFromLoadValidator {
                chain.replaceInterceptor(lockingInterceptor, LockingInterceptor.class);
             });
 
-		CacheCommandInitializer cci = cr.getComponent(CacheCommandInitializer.class).running();
-		return cci.removePutFromLoadValidator(cache.getName());
+
+      return cr.getComponent(PutFromLoadValidator.class).running();
 	}
 
 	public void destroy() {
