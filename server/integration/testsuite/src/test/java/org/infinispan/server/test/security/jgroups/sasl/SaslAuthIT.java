@@ -66,6 +66,7 @@ public class SaslAuthIT {
    }
 
    @Test
+   @Ignore
    @WithRunningServer(@RunningServer(name = COORDINATOR_NODE_MD5))
    public void testSaslMD5() throws Exception {
       saslTest(COORDINATOR_NODE_MD5, JOINING_NODE_MD5, MECH_MD5);

@@ -68,6 +68,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
 import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
 import org.infinispan.counter.api.CounterManager;
+import org.wildfly.security.WildFlyElytronProvider;
 
 /**
  * <p>Factory for {@link org.infinispan.client.hotrod.RemoteCache}s.</p>
@@ -109,6 +110,15 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private final XaModeTransactionTable xaTransactionTable;
    private ObjectName mbeanObjectName;
    private TimeService timeService = DefaultTimeService.INSTANCE;
+
+   static {
+      try {
+         Class.forName("org.wildfly.security.WildFlyElytronProvider", true, RemoteCacheManager.class.getClassLoader());
+         SecurityActions.addSecurityProvider(new WildFlyElytronProvider());
+      } catch (Throwable t) {
+         // Ignore
+      }
+   }
 
    /**
     * Create a new RemoteCacheManager using the supplied {@link Configuration}.

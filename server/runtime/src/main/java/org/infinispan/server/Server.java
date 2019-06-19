@@ -43,7 +43,6 @@ import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
 import org.infinispan.util.logging.LogFactory;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.auth.server.SecurityDomain;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
