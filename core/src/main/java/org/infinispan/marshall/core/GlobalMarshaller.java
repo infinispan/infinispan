@@ -352,7 +352,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    private void writeNonNullableObject(Object obj, BytesObjectOutput out) throws IOException {
       Class<?> clazz = obj.getClass();
-      int id = Primitives.PRIMITIVES.get(clazz, NOT_FOUND);
+      int id = Primitives.PRIMITIVES.getOrDefault(clazz, NOT_FOUND);
       if (id != NOT_FOUND) {
          writePrimitive(obj, out, id);
       } else if (clazz.isArray()) {
@@ -492,7 +492,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
             // because if an user registered it, he could rather explicitly register AdvancedExternalizer instead.
             out.writeByte(ID_ANNOTATED);
             out.writeObject(elementExt.getClass());
-         } else if ((primitiveId = Primitives.PRIMITIVES.get(elementType, NOT_FOUND)) != NOT_FOUND) {
+         } else if ((primitiveId = Primitives.PRIMITIVES.getOrDefault(elementType, NOT_FOUND)) != NOT_FOUND) {
             out.writeByte(ID_PRIMITIVE);
             out.writeByte(primitiveId);
             for (int i = 0; i < length; ++i) {

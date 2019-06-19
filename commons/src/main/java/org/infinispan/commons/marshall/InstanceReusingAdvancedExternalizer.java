@@ -5,9 +5,9 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import org.jboss.marshalling.util.IdentityIntMap;
+import java.util.Map;
 
 /**
  * An advanced externalizer that when implemented will allow for child instances that also extend this class to use object
@@ -17,7 +17,7 @@ import org.jboss.marshalling.util.IdentityIntMap;
  */
 public abstract class InstanceReusingAdvancedExternalizer<T> extends AbstractExternalizer<T> {
    static class ReusableData {
-      IdentityIntMap<Object> map = new IdentityIntMap<>();
+      Map<Object, Integer> map = new HashMap<>();
       int offset;
    }
    private static ThreadLocal<ReusableData> cachedWriteObjects = new ThreadLocal<ReusableData>();
@@ -55,7 +55,7 @@ public abstract class InstanceReusingAdvancedExternalizer<T> extends AbstractExt
       }
       try {
          int id;
-         if (data != null && (id = data.map.get(object, -1)) != -1) {
+         if (data != null && (id = data.map.getOrDefault(object, -1)) != -1) {
             final int diff = id - data.offset;
             if (diff >= -256) {
                 output.write(ID_REPEAT_OBJECT_NEAR);

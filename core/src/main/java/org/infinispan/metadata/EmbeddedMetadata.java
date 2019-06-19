@@ -3,6 +3,8 @@ package org.infinispan.metadata;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +17,6 @@ import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * Metadata class for embedded caches.
@@ -338,7 +339,7 @@ public class EmbeddedMetadata implements Metadata {
       private static final int EXPIRABLE = 1;
       private static final int LIFESPAN_EXPIRABLE = 2;
       private static final int MAXIDLE_EXPIRABLE = 3;
-      private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(2);
+      private final Map<Class<?>, Integer> numbers = new HashMap<>(2);
 
       public Externalizer() {
          numbers.put(EmbeddedMetadata.class, IMMORTAL);
@@ -360,7 +361,7 @@ public class EmbeddedMetadata implements Metadata {
 
       @Override
       public void writeObject(ObjectOutput output, EmbeddedMetadata object) throws IOException {
-         int number = numbers.get(object.getClass(), -1);
+         int number = numbers.getOrDefault(object.getClass(), -1);
          output.write(number);
          switch (number) {
             case EXPIRABLE:

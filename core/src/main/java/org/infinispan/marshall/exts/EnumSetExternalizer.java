@@ -5,14 +5,15 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.AbstractSet;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
-import org.jboss.marshalling.util.IdentityIntMap;
 
 import net.jcip.annotations.Immutable;
 
@@ -32,7 +33,7 @@ public class EnumSetExternalizer extends AbstractExternalizer<Set> {
    private static final int MINI_ENUM_SET = 4; // IBM class
    private static final int HUGE_ENUM_SET = 5; // IBM class
 
-   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(3);
+   private final Map<Class<?>, Integer> numbers = new HashMap<>(3);
 
    public EnumSetExternalizer() {
       numbers.put(EnumSet.class, ENUM_SET);
@@ -49,8 +50,8 @@ public class EnumSetExternalizer extends AbstractExternalizer<Set> {
 
    @Override
    public void writeObject(ObjectOutput output, Set set) throws IOException {
-      int number = numbers.get(set.getClass(), UNKNOWN_ENUM_SET);
-      if (number == UNKNOWN_ENUM_SET) {
+      Integer number = numbers.get(set.getClass());
+      if (number == null) {
          // Fallback on standard object write
          output.writeObject(set);
       } else {

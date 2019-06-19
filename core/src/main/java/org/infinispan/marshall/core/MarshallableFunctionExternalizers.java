@@ -3,13 +3,14 @@ package org.infinispan.marshall.core;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.LambdaExternalizer;
 import org.infinispan.commons.marshall.ValueMatcherMode;
 import org.infinispan.commons.util.Util;
 import org.infinispan.functional.MetaParam;
-import org.jboss.marshalling.util.IdentityIntMap;
 
 public class MarshallableFunctionExternalizers {
 
@@ -42,7 +43,7 @@ public class MarshallableFunctionExternalizers {
    private static final int SET_INTERNAL_CACHE_VALUE_CONSUMER = 18 | VALUE_MATCH_ALWAYS;
 
    public static final class ConstantLambdaExternalizer implements LambdaExternalizer<Object> {
-      private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(16);
+      private final Map<Class<?>, Integer> numbers = new HashMap<>(16);
 
       public ConstantLambdaExternalizer() {
          numbers.put(MarshallableFunctions.setValueReturnPrevOrNull().getClass(), SET_VALUE_RETURN_PREV_OR_NULL);
@@ -67,7 +68,7 @@ public class MarshallableFunctionExternalizers {
 
       @Override
       public ValueMatcherMode valueMatcher(Object o) {
-         int i = numbers.get(o.getClass(), -1);
+         int i = numbers.getOrDefault(o.getClass(), -1);
          if (i > 0) {
             int valueMatcherId = ((i & VALUE_MATCH_MASK) >> 12) - 1;
             return ValueMatcherMode.valueOf(valueMatcherId);
@@ -106,7 +107,7 @@ public class MarshallableFunctionExternalizers {
       }
 
       public void writeObject(ObjectOutput oo, Object o) throws IOException {
-         int id = numbers.get(o.getClass(), -1);
+         int id = numbers.getOrDefault(o.getClass(), -1);
          oo.writeShort(id);
       }
 
@@ -138,7 +139,7 @@ public class MarshallableFunctionExternalizers {
    }
 
    public static final class LambdaWithMetasExternalizer implements LambdaExternalizer<MarshallableFunctions.LambdaWithMetas> {
-      private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(8);
+      private final Map<Class<?>, Integer> numbers = new HashMap<>(7);
 
       public LambdaWithMetasExternalizer() {
          numbers.put(MarshallableFunctions.SetValueMetasReturnPrevOrNull.class, SET_VALUE_RETURN_PREV_OR_NULL);
@@ -153,7 +154,7 @@ public class MarshallableFunctionExternalizers {
       @Override
       public ValueMatcherMode valueMatcher(Object o) {
          // TODO: Code duplication
-         int i = numbers.get(o.getClass(), -1);
+         int i = numbers.getOrDefault(o.getClass(), -1);
          if (i > 0) {
             int valueMatcherId = ((i & VALUE_MATCH_MASK) >> 12) - 1;
             return ValueMatcherMode.valueOf(valueMatcherId);
@@ -182,7 +183,7 @@ public class MarshallableFunctionExternalizers {
 
       @Override
       public void writeObject(ObjectOutput oo, MarshallableFunctions.LambdaWithMetas o) throws IOException {
-         int id = numbers.get(o.getClass(), -1);
+         int id = numbers.getOrDefault(o.getClass(), -1);
          oo.writeShort(id);
          writeMetas(oo, o);
       }

@@ -3,6 +3,8 @@ package org.infinispan.filter;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -20,7 +22,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
-import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * Static factory class that contains utility methods that can be used for performing proper transformations from
@@ -168,7 +169,7 @@ public final class CacheFilters {
       private static final int CONVERTER_FUNCTION = 1;
       private static final int FILTER_CONVERTER_FUNCTION = 2;
 
-      private final IdentityIntMap<Class<?>> objects = new IdentityIntMap<>();
+      private final Map<Class<?>, Integer> objects = new HashMap<>(3);
 
       public CacheFiltersExternalizer() {
          objects.put(KeyValueFilterAsPredicate.class, KEY_VALUE_FILTER_PREDICATE);
@@ -189,7 +190,7 @@ public final class CacheFilters {
 
       @Override
       public void writeObject(ObjectOutput output, Object object) throws IOException {
-         int number = objects.get(object.getClass(), -1);
+         int number = objects.getOrDefault(object.getClass(), -1);
          output.writeByte(number);
          switch (number) {
             case KEY_VALUE_FILTER_PREDICATE:

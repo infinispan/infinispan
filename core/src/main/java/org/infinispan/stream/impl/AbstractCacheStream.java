@@ -8,9 +8,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.Queue;
 import java.util.Set;
@@ -57,7 +59,6 @@ import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
-import org.jboss.marshalling.util.IdentityIntMap;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
@@ -804,7 +805,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
    public static class MapOpsExternalizer extends AbstractExternalizer<IntermediateOperation> {
       static final int MAP = 0;
       static final int FLATMAP = 1;
-      private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(2);
+      private final Map<Class<?>, Integer> numbers = new HashMap<>(2);
 
       public MapOpsExternalizer() {
          numbers.put(MapHandler.class, MAP);
@@ -823,7 +824,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
 
       @Override
       public void writeObject(ObjectOutput output, IntermediateOperation object) throws IOException {
-         int number = numbers.get(object.getClass(), -1);
+         int number = numbers.getOrDefault(object.getClass(), -1);
          output.write(number);
          switch (number) {
             case MAP:
