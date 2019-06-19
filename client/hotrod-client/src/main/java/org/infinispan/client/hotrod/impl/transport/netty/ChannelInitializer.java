@@ -42,7 +42,8 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
 class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
-   private static final CallbackHandler NOOP_HANDLER = callbacks -> {};
+   private static final CallbackHandler NOOP_HANDLER = callbacks -> {
+   };
    private static Log log = LogFactory.getLog(ChannelInitializer.class);
    private static boolean trace = log.isTraceEnabled();
 
@@ -174,15 +175,21 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                configuration.saslMechanism(), configuration.saslProperties());
       }
       Collection<SaslClientFactory> clientFactories = SaslUtils.getSaslClientFactories(this.getClass().getClassLoader(), true);
-      for(SaslClientFactory saslFactory : clientFactories)  {
-         String[] saslFactoryMechs = saslFactory.getMechanismNames(configuration.saslProperties());
-         for (String supportedMech : saslFactoryMechs) {
-            if (supportedMech.equals(configuration.saslMechanism())) {
-               if (trace) {
-                  log.tracef("Loaded SaslClientFactory: %s", saslFactory.getClass().getName());
+      for (SaslClientFactory saslFactory : clientFactories) {
+         try {
+            String[] saslFactoryMechs = saslFactory.getMechanismNames(configuration.saslProperties());
+            for (String supportedMech : saslFactoryMechs) {
+               if (supportedMech.equals(configuration.saslMechanism())) {
+                  if (trace) {
+                     log.tracef("Loaded SaslClientFactory: %s", saslFactory.getClass().getName());
+                  }
+                  return saslFactory;
                }
-               return saslFactory;
+
             }
+         } catch (Throwable t) {
+            // Catch any errors that can happen when calling to a Sasl mech
+            log.tracef("Error while trying to obtain mechanism names supported by SaslClientFactory: %s", saslFactory.getClass().getName());
          }
       }
       throw new IllegalStateException("SaslClientFactory implementation now found");

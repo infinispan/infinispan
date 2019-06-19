@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.Provider;
 
 /**
  * Privileged actions for package org.infinispan.client.hotrod
@@ -96,5 +97,23 @@ final class SecurityActions {
          return SysProps.PRIVILEGED.setProperty(name, value);
       }
 
+   }
+
+   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+      if (System.getSecurityManager() != null) {
+         return AccessController.doPrivileged(action);
+      } else {
+         return action.run();
+      }
+   }
+
+   static void addSecurityProvider(Provider provider) {
+      doPrivileged(() -> {
+               if (java.security.Security.getProvider(provider.getName()) == null) {
+                  java.security.Security.insertProviderAt(provider, 1);
+               }
+               return null;
+            }
+      );
    }
 }

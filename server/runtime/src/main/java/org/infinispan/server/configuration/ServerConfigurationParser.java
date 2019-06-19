@@ -457,6 +457,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       String name = "ldap";
       SimpleDirContextFactoryBuilder dirContextBuilder = SimpleDirContextFactoryBuilder.builder();
       LdapSecurityRealmBuilder ldapRealmBuilder = LdapSecurityRealmBuilder.builder();
+      LdapSecurityRealmBuilder.IdentityMappingBuilder identityMappingBuilder = ldapRealmBuilder.identityMapping();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -481,10 +482,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                ldapRealmBuilder.setPageSize(Integer.parseInt(value));
                break;
             case SEARCH_DN:
-               ldapRealmBuilder.identityMapping().setSearchDn(value);
+               identityMappingBuilder.setSearchDn(value);
                break;
             case RDN_IDENTIFIER:
-               ldapRealmBuilder.identityMapping().setRdnIdentifier(value);
+               identityMappingBuilder.setRdnIdentifier(value);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -494,7 +495,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case IDENTITY_MAPPING:
-               parseLdapIdentityMapping(reader, ldapRealmBuilder);
+               parseLdapIdentityMapping(reader, ldapRealmBuilder, identityMappingBuilder);
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
@@ -510,17 +511,17 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseLdapIdentityMapping(XMLExtendedStreamReader reader, LdapSecurityRealmBuilder ldapRealmBuilder) throws XMLStreamException {
+   private void parseLdapIdentityMapping(XMLExtendedStreamReader reader, LdapSecurityRealmBuilder ldapRealmBuilder, LdapSecurityRealmBuilder.IdentityMappingBuilder identityMappingBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case SEARCH_DN:
-               ldapRealmBuilder.identityMapping().setSearchDn(value);
+               identityMappingBuilder.setSearchDn(value);
                break;
             case RDN_IDENTIFIER:
-               ldapRealmBuilder.identityMapping().setRdnIdentifier(value);
+               identityMappingBuilder.setRdnIdentifier(value);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -600,7 +601,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case FILTER:
                // Already seen
                break;
-            case FILTER_BASE_DN:
+            case FILTER_DN:
                attributeMappingBuilder.searchDn(value);
                break;
             default:
