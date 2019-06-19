@@ -15,7 +15,9 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  * Configures custom interceptors to be added to the cache.
  *
  * @author pmuir
+ * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
  */
+@Deprecated
 public class CustomInterceptorsConfiguration implements Matchable<CustomInterceptorsConfiguration>, ConfigurationInfo {
 
    static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CUSTOM_INTERCEPTORS.getLocalName());

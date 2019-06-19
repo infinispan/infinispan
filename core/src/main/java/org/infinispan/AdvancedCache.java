@@ -18,7 +18,6 @@ import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
-import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.container.DataContainer;
@@ -191,12 +190,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
 
    /**
     * Allows the modification of the interceptor chain.
-    * <p>
-    * Experimental: The ability to modify the interceptors at runtime may be removed in future versions.
     *
-    * @since 9.0
+    * @deprecated Since 10.0, will be removed without a replacement
     */
-   @Experimental
+   @Deprecated
    AsyncInterceptorChain getAsyncInterceptorChain();
 
    /**

@@ -30,10 +30,12 @@ import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
 import org.infinispan.counter.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.counter.logging.Log;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -66,9 +68,7 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
             .partitionHandling().whenSplit(config.reliability() == Reliability.CONSISTENT ?
                                            PartitionHandling.DENY_READ_WRITES :
                                            PartitionHandling.ALLOW_READ_WRITES)
-            .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
-            .customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class)
-            .interceptor(new CounterInterceptor());
+            .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       return builder.build();
    }
 
@@ -84,9 +84,8 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       map.put(ext.getId(), ext);
    }
 
-   private static CounterManagerConfiguration extractConfiguration(GlobalComponentRegistry globalComponentRegistry) {
-      CounterManagerConfiguration config = globalComponentRegistry.getGlobalConfiguration()
-            .module(CounterManagerConfiguration.class);
+   private static CounterManagerConfiguration extractConfiguration(GlobalConfiguration globalConfiguration) {
+      CounterManagerConfiguration config = globalConfiguration.module(CounterManagerConfiguration.class);
       return config == null ? CounterManagerConfigurationBuilder.defaultConfiguration() : config;
    }
 
@@ -136,7 +135,7 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       PersistenceMarshaller persistenceMarshaller = bcr.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class).wired();
       persistenceMarshaller.register(new PersistenceContextInitializerImpl());
 
-      CounterManagerConfiguration counterManagerConfiguration = extractConfiguration(gcr);
+      CounterManagerConfiguration counterManagerConfiguration = extractConfiguration(globalConfiguration);
       if (gcr.getGlobalConfiguration().isClustered()) {
          //only attempts to create the caches if the cache manager is clustered.
          registerCounterCache(internalCacheRegistry, counterManagerConfiguration);
@@ -145,5 +144,17 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
          registerLocalCounterCache(internalCacheRegistry);
       }
       registerCounterManager(cacheManager, bcr);
+   }
+
+   @Override
+   public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
+      if (COUNTER_CACHE_NAME.equals(cacheName) && configuration.clustering().cacheMode().isClustered()) {
+         BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+         CounterInterceptor counterInterceptor = new CounterInterceptor();
+         bcr.registerComponent(CounterInterceptor.class, counterInterceptor, true);
+         bcr.addDynamicDependency(AsyncInterceptorChain.class.getName(), CounterInterceptor.class.getName());
+         bcr.getComponent(AsyncInterceptorChain.class).wired()
+            .addInterceptorAfter(counterInterceptor, EntryWrappingInterceptor.class);
+      }
    }
 }

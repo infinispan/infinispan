@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,14 +13,9 @@ import javax.management.ObjectName;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -36,13 +30,6 @@ import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.client.impl.MarshallerRegistration;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
-import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.registry.InternalCacheRegistry.Flag;
-import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.impl.CacheRoleImpl;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
  * @author anistor@redhat.com
@@ -59,7 +46,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
 
    private final SerializationContext serCtx;
 
-   private EmbeddedCacheManager cacheManager;
+   @Inject EmbeddedCacheManager cacheManager;
 
    public ProtobufMetadataManagerImpl() {
       Configuration.Builder cfgBuilder = Configuration.builder();
@@ -70,17 +57,6 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       } catch (IOException | DescriptorParserException e) {
          throw new CacheException("Failed to initialise the Protobuf serialization context", e);
       }
-   }
-
-   /**
-    * Defines the configuration of the ___protobuf_metadata internal cache.
-    */
-   @Inject
-   protected void init(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
-      this.cacheManager = cacheManager;
-      internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME,
-            getProtobufMetadataCacheConfig().build(),
-            EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT));
    }
 
    /**
@@ -102,28 +78,6 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
          throw new IllegalStateException("Not started yet");
       }
       return protobufSchemaCache;
-   }
-
-   private ConfigurationBuilder getProtobufMetadataCacheConfig() {
-      GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
-      CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
-
-      ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.transaction()
-            .transactionMode(TransactionMode.TRANSACTIONAL).invocationBatching().enable()
-            .transaction().lockingMode(LockingMode.PESSIMISTIC)
-            .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
-            .clustering().cacheMode(cacheMode)
-            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
-            .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
-            .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
-            .customInterceptors().addInterceptor()
-            .interceptor(new ProtobufMetadataManagerInterceptor()).after(EntryWrappingInterceptor.class);
-      if (globalConfiguration.security().authorization().enabled()) {
-         globalConfiguration.security().authorization().roles().put(SCHEMA_MANAGER_ROLE, new CacheRoleImpl(SCHEMA_MANAGER_ROLE, AuthorizationPermission.ALL));
-         cfg.security().authorization().enable().role(SCHEMA_MANAGER_ROLE);
-      }
-      return cfg;
    }
 
    @Override

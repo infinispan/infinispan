@@ -293,6 +293,10 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       cache.addInterceptor(i, position);
    }
 
+   /**
+    * @deprecated Since 10.0, will be removed without a replacement
+    */
+   @Deprecated
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return cache.getAsyncInterceptorChain();

@@ -1194,6 +1194,10 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       throw log.interceptorStackNotSupported();
    }
 
+   /**
+    * @deprecated Since 10.0, will be removed without a replacement
+    */
+   @Deprecated
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return EmptyAsyncInterceptorChain.INSTANCE;

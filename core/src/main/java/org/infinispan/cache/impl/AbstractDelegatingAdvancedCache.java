@@ -70,6 +70,10 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       cache.getAsyncInterceptorChain().addInterceptor(i, position);
    }
 
+   /**
+    * @deprecated Since 10.0, will be removed without a replacement
+    */
+   @Deprecated
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return cache.getAsyncInterceptorChain();
