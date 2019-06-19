@@ -27,7 +27,7 @@ Custom interceptors can be added on a per named cache basis. This is because eac
 ----
 
 === Adding custom interceptors programatically
-In order to do that one needs to obtain a reference to the link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache] . This can be done ass follows:
+In order to do that one needs to obtain a reference to the link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache] . This can be done as follows:
 
 [source,java]
 ----
