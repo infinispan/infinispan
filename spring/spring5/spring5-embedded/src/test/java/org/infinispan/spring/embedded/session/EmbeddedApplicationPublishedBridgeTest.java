@@ -62,4 +62,9 @@ public class EmbeddedApplicationPublishedBridgeTest extends InfinispanApplicatio
    public void testUnregistration() throws Exception {
       super.testUnregistration();
    }
+
+   @Override
+   public void testEventBridgeWithSessionIdChange() throws Exception {
+      super.testEventBridgeWithSessionIdChange();
+   }
 }

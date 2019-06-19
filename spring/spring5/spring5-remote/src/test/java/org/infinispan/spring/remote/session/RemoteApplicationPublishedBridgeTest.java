@@ -95,6 +95,11 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
       assertEquals(id, value.getId());
    }
 
+   @Override
+   public void testEventBridgeWithSessionIdChange() throws Exception {
+      super.testEventBridgeWithSessionIdChange();
+   }
+
    class TestEvent implements ClientCacheEntryCustomEvent<byte[]> {
 
       private String sessionId;
