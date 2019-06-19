@@ -8,8 +8,18 @@
 
    <xs:complexType name="server">
       <xs:sequence>
-         <xs:element type="tns:interfaces" name="interfaces"/>
-         <xs:element type="tns:socket-bindings" name="socket-bindings"/>
+         <xs:element type="tns:interfaces" name="interfaces">
+            <xs:unique name="interface-name-unique">
+               <xs:selector xpath="./tns:interface" />
+               <xs:field xpath="@name" />
+            </xs:unique>
+         </xs:element>
+         <xs:element type="tns:socket-bindings" name="socket-bindings">
+            <xs:unique name="socket-binding-unique">
+               <xs:selector xpath="./tns:socket-binding" />
+               <xs:field xpath="@name" />
+            </xs:unique>
+         </xs:element>
          <xs:element type="tns:security" name="security"/>
          <xs:element type="tns:endpoints" name="endpoints"/>
       </xs:sequence>
@@ -35,6 +45,18 @@
       <xs:attribute type="xs:string" name="name"/>
    </xs:complexType>
 
+   <xs:complexType name="interface-match-interface">
+      <xs:attribute name="value"/>
+   </xs:complexType>
+
+   <xs:complexType name="interface-match-address">
+      <xs:attribute name="value"/>
+   </xs:complexType>
+
+   <xs:complexType name="interface-match-host">
+      <xs:attribute name="value"/>
+   </xs:complexType>
+
    <xs:complexType name="socket-bindings">
       <xs:sequence>
          <xs:element type="tns:socket-binding" name="socket-binding" maxOccurs="unbounded" minOccurs="0"/>
@@ -55,29 +77,21 @@
 
    <xs:complexType name="security">
       <xs:sequence>
-         <xs:element type="tns:security-realms" name="security-realms"/>
-      </xs:sequence>
-   </xs:complexType>
-
-   <xs:complexType name="endpoints">
-      <xs:sequence>
-         <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0" maxOccurs="unbounded"/>
-         <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0" maxOccurs="unbounded"/>
-         <xs:element type="tns:rest-connector" name="rest-connector" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element type="tns:security-realms" name="security-realms">
+            <xs:unique name="security-real-unique">
+               <xs:selector xpath="./tns:security-realm" />
+               <xs:field xpath="@name" />
+            </xs:unique>
+         </xs:element>
       </xs:sequence>
    </xs:complexType>
 
    <xs:complexType name="protocol-connector" abstract="true">
-      <xs:attribute name="socket-binding" type="xs:string" use="optional">
+      <xs:attribute name="socket-binding" type="xs:string">
          <xs:annotation>
             <xs:documentation>The socket on which this connector will bind itself. If missing, the server will not
                listen to TCP connections
             </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="ignored-caches" type="tns:ignored-caches">
-         <xs:annotation>
-            <xs:documentation>The list of ignored caches for this connector</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="cache-container" type="xs:string">
@@ -85,153 +99,111 @@
             <xs:documentation>The name of the cache container which will be exposed by this connector</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="name" type="xs:string" use="optional">
-         <xs:annotation>
-            <xs:documentation>The logical name to give to this connector. This attribute is required when there are more
-               connectors of the same type defined.
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="io-threads" type="xs:int" use="optional">
+      <xs:attribute name="io-threads" type="xs:int">
          <xs:annotation>
             <xs:documentation>Sets the number of I/O threads. Defaults to 2 * cpu cores</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="worker-threads" type="xs:int" use="optional">
+      <xs:attribute name="worker-threads" type="xs:int">
          <xs:annotation>
             <xs:documentation>Sets the number of worker threads. Defaults to 160</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="idle-timeout" type="xs:int" use="optional">
+      <xs:attribute name="idle-timeout" type="xs:int">
          <xs:annotation>
             <xs:documentation>Specifies the maximum time in seconds that connections from clients will be kept open
                without activity. Defaults to 0 (no timeout)
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="tcp-nodelay" type="xs:boolean" use="optional">
+      <xs:attribute name="tcp-nodelay" type="xs:boolean">
          <xs:annotation>
             <xs:documentation>Affects TCP NODELAY on the TCP stack. Defaults to enabled</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="tcp-keepalive" type="xs:boolean" use="optional">
+      <xs:attribute name="tcp-keepalive" type="xs:boolean">
          <xs:annotation>
             <xs:documentation>Affects TCP KEEPALIVE on the TCP stack. Defaults to disabled</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="send-buffer-size" type="xs:int" use="optional">
+      <xs:attribute name="send-buffer-size" type="xs:int">
          <xs:annotation>
             <xs:documentation>Sets the size of the send buffer.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="receive-buffer-size" type="xs:int" use="optional">
+      <xs:attribute name="receive-buffer-size" type="xs:int">
          <xs:annotation>
             <xs:documentation>Sets the size of the receive buffer.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
 
-   <xs:complexType name="hotrod-connector">
+   <xs:complexType name="endpoints" >
       <xs:complexContent>
          <xs:extension base="tns:protocol-connector">
+            <xs:sequence>
+               <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0" maxOccurs="unbounded"/>
+               <xs:element type="tns:rest-connector" name="rest-connector" minOccurs="0" maxOccurs="unbounded"/>
+               <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+            <xs:attribute name="socket-binding" type="xs:string" >
+               <xs:annotation>
+                  <xs:documentation>The socket on which the endpoint connector will bind itself</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="security-realm" type="xs:string">
+               <xs:annotation>
+                  <xs:documentation>The name of the security realm to use for authentication/authorization/encryption</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="named-protocol-connector" abstract="true">
+      <xs:complexContent>
+         <xs:extension base="tns:protocol-connector">
+            <xs:attribute name="ignored-caches" type="tns:ignored-caches">
+               <xs:annotation>
+                  <xs:documentation>The list of ignored caches for this connector</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="name" type="xs:string">
+               <xs:annotation>
+                  <xs:documentation>The logical name to give to this connector. This attribute is required when there are more
+                     connectors of the same type defined.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="hotrod-connector">
+      <xs:complexContent>
+         <xs:extension base="tns:named-protocol-connector">
             <xs:all>
-               <xs:element name="topology-state-transfer" type="tns:topology-state-transfer" minOccurs="0"
-                           maxOccurs="1"/>
-               <xs:element name="authentication" type="tns:authentication" minOccurs="0" maxOccurs="1"/>
-               <xs:element name="encryption" type="tns:encryption" minOccurs="0" maxOccurs="1"/>
+               <xs:element name="topology-state-transfer" type="tns:topology-state-transfer" minOccurs="0"/>
+               <xs:element name="authentication" type="tns:authentication" minOccurs="0"/>
+               <xs:element name="encryption" type="tns:encryption" minOccurs="0"/>
             </xs:all>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
 
-   <xs:complexType name="router-connector">
-      <xs:choice minOccurs="1" maxOccurs="unbounded">
-         <xs:element name="multi-tenancy" maxOccurs="unbounded">
-            <xs:annotation>
-               <xs:documentation>Multi-tenancy settings for the router</xs:documentation>
-            </xs:annotation>
-            <xs:complexType>
-               <xs:choice maxOccurs="unbounded">
-                  <xs:element name="hotrod" type="tns:router-multi-tenancy-hotrod" maxOccurs="unbounded"/>
-                  <xs:element name="rest" type="tns:router-multi-tenancy-rest" maxOccurs="unbounded"/>
-               </xs:choice>
-            </xs:complexType>
-         </xs:element>
-         <xs:element name="single-port" maxOccurs="unbounded">
-            <xs:annotation>
-               <xs:documentation>Single port settings for the router</xs:documentation>
-            </xs:annotation>
-            <xs:complexType>
-               <xs:choice maxOccurs="unbounded">
-                  <xs:element name="hotrod" type="tns:router-single-port-hotrod"/>
-                  <xs:element name="rest" type="tns:router-single-port-rest"/>
-               </xs:choice>
-               <xs:attribute name="security-realm" type="xs:string" use="required">
-                  <xs:annotation>
-                     <xs:documentation>The name of the security realm to use for TLS/ALPN negotiation</xs:documentation>
-                  </xs:annotation>
-               </xs:attribute>
-            </xs:complexType>
-         </xs:element>
-      </xs:choice>
-      <xs:attribute name="hotrod-socket-binding" type="xs:string" use="optional">
-         <xs:annotation>
-            <xs:documentation>The socket on which HotRod router will bind itself</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="rest-socket-binding" type="xs:string" use="optional">
-         <xs:annotation>
-            <xs:documentation>The socket on which REST router will bind itself</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="single-port-socket-binding" type="xs:string" use="optional">
-         <xs:annotation>
-            <xs:documentation>The socket on Single Port router will bind itself</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="name" type="xs:string" use="optional">
-         <xs:annotation>
-            <xs:documentation>The logical name to give to this connector. This attribute is required when there are more
-               connectors of the same type defined.
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="tcp-nodelay" type="xs:boolean" use="optional">
-         <xs:annotation>
-            <xs:documentation>Affects TCP NODELAY on the TCP stack. Defaults to enabled</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="tcp-keepalive" type="xs:boolean" use="optional">
-         <xs:annotation>
-            <xs:documentation>Affects TCP KEEP-ALIVE on the TCP stack. Defaults to disabled</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="send-buffer-size" type="xs:int" use="optional">
-         <xs:annotation>
-            <xs:documentation>Sets the size of the send buffer.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="receive-buffer-size" type="xs:int" use="optional">
-         <xs:annotation>
-            <xs:documentation>Sets the size of the receive buffer.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-   </xs:complexType>
-
    <xs:complexType name="memcached-connector">
       <xs:complexContent>
-         <xs:extension base="tns:protocol-connector">
-            <xs:attribute name="cache" type="xs:string" use="optional">
+         <xs:extension base="tns:named-protocol-connector">
+            <xs:attribute name="cache" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>The name of the cache to use for the Memcached connector. Defaults to
-                     memcachedCache
+                  <xs:documentation>The name of the cache to use for the Memcached connector. Defaults to memcachedCache
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="client-encoding" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>The client encoding for the values, only applicable to the memcached text
-                     protocol.
+                  <xs:documentation>The client encoding for the values, only applicable to the memcached text protocol.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
@@ -240,59 +212,39 @@
    </xs:complexType>
 
    <xs:complexType name="rest-connector">
-      <xs:all>
-         <xs:element name="authentication" type="tns:rest-authentication" minOccurs="0" maxOccurs="1"/>
-         <xs:element name="cors-rules" type="tns:cors-rules" minOccurs="0" maxOccurs="1"/>
-         <xs:element name="encryption" type="tns:encryption" minOccurs="0" maxOccurs="1"/>
-      </xs:all>
-      <xs:attribute name="name" type="xs:string" use="optional">
-         <xs:annotation>
-            <xs:documentation>The logical name to give to this connector. This attribute is required when there are more
-               connectors of the same type defined.
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="cache-container" type="xs:string">
-         <xs:annotation>
-            <xs:documentation>The name of the cache container which will be exposed by this connector</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="socket-binding" type="xs:string">
-         <xs:annotation>
-            <xs:documentation>The socket on which this connector will bind itself. If missing, the server will not
-               listen to TCP connections
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="context-path" type="xs:string" use="optional">
-         <xs:annotation>
-            <xs:documentation>The context path on which to register the REST connector. Defaults to '' (the root
-               context)
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="extended-headers" type="tns:extended-headers" use="optional" default="ON_DEMAND">
-         <xs:annotation>
-            <xs:documentation>Whether to enable extended headers. Can be NEVER or ON_DEMAND. Defaults to ON_DEMAND
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="ignored-caches" type="tns:ignored-caches">
-         <xs:annotation>
-            <xs:documentation>The list of ignored caches for this connector</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="max-content-length" type="xs:int" use="optional">
-         <xs:annotation>
-            <xs:documentation>Sets the maximum allowed content length.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="compression-level" type="xs:int" use="optional">
-         <xs:annotation>
-            <xs:documentation>Sets the compression level when using compressed requests and responses.
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
+      <xs:complexContent>
+         <xs:extension base="tns:named-protocol-connector">
+            <xs:all>
+               <xs:element name="authentication" type="tns:rest-authentication" minOccurs="0"/>
+               <xs:element name="cors-rules" type="tns:cors-rules" minOccurs="0"/>
+               <xs:element name="encryption" type="tns:encryption" minOccurs="0"/>
+            </xs:all>
+            <xs:attribute name="context-path" type="xs:string" use="optional">
+               <xs:annotation>
+                  <xs:documentation>The context path on which to register the REST connector. Defaults to '' (the root
+                     context)
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="extended-headers" type="tns:extended-headers" use="optional" default="ON_DEMAND">
+               <xs:annotation>
+                  <xs:documentation>Whether to enable extended headers. Can be NEVER or ON_DEMAND. Defaults to ON_DEMAND
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="max-content-length" type="xs:int" use="optional">
+               <xs:annotation>
+                  <xs:documentation>Sets the maximum allowed content length.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="compression-level" type="xs:int" use="optional">
+               <xs:annotation>
+                  <xs:documentation>Sets the compression level when using compressed requests and responses.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
    </xs:complexType>
 
    <xs:complexType name="topology-state-transfer">
@@ -350,51 +302,13 @@
       </xs:attribute>
    </xs:complexType>
 
-   <xs:complexType name="router-multi-tenancy-hotrod">
-      <xs:sequence>
-         <xs:element name="sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
-      <xs:attribute name="name" type="xs:string" use="required">
-         <xs:annotation>
-            <xs:documentation>HotRod connector name</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-   </xs:complexType>
-
-   <xs:complexType name="router-single-port-hotrod">
-      <xs:attribute name="name" type="xs:string" use="required">
-         <xs:annotation>
-            <xs:documentation>HotRod connector name</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-   </xs:complexType>
-
-   <xs:complexType name="router-single-port-rest">
-      <xs:attribute name="name" type="xs:string" use="required">
-         <xs:annotation>
-            <xs:documentation>REST connector name</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-   </xs:complexType>
-
-   <xs:complexType name="router-multi-tenancy-rest">
-      <xs:sequence>
-         <xs:element name="prefix" type="tns:prefix" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
-      <xs:attribute name="name" type="xs:string" use="required">
-         <xs:annotation>
-            <xs:documentation>REST connector name</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-   </xs:complexType>
-
    <xs:complexType name="authentication">
       <xs:all>
          <xs:element name="sasl" type="tns:sasl" minOccurs="0"/>
       </xs:all>
       <xs:attribute name="security-realm" type="xs:string" use="required">
          <xs:annotation>
-            <xs:documentation>The name of the security realm to use for obtaining the SSL keystore</xs:documentation>
+            <xs:documentation>The name of the security realm to use for authentication/authorization.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
@@ -688,6 +602,11 @@
                <xs:documentation>Client authentication will be use the SPNEGO scheme</xs:documentation>
             </xs:annotation>
          </xs:enumeration>
+         <xs:enumeration value="BEARER">
+            <xs:annotation>
+               <xs:documentation>Client authentication will be use the BEARER scheme</xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
       </xs:restriction>
    </xs:simpleType>
 
@@ -778,9 +697,12 @@
 
    <xs:complexType name="security-realm">
       <xs:sequence>
-         <xs:element type="tns:security-realm-properties" name="properties-realm" minOccurs="0"/>
+         <xs:element type="tns:security-realm-filesystem" name="filesystem-realm" minOccurs="0"/>
+         <xs:element type="tns:security-realm-ldap" name="ldap-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-local" name="local-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-kerberos" name="kerberos-realm" minOccurs="0"/>
+         <xs:element type="tns:security-realm-properties" name="properties-realm" minOccurs="0"/>
+         <xs:element type="tns:security-realm-token" name="token-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-truststore" name="truststore-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-server-identities" name="server-identities" minOccurs="0"/>
       </xs:sequence>
@@ -852,15 +774,83 @@
       <xs:attribute type="xs:string" name="relative-to"/>
    </xs:complexType>
 
-   <xs:complexType name="interface-match-interface">
-      <xs:attribute name="value"/>
+   <xs:complexType name="security-realm-ldap">
+      <xs:sequence>
+         <xs:element type="tns:ldap-identity-mapping" name="identity-mapping" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name"/>
+      <xs:attribute type="xs:string" name="url" use="required"/>
+      <xs:attribute type="xs:string" name="principal"/>
+      <xs:attribute type="xs:string" name="credential"/>
    </xs:complexType>
 
-   <xs:complexType name="interface-match-address">
-      <xs:attribute name="value"/>
+   <xs:complexType name="ldap-identity-mapping">
+      <xs:sequence>
+         <xs:element type="tns:ldap-attribute-mapping" name="attribute-mapping" minOccurs="0"/>
+         <xs:element type="tns:ldap-user-password-mapper" name="user-password-mapper" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="rdn-identifier"/>
+      <xs:attribute type="xs:string" name="search-base-dn"/>
    </xs:complexType>
 
-   <xs:complexType name="interface-match-host">
-      <xs:attribute name="value"/>
+   <xs:complexType name="ldap-attribute-mapping">
+      <xs:sequence>
+         <xs:element type="tns:ldap-attribute" name="attribute" maxOccurs="unbounded"/>
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="ldap-attribute">
+      <xs:attribute type="xs:string" name="filter" use="required"/>
+      <xs:attribute type="xs:string" name="filter-base-dn" />
+      <xs:attribute type="xs:string" name="from" />
+      <xs:attribute type="xs:string" name="to" />
+   </xs:complexType>
+
+   <xs:complexType name="ldap-user-password-mapper">
+      <xs:attribute type="xs:string" name="from" />
+      <xs:attribute type="xs:boolean" name="verifiable" />
+      <xs:attribute type="xs:boolean" name="writable" />
+   </xs:complexType>
+
+   <xs:complexType name="security-realm-token">
+      <xs:choice>
+         <xs:element type="tns:jwt" name="jwt"/>
+         <xs:element type="tns:oauth2-introspection" name="oauth2-introspection"/>
+      </xs:choice>
+      <xs:attribute type="xs:string" name="name" default="token"/>
+      <xs:attribute type="xs:string" name="principal-claim" default="username"/>
+   </xs:complexType>
+
+   <xs:complexType name="jwt">
+      <xs:attribute type="tns:name-list" name="issuer"/>
+      <xs:attribute type="tns:name-list" name="audience"/>
+      <xs:attribute type="xs:string" name="public-key"/>
+   </xs:complexType>
+
+   <xs:complexType name="oauth2-introspection">
+      <xs:attribute type="xs:string" name="client-id"/>
+      <xs:attribute type="xs:string" name="client-secret"/>
+      <xs:attribute type="xs:string" name="introspection-url"/>
+      <xs:attribute type="xs:string" name="host-name-verification-policy"/>
+   </xs:complexType>
+
+   <xs:complexType name="security-realm-filesystem">
+      <xs:attribute type="xs:string" name="name" default="filesystem"/>
+      <xs:attribute type="xs:string" name="path" use="required"/>
+      <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.data.path"/>
+      <xs:attribute type="xs:int" name="levels" default="0"/>
+      <xs:attribute type="xs:boolean" name="encoded" default="true"/>
+   </xs:complexType>
+
+   <xs:complexType name="security-realm-local">
+      <xs:attribute type="xs:string" name="name" default="local"/>
+   </xs:complexType>
+
+   <xs:complexType name="security-realm-kerberos">
+      <xs:attribute type="xs:string" name="name" default="kerberos"/>
+   </xs:complexType>
+
+   <xs:complexType name="security-realm-truststore">
+      <xs:attribute type="xs:string" name="name" default="truststore"/>
    </xs:complexType>
 </xs:schema>

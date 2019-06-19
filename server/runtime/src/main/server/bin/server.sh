@@ -282,7 +282,7 @@ while true; do
       # Execute the JVM in the foreground
       eval \"$JAVA\" $JAVA_OPTS \
          -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
-         -Dinfinispan.server.base.dir=\""$ISPN_BASE_DIR"\" \
+         -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
          -jar "$BOOTSTRAP_JAR" \
          "$SERVER_OPTS"
       ISPN_STATUS=$?
@@ -290,7 +290,7 @@ while true; do
       # Execute the JVM in the background
       eval \"$JAVA\" $JAVA_OPTS \
          -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
-         -Dinfinispan.server.base.dir=\""$ISPN_BASE_DIR"\" \
+         -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
          -jar "$BOOTSTRAP_JAR" \
          "$SERVER_OPTS" "&"
       ISPN_PID=$!

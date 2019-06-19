@@ -8,12 +8,19 @@ import java.util.Map;
  * @since 10.0
  */
 public enum Element {
-   //must be first
-   UNKNOWN(null),
+   UNKNOWN(null), //must be first
 
-   HOTROD_CONNECTOR,
    AUTHENTICATION,
    ENCRYPTION,
+   FORWARD_SECRECY,
+   HOTROD_CONNECTOR,
+   NO_ACTIVE,
+   NO_ANONYMOUS,
+   NO_DICTIONARY,
+   NO_PLAIN_TEXT,
+   PASS_CREDENTIALS,
+   POLICY,
+   PROPERTY,
    SASL,
    SNI,
    TOPOLOGY_STATE_TRANSFER,

@@ -67,9 +67,7 @@ public class TaskManagerImpl implements TaskManager {
 
    @Override
    public synchronized void registerTaskEngine(TaskEngine engine) {
-      if (engines.contains(engine)) {
-         throw log.duplicateTaskEngineRegistration(engine.getName());
-      } else {
+      if (!engines.contains(engine)) {
          engines.add(engine);
       }
    }

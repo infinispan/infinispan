@@ -14,6 +14,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -29,7 +30,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);
 
    public HotRodServerConfigurationBuilder() {
-      super(11222, HotRodServerConfiguration.attributeDefinitionSet());
+      super(HotRodServer.DEFAULT_HOTROD_PORT, HotRodServerConfiguration.attributeDefinitionSet());
    }
 
    @Override

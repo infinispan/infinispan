@@ -103,6 +103,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    private static final long MILLISECONDS_IN_30_DAYS = TimeUnit.DAYS.toMillis(30);
 
+   public static final int DEFAULT_HOTROD_PORT = 11222;
    public static final int LISTENERS_CHECK_INTERVAL = 10;
 
    private boolean hasDefaultCache;

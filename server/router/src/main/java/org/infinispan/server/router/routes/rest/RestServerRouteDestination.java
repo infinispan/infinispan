@@ -24,9 +24,7 @@ public class RestServerRouteDestination implements RouteDestination {
     @Override
     public String toString() {
         return "RestServerRouteDestination{" +
-                "name='" + name + '\'' +
-                ", restServer=" + restServer +
-                '}';
+                "name='" + name + '}';
     }
 
     @Override

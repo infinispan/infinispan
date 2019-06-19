@@ -11,9 +11,17 @@ public enum Element {
    //must be first
    UNKNOWN(null),
 
-   REST_CONNECTOR,
    AUTHENTICATION,
-   SNI(), ENCRYPTION(), CORS_RULES();
+   ALLOWED_HEADERS,
+   ALLOWED_METHODS,
+   ALLOWED_ORIGINS,
+   CORS_RULE,
+   CORS_RULES,
+   ENCRYPTION,
+   EXPOSE_HEADERS,
+   REST_CONNECTOR,
+   SNI,
+   ;
 
    private static final Map<String, Element> ELEMENTS;
 
