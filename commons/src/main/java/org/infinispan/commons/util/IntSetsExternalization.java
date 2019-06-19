@@ -3,10 +3,11 @@ package org.infinispan.commons.util;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * IntSets externalization mechanism
@@ -22,7 +23,7 @@ public class IntSetsExternalization {
    private static final int SINGLETONSET = 3;
    private static final int CONCURRENTSET = 4;
 
-   private final static IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(5);
+   private final static Map<Class<?>, Integer> numbers = new HashMap<>(5);
 
    static {
       numbers.put(RangeSet.class, RANGESET);
@@ -34,7 +35,7 @@ public class IntSetsExternalization {
    }
 
    public static void writeTo(ObjectOutput output, IntSet intSet) throws IOException {
-      int number = numbers.get(intSet.getClass(), -1);
+      int number = numbers.getOrDefault(intSet.getClass(), -1);
       output.write(number);
       switch (number) {
          case RANGESET:

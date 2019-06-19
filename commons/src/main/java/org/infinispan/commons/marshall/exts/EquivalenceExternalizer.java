@@ -1,5 +1,12 @@
 package org.infinispan.commons.marshall.exts;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.AnyServerEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
@@ -7,12 +14,6 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.Util;
-import org.jboss.marshalling.util.IdentityIntMap;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 
 public final class EquivalenceExternalizer extends AbstractExternalizer<Equivalence> {
 
@@ -20,7 +21,7 @@ public final class EquivalenceExternalizer extends AbstractExternalizer<Equivale
    private static final int ANY_EQ           = 0x01;
    private static final int ANY_SERVER_EQ    = 0x02;
 
-   private final IdentityIntMap<Class<?>> subIds = new IdentityIntMap<>(4);
+   private final Map<Class<?>, Integer> subIds = new HashMap<>(4);
 
    public EquivalenceExternalizer() {
       subIds.put(ByteArrayEquivalence.class, BYTE_ARRAY_EQ);
@@ -41,7 +42,7 @@ public final class EquivalenceExternalizer extends AbstractExternalizer<Equivale
 
    @Override
    public void writeObject(ObjectOutput out, Equivalence obj) throws IOException {
-      int subId = subIds.get(obj.getClass(), -1);
+      int subId = subIds.getOrDefault(obj.getClass(), -1);
       out.writeByte(subId);
    }
 

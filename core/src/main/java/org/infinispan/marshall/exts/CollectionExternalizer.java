@@ -1,13 +1,5 @@
 package org.infinispan.marshall.exts;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.FastCopyHashMap;
-import org.infinispan.commons.util.Util;
-import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
-import org.infinispan.marshall.core.Ids;
-import org.jboss.marshalling.util.IdentityIntMap;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,12 +9,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.FastCopyHashMap;
+import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
+import org.infinispan.marshall.core.Ids;
 
 public class CollectionExternalizer implements AdvancedExternalizer<Collection> {
 
@@ -39,7 +39,7 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
    private static final int ENTRY_SET = 10;
    private static final int EMPTY_SET = 11;
 
-   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(16);
+   private final Map<Class<?>, Integer> numbers = new HashMap<>(16);
 
    public CollectionExternalizer() {
       numbers.put(ArrayList.class, ARRAY_LIST);
@@ -63,7 +63,7 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
 
    @Override
    public void writeObject(ObjectOutput output, Collection collection) throws IOException {
-      int number = numbers.get(collection.getClass(), -1);
+      int number = numbers.getOrDefault(collection.getClass(), -1);
       output.writeByte(number);
       switch (number) {
          case ARRAY_LIST:

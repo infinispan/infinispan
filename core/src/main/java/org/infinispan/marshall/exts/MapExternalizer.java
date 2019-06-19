@@ -19,7 +19,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.marshall.core.Ids;
-import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * Map externalizer for all map implementations except immutable maps and singleton maps, i.e. FastCopyHashMap, HashMap,
@@ -37,7 +36,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    private static final int ENTRYVERSIONMAP = 5;
    private static final int SINGLETONMAP = 6;
    private static final int EMPTYMAP = 7;
-   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(9);
+   private final Map<Class<?>, Integer> numbers = new HashMap<>(9);
 
    public MapExternalizer() {
       numbers.put(HashMap.class, HASHMAP);
@@ -53,7 +52,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
 
    @Override
    public void writeObject(ObjectOutput output, Map map) throws IOException {
-      int number = numbers.get(map.getClass(), -1);
+      int number = numbers.getOrDefault(map.getClass(), -1);
       output.write(number);
       switch (number) {
          case HASHMAP:

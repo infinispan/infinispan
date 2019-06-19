@@ -3,6 +3,8 @@ package org.infinispan.stream.impl.termop;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -33,7 +35,6 @@ import org.infinispan.stream.impl.termop.primitive.ForEachLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjLongOperation;
-import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * {@link AdvancedExternalizer} that provides functionality required for marshalling all of the various terminal
@@ -57,7 +58,7 @@ public class TerminalOperationExternalizer implements AdvancedExternalizer<BaseT
    private static final int FOREACH_FLAT_OBJ_INT = 14;
    private static final int FOREACH_FLAT_OBJ_LONG = 15;
 
-   private final IdentityIntMap<Class<? extends BaseTerminalOperation>> operations = new IdentityIntMap<>();
+   private final Map<Class<? extends BaseTerminalOperation>, Integer> operations = new HashMap<>(16);
 
    public TerminalOperationExternalizer() {
       operations.put(SingleRunOperation.class, SINGLE);
@@ -96,7 +97,7 @@ public class TerminalOperationExternalizer implements AdvancedExternalizer<BaseT
 
    @Override
    public void writeObject(ObjectOutput output, BaseTerminalOperation object) throws IOException {
-      int number = operations.get(object.getClass(), -1);
+      int number = operations.getOrDefault(object.getClass(), -1);
       output.writeByte(number);
       output.writeObject(object.getIntermediateOperations());
       switch (number) {

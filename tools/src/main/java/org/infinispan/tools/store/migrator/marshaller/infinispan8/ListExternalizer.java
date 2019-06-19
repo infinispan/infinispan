@@ -4,14 +4,15 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
-import org.jboss.marshalling.util.IdentityIntMap;
 
 import net.jcip.annotations.Immutable;
 
@@ -27,7 +28,7 @@ class ListExternalizer extends AbstractExternalizer<List> {
    private static final int ARRAY_LIST = 0;
    private static final int LINKED_LIST = 1;
 
-   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(2);
+   private final Map<Class<?>, Integer> numbers = new HashMap<>(2);
 
    public ListExternalizer() {
       numbers.put(ArrayList.class, ARRAY_LIST);
@@ -37,7 +38,7 @@ class ListExternalizer extends AbstractExternalizer<List> {
 
    @Override
    public void writeObject(ObjectOutput output, List list) throws IOException {
-      int number = numbers.get(list.getClass(), -1);
+      int number = numbers.getOrDefault(list.getClass(), -1);
       output.writeByte(number);
       MarshallUtil.marshallCollection(list, output);
    }
