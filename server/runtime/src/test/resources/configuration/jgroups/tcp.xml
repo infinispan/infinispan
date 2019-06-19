@@ -1,0 +1,3 @@
+<jgroups>
+   <stack-file name="test" path="test-jgroups-tcp.xml"/>
+</jgroups>

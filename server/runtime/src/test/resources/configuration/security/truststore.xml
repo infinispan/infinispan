@@ -1,0 +1,12 @@
+<security>
+   <security-realms>
+      <security-realm name="default">
+         <truststore-realm path="ca.pfx" relative-to="infinispan.server.config.path" keystore-password="secret" />
+         <server-identities>
+            <ssl>
+               <keystore path="server.pfx" relative-to="infinispan.server.config.path" keystore-password="secret" alias="server"/>
+            </ssl>
+         </server-identities>
+      </security-realm>
+   </security-realms>
+</security>

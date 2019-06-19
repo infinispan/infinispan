@@ -329,7 +329,7 @@
       <versionx.org.apache.commons.commons-lang3>3.6</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.commons.commons-math3>3.2</versionx.org.apache.commons.commons-math3>
-      <versionx.org.apache.directory.server.apacheds-all>2.0.0-M20</versionx.org.apache.directory.server.apacheds-all>
+      <versionx.org.apache.directory.server.apacheds-all>2.0.0-M24</versionx.org.apache.directory.server.apacheds-all>
       <versionx.org.apache.felix.org.apache.felix.configadmin>1.8.16</versionx.org.apache.felix.org.apache.felix.configadmin>
       <versionx.org.apache.felix.org.apache.felix.fileinstall>3.6.4</versionx.org.apache.felix.org.apache.felix.fileinstall>
       <versionx.org.apache.felix.org.apache.felix.framework>5.6.10</versionx.org.apache.felix.org.apache.felix.framework>

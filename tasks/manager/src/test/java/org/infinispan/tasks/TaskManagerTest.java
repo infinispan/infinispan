@@ -44,11 +44,6 @@ public class TaskManagerTest extends SingleCacheManagerTest {
       gcr.getComponent(EventLogManager.class).replaceEventLogger(memoryLogger);
    }
 
-   @Test(expectedExceptions = IllegalStateException.class)
-   public void testRegisterDuplicateEngine() {
-      taskManager.registerTaskEngine(taskEngine);
-   }
-
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testUnhandledTask() {
       taskManager.runTask("UnhandledTask", new TaskContext());

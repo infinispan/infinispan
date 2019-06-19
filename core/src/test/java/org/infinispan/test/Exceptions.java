@@ -187,4 +187,12 @@ public class Exceptions {
       }
       return exception;
    }
+
+   public static void unchecked(ExceptionRunnable runnable) {
+      try {
+         runnable.run();
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+   }
 }

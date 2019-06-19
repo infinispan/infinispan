@@ -70,6 +70,8 @@ public class ThreadLeakChecker {
                       "|management-client-thread" +
                       // IBM JRE specific
                       "|ClassCache Reaper" +
+                      // Elytron
+                      "|SecurityDomain ThreadGroup" +
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
       "org.jboss.as.arquillian.container.managed.ManagedDeployableContainer$ConsoleConsumer";

@@ -23,14 +23,21 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -1104,6 +1111,42 @@ public final class Util {
          }
       }
       absoluteFile.delete();
+   }
+
+   public static void recursiveDirectoryCopy(Path source, Path target) throws IOException {
+      Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new FileVisitor<Path>() {
+         @Override
+         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+            try {
+               if (!source.equals(dir)) {
+                  Path relativize = source.relativize(dir);
+                  Path resolve = target.resolve(relativize);
+                  Files.copy(dir, resolve);
+               }
+            } catch (FileAlreadyExistsException x) {
+               // do nothing
+            } catch (IOException x) {
+               return FileVisitResult.SKIP_SUBTREE;
+            }
+            return FileVisitResult.CONTINUE;
+         }
+
+         @Override
+         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            Files.copy(file, target.resolve(source.relativize(file)));
+            return FileVisitResult.CONTINUE;
+         }
+
+         @Override
+         public FileVisitResult visitFileFailed(Path file, IOException exc) {
+            return FileVisitResult.CONTINUE;
+         }
+
+         @Override
+         public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+            return FileVisitResult.CONTINUE;
+         }
+      });
    }
 
    public static boolean isBasicType(Class<?> type) {
