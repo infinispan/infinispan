@@ -768,6 +768,7 @@
       <versionx.org.wildfly.extras.creaper.creaper-core>1.1.0</versionx.org.wildfly.extras.creaper.creaper-core>
       <versionx.org.wildfly.legacy.test.wildfly-legacy-spi>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-spi>
       <versionx.org.wildfly.legacy.test.wildfly-legacy-versions>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-versions>
+      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.0.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.wildfly.security.elytron-web.undertow-server>1.2.3.Final</versionx.org.wildfly.security.elytron-web.undertow-server>
       <versionx.org.wildfly.security.wildfly-elytron>1.6.1.Final</versionx.org.wildfly.security.wildfly-elytron>
       <versionx.org.wildfly.security.wildfly-security-manager>1.1.2.Final</versionx.org.wildfly.security.wildfly-security-manager>
@@ -4464,7 +4465,7 @@
          <plugin>
             <groupId>org.wildfly.maven.plugins</groupId>
             <artifactId>licenses-plugin</artifactId>
-            <version>1.0.0</version>
+            <version>${versionx.org.wildfly.maven.plugins.licenses-plugin}</version>
             <executions>
                <execution>
                   <id>update-licenses-xml</id>
