@@ -1,0 +1,32 @@
+body {
+   background: white;
+   font-family: 'Lucida Sans', 'Lucida Sans Unicode', 'Lucida Grande', Verdana, Arial, Helvetica, sans-serif;
+   font-size: 12px;
+   padding: 10px auto 10px auto;
+}
+
+.main {
+   width: 600px;
+   background: white;
+   padding: 30px 30px 30px 30px;
+   text-align: center;
+   margin: 0px auto 0px auto;
+   border-radius: 12px;
+}
+
+h1{font-weight: bold; font-size: 2.2em; display: block; color: #991133;}
+h2{font-weight: bold; font-size: 1.8em; display: block; color: #4A5D75;}
+h3{font-weight: bold; font-size: 1.6em; display: block; color: #4A5D75;}
+h4{font-weight: bold; font-size: 1.5em; display: block; color: #4A5D75;}
+h5{font-weight: bold; font-size: 1.3em; display: block; color: #4A5D75;}
+h6{font-weight: bold; font-size: 1.2em; display: block; color: #4A5D75;}
+
+a:link, a:visited {
+   color: #355491;
+   text-decoration: none;
+}
+
+a:hover {
+   color: #355491;
+   text-decoration: underline;
+}
