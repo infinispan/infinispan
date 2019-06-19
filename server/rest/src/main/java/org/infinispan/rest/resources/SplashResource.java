@@ -27,6 +27,8 @@ public class SplashResource implements ResourceHandler {
       return new Invocations.Builder()
             .invocation().method(Method.GET).path("/").handleWith(req -> this.serveStaticResource(req, "index.html"))
             .invocation().method(Method.GET).path("/banner.png").handleWith(req -> this.serveStaticResource(req, "banner.png"))
+            .invocation().method(Method.GET).path("/favicon.png").handleWith(req -> this.serveStaticResource(req, "favicon.png"))
+            .invocation().method(Method.GET).path("/css.css").handleWith(req -> this.serveStaticResource(req, "css.css"))
             .create();
    }
 
@@ -47,6 +49,7 @@ public class SplashResource implements ResourceHandler {
       if (resource == null) return null;
       if (resource.endsWith(".html") || resource.endsWith(".htm")) return MediaType.TEXT_HTML;
       if (resource.endsWith(".png")) return MediaType.IMAGE_PNG;
+      if (resource.endsWith(".css")) return MediaType.TEXT_CSS;
       return null;
    }
 
