@@ -1,4 +1,4 @@
-package org.infinispan.marshall.core;
+package org.infinispan.marshall.core.impl;
 
 /**
  * Identifiers for marshalling class name itself; this comes handy when marshalling arrays

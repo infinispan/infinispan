@@ -99,7 +99,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.GlobalMarshaller;
+import org.infinispan.marshall.core.impl.GlobalMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.metadata.EmbeddedMetadata;

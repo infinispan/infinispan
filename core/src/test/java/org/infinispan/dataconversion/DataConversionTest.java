@@ -40,7 +40,7 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.core.GlobalMarshaller;
+import org.infinispan.marshall.core.impl.GlobalMarshaller;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;

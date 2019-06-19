@@ -14,7 +14,7 @@ import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.core.EncoderRegistryImpl;
+import org.infinispan.marshall.core.impl.EncoderRegistryImpl;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

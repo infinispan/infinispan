@@ -19,7 +19,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.core.EncoderRegistryImpl;
+import org.infinispan.marshall.core.impl.EncoderRegistryImpl;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 
 /**

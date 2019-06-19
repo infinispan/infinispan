@@ -13,7 +13,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternallyMarshallable;
+import org.infinispan.marshall.core.impl.ExternallyMarshallable;
 import org.infinispan.persistence.jpa.entity.User;
 import org.infinispan.persistence.jpa.entity.Vehicle;
 import org.infinispan.persistence.jpa.entity.VehicleId;

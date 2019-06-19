@@ -1,25 +1,25 @@
-package org.infinispan.marshall.core;
+package org.infinispan.marshall.core.impl;
 
 import static java.util.Objects.deepEquals;
-import static org.infinispan.marshall.core.Primitives.ID_BOOLEAN_ARRAY;
-import static org.infinispan.marshall.core.Primitives.ID_BOOLEAN_OBJ;
-import static org.infinispan.marshall.core.Primitives.ID_BYTE_ARRAY;
-import static org.infinispan.marshall.core.Primitives.ID_BYTE_OBJ;
-import static org.infinispan.marshall.core.Primitives.ID_CHAR_ARRAY;
-import static org.infinispan.marshall.core.Primitives.ID_CHAR_OBJ;
-import static org.infinispan.marshall.core.Primitives.ID_DOUBLE_ARRAY;
-import static org.infinispan.marshall.core.Primitives.ID_DOUBLE_OBJ;
-import static org.infinispan.marshall.core.Primitives.ID_FLOAT_ARRAY;
-import static org.infinispan.marshall.core.Primitives.ID_FLOAT_OBJ;
-import static org.infinispan.marshall.core.Primitives.ID_INT_ARRAY;
-import static org.infinispan.marshall.core.Primitives.ID_INT_OBJ;
-import static org.infinispan.marshall.core.Primitives.ID_LONG_ARRAY;
-import static org.infinispan.marshall.core.Primitives.ID_LONG_OBJ;
-import static org.infinispan.marshall.core.Primitives.ID_SHORT_ARRAY;
-import static org.infinispan.marshall.core.Primitives.ID_SHORT_OBJ;
-import static org.infinispan.marshall.core.Primitives.ID_STRING;
-import static org.infinispan.marshall.core.Primitives.readPrimitive;
-import static org.infinispan.marshall.core.Primitives.writePrimitive;
+import static org.infinispan.marshall.core.impl.Primitives.ID_BOOLEAN_ARRAY;
+import static org.infinispan.marshall.core.impl.Primitives.ID_BOOLEAN_OBJ;
+import static org.infinispan.marshall.core.impl.Primitives.ID_BYTE_ARRAY;
+import static org.infinispan.marshall.core.impl.Primitives.ID_BYTE_OBJ;
+import static org.infinispan.marshall.core.impl.Primitives.ID_CHAR_ARRAY;
+import static org.infinispan.marshall.core.impl.Primitives.ID_CHAR_OBJ;
+import static org.infinispan.marshall.core.impl.Primitives.ID_DOUBLE_ARRAY;
+import static org.infinispan.marshall.core.impl.Primitives.ID_DOUBLE_OBJ;
+import static org.infinispan.marshall.core.impl.Primitives.ID_FLOAT_ARRAY;
+import static org.infinispan.marshall.core.impl.Primitives.ID_FLOAT_OBJ;
+import static org.infinispan.marshall.core.impl.Primitives.ID_INT_ARRAY;
+import static org.infinispan.marshall.core.impl.Primitives.ID_INT_OBJ;
+import static org.infinispan.marshall.core.impl.Primitives.ID_LONG_ARRAY;
+import static org.infinispan.marshall.core.impl.Primitives.ID_LONG_OBJ;
+import static org.infinispan.marshall.core.impl.Primitives.ID_SHORT_ARRAY;
+import static org.infinispan.marshall.core.impl.Primitives.ID_SHORT_OBJ;
+import static org.infinispan.marshall.core.impl.Primitives.ID_STRING;
+import static org.infinispan.marshall.core.impl.Primitives.readPrimitive;
+import static org.infinispan.marshall.core.impl.Primitives.writePrimitive;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
@@ -41,7 +41,7 @@ public class PrimitivesTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cm;
 
-   private  GlobalMarshaller globalMarshaller;
+   private GlobalMarshaller globalMarshaller;
 
    @BeforeClass
    public void setUp() {

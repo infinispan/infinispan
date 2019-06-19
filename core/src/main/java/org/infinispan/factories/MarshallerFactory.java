@@ -4,7 +4,7 @@ import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.impl.ComponentAlias;
-import org.infinispan.marshall.core.GlobalMarshaller;
+import org.infinispan.marshall.core.impl.GlobalMarshaller;
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
 
 /**

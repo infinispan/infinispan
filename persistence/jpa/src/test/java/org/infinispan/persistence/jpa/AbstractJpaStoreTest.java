@@ -4,7 +4,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternallyMarshallable;
+import org.infinispan.marshall.core.impl.ExternallyMarshallable;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.DummyInitializationContext;

@@ -117,7 +117,7 @@ import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.GlobalMarshaller;
+import org.infinispan.marshall.core.impl.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;

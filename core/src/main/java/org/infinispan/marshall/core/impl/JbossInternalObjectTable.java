@@ -1,14 +1,15 @@
-package org.infinispan.marshall.core;
+package org.infinispan.marshall.core.impl;
 
-import static org.infinispan.marshall.core.GlobalMarshaller.ID_EXTERNAL;
-import static org.infinispan.marshall.core.GlobalMarshaller.ID_INTERNAL;
-import static org.infinispan.marshall.core.GlobalMarshaller.ID_UNKNOWN;
+import static org.infinispan.marshall.core.impl.GlobalMarshaller.ID_EXTERNAL;
+import static org.infinispan.marshall.core.impl.GlobalMarshaller.ID_INTERNAL;
+import static org.infinispan.marshall.core.impl.GlobalMarshaller.ID_UNKNOWN;
 
 import java.io.IOException;
 import java.lang.invoke.SerializedLambda;
 import java.util.Arrays;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.util.function.SerializableFunction;
 import org.jboss.marshalling.ObjectTable;

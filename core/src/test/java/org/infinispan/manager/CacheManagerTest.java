@@ -48,7 +48,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.core.GlobalMarshaller;
+import org.infinispan.marshall.core.impl.GlobalMarshaller;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;

@@ -1,4 +1,4 @@
-package org.infinispan.marshall.core;
+package org.infinispan.marshall.core.impl;
 
 import java.util.Set;
 
@@ -63,6 +63,7 @@ import org.infinispan.globalstate.ScopeFilter;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.interceptors.distribution.VersionedResult;
 import org.infinispan.interceptors.distribution.VersionedResults;
+import org.infinispan.marshall.core.MarshallableFunctionExternalizers;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
 import org.infinispan.marshall.exts.CollectionExternalizer;
 import org.infinispan.marshall.exts.DoubleSummaryStatisticsExternalizer;

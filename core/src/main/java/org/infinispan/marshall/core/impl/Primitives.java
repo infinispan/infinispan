@@ -1,4 +1,4 @@
-package org.infinispan.marshall.core;
+package org.infinispan.marshall.core.impl;
 
 import java.io.EOFException;
 import java.io.IOException;

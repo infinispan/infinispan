@@ -28,14 +28,14 @@ import org.jboss.marshalling.ObjectTable;
  */
 public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
 
-   GlobalConfiguration globalCfg;
-   ObjectTable objectTable;
+   protected GlobalConfiguration globalCfg;
+   protected ObjectTable objectTable;
 
    public JBossMarshaller() {
       this(null, null);
    }
 
-   JBossMarshaller(ObjectTable objectTable, GlobalConfiguration globalCfg) {
+   public JBossMarshaller(ObjectTable objectTable, GlobalConfiguration globalCfg) {
       this.objectTable = objectTable;
       this.globalCfg = globalCfg;
    }

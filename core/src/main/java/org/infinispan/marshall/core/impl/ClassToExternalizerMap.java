@@ -1,4 +1,4 @@
-package org.infinispan.marshall.core;
+package org.infinispan.marshall.core.impl;
 
 import java.util.Arrays;
 
@@ -10,7 +10,7 @@ import org.infinispan.util.logging.LogFactory;
  * An efficient identity object map whose keys are {@link Class} objects and
  * whose values are {@link AdvancedExternalizer} instances.
  */
-final class ClassToExternalizerMap {
+public final class ClassToExternalizerMap {
 
    private static final Log log = LogFactory.getLog(ClassToExternalizerMap.class);
 
@@ -211,7 +211,7 @@ final class ClassToExternalizerMap {
       }
    }
 
-   interface IdToExternalizerMap {
+   public interface IdToExternalizerMap {
       AdvancedExternalizer get(int key);
       void put(int key, AdvancedExternalizer value);
       void clear();

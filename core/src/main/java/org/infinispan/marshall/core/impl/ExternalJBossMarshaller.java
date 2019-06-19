@@ -1,4 +1,4 @@
-package org.infinispan.marshall.core;
+package org.infinispan.marshall.core.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +13,7 @@ import org.infinispan.commons.marshall.MarshallableTypeHints;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.ExtendedRiverUnmarshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.marshall.core.JBossMarshaller;
 import org.jboss.marshalling.ByteInput;
 import org.jboss.marshalling.ByteOutput;
 

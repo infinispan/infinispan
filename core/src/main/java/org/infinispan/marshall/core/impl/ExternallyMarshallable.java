@@ -1,8 +1,10 @@
-package org.infinispan.marshall.core;
+package org.infinispan.marshall.core.impl;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.infinispan.marshall.core.ExternalPojo;
 
 /**
  * As much as possible, Infinispan consumers should provide
