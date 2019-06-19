@@ -251,4 +251,8 @@ public class SpringCache implements Cache {
          return new ValueRetrievalException(key, loader, ex);
       }
    }
+
+   public long getWriteTimeout() {
+      return writeTimeout;
+   }
 }
