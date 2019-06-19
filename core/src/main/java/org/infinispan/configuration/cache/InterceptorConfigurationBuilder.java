@@ -28,7 +28,10 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * This builder defines details of a specific custom interceptor.
+ *
+ * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
  */
+@Deprecated
 public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsConfigurationChildBuilder implements Builder<InterceptorConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(InterceptorConfigurationBuilder.class);
    private final AttributeSet attributes;

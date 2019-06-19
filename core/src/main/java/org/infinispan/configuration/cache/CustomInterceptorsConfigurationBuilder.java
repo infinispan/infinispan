@@ -14,8 +14,9 @@ import org.infinispan.configuration.parsing.Element;
  * Configures custom interceptors to be added to the cache.
  *
  * @author pmuir
- *
+ * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
  */
+@Deprecated
 public class CustomInterceptorsConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<CustomInterceptorsConfiguration>, ConfigurationBuilderInfo {
 
    private List<InterceptorConfigurationBuilder> interceptorBuilders = new LinkedList<>();
@@ -26,7 +27,9 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
 
    /**
     * Adds a new custom interceptor definition, to be added to the cache when the cache is started.
+    * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
     */
+   @Deprecated
    public InterceptorConfigurationBuilder addInterceptor() {
       InterceptorConfigurationBuilder builder = new InterceptorConfigurationBuilder(this);
       this.interceptorBuilders.add(builder);

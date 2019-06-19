@@ -850,7 +850,8 @@
       </xs:element>
       <xs:element name="custom-interceptors" type="tns:custom-interceptors" minOccurs="0">
         <xs:annotation>
-          <xs:documentation>Configures custom interceptors to be added to the cache.</xs:documentation>
+          <xs:documentation>Deprecated since 10.0, will be removed without a replacement.
+             Configures custom interceptors to be added to the cache.</xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="security" type="tns:cache-security" minOccurs="0">
@@ -1195,6 +1196,7 @@
   <xs:complexType name="custom-interceptors">
     <xs:sequence>
       <xs:element name="interceptor" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>Deprecated since 10.0, will be removed without a replacement.</xs:annotation>
         <xs:complexType>
           <xs:sequence>
             <xs:element name="property" type="tns:property" minOccurs="0"/>

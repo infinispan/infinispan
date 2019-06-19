@@ -1867,4 +1867,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalidation mode only supports when-split=ALLOW_READ_WRITES", id = 550)
    CacheConfigurationException invalidationPartitionHandlingNotSuported();
+
+   @LogMessage(level = WARN)
+   @Message(value = "The custom interceptors configuration has been deprecated and will be ignored in the future", id = 551)
+   void customInterceptorsDeprecated();
 }

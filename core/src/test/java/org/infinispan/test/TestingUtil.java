@@ -1027,6 +1027,10 @@ public class TestingUtil {
       return cm.getGlobalComponentRegistry().getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
    }
 
+   public static AsyncInterceptorChain extractInterceptorChain(Cache cache) {
+      return extractComponent(cache, AsyncInterceptorChain.class);
+   }
+
    /**
     * Add a hook to cache startup sequence that will allow to replace existing component with a mock.
     * @param cacheContainer

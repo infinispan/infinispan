@@ -139,6 +139,10 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       return clusteringConfiguration;
    }
 
+   /**
+    * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
+    */
+   @Deprecated
    public CustomInterceptorsConfiguration customInterceptors() {
       return customInterceptorsConfiguration;
    }

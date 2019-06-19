@@ -31,10 +31,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
@@ -191,11 +188,7 @@ public class LifecycleManager implements ModuleLifecycle {
          keyTransformationHandler.registerTransformer(kt.getKey(), (Class<? extends Transformer>) kt.getValue());
       }
 
-      // Interceptor registration not needed, core configuration handling
-      // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
       AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class).wired();
-
-      ConfigurationBuilder builder = new ConfigurationBuilder().read(cfg);
 
       EntryWrappingInterceptor wrappingInterceptor = ic.findInterceptorExtending(EntryWrappingInterceptor.class);
       AsyncInterceptor lastLoadingInterceptor = ic.findInterceptorExtending(CacheLoaderInterceptor.class);
@@ -207,22 +200,12 @@ public class LifecycleManager implements ModuleLifecycle {
       cr.registerComponent(QueryInterceptor.class, queryInterceptor, true);
       cr.addDynamicDependency(AsyncInterceptorChain.class.getName(), QueryInterceptor.class.getName());
 
-      // add the interceptor to the configuration also
-      builder.customInterceptors().addInterceptor()
-             .interceptor(queryInterceptor).after(lastLoadingInterceptor.getClass());
-
       if (cfg.transaction().transactionMode().isTransactional()) {
          TxQueryInterceptor txQueryInterceptor = new TxQueryInterceptor(txOldValues, queryInterceptor);
          ic.addInterceptorBefore(txQueryInterceptor, wrappingInterceptor.getClass());
          cr.registerComponent(TxQueryInterceptor.class, txQueryInterceptor, true);
          cr.addDynamicDependency(AsyncInterceptorChain.class.getName(), TxQueryInterceptor.class.getName());
-
-         // add the interceptor to the configuration also
-         builder.customInterceptors().addInterceptor()
-               .interceptor(txQueryInterceptor).before(wrappingInterceptor.getClass());
       }
-
-      cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
    }
 
    @Override
@@ -433,21 +416,6 @@ public class LifecycleManager implements ModuleLifecycle {
 
    @Override
    public void cacheStopped(ComponentRegistry cr, String cacheName) {
-      Configuration cfg = cr.getComponent(Configuration.class);
-      removeQueryInterceptorFromConfiguration(cfg);
-   }
-
-   private void removeQueryInterceptorFromConfiguration(Configuration cfg) {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      CustomInterceptorsConfigurationBuilder customInterceptorsBuilder = builder.customInterceptors();
-
-      for (InterceptorConfiguration interceptorConfig : cfg.customInterceptors().interceptors()) {
-         if (!(interceptorConfig.asyncInterceptor() instanceof QueryInterceptor)) {
-            customInterceptorsBuilder.addInterceptor().read(interceptorConfig);
-         }
-      }
-
-      cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
    }
 
    @Override

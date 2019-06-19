@@ -2,10 +2,12 @@ package org.infinispan.query.remote.impl;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+import static org.infinispan.query.remote.ProtobufMetadataManager.SCHEMA_MANAGER_ROLE;
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Map;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -17,7 +19,9 @@ import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
@@ -27,6 +31,8 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.MBeanMetadata;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -48,9 +54,14 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapperSearchWorkC
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.server.core.dataconversion.ProtostreamJsonTranscoder;
 import org.infinispan.server.core.dataconversion.ProtostreamObjectTranscoder;
 import org.infinispan.server.core.dataconversion.ProtostreamTextTranscoder;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
  * Initializes components for remote query. Each cache manager has its own instance of this class during its lifetime.
@@ -81,6 +92,9 @@ public final class LifecycleManager implements ModuleLifecycle {
       BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
       PersistenceMarshaller persistenceMarshaller = bcr.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class).wired();
       persistenceMarshaller.register(new PersistenceContextInitializerImpl());
+
+      InternalCacheRegistry icr = bcr.getComponent(InternalCacheRegistry.class).running();
+      registerProtobufMetadataCache(icr, globalCfg);
 
       initProtobufMetadataManager(globalCfg, gcr, bcr);
 
@@ -167,6 +181,16 @@ public final class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       BasicComponentRegistry gcr = cr.getGlobalComponentRegistry().getComponent(BasicComponentRegistry.class);
+
+      if (PROTOBUF_METADATA_CACHE_NAME.equals(cacheName)) {
+         BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+         ProtobufMetadataManagerInterceptor protobufInterceptor = new ProtobufMetadataManagerInterceptor();
+         bcr.registerComponent(ProtobufMetadataManagerInterceptor.class, protobufInterceptor, true);
+         bcr.addDynamicDependency(AsyncInterceptorChain.class.getName(), ProtobufMetadataManagerInterceptor.class.getName());
+         bcr.getComponent(AsyncInterceptorChain.class).wired()
+            .addInterceptorAfter(protobufInterceptor, EntryWrappingInterceptor.class);
+      }
+
       InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class).running();
       if (!icr.isInternalCache(cacheName)) {
          ProtobufMetadataManagerImpl protobufMetadataManager =
@@ -176,7 +200,6 @@ public final class LifecycleManager implements ModuleLifecycle {
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
          RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
          cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
-
       }
    }
 
@@ -224,5 +247,36 @@ public final class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheManagerStopped(GlobalComponentRegistry gcr) {
       mbeanServer = null;
+   }
+
+
+   private void registerProtobufMetadataCache(InternalCacheRegistry internalCacheRegistry,
+                                              GlobalConfiguration globalConfiguration) {
+      internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME,
+                                                  getProtobufMetadataCacheConfig(globalConfiguration).build(),
+                                                  EnumSet.of(InternalCacheRegistry.Flag.USER,
+                                                             InternalCacheRegistry.Flag.PROTECTED,
+                                                             InternalCacheRegistry.Flag.PERSISTENT));
+   }
+
+   private ConfigurationBuilder getProtobufMetadataCacheConfig(GlobalConfiguration globalConfiguration) {
+      CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
+
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.transaction()
+         .transactionMode(TransactionMode.TRANSACTIONAL).invocationBatching().enable()
+         .transaction().lockingMode(LockingMode.PESSIMISTIC)
+         .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
+         .clustering().cacheMode(cacheMode)
+         .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
+         .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
+         .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      if (globalConfiguration.security().authorization().enabled()) {
+         globalConfiguration.security().authorization().roles()
+                            .put(SCHEMA_MANAGER_ROLE,
+                                 new CacheRoleImpl(SCHEMA_MANAGER_ROLE, AuthorizationPermission.ALL));
+         cfg.security().authorization().enable().role(SCHEMA_MANAGER_ROLE);
+      }
+      return cfg;
    }
 }

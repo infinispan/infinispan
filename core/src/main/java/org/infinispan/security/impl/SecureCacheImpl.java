@@ -248,6 +248,10 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
       delegate.addInterceptor(i, position);
    }
 
+   /**
+    * @deprecated Since 10.0, will be removed without a replacement
+    */
+   @Deprecated
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);

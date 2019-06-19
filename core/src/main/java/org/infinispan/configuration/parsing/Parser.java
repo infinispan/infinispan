@@ -1396,6 +1396,7 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case CUSTOM_INTERCEPTORS: {
+            log.customInterceptorsDeprecated();
             this.parseCustomInterceptors(reader, holder);
             break;
          }

@@ -111,6 +111,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       return clustering;
    }
 
+   /**
+    * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
+    */
+   @Deprecated
    @Override
    public CustomInterceptorsConfigurationBuilder customInterceptors() {
       return customInterceptors;
