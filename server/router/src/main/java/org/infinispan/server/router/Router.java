@@ -32,14 +32,14 @@ public class Router {
     */
    public Router(RouterConfiguration routerConfiguration) {
       this.routerConfiguration = routerConfiguration;
-      if (routerConfiguration.getHotRodRouterConfiguration() != null) {
-         endpointRouters.add(new HotRodEndpointRouter(routerConfiguration.getHotRodRouterConfiguration()));
+      if (routerConfiguration.hotRodRouter() != null) {
+         endpointRouters.add(new HotRodEndpointRouter(routerConfiguration.hotRodRouter()));
       }
-      if (routerConfiguration.getRestRouterConfiguration() != null) {
-         endpointRouters.add(new RestEndpointRouter(routerConfiguration.getRestRouterConfiguration()));
+      if (routerConfiguration.restRouter() != null) {
+         endpointRouters.add(new RestEndpointRouter(routerConfiguration.restRouter()));
       }
-      if (routerConfiguration.getSinglePortRouterConfiguration() != null) {
-         endpointRouters.add(new SinglePortEndpointRouter(routerConfiguration.getSinglePortRouterConfiguration()));
+      if (routerConfiguration.singlePortRouter() != null) {
+         endpointRouters.add(new SinglePortEndpointRouter(routerConfiguration.singlePortRouter()));
       }
    }
 
@@ -47,8 +47,8 @@ public class Router {
     * Starts the router.
     */
    public void start() {
-      endpointRouters.forEach(r -> r.start(routerConfiguration.getRoutingTable()));
-      logger.printOutRoutingTable(routerConfiguration.getRoutingTable());
+      endpointRouters.forEach(r -> r.start(routerConfiguration.routingTable()));
+      logger.printOutRoutingTable(routerConfiguration.routingTable());
    }
 
    /**

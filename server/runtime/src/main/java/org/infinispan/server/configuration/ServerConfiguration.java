@@ -8,7 +8,8 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.network.SocketBinding;
-import org.infinispan.server.security.ServerSecurityRealm;
+import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
+import org.wildfly.security.auth.server.SecurityDomain;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -16,21 +17,24 @@ import org.infinispan.server.security.ServerSecurityRealm;
  */
 @BuiltBy(ServerConfigurationBuilder.class)
 public class ServerConfiguration {
-   final Map<String, NetworkAddress> networkInterfaces;
-   final Map<String, SocketBinding> socketBindings;
-   final Map<String, ServerSecurityRealm> securityRealms;
-   final List<ProtocolServerConfiguration> endpoints;
+   private final Map<String, NetworkAddress> networkInterfaces;
+   private final Map<String, SocketBinding> socketBindings;
+   private final Map<String, SecurityDomain> securityDomains;
+   private final List<ProtocolServerConfiguration> connectors;
+   private final SinglePortRouterConfiguration endpoint;
 
    public ServerConfiguration(
          Map<String, NetworkAddress> networkInterfaces,
          Map<String, SocketBinding> socketBindings,
-         final Map<String, ServerSecurityRealm> securityRealms,
-         List<ProtocolServerConfiguration> endpoints
+         final Map<String, SecurityDomain> securityDomains,
+         List<ProtocolServerConfiguration> connectors,
+         SinglePortRouterConfiguration endpoint
    ) {
       this.networkInterfaces = Collections.unmodifiableMap(networkInterfaces);
       this.socketBindings = Collections.unmodifiableMap(socketBindings);
-      this.securityRealms = Collections.unmodifiableMap(securityRealms);
-      this.endpoints = endpoints;
+      this.securityDomains = Collections.unmodifiableMap(securityDomains);
+      this.connectors = connectors;
+      this.endpoint = endpoint;
    }
 
    public Map<String, NetworkAddress> networkInterfaces() {
@@ -41,11 +45,15 @@ public class ServerConfiguration {
       return socketBindings;
    }
 
-   public Map<String, ServerSecurityRealm> securityRealms() {
-      return securityRealms;
+   public Map<String, SecurityDomain> securityDomains() {
+      return securityDomains;
    }
 
-   public List<ProtocolServerConfiguration> endpoints() {
-      return endpoints;
+   public List<ProtocolServerConfiguration> connectors() {
+      return connectors;
+   }
+
+   public SinglePortRouterConfiguration endpoint() {
+      return endpoint;
    }
 }

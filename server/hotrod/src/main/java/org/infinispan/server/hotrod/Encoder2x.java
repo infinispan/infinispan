@@ -179,7 +179,10 @@ class Encoder2x implements VersionedEncoder {
    @Override
    public ByteBuf statsResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Stats stats, NettyTransport transport, ComponentRegistry cacheRegistry) {
       ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
-      int numStats = 11;
+      int numStats = 9;
+      if (transport != null) {
+         numStats += 2;
+      }
       ClusterCacheStats clusterCacheStats = null;
       if (HotRodVersion.HOTROD_24.isAtLeast(header.version)) {
          clusterCacheStats = cacheRegistry.getComponent(ClusterCacheStats.class);
@@ -187,6 +190,7 @@ class Encoder2x implements VersionedEncoder {
             numStats += 7;
          }
       }
+
       ExtendedByteBuf.writeUnsignedInt(numStats, buf);
       writePair(buf, "timeSinceStart", String.valueOf(stats.getTimeSinceStart()));
       writePair(buf, "currentNumberOfEntries", String.valueOf(stats.getCurrentNumberOfEntries()));
@@ -197,8 +201,11 @@ class Encoder2x implements VersionedEncoder {
       writePair(buf, "misses", String.valueOf(stats.getMisses()));
       writePair(buf, "removeHits", String.valueOf(stats.getRemoveHits()));
       writePair(buf, "removeMisses", String.valueOf(stats.getRemoveMisses()));
-      writePair(buf, "totalBytesRead", String.valueOf(transport.getTotalBytesRead()));
-      writePair(buf, "totalBytesWritten", String.valueOf(transport.getTotalBytesWritten()));
+
+      if (transport != null) {
+         writePair(buf, "totalBytesRead", String.valueOf(transport.getTotalBytesRead()));
+         writePair(buf, "totalBytesWritten", String.valueOf(transport.getTotalBytesWritten()));
+      }
 
       if (clusterCacheStats != null) {
          writePair(buf, "globalCurrentNumberOfEntries", String.valueOf(clusterCacheStats.getCurrentNumberOfEntries()));

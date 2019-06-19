@@ -6,13 +6,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.SSLContext;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.Server;
+import org.infinispan.server.configuration.endpoint.SinglePortServerConfigurationBuilder;
+import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.server.core.security.ServerAuthenticationProvider;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.network.SocketBinding;
-import org.infinispan.server.security.ServerSecurityRealm;
+import org.infinispan.server.security.ElytronAuthenticationProvider;
+import org.wildfly.security.auth.server.SecurityDomain;
 
 /**
  * @author Tristan Tarrant
@@ -20,28 +25,44 @@ import org.infinispan.server.security.ServerSecurityRealm;
  */
 public class ServerConfigurationBuilder implements Builder<ServerConfiguration> {
    private final Map<String, NetworkAddress> networkInterfaces = new HashMap<>(2);
-   private final Map<String, ServerSecurityRealm> securityRealms = new HashMap<>(2);
+   private final Map<String, SecurityDomain> securityDomains = new HashMap<>(2);
+   private final Map<String, SSLContext> sslContexts = new HashMap<>(2);
    private final Map<String, SocketBinding> socketBindings = new HashMap<>(2);
-   private final List<ProtocolServerConfigurationBuilder<?, ?>> endpoints = new ArrayList<>(2);
+   private final List<ProtocolServerConfigurationBuilder<?, ?>> connectors = new ArrayList<>(2);
    private final GlobalConfigurationBuilder builder;
+   private final SinglePortServerConfigurationBuilder endpoint = new SinglePortServerConfigurationBuilder();
 
    public ServerConfigurationBuilder(GlobalConfigurationBuilder builder) {
       this.builder = builder;
    }
 
-   public <T extends ProtocolServerConfigurationBuilder<?, ?>> T addEndpoint(Class<T> klass) {
+   public <T extends ProtocolServerConfigurationBuilder<?, ?>> T addConnector(Class<T> klass) {
       try {
-         T builder = klass.newInstance();
-         this.endpoints.add(builder);
+         T builder = klass.getConstructor().newInstance();
+         this.connectors.add(builder);
          return builder;
       } catch (Exception e) {
          throw Server.log.cannotInstantiateProtocolServerConfigurationBuilder(klass, e);
       }
    }
 
-   public void addSecurityRealm(String name, ServerSecurityRealm realm) {
-      if (securityRealms.putIfAbsent(name, realm) != null) {
-         throw Server.log.duplicateSecurityRealm(name);
+   public List<ProtocolServerConfigurationBuilder<?, ?>> connectors() {
+      return connectors;
+   }
+
+   public SinglePortServerConfigurationBuilder endpoint() {
+      return endpoint;
+   }
+
+   public void addSecurityRealm(String name, SecurityDomain domain) {
+      if (securityDomains.putIfAbsent(name, domain) != null) {
+         throw Server.log.duplicateSecurityDomain(name);
+      }
+   }
+
+   public void addSSLContext(String name, SSLContext sslContext) {
+      if (sslContexts.putIfAbsent(name, sslContext) != null) {
+         throw Server.log.duplicateSecurityDomain(name);
       }
    }
 
@@ -74,8 +95,9 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       return new ServerConfiguration(
             networkInterfaces,
             socketBindings,
-            securityRealms,
-            endpoints.stream().map(b -> b.create()).collect(Collectors.toList())
+            securityDomains,
+            connectors.stream().map(b -> b.create()).collect(Collectors.toList()),
+            endpoint.create()
       );
    }
 
@@ -85,8 +107,32 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       return this;
    }
 
-   public SocketBinding getSocketBinding(String value) {
-      return socketBindings.get(value);
+   public SocketBinding getSocketBinding(String name) {
+      if (socketBindings.containsKey(name)) {
+         return socketBindings.get(name);
+      } else {
+         throw Server.log.unknownSocketBinding(name);
+      }
+   }
+
+   public SecurityDomain getSecurityRealm(String name) {
+      if (securityDomains.containsKey(name)) {
+         return securityDomains.get(name);
+      } else {
+         throw Server.log.unknownSecurityDomain(name);
+      }
+   }
+
+   public ServerAuthenticationProvider getAuthenticationProviderForRealm(String name) {
+      return new ElytronAuthenticationProvider(name, getSecurityRealm(name));
+   }
+
+   public SSLContext getSSLContext(String name) {
+      if (sslContexts.containsKey(name)) {
+         return sslContexts.get(name);
+      } else {
+         throw Server.log.unknownSecurityDomain(name);
+      }
    }
 
    public void applySocketBinding(String name, ProtocolServerConfigurationBuilder builder) {

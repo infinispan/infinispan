@@ -2,7 +2,11 @@ package org.infinispan.server.configuration.rest;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.xml.stream.XMLStreamConstants;
@@ -17,12 +21,15 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
-import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
-import org.infinispan.server.network.SocketBinding;
+import org.infinispan.server.core.configuration.SslConfigurationBuilder;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
+
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 
 /**
  * Server endpoint configuration parser
@@ -70,38 +77,19 @@ public class RestServerConfigurationParser implements ConfigurationParser {
 
    private void parseRest(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder)
          throws XMLStreamException {
-      RestServerConfigurationBuilder builder = serverBuilder.addEndpoint(RestServerConfigurationBuilder.class);
+      RestServerConfigurationBuilder builder = serverBuilder.addConnector(RestServerConfigurationBuilder.class);
+      boolean hasSocketBinding = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-            case SOCKET_BINDING: {
-               SocketBinding socketBinding = serverBuilder.getSocketBinding(value);
-               if (socketBinding != null) {
-                  builder.host(socketBinding.getAddress().getAddress().getHostAddress()).port(socketBinding.getPort());
-               } else {
-                  throw Server.log.unknownSocketBinding(value);
-               }
-               break;
-            }
-            case CACHE_CONTAINER: {
-               break;
-            }
             case CONTEXT_PATH: {
                builder.contextPath(value);
                break;
             }
             case EXTENDED_HEADERS: {
                builder.extendedHeaders(ExtendedHeaders.valueOf(value));
-               break;
-            }
-            case IDLE_TIMEOUT: {
-               builder.idleTimeout(Integer.parseInt(value));
-               break;
-            }
-            case IO_THREADS: {
-               builder.ioThreads(Integer.parseInt(value));
                break;
             }
             case NAME: {
@@ -125,8 +113,13 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                builder.ignoredCaches(ignoredCaches);
                break;
             }
+            case SOCKET_BINDING: {
+               serverBuilder.applySocketBinding(value, builder);
+               hasSocketBinding = true;
+               break;
+            }
             default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
+               ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
             }
          }
       }
@@ -138,7 +131,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case ENCRYPTION: {
-               parseEncryption(reader, builder);
+               parseEncryption(reader, serverBuilder, builder.ssl().enable());
                break;
             }
             case CORS_RULES: {
@@ -150,9 +143,88 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          }
 
       }
+      if (!hasSocketBinding) {
+         // This connector will be part of the single port router
+         builder.startTransport(false);
+      }
    }
 
-   private void parseCorsRules(XMLExtendedStreamReader reader, RestServerConfigurationBuilder builder) {
+   private void parseCorsRules(XMLExtendedStreamReader reader, RestServerConfigurationBuilder builder)
+         throws XMLStreamException {
+      ParseUtils.requireNoAttributes(reader);
+      List<CorsConfig> rules = new ArrayList<>();
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case CORS_RULE: {
+               rules.add(parseCorsRule(reader));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+      builder.addAll(rules);
+   }
+
+   private CorsConfig parseCorsRule(XMLExtendedStreamReader reader) throws XMLStreamException {
+      boolean allowCredentials = false;
+      Optional<Long> maxAge = Optional.empty();
+      Optional<String[]> allowedHeaders = Optional.empty();
+      Optional<String[]> allowedOrigins = Optional.empty();
+      Optional<HttpMethod[]> allowedMethods = Optional.empty();
+      Optional<String[]> exposeHeaders = Optional.empty();
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case ALLOW_CREDENTIALS: {
+               allowCredentials = true;
+               break;
+            }
+            case MAX_AGE_SECONDS: {
+               maxAge = Optional.of(Long.parseLong(value));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case ALLOWED_HEADERS: {
+               allowedHeaders = Optional.of(reader.getElementText().split(","));
+               break;
+            }
+            case ALLOWED_ORIGINS: {
+               allowedOrigins = Optional.of(reader.getElementText().split(","));
+               break;
+            }
+            case ALLOWED_METHODS: {
+               allowedMethods = Optional.of(Arrays.stream(reader.getElementText().split(",")).map(HttpMethod::valueOf).toArray(HttpMethod[]::new));
+               break;
+            }
+            case EXPOSE_HEADERS: {
+               exposeHeaders = Optional.of(reader.getElementText().split(","));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+      CorsConfigBuilder builder = allowedOrigins.isPresent() ? CorsConfigBuilder.forOrigins(allowedOrigins.get()) : CorsConfigBuilder.forAnyOrigin();
+      if (allowCredentials) builder.allowCredentials();
+      maxAge.ifPresent(a -> builder.maxAge(a));
+      allowedHeaders.ifPresent(h -> builder.allowedRequestHeaders(h));
+      allowedMethods.ifPresent(m -> builder.allowedRequestMethods(m));
+      exposeHeaders.ifPresent(h -> builder.exposeHeaders(h));
+      return builder.build();
    }
 
    private void parseAuthentication(XMLExtendedStreamReader reader, RestServerConfigurationBuilder builder) throws XMLStreamException {
@@ -162,11 +234,9 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case SECURITY_REALM: {
-
                break;
             }
             case AUTH_METHOD: {
-
                break;
             }
             default: {
@@ -178,18 +248,18 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseEncryption(XMLExtendedStreamReader reader, RestServerConfigurationBuilder builder) throws XMLStreamException {
+   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          String value = replaceProperties(reader.getAttributeValue(i));
          switch (attribute) {
             case REQUIRE_SSL_CLIENT_AUTH: {
-               builder.ssl().requireClientAuth(Boolean.parseBoolean(value));
+               builder.requireClientAuth(Boolean.parseBoolean(value));
                break;
             }
             case SECURITY_REALM: {
-               // TODO
+               builder.sslContext(serverBuilder.getSSLContext(value));
                break;
             }
             default: {
@@ -218,7 +288,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          ParseUtils.requireNoContent(reader);
    }
 
-   private void parseSni(XMLExtendedStreamReader reader, RestServerConfigurationBuilder builder) {
+   private void parseSni(XMLExtendedStreamReader reader, SslConfigurationBuilder builder) {
 
    }
 

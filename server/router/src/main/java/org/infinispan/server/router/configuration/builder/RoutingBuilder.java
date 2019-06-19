@@ -21,7 +21,7 @@ public class RoutingBuilder implements ConfigurationBuilderParent {
 
     protected static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
 
-    private final RouterConfigurationBuilder parent;
+    private final ConfigurationBuilderParent parent;
     private Set<Route<? extends RouteSource, ? extends RouteDestination>> routes = new HashSet<>();
 
     /**
@@ -29,7 +29,7 @@ public class RoutingBuilder implements ConfigurationBuilderParent {
      *
      * @param parent Parent {@link RouterConfiguration}.
      */
-    public RoutingBuilder(RouterConfigurationBuilder parent) {
+    public RoutingBuilder(ConfigurationBuilderParent parent) {
         this.parent = parent;
     }
 

@@ -6,12 +6,12 @@ import org.junit.Test;
 public class RestServerRouteDestinationTest {
 
     @Test(expected = IllegalArgumentException.class)
-    public void shouldValidateName() throws Exception {
+    public void shouldValidateName() {
         new RestServerRouteDestination(null, new RestServer()).validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void shouldValidateRestResource() throws Exception {
+    public void shouldValidateRestResource() {
         new RestServerRouteDestination("test", null).validate();
     }
 

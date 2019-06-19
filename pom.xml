@@ -253,7 +253,7 @@
       <versionx.com.sun.xml.fastinfoset.FastInfoset>1.2.13</versionx.com.sun.xml.fastinfoset.FastInfoset>
       <versionx.com.tdunning.t-digest>3.0</versionx.com.tdunning.t-digest>
       <versionx.com.thoughtworks.paranamer.paranamer>2.3</versionx.com.thoughtworks.paranamer.paranamer>
-      <versionx.com.thoughtworks.xstream.xstream>1.4.10</versionx.com.thoughtworks.xstream.xstream>
+      <versionx.com.thoughtworks.xstream.xstream>1.4.11</versionx.com.thoughtworks.xstream.xstream>
       <versionx.commons-beanutils.commons-beanutils>1.9.3</versionx.commons-beanutils.commons-beanutils>
       <versionx.commons-cli.commons-cli>1.4</versionx.commons-cli.commons-cli>
       <versionx.commons-codec.commons-codec>1.10</versionx.commons-codec.commons-codec>
@@ -686,7 +686,7 @@
       <versionx.org.wildfly.arquillian.wildfly-arquillian-protocol-jmx>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-protocol-jmx>
       <versionx.org.wildfly.arquillian.wildfly-arquillian-testenricher-msc>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-testenricher-msc>
       <versionx.org.wildfly.client.wildfly-client-config>1.0.0.Final</versionx.org.wildfly.client.wildfly-client-config>
-      <versionx.org.wildfly.common.wildfly-common>1.4.0.Final</versionx.org.wildfly.common.wildfly-common>
+      <versionx.org.wildfly.common.wildfly-common>1.5.1.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.core.wildfly-cli>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-cli>
       <versionx.org.wildfly.core.wildfly-controller>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-controller>
       <versionx.org.wildfly.core.wildfly-controller-client>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-controller-client>

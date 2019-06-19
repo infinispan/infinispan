@@ -2,6 +2,7 @@ package org.infinispan.server;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.Provider;
 import java.util.Properties;
 
 import org.infinispan.security.Security;
@@ -24,7 +25,17 @@ final class SecurityActions {
       }
    }
 
-   public static Properties getSystemProperties() {
+   static Properties getSystemProperties() {
       return doPrivileged(() -> System.getProperties());
+   }
+
+   static void addSecurityProvider(Provider provider) {
+      doPrivileged(() -> {
+               if (java.security.Security.getProvider(provider.getName()) == null) {
+                  java.security.Security.insertProviderAt(provider, 1);
+               }
+               return null;
+            }
+      );
    }
 }

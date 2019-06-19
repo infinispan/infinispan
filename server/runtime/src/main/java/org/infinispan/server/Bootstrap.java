@@ -24,19 +24,10 @@ public class Bootstrap {
    public static void main(String args[], PrintStream stdOut, PrintStream stdErr, ExitHandler exitHandler, Properties properties) {
       String cwd = properties.getProperty("user.dir");
       // Retrieve the server home from the properties if present, otherwise use the current working directory
-      File serverHome = new File(properties.getProperty(Server.INFINISPAN_SERVER_HOME, cwd));
+      File serverHome = new File(properties.getProperty(Server.INFINISPAN_SERVER_HOME_PATH, cwd));
       // Retrieve the server root from the properties if present, otherwise use the default server root under the server home
-      File serverRoot = new File(properties.getProperty(Server.INFINISPAN_SERVER_ROOT, new File(serverHome, Server.DEFAULT_SERVER_ROOT_DIR).getAbsolutePath()));
-      File confDir = new File(serverRoot, Server.DEFAULT_SERVER_CONFIG);
-      File configurationFile = new File(confDir, Server.DEFAULT_CONFIGURATION_FILE);
-      File logDir = new File(serverRoot, Server.DEFAULT_SERVER_LOG);
-      properties.putIfAbsent(Server.INFINISPAN_SERVER_LOG, logDir.getAbsolutePath());
-      try (InputStream is = new FileInputStream(new File(confDir, "logging.properties"))) {
-         LogManager.getLogManager().readConfiguration(is);
-      } catch (IOException e) {
-         stdErr.printf("Could not load logging.properties: %s", e.getMessage());
-         e.printStackTrace(stdErr);
-      }
+      File serverRoot = new File(properties.getProperty(Server.INFINISPAN_SERVER_ROOT_PATH, new File(serverHome, Server.DEFAULT_SERVER_ROOT_DIR).getAbsolutePath()));
+      File configurationFile = null;
 
       for (int i = 0; i < args.length; i++) {
          String command = args[i];
@@ -97,9 +88,24 @@ public class Bootstrap {
                break;
          }
       }
+
+      File confDir = new File(serverRoot, Server.DEFAULT_SERVER_CONFIG);
+      if (configurationFile == null)
+         configurationFile = new File(confDir, Server.DEFAULT_CONFIGURATION_FILE);
+      File logDir = new File(serverRoot, Server.DEFAULT_SERVER_LOG);
+      properties.putIfAbsent(Server.INFINISPAN_SERVER_LOG_PATH, logDir.getAbsolutePath());
+
+      try (InputStream is = new FileInputStream(new File(confDir, "logging.properties"))) {
+         LogManager.getLogManager().readConfiguration(is);
+      } catch (IOException e) {
+         stdErr.printf("Could not load logging.properties: %s", e.getMessage());
+         e.printStackTrace(stdErr);
+      }
+
       try {
          Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
          Server.log.serverStarting(Version.getBrandName());
+         Server.log.serverConfiguration(configurationFile.getAbsolutePath());
          Server server = new Server(serverRoot, configurationFile, properties);
          server.setExitHandler(exitHandler);
          server.run().get();

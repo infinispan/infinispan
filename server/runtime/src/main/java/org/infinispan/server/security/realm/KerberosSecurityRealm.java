@@ -1,4 +1,4 @@
-package org.infinispan.server.security;
+package org.infinispan.server.security.realm;
 
 import java.io.File;
 import java.security.spec.AlgorithmParameterSpec;
@@ -19,7 +19,6 @@ public class KerberosSecurityRealm implements SecurityRealm {
    public KerberosSecurityRealm(File keyTabFile) {
       this.keyTabFile = keyTabFile;
    }
-
 
    @Override
    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {

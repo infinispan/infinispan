@@ -38,8 +38,8 @@ public class ConfigurationTest {
                 .add(new Route(s1, d1));
 
         RouterConfiguration routerConfiguration = multiTenantConfigurationBuilder.build();
-        HotRodRouterConfiguration hotRodRouterConfiguration = routerConfiguration.getHotRodRouterConfiguration();
-        RestRouterConfiguration restRouterConfiguration = routerConfiguration.getRestRouterConfiguration();
+        HotRodRouterConfiguration hotRodRouterConfiguration = routerConfiguration.hotRodRouter();
+        RestRouterConfiguration restRouterConfiguration = routerConfiguration.restRouter();
 
         //then
         assertThat(hotRodRouterConfiguration.getPort()).isEqualTo(1010);
@@ -51,7 +51,7 @@ public class ConfigurationTest {
 
         assertThat(restRouterConfiguration.getPort()).isEqualTo(1111);
         assertThat(restRouterConfiguration.getIp()).isEqualTo(InetAddress.getLoopbackAddress());
-        assertThat(routerConfiguration.getRoutingTable().routesCount()).isEqualTo(1);
+        assertThat(routerConfiguration.routingTable().routesCount()).isEqualTo(1);
     }
 
 }

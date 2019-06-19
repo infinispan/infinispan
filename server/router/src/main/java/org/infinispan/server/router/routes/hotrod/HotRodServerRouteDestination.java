@@ -20,9 +20,7 @@ public class HotRodServerRouteDestination implements RouteDestination {
     @Override
     public String toString() {
         return "HotRodServerRouteDestination{" +
-              "name='" + name + '\'' +
-              ", hotrodServer=" + hotrodServer +
-              '}';
+              "name='" + name + '}';
     }
 
     @Override

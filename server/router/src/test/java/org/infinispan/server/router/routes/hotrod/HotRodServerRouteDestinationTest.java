@@ -6,12 +6,12 @@ import org.junit.Test;
 public class HotRodServerRouteDestinationTest {
 
     @Test(expected = IllegalArgumentException.class)
-    public void shouldValidateName() throws Exception {
+    public void shouldValidateName() {
         new HotRodServerRouteDestination(null, new HotRodServer()).validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void shouldValidateChannelInitializer() throws Exception {
+    public void shouldValidateChannelInitializer() {
         new HotRodServerRouteDestination("test", null).validate();
     }
 

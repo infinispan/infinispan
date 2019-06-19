@@ -17,7 +17,8 @@ public class RouterConfiguration {
 
     /**
      * Creates new configuration based on protocol configurations and the {@link RoutingTable}.
-     *  @param routingTable              The {@link RoutingTable} for supplying {@link org.infinispan.server.router.routes.Route}s.
+     *
+     * @param routingTable              The {@link RoutingTable} for supplying {@link org.infinispan.server.router.routes.Route}s.
      * @param hotRodRouterConfiguration Hot Rod Configuration.
      * @param restRouterConfiguration   REST Configuration.
      * @param singlePortRouterConfiguration
@@ -32,28 +33,28 @@ public class RouterConfiguration {
     /**
      * Gets the {@link RoutingTable}.
      */
-    public RoutingTable getRoutingTable() {
+    public RoutingTable routingTable() {
         return routingTable;
     }
 
     /**
      * Gets Hot Rod Configuration.
      */
-    public HotRodRouterConfiguration getHotRodRouterConfiguration() {
+    public HotRodRouterConfiguration hotRodRouter() {
         return hotRodRouterConfiguration;
     }
 
     /**
      * Gets REST Configuration.
      */
-    public RestRouterConfiguration getRestRouterConfiguration() {
+    public RestRouterConfiguration restRouter() {
         return restRouterConfiguration;
     }
 
     /**
      * Gets Single Port Configuration.
      */
-    public SinglePortRouterConfiguration getSinglePortRouterConfiguration() {
+    public SinglePortRouterConfiguration singlePortRouter() {
         return singlePortRouterConfiguration;
     }
 }
