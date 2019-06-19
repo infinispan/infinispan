@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
@@ -84,7 +86,6 @@ import org.infinispan.stream.impl.intops.primitive.l.MapToIntLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.MapToObjLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.PeekLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.SortedLongOperation;
-import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * Externalizer to be used for serializing the various intermediate operations
@@ -148,7 +149,7 @@ public class IntermediateOperationExternalizer implements AdvancedExternalizer<I
    private static final int LONG_PEEK = 70;
    private static final int LONG_SORTED = 71;
 
-   private final IdentityIntMap<Class<? extends IntermediateOperation>> operations = new IdentityIntMap<>();
+   private final Map<Class<? extends IntermediateOperation>, Integer> operations = new HashMap<>(72);
 
    public IntermediateOperationExternalizer() {
       operations.put(DistinctOperation.class, DISTINCT);
@@ -238,7 +239,7 @@ public class IntermediateOperationExternalizer implements AdvancedExternalizer<I
 
    @Override
    public void writeObject(ObjectOutput output, IntermediateOperation object) throws IOException {
-      int number = operations.get(object.getClass(), -1);
+      int number = operations.getOrDefault(object.getClass(), -1);
       output.writeByte(number);
       switch (number) {
          case FILTER:
