@@ -1,0 +1,6 @@
+<security>
+   <security-realms>
+      <security-realm name="default">
+      </security-realm>
+   </security-realms>
+</security>

@@ -1,7 +1,8 @@
 package org.infinispan.test.integration.security.utils;
 
+import java.io.InputStream;
+
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.ldif.LdifEntry;
 import org.apache.directory.api.ldap.model.ldif.LdifReader;
@@ -75,11 +76,10 @@ public class ApacheDsLdap {
    @CreateLdapServer(transports = { @CreateTransport( protocol = "LDAP",  port = LDAP_PORT) })
    public void createLdap() throws Exception {
       final String initFile = System.getProperty("ldap.init.file", LDAP_INIT_FILE);
-      final String ldifContent = IOUtils.toString(getClass().getClassLoader().getResource(initFile));
       final SchemaManager schemaManager = directoryService.getSchemaManager();
 
-      try {
-         for (LdifEntry ldifEntry : new LdifReader(IOUtils.toInputStream(ldifContent))) {
+      try (InputStream is = getClass().getClassLoader().getResourceAsStream(initFile)) {
+         for (LdifEntry ldifEntry : new LdifReader(is)) {
                   directoryService.getAdminSession().add(new DefaultEntry(schemaManager, ldifEntry.getEntry()));
          }
       } catch (Exception e) {

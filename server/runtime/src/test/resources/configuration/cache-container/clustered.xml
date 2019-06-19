@@ -1,0 +1,3 @@
+<cache-container>
+   <transport cluster="${infinispan.cluster.name}" stack="test"/>
+</cache-container>

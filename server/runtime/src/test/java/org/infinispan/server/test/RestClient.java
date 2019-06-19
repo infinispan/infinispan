@@ -1,17 +1,18 @@
-package org.infinispan.server;
+package org.infinispan.server.test;
 
+import java.io.Closeable;
 import java.io.IOException;
 
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 
-public class RestClient {
+public class RestClient implements Closeable {
 
-   private final HttpClient client = HttpClientBuilder.create().build();
+   private final CloseableHttpClient client = HttpClientBuilder.create().build();
    // using URI won't do any good since we need to concatenate and there is no method to do this
    private final String baseUri;
    private String cache;
@@ -46,5 +47,10 @@ public class RestClient {
 
    String constructPath(String baseUri, String cache, String key) {
       return baseUri + "/" + cache + "/" + key;
+   }
+
+   @Override
+   public void close() throws IOException {
+      client.close();
    }
 }
