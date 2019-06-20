@@ -23,7 +23,7 @@ import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Scheduler;
+import io.reactivex.Flowable;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -62,12 +62,12 @@ public class PersistenceManagerStub implements PersistenceManager {
 
    @Override
    public <T> Set<T> getStores(Class<T> storeClass) {
-      return Collections.EMPTY_SET;
+      return Collections.emptySet();
    }
 
    @Override
    public Collection<String> getStoresAsString() {
-      return Collections.EMPTY_SET;
+      return Collections.emptySet();
    }
 
    @Override
@@ -92,31 +92,31 @@ public class PersistenceManagerStub implements PersistenceManager {
    @Override
    public <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
                                                                    boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
-      return null;
+      return Flowable.empty();
    }
 
    @Override
    public <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
-      return null;
+      return Flowable.empty();
    }
 
    @Override
    public <K> Publisher<K> publishKeys(Predicate<? super K> filter, Predicate<? super StoreConfiguration> predicate) {
-      return null;
+      return Flowable.empty();
    }
 
    @Override
    public <K> Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter, Predicate<? super StoreConfiguration> predicate) {
-      return null;
+      return Flowable.empty();
    }
 
    @Override
-   public CompletionStage<MarshallableEntry> loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
+   public <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
       return CompletableFutures.completedNull();
    }
 
    @Override
-   public CompletionStage<MarshallableEntry> loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+   public <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
       return CompletableFutures.completedNull();
    }
 
@@ -181,10 +181,5 @@ public class PersistenceManagerStub implements PersistenceManager {
    @Override
    public boolean isReadOnly() {
       return false;
-   }
-
-   @Override
-   public Scheduler continuationScheduler() {
-      return null;
    }
 }

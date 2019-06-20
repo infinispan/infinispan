@@ -42,6 +42,7 @@ import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.persistence.manager.OrderedUpdatesManagerImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.scattered.BiasManager;
@@ -119,7 +120,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          } else if (componentName.equals(CommandsFactory.class.getName())) {
             return new CommandsFactoryImpl();
          } else if (componentName.equals(PersistenceManager.class.getName())) {
-            return new PersistenceManagerImpl();
+            if (configuration.persistence().usingStores()) {
+               return new PersistenceManagerImpl();
+            }
+            return new PersistenceManagerStub();
          } else if (componentName.equals(PassivationManager.class.getName())) {
             return new PassivationManagerImpl();
          } else if (componentName.equals(ActivationManager.class.getName())) {
