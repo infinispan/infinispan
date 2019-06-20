@@ -144,7 +144,7 @@ The basic configuration, is the simplest configuration that you can have, its ma
 
 [source,xml]
 ----
-<namedCache name="Local"/>
+<local-cache name="Local"/>
 
 ----
 
@@ -239,9 +239,9 @@ For the tutorial its enough to use:
 
 [source,xml]
 ----
-<namedCache name="LocalTX">
+<local-cache name="LocalTX">
     <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup"/>
-</namedCache>
+</local-cache>
 
 ----
 
@@ -301,7 +301,7 @@ As shown in the example, the transaction is controlled explicitly and the change
 
 [source,xml]
 ----
-<namedCache name="CacheStore">
+<local-cache name="CacheStore">
      <loaders passivation="false" shared="false" preload="true">
           <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
                ignoreModifications="false" purgeOnStartup="false">
@@ -310,7 +310,7 @@ As shown in the example, the transaction is controlled explicitly and the change
                </properties>
           </loader>
      </loaders>
-</namedCache>
+</local-cache>
 ----
 
 Now you have a cache with persistent store, lets try it to see how it works
@@ -358,12 +358,13 @@ Let check the configuration of the cache:
 
 [source,xml]
 ----
-<namedCache name="Eviction">
-   <eviction wakeUpInterval="500" maxEntries="2" strategy="LRU"/>
-</namedCache>
+<local-cache name="Eviction">
+   <memory> <object size="100"/> </memory>
+</local-cache>
 ----
 
-The strategy has been set to LRU, so the least recently used objects will be removed first and the maximum number of objects are only 2, so it will be easy to show how it works
+The objects are stored in the cache without serialization, and the maximum number of objects is 2,
+so it will be easy to show how it works.
 
 ----
 //GETTING THE NEW CACHE
@@ -399,7 +400,7 @@ The configuration is simple, just combine eviction and cache store configuration
 
 [source,xml]
 ----
-<namedCache name="CacheStoreEviction">
+<local-cache name="CacheStoreEviction">
      <loaders passivation="false" shared="false" preload="true">
           <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
             ignoreModifications="false" purgeOnStartup="false">
@@ -408,8 +409,8 @@ The configuration is simple, just combine eviction and cache store configuration
                </properties>
           </loader>
      </loaders>
-     <eviction wakeUpInterval="500" maxEntries="2" strategy="FIFO"/>
-</namedCache>
+     <memory> <object size="2"/> </memory>
+</local-cache>
 ----
 
 Nothing new in the configuration, lets check how it works

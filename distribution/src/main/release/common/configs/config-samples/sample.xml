@@ -273,10 +273,9 @@
    -->
    <!--
    <local-cache name="evictionAndPassivationCache">
-      <eviction
-         max-entries="5000"
-         strategy="LIRS"
-      />
+      <memory>
+         <object size="2"/>
+      </memory>
       <expiration
          interval="500"
          lifespan="60000"
@@ -300,7 +299,7 @@
       <persistence>
          <cluster-loader remote-timeout="20000" preload="false"/>
       </persistence>
-   </namedCache>
+   </invalidation-cache>
    -->
 
    <!--

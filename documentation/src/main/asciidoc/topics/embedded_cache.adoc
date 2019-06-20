@@ -134,7 +134,7 @@ $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcach
 
    <cache-container default-cache="default">
        <local-cache name="xml-configured-cache">
-          <eviction strategy="LIRS" max-entries="10" />
+          <memory> <object size="100"/> </memory>
        </local-cache>
    </cache-container>
 

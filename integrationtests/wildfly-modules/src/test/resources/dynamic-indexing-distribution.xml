@@ -14,7 +14,9 @@
       <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
          <locking acquire-timeout="20000" write-skew="false" concurrency-level="500" striping="false" />
          <state-transfer timeout="480000" enabled="true" />
-         <eviction max-entries="-1" strategy="NONE" />
+         <memory>
+            <object size="-1"/>
+         </memory>
          <expiration max-idle="-1" />
             <indexing index="LOCAL">
                <!-- Use our custom IndexManager; TODO autoinject by default? -->

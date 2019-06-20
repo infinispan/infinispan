@@ -21,34 +21,40 @@
    </default>
 
    <!-- Default configuration is appropriate for entity/collection caching. -->
-   <namedCache name="entity">
+   <local-cache name="entity">
       <locking isolationLevel="READ_COMMITTED" concurrencyLevel="1000"
                lockAcquisitionTimeout="15000" useLockStriping="false"/>
-      <eviction maxEntries="140000" strategy="LRU"/>
+      <memory>
+         <object size="140000"/>
+      </memory>
       <expiration maxIdle="1200000" wakeUpInterval="60000"/>
       <!-- No lazy deserialization or store as binary for local caches -->
       <transaction transactionMode="TRANSACTIONAL" autoCommit="false"
                    lockingMode="OPTIMISTIC" useSynchronization="true">
          <recovery enabled="false"/>
       </transaction>
-   </namedCache>
+   </local-cache>
 
    <!-- A config appropriate for query caching. Does not replicate queries. -->
-   <namedCache name="local-query">
+   <local-cache name="local-query">
       <locking isolationLevel="READ_COMMITTED" concurrencyLevel="1000"
                lockAcquisitionTimeout="15000" useLockStriping="false"/>
-      <eviction maxEntries="140000" strategy="LRU"/>
+      <memory>
+         <object size="140000"/>
+      </memory>
       <expiration maxIdle="1200000" wakeUpInterval="60000"/>
       <transaction transactionMode="NON_TRANSACTIONAL" autoCommit="false" />
-   </namedCache>
+   </local-cache>
 
    <!-- Optimized for timestamp caching. -->
-   <namedCache name="timestamps">
+   <local-cache name="timestamps">
       <locking isolationLevel="READ_COMMITTED" concurrencyLevel="1000"
                lockAcquisitionTimeout="15000" useLockStriping="false"/>
-      <eviction strategy="NONE"/>
+      <memory>
+         <object size="-1"/>
+      </memory>
       <expiration wakeUpInterval="0"/>
       <transaction transactionMode="NON_TRANSACTIONAL"/>
-   </namedCache>
+   </local-cache>
 
 </infinispan>
