@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 import javax.security.auth.Subject;
 import javax.transaction.Transaction;
@@ -118,6 +119,9 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
    // Processor used to handle async listener notifications.
    @Inject @ComponentName(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR)
    protected Executor asyncProcessor;
+   // Make sure all listeners resume on this executor
+   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
+   ExecutorService cpuExecutor;
 
    /**
     * Removes all listeners from the notifier
@@ -127,6 +131,10 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       for (List<L> list : listenersMap.values()) {
          if (list != null) list.clear();
       }
+   }
+
+   protected CompletionStage<Void> resumeOnCPU(CompletionStage<Void> stage, Object traceId) {
+      return CompletionStages.continueOnExecutor(stage, cpuExecutor, traceId);
    }
 
    protected abstract Log getLog();

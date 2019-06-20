@@ -127,6 +127,9 @@ public class CompletionStages {
     * on the thread that returned it. An example may be that some blocking operation is performed on a special blocking
     * thread pool. However when the blocking operation completes we will want to continue the processing of that result
     * in a thread pool that is for computational tasks.
+    * <p>
+    * If the supplied stage is already completed when invoking this command, this will return an already completed
+    * stage, which means any additional dependent stages will run in the invoking thread.
     * @param <V> return value type of the supplied stage
     * @param delay the stage to delay the continuation until complete
     * @param continuationExecutor the executor to run any further completion chain methods on
@@ -135,6 +138,12 @@ public class CompletionStages {
     */
    public static <V> CompletionStage<V> continueOnExecutor(CompletionStage<V> delay,
                                                            Executor continuationExecutor, Object traceId) {
+      if (isCompletedSuccessfully(delay)) {
+         if (trace) {
+            log.tracef("Stage for %s was already completed, returning in same thread", traceId);
+         }
+         return delay;
+      }
       CompletableFuture<V> returnedFuture = new CompletableFuture<>();
       delay.whenCompleteAsync((v, t) -> {
          if (t != null) {
