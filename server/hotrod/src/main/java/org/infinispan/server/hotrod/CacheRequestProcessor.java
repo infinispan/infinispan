@@ -37,12 +37,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private boolean isBlockingRead(CacheInfo info, HotRodHeader header) {
-      return info.persistence && !header.isSkipCacheLoad() || info.syncListener;
+      return info.persistence && !header.isSkipCacheLoad();
    }
 
    private boolean isBlockingWrite(CacheInfo cacheInfo, HotRodHeader header) {
       // Note: cache store cannot be skipped (yet)
-      return cacheInfo.persistence || cacheInfo.indexing && !header.isSkipIndexing() || cacheInfo.syncListener;
+      return cacheInfo.persistence || cacheInfo.indexing && !header.isSkipIndexing();
    }
 
    void ping(HotRodHeader header, Subject subject) {

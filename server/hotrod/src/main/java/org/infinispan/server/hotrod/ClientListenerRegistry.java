@@ -5,7 +5,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
@@ -16,10 +15,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -33,7 +29,6 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
@@ -54,6 +49,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterConverterAsCacheEventFilterConverter;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -64,9 +60,11 @@ import io.netty.channel.EventLoop;
  */
 class ClientListenerRegistry {
    private final EncoderRegistry encoderRegistry;
+   private final Executor cpuExecutor;
 
-   ClientListenerRegistry(EncoderRegistry encoderRegistry) {
+   ClientListenerRegistry(EncoderRegistry encoderRegistry, Executor cpuExecutor) {
       this.encoderRegistry = encoderRegistry;
+      this.cpuExecutor = cpuExecutor;
    }
 
    private final static Log log = LogFactory.getLog(ClientListenerRegistry.class, Log.class);
@@ -76,10 +74,6 @@ class ClientListenerRegistry {
    private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
    private final ConcurrentMap<String, CacheEventConverterFactory> cacheEventConverterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
    private final ConcurrentMap<String, CacheEventFilterConverterFactory> cacheEventFilterConverterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);
-
-   private final ExecutorService addListenerExecutor = new ThreadPoolExecutor(
-         0, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(),
-         new DefaultThreadFactory(null, 1, "add-listener-thread-%t", null, null));
 
    void setEventMarshaller(Optional<Marshaller> eventMarshaller) {
       eventMarshaller.ifPresent(m -> {
@@ -252,7 +246,6 @@ class ClientListenerRegistry {
       eventSenders.clear();
       cacheEventFilterFactories.clear();
       cacheEventConverterFactories.clear();
-      addListenerExecutor.shutdown();
    }
 
    void findAndWriteEvents(Channel channel) {
@@ -298,11 +291,9 @@ class ClientListenerRegistry {
       protected final ClientEventType targetEventType;
       protected final Cache cache;
 
-      final int highWaterMark = 100;
-      final int lowWaterMark = 60;
+      final int maxQueueSize = 100;
       final AtomicInteger eventSize = new AtomicInteger();
       final Queue<Events.Event> eventQueue = new ConcurrentLinkedQueue<>();
-      final Queue<CompletableFuture<Void>> delayedEvents = new ConcurrentLinkedQueue<>();
 
       private final Runnable writeEventsIfPossible = this::writeEventsIfPossible;
 
@@ -325,10 +316,8 @@ class ClientListenerRegistry {
 
       private void unblockCommands() {
          // Have to allow all waiting listeners to proceed
-         for (Iterator<CompletableFuture<Void>> delayedEventIter = delayedEvents.iterator(); delayedEventIter.hasNext(); ) {
-            CompletableFuture<Void> cf = delayedEventIter.next();
-            delayedEventIter.remove();
-            cf.complete(null);
+         for (Events.Event event : eventQueue) {
+            event.eventFuture.complete(null);
          }
       }
 
@@ -341,12 +330,13 @@ class ClientListenerRegistry {
          boolean submittedUnblock = false;
          boolean written = false;
          while (!eventQueue.isEmpty() && ch.isWritable()) {
-            int newSize = eventSize.decrementAndGet();
-            Events.Event event = eventQueue.poll();
+            eventSize.decrementAndGet();
+            Events.Event event = eventQueue.remove();
             if (isTrace) log.tracef("Write event: %s to channel %s", event, ch);
-            if (!submittedUnblock && newSize < lowWaterMark && !delayedEvents.isEmpty()) {
-               addListenerExecutor.execute(this::unblockCommands);
-               submittedUnblock = true;
+            CompletableFuture<Void> cf = event.eventFuture;
+            // We can just check instance equality as this is used to symbolize the event was not blocked below
+            if (cf != CompletableFutures.<Void>completedNull()) {
+               cpuExecutor.execute(() -> event.eventFuture.complete(null));
             }
             ByteBuf buf = ch.alloc().ioBuffer();
             encoder.writeEvent(event, buf);
@@ -403,32 +393,23 @@ class ClientListenerRegistry {
       }
 
       CompletionStage<Void> sendEvent(byte[] key, byte[] value, long dataVersion, CacheEntryEvent event) {
-         Events.Event remoteEvent = createRemoteEvent(key, value, dataVersion, event);
-         if (isTrace)
-            log.tracef("Queue event %s, before queuing event queue size is %d", remoteEvent, eventQueue.size());
-
          EventLoop loop = ch.eventLoop();
          int size = eventSize.incrementAndGet();
-         boolean forceWait = size >= highWaterMark;
-         CompletableFuture<Void> cf;
+         boolean forceWait = size >= maxQueueSize;
+         final CompletableFuture<Void> cf;
          if (forceWait) {
             if (isTrace) {
                log.tracef("Pending event size is %s which is forcing %s to delay operation until it is sent", size, event);
             }
+
             cf = new CompletableFuture<>();
-            // Have to write to map before queue, as we check in opposite order when sending events
-            delayedEvents.add(cf);
-
-            // If the event size is now less than water mark then don't force block - this is if there is a concurrent
-            // thread freeing all the waiters - It is possible but very slight chance that it could exhaust the
-            // entire delayedEvents without seeing ours so we don't force it to block (could get stuck otherwise)
-            if (eventSize.get() < highWaterMark) {
-               cf = null;
-            }
          } else {
-            cf = null;
+            cf = CompletableFutures.completedNull();
          }
+         Events.Event remoteEvent = createRemoteEvent(key, value, dataVersion, event, cf);
 
+         if (isTrace)
+            log.tracef("Queue event %s, before queuing event queue size is %d", remoteEvent, size - 1);
          eventQueue.add(remoteEvent);
 
          if (ch.isWritable()) {
@@ -439,7 +420,8 @@ class ClientListenerRegistry {
          return cf;
       }
 
-      private Events.Event createRemoteEvent(byte[] key, byte[] value, long dataVersion, CacheEntryEvent event) {
+      private Events.Event createRemoteEvent(byte[] key, byte[] value, long dataVersion, CacheEntryEvent event,
+            CompletableFuture<Void> eventFuture) {
          // Embedded listener event implementation implements all interfaces,
          // so can't pattern match on the event instance itself. Instead, pattern
          // match on the type and the cast down to the expected event instance type
@@ -449,20 +431,24 @@ class ClientListenerRegistry {
                   case CACHE_ENTRY_CREATED:
                   case CACHE_ENTRY_MODIFIED:
                      KeyValuePair<HotRodOperation, Boolean> responseType = getEventResponseType(event);
-                     return new Events.KeyWithVersionEvent(version, getEventId(event), responseType.getKey(), listenerId, responseType.getValue(), key, dataVersion);
+                     return new Events.KeyWithVersionEvent(version, getEventId(event), responseType.getKey(), listenerId,
+                           responseType.getValue(), key, dataVersion, eventFuture);
                   case CACHE_ENTRY_REMOVED:
                   case CACHE_ENTRY_EXPIRED:
                      responseType = getEventResponseType(event);
-                     return new Events.KeyEvent(version, getEventId(event), responseType.getKey(), listenerId, responseType.getValue(), key);
+                     return new Events.KeyEvent(version, getEventId(event), responseType.getKey(), listenerId,
+                           responseType.getValue(), key, eventFuture);
                   default:
                      throw log.unexpectedEvent(event);
                }
             case CUSTOM_PLAIN:
                KeyValuePair<HotRodOperation, Boolean> responseType = getEventResponseType(event);
-               return new Events.CustomEvent(version, getEventId(event), responseType.getKey(), listenerId, responseType.getValue(), value);
+               return new Events.CustomEvent(version, getEventId(event), responseType.getKey(), listenerId,
+                     responseType.getValue(), value, eventFuture);
             case CUSTOM_RAW:
                responseType = getEventResponseType(event);
-               return new Events.CustomRawEvent(version, getEventId(event), responseType.getKey(), listenerId, responseType.getValue(), value);
+               return new Events.CustomRawEvent(version, getEventId(event), responseType.getKey(), listenerId,
+                     responseType.getValue(), value, eventFuture);
             default:
                throw new IllegalArgumentException("Event type not supported: " + targetEventType);
          }
