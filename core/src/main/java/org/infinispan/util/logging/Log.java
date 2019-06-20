@@ -117,13 +117,13 @@ public interface Log extends BasicLogger {
    @Message(value = "Detected write skew on key [%s]. Another process has changed the entry since we last read it! Unable to copy entry for update.", id = 5)
    void unableToCopyEntryForUpdate(Object key);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Failed remote execution on node %s", id = 6)
-   void remoteExecutionFailed(Address address, @Cause Throwable t);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Failed remote execution on node %s", id = 6)
+//   void remoteExecutionFailed(Address address, @Cause Throwable t);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Failed local execution ", id = 7)
-   void localExecutionFailed(@Cause Throwable t);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Failed local execution ", id = 7)
+//   void localExecutionFailed(@Cause Throwable t);
 
    @LogMessage(level = WARN)
    @Message(value = "Can not select %s random members for %s", id = 8)
@@ -634,9 +634,9 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Strict peer-to-peer is enabled but the JGroups channel was started externally - this is very likely to result in RPC timeout errors on startup", id = 171)
 //   void warnStrictPeerToPeerWithInjectedChannel();
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Custom interceptor %s has used @Inject, @Start or @Stop. These methods will not be processed. Please extend org.infinispan.interceptors.base.BaseCustomInterceptor instead, and your custom interceptor will have access to a cache and cacheManager.  Override stop() and start() for lifecycle methods.", id = 173)
-   void customInterceptorExpectsInjection(String customInterceptorFQCN);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Custom interceptor %s has used @Inject, @Start or @Stop. These methods will not be processed. Please extend org.infinispan.interceptors.base.BaseCustomInterceptor instead, and your custom interceptor will have access to a cache and cacheManager.  Override stop() and start() for lifecycle methods.", id = 173)
+//   void customInterceptorExpectsInjection(String customInterceptorFQCN);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Unexpected error reading configuration", id = 174)
@@ -712,13 +712,13 @@ public interface Log extends BasicLogger {
    @Message(value = "When indexing locally a cache with shared cache loader, preload must be enabled", id = 191)
    void localIndexingWithSharedCacheLoaderRequiresPreload();
 
-   @LogMessage(level = WARN)
-   @Message(value = "hash's 'numVirtualNodes' attribute has been deprecated. Please use hash.numSegments instead", id = 192)
-   void hashNumVirtualNodesDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "hash's 'numVirtualNodes' attribute has been deprecated. Please use hash.numSegments instead", id = 192)
+//   void hashNumVirtualNodesDeprecated();
 
-   @LogMessage(level = WARN)
-   @Message(value = "hash's 'consistentHash' attribute has been deprecated. Please use hash.consistentHashFactory instead", id = 193)
-   void consistentHashDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "hash's 'consistentHash' attribute has been deprecated. Please use hash.consistentHashFactory instead", id = 193)
+//   void consistentHashDeprecated();
 
    @LogMessage(level = WARN)
    @Message(value = "Failed loading keys from cache store", id = 194)
@@ -839,9 +839,9 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Error while initializing SSL context", id = 226)
 //   CacheConfigurationException sslInitializationException(@Cause Throwable e);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Support for concurrent updates can no longer be configured (it is always enabled by default)", id = 227)
-   void warnConcurrentUpdateSupportCannotBeConfigured();
+//   @LogMessage(level = WARN)
+//   @Message(value = "Support for concurrent updates can no longer be configured (it is always enabled by default)", id = 227)
+//   void warnConcurrentUpdateSupportCannotBeConfigured();
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed to recover cache %s state after the current node became the coordinator", id = 228)
@@ -923,9 +923,9 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Invalid Cache Loader class: %s", id = 253)
 //   CacheConfigurationException invalidCacheLoaderClass(String name);
 
-   @LogMessage(level = WARN)
-   @Message(value = "The transport element's 'strictPeerToPeer' attribute is no longer in use.", id = 254)
-   void strictPeerToPeerDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "The transport element's 'strictPeerToPeer' attribute is no longer in use.", id = 254)
+//   void strictPeerToPeerDeprecated();
 
    @LogMessage(level = ERROR)
    @Message(value = "Error while processing prepare", id = 255)
@@ -1064,12 +1064,12 @@ public interface Log extends BasicLogger {
    void unrecognizedAttribute(String property);
 
    @LogMessage(level = INFO)
-   @Message(value = "Ignoring XML attribute %s, please remove from configuration file", id = 293)
-   void ignoreXmlAttribute(Object attribute);
+   @Message(value = "Ignoring XML attribute %s at [%d,%d], please remove from configuration file", id = 293)
+   void ignoreXmlAttribute(Object attribute, int line, int column);
 
    @LogMessage(level = INFO)
-   @Message(value = "Ignoring XML element %s, please remove from configuration file", id = 294)
-   void ignoreXmlElement(Object element);
+   @Message(value = "Ignoring XML element %s at [%d,%d], please remove from configuration file", id = 294)
+   void ignoreXmlElement(Object element, int line, int column);
 
    @Message(value = "No thread pool with name %s found", id = 295)
    CacheConfigurationException undefinedThreadPoolName(String name);
@@ -1158,9 +1158,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to read rebalancing status from coordinator %s", id = 329)
    void errorReadingRebalancingStatus(Address coordinator, @Cause Exception e);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Distributed task failed at %s. The task is failing over to be executed at %s", id = 330)
-   void distributedTaskFailover(Address failedAtAddress, Address failoverTarget, @Cause Exception e);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Distributed task failed at %s. The task is failing over to be executed at %s", id = 330)
+//   void distributedTaskFailover(Address failedAtAddress, Address failoverTarget, @Cause Exception e);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to invoke method %s on Object instance %s ", id = 331)
@@ -1237,8 +1237,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to instantiate loader/writer instance for StoreConfiguration %s", id = 355)
    CacheConfigurationException unableToInstantiateClass(Class<?> storeConfigurationClass);
 
-   @Message(value = "Maximum data container size is currently 2^48 - 1, the number provided was %s", id = 356)
-   CacheConfigurationException evictionSizeTooLarge(long value);
+//   @Message(value = "Maximum data container size is currently 2^48 - 1, the number provided was %s", id = 356)
+//   CacheConfigurationException evictionSizeTooLarge(long value);
 
    @LogMessage(level = ERROR)
    @Message(value = "end() failed for %s", id = 357)
@@ -1312,8 +1312,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Invocation batching not enabled in current configuration! Please enable it.", id = 378)
    CacheConfigurationException invocationBatchingNotEnabled();
 
-   @Message(value = "Distributed Executors Framework is not supported in simple cache", id = 380)
-   CacheConfigurationException distributedExecutorsNotSupported();
+//   @Message(value = "Distributed Executors Framework is not supported in simple cache", id = 380)
+//   CacheConfigurationException distributedExecutorsNotSupported();
 
    @Message(value = "This configuration is not supported for simple cache", id = 381)
    CacheConfigurationException notSupportedInSimpleCache();
@@ -1322,16 +1322,16 @@ public interface Log extends BasicLogger {
    @Message(value = "Global state persistence was enabled without specifying a location", id = 382)
    void missingGlobalStatePersistentLocation();
 
-   @LogMessage(level = WARN)
-   @Message(value = "The eviction max-entries attribute has been deprecated. Please use the size attribute instead", id = 383)
-   void evictionMaxEntriesDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "The eviction max-entries attribute has been deprecated. Please use the size attribute instead", id = 383)
+//   void evictionMaxEntriesDeprecated();
 
    @Message(value = "Unable to broadcast invalidation messages", id = 384)
    RuntimeException unableToBroadcastInvalidation(@Cause Throwable e);
 
-   @LogMessage(level = WARN)
-   @Message(value = "The data container class configuration has been deprecated.  This has no current replacement", id = 385)
-   void dataContainerConfigurationDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "The data container class configuration has been deprecated.  This has no current replacement", id = 385)
+//   void dataContainerConfigurationDeprecated();
 
    @Message(value = "Failed to read persisted state from file %s. Aborting.", id = 386)
    CacheConfigurationException failedReadingPersistentState(@Cause IOException e, File stateFile);
@@ -1463,8 +1463,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Eviction size value cannot be less than or equal to zero if eviction is enabled", id = 424)
    CacheConfigurationException invalidEvictionSize();
 
-   @Message(value = "Eviction cannot use memory-based approximation with LIRS", id = 425)
-   CacheConfigurationException memoryEvictionInvalidStrategyLIRS();
+//   @Message(value = "Eviction cannot use memory-based approximation with LIRS", id = 425)
+//   CacheConfigurationException memoryEvictionInvalidStrategyLIRS();
 
    //removed unused message (id=426)
 
@@ -1491,9 +1491,9 @@ public interface Log extends BasicLogger {
    @Message(value = "A default cache has been requested, but no cache has been set as default for this container", id = 433)
    CacheConfigurationException noDefaultCache();
 
-   @LogMessage(level = WARN)
-   @Message(value = "Direct usage of the ___defaultcache name to retrieve the default cache is deprecated", id = 434)
-   void deprecatedDefaultCache();
+//   @LogMessage(level = WARN)
+//   @Message(value = "Direct usage of the ___defaultcache name to retrieve the default cache is deprecated", id = 434)
+//   void deprecatedDefaultCache();
 
    @Message(value = "Cache manager initialized with a default cache configuration but without a name for it. Set it in the GlobalConfiguration.", id = 435)
    CacheConfigurationException defaultCacheConfigurationWithoutName();
@@ -1564,20 +1564,20 @@ public interface Log extends BasicLogger {
    @Message(value = "Failure during leaver transactions cleanup", id = 455)
    void transactionCleanupError(@Cause Throwable e);
 
-   @Message(value = "Cache does not contain the atomic map.", id = 456)
-   IllegalStateException atomicMapDoesNotExist();
+//   @Message(value = "Cache does not contain the atomic map.", id = 456)
+//   IllegalStateException atomicMapDoesNotExist();
 
-   @Message(value = "Cache contains %s which is not of expected type %s", id = 457)
-   IllegalStateException atomicMapHasWrongType(Object value, Class<?> type);
+//   @Message(value = "Cache contains %s which is not of expected type %s", id = 457)
+//   IllegalStateException atomicMapHasWrongType(Object value, Class<?> type);
 
-   @Message(value = "Fine grained maps require clustering.hash.groups enabled.", id = 458)
-   IllegalStateException atomicFineGrainedNeedsGroups();
+//   @Message(value = "Fine grained maps require clustering.hash.groups enabled.", id = 458)
+//   IllegalStateException atomicFineGrainedNeedsGroups();
 
-   @Message(value = "Fine grained maps require transactional cache.", id = 459)
-   IllegalStateException atomicFineGrainedNeedsTransactions();
+//   @Message(value = "Fine grained maps require transactional cache.", id = 459)
+//   IllegalStateException atomicFineGrainedNeedsTransactions();
 
-   @Message(value = "Fine grained maps require explict transaction or auto-commit enabled", id = 460)
-   IllegalStateException atomicFineGrainedNeedsExplicitTxOrAutoCommit();
+//   @Message(value = "Fine grained maps require explict transaction or auto-commit enabled", id = 460)
+//   IllegalStateException atomicFineGrainedNeedsExplicitTxOrAutoCommit();
 
    @Message(value = "Class %s should be a subclass of %s", id = 461)
    CacheException invalidEncodingClass(Class<?> configured, Class<?> required);
