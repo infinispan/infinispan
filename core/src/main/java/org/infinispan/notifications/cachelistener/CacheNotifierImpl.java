@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
@@ -386,7 +387,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyCacheEntryCreated(K key, V value, Metadata metadata, boolean pre,
                                        InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryCreatedListeners)) {
-         return doNotifyCreated(key, value, metadata, pre, ctx, command);
+         return resumeOnCPU(doNotifyCreated(key, value, metadata, pre, ctx, command), command);
       }
       return CompletableFutures.completedNull();
    }
@@ -425,7 +426,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyCacheEntryModified(K key, V value, Metadata metadata, V previousValue,
          Metadata previousMetadata, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryModifiedListeners)) {
-         return doNotifyModified(key, value, metadata, previousValue, previousMetadata, pre, ctx, command);
+         return resumeOnCPU(doNotifyModified(key, value, metadata, previousValue, previousMetadata, pre, ctx, command), command);
       }
       return CompletableFutures.completedNull();
    }
@@ -464,7 +465,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyCacheEntryRemoved(K key, V previousValue, Metadata previousMetadata, boolean pre,
                                        InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryRemovedListeners)) {
-         return doNotifyRemoved(key, previousValue, previousMetadata, pre, ctx, command);
+         return resumeOnCPU(doNotifyRemoved(key, previousValue, previousMetadata, pre, ctx, command), command);
       }
       return CompletableFutures.completedNull();
    }
@@ -555,7 +556,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public CompletionStage<Void> notifyCacheEntryVisited(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryVisitedListeners)) {
-         return doNotifyVisited(key, value, pre, ctx);
+         return resumeOnCPU(doNotifyVisited(key, value, pre, ctx), command);
       }
       return CompletableFutures.completedNull();
    }
@@ -576,7 +577,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public CompletionStage<Void> notifyCacheEntriesEvicted(Collection<Map.Entry<K, V>> entries, InvocationContext ctx, FlagAffectedCommand command) {
       if (!entries.isEmpty() && isNotificationAllowed(command, cacheEntriesEvictedListeners)) {
-         return doNotifyEvicted(entries);
+         return resumeOnCPU(doNotifyEvicted(entries), command);
       }
       return CompletableFutures.completedNull();
    }
@@ -610,7 +611,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public CompletionStage<Void> notifyCacheEntryExpired(K key, V value, Metadata metadata, InvocationContext ctx) {
       if (!cacheEntryExpiredListeners.isEmpty()) {
-         return doNotifyExpired(key, value, metadata, ctx);
+         return resumeOnCPU(doNotifyExpired(key, value, metadata, ctx), key);
       }
       return CompletableFutures.completedNull();
    }
@@ -645,7 +646,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyCacheEntryInvalidated(final K key, V value, Metadata metadata,
                                            final boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryInvalidatedListeners)) {
-         return doNotifyInvalidated(key, value, metadata, pre, ctx, command);
+         return resumeOnCPU(doNotifyInvalidated(key, value, metadata, pre, ctx, command), command);
       }
       return CompletableFutures.completedNull();
    }
@@ -669,7 +670,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyCacheEntryLoaded(K key, V value, boolean pre,
                                       InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryLoadedListeners)) {
-         return doNotifyLoaded(key, value, pre, ctx);
+         return resumeOnCPU(doNotifyLoaded(key, value, pre, ctx), command);
       }
       return CompletableFutures.completedNull();
    }
@@ -690,7 +691,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public CompletionStage<Void> notifyCacheEntryActivated(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryActivatedListeners)) {
-         return doNotifyActivated(key, value, pre, ctx);
+         return resumeOnCPU(doNotifyActivated(key, value, pre, ctx), command);
       }
       return CompletableFutures.completedNull();
    }
@@ -719,7 +720,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyCacheEntryPassivated(K key, V value, boolean pre, InvocationContext ctx,
          FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryPassivatedListeners)) {
-         return doNotifyPassivated(key, value, pre);
+         return resumeOnCPU(doNotifyPassivated(key, value, pre), command);
       }
       return CompletableFutures.completedNull();
    }
@@ -749,7 +750,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyTransactionCompleted(GlobalTransaction transaction, boolean successful,
          InvocationContext ctx) {
       if (!transactionCompletedListeners.isEmpty()) {
-         return doNotifyTransactionCompleted(transaction, successful, ctx);
+         return resumeOnCPU(doNotifyTransactionCompleted(transaction, successful, ctx), transaction);
       }
       return CompletableFutures.completedNull();
    }
@@ -778,7 +779,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public CompletionStage<Void> notifyTransactionRegistered(GlobalTransaction globalTransaction, boolean isOriginLocal) {
       if (!transactionRegisteredListeners.isEmpty()) {
-         return doNotifyTransactionRegistered(globalTransaction, isOriginLocal);
+         return resumeOnCPU(doNotifyTransactionRegistered(globalTransaction, isOriginLocal), globalTransaction);
       }
       return CompletableFutures.completedNull();
    }
@@ -798,7 +799,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyDataRehashed(ConsistentHash oldCH, ConsistentHash newCH, ConsistentHash unionCH,
          int newTopologyId, boolean pre) {
       if (!dataRehashedListeners.isEmpty()) {
-         return doNotifyDataRehashed(oldCH, newCH, unionCH, newTopologyId, pre);
+         return resumeOnCPU(doNotifyDataRehashed(oldCH, newCH, unionCH, newTopologyId, pre), newCH);
       }
       return CompletableFutures.completedNull();
    }
@@ -824,7 +825,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyTopologyChanged(CacheTopology oldTopology, CacheTopology newTopology,
          int newTopologyId, boolean pre) {
       if (!topologyChangedListeners.isEmpty()) {
-         return doNotifyTopologyChanged(oldTopology, newTopology, newTopologyId, pre);
+         return resumeOnCPU(doNotifyTopologyChanged(oldTopology, newTopology, newTopologyId, pre), newTopology);
       }
       return CompletableFutures.completedNull();
    }
@@ -850,7 +851,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public CompletionStage<Void> notifyPartitionStatusChanged(AvailabilityMode mode, boolean pre) {
       if (!partitionChangedListeners.isEmpty()) {
-         return doNotifyPartitionStatusChanged(mode, pre);
+         return resumeOnCPU(doNotifyPartitionStatusChanged(mode, pre), mode);
       }
       return CompletableFutures.completedNull();
    }
@@ -869,7 +870,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public CompletionStage<Void> notifyPersistenceAvailabilityChanged(boolean available) {
       if (!persistenceChangedListeners.isEmpty()) {
-         return doNotifyPersistenceAvailabilityChanged(available);
+         return resumeOnCPU(doNotifyPersistenceAvailabilityChanged(available), available);
       }
       return CompletableFutures.completedNull();
    }
@@ -941,7 +942,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                throw new IllegalArgumentException("Unexpected event type encountered!");
          }
       }
-      return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
+      return aggregateCompletionStage != null ? resumeOnCPU(aggregateCompletionStage.freeze(), uuid) : CompletableFutures.completedNull();
    }
 
    @Override

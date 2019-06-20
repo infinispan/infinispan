@@ -45,6 +45,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -75,9 +76,12 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       Configuration config = new ConfigurationBuilder().build();
       cdl.init(null, config, mock(KeyPartitioner.class));
+      ClusterEventManager cem = mock(ClusterEventManager.class);
+      when(cem.sendEvents()).thenReturn(CompletableFutures.completedNull());
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
-                         mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(KeyPartitioner.class),
-                         TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()));
+                         mock(InternalEntryFactory.class), cem, mock(KeyPartitioner.class),
+                         TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()),
+                         TestingUtil.named(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR, new WithinThreadExecutor()));
       cl = new CacheListener();
       n.start();
       addListener();

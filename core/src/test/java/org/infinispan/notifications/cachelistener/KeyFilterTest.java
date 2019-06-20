@@ -28,6 +28,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -59,8 +60,10 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       Configuration config = new ConfigurationBuilder().build();
       cdl.init(null, config, mock(KeyPartitioner.class));
+      ClusterEventManager cem = mock(ClusterEventManager.class);
+      when(cem.sendEvents()).thenReturn(CompletableFutures.completedNull());
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
-                         mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(KeyPartitioner.class));
+                         mock(InternalEntryFactory.class), cem, mock(KeyPartitioner.class));
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);

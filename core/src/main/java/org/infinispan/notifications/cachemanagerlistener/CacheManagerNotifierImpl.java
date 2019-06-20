@@ -84,7 +84,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
          aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage, invokeListener(listener, event));
       }
       if (aggregateCompletionStage != null) {
-         return aggregateCompletionStage.freeze();
+         return resumeOnCPU(aggregateCompletionStage.freeze(), event);
       }
       return CompletableFutures.completedNull();
    }
