@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 
@@ -18,13 +20,18 @@ class Events {
       protected final boolean isRetried;
       protected final byte marker;
 
-      protected Event(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried, byte marker) {
+      // Delays the operation that generated this event
+      protected final CompletableFuture<Void> eventFuture;
+
+      protected Event(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried, byte marker,
+                      CompletableFuture<Void> eventFuture) {
          this.version = version;
          this.messageId = messageId;
          this.op = op;
          this.listenerId = listenerId;
          this.isRetried = isRetried;
          this.marker = marker;
+         this.eventFuture = eventFuture;
       }
 
       abstract void writeEvent(ByteBuf buf);
@@ -39,8 +46,8 @@ class Events {
       protected final byte[] key;
 
       protected KeyEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
-                         byte[] key) {
-         super(version, messageId, op, listenerId, isRetried, (byte) 0);
+                         byte[] key, CompletableFuture<Void> eventFuture) {
+         super(version, messageId, op, listenerId, isRetried, (byte) 0, eventFuture);
          this.key = key;
       }
 
@@ -68,8 +75,8 @@ class Events {
       protected final long dataVersion;
 
       protected KeyWithVersionEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
-                                    byte[] key, long dataVersion) {
-         super(version, messageId, op, listenerId, isRetried, (byte) 0);
+                                    byte[] key, long dataVersion, CompletableFuture<Void> eventFuture) {
+         super(version, messageId, op, listenerId, isRetried, (byte) 0, eventFuture);
          this.key = key;
          this.dataVersion = dataVersion;
       }
@@ -99,8 +106,8 @@ class Events {
       protected final byte[] eventData;
 
       protected CustomEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
-                            byte[] eventData) {
-         super(version, messageId, op, listenerId, isRetried, (byte) 1);
+                            byte[] eventData, CompletableFuture<Void> eventFuture) {
+         super(version, messageId, op, listenerId, isRetried, (byte) 1, eventFuture);
          this.eventData = eventData;
       }
 
@@ -127,8 +134,8 @@ class Events {
       protected final byte[] eventData;
 
       protected CustomRawEvent(byte version, long messageId, HotRodOperation op, byte[] listenerId, boolean isRetried,
-                               byte[] eventData) {
-         super(version, messageId, op, listenerId, isRetried, (byte) 2);
+                               byte[] eventData, CompletableFuture<Void> eventFuture) {
+         super(version, messageId, op, listenerId, isRetried, (byte) 2, eventFuture);
          this.eventData = eventData;
       }
 

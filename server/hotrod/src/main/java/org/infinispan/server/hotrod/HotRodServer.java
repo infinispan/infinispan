@@ -5,21 +5,20 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +46,7 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
@@ -60,13 +60,6 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.multimap.impl.EmbeddedMultimapCache;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
@@ -224,14 +217,15 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // These are also initialized by super.startInternal, but we need them before
       this.configuration = configuration;
       this.cacheManager = cacheManager;
-      this.iterationManager = new DefaultIterationManager(cacheManager.getGlobalComponentRegistry().getTimeService());
+      GlobalComponentRegistry gcr = cacheManager.getGlobalComponentRegistry();
+      this.iterationManager = new DefaultIterationManager(gcr.getTimeService());
       this.hasDefaultCache = configuration.defaultCacheName() != null || cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent();
 
       // Initialize query-specific stuff
       List<QueryFacade> queryFacades = loadQueryFacades();
       queryFacade = queryFacades.size() > 0 ? queryFacades.get(0) : null;
-      clientListenerRegistry = new ClientListenerRegistry(
-         cacheManager.getGlobalComponentRegistry().getComponent(EncoderRegistry.class));
+      clientListenerRegistry = new ClientListenerRegistry(gcr.getComponent(EncoderRegistry.class),
+            gcr.getComponent(ExecutorService.class, ASYNC_OPERATIONS_EXECUTOR));
       clientCounterNotificationManager = new ClientCounterManagerNotificationManager(asCounterManager(cacheManager));
 
       addKeyValueFilterConverterFactory(ToEmptyBytesKeyValueFilterConverter.class.getName(), new ToEmptyBytesFactory());
@@ -378,18 +372,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return new EmbeddedMultimapCache(cache(getCacheInfo(header), header, subject));
    }
 
-   boolean hasSyncListener(CacheNotifierImpl<?, ?> cacheNotifier) {
-      for (Class<? extends Annotation> annotation :
-            new Class[]{CacheEntryCreated.class, CacheEntryRemoved.class, CacheEntryExpired.class, CacheEntryModified.class}) {
-         for (CacheEntryListenerInvocation invocation : cacheNotifier.getListenerCollectionForAnnotation(annotation)) {
-            if (invocation.isSync()) {
-               return true;
-            }
-         }
-      }
-      return false;
-   }
-
    public CacheInfo getCacheInfo(HotRodHeader header) {
       return getCacheInfo(header.cacheName, header.version, header.messageId, true);
    }
@@ -444,8 +426,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(info.anonymizedCache);
       PersistenceManager pm = cr.getComponent(PersistenceManager.class);
       boolean hasIndexing = SecurityActions.getCacheConfiguration(info.anonymizedCache).indexing().index().isEnabled();
-      CacheNotifierImpl cacheNotifier = (CacheNotifierImpl) cr.getComponent(CacheNotifier.class);
-      info.update(pm.isEnabled(), hasIndexing, hasSyncListener(cacheNotifier));
+      info.update(pm.isEnabled(), hasIndexing);
    }
 
    private AdvancedCache<byte[], byte[]> obtainAnonymizedCache(String cacheName) {
@@ -622,7 +603,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       final boolean clustered;
       volatile boolean persistence;
       volatile boolean indexing;
-      volatile boolean syncListener;
 
       CacheInfo(AdvancedCache<byte[], byte[]> cache, Configuration configuration) {
          this.anonymizedCache = SecurityActions.anonymizeSecureCache(cache);
@@ -636,7 +616,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          // Start conservative and assume we have all the stuff that can cause operations to block
          this.persistence = true;
          this.indexing = true;
-         this.syncListener = true;
       }
 
       AdvancedCache<byte[], byte[]> getCache(KeyValuePair<MediaType, MediaType> requestMediaTypes, Subject subject) {
@@ -654,10 +633,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          }
       }
 
-      public void update(boolean enabled, boolean indexing, boolean syncListener) {
+      public void update(boolean enabled, boolean indexing) {
          this.persistence = enabled;
          this.indexing = indexing;
-         this.syncListener = syncListener;
       }
    }
 
@@ -674,13 +652,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       }
 
       @TopologyChanged
-      public CompletionStage<Void> topologyChanged(TopologyChangedEvent<Address, ServerAddress> event) {
-         CompletableFuture<Void> cf = new CompletableFuture<>();
-         recursionTopologyChanged(cf);
-         return cf;
+      public void topologyChanged(TopologyChangedEvent<Address, ServerAddress> event) {
+         recursionTopologyChanged();
       }
 
-      private void recursionTopologyChanged(CompletableFuture<Void> cf) {
+      private void recursionTopologyChanged() {
          if (addressCache.getStatus().allowInvocations()) {
             // No need for a timeout here, the cluster executor has a default timeout
             clusterExecutor.submitConsumer(new CheckAddressTask(addressCache.getName(), clusterAddress), (a, v, t) -> {
@@ -694,13 +670,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
             }).whenComplete((v, t) -> {
                if (t != null) {
                   log.debug("Error re-adding address to topology cache, retrying", t);
-                  recursionTopologyChanged(cf);
-               } else {
-                  cf.complete(null);
+                  recursionTopologyChanged();
                }
             });
-         } else {
-            cf.complete(null);
          }
       }
    }
