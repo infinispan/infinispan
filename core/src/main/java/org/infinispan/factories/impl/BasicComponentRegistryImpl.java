@@ -113,7 +113,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       ComponentFactory factory = findFactory(name);
       if (wrapper == null) {
          if (factory == null) {
-            // Return null so the previous scope can have a go
+            // Return null without registering a wrapper so the previous scope can have a go
             // It's ok to return null if another thread is registering the component concurrently
             return null;
          }
@@ -123,7 +123,13 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       }
 
       if (needInstance) {
-         instantiateWrapper(wrapper, factory);
+         if (factory != null) {
+            instantiateWrapper(wrapper, factory);
+         } else {
+            // If the wrapper exists but the factory is null, another thread must be registering the component,
+            // either manually or from tryAutoInstantiation
+            awaitWrapperState(wrapper, WrapperState.INSTANTIATED);
+         }
          wireWrapper(wrapper);
       }
       return wrapper;
@@ -233,7 +239,8 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       if (factoryRef == null) {
          factoryRef = tryAutoInstantiation(factoryName);
       }
-      return factoryRef != null ? factoryRef.running() : null;
+      // Don't start the factory's dependencies
+      return factoryRef != null ? factoryRef.wired() : null;
    }
 
    private void commitWrapperStateChange(ComponentWrapper wrapper, WrapperState expectedState, WrapperState newState) {
