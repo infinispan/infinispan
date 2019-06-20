@@ -113,7 +113,7 @@ The possible attributes for the expiration element are:
 *  _interval_ interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1.
 
 === Eviction
-To define an eviction strategy for a cache, add the `<eviction/>` element as follows:
+To define eviction for a cache, add the `<memory/>` element as follows:
 
 include::config_examples/eviction.adoc[]
 

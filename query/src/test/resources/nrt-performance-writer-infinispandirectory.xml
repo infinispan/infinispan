@@ -7,7 +7,9 @@
    <cache-container name="QueryEnabledGrid-Local-NRTIndexing" default-cache="default" statistics="false">
       <jmx duplicate-domains="true" />
       <local-cache name="default" statistics="false">
-         <eviction size="-1" strategy="NONE"/>
+         <memory>
+            <object size="-1"/>
+         </memory>
          <expiration max-idle="-1"/>
          <indexing index="NONE"/>
       </local-cache>
@@ -16,7 +18,9 @@
       <!-- *************************************** -->
       <local-cache name="Indexed">
          <!--  For our test we don't want to keep all data in memory: throw some away -->
-         <eviction size="200" strategy="LIRS" />
+         <memory>
+            <object size="200"/>
+         </memory>
          <indexing index="ALL">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>

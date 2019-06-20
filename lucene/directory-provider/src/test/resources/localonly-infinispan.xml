@@ -16,7 +16,9 @@
          <!-- *************************************** -->
          <local-cache name="LuceneIndexesMetadata">
             <transaction mode="NONE"/>
-            <eviction max-entries="-1" strategy="NONE"/>
+            <memory>
+                <object size="-1"/>
+            </memory>
             <expiration max-idle="-1"/>
          </local-cache>
 
@@ -25,7 +27,9 @@
          <!-- **************************** -->
          <local-cache name="LuceneIndexesData">
             <transaction mode="NONE"/>
-            <eviction max-entries="-1" strategy="NONE"/>
+            <memory>
+                <object size="-1"/>
+            </memory>
             <expiration max-idle="-1"/>
          </local-cache>
 
@@ -34,7 +38,9 @@
          <!-- ***************************** -->
         <local-cache name="LuceneIndexesLocking">
             <transaction mode="NONE"/>
-            <eviction max-entries="-1" strategy="NONE"/>
+            <memory>
+                <object size="-1"/>
+            </memory>
             <expiration max-idle="-1"/>
         </local-cache>
     </cache-container>

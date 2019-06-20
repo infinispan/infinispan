@@ -549,11 +549,6 @@ The problem is that Hibernate will create a Transaction instance via java.sql.Co
 So, any work on the 2nd level cache will be done under a different transaction to the one used to commit the stuff to the database via Hibernate. In other words, your operations on the database and the 2LC are not treated as a single unit. Risks here include failures to update the 2LC leaving it with stale data while the database committed data correctly.
 
 === Cache Server questions
-==== After running a Hot Rod server for a while, I get a NullPointerException in HotRodEncoder.getTopologyResponse(), how can I get around it?
-This is a bug (see link:https://jira.jboss.org/browse/ISPN-669[ISPN-669] ) in the Hot Rod code where we didn't specifically set the topology cache to have no eviction and no expiration. So, if someone configured the default cache in the {brandname} configuration file for Hot Rod with expiration or eviction, the topology cache would end up having those capabilities and the topology view could after a while be removed from memory. To get around this issue either:
-
-* Avoid having expiration and eviction on for the default cache.
-* Or, make sure you create a namedCache for `___hotRodTopologyCache` with sync replication, state transfer, no expiration and no eviction.
 
 ==== Is there a way to do a Bulk Get on a remote cache?
 There's no bulk get operation in Hot Rod, but the Java Hot Rod client has implemented via link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] the getAsync() operation, which returns a link:{javadocroot}/org/infinispan/util/concurrent/NotifyingFuture.html[org.infinispan.util.concurrent.NotifyingFuture] (extends java.util.concurrent.Future). So, if you want to retrieve multiple keys in parallel, just call multiple times _getAsync()_ and when you need the values, just call _Future.get()_ , or attach a link:{javadocroot}/org/infinispan/util/concurrent/FutureListener.html[ _FutureListener_ ] to the _NotifyingFuture_ to get notified when the value is ready.

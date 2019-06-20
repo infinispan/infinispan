@@ -17,8 +17,10 @@
          <local-cache name="LuceneIndexesMetadata">
             <transaction mode="NONE"/>
             <indexing index="NONE" />
-            <locking striping="false" acquire-timeout="10000" concurrency-level="500" write-skew="false" />
-            <eviction max-entries="-1" strategy="NONE"/>
+            <locking striping="false" acquire-timeout="10000" concurrency-level="500" />
+            <memory>
+               <object size="-1"/>
+            </memory>
             <expiration max-idle="-1"/>
             <persistence>
                 <file-store shared="false" preload="true" fetch-state="true" read-only="false" purge="false" path="${tempTestDataDir}" />
@@ -31,8 +33,10 @@
          <local-cache name="LuceneIndexesData">
             <transaction mode="NONE"/>
             <indexing index="NONE" />
-            <locking striping="false" acquire-timeout="10000" concurrency-level="500" write-skew="false" />
-            <eviction max-entries="-1" strategy="NONE"/>
+            <locking striping="false" acquire-timeout="10000" concurrency-level="500" />
+            <memory>
+               <object size="-1"/>
+            </memory>
             <expiration max-idle="-1"/>
             <persistence>
                 <file-store shared="false" preload="true" fetch-state="true" read-only="false" purge="false" path="${tempTestDataDir}" />
@@ -45,8 +49,10 @@
         <local-cache name="LuceneIndexesLocking">
             <transaction mode="NONE"/>
             <indexing index="NONE" />
-            <locking striping="false" acquire-timeout="10000" concurrency-level="500" write-skew="false" />
-            <eviction max-entries="-1" strategy="NONE"/>
+            <locking striping="false" acquire-timeout="10000" concurrency-level="500" />
+            <memory>
+              <object size="-1"/>
+            </memory>
             <expiration max-idle="-1"/>
         </local-cache>
     </cache-container>

@@ -37,11 +37,11 @@ where infinispan-embedded-{infinispanversion}.0.Final.jar, jboss-transaction-api
          </persistence>
       </local-cache>
       <local-cache name="Eviction">
-         <eviction max-entries="2" strategy="FIFO" />
+         <memory> <object size="2"/> </memory>
          <expiration interval="500" />
       </local-cache>
       <local-cache name="CacheStoreEviction">
-         <eviction max-entries="2" strategy="FIFO" />
+         <memory> <object size="2"/> </memory>
          <expiration interval="500" />
          <persistence>
             <file-store path="${java.io.tmpdir}" shared="false" preload="false" purge="false" fetch-state="true" />
