@@ -431,7 +431,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
     * This method assumes that the write lock has already been acquired via {@link #getLocks()} and getting the write
     * lock for this key.
     * <p>
-    * This method will avoid some additional lookups ass the memory address is already acquired and not return
+    * This method will avoid some additional lookups as the memory address is already acquired and not return
     * the old entry.
     * @param key key to remove
     * @param address the address for the key
