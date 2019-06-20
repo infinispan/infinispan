@@ -28,6 +28,7 @@ import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -54,9 +55,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getConfigurationBuilder();
-
-      addClusterEnabledCacheManager(c);
-      addClusterEnabledCacheManager(c);
+      createCluster(DistributionRehashSCI.INSTANCE, c, 2);
       waitForClusterToForm();
    }
 
@@ -124,7 +123,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       } else {
          stateTransferLatch.countDown();
       }
-      addClusterEnabledCacheManager(c);
+      addClusterEnabledCacheManager(DistributionRehashSCI.INSTANCE, c);
       addBlockingLocalTopologyManager(manager(2), checkPoint, preJoinTopologyId);
 
 
@@ -217,8 +216,9 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       return op.perform(cache0, key);
    }
 
-   private static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
-      private CustomConsistentHashFactory() {
+   @ProtoName("BackupOwnerCustomConsistentHashFactory")
+   public static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
+      CustomConsistentHashFactory() {
          super(1);
       }
 

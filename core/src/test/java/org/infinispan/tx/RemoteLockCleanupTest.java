@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
@@ -26,7 +27,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       config.transaction().lockingMode(LockingMode.PESSIMISTIC);
-      super.createClusteredCaches(2, config);
+      super.createClusteredCaches(2, TestDataSCI.INSTANCE, config);
    }
 
    public void testLockCleanup() throws Exception {

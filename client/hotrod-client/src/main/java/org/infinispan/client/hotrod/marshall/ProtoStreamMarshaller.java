@@ -5,7 +5,6 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 
 /**
  * A client-side marshaller that uses Protocol Buffers.
@@ -13,16 +12,10 @@ import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class ProtoStreamMarshaller extends BaseProtoStreamMarshaller {
-
-   private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext();
+public class ProtoStreamMarshaller extends org.infinispan.commons.marshall.proto.ProtoStreamMarshaller {
 
    public ProtoStreamMarshaller() {
-   }
-
-   @Override
-   public SerializationContext getSerializationContext() {
-      return serializationContext;
+      super(ProtobufUtil.newSerializationContext());
    }
 
    /**

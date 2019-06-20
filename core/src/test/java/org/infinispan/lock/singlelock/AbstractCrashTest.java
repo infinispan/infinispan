@@ -21,6 +21,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -48,7 +49,7 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() {
       ConfigurationBuilder c = buildConfiguration();
-      createCluster(c, 3);
+      createCluster(TestDataSCI.INSTANCE, c, 3);
       waitForClusterToForm();
    }
 

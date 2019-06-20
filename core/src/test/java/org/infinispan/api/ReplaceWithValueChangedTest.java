@@ -9,6 +9,7 @@ import javax.transaction.Transaction;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -25,7 +26,7 @@ public class ReplaceWithValueChangedTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
-      createClusteredCaches(2, builder);
+      createClusteredCaches(2, TestDataSCI.INSTANCE, builder);
    }
 
    public void testReplace1() throws Throwable {

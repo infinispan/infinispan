@@ -45,6 +45,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
 import org.testng.Assert;
@@ -65,7 +66,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
       cfg.memory().storageType(StorageType.OFF_HEAP);
 
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(cfg)) {
+            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
          @Override
          public void call() throws IOException, InterruptedException {
             cm.getClassWhiteList().addClasses(Person.class);
@@ -91,7 +92,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
 
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(cfg)) {
+            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
 
          String charset = "UTF-8";
 
@@ -123,9 +124,8 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
    @Test
    public void testObjectEncoder() {
-      GenericJbossMarshallerEncoder encoder = new GenericJbossMarshallerEncoder(DataConversionTest.class.getClassLoader());
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(new ConfigurationBuilder())) {
+            createCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder())) {
 
          GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
 
@@ -169,7 +169,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
       cfg.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new TestInterceptor(1));
 
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(cfg)) {
+            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
 
          @Override
          public void call() {
@@ -238,7 +238,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
 
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(cfg)) {
+            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
          @Override
          public void call() {
             Cache<String, Person> cache = cm.getCache();
@@ -270,7 +270,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
       cfg.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
 
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(cfg)) {
+            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
          @Override
          public void call() {
             Cache<String, Map<String, String>> cache = cm.getCache();
@@ -321,7 +321,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
       value.mediaType("application/bar");
 
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(cfg)) {
+            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
          @Override
          public void call() {
             Cache<String, String> cache = cm.getCache();
@@ -354,7 +354,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
       cfg.encoding().value().mediaType("text/plain; charset=UTF-8");
 
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(cfg)) {
+            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
          @Override
          public void call() {
             Cache<byte[], byte[]> cache = cm.getCache();
@@ -375,7 +375,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
    public void testWithCustomEncoder() {
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(new ConfigurationBuilder())) {
+            createCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder())) {
          @Override
          public void call() {
             GlobalComponentRegistry registry = cm.getGlobalComponentRegistry();
@@ -398,7 +398,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
    @Test
    public void testSerialization() {
-      withCacheManager(new CacheManagerCallable(createCacheManager(new ConfigurationBuilder())) {
+      withCacheManager(new CacheManagerCallable(createCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder())) {
 
          GlobalMarshaller marshaller = TestingUtil.extractGlobalMarshaller(cm);
 

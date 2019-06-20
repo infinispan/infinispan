@@ -36,7 +36,11 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements Pe
    public final EmbeddedCacheManager cacheManager;
 
    public TestObjectStreamMarshaller() {
-      cacheManager = TestCacheManagerFactory.createCacheManager();
+      this(null);
+   }
+
+   public TestObjectStreamMarshaller(SerializationContextInitializer sci) {
+      cacheManager = TestCacheManagerFactory.createCacheManager(sci);
       marshaller = (PersistenceMarshallerImpl) cacheManager.getCache().getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
    }
 

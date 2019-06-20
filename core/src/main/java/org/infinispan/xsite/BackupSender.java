@@ -49,22 +49,10 @@ public interface BackupSender {
     */
    Map<String, Boolean> status();
 
-   enum BringSiteOnlineResponse {
-      NO_SUCH_SITE,
-      ALREADY_ONLINE,
-      BROUGHT_ONLINE
-   }
-
    /**
     * Brings a site with the given name back online.
     */
    BringSiteOnlineResponse bringSiteOnline(String siteName);
-
-   enum TakeSiteOfflineResponse {
-      NO_SUCH_SITE,
-      ALREADY_OFFLINE,
-      TAKEN_OFFLINE
-   }
 
    TakeSiteOfflineResponse takeSiteOffline(String siteName);
 }

@@ -12,6 +12,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.BaseSiteUnreachableTest;
+import org.infinispan.xsite.BringSiteOnlineResponse;
 import org.infinispan.xsite.OfflineStatus;
 import org.testng.annotations.Test;
 
@@ -38,7 +39,7 @@ public class NonTxOfflineTest extends BaseSiteUnreachableTest {
 
       for (int i = 0; i < FAILURES / nrRpcPerPut; i++) {
          try {
-            assertEquals(BackupSender.BringSiteOnlineResponse.ALREADY_ONLINE, bs.bringSiteOnline(NYC));
+            assertEquals(BringSiteOnlineResponse.ALREADY_ONLINE, bs.bringSiteOnline(NYC));
             cache(LON, 0).put(keys[i], "v" + i);
             fail("This should have failed");
          } catch (Exception e) {
@@ -56,9 +57,9 @@ public class NonTxOfflineTest extends BaseSiteUnreachableTest {
          assertEquals("v" + i, cache(LON, 0).get(keys[i]));
       }
 
-      assertEquals(BackupSender.BringSiteOnlineResponse.NO_SUCH_SITE, bs.bringSiteOnline("NO_SITE"));
+      assertEquals(BringSiteOnlineResponse.NO_SUCH_SITE, bs.bringSiteOnline("NO_SITE"));
 
-      assertEquals(BackupSender.BringSiteOnlineResponse.BROUGHT_ONLINE, bs.bringSiteOnline(NYC));
+      assertEquals(BringSiteOnlineResponse.BROUGHT_ONLINE, bs.bringSiteOnline(NYC));
 
       for (int i = 0; i < FAILURES / nrRpcPerPut; i++) {
          try {

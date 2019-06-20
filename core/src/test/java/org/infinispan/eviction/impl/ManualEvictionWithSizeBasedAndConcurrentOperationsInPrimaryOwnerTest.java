@@ -3,7 +3,6 @@ package org.infinispan.eviction.impl;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.Serializable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,7 +20,6 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -305,7 +303,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
             .hash().numOwners(2).numSegments(2);
       configurePersistence(builder);
       configureEviction(builder);
-      return TestCacheManagerFactory.createClusteredCacheManager(builder);
+      return TestCacheManagerFactory.createClusteredCacheManager(new EvictionWithConcurrentOperationsSCIImpl(), builder);
    }
 
    protected Object createSameHashCodeKey(String name) {
@@ -349,38 +347,6 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
          }
       };
       TestingUtil.replaceComponent(cache, InternalDataContainer.class, controlledDataContainer, true);
-   }
-
-   public static class SameHashCodeKey implements Serializable, ExternalPojo {
-
-      private final String name;
-      private final int hashCode;
-
-      public SameHashCodeKey(String name, int hashCode) {
-         this.name = name;
-         this.hashCode = hashCode;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         SameHashCodeKey that = (SameHashCodeKey) o;
-
-         return name.equals(that.name);
-
-      }
-
-      @Override
-      public int hashCode() {
-         return hashCode;
-      }
-
-      @Override
-      public String toString() {
-         return name;
-      }
    }
 
    class AfterPassivationOrCacheWriter extends ControlledCommandInterceptor {

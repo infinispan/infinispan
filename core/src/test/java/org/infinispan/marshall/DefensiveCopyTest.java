@@ -1,19 +1,15 @@
 package org.infinispan.marshall;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-
-import java.net.URL;
-import java.net.URLClassLoader;
+import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.data.Key;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.ReclosableLatch;
 import org.testng.annotations.Test;
 
 /**
@@ -29,19 +25,21 @@ public class DefensiveCopyTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory().storageType(StorageType.BINARY);
-      return TestCacheManagerFactory.createCacheManager(builder);
+      return TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, builder);
    }
 
    public void testOriginalReferenceSafety() {
-      final Integer k = 1;
-      Person person = new Person("Mr Infinispan");
-      cache().put(k, person);
-      assertEquals(person, cache.get(k));
+      Person key = new Person("Key1");
+      Person value = new Person("Mr Infinispan");
+      cache().put(key, value);
+      assertEquals(value, cache.get(key));
       // Change referenced object
-      person.setName("Ms Hibernate");
+      value.setName("Ms Hibernate");
       // If defensive copies are working as expected,
       // it should be same as before
-      assertEquals(new Person("Mr Infinispan"), cache.get(k));
+      assertEquals(new Person("Mr Infinispan"), cache.get(key));
+      key.setName("Key2");
+      assertNull(cache.get(key));
    }
 
    public void testSafetyAfterRetrieving() {
@@ -53,19 +51,4 @@ public class DefensiveCopyTest extends SingleCacheManagerTest {
       cachedPerson.setName("Mr Digweed");
       assertEquals(person, cache.get(k));
    }
-
-   public void testDiffClassloaders() throws Exception {
-      URL core = ReclosableLatch.class.getProtectionDomain().getCodeSource().getLocation();
-      URL tests = getClass().getResource("/");
-      ClassLoader cl1 = new URLClassLoader(new URL[]{core, tests}, null);
-      ClassLoader cl2 = new URLClassLoader(new URL[]{core, tests}, null);
-      Object key1 = cl1.loadClass(Key.class.getName()).getConstructor(String.class, Boolean.TYPE).newInstance("key1", false);
-      Object key2 = cl2.loadClass(Key.class.getName()).getConstructor(String.class, Boolean.TYPE).newInstance("key1", false);
-      String value = "tralala";
-      cache.put(key1, value);
-      Object result = cache.get(key2);
-      assertNotNull(result);
-      assertEquals(value, result);
-   }
-
 }

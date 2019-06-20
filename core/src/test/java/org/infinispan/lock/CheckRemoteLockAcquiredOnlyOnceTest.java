@@ -12,6 +12,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
@@ -33,7 +34,7 @@ public class CheckRemoteLockAcquiredOnlyOnceTest extends MultipleCacheManagersTe
    protected void createCacheManagers() throws Throwable {
       final ConfigurationBuilder c = getDefaultClusteredCacheConfig(mode, true);
       c.transaction().lockingMode(LockingMode.PESSIMISTIC);
-      createCluster(c, 2);
+      createCluster(TestDataSCI.INSTANCE, c, 2);
       waitForClusterToForm();
       controlInterceptor = new ControlInterceptor();
       extractInterceptorChain(cache(0)).addInterceptor(controlInterceptor, 1);

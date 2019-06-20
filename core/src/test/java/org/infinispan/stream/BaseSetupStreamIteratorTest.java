@@ -3,7 +3,6 @@ package org.infinispan.stream;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,8 +24,11 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
 import org.infinispan.filter.Converter;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -46,6 +48,7 @@ import org.testng.annotations.Test;
 public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = "testCache";
    protected ConfigurationBuilder builderUsed;
+   protected SerializationContextInitializer sci;
 
    public BaseSetupStreamIteratorTest(boolean tx, CacheMode mode) {
       transactional = tx;
@@ -59,6 +62,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
+      sci = new StreamSerializationContextImpl();
       HashConfigurationBuilder hashConfiguration = builderUsed.clustering().cacheMode(cacheMode).hash().numSegments(3);
       if (!cacheMode.isReplicated()) {
          BaseControlledConsistentHashFactory<? extends ConsistentHash> chf =
@@ -71,10 +75,10 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       if (cacheMode.isClustered()) {
          builderUsed.clustering().stateTransfer().chunkSize(50);
          enhanceConfiguration(builderUsed);
-         createClusteredCaches(3, CACHE_NAME, builderUsed);
+         createClusteredCaches(3, CACHE_NAME, sci, builderUsed);
       } else {
          enhanceConfiguration(builderUsed);
-         EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builderUsed);
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(sci, builderUsed);
          cacheManagers.add(cm);
          cm.defineConfiguration(CACHE_NAME, builderUsed.build());
       }
@@ -93,11 +97,17 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       return stream.collect(() -> Collectors.toMap(CacheEntry::getKey, CacheEntry::getValue));
    }
 
-   protected static class StringTruncator implements Converter<Object, String, String>, Serializable, ExternalPojo {
-      private final int beginning;
-      private final int length;
+   @ProtoName("BaseSetupStreamStringTrunctator")
+   public static class StringTruncator implements Converter<Object, String, String> {
+      @ProtoField(number = 1, defaultValue = "0")
+      int beginning;
 
-      public StringTruncator(int beginning, int length) {
+      @ProtoField(number = 2, defaultValue = "0")
+      int length;
+
+      StringTruncator() {}
+
+      StringTruncator(int beginning, int length) {
          this.beginning = beginning;
          this.length = length;
       }
@@ -112,7 +122,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       }
    }
 
-   private static class TestDefaultConsistentHashFactory
+   public static class TestDefaultConsistentHashFactory
          extends BaseControlledConsistentHashFactory<DefaultConsistentHash> {
       TestDefaultConsistentHashFactory() {
          super(new DefaultTrait(), 3);
@@ -133,7 +143,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       }
    }
 
-   private static class TestScatteredConsistentHashFactory
+   public static class TestScatteredConsistentHashFactory
          extends BaseControlledConsistentHashFactory<ScatteredConsistentHash> {
       TestScatteredConsistentHashFactory() {
          super(new ScatteredTrait(), 3);
@@ -172,5 +182,19 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
          set.add(new ImmortalCacheEntry(value.getKey(), value.getValue()));
       }
       return returnMap;
+   }
+
+   @AutoProtoSchemaBuilder(
+         // TODO use this or just explicitly add required classes?
+         dependsOn = org.infinispan.test.TestDataSCI.class,
+         includeClasses = {
+               BaseSetupStreamIteratorTest.StringTruncator.class,
+               BaseSetupStreamIteratorTest.TestDefaultConsistentHashFactory.class,
+               BaseSetupStreamIteratorTest.TestScatteredConsistentHashFactory.class,
+         },
+         schemaFileName = "core.stream.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.stream")
+   interface StreamSerializationContext extends SerializationContextInitializer {
    }
 }

@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -31,7 +30,6 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
@@ -39,6 +37,9 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -425,7 +426,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       configurePersistence(builder);
       configureEviction(builder);
-      return TestCacheManagerFactory.createCacheManager(builder);
+      return TestCacheManagerFactory.createCacheManager(new EvictionWithConcurrentOperationsSCIImpl(), builder);
    }
 
    protected void configureEviction(ConfigurationBuilder builder) {
@@ -460,12 +461,24 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
                  Arrays.toString(expectedValues));
    }
 
-   public static class SameHashCodeKey implements Serializable, ExternalPojo {
+   public static class SameHashCodeKey {
 
-      private final String name;
+      @ProtoField(number = 1)
+      String name;
 
-      public SameHashCodeKey(String name) {
+      @ProtoField(number = 2, defaultValue = "0")
+      int hashCode;
+
+      SameHashCodeKey() {}
+
+      //same hash code to force the keys to be in the same segment.
+      SameHashCodeKey(String name) {
+         this(name, 0);
+      }
+
+      SameHashCodeKey(String name, int hashCode) {
          this.name = name;
+         this.hashCode = hashCode;
       }
 
       @Override
@@ -476,12 +489,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          SameHashCodeKey that = (SameHashCodeKey) o;
 
          return name.equals(that.name);
-
       }
 
       @Override
       public int hashCode() {
-         return 0; //same hash code to force the keys to be in the same segment.
+         return hashCode;
       }
 
       @Override
@@ -664,7 +676,13 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          }
 
       }
+   }
 
-
+   @AutoProtoSchemaBuilder(
+         includeClasses = SameHashCodeKey.class,
+         schemaFileName = "test.core.eviction.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.eviction")
+   interface EvictionWithConcurrentOperationsSCI extends SerializationContextInitializer {
    }
 }

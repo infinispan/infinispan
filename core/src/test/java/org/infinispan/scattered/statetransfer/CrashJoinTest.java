@@ -3,14 +3,15 @@ package org.infinispan.scattered.statetransfer;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 
 /**
@@ -54,7 +55,7 @@ public class CrashJoinTest extends AbstractStateTransferTest {
 
    public void testNodeJoin() throws Exception {
       List<MagicKey> keys = init();
-      Cache c4 = addClusterEnabledCacheManager(defaultConfig, TRANSPORT_FLAGS).getCache(CACHE_NAME);
+      Cache c4 = addClusterEnabledCacheManager(TestDataSCI.INSTANCE, defaultConfig, TRANSPORT_FLAGS).getCache(CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, false, c1, c2, c3, c4);
       TestingUtil.waitForNoRebalance(c1, c2, c3, c4);
 

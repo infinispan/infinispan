@@ -35,6 +35,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
 import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.data.Person;
 import org.testng.annotations.Test;
@@ -77,6 +78,11 @@ public class DistributedMultimapCacheTest extends BaseDistFunctionalTest<String,
          MultimapCacheManager multimapCacheManager = EmbeddedMultimapCacheManagerFactory.from(cacheManager);
          multimapCacheCluster.put(cacheManager.getAddress(), multimapCacheManager.get(cacheName));
       }
+   }
+
+   @Override
+   protected SerializationContextInitializer getSerializationContext() {
+      return MultimapSCI.INSTANCE;
    }
 
    @Override

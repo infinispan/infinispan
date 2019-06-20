@@ -33,6 +33,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TEST_PING;
 import org.infinispan.test.fwk.TransportFlags;
@@ -77,7 +78,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       if (biasAcquisition != null) {
          dcc.clustering().biasAcquisition(biasAcquisition);
       }
-      createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
+      createClusteredCaches(numMembersInCluster, TestDataSCI.INSTANCE, dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
    }
 

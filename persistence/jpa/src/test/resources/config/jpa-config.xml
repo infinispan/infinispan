@@ -9,7 +9,7 @@
 
   <cache-container default-cache="default">
     <jmx duplicate-domains="true" />
-
+    <serialization context-initializer="org.infinispan.persistence.jpa.JpaSCIImpl"/>
     <local-cache name="default">
       <locking isolation="REPEATABLE_READ"
                acquire-timeout="20000" write-skew="false"

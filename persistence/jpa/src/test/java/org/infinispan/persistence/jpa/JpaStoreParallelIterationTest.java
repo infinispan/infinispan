@@ -4,16 +4,23 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.ParallelIterationTest;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
 import org.infinispan.persistence.jpa.entity.KeyValueEntity;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "persistence.JpaStoreParallelIterationTest")
 public class JpaStoreParallelIterationTest extends ParallelIterationTest {
+
    @Override
    protected void configurePersistence(ConfigurationBuilder cb) {
       cb.persistence().addStore(JpaStoreConfigurationBuilder.class)
          .persistenceUnitName(getPersistenceUnitName())
          .entityClass(KeyValueEntity.class)
          .storeMetadata(storeMetadata());
+   }
+
+   @Override
+   protected SerializationContextInitializer getSerializationContextInitializer() {
+      return JpaSCI.INSTANCE;
    }
 
    @Override

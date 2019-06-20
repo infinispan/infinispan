@@ -3,6 +3,8 @@ package org.infinispan.persistence.jdbc.stringbased;
 import java.util.StringTokenizer;
 
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
+import org.infinispan.test.data.Address;
+import org.infinispan.test.data.Person;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -12,11 +14,14 @@ public class TwoWayPersonKey2StringMapper extends PersonKey2StringMapper impleme
 
    @Override
    public Object getKeyMapping(String key) {
-      //person.getName() + "_" + person.getSurname() + "_" + person.getAge();
       StringTokenizer tkz = new StringTokenizer(key, "_");
       String name = tkz.nextToken();
-      String surname = tkz.nextToken();
-      String age = tkz.nextToken();
-      return new Person(name, surname, Integer.parseInt(age));
+      if (!tkz.hasMoreTokens())
+         return new Person(name);
+
+      String street = tkz.nextToken();
+      String city = tkz.nextToken();
+      String zip = tkz.nextToken();
+      return new Person(name, new Address(street, city, Integer.parseInt(zip)));
    }
 }

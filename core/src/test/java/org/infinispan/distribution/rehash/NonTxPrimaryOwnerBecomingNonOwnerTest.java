@@ -22,6 +22,7 @@ import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -44,12 +45,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distribution.rehash.NonTxPrimaryOwnerBecomingNonOwnerTest")
 @CleanupAfterMethod
 public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagersTest {
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getConfigurationBuilder();
-
-      addClusterEnabledCacheManager(c);
-      addClusterEnabledCacheManager(c);
+      createCluster(DistributionRehashSCI.INSTANCE, c, 2);
       waitForClusterToForm();
    }
 
@@ -105,7 +105,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       // Add a new member and block the rebalance before the final topology is installed
       ConfigurationBuilder c = getConfigurationBuilder();
       c.clustering().stateTransfer().awaitInitialTransfer(false);
-      addClusterEnabledCacheManager(c);
+      addClusterEnabledCacheManager(DistributionRehashSCI.INSTANCE, c);
       addBlockingLocalTopologyManager(manager(2), checkPoint, preJoinTopologyId);
 
       log.tracef("Starting the cache on the joiner");
@@ -178,8 +178,9 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       assertFalse(cache2.getAdvancedCache().getLockManager().isLocked(key));
    }
 
-   private static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
-      private CustomConsistentHashFactory() {
+   @ProtoName("PrimaryOwnerCustomConsistentHashFactory")
+   public static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
+      CustomConsistentHashFactory() {
          super(1);
       }
 

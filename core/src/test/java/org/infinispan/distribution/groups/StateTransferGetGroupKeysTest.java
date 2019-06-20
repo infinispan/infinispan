@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +19,9 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
@@ -71,16 +73,11 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       final BlockCommandInterceptor interceptor = injectBlockCommandInterceptorIfAbsent(extractTargetCache(testCache));
 
       interceptor.open = false;
-      Future<Map<GroupKey, String>> future = fork(new Callable<Map<GroupKey, String>>() {
-         @Override
-         public Map<GroupKey, String> call() throws Exception {
-            return testCache.testCache.getGroup(GROUP);
-         }
-      });
+      Future<Map<GroupKey, String>> future = fork(() -> testCache.testCache.getGroup(GROUP));
 
       interceptor.awaitCommandBlock();
 
-      addClusterEnabledCacheManager(createConfigurationBuilder());
+      addClusterEnabledCacheManager(StateTransferGetGroupKeysSCI.INSTANCE, createConfigurationBuilder());
       waitForClusterToForm();
 
       interceptor.unblockCommandAndOpen();
@@ -100,7 +97,7 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
             killMember(3);
          }
          while (getCacheManagers().size() < 3) {
-            addClusterEnabledCacheManager(createConfigurationBuilder());
+            addClusterEnabledCacheManager(StateTransferGetGroupKeysSCI.INSTANCE, createConfigurationBuilder());
          }
          waitForClusterToForm();
       }
@@ -119,7 +116,7 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(3, createConfigurationBuilder());
+      createClusteredCaches(3, new StateTransferGetGroupKeysSCIImpl(), createConfigurationBuilder());
    }
 
    private static BlockCommandInterceptor injectBlockCommandInterceptorIfAbsent(Cache<GroupKey, String> cache) {
@@ -149,8 +146,12 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
    }
 
 
-   private static class CustomConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
-      private final CacheMode cacheMode;
+   public static class CustomConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
+
+      @ProtoField(number = 2)
+      CacheMode cacheMode;
+
+      CustomConsistentHashFactory() {}
 
       private CustomConsistentHashFactory(Trait<CH> trait, CacheMode cacheMode) {
          super(trait, 1);
@@ -214,4 +215,16 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       }
    }
 
+   @AutoProtoSchemaBuilder(
+         includeClasses = {
+               GroupKey.class,
+               CacheMode.class,
+               CustomConsistentHashFactory.class
+         },
+         schemaFileName = "test.core.StateTransferGetGroupKeysTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.StateTransferGetGroupKeysTest")
+   interface StateTransferGetGroupKeysSCI extends SerializationContextInitializer {
+      StateTransferGetGroupKeysSCI INSTANCE = new StateTransferGetGroupKeysSCIImpl();
+   }
 }

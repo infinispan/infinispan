@@ -3,50 +3,64 @@ package org.infinispan.configuration.global;
 import java.util.Map;
 
 import org.infinispan.Version;
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
-import org.jboss.marshalling.ClassResolver;
+import org.infinispan.protostream.SerializationContextInitializer;
 
 public class SerializationConfiguration {
    public static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class)
          .immutable().build();
    public static final AttributeDefinition<Short> VERSION = AttributeDefinition.builder("version", Version.getMarshallVersion()).immutable().build();
-   public static final AttributeDefinition<ClassResolver> CLASS_RESOLVER = AttributeDefinition.builder("classResolver", null, ClassResolver.class).immutable().build();
+   @Deprecated
+   public static final AttributeDefinition<Object> CLASS_RESOLVER = AttributeDefinition.builder("classResolver", null, Object.class).immutable().build();
+
+   public static final AttributeDefinition<SerializationContextInitializer> CONTEXT_INITIALIZER = AttributeDefinition.builder("contextInitializer", null, SerializationContextInitializer.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SerializationConfiguration.class, MARSHALLER, VERSION, CLASS_RESOLVER);
+      return new AttributeSet(SerializationConfiguration.class, MARSHALLER, VERSION, CLASS_RESOLVER, CONTEXT_INITIALIZER);
    }
 
    private final Map<Integer, AdvancedExternalizer<?>> advancedExternalizers;
-   private final ClassResolver classResolver;
-   private final Marshaller marshaller;
-   private final short version;
+   private final Attribute<Object> classResolver;
+   private final Attribute<Marshaller> marshaller;
+   private final Attribute<Short> version;
+   private final Attribute<SerializationContextInitializer> contextInitializer;
    private final AttributeSet attributes;
 
    SerializationConfiguration(AttributeSet attributes, Map<Integer, AdvancedExternalizer<?>> advancedExternalizers) {
       this.attributes = attributes.checkProtection();
-      this.marshaller = attributes.attribute(MARSHALLER).get();
-      this.version = attributes.attribute(VERSION).get();
-      this.classResolver = attributes.attribute(CLASS_RESOLVER).get();
+      this.marshaller = attributes.attribute(MARSHALLER);
+      this.version = attributes.attribute(VERSION);
+      this.classResolver = attributes.attribute(CLASS_RESOLVER);
+      this.contextInitializer = attributes.attribute(CONTEXT_INITIALIZER);
       this.advancedExternalizers = advancedExternalizers;
    }
 
    public Marshaller marshaller() {
-      return marshaller;
+      return marshaller.get();
    }
 
    public short version() {
-      return version;
+      return version.get();
    }
 
    public Map<Integer, AdvancedExternalizer<?>> advancedExternalizers() {
       return advancedExternalizers;
    }
 
-   public ClassResolver classResolver() {
-      return classResolver;
+   /**
+    * @throws {@link ClassNotFoundException} if the infinispan-jboss-marshalling or jboss-marshalling jar are not on the classpath
+    */
+   @Deprecated
+   public Object classResolver() {
+      return classResolver.get();
+   }
+
+   public SerializationContextInitializer contextInitializer() {
+      return contextInitializer.get();
    }
 
    public AttributeSet attributes() {

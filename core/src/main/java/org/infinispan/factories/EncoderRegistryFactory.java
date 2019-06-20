@@ -13,6 +13,7 @@ import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
@@ -42,15 +43,22 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       ClassWhiteList classWhiteList = embeddedCacheManager.getClassWhiteList();
 
       ClassLoader classLoader = globalConfiguration.classLoader();
-      GenericJBossMarshaller jBossMarshaller = new GenericJBossMarshaller(classLoader, classWhiteList);
       JavaSerializationMarshaller javaSerializationMarshaller = new JavaSerializationMarshaller(classWhiteList);
 
       encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
       encoderRegistry.registerEncoder(UTF8Encoder.INSTANCE);
       encoderRegistry.registerEncoder(new JavaSerializationEncoder(classWhiteList));
       encoderRegistry.registerEncoder(new BinaryEncoder(globalMarshaller.wired()));
-      encoderRegistry.registerEncoder(new GenericJbossMarshallerEncoder(jBossMarshaller));
       encoderRegistry.registerEncoder(new GlobalMarshallerEncoder(globalMarshaller.wired()));
+
+      GenericJBossMarshaller jBossMarshaller;
+      try {
+         Util.loadClassStrict("org.jboss.marshalling.Marshalling", globalConfiguration.classLoader());
+         jBossMarshaller = new GenericJBossMarshaller(classLoader, classWhiteList);
+         encoderRegistry.registerEncoder(new GenericJbossMarshallerEncoder(jBossMarshaller));
+      } catch (ClassNotFoundException e) {
+         jBossMarshaller = null;
+      }
       encoderRegistry.registerTranscoder(new DefaultTranscoder(jBossMarshaller, javaSerializationMarshaller));
 
       encoderRegistry.registerWrapper(ByteArrayWrapper.INSTANCE);

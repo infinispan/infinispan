@@ -24,6 +24,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.util.ControlledRpcManager;
 import org.testng.annotations.Test;
 
@@ -31,7 +32,7 @@ import org.testng.annotations.Test;
 public class GetAllCommandNodeCrashTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(3, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
+      createClusteredCaches(3, TestDataSCI.INSTANCE, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
    }
 
    public void test() throws Exception {

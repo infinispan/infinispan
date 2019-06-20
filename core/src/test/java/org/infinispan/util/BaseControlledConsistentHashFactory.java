@@ -17,6 +17,7 @@ import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
 import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -28,8 +29,12 @@ import org.infinispan.remoting.transport.Address;
 @SuppressWarnings("unchecked")
 public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentHash> implements ConsistentHashFactory<CH>,
                                                                     Serializable, ExternalPojo {
-   protected final Trait<CH> trait;
-   protected final int numSegments;
+   protected Trait<CH> trait;
+
+   @ProtoField(number = 1, defaultValue = "0")
+   public int numSegments;
+
+   protected BaseControlledConsistentHashFactory() {}
 
    protected BaseControlledConsistentHashFactory(Trait<CH> trait, int numSegments) {
       this.trait = trait;

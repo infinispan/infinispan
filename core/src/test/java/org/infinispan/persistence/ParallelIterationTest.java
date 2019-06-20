@@ -21,7 +21,9 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -39,6 +41,8 @@ import io.reactivex.subscribers.TestSubscriber;
 @Test (groups = "functional", testName = "persistence.ParallelIterationTest")
 public abstract class ParallelIterationTest extends SingleCacheManagerTest {
 
+   private static final SerializationContextInitializer CONTEXT_INITIALIZER = TestDataSCI.INSTANCE;
+
    private static final int NUM_THREADS = 10;
    private static final int NUM_ENTRIES = 200;
 
@@ -50,7 +54,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cb = getDefaultStandaloneCacheConfig(false);
       configurePersistence(cb);
-      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(cb);
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(getSerializationContextInitializer(), cb);
       loader = TestingUtil.getFirstLoader(manager.getCache());
       writer = TestingUtil.getFirstWriter(manager.getCache());
       executor = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS,
@@ -68,6 +72,10 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    }
 
    protected abstract void configurePersistence(ConfigurationBuilder cb);
+
+   protected SerializationContextInitializer getSerializationContextInitializer() {
+      return CONTEXT_INITIALIZER;
+   }
 
    public void testParallelIterationWithValueAndMetadata() {
       runIterationTest(executor, true, true);

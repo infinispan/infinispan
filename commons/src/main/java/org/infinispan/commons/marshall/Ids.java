@@ -210,6 +210,11 @@ public interface Ids {
 
    int CACHE_STREAM_INTERMEDIATE_REDUCER = 143;
 
+   int CLASS = 144;
+   int DISTRIBUTED_CACHE_STATS_CALLABLE = 145;
+   int EXCEPTIONS = 146;
+   int IMMUTABLE_LIST_COPY = 147;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

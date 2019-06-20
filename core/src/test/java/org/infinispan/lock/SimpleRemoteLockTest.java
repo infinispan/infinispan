@@ -14,6 +14,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
@@ -34,7 +35,7 @@ public class SimpleRemoteLockTest extends MultipleCacheManagersTest {
       builder.clustering().hash().numOwners(1);
       builder.clustering().stateTransfer().fetchInMemoryState(false);
       builder.customInterceptors().addInterceptor().before(NonTransactionalLockingInterceptor.class).interceptorClass(ExceptionInRemotePutInterceptor.class);
-      createClusteredCaches(2, builder);
+      createClusteredCaches(2, TestDataSCI.INSTANCE, builder);
    }
 
    public void testExceptionBeforeLockingInterceptor() {

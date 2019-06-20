@@ -1,13 +1,16 @@
 package org.infinispan.util;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -16,20 +19,19 @@ import org.infinispan.remoting.transport.Address;
  * @author Dan Berindei
  * @since 7.0
  */
-public class ReplicatedControlledConsistentHashFactory
-      implements ConsistentHashFactory<ReplicatedConsistentHash>, Serializable, ExternalPojo {
-   private volatile List<Address> membersToUse;
+@SerializeWith(ReplicatedControlledConsistentHashFactory.Externalizer.class)
+public class ReplicatedControlledConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
    private int[] primaryOwnerIndices;
 
    /**
     * Create a consistent hash factory with a single segment.
     */
    public ReplicatedControlledConsistentHashFactory(int primaryOwner1, int... otherPrimaryOwners) {
-      setOwnerIndexes(primaryOwner1, otherPrimaryOwners);
+      this(concatOwners(primaryOwner1, otherPrimaryOwners));
    }
 
-   public void setOwnerIndexes(int primaryOwner1, int... otherPrimaryOwners) {
-      primaryOwnerIndices = concatOwners(primaryOwner1, otherPrimaryOwners);
+   private ReplicatedControlledConsistentHashFactory(int[] primaryOwnerIndices) {
+      this.primaryOwnerIndices = primaryOwnerIndices;
    }
 
    @Override
@@ -37,13 +39,7 @@ public class ReplicatedControlledConsistentHashFactory
          List<Address> members, Map<Address, Float> capacityFactors) {
       int[] thePrimaryOwners = new int[primaryOwnerIndices.length];
       for (int i = 0; i < primaryOwnerIndices.length; i++) {
-         if (membersToUse != null) {
-            int membersToUseIndex = Math.min(primaryOwnerIndices[i], membersToUse.size() - 1);
-            int membersIndex = members.indexOf(membersToUse.get(membersToUseIndex));
-            thePrimaryOwners[i] = membersIndex > 0 ? membersIndex : members.size() - 1;
-         } else {
-            thePrimaryOwners[i] = Math.min(primaryOwnerIndices[i], members.size() - 1);
-         }
+         thePrimaryOwners[i] = Math.min(primaryOwnerIndices[i], members.size() - 1);
       }
       return new ReplicatedConsistentHash(hashFunction, members, thePrimaryOwners);
    }
@@ -66,7 +62,7 @@ public class ReplicatedControlledConsistentHashFactory
       return ch1.union(ch2);
    }
 
-   private int[] concatOwners(int head, int[] tail) {
+   private static int[] concatOwners(int head, int[] tail) {
       int[] firstSegmentOwners;
       if (tail == null || tail.length == 0) {
          firstSegmentOwners = new int[]{head};
@@ -80,10 +76,22 @@ public class ReplicatedControlledConsistentHashFactory
       return firstSegmentOwners;
    }
 
-   /**
-    * @param membersToUse Owner indexes will be in this list, instead of the current list of members
-    */
-   public void setMembersToUse(List<Address> membersToUse) {
-      this.membersToUse = membersToUse;
+   public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ReplicatedControlledConsistentHashFactory> {
+      @Override
+      public void writeObject(ObjectOutput output, ReplicatedControlledConsistentHashFactory object) throws IOException {
+         int numberOfIndices = object.primaryOwnerIndices.length;
+         MarshallUtil.marshallSize(output, numberOfIndices);
+         for (int i = 0; i < numberOfIndices; i++)
+            output.writeInt(object.primaryOwnerIndices[i]);
+      }
+
+      @Override
+      public ReplicatedControlledConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         int numberOfIndices = MarshallUtil.unmarshallSize(input);
+         int[] indices = new int[numberOfIndices];
+         for (int i = 0; i < numberOfIndices; i++)
+            indices[i] = input.readInt();
+         return new ReplicatedControlledConsistentHashFactory(indices);
+      }
    }
 }

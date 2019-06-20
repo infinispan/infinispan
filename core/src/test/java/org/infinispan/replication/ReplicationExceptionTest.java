@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.Serializable;
+
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
@@ -14,12 +15,12 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -58,31 +59,20 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       return mgr;
    }
 
-   public void testNonSerializableRepl() throws Exception {
+   @Test(expectedExceptions = MarshallingException.class)
+   public void testNonMarshallableRepl() {
       doNonSerializableReplTest("syncReplCacheNoTx");
    }
 
-   public void testNonSerializableAsyncRepl() throws Exception {
+   @Test(expectedExceptions = MarshallingException.class)
+   public void testNonMarshallableAsyncRepl() {
       doNonSerializableReplTest("asyncReplCacheNoTx");
    }
 
    private void doNonSerializableReplTest(String cacheName) {
       AdvancedCache<Object, Object> cache1 = advancedCache(0, cacheName);
       AdvancedCache<Object, Object> cache2 = advancedCache(1, cacheName);
-      try {
-         cache1.put("test", new ContainerData());
-         // We should not come here.
-         assertNotNull("NonSerializableData should not be null on cache2", cache2.get("test"));
-      } catch (RuntimeException runtime) {
-         Throwable t = runtime.getCause();
-         if (runtime instanceof NotSerializableException
-                  || t instanceof NotSerializableException
-                  || t.getCause() instanceof NotSerializableException) {
-            log.trace("received NotSerializableException - as expected");
-         } else {
-            throw runtime;
-         }
-      }
+      cache1.put("test", new ContainerData());
    }
 
    public void testNonSerializableReplWithTx() throws Exception {

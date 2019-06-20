@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
@@ -29,7 +30,7 @@ public class NoRpcOnReadonlyTransactionsTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       config.clustering().hash().numOwners(1);
-      createCluster(config, 3);
+      createCluster(TestDataSCI.INSTANCE, config, 3);
       waitForClusterToForm();
 
       i0 = new TxCheckInterceptor();

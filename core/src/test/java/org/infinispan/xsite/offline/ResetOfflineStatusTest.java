@@ -15,6 +15,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.BaseSiteUnreachableTest;
+import org.infinispan.xsite.BringSiteOnlineResponse;
 import org.infinispan.xsite.OfflineStatus;
 import org.testng.annotations.Test;
 
@@ -63,7 +64,7 @@ public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
          assertEquals("v" + i, cache(LON, 0).get(KEYS[i]));
       }
 
-      assertEquals(BackupSender.BringSiteOnlineResponse.BROUGHT_ONLINE, bs.bringSiteOnline(NYC));
+      assertEquals(BringSiteOnlineResponse.BROUGHT_ONLINE, bs.bringSiteOnline(NYC));
 
       for (int i = 0; i < FAILURES - 1; i++) {
          try {

@@ -16,6 +16,7 @@ import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
@@ -26,11 +27,11 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.CountingRpcManager;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -48,7 +49,7 @@ public class BiasLeaseTest extends MultipleCacheManagersTest {
       builder.clustering().biasAcquisition(BiasAcquisition.ON_WRITE);
       // Scan biases frequently
       builder.expiration().wakeUpInterval(100);
-      createCluster(builder, 3);
+      createCluster(TestDataSCI.INSTANCE, builder, 3);
       waitForClusterToForm();
 
       Arrays.stream(managers()).forEach(

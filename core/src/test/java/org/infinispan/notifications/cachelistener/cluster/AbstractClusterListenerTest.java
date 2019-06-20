@@ -237,9 +237,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
-      log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(builderUsed);
-      log.info("Added a new node");
+      addClusteredCacheManager();
 
       Cache<Object, String> cache3 = cache(3, CACHE_NAME);
       MagicKey key = new MagicKey(cache3);
@@ -256,9 +254,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       cache0.addListener(clusterListener, new KeyFilterAsCacheEventFilter<Object>(
               new CollectionKeyFilter<Object>(Collections.singleton(keyToFilter), true)), new StringTruncator(0, 3));
 
-      log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(builderUsed);
-      log.info("Added a new node");
+      addClusteredCacheManager();
 
       Cache<Object, String> cache3 = cache(3, CACHE_NAME);
       MagicKey key = new MagicKey(cache3);

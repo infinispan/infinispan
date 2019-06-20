@@ -9,6 +9,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.CountingRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -26,7 +27,7 @@ public class RepeatableReadRemoteGetCountTest extends MultipleCacheManagersTest 
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       builder.clustering().hash().numOwners(1);
-      createClusteredCaches(2, builder);
+      createClusteredCaches(2, TestDataSCI.INSTANCE, builder);
    }
 
    public void testOnKeyInitialized() throws Exception {

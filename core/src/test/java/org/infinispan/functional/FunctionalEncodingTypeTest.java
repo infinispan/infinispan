@@ -3,19 +3,17 @@ package org.infinispan.functional;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-import java.io.Serializable;
-
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.proto.RuntimeMarshallableWrapper;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -93,12 +91,12 @@ public class FunctionalEncodingTypeTest extends FunctionalMapTest {
 
       @Override
       public Object toStorage(Object content) {
-         return content == null ? null : new Wrapper(content);
+         return content == null ? null : new RuntimeMarshallableWrapper(content);
       }
 
       @Override
       public Object fromStorage(Object content) {
-         return content == null ? null : ((Wrapper) content).content;
+         return content == null ? null : ((RuntimeMarshallableWrapper) content).get();
       }
 
       @Override
@@ -114,34 +112,6 @@ public class FunctionalEncodingTypeTest extends FunctionalMapTest {
       @Override
       public short id() {
          return ID;
-      }
-
-      static class Wrapper implements Serializable, ExternalPojo {
-         private final Object content;
-
-         Wrapper(Object content) {
-            this.content = content;
-         }
-
-         @Override
-         public String toString() {
-            return "TestKey#" + content;
-         }
-
-         @Override
-         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Wrapper wrapper = (Wrapper) o;
-
-            return content.equals(wrapper.content);
-         }
-
-         @Override
-         public int hashCode() {
-            return content.hashCode();
-         }
       }
    }
 
@@ -151,12 +121,12 @@ public class FunctionalEncodingTypeTest extends FunctionalMapTest {
 
       @Override
       public Object toStorage(Object content) {
-         return content == null ? null : new Wrapper(content);
+         return content == null ? null : new RuntimeMarshallableWrapper(content);
       }
 
       @Override
       public Object fromStorage(Object content) {
-         return content == null ? null : ((Wrapper) content).content;
+         return content == null ? null : ((RuntimeMarshallableWrapper) content).get();
       }
 
       @Override
@@ -172,34 +142,6 @@ public class FunctionalEncodingTypeTest extends FunctionalMapTest {
       @Override
       public short id() {
          return ID;
-      }
-
-      static class Wrapper implements Serializable, ExternalPojo {
-         private final Object content;
-
-         Wrapper(Object content) {
-            this.content = content;
-         }
-
-         @Override
-         public String toString() {
-            return "TestValue#" + content;
-         }
-
-         @Override
-         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Wrapper wrapper = (Wrapper) o;
-
-            return content.equals(wrapper.content);
-         }
-
-         @Override
-         public int hashCode() {
-            return content.hashCode();
-         }
       }
    }
 

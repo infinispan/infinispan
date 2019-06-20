@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -14,6 +13,9 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -71,7 +73,7 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(2, createConfigurationBuilder());
+      createClusteredCaches(2, ReadAfterLostOwnershipTestSCI.INSTANCE, createConfigurationBuilder());
    }
 
    protected final ConfigurationBuilder createConfigurationBuilder() {
@@ -93,14 +95,10 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       stateConsumer.setKeyInvalidationListener(listener);
 
       log.debug("Add a 3rd node");
-      addClusterEnabledCacheManager(createConfigurationBuilder());
-      Future<Void> join = fork(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            waitForClusterToForm();
-            log.debug("3rd has join");
-            return null;
-         }
+      addClusterEnabledCacheManager(ReadAfterLostOwnershipTestSCI.INSTANCE, createConfigurationBuilder());
+      Future<Void> join = fork(() -> {
+         waitForClusterToForm();
+         log.debug("3rd has join");
       });
 
       log.debug("Waiting for command to block");
@@ -155,9 +153,10 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       }
    }
 
+   @ProtoName("ReadAfterSingleKeyConsistentHashFactory")
    public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
 
-      public SingleKeyConsistentHashFactory() {
+      SingleKeyConsistentHashFactory() {
          super(1);
       }
 
@@ -194,5 +193,14 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
             Thread.currentThread().interrupt();
          }
       }
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = SingleKeyConsistentHashFactory.class,
+         schemaFileName = "test.core.ReadAfterLostOwnershipTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.ReadAfterLostOwnershipTest")
+   interface ReadAfterLostOwnershipTestSCI extends SerializationContextInitializer {
+      ReadAfterLostOwnershipTestSCI INSTANCE = new ReadAfterLostOwnershipTestSCIImpl();
    }
 }

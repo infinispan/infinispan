@@ -28,6 +28,7 @@ import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.CommandMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
@@ -56,7 +57,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(3);
       builder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
-      createCluster(builder, 4);
+      createCluster(TestDataSCI.INSTANCE, builder, 4);
       waitForClusterToForm();
    }
 

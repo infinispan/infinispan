@@ -2,28 +2,24 @@ package org.infinispan.remoting;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
-import java.io.EOFException;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.lang.reflect.InvocationTargetException;
 import java.util.EmptyStackException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
-import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.marshall.core.MarshallingException;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
+import org.infinispan.test.data.BrokenMarshallingPojo;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "remoting.TransportSenderExceptionHandlingTest")
@@ -32,15 +28,13 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(2, "replSync",
+      createClusteredCaches(2, "replSync", TestDataSCI.INSTANCE,
             getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
    }
 
    public void testInvokeAndExceptionWhileUnmarshalling() throws Exception {
       Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
-      Exceptions.expectException(RemoteException.class, MarshallingException.class,
-                                 () -> cache1.put(key, new BrokenDeserializationPojo()));
+      Exceptions.expectException(RemoteException.class, MarshallingException.class, () -> cache1.put(key, new BrokenMarshallingPojo(false)));
    }
 
    @Test(expectedExceptions = ArrayStoreException.class)
@@ -126,11 +120,6 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       }
    }
 
-   enum FailureType implements ExternalPojo {
-      EXCEPTION_FROM_LISTENER, ERROR_FROM_LISTENER,
-      EXCEPTION_FROM_INTERCEPTOR, ERROR_FROM_INTERCEPTOR
-   }
-
    static class ErrorInducingInterceptor extends DDAsyncInterceptor {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
@@ -141,19 +130,6 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
             throw new ClassCircularityError();
          else
             return super.visitPutKeyValueCommand(ctx, command);
-      }
-   }
-
-   public static class BrokenDeserializationPojo implements Externalizable, ExternalPojo {
-
-      @Override
-      public void writeExternal(ObjectOutput out) throws IOException {
-
-      }
-
-      @Override
-      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-         throw new EOFException();
       }
    }
 }

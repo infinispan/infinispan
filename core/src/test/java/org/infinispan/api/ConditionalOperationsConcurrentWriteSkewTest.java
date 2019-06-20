@@ -20,6 +20,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.ReclosableLatch;
@@ -51,7 +52,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
       if (writeSkewCheck) {
          dcc.transaction().locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       }
-      createCluster(dcc, NODES_NUM);
+      createCluster(TestDataSCI.INSTANCE, dcc, NODES_NUM);
       waitForClusterToForm();
    }
 

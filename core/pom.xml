@@ -57,6 +57,7 @@
       <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
+         <optional>true</optional>
       </dependency>
 
       <dependency>

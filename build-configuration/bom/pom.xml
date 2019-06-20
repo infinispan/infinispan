@@ -189,6 +189,11 @@
               <artifactId>infinispan-core</artifactId>
               <version>${version.infinispan}</version>
            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-jboss-marshalling</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
             <!-- TODO should be here? -->
             <dependency>
                 <groupId>org.infinispan</groupId>

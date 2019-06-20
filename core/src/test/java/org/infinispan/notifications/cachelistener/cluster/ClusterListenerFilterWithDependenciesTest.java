@@ -12,6 +12,8 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
@@ -32,7 +34,7 @@ public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheMana
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(cacheMode, false);
-      createClusteredCaches(NUM_NODES, cfgBuilder);
+      createClusteredCaches(NUM_NODES, new ClusterListenerWithDependenciesSCIImpl(), cfgBuilder);
    }
 
    public void testEventFilterCurrentState() {
@@ -80,5 +82,16 @@ public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheMana
             createEvents.add(event);
          }
       }
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = {
+               MagicKey.class,
+               NoOpCacheEventFilterConverterWithDependencies.class
+         },
+         schemaFileName = "test.core.ClusterListenerFilterWithDependenciesTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.ClusterListenerFilterWithDependenciesTest")
+   interface ClusterListenerWithDependenciesSCI extends SerializationContextInitializer {
    }
 }

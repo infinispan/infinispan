@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
@@ -22,7 +23,7 @@ public class PutMapCommandTest extends MultipleCacheManagersTest {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.clustering().hash().numOwners(1).l1().disable();
       dcc.locking().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      createCluster(dcc, 4);
+      createCluster(TestDataSCI.INSTANCE, dcc, 4);
       waitForClusterToForm();
    }
 

@@ -10,7 +10,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import io.reactivex.Flowable;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -26,11 +25,14 @@ import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.logging.Log;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+
+import io.reactivex.Flowable;
 
 /**
  * It tests the grouping advanced interface.
@@ -188,7 +190,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(3, amendConfiguration(createConfigurationBuilder(transactional)));
+      createClusteredCaches(3, TestDataSCI.INSTANCE, amendConfiguration(createConfigurationBuilder(transactional)));
       defineConfigurationOnAllManagers(PERSISTENCE_CACHE,
                                        amendConfiguration(createConfigurationBuilderWithPersistence(transactional, false)));
       waitForClusterToForm(PERSISTENCE_CACHE);

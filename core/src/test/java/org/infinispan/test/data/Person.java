@@ -3,12 +3,11 @@ package org.infinispan.test.data;
 import java.io.Serializable;
 
 import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.protostream.annotations.ProtoField;
 
 public class Person implements Serializable, ExternalPojo {
 
-   private static final long serialVersionUID = -885384294556845285L;
-
-   String name = null;
+   String name;
    Address address;
 
    public Person() {
@@ -16,9 +15,15 @@ public class Person implements Serializable, ExternalPojo {
    }
 
    public Person(String name) {
-      this.name = name;
+      this(name, null);
    }
 
+   public Person(String name, Address address) {
+      this.name = name;
+      this.address = address;
+   }
+
+   @ProtoField(number = 1)
    public String getName() {
       return name;
    }
@@ -27,10 +32,7 @@ public class Person implements Serializable, ExternalPojo {
       this.name = name;
    }
 
-   public void setName(Object obj) {
-      this.name = (String) obj;
-   }
-
+   @ProtoField(number = 2)
    public Address getAddress() {
       return address;
    }
@@ -39,10 +41,12 @@ public class Person implements Serializable, ExternalPojo {
       this.address = address;
    }
 
+   @Override
    public String toString() {
-      StringBuilder sb = new StringBuilder();
-      sb.append("name=").append(getName()).append(" Address= ").append(address);
-      return sb.toString();
+      return "Person{" +
+            "name='" + name + '\'' +
+            ", address=" + address +
+            '}';
    }
 
    public boolean equals(Object o) {

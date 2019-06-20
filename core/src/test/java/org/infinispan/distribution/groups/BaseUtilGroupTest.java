@@ -1,6 +1,5 @@
 package org.infinispan.distribution.groups;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +10,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.Group;
-import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 
@@ -139,10 +138,15 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
       public abstract TestCache create(String groupName, List<Cache<GroupKey, String>> cacheList);
    }
 
-   public static class GroupKey implements Serializable, ExternalPojo {
+   public static class GroupKey {
 
-      private final String group;
-      private final int key;
+      @ProtoField(number = 1)
+      String group;
+
+      @ProtoField(number = 2, defaultValue = "0")
+      int key;
+
+      GroupKey() {}
 
       GroupKey(String group, int key) {
          this.group = group;

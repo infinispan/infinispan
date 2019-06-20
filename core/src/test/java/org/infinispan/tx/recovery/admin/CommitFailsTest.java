@@ -12,6 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -36,7 +37,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       ConfigurationBuilder configuration = defaultRecoveryConfig();
       configuration.transaction().autoCommit(false);
       configuration.locking().isolationLevel(IsolationLevel.READ_COMMITTED); //skip WSC exceptions
-      createCluster(configuration, 3);
+      createCluster(TestDataSCI.INSTANCE, configuration, 3);
       waitForClusterToForm();
 
       key = getKey();

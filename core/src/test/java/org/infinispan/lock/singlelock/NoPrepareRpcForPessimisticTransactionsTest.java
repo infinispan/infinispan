@@ -12,6 +12,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.BeforeMethod;
@@ -35,7 +36,7 @@ public class NoPrepareRpcForPessimisticTransactionsTest extends MultipleCacheMan
          .clustering()
             .hash().numOwners(1)
             .l1().disable();
-      createCluster(c, 2);
+      createCluster(TestDataSCI.INSTANCE, c, 2);
       waitForClusterToForm();
 
       k1 = getKeyForCache(1);

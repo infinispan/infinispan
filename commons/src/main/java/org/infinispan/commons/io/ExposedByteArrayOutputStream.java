@@ -2,8 +2,6 @@ package org.infinispan.commons.io;
 
 import java.io.ByteArrayOutputStream;
 
-import org.jboss.marshalling.ByteOutput;
-
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -20,7 +18,7 @@ import net.jcip.annotations.NotThreadSafe;
  * @since 4.0
  */
 @NotThreadSafe
-public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream implements ByteOutput {
+public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
    /**
     * Default buffer size after which if more buffer capacity is needed the buffer will grow by 25% rather than 100%
     */

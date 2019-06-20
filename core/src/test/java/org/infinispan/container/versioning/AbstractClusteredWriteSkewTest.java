@@ -18,6 +18,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -256,7 +257,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       ConfigurationBuilder builder = defaultConfigurationBuilder();
       decorate(builder);
 
-      createCluster(builder, clusterSize());
+      createCluster(TestDataSCI.INSTANCE, builder, clusterSize());
       waitForClusterToForm();
 
       builder = defaultConfigurationBuilder();

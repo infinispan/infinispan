@@ -6,7 +6,7 @@ import org.infinispan.test.data.Person;
 
 public class SuperPerson extends Person {
 
-   private static final long serialVersionUID = 4681502647114171590L;
+   SuperPerson() {}
 
    public SuperPerson(String name) {
       super(name);

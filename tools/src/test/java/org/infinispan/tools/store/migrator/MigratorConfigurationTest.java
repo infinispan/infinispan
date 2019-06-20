@@ -39,7 +39,7 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.marshall.core.JBossUserMarshaller;
+import org.infinispan.jboss.marshalling.core.JBossUserMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
@@ -215,9 +215,7 @@ public class MigratorConfigurationTest {
       @Override
       public Person readObject(ObjectInput input) throws IOException {
          externalizerReadCount.incrementAndGet();
-         Person person = new Person();
-         person.setName(MarshallUtil.unmarshallString(input));
-         return person;
+         return new Person(MarshallUtil.unmarshallString(input));
       }
    }
 }

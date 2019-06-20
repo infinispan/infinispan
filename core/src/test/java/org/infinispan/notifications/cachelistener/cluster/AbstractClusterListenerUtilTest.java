@@ -12,7 +12,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,12 +20,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -45,13 +44,15 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
@@ -68,6 +69,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    protected final static String SECOND_VALUE = "second-value";
 
    protected ConfigurationBuilder builderUsed;
+   protected SerializationContextInitializer sci;
    protected final boolean tx;
    protected final CacheMode cacheMode;
 
@@ -80,6 +82,14 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       cleanup = CleanupPhase.AFTER_METHOD;
       this.tx = tx;
       this.cacheMode = cacheMode;
+      this.sci = new ListenerSerializationContextImpl();
+   }
+
+   protected void addClusteredCacheManager() {
+      // First we add the new node, but block the dist exec execution
+      log.info("Adding a new node ..");
+      addClusterEnabledCacheManager(sci, builderUsed);
+      log.info("Added a new node");
    }
 
    @Override
@@ -91,7 +101,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
          builderUsed.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       }
       builderUsed.expiration().disableReaper();
-      createClusteredCaches(3, CACHE_NAME, builderUsed);
+      createClusteredCaches(3, CACHE_NAME, sci, builderUsed);
       injectTimeServices();
    }
 
@@ -153,12 +163,16 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
    }
 
-   protected static class LifespanFilter<K, V> implements KeyValueFilter<K, V>, Serializable, ExternalPojo {
-      public LifespanFilter(long lifespan) {
+   public static class LifespanFilter<K, V> implements KeyValueFilter<K, V> {
+
+      @ProtoField(number = 1, defaultValue = "-1")
+      long lifespan;
+
+      LifespanFilter() {}
+
+      LifespanFilter(long lifespan) {
          this.lifespan = lifespan;
       }
-
-      private final long lifespan;
 
       @Override
       public boolean accept(K key, V value, Metadata metadata) {
@@ -170,7 +184,14 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
    }
 
-   protected static class NewLifespanLargerFilter<K, V> implements CacheEventFilter<K, V>, Serializable, ExternalPojo {
+   public static class NewLifespanLargerFilter<K, V> implements CacheEventFilter<K, V> {
+
+      // TODO remove when protostream supports empty message types
+      @ProtoField(number = 1, defaultValue = "false")
+      boolean ignore;
+
+      NewLifespanLargerFilter() {}
+
       @Override
       public boolean accept(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType) {
          // If neither metadata is provided dont' raise the event (this will preclude all creations and removals)
@@ -182,14 +203,20 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
    }
 
-   protected static class LifespanConverter implements CacheEventConverter<Object, String, Object>, Serializable, ExternalPojo {
-      public LifespanConverter(boolean returnOriginalValueOrNull, long lifespanThreshold) {
+   public static class LifespanConverter implements CacheEventConverter<Object, String, Object> {
+
+      @ProtoField(number = 1, defaultValue = "false")
+      boolean returnOriginalValueOrNull;
+
+      @ProtoField(number = 2, defaultValue = "-1")
+      long lifespanThreshold;
+
+      LifespanConverter() {}
+
+      LifespanConverter(boolean returnOriginalValueOrNull, long lifespanThreshold) {
          this.returnOriginalValueOrNull = returnOriginalValueOrNull;
          this.lifespanThreshold = lifespanThreshold;
       }
-
-      private final boolean returnOriginalValueOrNull;
-      private final long lifespanThreshold;
 
       @Override
       public Object convert(Object key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
@@ -206,11 +233,17 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
    }
 
-   protected static class StringTruncator implements CacheEventConverter<Object, String, String>, Serializable, ExternalPojo {
-      private final int beginning;
-      private final int length;
+   public static class StringTruncator implements CacheEventConverter<Object, String, String> {
 
-      public StringTruncator(int beginning, int length) {
+      @ProtoField(number = 1, defaultValue = "0")
+      int beginning;
+
+      @ProtoField(number = 2, defaultValue = "0")
+      int length;
+
+      StringTruncator() {}
+
+      StringTruncator(int beginning, int length) {
          this.beginning = beginning;
          this.length = length;
       }
@@ -225,18 +258,31 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
    }
 
-   protected static class StringAppender implements CacheEventConverter<Object, String, String>, Serializable, ExternalPojo {
+   public static class StringAppender implements CacheEventConverter<Object, String, String> {
+
+      // TODO remove when protostream supports empty message types
+      @ProtoField(number = 1, defaultValue = "false")
+      boolean ignore;
+
+      StringAppender() {};
+
       @Override
       public String convert(Object key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
          return oldValue + (oldMetadata != null ? oldMetadata.lifespan() : "null") + newValue + (newMetadata != null ? newMetadata.lifespan() : "null");
       }
    }
 
-   protected static class FilterConverter implements CacheEventFilterConverter<Object, Object, Object>, Serializable, ExternalPojo {
-      private final boolean throwExceptionOnNonFilterAndConverterMethods;
-      private final Object convertedValue;
+   public static class FilterConverter implements CacheEventFilterConverter<Object, Object, Object> {
 
-      public FilterConverter(boolean throwExceptionOnNonFilterAndConverterMethods, Object convertedValue) {
+      @ProtoField(number = 1, defaultValue = "false")
+      boolean throwExceptionOnNonFilterAndConverterMethods;
+
+      @ProtoField(number = 2)
+      String convertedValue;
+
+      FilterConverter() {}
+
+      FilterConverter(boolean throwExceptionOnNonFilterAndConverterMethods, String convertedValue) {
          this.throwExceptionOnNonFilterAndConverterMethods = throwExceptionOnNonFilterAndConverterMethods;
          this.convertedValue = convertedValue;
       }
@@ -383,5 +429,22 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
          }
       }).when(mockNotifier).notifyViewChange(anyList(), anyList(), any(Address.class), anyInt());
       TestingUtil.replaceComponent(cacheContainer, CacheManagerNotifier.class, mockNotifier, true);
+   }
+
+   @AutoProtoSchemaBuilder(
+         // TODO use this or just explicitly add required classes?
+         dependsOn = org.infinispan.test.TestDataSCI.class,
+         includeClasses = {
+               AbstractClusterListenerUtilTest.FilterConverter.class,
+               AbstractClusterListenerUtilTest.LifespanConverter.class,
+               AbstractClusterListenerUtilTest.LifespanFilter.class,
+               AbstractClusterListenerUtilTest.NewLifespanLargerFilter.class,
+               AbstractClusterListenerUtilTest.StringAppender.class,
+               AbstractClusterListenerUtilTest.StringTruncator.class,
+         },
+         schemaFileName = "core.listeners.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.notifications")
+   interface ListenerSerializationContext extends SerializationContextInitializer {
    }
 }

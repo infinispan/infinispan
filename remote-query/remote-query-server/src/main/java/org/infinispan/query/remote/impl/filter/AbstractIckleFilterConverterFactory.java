@@ -5,9 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
+import org.infinispan.commons.marshall.proto.ProtoStreamMarshaller;
 
 /**
  * @author gustavonalle
@@ -15,15 +13,7 @@ import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 abstract class AbstractIckleFilterConverterFactory<T> {
 
    // This marshaller is able to handle primitive/scalar types only
-   private static final BaseProtoStreamMarshaller paramMarshaller = new BaseProtoStreamMarshaller() {
-
-      private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext();
-
-      @Override
-      protected SerializationContext getSerializationContext() {
-         return serializationContext;
-      }
-   };
+   private static final ProtoStreamMarshaller paramMarshaller = new ProtoStreamMarshaller();
 
    private String unmarshallQueryString(Object[] params) {
       try {

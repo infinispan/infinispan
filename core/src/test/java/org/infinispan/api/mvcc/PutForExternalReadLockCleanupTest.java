@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -71,7 +72,7 @@ public class PutForExternalReadLockCleanupTest extends MultipleCacheManagersTest
          c.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
       }
       amendConfiguration.accept(c);
-      createClusteredCaches(2, c);
+      createClusteredCaches(2, TestDataSCI.INSTANCE, c);
    }
 
    private void doTest(boolean owner) {

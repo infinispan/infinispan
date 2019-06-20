@@ -1,9 +1,9 @@
 package org.infinispan.persistence.jpa.entity;
 
-import java.io.Serializable;
-
 import javax.persistence.Entity;
 import javax.persistence.Id;
+
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  *
@@ -11,36 +11,40 @@ import javax.persistence.Id;
  *
  */
 @Entity
-public class Document implements Serializable {
-
-   /**
-    *
-    */
-   private static final long serialVersionUID = -81291531402946577L;
+public class Document {
 
    @Id
    private String name;
    private String title;
    private String article;
 
+   @ProtoField(number = 1)
    public String getName() {
       return name;
    }
+
    public void setName(String name) {
       this.name = name;
    }
+
+   @ProtoField(number = 2)
    public String getTitle() {
       return title;
    }
+
    public void setTitle(String title) {
       this.title = title;
    }
+
+   @ProtoField(number = 3)
    public String getArticle() {
       return article;
    }
+
    public void setArticle(String article) {
       this.article = article;
    }
+
    @Override
    public int hashCode() {
       final int prime = 31;

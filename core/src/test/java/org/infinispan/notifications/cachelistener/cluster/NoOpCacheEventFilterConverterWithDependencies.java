@@ -1,25 +1,27 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import java.io.Serializable;
-
 import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author anistor@redhat.com
  * @since 7.2
  */
 @Scope(Scopes.NONE)
-public class NoOpCacheEventFilterConverterWithDependencies<K, V>
-      extends AbstractCacheEventFilterConverter<K, V, V> implements Serializable, ExternalPojo {
+public class NoOpCacheEventFilterConverterWithDependencies<K, V> extends AbstractCacheEventFilterConverter<K, V, V> {
+
+   @ProtoField(number = 1, defaultValue = "false")
+   boolean ignore;
 
    private transient Cache cache;
+
+   NoOpCacheEventFilterConverterWithDependencies() {}
 
    @Inject
    protected void injectDependencies(Cache cache) {

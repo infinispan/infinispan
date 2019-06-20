@@ -1,6 +1,9 @@
 package org.infinispan.scripting.impl;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -10,6 +13,8 @@ import javax.script.SimpleBindings;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
 
@@ -19,7 +24,8 @@ import org.infinispan.scripting.ScriptingManager;
  * @author Tristan Tarrant
  * @since 7.2
  */
-class DistributedScript<T> implements Function<EmbeddedCacheManager, T>, Serializable {
+@SerializeWith(DistributedScript.Externalizer.class)
+class DistributedScript<T> implements Function<EmbeddedCacheManager, T> {
    private final String cacheName;
    private final ScriptMetadata metadata;
    private final Map<String, ?> ctxParams;
@@ -46,6 +52,28 @@ class DistributedScript<T> implements Function<EmbeddedCacheManager, T>, Seriali
          return (T) (scriptManager.execute(metadata, bindings).get());
       } catch (InterruptedException | ExecutionException e) {
          throw new CacheException(e);
+      }
+   }
+
+   /**
+    * Externalizer required for serialization when jboss-marshalling is not present. Eventually {@link DistributedScript}
+    * will be marshalled via protostream annotations once the GlobalMarshaller has been converted and this class can be
+    * removed.
+    */
+   public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<DistributedScript> {
+      @Override
+      public void writeObject(ObjectOutput output, DistributedScript object) throws IOException {
+         output.writeUTF(object.cacheName);
+         output.writeObject(object.metadata);
+         MarshallUtil.marshallMap(object.ctxParams, output);
+      }
+
+      @Override
+      public DistributedScript readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         String cacheName = input.readUTF();
+         ScriptMetadata metadata = (ScriptMetadata) input.readObject();
+         Map<String, ?> ctxParams = MarshallUtil.unmarshallMap(input, HashMap::new);
+         return new DistributedScript<>(cacheName, metadata, ctxParams);
       }
    }
 }

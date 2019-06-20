@@ -27,6 +27,7 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
@@ -189,6 +190,16 @@ public class TestCacheManagerFactory {
       return createClusteredCacheManager(GlobalConfigurationBuilder.defaultClusteredBuilder(), defaultCacheConfig, flags);
    }
 
+   public static EmbeddedCacheManager createClusteredCacheManager(SerializationContextInitializer sci) {
+      return createClusteredCacheManager(sci, new ConfigurationBuilder());
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(SerializationContextInitializer sci, ConfigurationBuilder defaultCacheConfig) {
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().contextInitializer(sci);
+      return createClusteredCacheManager(globalBuilder, defaultCacheConfig, new TransportFlags());
+   }
+
    public static EmbeddedCacheManager createClusteredCacheManager(GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig) {
       return createClusteredCacheManager(gcb, defaultCacheConfig, new TransportFlags());
    }
@@ -250,6 +261,12 @@ public class TestCacheManagerFactory {
       return createCacheManager(new GlobalConfigurationBuilder().nonClusteredDefault(), builder);
    }
 
+   public static EmbeddedCacheManager createCacheManager(SerializationContextInitializer sci, ConfigurationBuilder builder) {
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.serialization().contextInitializer(sci);
+      return createCacheManager(globalBuilder, builder);
+   }
+
    public static EmbeddedCacheManager createCacheManager() {
       return createCacheManager(new ConfigurationBuilder());
    }
@@ -276,6 +293,16 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager createCacheManager(boolean start) {
       return newDefaultCacheManager(start, new GlobalConfigurationBuilder().nonClusteredDefault(), new ConfigurationBuilder(), false);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(SerializationContextInitializer sci) {
+      return createCacheManager(true, sci);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(boolean start, SerializationContextInitializer sci) {
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.serialization().contextInitializer(sci);
+      return newDefaultCacheManager(start, globalBuilder, new ConfigurationBuilder(), false);
    }
 
    public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {

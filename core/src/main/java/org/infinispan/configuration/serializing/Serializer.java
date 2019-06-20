@@ -421,6 +421,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       AttributeSet attributes = serialization.attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.SERIALIZATION);
+         attributes.write(writer, SerializationConfiguration.CONTEXT_INITIALIZER, Attribute.CONTEXT_INITIALIZER);
          attributes.write(writer, SerializationConfiguration.MARSHALLER, Attribute.MARSHALLER_CLASS);
          if (attributes.attribute(SerializationConfiguration.VERSION).isModified()) {
             writer.writeAttribute(Attribute.VERSION, Version.decodeVersion(serialization.version()));

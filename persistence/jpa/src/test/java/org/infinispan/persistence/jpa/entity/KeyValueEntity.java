@@ -1,18 +1,16 @@
 package org.infinispan.persistence.jpa.entity;
 
-import java.io.Serializable;
-
 import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-import org.infinispan.marshall.core.ExternalPojo;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Entity
-public class KeyValueEntity implements Serializable, ExternalPojo {
+public class KeyValueEntity {
    @Id
    private String k; // key is reserved word in SQL
 
@@ -27,6 +25,7 @@ public class KeyValueEntity implements Serializable, ExternalPojo {
       this.value = value;
    }
 
+   @ProtoField(number = 1)
    public String getK() {
       return k;
    }
@@ -35,6 +34,7 @@ public class KeyValueEntity implements Serializable, ExternalPojo {
       this.k = k;
    }
 
+   @ProtoField(number = 2)
    public String getValue() {
       return value;
    }

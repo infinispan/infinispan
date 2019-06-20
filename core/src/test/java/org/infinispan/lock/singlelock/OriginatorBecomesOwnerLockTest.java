@@ -25,14 +25,15 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
-import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.ControlledRpcManager;
 import org.testng.annotations.Test;
 
 
@@ -70,7 +71,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
             new ControlledConsistentHashFactory.Default(new int[][]{{KILLED_INDEX, ORIGINATOR_INDEX},
                   {KILLED_INDEX, OTHER_INDEX}});
       configurationBuilder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
-      createCluster(configurationBuilder, 3);
+      createCluster(TestDataSCI.INSTANCE, configurationBuilder, 3);
       waitForClusterToForm();
 
       originatorCache = cache(ORIGINATOR_INDEX);

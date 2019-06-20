@@ -37,6 +37,7 @@ import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -154,7 +155,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             CacheStatusResponse initialStatus = null;
             try {
                initialStatus = (CacheStatusResponse) executeOnCoordinator(command, timeout);
-            } catch (NotSerializableException e) {
+            } catch (MarshallingException | NotSerializableException e) {
                // There's no point in retrying if the cache join info is not serializable
                throw new CacheJoinException(e);
             } catch (Exception e) {
