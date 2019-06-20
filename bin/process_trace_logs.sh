@@ -26,9 +26,6 @@ for FAILURES_LOG in $(find "$ROOT_DIR" -name 'test-failures*.log'); do
   # Find the failed tests in this failures log and move them
   FAILED_TESTS=$(sed -n -r 's/.*TestSuiteProgress.*[^[:alnum:]]([[:alnum:]]+Test)\..*/\1/ p' "$FAILURES_LOG" | sort -u)
   for TEST in $FAILED_TESTS; do
-    echo ls -ld ${LOG_DIR}/*${TEST}*
-    ls -l ${LOG_DIR}/*${TEST}*
-
     if test -n "$(find ${LOG_DIR} -maxdepth 1 -name "*${TEST}*" -print -quit)"; then
       for LOG in ${LOG_DIR}/*${TEST}*; do
         echo $LOG
