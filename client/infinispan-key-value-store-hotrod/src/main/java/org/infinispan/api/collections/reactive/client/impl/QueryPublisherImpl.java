@@ -24,15 +24,10 @@ public class QueryPublisherImpl<T> implements QueryPublisher<T> {
    private ExecutorService executorService;
    private Query query;
 
-   public QueryPublisherImpl(QueryFactory queryFactory, ExecutorService executorService) {
+   public QueryPublisherImpl(QueryFactory queryFactory, ExecutorService executorService, String ickleQuery) {
       this.queryFactory = queryFactory;
       this.executorService = executorService;
-   }
-
-   @Override
-   public QueryPublisher<T> query(String ickleQuery) {
       query = queryFactory.create(ickleQuery);
-      return this;
    }
 
    @Override

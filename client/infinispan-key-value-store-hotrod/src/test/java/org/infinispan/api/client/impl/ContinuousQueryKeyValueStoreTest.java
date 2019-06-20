@@ -100,12 +100,10 @@ public class ContinuousQueryKeyValueStoreTest extends SingleHotRodServerTest {
 
    @Test
    public void continuous_query_search_only_created_entries() {
-      ContinuousQueryPublisher<String, Person> continuousQueryPublisher = store.findContinuously();
-      continuousQueryPublisher.query("FROM org.infinispan.Person p")
-            .created();
-
       TestSubscriber<KeyValueEntry<String, Person>> personTestSubscriber = new TestSubscriber<>();
-      continuousQueryPublisher.subscribe(personTestSubscriber);
+      store.findContinuously("FROM org.infinispan.Person p")
+            .subscribe(personTestSubscriber);
+
       personTestSubscriber.assertSubscribed();
 
       updateOneValue();

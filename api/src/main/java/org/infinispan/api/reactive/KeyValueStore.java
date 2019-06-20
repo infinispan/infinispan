@@ -1,5 +1,6 @@
 package org.infinispan.api.reactive;
 
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.reactivestreams.Publisher;
@@ -51,13 +52,15 @@ public interface KeyValueStore<K, V> {
    CompletionStage<V> getAndRemove(K key);
 
 
-   //CompletionStage<Boolean> replace(K key, V oldValue, V newValue);
+   //Publisher<K> keys();
+
+   //Publisher<KeyValueEntry> entries();
 
    /**
     * @param pairs
     * @return
     */
-   CompletionStage<Void> putMany(Publisher<KeyValueEntry<K, V>> pairs);
+   CompletionStage<Void> putMany(Publisher<Map.Entry<K, V>> pairs);
 
    /**
     * Estimation of the size of the store
@@ -69,6 +72,8 @@ public interface KeyValueStore<K, V> {
    /**
     * Clear the key-value store
     *
+    * Concurrent operations, use it carefully*
+    *
     * @return {@link CompletionStage<Void>}
     */
    CompletionStage<Void> clear();
@@ -78,12 +83,19 @@ public interface KeyValueStore<K, V> {
     *
     * @return query publisher {@link QueryPublisher}
     */
-   QueryPublisher<V> find();
+   QueryPublisher find(String ickleQuery);
+
+   QueryPublisher find(Query query);
+
+   QueryRequestBuilder(string).queryParam(...).limit().skip().build();
 
    /**
     * Provides the entry point to create a continuous query in a reactive way.
     *
     * @return continuous query publisher {@link ContinuousQueryPublisher}
     */
-   ContinuousQueryPublisher<K, V> findContinuously();
+   ContinuousQueryPublisher<K, V> findContinuously(String ickleQuery);
+
+   ContinuousQueryPublisher<K, V> find(ContinuousQuery query);
+
 }

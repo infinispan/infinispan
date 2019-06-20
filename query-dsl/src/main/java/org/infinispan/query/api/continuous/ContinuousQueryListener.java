@@ -15,6 +15,7 @@ public interface ContinuousQueryListener<K, V> {
     *
     * @param key   the key of the joining entry
     * @param value the joining entry or the Object[] projection if a projection was specified
+    *              Note for Adrian: WRONG!!!!!!
     */
    default void resultJoining(K key, V value) {
    }

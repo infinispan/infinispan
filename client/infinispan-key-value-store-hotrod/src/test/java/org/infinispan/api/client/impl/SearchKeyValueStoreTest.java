@@ -68,8 +68,8 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
    @Test
    public void search_api_with_params() throws Exception {
       TestSubscriber<Person> personTestSubscriber = new TestSubscriber<>();
-      store.find()
-            .query("FROM org.infinispan.Person p where p.lastName = :lastName and p.address.number = :number")
+
+      store.find("FROM org.infinispan.Person p where p.lastName = :lastName and p.address.number = :number")
             .withQueryParameters(QueryParameters.init("lastName", "Bilbao").append("number", "12"))
             .subscribe(personTestSubscriber);
 

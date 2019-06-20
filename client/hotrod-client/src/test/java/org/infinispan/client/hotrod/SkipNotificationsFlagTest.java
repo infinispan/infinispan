@@ -69,6 +69,10 @@ public class SkipNotificationsFlagTest extends SingleCacheManagerTest {
       performTest(RequestType.PUT_ALL);
    }
 
+   public void testRemoveValue() {
+      performTest(RequestType.REMOVE_VALUE);
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
@@ -152,6 +156,15 @@ public class SkipNotificationsFlagTest extends SingleCacheManagerTest {
             cache.remove(KEY);
          }
       },
+
+      REMOVE_VALUE {
+         @Override
+         void execute(RemoteCache<String, String> cache) {
+            System.out.println("pepe");
+            cache.remove(KEY, VALUE);
+         }
+      },
+
       REMOVE_IF_UNMODIFIED {
          @Override
          void execute(RemoteCache<String, String> cache) {

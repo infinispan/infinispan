@@ -82,14 +82,14 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    }
 
    @Override
-   public QueryPublisher<V> find() {
+   public QueryPublisher<V> find(String ickleQuery) {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       QueryPublisherImpl queryPublisher = new QueryPublisherImpl(queryFactory, cache.getRemoteCacheManager().getAsyncExecutorService());
       return queryPublisher;
    }
 
    @Override
-   public ContinuousQueryPublisher<K, V> findContinuously() {
+   public ContinuousQueryPublisher<K, V> findContinuously(String ickleQuery) {
       ContinuousQuery<K, V> continuousQuery = Search.getContinuousQuery(cache);
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       ContinuousQueryPublisherImpl continuousQueryPublisherImpl = new ContinuousQueryPublisherImpl(continuousQuery, queryFactory);
