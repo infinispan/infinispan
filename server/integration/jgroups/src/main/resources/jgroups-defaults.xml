@@ -76,17 +76,17 @@
       print_local_addr="false"
       join_timeout="${jgroups.join_timeout:5000}"/>
    <UFC
-      max_credits="2m"
+      max_credits="3m"
       min_threshold="0.40"/>
    <MFC
-      max_credits="2m"
+      max_credits="3m"
       min_threshold="0.40"/>
    <UFC_NB
-      max_credits="2m"
+      max_credits="3m"
       max_queue_size="2m"
       min_threshold="0.40"/>
    <MFC_NB
-      max_credits="2m"
+      max_credits="3m"
       max_queue_size="2m"
       min_threshold="0.40"/>
    <FRAG2 frag_size="8000"/>
