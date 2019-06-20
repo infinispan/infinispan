@@ -1126,11 +1126,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return readOnly;
    }
 
-   @Override
-   public Scheduler continuationScheduler() {
-      return cpuScheduler;
-   }
-
    public List<CacheLoader> getAllLoaders() {
       storesMutex.readLock().lock();
       try {

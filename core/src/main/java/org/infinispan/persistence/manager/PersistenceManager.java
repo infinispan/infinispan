@@ -18,8 +18,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Scheduler;
-
 /**
  * Defines the logic for interacting with the chain of external storage.
  *
@@ -386,12 +384,4 @@ public interface PersistenceManager extends Lifecycle {
     * @return true if no {@link org.infinispan.persistence.spi.CacheWriter} instances have been configured.
     */
    boolean isReadOnly();
-
-   /**
-    * The scheduler that should be used when a Publisher is subscribed but before completing. This should be used
-    * by caller's as it is their duty to manage when a Publisher running thread reverts back to the CPU based continuation
-    * thread.
-    * @return RxJava2 scheduler that can be used with {@link io.reactivex.Flowable#observeOn(Scheduler)} or equivalent
-    */
-   Scheduler continuationScheduler();
 }

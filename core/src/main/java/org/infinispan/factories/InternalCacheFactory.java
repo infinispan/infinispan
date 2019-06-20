@@ -50,8 +50,6 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.impl.ClusterEventManagerStub;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -532,7 +530,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
          registerComponent(new PassivationManagerStub(), PassivationManager.class);
          registerComponent(new ActivationManagerStub(), ActivationManager.class);
-         registerComponent(new PersistenceManagerStub(), PersistenceManager.class);
       }
 
       @Override

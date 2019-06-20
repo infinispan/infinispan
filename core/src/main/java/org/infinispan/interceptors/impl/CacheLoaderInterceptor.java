@@ -231,8 +231,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             .map(me -> PersistenceUtil.convert(me, iceFactory))
             .doOnNext(ice -> entryFactory.wrapExternalEntry(ctx, ice.getKey(), ice, true, false))
             .lastElement()
-            // The installation of the ctx is done on the persistence thread, but we are continued on the cpu thread
-            .observeOn(persistenceManager.continuationScheduler())
             .to(RxJavaInterop.maybeToCompletionStage());
       return asyncInvokeNext(ctx, command, publisherStage);
    }
