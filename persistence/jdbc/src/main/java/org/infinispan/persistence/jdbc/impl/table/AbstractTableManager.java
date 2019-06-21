@@ -45,7 +45,6 @@ public abstract class AbstractTableManager implements TableManager {
    private final String loadAllNonExpiredRowsSql;
    private final String deleteAllRows;
    private final String selectExpiredRowsSql;
-   private final String deleteExpiredRowsSql;
 
    AbstractTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName, Log log) {
       this(connectionFactory, config, metaData, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING, log);
@@ -74,8 +73,7 @@ public abstract class AbstractTableManager implements TableManager {
       this.countRowsSql = initCountNonExpiredRowsSql();
       this.loadAllNonExpiredRowsSql = initLoadNonExpiredAllRowsSql();
       this.deleteAllRows = initDeleteAllRowsSql();
-      this.selectExpiredRowsSql = initSelectExpiredBucketsSql();
-      this.deleteExpiredRowsSql = initSelectOnlyExpiredRowsSql();
+      this.selectExpiredRowsSql = initSelectOnlyExpiredRowsSql();
    }
 
    @Override
@@ -411,17 +409,13 @@ public abstract class AbstractTableManager implements TableManager {
       return deleteAllRows;
    }
 
-   protected String initSelectExpiredBucketsSql() {
-      return String.format("%s WHERE %s < ?", loadAllRowsSql, config.timestampColumnName());
-   }
-
    protected String initSelectOnlyExpiredRowsSql() {
-      return String.format("%1$s WHERE %2$s < ? AND %2$s > 0", getLoadAllRowsSql(), config.timestampColumnName());
+      return String.format("%1$s WHERE %2$s < ? AND %2$s > 0 FOR UPDATE", getLoadAllRowsSql(), config.timestampColumnName());
    }
 
    @Override
    public String getSelectOnlyExpiredRowsSql() {
-      return deleteExpiredRowsSql;
+      return selectExpiredRowsSql;
    }
 
    protected String initUpsertRowSql() {
