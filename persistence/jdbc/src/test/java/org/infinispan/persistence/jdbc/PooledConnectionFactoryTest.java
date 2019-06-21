@@ -8,6 +8,7 @@ import java.util.Set;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.C3P0ConnectionPool;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionPool;
 import org.infinispan.persistence.jdbc.connectionfactory.HikariConnectionPool;
@@ -31,6 +32,14 @@ public class PooledConnectionFactoryTest {
    private PooledConnectionFactory factory;
    private JdbcStringBasedStoreConfigurationBuilder storeBuilder;
    private ConnectionFactoryConfigurationBuilder<?> factoryBuilder;
+   private PooledConnectionFactoryConfiguration customFactoryConfiguration;
+
+   public PooledConnectionFactoryTest() {}
+
+   @SuppressWarnings("unused")
+   public PooledConnectionFactoryTest(PooledConnectionFactoryConfiguration customFactoryConfiguration) {
+      this.customFactoryConfiguration = customFactoryConfiguration;
+   }
 
    @BeforeMethod
    public void beforeMethod() {
@@ -59,7 +68,13 @@ public class PooledConnectionFactoryTest {
             .getDefaultCacheConfiguration(false)
             .persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
-      factoryBuilder = UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+
+      if(customFactoryConfiguration != null) {
+         factoryBuilder = storeBuilder.connectionPool().read(customFactoryConfiguration);
+      } else {
+         factoryBuilder = UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+      }
+
       ConnectionFactoryConfiguration factoryConfiguration = factoryBuilder.create();
       factory.start(factoryConfiguration, Thread.currentThread().getContextClassLoader());
 
@@ -119,7 +134,12 @@ public class PooledConnectionFactoryTest {
             .getDefaultCacheConfiguration(false)
             .persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
-      factoryBuilder = UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+
+      if(customFactoryConfiguration != null) {
+         factoryBuilder = storeBuilder.connectionPool().read(customFactoryConfiguration);
+      } else {
+         factoryBuilder = UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+      }
       ConnectionFactoryConfiguration factoryConfiguration = factoryBuilder.create();
       factory.start(factoryConfiguration, Thread.currentThread().getContextClassLoader());
 
