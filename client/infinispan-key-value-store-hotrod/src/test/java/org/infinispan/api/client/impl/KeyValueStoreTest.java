@@ -5,14 +5,11 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.AbstractMap;
 
 import org.infinispan.api.ClientConfig;
 import org.infinispan.api.Infinispan;
 import org.infinispan.api.InfinispanClient;
-import org.infinispan.api.reactive.KeyValueEntry;
 import org.infinispan.api.reactive.KeyValueStore;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -70,24 +67,22 @@ public class KeyValueStoreTest extends SingleHotRodServerTest {
       assertNull(await(store.get(0)));
    }
 
-   public void testPutAndGetValue() {
-      await(store.put(1, "hi"));
+   public void testCreate() {
+      await(store.create(1, "hi"));
       assertEquals("hi", await(store.get(1)));
    }
 
-   public void testGetAndPut() {
-      await(store.put(1, "hi"));
-      String getAndPutValue = await(store.getAndPut(1, "hola"));
-      assertEquals("hi", getAndPutValue);
+   public void testGetAndSave() {
+      await(store.save(1, "hi"));
+      String getAndSaveValue = await(store.getAndSave(1, "hola"));
+      assertEquals("hi", getAndSaveValue);
       assertEquals("hola", await(store.get(1)));
    }
 
-   public void testPutMany() {
-      List<KeyValueEntry<Integer, String>> entries = Stream.of(new KeyValueEntry<>(1, "adios"),
-            new KeyValueEntry<>(2, "agur"),
-            new KeyValueEntry<>(3, "ciao")).collect(Collectors.toList());
-
-      await(store.putMany(Flowable.fromIterable(entries)));
+   public void testSaveMany() {
+      await(store.saveMany(Flowable.fromArray(new AbstractMap.SimpleEntry(1, "adios"),
+            new AbstractMap.SimpleEntry(2, "agur"),
+            new AbstractMap.SimpleEntry(3, "ciao"))));
 
       assertEquals("adios", await(store.get(1)));
       assertEquals("agur", await(store.get(2)));
@@ -102,33 +97,33 @@ public class KeyValueStoreTest extends SingleHotRodServerTest {
 
    public void testEstimateSizeWithData() {
       for (int i = 0; i < 100; i++) {
-         await(store.put(i, "" + i));
+         await(store.save(i, "" + i));
       }
 
       long estimatedSize = await(store.estimateSize());
       assertEquals(100, estimatedSize);
    }
 
-   public void testGetAndRemoveNotExistingKeyValue() {
-      String removed = await(store.getAndRemove(0));
+   public void testGetAndDeleteNotExisting() {
+      String removed = await(store.getAndDelete(0));
       assertNull(removed);
    }
 
-   public void testGetAndRemoveExistingKeyValue() {
-      await(store.put(0, "hi"));
-      String removed = await(store.getAndRemove(0));
+   public void testGetAndDeleteExisting() {
+      await(store.save(0, "hi"));
+      String removed = await(store.getAndDelete(0));
       assertEquals("hi", removed);
       String getRemovedValue = await(store.get(0));
       assertNull(getRemovedValue);
    }
 
-   public void testRemoveKeyNotExisting() {
-      await(store.remove(0));
+   public void testDeleteNotExisting() {
+      await(store.delete(0));
    }
 
-   public void testRemoveKeyExisting() {
-      await(store.put(0, "hola"));
-      await(store.remove(0));
+   public void testDeleteExisting() {
+      await(store.save(0, "hola"));
+      await(store.delete(0));
       String getRemovedValue = await(store.get(0));
       assertNull(getRemovedValue);
    }

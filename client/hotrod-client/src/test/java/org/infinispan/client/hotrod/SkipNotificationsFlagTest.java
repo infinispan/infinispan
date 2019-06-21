@@ -160,7 +160,6 @@ public class SkipNotificationsFlagTest extends SingleCacheManagerTest {
       REMOVE_VALUE {
          @Override
          void execute(RemoteCache<String, String> cache) {
-            System.out.println("pepe");
             cache.remove(KEY, VALUE);
          }
       },

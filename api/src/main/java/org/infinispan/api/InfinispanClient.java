@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
  * @author Katia Aresti, karesti@redhat.com
  * @since 10.0
  */
+@Experimental
 public class InfinispanClient {
 
    //TODO: Decide how to test and how to make this work

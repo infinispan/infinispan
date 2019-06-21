@@ -9,9 +9,10 @@ import static org.infinispan.api.client.impl.SearchUtil.UNAI;
 import org.infinispan.api.Infinispan;
 import org.infinispan.api.reactive.KeyValueStore;
 import org.infinispan.api.reactive.KeyValueStoreConfig;
-import org.infinispan.api.reactive.QueryParameters;
-import org.infinispan.api.reactive.QueryPublisher;
+import org.infinispan.api.reactive.QueryRequest;
+import org.infinispan.api.reactive.QueryRequestBuilder;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
@@ -69,9 +70,13 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
    public void search_api_with_params() throws Exception {
       TestSubscriber<Person> personTestSubscriber = new TestSubscriber<>();
 
-      store.find("FROM org.infinispan.Person p where p.lastName = :lastName and p.address.number = :number")
-            .withQueryParameters(QueryParameters.init("lastName", "Bilbao").append("number", "12"))
-            .subscribe(personTestSubscriber);
+      QueryRequest queryRequest = QueryRequestBuilder
+            .query("FROM org.infinispan.Person p where p.lastName = :lastName and p.address.number = :number")
+            .param("lastName", "Bilbao")
+            .param("number", 12)
+            .build();
+
+      store.find(queryRequest).subscribe(personTestSubscriber);
 
       personTestSubscriber.await();
 
@@ -81,13 +86,28 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
    }
 
    @Test
-   public void search_skip() throws Exception {
-      QueryPublisher<Person> queryPublisher = store.find();
-      queryPublisher.query("FROM org.infinispan.Person p where p.lastName = :lastName order by p.firstName")
-            .withQueryParameter("lastName", "Bilbao");
-
+   public void search_api_with_incorrect_query() throws Exception {
       TestSubscriber<Person> personTestSubscriber = new TestSubscriber<>();
-      queryPublisher.subscribe(personTestSubscriber);
+
+      store.find("FROM org.infinispan.Wrooong").subscribe(personTestSubscriber);
+
+      personTestSubscriber.await();
+
+      personTestSubscriber.assertError(HotRodClientException.class);
+   }
+
+   @Test
+   public void search_skip() throws Exception {
+      TestSubscriber<Person> personTestSubscriber = new TestSubscriber<>();
+
+      QueryRequest queryRequest = QueryRequestBuilder
+            .query("FROM org.infinispan.Person p where p.lastName = :lastName order by p.firstName")
+            .param("lastName", "Bilbao")
+            .skip(1)
+            .build();
+
+      store.find(queryRequest).subscribe(personTestSubscriber);
+
       personTestSubscriber.await();
 
       personTestSubscriber.assertComplete();
@@ -97,12 +117,14 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
 
    @Test
    public void search_limit() throws Exception {
-      QueryPublisher<Person> queryPublisher = store.find();
-      queryPublisher.query("FROM org.infinispan.Person p where p.lastName = :lastName order by p.firstName")
-            .withQueryParameter("lastName", "Bilbao");
-
       TestSubscriber<Person> personTestSubscriber = new TestSubscriber<>();
-      queryPublisher.subscribe(personTestSubscriber);
+      QueryRequest queryRequest = QueryRequestBuilder
+            .query("FROM org.infinispan.Person p where p.lastName = :lastName order by p.firstName")
+            .param("lastName", "Bilbao")
+            .limit(1)
+            .build();
+
+      store.find(queryRequest).subscribe(personTestSubscriber);
       personTestSubscriber.await();
 
       personTestSubscriber.assertComplete();

@@ -16,6 +16,8 @@ import org.infinispan.api.reactive.ContinuousQueryPublisher;
 import org.infinispan.api.reactive.KeyValueEntry;
 import org.infinispan.api.reactive.KeyValueStore;
 import org.infinispan.api.reactive.KeyValueStoreConfig;
+import org.infinispan.api.reactive.QueryRequest;
+import org.infinispan.api.reactive.QueryRequestBuilder;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
@@ -71,19 +73,21 @@ public class ContinuousQueryKeyValueStoreTest extends SingleHotRodServerTest {
 
    @Test
    public void continuous_query_search() {
-      ContinuousQueryPublisher<String, Person> continuousQueryPublisher = store.findContinuously();
-
-      continuousQueryPublisher.query("FROM org.infinispan.Person p where p.address.number = :number")
-            .withQueryParameter("number", "12");
-
       TestSubscriber<KeyValueEntry<String, Person>> personTestSubscriber = new TestSubscriber<>();
-      continuousQueryPublisher.subscribe(personTestSubscriber);
+      QueryRequest queryRequest = QueryRequestBuilder
+            .query("FROM org.infinispan.Person p where p.address.number = :number")
+            .param("number", 12)
+            .all()
+            .build();
+
+      store.findContinuously(queryRequest).subscribe(personTestSubscriber);
+
       personTestSubscriber.assertValueCount(1);
 
       for (int i = 0; i < 10; i++) {
          Person person = new Person(OIHANA.firstName + i, OIHANA.lastName, OIHANA.bornYear, OIHANA.bornIn);
          person.address = OIHANA.address;
-         await(store.put(SearchUtil.id(), person));
+         await(store.save(SearchUtil.id(), person));
       }
 
       personTestSubscriber.assertValueCount(10);
@@ -101,8 +105,11 @@ public class ContinuousQueryKeyValueStoreTest extends SingleHotRodServerTest {
    @Test
    public void continuous_query_search_only_created_entries() {
       TestSubscriber<KeyValueEntry<String, Person>> personTestSubscriber = new TestSubscriber<>();
-      store.findContinuously("FROM org.infinispan.Person p")
+      QueryRequest queryRequest = QueryRequestBuilder.query("FROM org.infinispan.Person p").created().build();
+
+      store.findContinuously(queryRequest)
             .subscribe(personTestSubscriber);
+
 
       personTestSubscriber.assertSubscribed();
 
@@ -114,32 +121,27 @@ public class ContinuousQueryKeyValueStoreTest extends SingleHotRodServerTest {
 
    @Test
    public void continuous_query_search_updated_entries() throws Exception {
-      ContinuousQueryPublisher<String, Person> continuousQueryPublisher = store.findContinuously();
-
-      continuousQueryPublisher.query("FROM org.infinispan.Person p")
-            .updated();
-
       TestSubscriber<KeyValueEntry<String, Person>> personTestSubscriber = new TestSubscriber<>();
-      continuousQueryPublisher.subscribe(personTestSubscriber);
+      QueryRequest queryRequest = QueryRequestBuilder.query("FROM org.infinispan.Person p").updated().build();
+
+      store.findContinuously(queryRequest).subscribe(personTestSubscriber);
+
       personTestSubscriber.assertSubscribed();
       personTestSubscriber.assertValueCount(0);
 
       updateOneValue();
 
       personTestSubscriber.await(1, TimeUnit.SECONDS);
-      await(store.remove(OIHANA.id));
+      await(store.delete(OIHANA.id));
       personTestSubscriber.assertValueCount(1);
    }
 
    @Test
-   public void continuous_query_search_removed_entries() throws Exception {
-      ContinuousQueryPublisher<String, Person> continuousQueryPublisher = store.findContinuously();
-
-      continuousQueryPublisher.query("FROM org.infinispan.Person p")
-            .removed();
-
+   public void continuous_query_search_deleted_entries() throws Exception {
       TestSubscriber<KeyValueEntry<String, Person>> personTestSubscriber = new TestSubscriber<>();
-      continuousQueryPublisher.subscribe(personTestSubscriber);
+      QueryRequest queryRequest = QueryRequestBuilder.query("FROM org.infinispan.Person p").deleted().build();
+
+      store.findContinuously(queryRequest).subscribe(personTestSubscriber);
       personTestSubscriber.assertSubscribed();
       personTestSubscriber.assertValueCount(0);
 
@@ -153,7 +155,7 @@ public class ContinuousQueryKeyValueStoreTest extends SingleHotRodServerTest {
    private void updateOneValue() {
       Person copied = OIHANA.copy();
       copied.setAddress(new Address("25", "c/ Trafalgar", "28990", "Madrid", "Spain"));
-      await(store.remove(ELAIA.id));
-      await(store.put(OIHANA.id, copied));
+      await(store.delete(ELAIA.id));
+      await(store.save(OIHANA.id, copied));
    }
 }

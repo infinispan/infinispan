@@ -17,85 +17,34 @@ import org.reactivestreams.Publisher;
  */
 public interface KeyValueStore<K, V> {
 
-   /**
-    * Get key value
-    *
-    * @param key
-    * @return
-    */
    CompletionStage<V> get(K key);
 
-   /**
-    * @param key
-    * @param value
-    * @return
-    */
-   CompletionStage<Void> put(K key, V value);
+   CompletionStage<Void> create(K key, V value);
 
-   /**
-    * @param key
-    * @param value
-    * @return
-    */
-   CompletionStage<V> getAndPut(K key, V value);
+   CompletionStage<Void> save(K id, V value);
 
-   /**
-    * @param key
-    * @return
-    */
-   CompletionStage<Void> remove(K key);
+   CompletionStage<V> getAndSave(K key, V value);
 
-   /**
-    * @param key
-    * @return
-    */
-   CompletionStage<V> getAndRemove(K key);
+   CompletionStage<Void> delete(K key);
 
+   CompletionStage<V> getAndDelete(K key);
 
-   //Publisher<K> keys();
+   Publisher<K> keys();
 
-   //Publisher<KeyValueEntry> entries();
+   Publisher<Map.Entry<K, V>> entries();
 
-   /**
-    * @param pairs
-    * @return
-    */
-   CompletionStage<Void> putMany(Publisher<Map.Entry<K, V>> pairs);
+   CompletionStage<Void> saveMany(Publisher<Map.Entry<K, V>> pairs);
 
-   /**
-    * Estimation of the size of the store
-    *
-    * @return {@link CompletionStage<Long>}
-    */
    CompletionStage<Long> estimateSize();
 
-   /**
-    * Clear the key-value store
-    *
-    * Concurrent operations, use it carefully*
-    *
-    * @return {@link CompletionStage<Void>}
-    */
    CompletionStage<Void> clear();
 
-   /**
-    * Provides the entry point to create queries in a reactive way.
-    *
-    * @return query publisher {@link QueryPublisher}
-    */
    QueryPublisher find(String ickleQuery);
 
-   QueryPublisher find(Query query);
+   QueryPublisher find(QueryRequest queryRequest);
 
-   QueryRequestBuilder(string).queryParam(...).limit().skip().build();
+   ContinuousQueryPublisher findContinuously(String ickleQuery);
 
-   /**
-    * Provides the entry point to create a continuous query in a reactive way.
-    *
-    * @return continuous query publisher {@link ContinuousQueryPublisher}
-    */
-   ContinuousQueryPublisher<K, V> findContinuously(String ickleQuery);
-
-   ContinuousQueryPublisher<K, V> find(ContinuousQuery query);
+   ContinuousQueryPublisher findContinuously(QueryRequest queryRequest);
 
 }

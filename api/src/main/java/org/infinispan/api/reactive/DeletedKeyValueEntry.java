@@ -1,7 +1,7 @@
 package org.infinispan.api.reactive;
 
-public class RemovedKeyValueEntry<K, V> extends KeyValueEntry {
-   public RemovedKeyValueEntry(K key, V value) {
+public class DeletedKeyValueEntry<K, V> extends KeyValueEntry {
+   public DeletedKeyValueEntry(K key, V value) {
       super(key, value);
    }
 

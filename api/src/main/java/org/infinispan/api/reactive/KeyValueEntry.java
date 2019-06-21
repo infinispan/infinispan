@@ -1,6 +1,5 @@
 package org.infinispan.api.reactive;
 
-import java.util.Map;
 import java.util.Objects;
 
 public class KeyValueEntry<K, V> {
