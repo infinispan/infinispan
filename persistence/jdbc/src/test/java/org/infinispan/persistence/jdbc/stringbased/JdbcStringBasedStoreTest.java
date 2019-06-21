@@ -49,7 +49,7 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
             .persistence()
-               .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+              .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
       storeBuilder.segmented(segmented);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());

@@ -28,7 +28,7 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
             .persistence()
-               .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+              .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
 
       storeBuilder.dataSource()
             .jndiUrl(getDatasourceLocation());
