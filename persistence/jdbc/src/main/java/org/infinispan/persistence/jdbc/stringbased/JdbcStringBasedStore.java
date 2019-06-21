@@ -33,9 +33,9 @@ import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
+import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.keymappers.Key2StringMapper;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
@@ -450,6 +450,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       try {
          String sql = tableManager.getSelectOnlyExpiredRowsSql();
          conn = connectionFactory.getConnection();
+         conn.setAutoCommit(false);
          ps = conn.prepareStatement(sql);
          ps.setLong(1, timeService.wallClockTime());
          rs = ps.executeQuery();
@@ -478,10 +479,16 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
                   log.tracef("Successfully purged %d rows.", result.length);
                }
             }
+            conn.commit();
          }
-      } catch (SQLException ex) {
-         log.failedClearingJdbcCacheStore(ex);
-         throw new PersistenceException("Failed clearing string based JDBC store", ex);
+      } catch (SQLException e) {
+         log.failedClearingJdbcCacheStore(e);
+         try {
+            conn.rollback();
+         } catch (SQLException ex) {
+            log.sqlFailureTxRollback(ex);
+         }
+         throw new PersistenceException("Failed clearing string based JDBC store", e);
       } finally {
          JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);

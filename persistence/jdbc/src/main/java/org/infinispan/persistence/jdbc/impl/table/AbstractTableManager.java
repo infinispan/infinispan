@@ -422,7 +422,7 @@ public abstract class AbstractTableManager implements TableManager {
    @Override
    public String getSelectOnlyExpiredRowsSql() {
       if (deleteExpiredRowsSql == null) {
-         deleteExpiredRowsSql = String.format("%1$s WHERE %2$s < ? AND %2$s > 0", getLoadAllRowsSql(), config.timestampColumnName());
+         deleteExpiredRowsSql = String.format("%1$s WHERE %2$s < ? AND %2$s > 0 FOR UPDATE", getLoadAllRowsSql(), config.timestampColumnName());
       }
       return deleteExpiredRowsSql;
    }
