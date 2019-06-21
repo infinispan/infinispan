@@ -4,6 +4,9 @@
 
 include::topics/attributes/product-attributes.adoc[]
 
+// Images directory attribute.
+:images_dir: images
+
 = {ProductName} Spring Boot Starter
 
 include::topics/productized/spring_boot_starter.adoc[leveloffset=+1]

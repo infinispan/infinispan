@@ -7,7 +7,7 @@ NOTE: Cross site replication needs the backup cache running in the site master n
 == Sample deployment
 The diagram below depicts a possible setup of replicated sites, followed by a description of individual elements present in the deployment. Options are then explained at large in future paragraphs. Comments on the diagram above:
 
-image::images/xdc.png[Cross-site datacenters]
+image::{images_dir}/xdc.png[Cross-site datacenters]
 
 
 * there are 3 sites: LON, NYC and SFO.
@@ -281,7 +281,7 @@ When you invoke the `pushState(String)` operation on the site that transfers sta
 
 The following figure shows the +pushState(String)+ operation in JConsole:
 
-image::images/xsite-state-transfer.png[align="center", title="Pushing state via JConsole"]
+image::{images_dir}/xsite-state-transfer.png[align="center", title="Pushing state via JConsole"]
 
 === Handling join/leave nodes
 
