@@ -1,5 +1,8 @@
-//Include productized flag.
+// Include productized flag.
 :productized:
+
+// Images directory attribute.
+:images_dir: images
 
 // Include global attributes
 include::topics/attributes/product-attributes.adoc[]

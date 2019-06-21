@@ -2,7 +2,7 @@
 
 The following class diagram presents the main SPI interfaces of the persistence API:
 
-image::images/Figure2_1_persistence_API.png[align="center", title="Persistence SPI"]
+image::{images_dir}/Figure2_1_persistence_API.png[align="center", title="Persistence SPI"]
 
 Some notes about the classes:
 

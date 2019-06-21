@@ -427,7 +427,7 @@ A normal recovery flow is:
 * *STEP 1*: The system administrator connects to an {brandname} server through JMX, and lists the in doubt transactions.
 The image below demonstrates JConsole connecting to an {brandname} node that has an in doubt transaction.
 
-image::images/showInDoubtTx.png[align="center", title="Show in-doubt transactions"]
+image::{images_dir}/showInDoubtTx.png[align="center", title="Show in-doubt transactions"]
 
 The status of each in-doubt transaction is displayed(in this example " _PREPARED_ ").
 There might be multiple elements in the status field, e.g. "PREPARED" and "COMMITTED" in the case the transaction committed on certain nodes but not on all of them.  
@@ -438,7 +438,7 @@ This step is needed because the XID, a byte array, cannot conveniently be passed
 * *STEP 3*: The system administrator forces the transaction's commit/rollback through the corresponding jmx operation, based on the internal id.
 The image below is obtained by forcing the commit of the transaction based on its internal id.
 
-image::images/forceCommit.png[align="center", title="Force commit"]
+image::{images_dir}/forceCommit.png[align="center", title="Force commit"]
 
 TIP: All JMX operations described above can be executed on any node, regardless of where the transaction originated.
 
@@ -482,7 +482,7 @@ When the transaction ends, {brandname} sends the transaction (and its modificati
 This ensures all the transactions are deliver in the same order in all the involved {brandname} nodes.
 As a result, when a transaction is delivered, it performs a deterministic write skew check over the same state (if enabled), leading to the same outcome (transaction commit or rollback).
 
-image::images/total-order-1pc.png[align="center", title="1-phase commit"]
+image::{images_dir}/total-order-1pc.png[align="center", title="1-phase commit"]
 
 The figure above demonstrates a high level example with 3 nodes.
 `Node1` and `Node3` are running one transaction each and lets assume that both transaction writes on the same key.
@@ -500,7 +500,7 @@ As soon as it has the confirmation that all keys are successfully validated, it 
 On other hand, if it receives a negative reply, it returns a negative response to the `TransactionManager`.
 Finally, the transaction is committed or aborted in the second phase depending of the `TransactionManager` request.
 
-image::images/total-order-2pc.png[align="center", title="2-phase commit"]
+image::{images_dir}/total-order-2pc.png[align="center", title="2-phase commit"]
 
 The figure above shows the scenario described in the first figure but now committing the transactions using two phases.
 When _tx1_ is deliver, it performs the validation and it replies to the `TransactionManager`.
@@ -521,7 +521,7 @@ The main differences are:
 This way, it provides a synchronization between the state transfer and the transactions deliver that is the same all the nodes.
 Although, the transactions caught in the middle of state transfer (i.e. sent before the state transfer start and deliver after it) needs to be re-sent to find a new total order involving the new joiners.
 
-image::images/total-order-joing-during-st.png[align="center", title="Node joining during transaction"]
+image::{images_dir}/total-order-joing-during-st.png[align="center", title="Node joining during transaction"]
 
 The figure above describes a node joining.
 In the scenario, the _tx2_ is sent in _topologyId=1_ but when it is received, it is in _topologyId=2_ .
