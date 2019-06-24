@@ -296,10 +296,11 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             source.addProtoFile((String) key, (String) value);
          }
       }
-
-      // lock .errors key
-      VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-      invoker.running().invoke(ctx, cmd);
+      if (ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_LOCKING)) {
+         // lock .errors key
+         VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
+         invoker.running().invoke(ctx, cmd);
+      }
 
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          long flagsBitSet = copyFlags(((PutMapCommand) rCommand));
