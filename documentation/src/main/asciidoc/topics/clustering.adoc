@@ -454,7 +454,7 @@ Rack::
   hardware or network failure at the same time.
 Site::
   Some clusters may have nodes in multiple physical locations for extra resilience.
-  Note that link:#x_site_replication[Cross site replication] is another alternative for
+  Note that Cross site replication is another alternative for
   clusters that need to span two or more data centres.
 
 All of the above are optional.
@@ -813,7 +813,7 @@ try {
 The correct way to implement this is to use
 `cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(k)`.
 
-In caches with optimistic locking, writes can also return stale previous values. Write skew checks can avoid stale previous values. For more information, see link:#tx_write_skew[Write Skews].
+In caches with optimistic locking, writes can also return stale previous values. Write skew checks can avoid stale previous values.
 
 == Partition handling
 

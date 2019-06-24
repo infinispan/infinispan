@@ -419,7 +419,7 @@ Dependencies: org.infinispan.lucene-directory:{infinispanslot}
 The Hibernate Search directory provider for {brandname} is also contained within the {brandname} modules zip. It is not necessary to add an entry to the manifest file since the Hibernate Search module already has an optional dependency to it.
 When choosing the {brandname} module zip to use, start by checking which Hibernate Search is in use, more details below.
 
-====== Usage with {wildflybrandname} Internal Hibernate Search Modules
+===== Usage with {wildflybrandname} Internal Hibernate Search Modules
 
 The Hibernate Search module present in {wildflybrandname}
 ifndef::productized[]
@@ -431,7 +431,7 @@ endif::productized[]
 has slot "5.5", which in turn has an optional dependency to `org.infinispan.hibernate-search.directory-provider:for-hibernatesearch-5.5`.
 This dependency will be available once the {brandname} modules are link:#modules_installation_section[installed].
 
-====== Usage with other Hibernate Search modules
+===== Usage with other Hibernate Search modules
 
 The module `org.hibernate.search:{infinispanslot}` distributed with {brandname} is to be used together with {brandname} Query only (querying data from caches), and should not be used by Hibernate ORM applications.
 To use a Hibernate Search with a different version that is present in {wildflybrandname}, please consult the link:https://docs.jboss.org/hibernate/search/5.6/reference/en-US/html_single/#search-configuration-deploy-on-wildfly[Hibernate Search documentation].
@@ -455,7 +455,7 @@ To enable server mode, make the following additions to your {wildflybrandname} c
 
 . Add the {brandname} extensions to your `<extensions>` section.
 +
-include::topics/configuration/wfly_extensions.adoc[]
+include::config_examples/wfly_extensions.adoc[]
 +
 . Configure the {brandname} subsystem and your required containers and caches in the server profile that requires {brandname}.
 +
@@ -464,7 +464,7 @@ include::topics/configuration/wfly_extensions.adoc[]
 Be sure that you define the `module` attribute to load the correct {brandname} classes.
 ====
 +
-include::topics/configuration/wfly_subsystem.adoc[]
+include::config_examples/wfly_subsystem.adoc[]
 +
 ifndef::productized[]
 . Define the {wildflybrandname} https://docs.jboss.org/author/display/WFLY10/Interfaces+and+ports[socket-bindings] required by the endpoint and/or JGroup subsystems
@@ -476,7 +476,7 @@ endif::productized[]
 ifndef::productized[]
 . Configure any endpoints that you require via the endpoint subsystem:
 +
-include::topics/configuration/wfly_endpoints.adoc[]
+include::config_examples/wfly_endpoints.adoc[]
 endif::productized[]
 +
 . Define the JGroups transport, ensuring that you define the `model` attribute for each protocol.
@@ -486,7 +486,7 @@ endif::productized[]
 You do not neet to define a JGroups transport for local cache configurations. The JGroups transport is required for clustered cache configurations only.
 ====
 +
-include::topics/jgroups/wfly_jgroups.adoc[]
+include::config_examples/wfly_jgroups.adoc[]
 
 ===== Accessing Containers and Caches
 Once a container has been defined in your server's configuration, it is possible to inject an instance of a CacheContainer

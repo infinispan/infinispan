@@ -48,7 +48,7 @@ HTTP PUT and POST methods are used to place data in the cache, with URLs to addr
 
 ==== Configuration
 
-Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType]. More details in the configuration link:#encoding_media_type[here].
+Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType].
 
 An example of storage configuration is as follows:
 
@@ -297,7 +297,7 @@ Will execute an Ickle query in the given cache name.
 * _query_: REQUIRED the query string
 * _max_results_: OPTIONAL the number of results to return, default is _10_
 * _offset_: OPTIONAL the index of the first result to return, default is _0_
-* _query_mode_: OPTIONAL the link:#query_clustered_query_api[execution mode] of the query once it's received by server. Valid values are _FETCH_ and _BROADCAST_. Default is _FETCH_.
+* _query_mode_: OPTIONAL the execution mode of the query once it's received by server. Valid values are _FETCH_ and _BROADCAST_. Default is _FETCH_.
 
 .Query Result
 
