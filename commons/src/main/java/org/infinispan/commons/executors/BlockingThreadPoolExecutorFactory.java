@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.concurrent.CallerAlwaysRunsPolicy;
 
 /**
  * @author Galder Zamarreño
@@ -51,12 +52,12 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
    @Override
    public ExecutorService createExecutor(ThreadFactory threadFactory) {
       BlockingQueue<Runnable> queue = queueLength == 0 ?
-            new SynchronousQueue<Runnable>() :
-            new LinkedBlockingQueue<Runnable>(queueLength);
+            new SynchronousQueue<>() :
+            new LinkedBlockingQueue<>(queueLength);
 
       return new ThreadPoolExecutor(coreThreads, maxThreads, keepAlive,
             TimeUnit.MILLISECONDS, queue, threadFactory,
-            new ThreadPoolExecutor.CallerRunsPolicy());
+            new CallerAlwaysRunsPolicy());
    }
 
    @Override
