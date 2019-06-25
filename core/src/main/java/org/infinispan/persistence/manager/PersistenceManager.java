@@ -28,6 +28,11 @@ import org.reactivestreams.Publisher;
 public interface PersistenceManager extends Lifecycle {
 
    boolean isEnabled();
+
+   /**
+    * Returns whether the manager is enabled and has at least one store
+    */
+   boolean hasWriter();
    /**
     * @return true if all entries from the store have been inserted to the cache. If the persistence/preload
     * is disabled or eviction limit was reached when preloading, returns false.

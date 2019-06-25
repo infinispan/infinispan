@@ -59,7 +59,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       doNothing().when(activationManager).onUpdate(Mockito.any(), Mockito.anyBoolean());
       InternalExpirationManager expirationManager = mock(InternalExpirationManager.class);
       Mockito.when(expirationManager.entryExpiredInMemory(Mockito.any(), Mockito.anyLong(), Mockito.anyBoolean())).thenReturn(CompletableFutures.completedTrue());
-      Mockito.when(expirationManager.entryExpiredInMemoryFromIteration(Mockito.any(), Mockito.anyLong())).thenReturn(CompletableFutures.completedTrue());
+      Mockito.when(expirationManager.entryExpiredInMemoryFromIteration(Mockito.any(), Mockito.anyLong())).thenReturn(true);
       TestingUtil.inject(dc, internalEntryFactory, activationManager, timeService, expirationManager);
       return dc;
    }

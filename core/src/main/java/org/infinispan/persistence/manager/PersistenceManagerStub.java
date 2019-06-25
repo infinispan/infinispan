@@ -47,6 +47,11 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
+   public boolean hasWriter() {
+      return false;
+   }
+
+   @Override
    public boolean isPreloaded() {
       return false;
    }
