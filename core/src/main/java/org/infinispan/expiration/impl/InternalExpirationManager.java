@@ -41,7 +41,7 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
     * @param currentTime the current time when it expired
     * @return if this entry actually expired or not
     */
-   CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime);
+   boolean entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime);
 
    /**
     * This is to be invoked when a store entry expires.  This method may attempt to lock this key to preserve atomicity.

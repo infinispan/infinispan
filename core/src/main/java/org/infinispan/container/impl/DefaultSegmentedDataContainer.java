@@ -74,7 +74,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
          }
          // TODO: should we optimize wallClockTime per entry invocation?
          long currentTime = timeService.wallClockTime();
-         return !(ice.isExpired(currentTime) && expirationManager.entryExpiredInMemoryFromIteration(ice, currentTime).join() == Boolean.TRUE);
+         return !(ice.isExpired(currentTime) && expirationManager.entryExpiredInMemoryFromIteration(ice, currentTime));
       };
    }
 

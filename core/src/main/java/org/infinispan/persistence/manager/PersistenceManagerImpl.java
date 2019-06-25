@@ -307,6 +307,19 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
+   public boolean hasWriter() {
+      if (!enabled) {
+         return false;
+      }
+      storesMutex.readLock().lock();
+      try {
+         return !nonTxWriters.isEmpty() || !txWriters.isEmpty();
+      } finally {
+         storesMutex.readLock().unlock();
+      }
+   }
+
+   @Override
    public boolean isEnabled() {
       return enabled;
    }
@@ -846,7 +859,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public void writeToAllNonTxStoresSync(MarshallableEntry marshalledEntry, int segment,
          Predicate<? super StoreConfiguration> predicate) {
-      assert Thread.currentThread().getName().startsWith("persistence") : "Thread name is: " + Thread.currentThread().getName();
+      // This is commented out due to the fact that caffeine may schedule a buffer drain on the thread doing just
+      // a simple get (note this is only an issue with passivation)
+//      assert Thread.currentThread().getName().startsWith("persistence") : "Thread name is: " + Thread.currentThread().getName();
       writeToAllNonTxStoresSync(marshalledEntry, segment, predicate, 0, -1);
    }
 
