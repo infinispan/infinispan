@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.concurrent.CallerRunsRejectOnShutdownPolicy;
 
 /**
  * @author Galder Zamarreño
@@ -56,7 +57,7 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
 
       return new ThreadPoolExecutor(coreThreads, maxThreads, keepAlive,
             TimeUnit.MILLISECONDS, queue, threadFactory,
-            new ThreadPoolExecutor.CallerRunsPolicy());
+            new CallerRunsRejectOnShutdownPolicy());
    }
 
    @Override
