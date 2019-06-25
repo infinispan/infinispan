@@ -1,8 +1,8 @@
 package org.infinispan.statetransfer;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
@@ -41,8 +41,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
    public static final String CACHE_NAME = "testCache";
    private static final String OTHER_CACHE_NAME = "other_cache";
    private ConfigurationBuilder defaultConfig;
-   Cache c1, c2, c3;
-   DISCARD d1, d2, d3;
+   private Cache c1, c2, c3;
+   private DISCARD d1, d2, d3;
 
    @Override
    public Object[] factory() {
@@ -88,8 +88,10 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       cache(1, "cache5");
 
       // create the partitions
-      log.debugf("Killing coordinator via discard");
+      log.debugf("Splitting cluster");
       d3.setDiscardAll(true);
+      TestingUtil.installNewView(manager(0), manager(1));
+      TestingUtil.installNewView(manager(2));
 
       // wait for the partitions to form
       long startTime = System.currentTimeMillis();
@@ -130,8 +132,10 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
    public void testClusterRecoveryAfterCoordLeave() throws Exception {
       // create the partitions
-      log.debugf("Killing coordinator via discard");
+      log.debugf("Splitting cluster");
       d1.setDiscardAll(true);
+      TestingUtil.installNewView(manager(0));
+      TestingUtil.installNewView(manager(1), manager(2));
 
       // wait for the partitions to form
       long startTime = System.currentTimeMillis();
@@ -157,6 +161,10 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       d1.setDiscardAll(true);
       d2.setDiscardAll(true);
       d3.setDiscardAll(true);
+
+      TestingUtil.installNewView(manager(0));
+      TestingUtil.installNewView(manager(1));
+      TestingUtil.installNewView(manager(2));
 
       // wait for the partitions to form
       TestingUtil.blockUntilViewsReceived(30000, false, c1);
@@ -194,6 +202,10 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       d1.setDiscardAll(true);
       d2.setDiscardAll(true);
       d3.setDiscardAll(true);
+
+      TestingUtil.installNewView(manager(0));
+      TestingUtil.installNewView(manager(1));
+      TestingUtil.installNewView(manager(2));
 
       // wait for the partitions to form
       TestingUtil.blockUntilViewsReceived(30000, false, c1);
@@ -241,6 +253,10 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       d1.setDiscardAll(true);
       d2.setDiscardAll(true);
       d3.setDiscardAll(true);
+
+      TestingUtil.installNewView(manager(0));
+      TestingUtil.installNewView(manager(1));
+      TestingUtil.installNewView(manager(2));
 
       // wait for the coordinator to be separated (don't care about the others)
       TestingUtil.blockUntilViewsReceived(30000, false, c1);
@@ -326,13 +342,14 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
     * Test that cluster recovery can finish if one of the members leaves before sending the status response.
     */
    public void testAbruptLeaveAfterGetStatus() throws TimeoutException, InterruptedException {
-
       // Block the GET_STATUS command on node 2
       final LocalTopologyManager localTopologyManager2 = TestingUtil.extractGlobalComponent(manager(1),
             LocalTopologyManager.class);
       final CheckPoint checkpoint = new CheckPoint();
       LocalTopologyManager spyLocalTopologyManager2 = spy(localTopologyManager2);
       final CacheTopology initialTopology = localTopologyManager2.getCacheTopology(CACHE_NAME);
+      log.debugf("Starting with topology %d", initialTopology);
+
       doAnswer(invocation -> {
          int viewId = (Integer) invocation.getArguments()[0];
          checkpoint.trigger("GET_STATUS_" + viewId);
@@ -343,16 +360,12 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager2, true);
 
       // Node 1 (the coordinator) dies. Node 2 becomes coordinator and tries to call GET_STATUS
-      log.debugf("Killing coordinator");
-      manager(0).stop();
-      TestingUtil.blockUntilViewsReceived(30000, false, manager(1), manager(2));
+      killNode(manager(0), new EmbeddedCacheManager[]{manager(1), manager(2)});
 
       // Wait for the GET_STATUS command and stop node 3 abruptly
       int viewId = manager(1).getTransport().getViewId();
       checkpoint.awaitStrict("GET_STATUS_" + viewId, 10, TimeUnit.SECONDS);
-      d3.setDiscardAll(true);
-      manager(2).stop();
-      TestingUtil.blockUntilViewsReceived(30000, false, manager(1));
+      killNode(manager(2), new EmbeddedCacheManager[]{manager(1)});
       checkpoint.triggerForever("3 left");
 
       // Wait for node 2 to install a view with only itself and unblock the GET_STATUS command
@@ -380,13 +393,14 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
     * start and finish the rebalance.
     */
    public void testAbruptLeaveAfterGetStatus2() throws TimeoutException, InterruptedException {
-
       // Block the GET_STATUS command on node 2
       final LocalTopologyManager localTopologyManager2 = TestingUtil.extractGlobalComponent(manager(1),
             LocalTopologyManager.class);
       final CheckPoint checkpoint = new CheckPoint();
       LocalTopologyManager spyLocalTopologyManager2 = spy(localTopologyManager2);
       final CacheTopology initialTopology = localTopologyManager2.getCacheTopology(CACHE_NAME);
+      log.debugf("Starting with topology %d", initialTopology);
+
       doAnswer(invocation -> {
          int viewId = (Integer) invocation.getArguments()[0];
          checkpoint.trigger("GET_STATUS_" + viewId);
@@ -418,20 +432,26 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager2, true);
 
       // Node 1 (the coordinator) dies. Node 2 becomes coordinator and tries to call GET_STATUS
-      log.debugf("Killing coordinator");
-      manager(0).stop();
-      TestingUtil.blockUntilViewsReceived(30000, false, manager(1), manager(2));
+      killNode(manager(0), new EmbeddedCacheManager[]{manager(1), manager(2)});
 
       // Wait for the GET_STATUS command and stop node 3 abruptly
       int viewId = manager(1).getTransport().getViewId();
       checkpoint.awaitStrict("GET_STATUS_" + viewId, 10, TimeUnit.SECONDS);
-      d3.setDiscardAll(true);
-      manager(2).stop();
-      TestingUtil.blockUntilViewsReceived(30000, false, manager(1));
+      killNode(manager(2), new EmbeddedCacheManager[]{manager(1)});
+
       checkpoint.triggerForever("3 left");
 
       // Wait for node 2 to install a view with only itself and unblock the GET_STATUS command
       TestingUtil.waitForNoRebalance(c2);
+   }
+
+   private void killNode(EmbeddedCacheManager nodeToKill, EmbeddedCacheManager[] nodesToKeep) {
+      log.debugf("Killing node %s", nodeToKill);
+      d1.setDiscardAll(true);
+      TestingUtil.installNewView(nodeToKill);
+      nodeToKill.stop();
+      TestingUtil.installNewView(nodesToKeep);
+      TestingUtil.blockUntilViewsReceived(30000, false, nodesToKeep);
    }
 
    @InTransactionMode(TransactionMode.TRANSACTIONAL)
