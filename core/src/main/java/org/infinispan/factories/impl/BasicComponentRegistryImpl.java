@@ -239,8 +239,9 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       if (factoryRef == null) {
          factoryRef = tryAutoInstantiation(factoryName);
       }
-      // Don't start the factory's dependencies
-      return factoryRef != null ? factoryRef.wired() : null;
+      // Start the factory (and it's dependencies!) because some factories
+      // are responsible for stopping the components they create (e.g. NamedExecutorsFactory)
+      return factoryRef != null ? factoryRef.running() : null;
    }
 
    private void commitWrapperStateChange(ComponentWrapper wrapper, WrapperState expectedState, WrapperState newState) {

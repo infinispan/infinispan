@@ -126,6 +126,7 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
       } catch (RejectedExecutionException rejected) {
          //put it back!
          blockedTasks.offer(runnable);
+         checkForReadyTasks();
       }
    }
 
