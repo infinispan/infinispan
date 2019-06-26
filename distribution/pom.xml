@@ -64,20 +64,6 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-javadoc-embedded</artifactId>
-         <version>${version.infinispan}</version>
-         <classifier>javadoc</classifier>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-javadoc-remote</artifactId>
-         <version>${version.infinispan}</version>
-         <classifier>javadoc</classifier>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-javadoc-all</artifactId>
          <version>${version.infinispan}</version>
          <classifier>javadoc</classifier>
@@ -338,50 +324,11 @@
                   <configuration>
                      <descriptors>
                         <descriptor>src/main/assemblies/src.xml</descriptor>
-                     </descriptors>
-                     <finalName>${infinispan.brand.prefix}-${infinispan.brand.version}</finalName>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>assemble-modules</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>single</goal>
-                  </goals>
-                  <configuration>
-                     <appendAssemblyId>false</appendAssemblyId>
-                     <finalName>${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}</finalName>
-                     <descriptors>
                         <descriptor>src/main/assemblies/wildfly.xml</descriptor>
-                     </descriptors>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>assemble-server</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>single</goal>
-                  </goals>
-                  <configuration>
-                     <descriptors>
                         <descriptor>src/main/assemblies/server.xml</descriptor>
-                     </descriptors>
-                     <finalName>${infinispan.brand.prefix}-server-${infinispan.brand.version}</finalName>
-                     <appendAssemblyId>false</appendAssemblyId>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>assemble-wildfly-server</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>single</goal>
-                  </goals>
-                  <configuration>
-                     <descriptors>
                         <descriptor>src/main/assemblies/wildfly-server.xml</descriptor>
                      </descriptors>
-                     <finalName>${infinispan.brand.prefix}-${wildfly.brand.prefix}-server-${infinispan.brand.version}</finalName>
-                     <appendAssemblyId>false</appendAssemblyId>
+                     <finalName>${infinispan.brand.prefix}-${infinispan.brand.version}</finalName>
                   </configuration>
                </execution>
             </executions>
@@ -421,7 +368,7 @@
                            <artifactId>infinispan-server</artifactId>
                            <version>${project.version}</version>
                            <packaging>zip</packaging>
-                           <file>${project.build.directory}/distribution/${infinispan.brand.prefix}-server-${infinispan.brand.version}.zip</file>
+                           <file>${project.build.directory}/distribution/${infinispan.brand.prefix}-${infinispan.brand.version}-server.zip</file>
                            <generatePom>false</generatePom>
                         </configuration>
                      </execution>
