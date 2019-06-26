@@ -1,0 +1,5 @@
+<dependency>
+  <groupId>org.infinispan</groupId>
+  <artifactId>infinispan-spring-boot-starter-embedded</artifactId>
+  <version>{sb_starter}</version>
+</dependency>

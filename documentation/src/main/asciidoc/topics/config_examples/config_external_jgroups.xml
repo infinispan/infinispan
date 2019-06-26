@@ -1,0 +1,12 @@
+<infinispan>
+  <jgroups>
+     <stack-file name="external-file" path="jgroups.xml"/>
+  </jgroups>
+  <cache-container default-cache="replicatedCache">
+    <transport stack="external-file" />
+    <replicated-cache name="replicatedCache"/>
+  </cache-container>
+
+  ...
+
+</infinispan>

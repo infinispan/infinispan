@@ -4,9 +4,7 @@ Persistence allows configuring external (persistent) storage engines complementa
 An external persistent storage might be useful for several reasons:
 
 * Increased Durability. Memory is volatile, so a cache store could increase the life-span of the information store in the cache.
-
 * Write-through. Interpose {brandname} as a caching layer between an application and a (custom) external storage engine.
-
 * Overflow Data. By using eviction and passivation, one can store only the "hot" data in memory and overflow the data that is less frequently used to disk.
 
 The integration with the persistent store is done through the following SPI: CacheLoader, CacheWriter, AdvancedCacheLoader and AdvancedCacheWriter (discussed in the following sections).
@@ -14,13 +12,9 @@ The integration with the persistent store is done through the following SPI: Cac
 These SPIs allow for the following features:
 
 * Alignment with link:http://jcp.org/en/jsr/detail?id=107[JSR-107]. The link:{javadocroot}/org/infinispan/persistence/spi/CacheWriter.html[CacheWriter] and link:{javadocroot}/org/infinispan/persistence/spi/CacheLoader.html[CacheLoader] interface are similar to the the loader and writer in JSR 107. This should considerably help writing portable stores across JCache compliant vendors.
-
 * Simplified Transaction Integration. All necessary locking is handled by {brandname} automatically and implementations don’t have to be concerned with coordinating concurrent access to the store. Even though concurrent writes on the same key are not going to happen (depending locking mode in use), implementors should expect operations on the store to happen from multiple/different threads and code the implementation accordingly.
-
 * Parallel Iteration. It is now possible to iterate over entries in the store with multiple threads in parallel.
-
 * Reduced Serialization. This translates in less CPU usage. The new API exposes the stored entries in serialized format. If an entry is fetched from persistent storage for the sole purpose of being sent remotely, we no longer need to deserialize it (when reading from the store) and serialize it back (when writing to the wire). Now we can write to the wire the serialized format as read from the storage directly.
-
 
 == Configuration
 Stores (readers and/or writers) can be configured in a chain. Cache read operation looks at all of the specified `CacheLoader` s, in the order they are configured, until it finds a valid and non-null element of data. When performing writes all cache `CacheWriter` s are written to, except if the `ignoreModifications` element has been set to true for a specific cache writer.
@@ -32,43 +26,19 @@ Stores (readers and/or writers) can be configured in a chain. Cache read operati
 Store providers should implement both the `CacheWriter` and the `CacheLoader` interfaces. Stores that do this are considered both for reading and writing (assuming `read-only=false`) data.
 ====
 //Exclude the following configuration from productized docs
+This is the configuration of a custom (not shipped with infinispan) store:
 ifndef::productized[]
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-This is the configuration of a custom(not shipped with infinispan) store:
-   <local-cache name="myCustomStore">
-      <persistence passivation="false">
-         <store
-            class="org.acme.CustomStore"
-            fetch-state="false" preload="true" shared="false"
-            purge="true" read-only="false" segmented="true">
-
-            <write-behind modification-queue-size="123" thread-pool-size="23" />
-
-            <property name="myProp">${system.property}</property>
-         </store>
-      </persistence>
-   </local-cache>
+include::config_examples/persistence_custom_store_example.xml[]
 ----
 endif::productized[]
 //Include the following configuration in productized docs
 ifdef::productized[]
-[source,xml]
+This is the configuration of a custom store:
+[source,xml,options="nowrap",subs=attributes+]
 ----
-This is the configuration of a custom(not shipped with infinispan) store:
-   <local-cache name="myCustomStore">
-      <persistence passivation="false">
-         <store
-            class="org.acme.CustomStore"
-            fetch-state="false" preload="true" shared="false"
-            purge="true" read-only="false">
-
-            <write-behind modification-queue-size="123" thread-pool-size="23" />
-
-            <property name="myProp">${system.property}</property>
-         </store>
-      </persistence>
-   </local-cache>
+include::config_examples/persistence_custom_store_example_notsegmented.xml[]
 ----
 endif::productized[]
 
@@ -186,39 +156,16 @@ However, the default {brandname} store implementation has a more complex
 configuration schema, in which the `properties` section is replaced with XML
 attributes:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<persistence passivation="false">
-   <!-- note that class is missing and is induced by the fileStore element name -->
-   <file-store
-           shared="false" preload="true"
-           fetch-state="true"
-           read-only="false"
-           purge="false"
-           path="${java.io.tmpdir}">
-      <write-behind thread-pool-size="5" />
-   </file-store>
-</persistence>
-
+include::config_examples/persistence_attributes.xml[]
 ----
 
 The same configuration can be achieved programmatically:
 
 [source,java]
 ----
-   ConfigurationBuilder builder = new ConfigurationBuilder();
-   builder.persistence()
-         .passivation(false)
-         .addSingleFileStore()
-            .preload(true)
-            .shared(false)
-            .fetchPersistentState(true)
-            .ignoreModifications(false)
-            .purgeOnStartup(false)
-            .location(System.getProperty("java.io.tmpdir"))
-            .async()
-               .enabled(true)
-               .threadPoolSize(5)
+include::code_examples/PersistenceAttributes.java[]
 ----
 
 [[cache_passivation]]
@@ -308,14 +255,9 @@ The main advantage of this mode is that the cache store is updated at the same t
 
 Configuring a write-through or synchronous cache store does not require any particular configuration option. By default, unless marked explicitly as write-behind or asynchronous, all cache stores are write-through or synchronous. Please find below a sample configuration file of a write-through unshared local file cache store:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<persistence passivation="false">
-   <file-store fetch-state="true"
-               read-only="false"
-               purge="false" path="${java.io.tmpdir}"/>
-</persistence>
-
+include::config_examples/persistence_write_through_sync.xml[]
 ----
 
 [[write_behind_asynchronous]]
@@ -339,17 +281,9 @@ possible period.
 
 The following is an example configuration for the write-behind strategy:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<persistence passivation="false">
-   <file-store fetch-state="true"
-               read-only="false"
-               purge="false" path="${java.io.tmpdir}">
-   <!-- start write-behind configuration -->
-   <write-behind modification-queue-size="123" thread-pool-size="23" />
-   <!-- end write-behind configuration -->
-   </file-store>
-</persistence>
+include::config_examples/persistence_write_through_async.xml[]
 ----
 
 //Exclude segmented cache stores from productized docs.

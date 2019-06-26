@@ -28,23 +28,12 @@ one location is used to store non-expired data, while the second location is use
 
 [source,java]
 ----
-Configuration cacheConfig = new ConfigurationBuilder().persistence()
-				.addStore(RocksDBStoreConfigurationBuilder.class)
-				.build();
-EmbeddedCacheManager cacheManager = new DefaultCacheManager(cacheConfig);
-
-Cache<String, User> usersCache = cacheManager.getCache("usersCache");
-usersCache.put("raytsang", new User(...));
-
+include::code_examples/ConfigRocksDb.java[]
 ----
 
 == Configuration
 
-It is also possible to configure the underlying rocks db instance. This can be done
-via properties in the store configuration. Any property that is prefixed with the
-name `database` will configure the rocks db database. Data is now stored in column
-families, these can be configured independently of the database by setting
-a property prefixed with the name `data`.
+It is also possible to configure the underlying rocks db instance. This can be done via properties in the store configuration. Any property that is prefixed with the name `database` will configure the rocks db database. Data is now stored in column families, these can be configured independently of the database by setting a property prefixed with the name `data`.
 
 Note that you do not have to supply properties and this is entirely optional.
 
@@ -52,17 +41,7 @@ Note that you do not have to supply properties and this is entirely optional.
 
 [source,java]
 ----
-Properties props = new Properties();
-props.put("database.max_background_compactions", "2");
-props.put("data.write_buffer_size", "512MB");
-
-Configuration cacheConfig = new ConfigurationBuilder().persistence()
-				.addStore(RocksDBStoreConfigurationBuilder.class)
-				.location("/tmp/rocksdb/data")
-				.expiredLocation("/tmp/rocksdb/expired")
-        .properties(props)
-				.build();
-
+include::code_examples/ConfigRocksDbProperties.java[]
 ----
 
 [options="header"]
@@ -82,19 +61,9 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
 === Sample XML Configuration
 
 .infinispan.xml
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<local-cache name="vehicleCache">
-   <persistence>
-      <rocksdb-store path="/tmp/rocksdb/data">
-         <expiration path="/tmp/rocksdb/expired"/>
-         <property name="database.max_background_compactions">2</property>
-         <property name="data.write_buffer_size">512MB</property>
-      </rocksdb-store>
-   </persistence>
-</local-cache>
-
+include::config_examples/persistence_rocksdb_example.xml[]
 ----
 
 == Additional References

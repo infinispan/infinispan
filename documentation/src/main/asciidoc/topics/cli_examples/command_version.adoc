@@ -1,0 +1,3 @@
+[jmx://localhost:12000/MyCacheManager/namedCache]> version
+Client Version x.x.x.Final
+Server Version x.x.x.Final

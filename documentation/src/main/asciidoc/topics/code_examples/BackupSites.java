@@ -1,0 +1,12 @@
+ConfigurationBuilder lon = new ConfigurationBuilder();
+lon.sites().addBackup()
+      .site("NYC")
+      .backupFailurePolicy(BackupFailurePolicy.WARN)
+      .strategy(BackupConfiguration.BackupStrategy.SYNC)
+      .replicationTimeout(12000)
+      .sites().addInUseBackupSite("NYC")
+    .sites().addBackup()
+      .site("SFO")
+      .backupFailurePolicy(BackupFailurePolicy.IGNORE)
+      .strategy(BackupConfiguration.BackupStrategy.ASYNC)
+      .sites().addInUseBackupSite("SFO")

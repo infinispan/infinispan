@@ -3,7 +3,7 @@
 If the provided cache stores do not fulfill all of your requirements, it is possible for you to implement your own store.
 The steps required to create your own store are as follows:
 
-1. Write your custom store by implementing one of the following interfaces:
+. Write your custom store by implementing one of the following interfaces:
 * `org.infinispan.persistence.spi.AdvancedCacheWriter`
 * `org.infinispan.persistence.spi.AdvancedCacheLoader`
 * `org.infinispan.persistence.spi.CacheLoader`
@@ -16,10 +16,10 @@ ifndef::productized[]
 * `org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore`
 endif::productized[]
 +
-2. Annotate your store class with the `@Store` annotation and specify the properties relevant to your store, e.g. is it
+. Annotate your store class with the `@Store` annotation and specify the properties relevant to your store, e.g. is it
 possible for the store to be shared in Replicated or Distributed mode: `@Store(shared = true)`.
 +
-3. Create a custom cache store configuration and builder. This requires extending `AbstractStoreConfiguration` and `AbstractStoreConfigurationBuilder`.
+. Create a custom cache store configuration and builder. This requires extending `AbstractStoreConfiguration` and `AbstractStoreConfigurationBuilder`.
 As an optional step, you should add the following annotations to your configuration - `@ConfigurationFor`, `@BuiltBy` as well
 as adding `@ConfiguredBy` to your store implementation class.  These additional annotations will ensure that your custom
 configuration builder is used to parse your store configuration from xml. If these annotations are not added, then the
@@ -34,22 +34,20 @@ store instance per segment, instead of extending `AbstractStoreConfiguration`
 you should extend `AbstractSegmentedStoreConfiguration`.
 endif::productized[]
 +
-4. Add your custom store to your cache's configuration:
-
-   a. Add your custom store to the ConfigurationBuilder, for example:
-
-   Configuration config = new ConfigurationBuilder()
-               .persistence()
-               .addStore(CustomStoreConfigurationBuilder.class)
-               .build();
-
-   b. Define your custom store via xml:
-
-   <local-cache name="customStoreExample">
-     <persistence>
-       <store class="org.infinispan.persistence.dummy.DummyInMemoryStore" />
-     </persistence>
-   </local-cache>
+. Add your custom store to your cache's configuration:
+.. Add your custom store to the ConfigurationBuilder, for example:
++
+[source,java]
+----
+include::code_examples/PersistenceCustomStore.java[]
+----
++
+.. Define your custom store via xml:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/persistence_store_class.xml[]
+----
 
 == HotRod Deployment
 A Custom Cache Store can be packaged into a separate JAR file and deployed in a HotRod server using the following steps:

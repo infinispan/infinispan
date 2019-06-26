@@ -1,0 +1,3 @@
+<distributed-cache name="the-default-cache">
+   <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_NON_NULL"/>
+</distributed-cache>

@@ -22,9 +22,7 @@ The simplest way to create a CacheManager is:
 
 [source,java]
 ----
-
-EmbeddedCacheManager manager = new DefaultCacheManager();
-
+include::code_examples/NewDefaultCacheManager.java[]
 ----
 
 which starts the most basic, local mode, non-clustered cache manager with no caches. CacheManagers have a lifecycle
@@ -35,14 +33,7 @@ mind that CacheManagers need to be started before they can be used to create Cac
 Once constructed, CacheManagers should be made available to any component that require to interact with it via some form
 of application-wide scope such as JNDI, a ServletContext or via some other mechanism such as an IoC container.
 
-When you are done with a CacheManager, you must stop it so that it can release its resources:
-
-[source,java]
-----
-
-manager.stop();
-
-----
+When you are done with a CacheManager, you must stop it so that it can release its resources: `manager.stop();`
 
 This will ensure all caches within its scope are properly stopped, thread pools are shutdown. If the CacheManager was
 clustered it will also leave the cluster gracefully.
@@ -54,7 +45,7 @@ Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#g
 
 [source,java,options="nowrap"]
 ----
-Cache<String, String> myCache = manager.getCache("myCache");
+include::code_examples/GetCache.java[]
 ----
 
 The preceding operation creates a cache named `myCache`, if it does not already exist, and returns it.
@@ -65,7 +56,7 @@ Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManagerAdmin.h
 
 [source,java]
 ----
-Cache<String, String> myCache = manager.administration().createCache("myCache", "myTemplate");
+include::code_examples/CreateCache.java[]
 ----
 
 The preceding operation also automatically creates caches on any nodes that subsequently join the cluster.
@@ -76,7 +67,7 @@ Use the +PERMANENT+ flag to ensure that caches can survive restarts, as follows:
 
 [source,java,options="nowrap"]
 ----
-Cache<String, String> myCache = manager.administration().withFlags(AdminFlag.PERMANENT).createCache("myCache", "myTemplate");
+include::code_examples/CreateCacheWithFlagsPermanent.java[]
 ----
 
 For the +PERMANENT+ flag to take effect, you must enable global state and set a configuration storage provider.

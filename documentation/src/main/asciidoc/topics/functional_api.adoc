@@ -59,15 +59,7 @@ link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnly
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.functional.impl.*;
-
-AdvancedCache<String, String> cache = ...
-
-FunctionalMapImpl<String, String> functionalMap = FunctionalMapImpl.create(cache);
-ReadOnlyMap<String, String> readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
-WriteOnlyMap<String, String> writeOnlyMap = WriteOnlyMapImpl.create(functionalMap);
-ReadWriteMap<String, String> readWriteMap = ReadWriteMapImpl.create(functionalMap);
+include::code_examples/FunctionalMap.java[]
 ----
 
 WARNING: At this stage, the Functional Map API is experimental and hence the
@@ -83,27 +75,14 @@ link:{jdkdocroot}/java/util/Map.html#get-java.lang.Object-[Map.get(K)]:
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-
-ReadOnlyMap<String, String> readOnlyMap = ...
-CompletableFuture<Optional<String>> readFuture = readOnlyMap.eval("key1", ReadEntryView::find);
-readFuture.thenAccept(System.out::println);
+include::code_examples/ReadOnlyMap.java[]
 ----
 
 Read-only map also exposes operations to retrieve multiple keys in one go:
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.api.functional.Traversable;
-
-ReadOnlyMap<String, String> readOnlyMap = ...
-
-Set<String> keys = new HashSet<>(Arrays.asList("key1", "key2"));
-Traversable<String> values = readOnlyMap.evalMany(keys, ReadEntryView::get);
-values.forEach(System.out::println);
+include::code_examples/ReadOnlyMapRetrieveKeys.java[]
 ----
 
 Finally, read-only map also exposes methods to read all existing keys as well
@@ -157,17 +136,7 @@ value using the read-only map API:
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-
-WriteOnlyMap<String, String> writeOnlyMap = ...
-ReadOnlyMap<String, String> readOnlyMap = ...
-
-CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", "value1",
-   (v, view) -> view.set(v));
-CompletableFuture<String> readFuture = writeFuture.thenCompose(r ->
-   readOnlyMap.eval("key1", ReadEntryView::get));
-readFuture.thenAccept(System.out::println);
+include::code_examples/WriteOnlyMap.java[]
 ----
 
 Multiple key/value pairs can be stored in one go using
@@ -176,27 +145,18 @@ API:
 
 [source,java]
 ----
-WriteOnlyMap<String, String> writeOnlyMap = ...
-
-Map<K, String> data = new HashMap<>();
-data.put("key1", "value1");
-data.put("key2", "value2");
-CompletableFuture<Void> writerAllFuture = writeOnlyMap.evalMany(data, (v, view) -> view.set(v));
-writerAllFuture.thenAccept(x -> "Write completed");
+include::code_examples/WriteOnlyMapStoreKeys.java[]
 ----
 
 To remove all contents of the cache, there are two possibilities with
 different semantics. If using
 link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#evalAll-java.util.function.Consumer-[`evalAll`]
 each cached entry is iterated over and the function is called
-with that entry's information. Using this method also results in listeners being invoked. See link:#functional_listeners[functional listeners] for more information.
+with that entry's information. Using this method also results in listeners being invoked.
 
 [source,java]
 ----
-WriteOnlyMap<String, String> writeOnlyMap = ...
-
-CompletableFuture<Void> removeAllFuture = writeOnlyMap.evalAll(WriteEntryView::remove);
-removeAllFuture.thenAccept(x -> "All entries removed");
+include::code_examples/WriteOnlyMapRemoveAll.java[]
 ----
 
 The alternative way to remove all entries is to call
@@ -206,10 +166,7 @@ invoking any listeners and is best-effort:
 
 [source,java]
 ----
-WriteOnlyMap<String, String> writeOnlyMap = ...
-
-CompletableFuture<Void> truncateFuture = writeOnlyMap.truncate();
-truncateFuture.thenAccept(x -> "Cache contents cleared");
+include::code_examples/WriteOnlyMapTruncate.java[]
 ----
 
 [[write_only_entry_view]]
@@ -252,18 +209,7 @@ with the cache entry is easy to achieve with the read-write map API:
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-
-ReadWriteMap<String, String> readWriteMap = ...
-
-CompletableFuture<Optional<String>> readWriteFuture = readWriteMap.eval("key1", "value1",
-   (v, view) -> {
-      Optional<V> prev = rw.find();
-      view.set(v);
-      return prev;
-   });
-readWriteFuture.thenAccept(System.out::println);
+include::code_examples/ReadWriteMap.java[]
 ----
 
 link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[`ConcurrentMap.replace(K, V, V)`]
@@ -275,19 +221,7 @@ can easily be implemented using the read-write map API:
 
 [source,java]
 ----
-ReadWriteMap<String, String> readWriteMap = ...
-
-String oldValue = "old-value";
-CompletableFuture<Boolean> replaceFuture = readWriteMap.eval("key1", "value1", (v, view) -> {
-   return view.find().map(prev -> {
-      if (prev.equals(oldValue)) {
-         rw.set(v);
-         return true; // previous value present and equals to the expected one
-      }
-      return false; // previous value associated with key does not match
-   }).orElse(false); // no value associated with this key
-});
-replaceFuture.thenAccept(replaced -> System.out.printf("Value was replaced? %s%n", replaced));
+include::code_examples/ReadWriteMapReplace.java[]
 ----
 
 NOTE: The function in the example above captures `oldValue` which is an
@@ -337,19 +271,7 @@ them:
 
 [source,java]
 ----
-import java.time.Duration;
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.api.functional.MetaParam.*;
-
-WriteOnlyMap<String, String> writeOnlyMap = ...
-ReadOnlyMap<String, String> readOnlyMap = ...
-
-CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", "value1",
-   (v, view) -> view.set(v, new MetaLifespan(Duration.ofHours(1).toMillis())));
-CompletableFuture<MetaLifespan> readFuture = writeFuture.thenCompose(r ->
-   readOnlyMap.eval("key1", view -> view.findMetaParam(MetaLifespan.class).get()));
-readFuture.thenAccept(System.out::println);
+include::code_examples/FunctionalMetaParam.java[]
 ----
 
 If the metadata parameter is generic, for example
@@ -361,14 +283,7 @@ lost:
 
 [source,java]
 ----
-ReadOnlyMap<String, String> readOnlyMap = ...
-
-CompletableFuture<String> readFuture = readOnlyMap.eval("key1", view -> {
-   // If caller depends on the typed information, this is not an ideal way to retrieve it
-   // If the caller does not depend on the specific type, this works just fine.
-   Optional<MetaEntryVersion> version = view.findMetaParam(MetaEntryVersion.class);
-   return view.get();
-});
+include::code_examples/ReadOnlyMapMetaParam.java[]
 ----
 
 When generic information is important the user can define a static helper
@@ -377,20 +292,7 @@ and then use that helper method in the call to `findMetaParam`:
 
 [source,java]
 ----
-class MetaEntryVersion<T> implements MetaParam.Writable<EntryVersion<T>> {
-   ...
-   public static <T> T type() { return (T) MetaEntryVersion.class; }
-   ...
-}
-
-ReadOnlyMap<String, String> readOnlyMap = ...
-
-CompletableFuture<String> readFuture = readOnlyMap.eval("key1", view -> {
-   // The caller wants guarantees that the metadata parameter for version is numeric
-   // e.g. to query the actual version information
-   Optional<MetaEntryVersion<Long>> version = view.findMetaParam(MetaEntryVersion.type());
-   return view.get();
-});
+include::code_examples/ReadOnlyMapFindMetaParam.java[]
 ----
 
 Finally, users are free to create new instances of metadata parameters to
@@ -421,13 +323,7 @@ can be passed as per-invocation parameter to avoid creating that extra thread. E
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.api.functional.Param.*;
-
-ReadOnlyMap<String, String> readOnlyMap = ...
-ReadOnlyMap<String, String> readOnlyMapCompleted = readOnlyMap.withParams(FutureMode.COMPLETED);
-Optional<String> readFuture = readOnlyMapCompleted.eval("key1", ReadEntryView::find).get();
+include::code_examples/ReadOnlyMapCompleted.java[]
 ----
 
 Param.PersistenceMode controls whether a write operation will be propagated
@@ -443,13 +339,7 @@ untouched:
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.api.functional.Param.*;
-
-WriteOnlyMap<String, String> writeOnlyMap = ...
-WriteOnlyMap<String, String> skiPersistMap = writeOnlyMap.withParams(PersistenceMode.SKIP);
-CompletableFuture<Void> removeFuture = skiPersistMap.eval("key1", WriteEntryView::remove);
+include::code_examples/WriteOnlyMapSkipPersistence.java[]
 ----
 
 Note that there's no need for another PersistenceMode option to skip
@@ -511,30 +401,7 @@ instance that can be used to de-register the function listener:
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.api.functional.Listeners.WriteListeners.WriteListener;
-
-WriteOnlyMap<String, String> woMap = ...
-
-AutoCloseable writeFunctionCloseHandler = woMap.listeners().onWrite(written -> {
-   // `written` is a ReadEntryView of the written entry
-   System.out.printf("Written: %s%n", written.get());
-});
-AutoCloseable writeCloseHanlder = woMap.listeners().add(new WriteListener<String, String>() {
-   @Override
-   public void onWrite(ReadEntryView<K, V> written) {
-      System.out.printf("Written: %s%n", written.get());
-   }
-});
-
-// Either wrap handler in a try section to have it auto close...
-try(writeFunctionCloseHandler) {
-   // Write entries using read-write or write-only functional map API
-   ...
-}
-// Or close manually
-writeCloseHanlder.close();
+include::code_examples/WriteOnlyMapWriteListener.java[]
 ----
 
 === Read-Write Listeners
@@ -567,36 +434,7 @@ used to de-register the function listener:
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-
-ReadWriteMap<String, String> rwMap = ...
-AutoCloseable createClose = rwMap.listeners().onCreate(created -> {
-   // `created` is a ReadEntryView of the created entry
-   System.out.printf("Created: %s%n", created.get());
-});
-AutoCloseable modifyClose = rwMap.listeners().onModify((before, after) -> {
-   // `before` is a ReadEntryView of the entry before update
-   // `after` is a ReadEntryView of the entry after update
-   System.out.printf("Before: %s%n", before.get());
-   System.out.printf("After: %s%n", after.get());
-});
-AutoCloseable removeClose = rwMap.listeners().onRemove(removed -> {
-   // `removed` is a ReadEntryView of the removed entry
-   System.out.printf("Removed: %s%n", removed.get());
-});
-AutoCloseable writeClose = woMap.listeners().onWrite(written -> {
-   // `written` is a ReadEntryView of the written entry
-   System.out.printf("Written: %s%n", written.get());
-});
-...
-// Either wrap handler in a try section to have it auto close...
-try(createClose) {
-   // Create entries using read-write functional map API
-   ...
-}
-// Or close manually
-modifyClose.close();
+include::code_examples/ReadWriteMapAutoCloseable.java[]
 ----
 
 If listening for two or more event types, it's better to pass in an
@@ -609,42 +447,7 @@ callbacks with default method implementations that are empty:
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners.ReadWriteListener;
-
-ReadWriteMap<String, String> rwMap = ...
-AutoCloseable readWriteClose = rwMap.listeners.add(new ReadWriteListener<String, String>() {
-   @Override
-   public void onCreate(ReadEntryView<String, String> created) {
-      System.out.printf("Created: %s%n", created.get());
-   }
-
-   @Override
-   public void onModify(ReadEntryView<String, String> before, ReadEntryView<String, String> after) {
-      System.out.printf("Before: %s%n", before.get());
-      System.out.printf("After: %s%n", after.get());
-   }
-
-   @Override
-   public void onRemove(ReadEntryView<String, String> removed) {
-      System.out.printf("Removed: %s%n", removed.get());
-   }
-);
-AutoCloseable writeClose = rwMap.listeners.add(new WriteListener<String, String>() {
-   @Override
-   public void onWrite(ReadEntryView<K, V> written) {
-      System.out.printf("Written: %s%n", written.get());
-   }
-);
-
-// Either wrap handler in a try section to have it auto close...
-try(readWriteClose) {
-   // Create/update/remove entries using read-write functional map API
-   ...
-}
-// Or close manually
-writeClose.close();
+include::code_examples/ReadWriteMapListener.java[]
 ----
 
 == Marshalling of Functions
@@ -658,21 +461,11 @@ to the method and the functions are replicated to other nodes.
 There are multiple ways in which a function can be marshalled. The simplest
 way, which is also the most costly option in terms of payload size, is
 to mark the function as
-link:{jdkdocroot}/java/io/Serializable.html[`Serializable`]
-:
+link:{jdkdocroot}/java/io/Serializable.html[`Serializable`]:
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-
-WriteOnlyMap<String, String> writeOnlyMap = ...
-
-// Force a function to be Serializable
-Consumer<WriteEntryView<String>> function =
-   (Consumer<WriteEntryView<String>> & Serializable) wv -> wv.set("one");
-
-CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", function);
+include::code_examples/WriteOnlyMapSerializable.java[]
 ----
 
 {brandname} provides overloads for all functional methods that make lambdas
@@ -681,8 +474,7 @@ this overload if that's possible. Therefore you can call
 
 [source,java]
 ----
-WriteOnlyMap<String, String> writeOnlyMap = ...
-CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", wv -> wv.set("one"));
+include::code_examples/WriteOnlyMapWriteFuture.java[]
 ----
 
 without doing the cast described above.
@@ -692,33 +484,7 @@ link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[`Externaliz
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeFunctionWith;
-
-WriteOnlyMap<String, String> writeOnlyMap = ...
-
-// Force a function to be Serializable
-Consumer<WriteEntryView<String>> function = new SetStringConstant<>();
-CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", function);
-
-@SerializeFunctionWith(value = SetStringConstant.Externalizer0.class)
-class SetStringConstant implements Consumer<WriteEntryView<String>> {
-   @Override
-   public void accept(WriteEntryView<String> view) {
-      view.set("value1");
-   }
-
-   public static final class Externalizer0 implements Externalizer<Object> {
-      public void writeObject(ObjectOutput oo, Object o) {
-         // No-op
-      }
-      public Object readObject(ObjectInput input) {
-         return new SetStringConstant<>();
-      }
-   }
-}
+include::code_examples/WriteOnlyMapExternalizer.java[]
 ----
 
 To help users take advantage of the tiny payloads generated by
@@ -740,15 +506,7 @@ using functional map API which can be run in a cluster:
 
 [source,java]
 ----
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.marshall.MarshallableFunctions;
-
-ReadWriteMap<String, String> readWriteMap = ...
-
-CompletableFuture<Boolean> future = readWriteMap.eval("key1,
-   MarshallableFunctions.setValueIfAbsentReturnBoolean());
-future.thenAccept(stored -> System.out.printf("Value was put? %s%n", stored));
+include::code_examples/ReadWriteMapMarshallableFunctions.java[]
 ----
 
 == Use Cases for Functional API

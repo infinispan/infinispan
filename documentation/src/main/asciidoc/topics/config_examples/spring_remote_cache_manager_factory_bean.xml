@@ -1,0 +1,9 @@
+<bean id="springRemoteCacheManagerConfiguredUsingConfigurationProperties"
+      class="org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean">
+    <property name="configurationProperties">
+        <props>
+           <prop key="infinispan.spring.operation.read.timeout">500</prop>
+           <prop key="infinispan.spring.operation.write.timeout">700</prop>
+        </props>
+    </property>
+</bean>

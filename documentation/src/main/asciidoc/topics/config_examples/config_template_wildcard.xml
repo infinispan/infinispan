@@ -1,0 +1,9 @@
+<infinispan>
+    <cache-container>
+        <local-cache-configuration name="basecache*">
+            <expiration interval="10500" lifespan="11" max-idle="11"/>
+        </local-cache-configuration>
+        <local-cache name="basecache-1"/>
+        <local-cache name="basecache-2"/>
+    </cache-container>
+</infinispan>

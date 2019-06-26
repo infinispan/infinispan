@@ -1,0 +1,8 @@
+<infinispan>
+  <cache-container>
+    <serialization>
+      <advanced-externalizer class="Person$PersonExternalizer"/>
+    </serialization>
+  </cache-container>
+  ...
+</infinispan>

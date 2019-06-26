@@ -167,20 +167,11 @@ If, for put operations, you don't need the previous values existing in the cache
 
 [source,java]
 ----
- cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put(key, value);
-
+include::code_examples/GetAdvancedCacheWithFlagsSkipCacheLoad.java[]
 ----
 
 Note that in this case the value returned by `cache.put()` is not reliable.
 This optimization skips a cache store read and can have very significant performance improvement effects.
-
-For more information, check out our link:../performance_guide/performance_guide.html[Performance Guide].
-
-TIP: More flags are described at link:../user_guide/user_guide.html#invocation_flags[Per-Invocation Flags]
-
-=== How to speed up {brandname}?
-
-Have a look at our link:../performance_guide/performance_guide.html[Performance Guide].
 
 === Locking and Transaction questions
 ==== Does {brandname} support distributed eager locking?
@@ -189,19 +180,14 @@ However, {brandname} can be configured to lock cache keys eagerly, by using the 
 
 [source,java]
 ----
-   ConfigurationBuilder builder = new ConfigurationBuilder();
-   builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+include::code_examples/LockingModePessimistic.java[]
 ----
 
 With pessimistic locking, {brandname} will implicitly acquire locks when a transaction modifies one or more keys:
 
 [source,java]
 ----
-   tm.begin()
-   cache.put(K,V)    // acquire cluster-wide lock on K
-   cache.put(K2,V2)  // acquire cluster-wide lock on K2
-   cache.put(K,V5)   // no-op, we already own cluster wide lock for K
-   tm.commit()       // releases locks
+include::code_examples/LockingModePessimisticImplicitAcquire.java[]
 ----
 
 ==== How does {brandname} support explicit eager locking?
@@ -213,15 +199,11 @@ All locks are released during commit or rollback phase.
 
 [source,java]
 ----
-   tm.begin()
-   cache.getAdvancedCache().lock(K)  // acquire cluster-wide lock on K
-   cache.put(K,V5)                   // guaranteed to succeed
-   tm.commit()                       // releases locks
+include::code_examples/LockingModePessimisticExplicitAcquire.java[]
 ----
 
-
 ==== What isolation levels does {brandname} support?
-{brandname} only supports the isolation levels link:../glossary/glossary.html#read_committed[*READ_COMMITTED*] and link:../glossary/glossary.html#repeatable_read[*REPEATABLE_READ*].
+{brandname} only supports the isolation levels *READ_COMMITTED* and *REPEATABLE_READ*.
 Note that exact definition of these levels may differ from traditional database definitions.
 
 The default isolation mode is *READ_COMMITTED*.
@@ -269,7 +251,7 @@ As far as possible, internal components are shared between Cache instances.  Not
 ==== What is the difference between a replicated cache and a distributed cache?
 Distribution is a new cache mode in {brandname}, in addition to replication and invalidation.  In a replicated cache all nodes in a cluster hold all keys i.e. if a key exists on one node, it will also exist on _all_ other nodes.  In a distributed cache, a number of copies are maintained to provide redundancy and fault tolerance, however this is typically far fewer than the number of nodes in the cluster. A distributed cache provides a far greater degree of scalability than a replicated cache.
 
-A distributed cache is also able to transparently locate keys across a cluster, and provides an L1 cache for fast local read access of state that is stored remotely.  You can read more in the relevant link:../user_guide/user_guide.html[User Guide] chapter.
+A distributed cache is also able to transparently locate keys across a cluster, and provides an L1 cache for fast local read access of state that is stored remotely.
 
 
 ==== Does DIST support both synchronous and asynchronous communications?
@@ -382,9 +364,7 @@ A workaround that is know to work is to call the following before creating the c
 
 [source,java]
 ----
-
-Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-
+include::code_examples/GetClassLoader.java[]
 ----
 
 === Marshalling and Unmarshalling
@@ -400,23 +380,7 @@ No, they don't. Here's an example of what should not be done:
 
 [source,java]
 ----
-public static class ABCMarshallingExternalizer implements AdvancedExternalizer<ABCMarshalling> {
-   @Override
-   public void writeObject(ObjectOutput output, ABCMarshalling object) throws IOException {
-      MapExternalizer ma = new MapExternalizer();
-      ma.writeObject(output, object.getMap());
-   }
-
-   @Override
-   public ABCMarshalling readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      ABCMarshalling hi = new ABCMarshalling();
-      MapExternalizer ma = new MapExternalizer();
-      hi.setMap((ConcurrentHashMap<Long, Long>) ma.readObject(input));
-      return hi;
-   }
-
-   ...
-}
+include::code_examples/ABCMarshallingExternalizerWrong.java[]
 ----
 
 End user externalizers should not need to fiddle with {brandname} internal externalizer classes.
@@ -424,21 +388,7 @@ Instead, this code should have been written as:
 
 [source,java]
 ----
-public static class ABCMarshallingExternalizer implements AdvancedExternalizer<ABCMarshalling> {
-   @Override
-   public void writeObject(ObjectOutput output, ABCMarshalling object) throws IOException {
-      output.writeObject(object.getMap());
-   }
-
-   @Override
-   public ABCMarshalling readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      ABCMarshalling hi = new ABCMarshalling();
-      hi.setMap((ConcurrentHashMap<Long, Long>) input.readObject());
-      return hi;
-   }
-
-   ...
-}
+include::code_examples/ABCMarshallingExternalizer.java[]
 ----
 
 ==== During state transfer, the state receiver logs an EOFException when applying state saying "Read past end of file". Should I worry about this?
@@ -446,8 +396,7 @@ It depends on whether the state provider encountered an error or not when genera
 For example, sometimes the state provider might already be providing state to another node, so when the node requests the state, the state generator might log:
 
 ----
-
-2010-12-09 10:26:21,533 20267 ERROR [org.infinispan.remoting.transport.jgroups.JGroupsTransport] (STREAMING_STATE_TRANSFER-sender-1,{brandname}-Cluster,NodeJ-2368:) Caught while responding to state transfer request
+ERROR [org.infinispan.remoting.transport.jgroups.JGroupsTransport] (STREAMING_STATE_TRANSFER-sender-1,{brandname}-Cluster,NodeJ-2368:) Caught while responding to state transfer request
 org.infinispan.statetransfer.StateTransferException: java.util.concurrent.TimeoutException: Could not obtain exclusive processing lock
      at org.infinispan.statetransfer.StateTransferManagerImpl.generateState(StateTransferManagerImpl.java:175)
      at org.infinispan.remoting.InboundInvocationHandlerImpl.generateState(InboundInvocationHandlerImpl.java:119)
@@ -467,7 +416,6 @@ Caused by: java.util.concurrent.TimeoutException: Could not obtain exclusive pro
      at org.infinispan.statetransfer.StateTransferManagerImpl.generateTransactionLog(StateTransferManagerImpl.java:202)
      at org.infinispan.statetransfer.StateTransferManagerImpl.generateState(StateTransferManagerImpl.java:165)
      ... 12 more
-
 ----
 
 This exception is basically saying that the state generator was not able to generate the transaction log and so the output to which it was writing is closed.
@@ -475,8 +423,7 @@ In this situation, it's common to see the state receiver log an EOFException , a
 
 
 ----
-
-2010-12-09 10:26:21,535 20269 TRACE [org.infinispan.marshall.VersionAwareMarshaller] (Incoming-2,{brandname}-Cluster,NodeI-38030:) Log exception reported
+TRACE [org.infinispan.marshall.VersionAwareMarshaller] (Incoming-2,{brandname}-Cluster,NodeI-38030:) Log exception reported
 java.io.EOFException: Read past end of file
      at org.jboss.marshalling.AbstractUnmarshaller.eofOnRead(AbstractUnmarshaller.java:184)
      at org.jboss.marshalling.AbstractUnmarshaller.readUnsignedByteDirect(AbstractUnmarshaller.java:319)
@@ -491,7 +438,6 @@ java.io.EOFException: Read past end of file
      at org.infinispan.remoting.InboundInvocationHandlerImpl.applyState(InboundInvocationHandlerImpl.java:102)
      at org.infinispan.remoting.transport.jgroups.JGroupsTransport.setState(JGroupsTransport.java:603)
         ...
-
 ----
 
 The current logic is for the state receiver to back off in these scenarios and retry after a few seconds. Quite often, after the retry the state generator might have already finished dealing with the other node and hence the state receiver will be able to fully receive the state.
@@ -523,7 +469,6 @@ java.util.concurrent.RejectedExecutionException
 ----
 
 To solve this issue, you should try any of these options:
-
 
 *  Increase the maxThreads property in link:http://docs.jboss.org/infinispan/5.0/apidocs/config.html#ce_global_asyncTransportExecutor[asyncTransportExecutor] . At the time of writing, the default value for this particular executor is 25.
 *  Define your own ExecutorFactory which creates an executor with a bigger queue. You can find more information about different queueing strategies in link:{jdkdocroot}/java/util/concurrent/ThreadPoolExecutor.html[ThreadPoolExecutor javadoc] .
@@ -572,8 +517,7 @@ Here's an example of log message with a partially displayed byte array:
 
 
 ----
-
-2010-04-14 15:46:09,342 TRACE [ReadCommittedEntry] (HotRodWorker-1-1) Updating entry
+TRACE [ReadCommittedEntry] (HotRodWorker-1-1) Updating entry
 (key=CacheKey{data=ByteArray{size=19, hashCode=1b3278a,
 array=[107, 45, 116, 101, 115, 116, 82, 101, 112, 108, ..]}}
 removed=false valid=true changed=true created=true value=CacheValue{data=ByteArray{size=19,
@@ -585,13 +529,12 @@ And here's a log message where the full byte array is shown:
 
 
 ----
-2010-04-14 15:45:00,723 TRACE [ReadCommittedEntry] (Incoming-2,{brandname}-Cluster,eq-6834) Updating entry
+TRACE [ReadCommittedEntry] (Incoming-2,{brandname}-Cluster,eq-6834) Updating entry
 (key=CacheKey{data=ByteArray{size=19, hashCode=6cc2a4,
 array=[107, 45, 116, 101, 115, 116, 82, 101, 112, 108, 105, 99, 97, 116, 101, 100, 80, 117, 116]}}
 removed=false valid=true changed=true created=true value=CacheValue{data=ByteArray{size=19,
 array=[118, 45, 116, 101, 115, 116, 82, 101, 112, 108, 105, 99, 97, 116, 101, 100, 80, 117, 116]},
 version=281483566645249}]
-
 ----
 
 === Clustering Transport questions

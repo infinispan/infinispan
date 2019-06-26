@@ -1,0 +1,3 @@
+<subsystem xmlns="urn:infinispan:server:endpoint:9.4">
+ ...
+</subsystem>

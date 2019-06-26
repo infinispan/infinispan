@@ -50,10 +50,9 @@ Some permissions might need to be combined with others in order to be useful.
 For example, suppose you want to allow only "supervisors" to be able to run
 stream operations, while "standard" users can only perform puts and gets, you would define the following mappings:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<role name="standard" permission="READ WRITE" />
-<role name="supervisors" permission="READ WRITE EXEC BULK"/>
+include::config_examples/security_combined_permission.xml[]
 ----
 
 [[security_embedded_api]]
@@ -121,27 +120,9 @@ There are two levels of configuration: global and per-cache. The global configur
 ----
 
 .Declarative
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-   <cache-container default-cache="secured" name="secured">
-      <security>
-         <authorization>
-            <identity-role-mapper />
-            <role name="admin" permissions="ALL" />
-            <role name="reader" permissions="READ" />
-            <role name="writer" permissions="WRITE" />
-            <role name="supervisor" permissions="READ WRITE EXEC"/>
-         </authorization>
-      </security>
-      <local-cache name="secured">
-         <security>
-            <authorization roles="admin reader writer supervisor" />
-         </security>
-      </local-cache>
-   </cache-container>
-
-</infinispan>
+include::config_examples/cache_authorization.xml[]
 ----
 
 [[security_role_mappers]]
@@ -171,18 +152,9 @@ The audit logger is configured at the cache container authorization level:
 ----
 
 .Declarative
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-   <cache-container default-cache="secured">
-      <security>
-         <authorization audit-logger="org.infinispan.security.impl.LoggingAuditLogger">
-            ...
-         </authorization>
-      </security>
-      ...
-   </cache-container>
-</infinispan>
+include::config_examples/security_audit_logger.xml[]
 ----
 
 In embedded mode the default audit logger is +org.infinispan.security.impl.NullAuditLogger+ which does nothing. {brandname} also comes with the +org.infinispan.security.impl.LoggingAuditLogger+ which outputs audit logs through the available logging framework (e.g. Log4J) at level TRACE and category AUDIT. These logs look like:
@@ -199,14 +171,9 @@ The +user+ which is included in the log above is the name of the first non-+java
 
 JGroups can be configured so that nodes need to authenticate each other when joining / merging. The authentication uses SASL and is setup by adding the +SASL+ protocol to your JGroups XML configuration above the GMS protocol, as follows:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<SASL mech="DIGEST-MD5"
-    client_name="node_user"
-    client_password="node_password"
-    server_callback_handler_class="org.example.infinispan.security.JGroupsSaslServerCallbackHandler"
-    client_callback_handler_class="org.example.infinispan.security.JGroupsSaslClientCallbackHandler"
-    sasl_props="com.sun.security.sasl.digest.realm=test_realm" />
+include::config_examples/security_cluster.xml[]
 ----
 
 In the above example, the SASL mech will be +DIGEST-MD5+. Each node will need to declare the user and password it will use when joining the cluster. The behaviour of a node differs depending on whether it is the coordinator or any other node. The coordinator acts as the SASL server, whereas joining/merging nodes act as SASL clients. Therefore two different CallbackHandlers are required, the +server_callback_handler_class+ will be used by the coordinator, and the +client_callback_handler_class+ will be used by the other nodes.

@@ -1,0 +1,12 @@
+<property
+    name="hibernate.cache.infinispan.entities.cfg"
+    value="custom-entities" />
+<property
+    name="hibernate.cache.infinispan.query.cfg"
+    value="custom-query-cache" />
+<property
+    name="hibernate.cache.infinispan.com.example.MyEntity.cfg"
+    value="my-entities" />
+<property
+    name="hibernate.cache.infinispan.com.example.MyEntity.someCollection.cfg"
+    value="my-entities-some-collection" />

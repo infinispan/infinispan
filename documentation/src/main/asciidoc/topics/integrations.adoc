@@ -29,7 +29,10 @@ Apache Lucene versions 5.5.x
 All you need is the following:
 
 .pom.xml
-include::maven_dependencies/lucene_directory.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/lucene_directory.xml[]
+----
 
 === How to use it
 
@@ -37,50 +40,7 @@ See the below example of using the {brandname} Lucene Directory in order to inde
 
 [source,java]
 ----
-import java.io.IOException;
-
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.store.Directory;
-import org.infinispan.lucene.directory.DirectoryBuilder;
-import org.infinispan.manager.DefaultCacheManager;
-
-// Create caches that will store the index. Here the programmatic configuration is used
-DefaultCacheManager defaultCacheManager = new DefaultCacheManager();
-Cache metadataCache = defaultCacheManager.getCache("metadataCache");
-Cache dataCache = defaultCacheManager.getCache("dataCache");
-Cache lockCache = defaultCacheManager.getCache("lockCache");
-
-// Create the directory
-Directory directory = DirectoryBuilder.newDirectoryInstance(metadataCache, dataCache, lockCache, indexName).create();
-
-// Use the directory in Lucene
-IndexWriterConfig indexWriterConfig = new IndexWriterConfig(new StandardAnalyzer()).setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-
-IndexWriter indexWriter = new IndexWriter(directory, indexWriterConfig);
-
-// Index a single document
-Document doc = new Document();
-doc.add(new StringField("field", "value", Field.Store.NO));
-indexWriter.addDocument(doc);
-indexWriter.close();
-
-// Querying the inserted document
-DirectoryReader directoryReader = DirectoryReader.open(directory);
-IndexSearcher searcher = new IndexSearcher(directoryReader);
-TermQuery query = new TermQuery(new Term("field", "value"));
-TopDocs topDocs = searcher.search(query, 10);
-System.out.println(topDocs.totalHits);
-
+include::code_examples/LuceneDirectoryExampleQuery.java[]
 ----
 
 The _indexName_ in the _DirectoryBuilder_ is a unique key to identify your index. It takes the same role as the path did on filesystem based indexes: you can create several different indexes giving them different names. When you use the same _indexName_ in another instance connected to the same network (or instantiated on the same machine, useful for testing) they will join, form a cluster and share all content. Using a different _indexName_ allows you to store different indexes in the same set of Caches.
@@ -88,7 +48,6 @@ The _indexName_ in the _DirectoryBuilder_ is a unique key to identify your index
 The _metadataCache_, _dataCache_ and _lockCache_ are the caches that will store the indexes. More details provided below.
 
 New nodes can be added or removed dynamically, making the service administration very easy and also suited for cloud environments: it's simple to react to load spikes, as adding more memory and CPU power to the search system is done by just starting more nodes.
-
 
 === Configuration
 {brandname} can be configured as LOCAL clustering mode, in which case it will disable clustering features and serve as a cache for the index, or any clustering mode. A transaction manager is not mandatory, but when enabled the changes to the index can participate in transactions.
@@ -100,15 +59,9 @@ As pointed out in the javadocs of link:{javadocroot}/org/infinispan/lucene/direc
 ==== Lock Cache
 The lock cache is used to store a single entry per index that will function as the directory lock. Given the small storage requirement this cache is usually configured as REPL_SYNC. Example of declarative configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
-    <transaction mode="NONE"/>
-    <indexing index="NONE" />
-    <memory>
-       <object size="-1"/>
-    </memory>
-</replicated-cache>
+include::config_examples/lucene_indexes_locking.xml[]
 ----
 
 ==== Metadata Cache
@@ -116,15 +69,9 @@ The lock cache is used to store a single entry per index that will function as t
 The metadata cache is used to store information about the files of the directory, such as buffer sizes and number of chunks. It uses more space than the Lock Cache, but not as much as the Data Cache, so using a REPL_SYNC cache should be fine for most cases.
 Example of configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<replicated-cache name="LuceneIndexesMetadaData" mode="SYNC" remote-timeout="25000">
-    <transaction mode="NONE"/>
-    <indexing index="NONE" />
-    <memory>
-       <object size="-1"/>
-    </memory>
-</replicated-cache>
+include::config_examples/lucene_indexes_metadata.xml[]
 ----
 
 ==== Data Cache
@@ -135,30 +82,22 @@ Usage of REPL_SYNC offers lower latencies for queries since each node holds the 
 
 Example of configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
-    <transaction mode="NONE"/>
-    <indexing index="NONE" />
-    <memory>
-       <object size="-1"/>
-    </memory>
-</distributed-cache>
+include::config_examples/lucene_indexes_data.xml[]
 ----
 
 === Using a CacheLoader
 Using a CacheLoader you can have the index content backed up to a permanent storage; you can use a shared store for all nodes or one per node, see cache passivation for more details.
-
-//old_link: link:#cache_passivation[cache passivation]
 
 When using a CacheLoader to store a Lucene index, to get best write performance you would need to configure the CacheLoader with _async=true_ .
 
 === Storing the index in a database
 It might be useful to store the Lucene index in a relational database; this would be very slow but {brandname} can act as a cache between the application and the JDBC interface, making this configuration useful in both clustered and non-clustered configurations. When storing indexes in a JDBC database, it's suggested to use the _JdbcStringBasedCacheStore_ , which will need the `key-to-string-mapper` attribute to be set to `org.infinispan.lucene.LuceneKey2StringMapper`:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<jdbc:string-keyed-jdbc-store preload="true" key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper">
+include::config_examples/lucene_key_string_mapper.xml[]
 ----
 
 === Loading an existing Lucene Index
@@ -176,7 +115,6 @@ The _org.infinispan.lucene.cachestore.LuceneCacheLoader_ is an {brandname} Cache
 It's worth noting that the IO operations are delegated to Lucene's standard _org.apache.lucene.store.FSDirectory_ , which will select an optimal approach for the running platform.
 
 Implementing write-through should not be hard: you're welcome to try implementing it.
-
 
 === Architectural limitations
 This Directory implementation makes it possible to have almost real-time reads across multiple nodes. A fundamental limitation of the Lucene design is that only a single IndexWriter is allowed to make changes on the index: a pessimistic lock is acquired by the writer; this is generally ok as a single IndexWriter _instance_ is very fast and accepts update requests from multiple threads. When sharing the Directory across {brandname} nodes the IndexWriter limitation is not lifted: since you can have only one instance, that reflects in your application as having to apply all changes on the same node. There are several strategies to write from multiple nodes on the same index:
@@ -227,7 +165,10 @@ Hibernate Search applications can use {brandname} as a directory provider, takin
 === Maven dependencies
 
 .pom.xml
-include::maven_dependencies/hibernate_directory_provider.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/hibernate_directory_provider.xml[]
+----
 
 === How to use it
 
@@ -366,7 +307,10 @@ endif::productized[]
 If you are using Maven to build your application, mark the {brandname} dependencies as _provided_ and configure your artifact archiver to generate the appropriate MANIFEST.MF file:
 
 .pom.xml
-include::maven_dependencies/eap_dependencies.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/eap_dependencies.xml[]
+----
 
 The next section illustrates the manifest entries for different types of {brandname}'s dependencies.
 
@@ -455,7 +399,18 @@ To enable server mode, make the following additions to your {wildflybrandname} c
 
 . Add the {brandname} extensions to your `<extensions>` section.
 +
-include::config_examples/wfly_extensions.adoc[]
+ifndef::productized[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/wfly_extensions_community.xml[]
+----
+endif::productized[]
+ifdef::productized[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/wfly_extensions_product.xml[]
+----
+endif::productized[]
 +
 . Configure the {brandname} subsystem and your required containers and caches in the server profile that requires {brandname}.
 +
@@ -464,7 +419,10 @@ include::config_examples/wfly_extensions.adoc[]
 Be sure that you define the `module` attribute to load the correct {brandname} classes.
 ====
 +
-include::config_examples/wfly_subsystem.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/wfly_subsystem.xml[]
+----
 +
 ifndef::productized[]
 . Define the {wildflybrandname} https://docs.jboss.org/author/display/WFLY10/Interfaces+and+ports[socket-bindings] required by the endpoint and/or JGroup subsystems
@@ -476,7 +434,10 @@ endif::productized[]
 ifndef::productized[]
 . Configure any endpoints that you require via the endpoint subsystem:
 +
-include::config_examples/wfly_endpoints.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/wfly_endpoints.xml[]
+----
 endif::productized[]
 +
 . Define the JGroups transport, ensuring that you define the `model` attribute for each protocol.
@@ -486,7 +447,10 @@ endif::productized[]
 You do not neet to define a JGroups transport for local cache configurations. The JGroups transport is required for clustered cache configurations only.
 ====
 +
-include::config_examples/wfly_jgroups.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/wfly_jgroups.xml[]
+----
 
 ===== Accessing Containers and Caches
 Once a container has been defined in your server's configuration, it is possible to inject an instance of a CacheContainer
@@ -499,13 +463,7 @@ called "infinispan_container" and the distributed cache "namedCache" into an app
 
 [source,java]
 ----
-public class ExampleApplication {
-    @Resource(lookup = "java:jboss/datagrid-infinispan/container/infinispan_container")
-    CacheContainer container;
-
-    @Resource(lookup = "java:jboss/datagrid-infinispan/container/infinispan_container/cache/namedCache")
-    Cache cache;
-}
+include::code_examples/ExampleApplicationInjectCache.java[]
 ----
 
 === Troubleshooting
@@ -518,13 +476,13 @@ To enable it at runtime using the {wildflybrandname} CLI:
 ----
 bin/jboss-cli.sh -c '/subsystem=logging/logger=org.jboss.modules:add'
 bin/jboss-cli.sh -c '/subsystem=logging/logger=org.jboss.modules:write-attribute(name=level,value=TRACE)'
-
 ----
+
 ==== Print dependency tree
 
 The following command can be used to print all dependencies for a certain module. For example, to obtain the tree for the module `org.infinispan:{infinispanslot}`, execute from `WILDFLY_HOME`:
 
-[subs=attributes]
+[source,bash,subs=attributes+]
 ----
-java -jar jboss-modules.jar -deptree -mp modules/ "org.infinispan:{infinispanslot}"
+$ java -jar jboss-modules.jar -deptree -mp modules/ "org.infinispan:{infinispanslot}"
 ----

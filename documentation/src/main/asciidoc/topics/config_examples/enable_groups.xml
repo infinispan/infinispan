@@ -1,0 +1,3 @@
+<distributed-cache>
+   <groups enabled="true"/>
+</distributed-cache>

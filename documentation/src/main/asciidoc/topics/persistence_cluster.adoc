@@ -15,25 +15,16 @@ The cluster cache loader does not support segmentation.
 ====
 endif::productized[]
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<persistence>
-   <cluster-loader remote-timeout="500"/>
-</persistence>
-
+include::config_examples/persistence_cluster_loader.xml[]
 ----
 
 [source,java]
 ----
-
-ConfigurationBuilder b = new ConfigurationBuilder();
-b.persistence()
-    .addClusterLoader()
-    .remoteCallTimeout(500);
-
+include::code_examples/PersistenceClusterLoader.java[]
 ----
 
 For a list of ClusterCacheLoader configuration refer to the link:{javadocroot}/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html[javadoc] .
 
-NOTE: The ClusterCacheLoader does not support preloading(preload=true). It also won't provide state if fetchPersistentSate=true.
+NOTE: The ClusterCacheLoader does not support preloading (`preload=true`). It also won't provide state if `fetchPersistentSate=true`.

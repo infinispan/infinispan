@@ -1,0 +1,19 @@
+<infinispan>
+   <cache-container default-cache="local">
+      <!-- template configurations -->
+      <local-cache-configuration name="base-template">
+         <expiration interval="10000" lifespan="10" max-idle="10"/>
+      </local-cache-configuration>
+
+      <local-cache-configuration name="extended-template" configuration="base-template">
+         <expiration lifespan="20"/>
+         <memory>
+            <object size="2000"/>
+         </memory>
+      </local-cache-configuration>
+
+      <!-- cache definitions -->
+      <local-cache name="local" configuration="base-template" />
+      <local-cache name="local-bounded" configuration="extended-template" />
+   </cache-container>
+</infinispan>

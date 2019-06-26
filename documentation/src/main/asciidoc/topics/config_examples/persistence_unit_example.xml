@@ -1,0 +1,3 @@
+<persistence-unit name="myPersistenceUnit">
+	...
+</persistence-unit>

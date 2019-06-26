@@ -1,29 +1,12 @@
-= Security
-
 == General concepts
 
 === Authorization
 
 Just like embedded mode, the server supports cache authorization using the same configuration, e.g.:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-   <cache-container default-cache="secured">
-      <security>
-         <authorization>
-	    <identity-role-mapper/>
-            <role name="admin" permissions="ALL" />
-            <role name="reader" permissions="READ" />
-            <role name="writer" permissions="WRITE" />
-            <role name="supervisor" permissions="READ WRITE EXEC BULK"/>
-         </authorization>
-      </security>
-      <local-cache name="secured">
-         <security>
-            <authorization roles="admin reader writer supervisor" />
-         </security>
-      </local-cache>
-   </cache-container>
+include::config_examples/cache_authorization.xml[]
 ----
 
 === Server Realms
@@ -32,24 +15,9 @@ Just like embedded mode, the server supports cache authorization using the same 
 Security Realms are used by the server to provide authentication and authorization information for both the management and application interfaces.
 
 .Security Realm configuration
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<server xmlns="urn:jboss:domain:2.1">
-   ...
-   <management>
-        ...
-        <security-realm name="ApplicationRealm">
-           <authentication>
-              <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
-           </authentication>
-           <authorization>
-              <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
-           </authorization>
-        </security-realm>
-        ...
-    </management>
-    ...
-</server>
+include::config_examples/server_realm_config.xml[]
 ----
 
 {brandname} Server comes with an add-user.sh script (add-user.bat for Windows) to ease the process of adding new user/role mappings to the above property files.
@@ -86,13 +54,9 @@ The supported SASL mechanisms (usually shortened as mechs) are:
 The following configuration enables authentication against ApplicationRealm, using the DIGEST-MD5 SASL mechanism and only enables the *auth* QoP (see link:#security_saslqop[SASL Quality of Protection]):
 
 .Hot Rod connector configuration
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<hotrod-connector socket-binding="hotrod" cache-container="default">
-   <authentication security-realm="ApplicationRealm">
-      <sasl server-name="myhotrodserver" mechanisms="DIGEST-MD5" qop="auth" />
-   </authentication>
-</hotrod-connector>
+include::config_examples/hotrod_connector_sasl.xml[]
 ----
 Notice the server-name attribute: it is the name that the server declares to incoming clients and therefore the client configuration must match.
 It is particularly important when using GSSAPI as it is equivalent to the Kerberos service name.
@@ -139,19 +103,9 @@ authorization configuration. To do so, set the *no-anonymous* policy to false an
 The following configuration selects all available mechanisms, but effectively only enables GSSAPI, since it is the only one that respects all chosen policies:
 
 .Hot Rod connector policies
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<hotrod-connector socket-binding="hotrod" cache-container="default">
-   <authentication security-realm="ApplicationRealm">
-      <sasl server-name="myhotrodserver" mechanisms="PLAIN DIGEST-MD5 GSSAPI EXTERNAL" qop="auth">
-         <policy>
-            <no-active value="true" />
-            <no-anonymous value="true" />
-            <no-plain-text value="true" />
-         </policy<>
-      </sasl>
-   </authentication>
-</hotrod-connector>
+include::config_examples/hotrod_connector_policies.xml[]
 ----
 
 === Using GSSAPI/Kerberos
@@ -159,39 +113,17 @@ The following configuration selects all available mechanisms, but effectively on
 If you want to use GSSAPI/Kerberos, setup and configuration differs. First we need to define a Kerberos login module using the security domain subsystem:
 
 .Security domain configuration
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<system-properties>
-    <property name="java.security.krb5.conf" value="/tmp/infinispan/krb5.conf"/>
-    <property name="java.security.krb5.debug" value="true"/>
-    <property name="jboss.security.disable.secdomain.option" value="true"/>
-</system-properties>
-
-<security-domain name="infinispan-server" cache-type="default">
-    <authentication>
-        <login-module code="Kerberos" flag="required">
-            <module-option name="debug" value="true"/>
-            <module-option name="storeKey" value="true"/>
-            <module-option name="refreshKrb5Config" value="true"/>
-            <module-option name="useKeyTab" value="true"/>
-            <module-option name="doNotPrompt" value="true"/>
-            <module-option name="keyTab" value="/tmp/infinispan/infinispan.keytab"/>
-            <module-option name="principal" value="HOTROD/localhost@INFINISPAN.ORG"/>
-        </login-module>
-    </authentication>
-</security-domain>
+include::config_examples/security_domain.xml[]
 ----
 
 Next we need to modify the Hot Rod connector
 
 .Hot Rod connector configuration
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<hotrod-connector socket-binding="hotrod" cache-container="default">
-   <authentication security-realm="ApplicationRealm">
-      <sasl server-name="infinispan-server" server-context-name="infinispan-server" mechanisms="GSSAPI" qop="auth" />
-   </authentication>
-</hotrod-connector>
+include::config_examples/hotrod_connector_gssapi.xml[]
 ----
 
 [[security_hotrod_rest_encryption]]
@@ -200,15 +132,9 @@ Next we need to modify the Hot Rod connector
 Both Hot Rod and REST protocols support encryption using SSL/TLS with optional TLS/SNI support (link:https://en.wikipedia.org/wiki/Server_Name_Indication[Server Name Indication]). To set this up you need to create a keystore using the +keytool+ application which is part of the JDK to store your server certificate. Then add a +<server-identities>+ element to your security realm:
 
 .Security Realm configuration for SSL
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<security-realm name="ApplicationRealm">
-    <server-identities>
-        <ssl>
-            <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" />
-        </ssl>
-    </server-identities>
-</security-realm>
+include::config_examples/security_realm_application.xml[]
 ----
 
 [NOTE]
@@ -220,15 +146,9 @@ It is also possible to generate development certificates on server startup. In o
 in the keystore element as shown below:
 
 .Generating Keystore automatically
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<security-realm name="ApplicationRealm">
-    <server-identities>
-        <ssl>
-            <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" generate-self-signed-certificate-host="localhost"/>
-        </ssl>
-    </server-identities>
-</security-realm>
+include::config_examples/security_realm_application_generate_cert.xml[]
 ----
 
 [NOTE]
@@ -244,21 +164,9 @@ Next modify the +<hotrod-connector>+ and/or +<rest-connector>+ elements in the e
 Optionally add SNI configuration:
 
 .Hot Rod connector SSL configuration
-
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<hotrod-connector socket-binding="hotrod" cache-container="local">
-    <encryption security-realm="ApplicationRealm" require-ssl-client-auth="false">
-        <sni host-name="domain1" security-realm="Domain1ApplicationRealm" />
-        <sni host-name="domain2" security-realm="Domain2ApplicationRealm" />
-    </encryption>
-</hotrod-connector>
-<rest-connector socket-binding="rest" cache-container="local">
-    <encryption security-realm="ApplicationRealm" require-ssl-client-auth="false">
-        <sni host-name="domain1" security-realm="Domain1ApplicationRealm" />
-        <sni host-name="domain2" security-realm="Domain2ApplicationRealm" />
-    </encryption>
-</rest-connector>
+include::config_examples/hotrod_connector_ssl_config.xml[]
 ----
 
 NOTE: To configure the client In order to connect to the server using the Hot Rod protocol, the client needs a trust store containing the public key
@@ -286,33 +194,16 @@ EXTERNAL SASL mech to authenticate and authorize clients).
 To enable this you will need the security realm on the server to be able to trust incoming client certificates by adding
 a trust store:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<security-realm name="ApplicationRealm">
-   <authentication>
-      <truststore path="truststore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
-   </authentication>
-   <server-identities>
-       <ssl>
-           <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" />
-       </ssl>
-   </server-identities>
-</security-realm>
+include::config_examples/security_realm_application_keystore.xml[]
 ----
 
 And then tell the connector to require a client certificate:
 
 [source,xml]
 ----
-<hotrod-connector socket-binding="hotrod" cache-container="local">
-    <encryption security-realm="ApplicationRealm" require-ssl-client-auth="true" />
-</hotrod-connector>
+include::config_examples/hotrod_connector_require_client_cert.xml[]
 ----
 
-The client, at this point, will also need to specify a keyStore which contains its certificate on top of the trustStore
-which trusts the server certificate.
-ifndef::productized[]
-See the link:../user_guide/user_guide.html#hr_encryption[Hot Rod client encryption]
-endif::productized[]
-
-section to learn how.
+The client, at this point, will also need to specify a keyStore which contains its certificate on top of the trustStore which trusts the server certificate.

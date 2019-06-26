@@ -42,36 +42,16 @@ The Multi-tenant router endpoint works as a facade for one or more REST/Hot Rod 
 
 In order to properly configure the routing, `socket-binding` attributes of other connectors must be disabled and additional attribute `name` must be used as shown below:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<rest-connector name="rest-1" cache-container="local"/>
-<rest-connector name="rest-2" cache-container="local"/>
-<hotrod-connector name="hotrod-1" cache-container="local" />
-<hotrod-connector name="hotrod-2" cache-container="local" />
-
+include::config_examples/multitenant_router.xml[]
 ----
 
 The next step is to add a new `router-connector` endpoint and configure how other containers will be accessed. Note that Hot Rod connectors require using TLS/SNI and REST connectors require using prefix in the URL:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<router-connector hotrod-socket-binding="hotrod" rest-socket-binding="rest" keep-alive="true" tcp-nodelay="false" receive-buffer-size="1024" send-buffer-size="1024">
-    <hotrod name="hotrod-1" >
-        <sni host-name="hotrod-1" security-realm="SSLRealm1"/>
-    </hotrod>
-    <hotrod name="hotrod-2" >
-        <sni host-name="hotrod-2" security-realm="SSLRealm2"/>
-    </hotrod>
-    <rest name="rest-1">
-        <prefix path="rest-1" />
-    </rest>
-    <rest name="rest-2">
-        <prefix path="rest-2" />
-    </rest>
-</router-connector>
-
+include::config_examples/multitenant_router_connector.xml[]
 ----
 
 With the following configuration, Hot Rod clients will access `hotrod-1` connector when using SNI Host Name "hotrod-1".

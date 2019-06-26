@@ -7,138 +7,47 @@
 
 WARNING: Make sure you follow the steps outlined in link:http://community.jboss.org/docs/15169[Maven Getting Started - Users] to set up your JBoss repository correctly.
 This step is _crucial_ to ensure your Maven setup can locate JBoss artifacts!
-If you also want to test the EAP integration modules you should also add the appropriate link:http://maven.repository.redhat.com/[Enterprise Red Hat Maven Repository.] 
+If you also want to test the EAP integration modules you should also add the appropriate link:http://maven.repository.redhat.com/[Enterprise Red Hat Maven Repository.]
 
 === Maven
 The following is an example `settings.xml` to get you started:
 
-[source,xml]
 .settings.xml
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
-                      http://maven.apache.org/xsd/settings-1.0.0.xsd" >
-  <localRepository/>
-  <interactiveMode/>
-  <usePluginRegistry/>
-  <offline/>
-  <proxies/>
-  <profiles>
-    <profile>
-      <id>jboss-public-repository</id>
-      <repositories>
-        <repository>
-          <id>jboss-public-repository-group</id>
-          <name>JBoss Public Maven Repository Group</name>
-          <url> https://repository.jboss.org/nexus/content/groups/public-jboss/ </url>
-          <layout>default</layout>
-          <releases>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-          </releases>
-          <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-          </snapshots>
-        </repository>
-      </repositories>
-      <pluginRepositories>
-        <pluginRepository>
-          <id>jboss-public-repository-group</id>
-          <name>JBoss Public Maven Repository Group</name>
-          <url> https://repository.jboss.org/nexus/content/groups/public-jboss/ </url>
-          <layout>default</layout>
-          <releases>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-          </releases>
-          <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-          </snapshots>
-        </pluginRepository>
-      </pluginRepositories>
-    </profile>
-
-    <!-- Include early access of application server and other products -->
-    <profile>
-      <id>redhat-earlyaccess-repository</id>
-        <repositories>
-          <repository>
-            <id>redhat-earlyaccess-repository-group</id>
-            <name>Red Hat early access repository</name>
-            <url> http://maven.repository.redhat.com/earlyaccess/all/ </url>
-            <layout>default</layout>
-            <releases>
-              <enabled>true</enabled>
-              <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-              <enabled>true</enabled>
-              <updatePolicy>never</updatePolicy>
-            </snapshots>
-          </repository>
-        </repositories>
-     </profile>
-  </profiles>
-  <activeProfiles>
-    <activeProfile>jboss-public-repository</activeProfile>
-    <activeProfile>redhat-earlyaccess-repository</activeProfile>
-  </activeProfiles>
-</settings>
+include::config_examples/settings.xml[]
 ----
 
 ==== Quick command reference
 
-TIP: Maven places it's output in `target/` 
+TIP: Maven places it's output in `target/`
 [cols="2,1", options="header", width="80%"]
 |===============
 |Command|Meaning
 | `mvn clean` |Cleans out any old builds and binaries
 | `mvn compile` |Compiles java source code
 | `mvn test` |Runs the TestNG unit test suite on the compiled code. Will also compile the tests. See the testing section below for more information on running different test groups. The default test group run is the "unit" group.
-| `mvn package` | Packages the module as a JAR file, the resulting JAR file will be in target/ 
+| `mvn package` | Packages the module as a JAR file, the resulting JAR file will be in target/
 | `mvn package -DskipTests` |Creates a JAR file without running tests
 | `mvn package -DskipTests -P minimal-distribution` |Creates a reduced version of the distribution with all modules,scripts...etc but no javadoc or source code. This is very handy to quickly build the distribution in order to run some tests.
 | `mvn install -DskipTests` |Installs the artifacts in your local repo for use by other projects/modules, including inter-module dependencies within the same project.
-| `mvn install -P distribution` | In addition to install, will also use Maven's assembly plugin to build ZIP files for distribution (in target/distribution ). Contents of various distribution are controlled by the files in src/main/resources/assemblies . 
+| `mvn install -P distribution` | In addition to install, will also use Maven's assembly plugin to build ZIP files for distribution (in target/distribution ). Contents of various distribution are controlled by the files in src/main/resources/assemblies .
 | `mvn deploy` |Builds and deploy the project to the JBoss snapshots repository.
 | `mvn install -P-extras` |Avoids the extras profile disables the enforce plugin, generation of source jars and OSGI bundleconstruction, hence making builds run faster. Clearly, this option should not be used when making a release or publishing a snapshot.
 |===============
 
-NOTE: For non-snapshot releases (e.g., alphas, betas, release candidates and final releases) you should use the `bin/release.py` script. 
+NOTE: For non-snapshot releases (e.g., alphas, betas, release candidates and final releases) you should use the `bin/release.py` script.
 
 ==== Publishing releases to Maven
 
-To be able to publish releases to Maven, you need to have the following in your `settings.xml` file: 
+To be able to publish releases to Maven, you need to have the following in your `settings.xml` file:
 
-[source,xml]
 .settings.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/settings_credentials.xml[]
 ----
 
-<settings>
-  ...
-  <servers>
-    ...
-    <server>
-      <id>jboss-snapshots-repository</id>
-      <username>your JBoss.org username</username>
-      <password>your JBoss.org password</password>
-
-    </server>
-    <server>
-      <id>jboss-releases-repository</id>
-      <username>your JBoss.org username</username>
-      <password>your JBoss.org password</password>
-
-    </server>
-    ...
-  </servers>
-  ...
-</settings>
-
-----
 ===== Publishing snapshots
 Simply running
 
@@ -165,12 +74,12 @@ Use the `newproject-archetype` project.  The simple command below will get you s
     -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
 
 You will be prompted for a few things, including the artifactId , groupId and version of your new project.
-And that's it - you're ready to go! 
+And that's it - you're ready to go!
 
 ====== Exploring your new project
 The skeleton project ships with a sample application class for interacting with {brandname}.
 You can open this new project in your IDE - most good IDEs such as IntelliJ and Eclipse allow you to import Maven projects, see link:https://www.jetbrains.com/idea/help/importing-project-from-maven-model.html[this guide] and link:http://m2eclipse.sonatype.org/[this guide].
-Once you open your project in your IDE, you should examine the generated classes and read through the comments. 
+Once you open your project in your IDE, you should examine the generated classes and read through the comments.
 
 ====== On the command line...
 Try running
@@ -198,7 +107,7 @@ Try running
  $ mvn test
 
 in your newly generated project to run your tests.
-The generated project has a few different profiles you can use as well, using Maven's -P flag. For example: 
+The generated project has a few different profiles you can use as well, using Maven's -P flag. For example:
 
  $ mvn test -Pudp
 
@@ -227,5 +136,4 @@ You should edit these generated poms by hand to point to other versions of {bran
 ===== Source Code
 
 The source code used to generate these archetypes are link:https://github.com/infinispan/infinispan-archetypes[on GitHub].
-If you wish to enhance and contribute back to the project, fork away! 
-
+If you wish to enhance and contribute back to the project, fork away!

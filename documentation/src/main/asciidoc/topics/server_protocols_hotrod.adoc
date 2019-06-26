@@ -1103,14 +1103,9 @@ within the JAR file containing the fully qualified class name of the `Protostrea
 4. Deploy the JAR file in the {brandname} Server in the `standalone/deployments` folder
 5. Configure this deployment in the desired cache manager:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<cache-container name="local" default-cache="default">
-   <modules>
-     <module name="deployment.my-file.jar"/>
-   </modules>
-   ...
-</cache-container>
+include::config_examples/custom_deployment_jar.xml[]
 ----
 
 WARNING: The deployment must be available during the server startup!

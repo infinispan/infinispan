@@ -6,7 +6,10 @@ MutimapCache is a type of {brandname} Cache that maps keys to values in which ea
 == Installation and configuration
 
 .pom.xml
-include::maven_dependencies/multimap.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/multimap.xml[]
+----
 
 == MultimapCache API
 
@@ -15,29 +18,7 @@ All these methods are non-blocking in most of the cases. See [limitations]
 
 [source,java]
 ----
-public interface MultimapCache<K, V> {
-
-   CompletableFuture<Void> put(K key, V value);
-
-   CompletableFuture<Collection<V>> get(K key);
-
-   CompletableFuture<Boolean> remove(K key);
-
-   CompletableFuture<Boolean> remove(K key, V value);
-
-   CompletableFuture<Void> remove(Predicate<? super V> p);
-
-   CompletableFuture<Boolean> containsKey(K key);
-
-   CompletableFuture<Boolean> containsValue(V value);
-
-   CompletableFuture<Boolean> containsEntry(K key, V value);
-
-   CompletableFuture<Long> size();
-
-   boolean supportsDuplicates();
-
-}
+include::code_examples/MultiMapCache.java[]
 ----
 
 === CompletableFuture<Void> put(K key, V value)
@@ -45,20 +26,10 @@ Puts a key-value pair in the multimap cache.
 
 [source,java]
 ----
-MultimapCache<String, String> multimapCache = ...;
-
-multimapCache.put("girlNames", "marie")
-             .thenCompose(r1 -> multimapCache.put("girlNames", "oihana"))
-             .thenCompose(r3 -> multimapCache.get("girlNames"))
-             .thenAccept(names -> {
-                          if(names.contains("marie"))
-                              System.out.println("Marie is a girl name");
-
-                           if(names.contains("oihana"))
-                              System.out.println("Oihana is a girl name");
-                        });
+include::code_examples/MultiMapCachePut.java[]
 ----
-The output of this code is :
+
+The output of this code is as follows:
 
 [source, txt]
 ----
@@ -107,17 +78,7 @@ See how to configure a regular Cache in the section link to [configure a cache].
 
 [source,java]
 ----
-// create or obtain your EmbeddedCacheManager
-EmbeddedCacheManager cm = ... ;
-
-// create or obtain a MultimapCacheManager passing the EmbeddedCacheManager
-MultimapCacheManager multimapCacheManager = EmbeddedMultimapCacheManagerFactory.from(cm);
-
-// define the configuration for the multimap cache
-multimapCacheManager.defineConfiguration(multimapCacheName, c.build());
-
-// get the multimap cache
-multimapCache = multimapCacheManager.get(multimapCacheName);
+include::code_examples/MultiMapCacheEmbedded.java[]
 ----
 
 === Server mode

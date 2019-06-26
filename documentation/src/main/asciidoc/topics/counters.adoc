@@ -13,7 +13,10 @@ Details are provided below in this document to help you choose which one fits be
 In order to start using the counters, you needs to add the dependency in your Maven `pom.xml` file:
 
 .pom.xml
-include::maven_dependencies/clustered_counters.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/clustered_counters.xml[]
+----
 
 The counters can be configured {brandname} configuration file or on-demand via the `CounterManager` interface detailed
 later in this document.
@@ -21,32 +24,23 @@ A counters configured in {brandname} configuration file is created at boot time 
 Theses counters are started eagerly and they are available in all the cluster's nodes.
 
 .configuration.xml
-include::config_examples/clustered_counters_config.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/clustered_counters_config.xml[]
+----
 
 or programmatically, in the `GlobalConfigurationBuilder`:
 
 [source,java]
 ----
-GlobalConfigurationBuilder globalConfigurationBuilder = ...;
-CounterManagerConfigurationBuilder builder = globalConfigurationBuilder.addModule(CounterManagerConfigurationBuilder.class);
-builder.numOwner(3).reliability(Reliability.CONSISTENT);
-builder.addStrongCounter().name("c1").initialValue(1).storage(Storage.PERSISTENT);
-builder.addStrongCounter().name("c2").initialValue(2).lowerBound(0).storage(Storage.VOLATILE);
-builder.addStrongCounter().name("c3").initialValue(3).upperBound(5).storage(Storage.PERSISTENT);
-builder.addStrongCounter().name("c4").initialValue(4).lowerBound(0).upperBound(10).storage(Storage.VOLATILE);
-builder.addWeakCounter().name("c5").initialValue(5).concurrencyLevel(1).storage(Storage.PERSISTENT);
+include::code_examples/ClusteredCounters.java[]
 ----
 
 On other hand, the counters can be configured on-demand, at any time after the `EmbeddedCacheManager` is initialized.
 
 [source,java]
 ----
-CounterManager manager = ...;
-manager.defineCounter("c1", CounterConfiguration.builder(CounterType.UNBOUNDED_STRONG).initialValue(1).storage(Storage.PERSISTENT)build());
-manager.defineCounter("c2", CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(2).lowerBound(0).storage(Storage.VOLATILE).build());
-manager.defineCounter("c3", CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(3).upperBound(5).storage(Storage.PERSISTENT).build());
-manager.defineCounter("c4", CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(4).lowerBound(0).upperBound(10).storage(Storage.VOLATILE).build());
-manager.defineCounter("c2", CounterConfiguration.builder(CounterType.WEAK).initialValue(5).concurrencyLevel(1).storage(Storage.PERSISTENT).build());
+include::code_examples/ClusteredCountersEmbeddedCacheManager.java[]
 ----
 
 NOTE: `CounterConfiguration` is immutable and can be reused.
@@ -57,10 +51,7 @@ To find out if a counter is already defined, use the method `isDefined()`.
 
 [source,java]
 ----
-CounterManager manager = ...
-if (!manager.isDefined("someCounter")) {
-    manager.define("someCounter", ...);
-}
+include::code_examples/ClusteredCountersIsDefined.java[]
 ----
 
 *Per cluster attributes:*
@@ -122,25 +113,15 @@ as shown in the example below:
 
 [source,java]
 ----
-// create or obtain your EmbeddedCacheManager
-EmbeddedCacheManager manager = ...;
-
-// retrieve the CounterManager
-CounterManager counterManager = EmbeddedCounterManagerFactory.asCounterManager(manager);
+include::code_examples/CounterManagerEmbedded.java[]
 ----
 
 For Hot Rod client, the `CounterManager` is registered in the RemoteCacheManager and it can be retrieved like:
 
 [source,java]
 ----
-// create or obtain your RemoteCacheManager
-RemoteCacheManager manager = ...;
-
-// retrieve the CounterManager
-CounterManager counterManager = RemoteCounterManagerFactory.asCounterManager(manager);
+include::code_examples/CounterManagerRemote.java[]
 ----
-
-//old_link: NOTE: Hot Rod messages format can be found in link:#hot_rod_protocol_2_7[Hot Rod Protocol 2.7]
 
 === Remove a counter via CounterManager
 
@@ -169,13 +150,7 @@ The following methods are common to both interfaces:
 
 [source,java]
 ----
-String getName();
-CompletableFuture<Long> getValue();
-CompletableFuture<Void> reset();
-<T extends CounterListener> Handle<T> addListener(T listener);
-CounterConfiguration getConfiguration();
-CompletableFuture<Void> remove();
-SyncStrongCounter sync(); //SyncWeakCounter for WeakCounter
+include::code_examples/CounterSync.java[]
 ----
 
 * `getName()` returns the counter name (identifier).
@@ -201,8 +176,7 @@ As an example:
 
 [source,java]
 ----
-CounterManager counterManager = ...
-StrongCounter aCounter = counterManager.getStrongCounter("my-counter);
+include::code_examples/CounterGetStrong.java[]
 ----
 
 WARNING: Since every operation will hit a single key, the `StrongCounter` has a higher contention rate.
@@ -211,19 +185,7 @@ The `StrongCounter` interface adds the following method:
 
 [source,java]
 ----
-default CompletableFuture<Long> incrementAndGet() {
-   return addAndGet(1L);
-}
-
-default CompletableFuture<Long> decrementAndGet() {
-   return addAndGet(-1L);
-}
-
-CompletableFuture<Long> addAndGet(long delta);
-
-CompletableFuture<Boolean> compareAndSet(long expect, long update);
-
-CompletableFuture<Long> compareAndSwap(long expect, long update);
+include::code_examples/CounterStrongMethod.java[]
 ----
 
 * `incrementAndGet()` increments the counter by one and returns the new value.
@@ -260,94 +222,28 @@ The strong counter fits better in the following uses cases:
 
 [source,java]
 ----
-StrongCounter counter = counterManager.getStrongCounter("unbounded_coutner");
-
-// incrementing the counter
-System.out.println("new value is " + counter.incrementAndGet().get());
-
-// decrement the counter's value by 100 using the functional API
-counter.addAndGet(-100).thenApply(v -> {
-   System.out.println("new value is " + v);
-   return null;
-}).get
-
-// alternative, you can do some work while the counter is updated
-CompletableFuture<Long> f = counter.addAndGet(10);
-// ... do some work ...
-System.out.println("new value is " + f.get());
-
-// and then, check the current value
-System.out.println("current value is " + counter.getValue().get());
-
-// finally, reset to initial value
-counter.reset().get();
-System.out.println("current value is " + counter.getValue().get());
-
-// or set to a new value if zero
-System.out.println("compare and set succeeded? " + counter.compareAndSet(0, 1));
+include::code_examples/CounterGetStrongUnbounded.java[]
 ----
 
 And below, there is another example using a bounded counter:
 
 [source,java]
 ----
-StrongCounter counter = counterManager.getStrongCounter("bounded_counter");
-
-// incrementing the counter
-try {
-    System.out.println("new value is " + counter.addAndGet(100).get());
-} catch (ExecutionException e) {
-    Throwable cause = e.getCause();
-    if (cause instanceof CounterOutOfBoundsException) {
-       if (((CounterOutOfBoundsException) cause).isUpperBoundReached()) {
-          System.out.println("ops, upper bound reached.");
-       } else if (((CounterOutOfBoundsException) cause).isLowerBoundReached()) {
-          System.out.println("ops, lower bound reached.");
-       }
-    }
-}
-
-// now using the functional API
-counter.addAndGet(-100).handle((v, throwable) -> {
-   if (throwable != null) {
-      Throwable cause = throwable.getCause();
-      if (cause instanceof CounterOutOfBoundsException) {
-         if (((CounterOutOfBoundsException) cause).isUpperBoundReached()) {
-            System.out.println("ops, upper bound reached.");
-         } else if (((CounterOutOfBoundsException) cause).isLowerBoundReached()) {
-            System.out.println("ops, lower bound reached.");
-         }
-      }
-      return null;
-   }
-   System.out.println("new value is " + v);
-   return null;
-}).get();
+include::code_examples/CounterGetStrongBounded.java[]
 ----
 
 Compare-and-set vs Compare-and-swap examples:
 
 [source,java]
 ----
-StrongCounter counter = counterManager.getStrongCounter("my-counter");
-long oldValue, newValue;
-do {
-   oldValue = counter.getValue().get();
-   newValue = someLogic(oldValue);
-} while (!counter.compareAndSet(oldValue, newValue).get());
+include::code_examples/CounterGetStrongCompareSet.java[]
 ----
 
 With compare-and-swap, it saves one invocation counter invocation (`counter.getValue()`)
 
 [source,java]
 ----
-StrongCounter counter = counterManager.getStrongCounter("my-counter");
-long oldValue = counter.getValue().get();
-long currentValue, newValue;
-do {
-   currentValue = oldValue;
-   newValue = someLogic(oldValue);
-} while ((oldValue = counter.compareAndSwap(oldValue, newValue).get()) != currentValue);
+include::code_examples/CounterGetStrongCompareSwap.java[]
 ----
 
 === The `WeakCounter` interface: when speed is needed
@@ -367,8 +263,7 @@ As an example:
 
 [source,java]
 ----
-CounterManager counterManager = ...
-StrongCounter aCounter = counterManager.getWeakCounter("my-counter);
+include::code_examples/CounterGetWeak.java[]
 ----
 
 ==== Weak Counter Interface
@@ -377,15 +272,7 @@ The `WeakCounter` adds the following methods:
 
 [source,java]
 ----
-default CompletableFuture<Void> increment() {
-   return add(1L);
-}
-
-default CompletableFuture<Void> decrement() {
-   return add(-1L);
-}
-
-CompletableFuture<Void> add(long delta);
+include::code_examples/CounterWeakMethod.java[]
 ----
 
 They are similar to the `StrongCounter`'s methods but they don't return the new value.
@@ -402,40 +289,25 @@ Below, there is an example of the weak counter usage.
 
 [source,java]
 ----
-WeakCounter counter = counterManager.getWeakCounter("my_counter");
-
-// increment the counter and check its result
-counter.increment().get();
-System.out.println("current value is " + counter.getValue().get());
-
-CompletableFuture<Void> f = counter.add(-100);
-//do some work
-f.get(); //wait until finished
-System.out.println("current value is " + counter.getValue().get());
-
-//using the functional API
-counter.reset().whenComplete((aVoid, throwable) -> System.out.println("Reset done " + (throwable == null ? "successfully" : "unsuccessfully"))).get();
-System.out.println("current value is " + counter.getValue().get());
+include::code_examples/CounterWeakGetCounter.java[]
 ----
 
 [[clustered_counters_notify_events]]
 == Notifications and Events
 
 Both strong and weak counter supports a listener to receive its updates events.
-The listener must implement `CounterListener` and it can be registerer by the following method:
+The listener must implement `CounterListener` and it can be registered by the following method:
 
 [source,java]
 ----
-<T extends CounterListener> Handle<T> addListener(T listener);
+include::code_examples/CounterListenerAdd.java[]
 ----
 
-The `CounterLister` has the following interface:
+The `CounterListener` has the following interface:
 
 [source,java]
 ----
-public interface CounterListener {
-   void onUpdate(CounterEvent entry);
-}
+include::code_examples/CounterListener.java[]
 ----
 
 The `Handle` object returned has the main goal to remove the `CounterListener` when it is not longer needed.
@@ -444,10 +316,7 @@ It has the following interface:
 
 [source,java]
 ----
-public interface Handle<T extends CounterListener> {
-   T getCounterListener();
-   void remove();
-}
+include::code_examples/CounterListenerHandle.java[]
 ----
 
 Finally, the `CounterEvent` has the previous and current value and state.
@@ -455,12 +324,7 @@ It has the following interface:
 
 [source,java]
 ----
-public interface CounterEvent {
-   long getOldValue();
-   State getOldState();
-   long getNewValue();
-   State getNewState();
-}
+include::code_examples/CounterEvent.java[]
 ----
 
 NOTE: The state is always `State.VALID` for unbounded strong counter and weak counter.

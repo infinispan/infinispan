@@ -1,0 +1,8 @@
+[jmx://localhost:12000/MyCacheManager/namedCache]> encoding
+none
+[jmx://localhost:12000/MyCacheManager/namedCache]> encoding --list
+memcached
+hotrod
+none
+rest
+[jmx://localhost:12000/MyCacheManager/namedCache]> encoding hotrod

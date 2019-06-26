@@ -1,0 +1,19 @@
+<replicated-cache name="default">
+    <indexing index="ALL">
+        <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
+        <property name="default.data_cachename">LuceneIndexesData_custom</property>
+        <property name="default.metadata_cachename">LuceneIndexesMetadata_custom</property>
+    </indexing>
+</replicated-cache>
+
+<local-cache name="LuceneIndexesLocking_custom">
+    <indexing index="NONE" />
+</local-cache>
+
+<local-cache name="LuceneIndexesMetadata_custom">
+    <indexing index="NONE" />
+</local-cache>
+
+<local-cache name="LuceneIndexesData_custom">
+    <indexing index="NONE" />
+</local-cache>

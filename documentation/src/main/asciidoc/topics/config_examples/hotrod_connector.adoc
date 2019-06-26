@@ -1,4 +1,0 @@
-[source,xml,options="nowrap"]
-----
-<hotrod-connector socket-binding="hotrod" cache-container="local" />
-----

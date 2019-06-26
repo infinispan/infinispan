@@ -1,0 +1,1 @@
+[remoting://localhost:9999]> grant supervisor to user1

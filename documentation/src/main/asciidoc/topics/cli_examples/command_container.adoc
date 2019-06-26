@@ -1,0 +1,4 @@
+[jmx://localhost:12000/MyCacheManager/namedCache]> container
+MyCacheManager OtherCacheManager
+[jmx://localhost:12000/MyCacheManager/namedCache]> container OtherCacheManager
+[jmx://localhost:12000/OtherCacheManager/]>

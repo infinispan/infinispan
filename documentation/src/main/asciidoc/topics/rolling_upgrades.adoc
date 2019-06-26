@@ -29,21 +29,9 @@ From a high-level, you do the following to perform rolling upgrades:
 * `protocol-version` matches the Hot Rod protocol version of the source cluster.
 +
 .Example `RemoteCacheStore` Configuration
-[source,xml,options="nowrap"]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache>
-   <remote-store cache="MyCache" socket-timeout="60000" tcp-no-delay="true" protocol-version="2.5" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
-      <remote-server outbound-socket-binding="remote-store-hotrod-server"/>
-   </remote-store>
-</distributed-cache>
-...
-<socket-binding-group name="standard-sockets" default-interface="public" port-offset="${jboss.socket.binding.port-offset:0}">
-  ...
-  <outbound-socket-binding name="remote-store-hotrod-server">
-     <remote-destination host="198.51.100.0" port="11222"/>
-  </outbound-socket-binding>
-  ...
-</socket-binding-group>
+include::config_examples/remote_cache_store.xml[]
 ----
 +
 . Configure the target cluster to handle all client requests instead of the source cluster:

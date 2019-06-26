@@ -1,0 +1,3 @@
+<cache-container name="clustered" default-cache="default">
+  ...
+</cache-container>

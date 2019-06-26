@@ -1,0 +1,8 @@
+-c, --connect=URL       connects to a running instance of Infinispan.
+                        JMX over RMI jmx://[username[:password]]@host:port[/container[/cache]]
+                        JMX over JBoss remoting remoting://[username[:password]]@host:port[/container[/cache]]
+-f, --file=FILE         reads input from the specified file instead of using                          
+                        interactive mode. If FILE is '-', then commands will be read
+                        from stdin
+-h, --help              shows this help page 
+-v, --version           shows version information

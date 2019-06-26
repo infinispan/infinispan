@@ -266,26 +266,16 @@ Eviction and Expiration may be configured using the programmatic or
 declarative XML configuration. This configuration is on a per-cache basis.
 Valid eviction/expiration-related configuration elements are:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<!-- Eviction -->
-<memory>
-   <object size="2000"/>
-</memory>
-<!-- Expiration -->
-<expiration lifespan="1000" max-idle="500" interval="1000" />
-
+include::config_examples/config_eviction_expiration.xml[]
 ----
 
 Programmatically, the same would be defined using:
 
 [source,java]
 ----
-Configuration c = new ConfigurationBuilder()
-               .memory().size(2000)
-               .expiration().wakeUpInterval(5000l).lifespan(1000l).maxIdle(500l)
-               .build();
-
+include::code_examples/ConfigEvictionExpiration.java[]
 ----
 
 [[eviction_expiration_config_mem]]
@@ -296,22 +286,14 @@ are using your own custom types (as {brandname} is normally used).  In this case
 {brandname} cannot estimate the memory usage of your classes and as such you are
 required to use `storeAsBinary` when memory based eviction is used.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<!-- Enable memory based eviction with 1 GB/>
-<memory>
-   <binary size="1000000000" eviction="MEMORY"/>
-</memory>
+include::config_examples/config_eviction_memory.xml[]
 ----
 
 [source,java]
 ----
-Configuration c = new ConfigurationBuilder()
-               .memory()
-               .storageType(StorageType.BINARY)
-               .evictionType(EvictionType.MEMORY)
-               .size(1_000_000_000)
-               .build();
+include::code_examples/ConfigEvictionMemory.java[]
 ----
 
 [[eviction_expiration_config_default]]
@@ -331,29 +313,14 @@ Expiration allows you to set either a lifespan or a maximum idle time on each ke
 
 For example, assume the following configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<expiration lifespan="1000" />
-
+include::config_examples/config_expiration_lifespan.xml[]
 ----
 
 [source,java]
 ----
-// this entry will expire in 1000 millis
-cache.put("pinot noir", pinotNoirPrice);
-
-// this entry will expire in 2000 millis
-cache.put("chardonnay", chardonnayPrice, 2, TimeUnit.SECONDS);
-
-// this entry will expire 1000 millis after it is last accessed
-cache.put("pinot grigio", pinotGrigioPrice, -1,
-          TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
-
-// this entry will expire 1000 millis after it is last accessed, or
-// in 5000 millis, which ever triggers first
-cache.put("riesling", rieslingPrice, 5,
-          TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
-
+include::code_examples/EvictionLifespanExample.java[]
 ----
 
 [[expiration_designs]]

@@ -23,13 +23,9 @@ endif::productized[]
 For example, given a persistence unit "myPersistenceUnit", and a JPA entity User:
 
 .persistence.xml
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<persistence-unit name="myPersistenceUnit">
-	...
-</persistence-unit>
-
+include::config_examples/persistence_unit_example.xml[]
 ----
 
 User entity class
@@ -37,100 +33,47 @@ User entity class
 .User.java
 [source,java]
 ----
-
-@Entity
-public class User implements Serializable {
-	@Id
-	private String username;
-	private String firstName;
-	private String lastName;
-
-	...
-}
-
+include::code_examples/PersistenceUserEntityClass.java[]
 ----
 
 Then you can configure a cache "usersCache" to use JPA Cache Store, so that when you put data into the cache, the data would be persisted into the database based on JPA configuration.
 
 [source,java]
 ----
-
-EmbeddedCacheManager cacheManager = ...;
-
-
-Configuration cacheConfig = new ConfigurationBuilder().persistence()
-            .addStore(JpaStoreConfigurationBuilder.class)
-            .persistenceUnitName("org.infinispan.loaders.jpa.configurationTest")
-            .entityClass(User.class)
-            .build();
-cacheManager.defineCache("usersCache", cacheConfig);
-
-Cache<String, User> usersCache = cacheManager.getCache("usersCache");
-usersCache.put("raytsang", new User(...));
-
+include::code_examples/PersistenceJpaCacheStore.java[]
 ----
 
 Normally a single {brandname} cache can store multiple types of key/value pairs, for example:
 
 [source,java]
 ----
-
-Cache<String, User> usersCache = cacheManager.getCache("myCache");
-usersCache.put("raytsang", new User());
-Cache<Integer, Teacher> teachersCache = cacheManager.getCache("myCache");
-teachersCache.put(1, new Teacher());
-
+include::code_examples]$ atom CacheMultipleKeyValuePairs.java[]
 ----
 
 It's important to note that, when a cache is configured to use a JPA Cache Store, that cache would only be able to store ONE type of data.
 
 [source,java]
 ----
-
-Cache<String, User> usersCache = cacheManager.getCache("myJPACache"); // configured for User entity class
-usersCache.put("raytsang", new User());
-Cache<Integer, Teacher> teachersCache = cacheManager.getCache("myJPACache"); // cannot do this when this cache is configured to use a JPA cache store
-teachersCache.put(1, new Teacher());
-
+include::code_examples/CacheJpaStore.java[]
 ----
 
 Use of `@EmbeddedId` is supported so that you can also use composite keys.
 
 [source,java]
 ----
-
-@Entity
-public class Vehicle implements Serializable {
-	@EmbeddedId
-	private VehicleId id;
-	private String color;	...
-}
-
-@Embeddable
-public class VehicleId implements Serializable
-{
-	private String state;
-	private String licensePlate;
-	...
-}
-
+include::code_examples/EmbeddedIdExample.java[]
 ----
 
 Lastly, auto-generated IDs ﻿(e.g., `@GeneratedValue`) is not supported.
 When putting things into the cache with a JPA cache store, the key should be the ID value!
 
 == Configuration
-=== Sample Programatic Configuration
+
+=== Sample Programmatic Configuration
 
 [source,java]
 ----
-
-Configuration cacheConfig = new ConfigurationBuilder().persistence()
-             .addStore(JpaStoreConfigurationBuilder.class)
-             .persistenceUnitName("org.infinispan.loaders.jpa.configurationTest")
-             .entityClass(User.class)
-             .build();
-
+include::code_examples/ConfigJpaStore.java[]
 ----
 
 [options="header"]
@@ -142,18 +85,9 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
 
 === Sample XML Configuration
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<local-cache name="vehicleCache">
-   <persistence passivation="false">
-      <jpa-store xmlns="urn:infinispan:config:store:jpa:7.0"
-         persistence-unit="org.infinispan.persistence.jpa.configurationTest"
-         entity-class="org.infinispan.persistence.jpa.entity.Vehicle">
-		/>
-   </persistence>
-</local-cache>
-
+include::config_examples/persistence_jpa_store.xml[]
 ----
 
 [options="header"]

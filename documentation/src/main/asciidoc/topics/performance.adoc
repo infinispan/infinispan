@@ -133,12 +133,10 @@ NOTE: Java 10 and later can limit the number of active processor using the VM fl
 Hot Rod Server uses worker threads which are activated by a client's requests.
 It's important to match the number of worker threads to the number of concurrent client requests:
 
-[source,java]
+[source,xml,options="nowrap",subs=attributes+]
 .Hot Rod Server worker thread pool size
 ----
-<hotrod-connector socket-binding="hotrod" cache-container="local" worker-threads="200">
-   <!-- Additional configuration here -->
-</hotrod-connector>
+include::config_examples/hot_rod_worker_threads.xml[]
 ----
 
 == Cache Store performance
@@ -160,20 +158,18 @@ There are also several hints for developers which can be easily applied to the c
 
 When you're not interested in returning value of the `#put(k, v)` or `#remove(k)` method, use `Flag.IGNORE_RETURN_VALUES` flag as shown below:
 
-[source,java]
 .Using Flag.IGNORE_RETURN_VALUES
+[source,java]
 ----
-Cache noPreviousValueCache = cache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
-noPreviousValueCache.put(k, v);
+include::code_examples/GetAdvancedCacheWithFlagsIgnoreReturnValues.java[]
 ----
 
 It is also possible to set this flag using ConfigurationBuilder
 
-[source,java]
 .Using ConfigurationBuilder settings
+[source,java]
 ----
-ConfigurationBuilder cb = new ConfigurationBuilder();
-cb.unsafe().unreliableReturnValues(true);
+include::code_examples/ConfigurationBuilderUnreliableReturnValues.java[]
 ----
 
 === Use `Externalizer` for marshalling
@@ -184,68 +180,22 @@ This solutions prevents JBoss Marshalling from sending class name over the netwo
 [source,java]
 .User entity with Externalizer
 ----
-import org.infinispan.marshall.AdvancedExternalizer;
-
-public class Book {
-
-   final String name;
-   final String author;
-
-   public Book(String name, String author) {
-      this.name = name;
-      this.author = author;
-   }
-
-   public static class BookExternalizer
-            implements AdvancedExternalizer<Book> {
-
-      @Override
-      public void writeObject(ObjectOutput output, Book book)
-            throws IOException {
-         output.writeObject(book.name);
-         output.writeObject(book.author);
-      }
-
-      @Override
-      public Person readObject(ObjectInput input)
-            throws IOException, ClassNotFoundException {
-         return new Person((String) input.readObject(), (String) input.readObject());
-      }
-
-      @Override
-      public Set<Class<? extends Book>> getTypeClasses() {
-         return Util.<Class<? extends Book>>asSet(Book.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return 2345;
-      }
-   }
-}
+include::code_examples/AdvancedExternalizerBookExample.java[]
 ----
 
 The Externalizer must be registered in cache configuration. See configuration examples below:
 
-[source,java]
 .Adding Externalizer using XML
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<cache-container>
-   <serialization>
-      <advanced-externalizer class="Book$BookExternalizer"/>
-   </serialization>
-</cache-container>
+include::config_examples/advanced_externalizer_book_example.xml[]
 ----
 
-[source,java]
 .Adding Externalizer using Java
+[source,java]
 ----
-GlobalConfigurationBuilder builder = ...
-builder.serialization().addAdvancedExternalizer(new Book.BookExternalizer());
+include::code_examples/AdvancedExternalizerAddBookExternalizer.java[]
 ----
-ifndef::productized[]
-For more information, please refer to the link:../user_guide/user_guide.html#benefits_of_externalizers[User's Guide].
-endif::productized[]
 
 === Storing Strings efficiently
 
@@ -271,8 +221,4 @@ This is an example comparison of the difference, randomly reading/writing into c
 
 The CHM shows comparison for ConcurrentHashMap from JSR-166 with pluggable equality/hashCode function, which is used as the underlying storage in {brandname}.
 
-Even though we use http://openjdk.java.net/projects/code-tools/jmh/[JMH] to prevent some common pitfals of microbenchmarking, consider these results only aproximative. Your mileage may vary.
-
-ifndef::productized[]
-Please consult link:../user_guide/user_guide.html#simple_cache[User's Guide] for the limitations of simple cache and configuration.
-endif::productized[]
+Even though we use http://openjdk.java.net/projects/code-tools/jmh/[JMH] to prevent some common pitfalls of microbenchmarking, consider these results only approximate. Your mileage may vary.

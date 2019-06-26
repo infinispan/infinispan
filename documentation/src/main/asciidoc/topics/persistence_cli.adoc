@@ -18,21 +18,12 @@ The Command-Line Interface (CLI) cache loader does not support segmentation.
 ====
 endif::productized[]
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<persistence>
-   <cli-loader connection="jmx://1.2.3.4:4444/MyCacheManager/myCache" />
-</persistence>
-
+include::config_examples/persistence_cli_loader.xml[]
 ----
 
 [source,java]
 ----
-
-ConfigurationBuilder b = new ConfigurationBuilder();
-b.persistence()
-    .addStore(CLInterfaceLoaderConfigurationBuilder.class)
-    .connectionString("jmx://1.2.3.4:4444/MyCacheManager/myCache");
-
+include::code_examples/PersistenceCliLoader.java[]
 ----

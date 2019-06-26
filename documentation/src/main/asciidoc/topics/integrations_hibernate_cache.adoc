@@ -16,7 +16,10 @@ The {brandname} cache provider version suitable for your application depends on 
 Hibernate 5.3::
 Use the following Maven coordinates:
 +
-include::maven_dependencies/hibernate_v5.3.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/hibernate_v5.3.xml[]
+----
 
 ifndef::productized[]
 Hibernate 5.2::
@@ -28,13 +31,19 @@ Hibernate 5.2 is supported in {brandname} 9.2.x only.
 +
 Use the following Maven coordinates:
 +
-include::maven_dependencies/hibernate_v5.2.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/hibernate_v5.2.xml[]
+----
 endif::productized[]
 
 Hibernate 5.1::
 Use the following Maven coordinates:
 +
-include::maven_dependencies/hibernate_v5.1.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/hibernate_v5.1.xml[]
+----
 
 [NOTE]
 ====
@@ -104,17 +113,9 @@ Enabling {brandname} second level cache provider inside a JPA/Hibernate applicat
 First, make sure the Hibernate {brandname} cache provider is available in the classpath.
 Then, modify the persistence.xml to include these properties:
 
-[source, XML, indent=0]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<!-- Use Infinispan second level cache provider -->
-<property name="hibernate.cache.region.factory_class" value="infinispan"/>
-
-<!--
-   Force using local configuration when only using a single node.
-   Otherwise a clustered configuration is loaded.
--->
-<property name="hibernate.cache.infinispan.cfg"
-     value="org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml"/>
+include::config_examples/ispn_second_level_cache.xml[]
 ----
 
 By default when running standalone, the {brandname} second-level cache provider uses an {brandname} configuration that’s designed for clustered environments.
@@ -173,9 +174,10 @@ link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hiber
 When running a JPA/Hibernate in a multi-node environment and enabling {brandname} second-level cache, it is necessary to cluster the second-level cache so that cache consistency can be guaranteed.
 Clustering the {brandname} second-level cache provider is as simple as adding the following property to the `persistence.xml` file:
 
-[source, XML, indent=0]
-<!-- Use Infinispan second level cache provider -->
-<property name="hibernate.cache.region.factory_class" value="infinispan"/>
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/ispn_second_level_cache_multinode.xml[]
+----
 
 The default {brandname} configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
 You can find more about the configuration check the link:#default_cluster_configuration_second_level[Default Cluster Configuration] section.
@@ -322,12 +324,10 @@ See examples below on how entity/collection specific configurations can be appli
 
 [[caching_provider_infinispan_config_example]]
 .Use custom {brandname} configuration
-====
-[source, XML, indent=0]
-<property
-    name="hibernate.cache.infinispan.cfg"
-    value="my-infinispan-configuration.xml" />
-====
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/ispn_caching_provider.xml[]
+----
 
 NOTE: If the cache is configured as transactional, {brandname} cache provider automatically sets transaction manager so that the TM used by {brandname} is the same as TM used by Hibernate.
 
@@ -354,34 +354,18 @@ For specifying cache template for specific region, use region name instead of th
 
 [[caching_provider_infinispan_config_cache_example]]
 .Use custom cache template
-====
-[source, XML, indent=0]
-<property
-    name="hibernate.cache.infinispan.entities.cfg"
-    value="custom-entities" />
-<property
-    name="hibernate.cache.infinispan.query.cfg"
-    value="custom-query-cache" />
-<property
-    name="hibernate.cache.infinispan.com.example.MyEntity.cfg"
-    value="my-entities" />
-<property
-    name="hibernate.cache.infinispan.com.example.MyEntity.someCollection.cfg"
-    value="my-entities-some-collection" />
-====
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/ispn_caching_provider_custom.xml[]
+----
 
 .Use custom cache template in Wildfly
 When applying entity/collection level changes inside JPA applications deployed in Wildfly, it is necessary to specify deployment name and persistence unit name (separated by `#` character):
 
-====
-[source, XML, indent=0]
-<property
-    name="hibernate.cache.infinispan._war_or_ear_name_#_unit_name_.com.example.MyEntity.cfg"
-    value="my-entities" />
-<property
-    name="hibernate.cache.infinispan._war_or_ear_name_#_unit_name_.com.example.MyEntity.someCollection.cfg"
-    value="my-entities-some-collection" />
-====
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/ispn_caching_provider_wfly.xml[]
+----
 
 IMPORTANT: Cache configurations are used only as a template for the cache created for given region.
 Usually each entity hierarchy or collection has its own region
@@ -405,19 +389,11 @@ Period of thread checking expired entries.
 Globally enables/disable {brandname} statistics collection, and their exposure via JMX.
 
 Example:
-====
-[source, XML, indent=0]
-<property name="hibernate.cache.infinispan.entity.eviction.strategy"
-   value= "LRU"/>
-<property name="hibernate.cache.infinispan.entity.eviction.wake_up_interval"
-   value= "2000"/>
-<property name="hibernate.cache.infinispan.entity.eviction.max_entries"
-   value= "5000"/>
-<property name="hibernate.cache.infinispan.entity.expiration.lifespan"
-   value= "60000"/>
-<property name="hibernate.cache.infinispan.entity.expiration.max_idle"
-   value= "30000"/>
-====
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/hibernate_cache_properties.xml[]
+----
 
 With the above configuration, you're overriding whatever eviction/expiration settings were defined for the default entity cache name in the {brandname} cache configuration used.
 This happens regardless of whether it's the default one or user defined.
@@ -433,10 +409,9 @@ You can also override eviction/expiration settings on a per entity/collection ty
 This allows overrides that only affects a particular entity (i.e. `com.acme.Person`) or collection type (i.e. `com.acme.Person.addresses`).
 Example:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<property name="hibernate.cache.infinispan.com.acme.Person.eviction.strategy"
-   value= "LIRS"/>
+include::config_examples/hibernate_cache_eviction.xml[]
 ----
 
 Inside of Wildfly, same as with the entity/collection configuration override, eviction/expiration settings would also require deployment name and persistence unit information
@@ -444,12 +419,9 @@ Inside of Wildfly, same as with the entity/collection configuration override, ev
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/wildfly-local[here]
 ):
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<property name="hibernate.cache.infinispan._war_or_ear_name_#_unit_name_.com.acme.Person.eviction.strategy"
-   value= "LIRS"/>
-<property name="hibernate.cache.infinispan._war_or_ear_name_#_unit_name_.com.acme.Person.expiration.lifespan"
-   value= "65000"/>
+include::config_examples/hibernate_cache_deployment.xml[]
 ----
 
 == Cache Strategies
@@ -489,19 +461,10 @@ IMPORTANT: Use of transactional caches is possible only in JTA environment. Hibe
 
 [[caching_provider_infinispan_stale_read_example]]
 .Stale read with `nonstrict-read-write` strategy
-====
-[source, indent=0]
+[source,java,indent=0]
 ----
-A=0 (non-cached), B=0 (cached in 2LC)
-TX1: write A = 1, write B = 1
-TX1: start commit
-TX1: commit A, B in DB
-TX2: read A = 1 (from DB), read B = 0 (from 2LC) // breaks transactional atomicity
-TX1: update A, B in 2LC
-TX1: end commit
-Tx3: read A = 1, B = 1 // reads after TX1 commit completes are consistent again
+include::code_examples/StaleReadExample.java[]
 ----
-====
 
 == Using minimal puts
 

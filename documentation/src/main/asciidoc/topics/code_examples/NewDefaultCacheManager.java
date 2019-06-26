@@ -1,0 +1,1 @@
+EmbeddedCacheManager manager = new DefaultCacheManager();

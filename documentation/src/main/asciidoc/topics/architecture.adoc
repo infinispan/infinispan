@@ -12,15 +12,9 @@ extending or enhancing {brandname}, or just curious about {brandname}’s intern
 which provides for a familiar and easy-to-use API.
 
 [source,java]
----
-public interface Cache<K, V> extends BasicCache<K, V> {
- ...
-}
-
-public interface BasicCache<K, V> extends ConcurrentMap<K, V> {
- ...
-}
----
+----
+include::code_examples/ConcurrentMap.java[]
+----
 
 Caches are created by using a CacheContainer instance - either the
 EmbeddedCacheManager or a RemoteCacheManager.  In addition to their capabilities
@@ -40,49 +34,28 @@ references to necessary parameters.  The actual logic of a given command, for
 example a ReplaceCommand, is encapsulated in the command’s perform() method.
 Very object-oriented and easy to test.
 
-All of these commands implement the VisitableCommand inteface which allow a
+All of these commands implement the VisitableCommand interface which allow a
 Visitor (described in next section) to process them accordingly.
 
 [source,java]
----
-public class PutKeyValueCommand extends VisitableCommand {
-  ...
-}
-
-
-public class GetKeyValueCommand extends VisitableCommand {
-  ...
-}
-
-... etc ...
----
+----
+include::code_examples/VisitableCommand.java[]
+----
 
 == Visitors
 
 Commands are processed by the various Visitors.  The visitor interface,
 displayed below, exposes methods to visit each of the different types of
 commands in the system.  This gives us a type-safe mechanism for adding
-behaviour to a call.Commands are processed by `Visitor`s.  The visitor
+behaviour to a call. Commands are processed by `Visitor`s.  The visitor
 interface, displayed below, exposes methods to visit each of the different
 types of commands in the system.  This gives us a type-safe mechanism for
 adding behaviour to a call.
 
 [source, java]
----
-public interface Vistor {
-   Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable;
-
-   Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable;
-
-   Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable;
-
-   Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable;
-
-   Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable;
-
-   ... etc ...
-}
----
+----
+include::code_examples/Visitor.java[]
+----
 
 An `AbstractVisitor` class in the `org.infinispan.commands` package is provided with
 no-op implementations of each of these methods.  Real implementations then only
@@ -161,8 +134,8 @@ A component detailing all of the configuration in this cache.
 == ComponentRegistry
 
 A registry where the various managers above and components are created and
-stored for use in the cache.  All of the other managers and crucial componanets
-are accesible through the registry.
+stored for use in the cache.  All of the other managers and crucial components
+are accessible through the registry.
 
 The registry itself is a lightweight dependency injection framework, allowing
 components and managers to reference and initialise one another.  Here is an
@@ -171,34 +144,18 @@ Configuration, and a DataContainerFactory declaring its ability to construct
 DataContainers on the fly.
 
 [source,java]
----
-   @Inject
-   public void injectDependencies(DataContainer container, Configuration configuration) {
-      this.container = container;
-      this.configuration = configuration;
-   }
-
-   @DefaultFactoryFor
-   public class DataContainerFactory extends AbstractNamedCacheComponentFactory {
----
+----
+include::code_examples/InjectDependencies.java[]
+----
 
 Components registered with the ComponentRegistry may also have a lifecycle, and
 methods annotated with @Start or @Stop will be invoked before and after they
 are used by the component registry.
 
 [source,java]
----
-   @Start
-   public void init() {
-      useWriteSkewCheck = configuration.locking().writeSkewCheck();
-   }
-
-   @Stop(priority=20)
-   public void stop() {
-      notifier.removeListener(listener);
-      executor.shutdownNow();
-   }
----
+----
+include::code_examples/StartStop.java[]
+----
 
 In the example above, the optional priority parameter to @Stop is used to
 indicate the order in which the component is stopped, in relation to other

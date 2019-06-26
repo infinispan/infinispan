@@ -1,0 +1,2 @@
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> evict a

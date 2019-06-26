@@ -1,0 +1,3 @@
+<memory>
+  <binary size="1000" eviction="COUNT"/>
+</memory>

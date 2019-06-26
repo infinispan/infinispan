@@ -1,0 +1,7 @@
+<extensions>
+  <extension module="org.infinispan.extension:{infinispanslot}"/>
+  <extension module="org.infinispan.server.endpoint:{infinispanslot}"/>
+  <extension module="org.jgroups.extension:{infinispanslot}"/>
+
+  <!--Other wildfly extensions-->
+</extensions>

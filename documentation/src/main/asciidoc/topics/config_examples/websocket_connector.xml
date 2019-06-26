@@ -1,0 +1,1 @@
+<websocket-connector socket-binding="websocket" cache-container="local"/>

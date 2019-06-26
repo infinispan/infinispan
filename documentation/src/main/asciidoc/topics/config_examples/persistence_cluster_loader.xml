@@ -1,0 +1,3 @@
+<persistence>
+   <cluster-loader remote-timeout="500"/>
+</persistence>

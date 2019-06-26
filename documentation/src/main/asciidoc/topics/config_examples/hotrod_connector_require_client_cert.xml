@@ -1,0 +1,3 @@
+<hotrod-connector socket-binding="hotrod" cache-container="local">
+    <encryption security-realm="ApplicationRealm" require-ssl-client-auth="true" />
+</hotrod-connector>

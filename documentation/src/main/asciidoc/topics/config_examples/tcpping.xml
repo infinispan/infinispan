@@ -1,0 +1,9 @@
+<config>
+      <TCP bind_port="7800" />
+      <TCPPING timeout="3000"
+           initial_hosts="${jgroups.tcpping.initial_hosts:localhost[7800],localhost[7801]}"
+           port_range="1"
+           num_initial_members="3"/>
+...
+...
+</config>

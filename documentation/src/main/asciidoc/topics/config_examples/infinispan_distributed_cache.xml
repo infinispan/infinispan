@@ -1,0 +1,9 @@
+<infinispan>
+    <cache-container>
+        <distributed-cache name="cacheName" mode="SYNC">
+            <memory>
+                <object size="20"/>
+            </memory>
+        </distributed-cache>
+    </cache-container>
+</infinispan>

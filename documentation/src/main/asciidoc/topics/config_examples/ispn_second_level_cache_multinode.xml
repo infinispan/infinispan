@@ -1,0 +1,2 @@
+<!-- Use Infinispan second level cache provider -->
+<property name="hibernate.cache.region.factory_class" value="infinispan"/>

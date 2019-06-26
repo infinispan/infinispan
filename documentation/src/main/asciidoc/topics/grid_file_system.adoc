@@ -16,51 +16,21 @@ Here is a quick code snippet demonstrating usage:
 
 [source,java]
 ----
-
-Cache<String,byte[]> data = cacheManager.getCache("distributed");
-Cache<String,GridFile.Metadata> metadata = cacheManager.getCache("replicated");
-GridFilesystem fs = new GridFilesystem(data, metadata);
-
-// Create directories
-File file=fs.getFile("/tmp/testfile/stuff");
-fs.mkdirs(); // creates directories /tmp/testfile/stuff
-
-// List all files and directories under "/usr/local"
-file=fs.getFile("/usr/local");
-File[] files=file.listFiles();
-
-// Create a new file
-file=fs.getFile("/tmp/testfile/stuff/README.txt");
-file.createNewFile();
-
+include::code_examples/GridFileSystemExample.java[]
 ----
 
 Copying stuff to the grid file system:
 
 [source,java]
 ----
-InputStream in=new FileInputStream("/tmp/my-movies/dvd-image.iso");
-OutputStream out=fs.getOutput("/grid-movies/dvd-image.iso");
-byte[] buffer=new byte[20000];
-int len;
-while((len=in.read(buffer, 0, buffer.length)) != -1) out.write(buffer, 0, len);
-in.close();
-out.close();
-
+include::code_examples/GridFileSystemCopyExample.java[]
 ----
 
 Reading stuff from the grid:
 
 [source,java]
 ----
-InputStream in=in.getInput("/grid-movies/dvd-image.iso");
-OutputStream out=new FileOutputStream("/tmp/my-movies/dvd-image.iso");
-byte[] buffer=new byte[200000];
-int len;
-while((len=in.read(buffer, 0, buffer.length)) != -1) out.write(buffer, 0, len);
-in.close();
-out.close();
-
+include::code_examples/GridFileSystemReadExample.java[]
 ----
 
 == WebDAV demo

@@ -38,17 +38,10 @@ letting {brandname} link:#query_autoconfig[configure the indexing automatically]
 
 {brandname} configuration:
 
-[source,xml]
 .infinispan.xml
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-    <cache-container>
-        <transport cluster="infinispan-cluster"/>
-        <distributed-cache name="books">
-            <indexing index="LOCAL" auto-config="true"/>
-        </distributed-cache>
-    </cache-container>
-</infinispan>
+include::config_examples/infinispan_distributed_cache_books.xml[]
 ----
 
 Obtaining the cache:
@@ -200,18 +193,9 @@ have a vastly superior performance. On the other hand, enabling indexing can imp
 To enable indexing via XML, you need to add the `<indexing>` element plus the `index` (link:#query_index_mode[index mode])
 to your cache configuration, and optionally pass additional properties.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-   <cache-container default-cache="default">
-      <replicated-cache name="default">
-         <indexing index="ALL">
-            <property name="property.name">some value</property>
-         </indexing>
-      </replicated-cache>
-   </cache-container>
-</infinispan>
-
+include::config_examples/indexing.xml[]
 ----
 
 Programmatic:
@@ -229,15 +213,9 @@ cacheCfg.indexing().index(Index.ALL)
 
 Each property inside the `index` element is prefixed with the index name, for the index named `org.infinispan.sample.Car` the `directory_provider` is `local-heap`:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-    ...
-    <indexing index="ALL">
-        <property name="org.infinispan.sample.Car.directory_provider">local-heap</property>
-    </indexing>
-    ...
-</infinispan>
-
+include::config_examples/indexing_property.xml[]
 ----
 
 [source,java]
@@ -270,19 +248,9 @@ public class Airplane {
 }
 ----
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-    ...
-    <indexing index="ALL">
-        <property name="default.directory_provider">infinispan</property>
-        <property name="boatIndex.directory_provider">local-heap</property>
-        <property name="org.infinispan.sample.Airplane.directory_provider">
-            ram
-        </property>
-    </indexing>
-    ...
-</infinispan>
-
+include::config_examples/indexing_property_entity.xml[]
 ----
 
 
@@ -291,21 +259,9 @@ public class Airplane {
 {brandname} can automatically recognize and manage indexes for different entity types in a cache. Future versions of {brandname} will remove this capability so it's recommended to
 declare upfront which types are going to be indexed (list them by their fully qualified class name). This can be done via xml:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-   <cache-container default-cache="default">
-      <replicated-cache name="default">
-         <indexing index="ALL">
-            <indexed-entities>
-                <indexed-entity>com.acme.query.test.Car</indexed-entity>
-                <indexed-entity>com.acme.query.test.Truck</indexed-entity>
-            </indexed-entities>
-         </indexing>
-      </replicated-cache>
-   </cache-container>
-</infinispan>
-
+include::config_examples/indexed_entities.xml[]
 ----
 
 or programmatically:
@@ -374,38 +330,9 @@ This index manager uses the {brandname} Directory Provider, and is suitable for 
 
 Configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="default" >
-    <indexing index="LOCAL">
-        <property name="default.indexmanager">
-            org.infinispan.query.indexmanager.InfinispanIndexManager
-        </property>
-        <!-- optional: tailor each index cache -->
-        <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
-        <property name="default.data_cachename">LuceneIndexesData_custom</property>
-        <property name="default.metadata_cachename">LuceneIndexesMetadata_custom</property>
-    </indexing>
-</distributed-cache>
-
-<!-- Optional -->
-<replicated-cache name="LuceneIndexesLocking_custom">
-    <indexing index="NONE" />
-    <-- extra configuration -->
-</replicated-cache>
-
-<!-- Optional -->
-<replicated-cache name="LuceneIndexesMetadata_custom">
-    <indexing index="NONE" />
-    <-- extra configuration -->
-</replicated-cache>
-
-<!-- Optional -->
-<distributed-cache name="LuceneIndexesData_custom">
-    <-- extra configuration -->
-    <indexing index="NONE" />
-</distributed-cache>
-
+include::config_examples/index_manager.xml[]
 ----
 
 Indexes are stored in a set of clustered caches, called by default _LuceneIndexesData_, _LuceneIndexesMetadata_ and _LuceneIndexesLocking_.
@@ -435,19 +362,9 @@ The PRIMARY_OWNER index mode is required, together with a special kind of `KeyPa
 
 XML Configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="default"
-                   key-partitioner="org.infinispan.distribution.ch.impl.AffinityPartitioner">
-    <indexing index="PRIMARY_OWNER">
-        <property name="default.indexmanager">
-            org.infinispan.query.affinity.AffinityIndexManager
-        </property>
-        <!-- optional: control the number of shards, the default is 4 -->
-        <property name="default.sharding_strategy.nbr_of_shards">10</property>
-    </indexing>
-</distributed-cache>
-
+include::config_examples/indexing_primary_owner.xml[]
 ----
 
 Programmatic:
@@ -511,14 +428,9 @@ It is the recommended storage for local indexes. Although indexes are persistent
 
 Configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<replicated-cache name="myCache">
-   <indexing index="ALL">
-      <!-- Optional: define base folder for indexes -->
-      <property name="default.indexBase">${java.io.tmpdir}/baseDir</property>
-   </indexing>
-</replicated-cache>
+include::config_examples/indexing_filesystem.xml[]
 ----
 
 {brandname} will create a different folder under `default.indexBase` for each entity (index) present in the cache.
@@ -530,13 +442,9 @@ Not recommended for large indexes or highly concurrent situations. Indexes store
 is needed. Configuration:
 
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<replicated-cache name="myCache">
-   <indexing index="ALL">
-      <property name="default.directory_provider">local-heap</property>
-   </indexing>
-</replicated-cache>
+include::config_examples/indexing_local_heap.xml[]
 ----
 
 [small]*{brandname} storage*
@@ -544,30 +452,10 @@ is needed. Configuration:
 {brandname} storage makes use of the {brandname} Lucene directory that saves the indexes to a set of caches; those caches can be configured like any other {brandname} cache, for example by adding a cache store to have indexes persisted elsewhere apart from memory.
 In order to use {brandname} storage with a non-shared index, it's necessary to use LOCAL caches for the indexes:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<replicated-cache name="default">
-    <indexing index="ALL">
-        <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
-        <property name="default.data_cachename">LuceneIndexesData_custom</property>
-        <property name="default.metadata_cachename">LuceneIndexesMetadata_custom</property>
-    </indexing>
-</replicated-cache>
-
-<local-cache name="LuceneIndexesLocking_custom">
-    <indexing index="NONE" />
-</local-cache>
-
-<local-cache name="LuceneIndexesMetadata_custom">
-    <indexing index="NONE" />
-</local-cache>
-
-<local-cache name="LuceneIndexesData_custom">
-    <indexing index="NONE" />
-</local-cache>
-
+include::config_examples/indexing_lucene_storage.xml[]
 ----
-
 
 ===== near-real-time index manager
 
@@ -578,25 +466,16 @@ type is the same as the link:#query_directory_based[directory-based] index manag
 
 Example with ram:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<replicated-cache name="default">
-    <indexing index="ALL">
-        <property name="default.indexmanager">near-real-time</property>
-        <property name="default.directory_provider">local-heap</property>
-    </indexing>
-</replicated-cache>
+include::config_examples/indexing_near_real_time.xml[]
 ----
 
 Example with filesystem:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<replicated-cache name="default">
-    <indexing index="ALL">
-        <property name="default.indexmanager">near-real-time</property>
-    </indexing>
-</replicated-cache>
+include::config_examples/indexing_near_real_time_fs.xml[]
 ----
 
 ==== External indexes
@@ -611,14 +490,9 @@ for example `indexNullAs` for `@IndexedEmbedded` annotations is link:https://hib
 
 Configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<indexing index="LOCAL">
-    <property name="default.indexmanager">elasticsearch</property>
-    <property name="default.elasticsearch.host">link:http://elasticHost:9200</property>
-    <!-- other elasticsearch configurations -->
-</indexing>
-
+include::config_examples/indexing_elasticsearch.xml[]
 ----
 
 The index mode should be set to `LOCAL`, since {brandname} considers Elasticsearch as a single shared index.
@@ -631,13 +505,9 @@ The attribute auto-config provides a simple way of configuring indexing based on
 with any other processes. Also, it is configured so that minimum delay exists between the moment an object is indexed and the moment it is available for searches (near real time).
 
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-      <local-cache name="default">
-         <indexing index="LOCAL" auto-config="true">
-         </indexing>
-      </local-cache>
-
+include::config_examples/indexing_auto_config.xml[]
 ----
 
 NOTE: it is possible to redefine any property added via auto-config, and also add new properties, allowing for advanced tuning.
@@ -742,17 +612,9 @@ public class CustomTransformer implements Transformer {
 
 You can use the _key-transformers_ xml element in both embedded and server config:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-   <replicated-cache name="test">
-       <indexing index="ALL" auto-config="true">
-           <key-transformers>
-               <key-transformer key="com.mycompany.CustomKey" transformer="com.mycompany.CustomTransformer"/>
-           </key-transformers>
-       </indexing>
-   </replicated-cache>
-
+include::config_examples/indexing_key_transformer.xml[]
 ----
 
 or alternatively, you can achieve the same effect by using the Java configuration API (embedded mode):
@@ -1952,13 +1814,9 @@ public final class MyAnalyzerProvider implements ProgrammaticSearchMappingProvid
 . Specify the `JAR` in the cache container configuration, for
 example:
 +
-[source,xml,options="nowrap"]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<cache-container name="mycache" default-cache="default">
-   <modules>
-     <module name="deployment.analyzers.jar"/>
-   </modules>
-...
+include::config_examples/custom_deployment_analyzers_jar.xml[]
 ----
 
 == Statistics
@@ -2008,20 +1866,9 @@ The async mode offers much better writing performance, since in this mode commit
 
 Configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="default">
-    <indexing index="LOCAL">
-        <property name="default.indexmanager">
-              org.infinispan.query.indexmanager.InfinispanIndexManager
-        </property>
-        <!-- Index data in async mode -->
-        <property name="default.worker.execution">async</property>
-        <!-- Optional: configure the commit interval, default is 1000ms -->
-        <property name="default.index_flush_interval">500</property>
-    </indexing>
-</distributed-cache>
-
+include::config_examples/indexing_async.xml[]
 ----
 
 === Index reader async strategy
@@ -2032,20 +1879,9 @@ freshness of the index readers before every query and refresh them if necessary.
 
 It is possible to tune this strategy to relax this freshness checking to a pre-configured interval by using the `reader.strategy` configuration set as `async`:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="default"
-                   key-partitioner="org.infinispan.distribution.ch.impl.AffinityPartitioner">
-    <indexing index="PRIMARY_OWNER">
-        <property name="default.indexmanager">
-              org.infinispan.query.affinity.AffinityIndexManager
-        </property>
-        <property name="default.reader.strategy">async</property>
-        <!-- refresh reader every 1s, default is 5s -->
-        <property name="default.reader.async_refresh_period_ms">1000</property>
-    </indexing>
-</distributed-cache>
-
+include::config_examples/indexing_async_reader_strategy.xml[]
 ----
 
 The async reader strategy is particularly useful for Index Managers that rely on shards, such as the AffinityIndexManager.

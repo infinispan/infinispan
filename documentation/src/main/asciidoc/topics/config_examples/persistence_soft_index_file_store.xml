@@ -1,0 +1,6 @@
+<persistence>
+    <soft-index-file-store xmlns="urn:infinispan:config:store:soft-index:8.0">
+        <index path="/tmp/sifs/testCache/index" />
+        <data path="/tmp/sifs/testCache/data" />
+    </soft-index-file-store>
+</persistence>
