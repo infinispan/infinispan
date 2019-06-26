@@ -1,0 +1,3 @@
+GlobalConfigurationBuilder builder = ...
+builder.serialization()
+   .addAdvancedExternalizer(new Person.PersonExternalizer());

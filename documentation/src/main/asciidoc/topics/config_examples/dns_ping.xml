@@ -1,0 +1,3 @@
+<protocol type="dns.DNS_PING">
+    <property name="dns_query">${jgroups.dns_ping.dns_query}</property>
+</protocol>

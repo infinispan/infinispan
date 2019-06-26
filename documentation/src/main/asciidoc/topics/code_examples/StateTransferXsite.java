@@ -1,0 +1,9 @@
+lon.sites().addBackup()
+      .site("NYC")
+      .backupFailurePolicy(BackupFailurePolicy.FAIL)
+      .strategy(BackupConfiguration.BackupStrategy.SYNC)
+      .stateTransfer()
+         .chunkSize(512)
+         .timeout(1200000)
+         .maxRetries(30)
+         .waitingTimeBetweenRetries(2000);

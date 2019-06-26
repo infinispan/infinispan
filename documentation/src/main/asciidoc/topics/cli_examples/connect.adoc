@@ -1,0 +1,2 @@
+[disconnected//]> connect jmx://localhost:12000
+[jmx://localhost:12000/MyCacheManager/>

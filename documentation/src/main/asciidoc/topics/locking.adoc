@@ -49,8 +49,6 @@ Refer to Transaction Locking for more information.
 Isolation level affects what transactions can read when running concurrently with other transaction.
 Refer to Isolation Levels for more information.
 
-//old_link: link:#tx_isolation_levels[Isolation Levels]
-
 === The LockManager
 The `LockManager` is a component that is responsible for locking an entry for writing.
 The `LockManager` makes use of a `LockContainer` to locate/hold/create locks.
@@ -70,9 +68,9 @@ The size of the shared lock collection used by lock striping can be tuned using 
 
 *Configuration example:*
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<locking striping="false|true"/>
+include::config_examples/locking_striping.xml[]
 ----
 
 Or
@@ -88,9 +86,9 @@ Please refer to the JDK `ConcurrentHashMap` Javadocs for a detailed discussion o
 
 *Configuration example:*
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<locking concurrency-level="32"/>
+include::config_examples/locking_concurrency.xml[]
 ----
 
 Or
@@ -106,9 +104,9 @@ The lock timeout specifies the amount of time, in milliseconds, to wait for a co
 
 *Configuration example:*
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<locking acquire-timeout="10000"/>
+include::config_examples/locking_acquire_timeout.xml[]
 ----
 
 Or

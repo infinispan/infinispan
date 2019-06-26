@@ -1,0 +1,16 @@
+<server xmlns="urn:jboss:domain:2.1">
+   ...
+   <management>
+        ...
+        <security-realm name="ApplicationRealm">
+           <authentication>
+              <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
+           </authentication>
+           <authorization>
+              <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
+           </authorization>
+        </security-realm>
+        ...
+    </management>
+    ...
+</server>

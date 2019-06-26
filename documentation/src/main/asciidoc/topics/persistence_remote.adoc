@@ -21,35 +21,14 @@ endif::productized[]
 
 == Sample Usage
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<persistence>
-   <remote-store xmlns="urn:infinispan:config:store:remote:8.0" cache="mycache" raw-values="true">
-      <remote-server host="one" port="12111" />
-      <remote-server host="two" />
-      <connection-pool max-active="10" exhausted-action="CREATE_NEW" />
-      <write-behind />
-   </remote-store>
-</persistence>
+include::config_examples/persistence_remote_store.xml[]
 ----
 
 [source,java]
 ----
-ConfigurationBuilder b = new ConfigurationBuilder();
-b.persistence().addStore(RemoteStoreConfigurationBuilder.class)
-      .fetchPersistentState(false)
-      .ignoreModifications(false)
-      .purgeOnStartup(false)
-      .remoteCacheName("mycache")
-      .rawValues(true)
-.addServer()
-      .host("one").port(12111)
-      .addServer()
-      .host("two")
-      .connectionPool()
-      .maxActive(10)
-      .exhaustedAction(ExhaustedAction.CREATE_NEW)
-      .async().enable();
+include::code_examples/ConfigRemoteStore.java[]
 ----
 
 In this sample configuration, the remote cache store is configured to use the remote cache named "mycache" on servers "one" and "two". It also configures connection pooling and provides a custom transport executor. Additionally the cache store is asynchronous.

@@ -1,0 +1,4 @@
+<property name="hibernate.cache.infinispan._war_or_ear_name_#_unit_name_.com.acme.Person.eviction.strategy"
+   value= "LIRS"/>
+<property name="hibernate.cache.infinispan._war_or_ear_name_#_unit_name_.com.acme.Person.expiration.lifespan"
+   value= "65000"/>

@@ -32,25 +32,16 @@ endif::productized[]
 
 Here is an example of Soft-Index File Store configuration via XML:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<persistence>
-    <soft-index-file-store xmlns="urn:infinispan:config:store:soft-index:8.0">
-        <index path="/tmp/sifs/testCache/index" />
-        <data path="/tmp/sifs/testCache/data" />
-    </soft-index-file-store>
-</persistence>
+include::config_examples/persistence_soft_index_file_store.xml[]
 ----
 
 Programmatic configuration would look as follows:
 
 [source,java]
 ----
-ConfigurationBuilder b = new ConfigurationBuilder();
-b.persistence()
-    .addStore(SoftIndexFileStoreConfigurationBuilder.class)
-        .indexLocation("/tmp/sifs/testCache/index");
-        .dataLocation("/tmp/sifs/testCache/data")
+include::code_examples/ConfigSoftIndexFileStore.java[]
 ----
 
 == Current limitations
@@ -67,4 +58,4 @@ entries are expired. Therefore, such old file will not be compacted (method
 AdvancedStore.purgeExpired() is not implemented). This can lead to excessive
 file-system space usage.
 
-'''
+//-

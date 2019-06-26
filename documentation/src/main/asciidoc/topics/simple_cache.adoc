@@ -32,11 +32,9 @@ So, what's left?
 
 == Declarative configuration
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-   <local-cache name="mySimpleCache" simple-cache="true">
-        <!-- expiration, eviction, security... -->
-   </local-cache>
+include::config_examples/simple_cache.xml[]
 ----
 
 == Programmatic configuration

@@ -11,7 +11,10 @@ The only thing you need to set up {brandname} is add it's dependencies to your p
 If you are using Maven (or another build system like Gradle or Ivy which can use Maven dependencies), then this is easy. Just add the following to the `<dependencies>` section of your `pom.xml`:
 
 .pom.xml
-include::maven_dependencies/ispn_embedded.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/ispn_embedded.xml[]
+----
 
 ifndef::productized[]
 .Which version of {brandname} should I use?
@@ -31,13 +34,7 @@ In order to run {brandname}, we're going to create a `main()` method in the `Qui
 .Quickstart.java
 
 ----
-public class Quickstart {
-
-   public static void main(String args[]) throws Exception {
-      Cache<Object, Object> c = new DefaultCacheManager().getCache();
-   }
-
-}
+include::code_examples/Quickstart.java[]
 ----
 
 We now need a way to run the main method! To run the Quickstart main class:
@@ -59,15 +56,7 @@ Congratulations, you now have {brandname} running as a local cache!
 [source,java,options=nowrap]
 .DefaultCacheQuickstart.java
 ----
-// Add a entry
-cache.put("key", "value");
-// Validate the entry is now in the cache
-assertEqual(1, cache.size());
-assertTrue(cache.containsKey("key"));
-// Remove the entry from the cache
-Object v = cache.remove("key");
-// Validate the entry is no longer in the cache
-assertEqual("value", v);
+include::code_examples/QuickstartDefaultCache.java[]
 ----
 
 {brandname} offers a thread-safe data-structure:
@@ -75,11 +64,7 @@ assertEqual("value", v);
 [source,java,options=nowrap]
 .DefaultCacheQuickstart.java
 ----
-// Add an entry with the key "key"
-cache.put("key", "value");
-// And replace it if missing
-cache.putIfAbsent("key", "newValue");
-// Validate that the new value was not added
+include::code_examples/QuickstartDefaultCacheThreadSafe.java[]
 ----
 
 By default entries are immortal but you can override this on a per-key basis and provide lifespans.
@@ -87,10 +72,7 @@ By default entries are immortal but you can override this on a per-key basis and
 [source,java,options=nowrap]
 .DefaultCacheQuickstart.java
 ----
-//By default entries are immortal but we can override this on a per-key basis and provide lifespans.
-cache.put("key", "value", 5, SECONDS);
-assertTrue(cache.containsKey("key"));
-Thread.sleep(10000);
+include::code_examples/QuickstartDefaultCacheLifespan.java[]
 ----
 
 to run using maven:
@@ -106,13 +88,7 @@ Each cache in {brandname} can offer a different set of features (for example tra
 [source,java,options=nowrap]
 .CustomCacheQuickstart.java
 ----
-public static void main(String args[]) throws Exception {
-   EmbeddedCacheManager manager = new DefaultCacheManager();
-   manager.defineConfiguration("custom-cache", new ConfigurationBuilder()
-             .eviction().strategy(LIRS).maxEntries(10)
-             .build());
-   Cache<Object, Object> c = manager.getCache("custom-cache");
-}
+include::code_examples/QuickstartCustomCache.java[]
 ----
 
 The example above uses {brandname}'s fluent configuration, which offers the ability to configure your cache programmatically. However, should you prefer to use XML, then you may. We can create an identical cache to the one created with a programmatic configuration:
@@ -124,31 +100,18 @@ To run using maven:
 $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcache.CustomCacheQuickstart"
 ----
 
-[source,xml,subs=attributes+]
 .infinispan.xml
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:{infinispanversion} http://www.infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd"
-        xmlns="urn:infinispan:config:{infinispanversion}">
-
-   <cache-container default-cache="default">
-       <local-cache name="xml-configured-cache">
-          <memory> <object size="100"/> </memory>
-       </local-cache>
-   </cache-container>
-
-</infinispan>
+include::config_examples/infinispan_custom_cache.xml[]
 ----
 
 We then need to load the configuration file, and use the programmatically defined cache:
 
-[source,java,options=nowrap]
 .XmlConfiguredCacheQuickstart.java
+[source,java,options=nowrap]
 ----
-public static void main(String args[]) throws Exception {
-	Cache<Object, Object> c = new DefaultCacheManager("infinispan.xml").getCache("xml-configured-cache");
-}
+include::code_examples/ConfigLoadCustomCache.java[]
 ----
 
 To run using maven:

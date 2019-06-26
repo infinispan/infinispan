@@ -45,18 +45,12 @@ endif::productized[]
 == Configuration
 The following examples show single file cache store configuration:
 
-[source,xml,options=nowrap]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<persistence>
-   <file-store path="/tmp/myDataStore" max-entries="5000"/>
-</persistence>
+include::config_examples/persistence_file_store.xml[]
 ----
 
 [source,java,options=nowrap]
 ----
-ConfigurationBuilder b = new ConfigurationBuilder();
-b.persistence()
-    .addSingleFileStore()
-    .location("/tmp/myDataStore")
-    .maxEntries(5000);
+include::code_examples/ConfigSingleFileStore.java[]
 ----

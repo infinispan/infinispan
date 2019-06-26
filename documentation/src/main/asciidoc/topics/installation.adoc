@@ -35,7 +35,10 @@ endif::productized[]
 === Getting {brandname} from Maven
 Add to your pom:
 
-include::maven_dependencies/ispn_embedded.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/ispn_embedded.xml[]
+----
 
 === Installing {brandname} inside Apache Karaf
 The {brandname} jars contain the required OSGi manifest headers and can be used

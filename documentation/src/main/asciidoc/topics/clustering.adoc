@@ -7,26 +7,21 @@ discover neighboring instances on the same local network and form a cluster.
 Creating a local-only cache manager is trivial: just use the no-argument
 `DefaultCacheManager` constructor, or supply the following XML configuration file.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan/>
+include::config_examples/infinispan.xml[]
 ----
 
 To start a clustered cache manager, you need to create a clustered configuration.
 
 [source,java]
 ----
-GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
-DefaultCacheManager manager = new DefaultCacheManager(gcb.build());
+include::code_examples/ClusteredConfiguration.java[]
 ----
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-  <cache-container>
-    <transport/>
-  </cache-container>
-</infinispan>
+include::config_examples/infinispan_cache_container.xml[]
 ----
 
 Individual caches can then be configured in different modes:
@@ -359,15 +354,16 @@ user defined caches and internal caches.
 When defining a zero capacity node, the node won't hold any data.
 This is how you declare a zero capacity node:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-   <cache-container zero-capacity-node="true" />
+include::config_examples/zero_capacity_node.xml[]
 ----
 
 [source, java]
 ----
-new GlobalConfigurationBuilder().zeroCapacityNode(true);
+include::code_examples/ZeroCapacityNode.java[]
 ----
+
 However, note that this will be true for distributed caches only. If you are using replicated
 caches, the node will still keep a copy of the value. Use only distributed caches to make the
 best use of this feature.
@@ -375,22 +371,15 @@ best use of this feature.
 ==== Hashing Configuration
 This is how you configure hashing declaratively, via XML:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-   <distributed-cache name="distributedCache" owners="2" segments="100" capacity-factor="2" />
+include::config_examples/hashing_configuration.xml[]
 ----
 
 And this is how you can configure it programmatically, in Java:
 [source,java]
 ----
-Configuration c = new ConfigurationBuilder()
-   .clustering()
-      .cacheMode(CacheMode.DIST_SYNC)
-      .hash()
-         .numOwners(2)
-         .numSegments(100)
-         .capacityFactor(2)
-   .build();
+include::code_examples/HashingConfiguration.java[]
 ----
 
 === Initial cluster size
@@ -402,19 +391,15 @@ you can specify how many nodes should have joined the cluster before proceeding 
 initialization. To do this, use the `initialClusterSize` and `initialClusterTimeout` transport
 properties. The declarative XML configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-   <transport initial-cluster-size="4" initial-cluster-timeout="30000" />
+include::config_examples/initial_cluster_size.xml[]
 ----
 
 The programmatic Java configuration:
 [source,java]
 ----
-GlobalConfiguration global = new GlobalConfigurationBuilder()
-   .transport()
-       .initialClusterSize(4)
-       .initialClusterTimeout(30000)
-   .build();
+include::code_examples/InitialClusterSize.java[]
 ----
 
 The above configuration will wait for _4_ nodes to join the cluster before initialization. If
@@ -464,15 +449,10 @@ segment across as many sites, racks, and machines (in this order) as possible.
 ==== Configuration
 The hints are configured at transport level:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<transport
-    cluster="MyCluster"
-    machine="LinuxServer01"
-    rack="Rack01"
-    site="US-WestCoast" />
+include::config_examples/transport_level_server_hint.xml[]
 ----
-
 
 [[key_affinity_service]]
 ===  Key affinity service
@@ -488,22 +468,7 @@ Following code snippet depicts how a reference to this service can be obtained a
 
 [source,java]
 ----
-// 1. Obtain a reference to a cache
-Cache cache = ...
-Address address = cache.getCacheManager().getAddress();
-
-// 2. Create the affinity service
-KeyAffinityService keyAffinityService = KeyAffinityServiceFactory.newLocalKeyAffinityService(
-      cache,
-      new RndKeyGenerator(),
-      Executors.newSingleThreadExecutor(),
-      100);
-
-// 3. Obtain a key for which the local node is the primary owner
-Object localKey = keyAffinityService.getKeyForAddress(address);
-
-// 4. Insert the key in the cache
-cache.put(localKey, "yourValue");
+include::code_examples/KeyAffinityService.java[]
 ----
 
 The service is started at step 2: after this point it uses the supplied _Executor_ to
@@ -515,10 +480,7 @@ At step 3, we obtain a key from the service, and at step 4 we use it.
 
 [source,java]
 ----
-public interface Lifecycle {
-   void start();
-   void stop();
-}
+include::code_examples/Lifecycle.java[]
 ----
 
 The service is instantiated through `KeyAffinityServiceFactory`. All the factory methods
@@ -570,18 +532,14 @@ First, you must enable groups. If you are configuring {brandname} programmatical
 
 [source,java]
 ----
-Configuration c = new ConfigurationBuilder()
-   .clustering().hash().groups().enabled()
-   .build();
+include::code_examples/EnableGroups.java[]
 ----
 
 Or, if you are using XML:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache>
-   <groups enabled="true"/>
-</distributed-cache>
+include::config_examples/enable_groups.xml[]
 ----
 
 If you have control of the key class (you can alter the class definition, it's not part of
@@ -591,24 +549,7 @@ Let's take a look at an example:
 
 [source,java]
 ----
-class User {
-   ...
-   String office;
-   ...
-
-   public int hashCode() {
-      // Defines the hash for the key, normally used to determine location
-      ...
-   }
-
-   // Override the location by specifying a group
-   // All keys in the same group end up with the same owners
-   @Group
-   public String getOffice() {
-      return office;
-   }
-   }
-}
+include::code_examples/IntrinsicGroup.java[]
 ----
 
 NOTE: The group method must return a `String`
@@ -619,11 +560,7 @@ An extrinsic group is specified by implementing the `Grouper` interface.
 
 [source,java]
 ----
-public interface Grouper<T> {
-    String computeGroup(T key, String group);
-
-    Class<T> getKeyType();
-}
+include::code_examples/ExtrinsicGroup.java[]
 ----
 
 If multiple `Grouper` classes are configured for the same key type, all of them will be
@@ -635,27 +572,7 @@ Let's take a look at an example `Grouper` implementation:
 
 [source,java]
 ----
-public class KXGrouper implements Grouper<String> {
-
-   // The pattern requires a String key, of length 2, where the first character is
-   // "k" and the second character is a digit. We take that digit, and perform
-   // modular arithmetic on it to assign it to group "0" or group "1".
-   private static Pattern kPattern = Pattern.compile("(^k)(<a>\\d</a>)$");
-
-   public String computeGroup(String key, String group) {
-      Matcher matcher = kPattern.matcher(key);
-      if (matcher.matches()) {
-         String g = Integer.parseInt(matcher.group(2)) % 2 + "";
-         return g;
-      } else {
-         return null;
-      }
-   }
-
-   public Class<String> getKeyType() {
-      return String.class;
-   }
-}
+include::code_examples/GrouperImplementation.java[]
 ----
 
 `Grouper` implementations must be registered explicitly in the cache configuration.
@@ -663,20 +580,14 @@ If you are configuring {brandname} programmatically:
 
 [source,java]
 ----
-Configuration c = new ConfigurationBuilder()
-   .clustering().hash().groups().enabled().addGrouper(new KXGrouper())
-   .build();
+include::code_examples/GrouperRegistration.java[]
 ----
 
 Or, if you are using XML:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache>
-   <groups enabled="true">
-      <grouper class="com.acme.KXGrouper" />
-   </groups>
-</distributed-cache>
+include::config_examples/grouper_registration.xml[]
 ----
 
 ==== Advanced Interface
@@ -720,17 +631,15 @@ but these are expected to be added soon.
 
 The cache is configured in a similar way as the other cache modes, here is an example of declarative configuration:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-   <scattered-cache name="scatteredCache" />
+include::config_examples/scattered_cache.xml[]
 ----
 
 And this is how you can configure it programmatically:
 [source,java]
 ----
-Configuration c = new ConfigurationBuilder()
-   .clustering().cacheMode(CacheMode.SCATTERED_SYNC)
-   .build();
+include::code_examples/ScatteredCache.java[]
 ----
 
 Scattered mode is not exposed in the server configuration as the server is usually accessed through the Hot Rod
@@ -792,22 +701,7 @@ That means this example of "double-checked locking" won't work:
 
 [source,java]
 ----
-Cache cache = ...
-TransactionManager tm = ...
-
-tm.begin();
-try {
-   Integer v1 = cache.get(k);
-   // Increment the value
-   Integer v2 = cache.put(k, v1 + 1);
-   if (Objects.equals(v1, v2) {
-      // success
-   } else {
-      // retry
-   }
-} finally {
-  tm.commit();
-}
+include::code_examples/TransactionDoubleCheckedLocking.java[]
 ----
 
 The correct way to implement this is to use
@@ -1070,26 +964,7 @@ key and how to check for conflicts across a given cache.
 
 [source,java]
 ----
-EmbeddedCacheManager manager = new DefaultCacheManager("example-config.xml");
-Cache<Integer, String> cache = manager.getCache("testCache");
-ConflictManager<Integer, String> crm = ConflictManagerFactory.get(cache.getAdvancedCache());
-
-// Get All Versions of Key
-Map<Address, InternalCacheValue<String>> versions = crm.getAllVersions(1);
-
-// Process conflicts stream and perform some operation on the cache
-Stream<Map<Address, InternalCacheEntry<Integer, String>>> stream = crm.getConflicts();
-stream.forEach(map -> {
-   CacheEntry<Object, Object> entry = map.values().iterator().next();
-   Object conflictKey = entry.getKey();
-   cache.remove(conflictKey);
-});
-
-// Detect and then resolve conflicts using the configured EntryMergePolicy
-crm.resolveConflicts();
-
-// Detect and then resolve conflicts using the passed EntryMergePolicy instance
-crm.resolveConflicts((preferredEntry, otherEntries) -> preferredEntry);
+include::code_examples/EmbeddedConflictManager.java[]
 ----
 
 NOTE: Although the `ConflictManager::getConflicts` stream is processed per entry, the underlying spliterator is in
@@ -1100,54 +975,39 @@ fact lazily-loading cache entries on a per segment basis.
 Unless the cache is distributed or replicated, partition handling configuration is ignored. The default partition
 handling strategy is ALLOW_READ_WRITES and the default EntryMergePolicy is MergePolicies::PREFERRED_ALWAYS.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="the-default-cache">
-   <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_NON_NULL"/>
-</distributed-cache>
+include::config_examples/partition_handling.xml[]
 ----
 
 The same can be achieved programmatically:
 [source,java]
 ----
-ConfigurationBuilder dcc = new ConfigurationBuilder();
-dcc.clustering().partitionHandling()
-                    .whenSplit(PartitionHandling.ALLOW_READ_WRITES)
-                    .mergePolicy(MergePolicies.PREFERRED_ALWAYS);
+include::code_examples/PartitionHandling.java[]
 ----
 
 [[partition_handling_custom_merge_policy]]
 ==== Implement a custom merge policy
 It's also possible to provide custom implementations of the EntryMergePolicy
-[source,xml]
+
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="the-default-cache">
-   <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="org.example.CustomMergePolicy"/>
-</distributed-cache>
+include::config_examples/custom_merge_policy.xml[]
 ----
 
 [source,java]
 ----
-ConfigurationBuilder dcc = new ConfigurationBuilder();
-dcc.clustering().partitionHandling()
-                    .whenSplit(PartitionHandling.ALLOW_READ_WRITES)
-                    .mergePolicy(new CustomMergePolicy());
+include::code_examples/CustomMergePolicy.java[]
 ----
+
 [source,java]
 ----
-public class CustomMergePolicy implements EntryMergePolicy<String, String> {
-
-   @Override
-   public CacheEntry<String, String> merge(CacheEntry<String, String> preferredEntry, List<CacheEntry<String, String>> otherEntries) {
-      // decide which entry should be used
-
-      return the_solved_CacheEntry;
-   }
+include::code_examples/CustomMergePolicyEntryMerge.java[]
 ----
 
 ==== Deploy custom merge policies to a Infinispan server instance
 To utilise a custom EntryMergePolicy implementation on the server, it's necessary for the implementation class(es) to be deployed to the server. This is accomplished by utilising the java service-provider convention and packaging the class files in a jar which has a META-INF/services/org.infinispan.conflict.EntryMergePolicy file containing the fully qualified class name of the EntryMergePolicy implementation.
-[source]
+
 ----
 # list all necessary implementations of EntryMergePolicy with the full qualified name
 org.example.CustomMergePolicy
@@ -1172,13 +1032,5 @@ interface:
 
 [source,java]
 ----
-AdvancedCache ac = cache.getAdvancedCache();
-
-// Read the availability
-boolean available = ac.getAvailability() == AvailabilityMode.AVAILABLE;
-
-// Change the availability
-if (!available) {
-   ac.setAvailability(AvailabilityMode.AVAILABLE);
-}
+include::code_examples/AdvancedCacheAvailibilityMode.java[]
 ----

@@ -26,15 +26,16 @@ To add caching support to your application, do the following:
 +
 * *Declaratively:* Add `<cache:annotation-driven/>` to your application context.
 +
-include::config_examples/spring_annotation_driven.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/spring_annotation_driven.xml[]
+----
 +
 * *Programmatically:* Enable cache support as follows:
 +
 [source,java,options=nowrap]
 ----
-@EnableCaching @Configuration
-public class Config {
-}
+include::code_examples/SpringEnableCaching.java[]
 ----
 +
 . Add {brandname} and the Spring integration module to your `pom.xml`.
@@ -44,7 +45,10 @@ public class Config {
 +
 The following is an example with embedded mode:
 +
-include::maven_dependencies/spring_integration.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/spring_integration.xml[]
+----
 
 [[spring_configure_cache_provider]]
 === Configuring {brandname} as the Spring Cache Provider
@@ -56,31 +60,15 @@ You can configure your application context either declaratively or programmatica
 
 * *Declaratively:*
 +
-[source,xml,options=nowrap]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<!-- Infinispan cache manager -->
-<bean id="cacheManager"
-          class="org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBean"
-          p:configurationFileLocation="classpath:/org/infinispan/spring/embedded/provider/sample/books-infinispan-config.xml" />
+include::config_examples/spring_cache_manager_bean.xml[]
 ----
 * *Programmatically:*
 +
-[source,xml,options=nowrap]
+[source,java,options=nowrap]
 ----
-@EnableCaching
-@Configuration
-public class Config {
-
-   @Bean
-   public CacheManager cacheManager() {
-      return new SpringEmbeddedCacheManager(infinispanCacheManager());
-   }
-
-   private EmbeddedCacheManager infinispanCacheManager() {
-      return new DefaultCacheManager();
-   }
-
-}
+include::code_examples/SpringCacheManager.java[]
 ----
 
 [[spring_add_caching]]
@@ -97,9 +85,7 @@ Annotate the `findBook(Integer bookId)` method with `@Cacheable` as follows:
 
 [source,java,options=nowrap]
 ----
-@Transactional
-@Cacheable(value = "books", key = "#bookId")
-public Book findBook(Integer bookId) {...}
+include::code_examples/SpringCachableExample.java[]
 ----
 
 Any `Book` instances returned from `findBook(Integer bookId)` are stored in a cache named `books`, using `bookId` as the key.
@@ -119,15 +105,7 @@ Annotate the `deleteBook(Integer bookId)` method with `@CacheEvict` as follows:
 
 [source,java,options=nowrap]
 ----
-// Evict all entries in the "books" cache
-@Transactional
-@CacheEvict (value="books", key = "#bookId", allEntries = true)
-public void deleteBookAllEntries() {...}
-
-// Evict entries in the "books" cache that match #bookId
-@Transactional
-@CacheEvict (value="books", key = "#bookId")
-public void deleteBook(Integer bookId) {...]}
+include::code_examples/ SpringCacheEvictExample.java[]
 ----
 
 [[spring_configure_timeouts]]
@@ -149,17 +127,9 @@ In remote client-server mode, you can also add these properties to `hotrod-clien
 
 The following example shows the timeout properties in the context XML for `SpringRemoteCacheManagerFactoryBean`:
 
-[source,xml,options=nowrap]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<bean id="springRemoteCacheManagerConfiguredUsingConfigurationProperties"
-      class="org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean">
-    <property name="configurationProperties">
-        <props>
-           <prop key="infinispan.spring.operation.read.timeout">500</prop>
-           <prop key="infinispan.spring.operation.write.timeout">700</prop>
-        </props>
-    </property>
-</bean>
+include::config_examples/spring_remote_cache_manager_factory_bean.xml[]
 ----
 
 [[spring_externalize_sessions]]
@@ -176,7 +146,10 @@ To configure Spring Session integration in your application, do the following:
 +
 The following is an example with remote client-server mode:
 +
-include::maven_dependencies/spring5_session_dependencies.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/spring5_session_dependencies.xml[]
+----
 +
 . Specify the appropriate FactoryBean to expose a `CacheManager` instance.
 +
@@ -197,21 +170,5 @@ The following example shows a complete, annotation-based configuration:
 
 [source,java,options=nowrap]
 ----
-@EnableInfinispanEmbeddedHttpSession
-@Configuration
-public class Config {
-
-   @Bean
-   public SpringEmbeddedCacheManagerFactoryBean springCacheManager() {
-      return new SpringEmbeddedCacheManagerFactoryBean();
-   }
-
-   //An optional configuration bean responsible for replacing the default
-   //cookie that obtains configuration.
-   //For more information refer to the Spring Session documentation.
-   @Bean
-   public HttpSessionStrategy httpSessionStrategy() {
-      return new HeaderHttpSessionStrategy();
-   }
-}
+include::code_examples/SpringExternalizeSessions.java[]
 ----

@@ -1,0 +1,2 @@
+[jmx://localhost:12000/MyCacheManager/namedCache]> upgrade --synchronize=hotrod --all
+[jmx://localhost:12000/MyCacheManager/namedCache]> upgrade --disconnectsource=hotrod --all

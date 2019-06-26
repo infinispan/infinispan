@@ -1,0 +1,4 @@
+[jmx://localhost:12000/MyCacheManager/> cache
+___defaultcache  namedCache
+[jmx://localhost:12000/MyCacheManager/]> cache ___defaultcache
+[jmx://localhost:12000/MyCacheManager/___defaultcache]>

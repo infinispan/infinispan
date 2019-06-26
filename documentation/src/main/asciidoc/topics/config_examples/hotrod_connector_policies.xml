@@ -1,0 +1,11 @@
+<hotrod-connector socket-binding="hotrod" cache-container="default">
+   <authentication security-realm="ApplicationRealm">
+      <sasl server-name="myhotrodserver" mechanisms="PLAIN DIGEST-MD5 GSSAPI EXTERNAL" qop="auth">
+         <policy>
+            <no-active value="true" />
+            <no-anonymous value="true" />
+            <no-plain-text value="true" />
+         </policy<>
+      </sasl>
+   </authentication>
+</hotrod-connector>

@@ -1,0 +1,13 @@
+<local-cache name="myCustomStore">
+   <persistence passivation="false">
+      <store
+         class="org.acme.CustomStore"
+         fetch-state="false" preload="true" shared="false"
+         purge="true" read-only="false">
+
+         <write-behind modification-queue-size="123" thread-pool-size="23" />
+
+         <property name="myProp">${system.property}</property>
+      </store>
+   </persistence>
+</local-cache>

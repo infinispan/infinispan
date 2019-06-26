@@ -1,0 +1,33 @@
+<dependencies>
+  <dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-core</artifactId>
+    <!-- Replace ${version.infinispan} with the
+    version of {brandname} that you're using. -->
+    <version>${version.infinispan}</version>
+    <scope>provided</scope>
+  </dependency>
+  <dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-cachestore-jdbc</artifactId>
+    <!-- Replace ${version.infinispan} with the
+    version of {brandname} that you're using. -->
+    <version>${version.infinispan}</version>
+    <scope>provided</scope>
+  </dependency>
+</dependencies>
+<build>
+  <plugins>
+     <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-war-plugin</artifactId>
+       <configuration>
+         <archive>
+           <manifestEntries>
+             <Dependencies>org.infinispan.core:{infinispanslot} services, org.infinispan.cachestore.jdbc:{infinispanslot} services</Dependencies>
+           </manifestEntries>
+         </archive>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>

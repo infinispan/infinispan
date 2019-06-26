@@ -1,0 +1,5 @@
+<hotrod-connector socket-binding="hotrod" cache-container="default">
+   <authentication security-realm="ApplicationRealm">
+      <sasl server-name="myhotrodserver" mechanisms="DIGEST-MD5" qop="auth" />
+   </authentication>
+</hotrod-connector>

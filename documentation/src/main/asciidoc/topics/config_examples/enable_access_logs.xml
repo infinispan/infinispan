@@ -1,0 +1,6 @@
+<logger category="org.infinispan.HOTROD_ACCESS_LOG" use-parent-handlers="false">
+    <level name="TRACE"/>
+    <handlers>
+       <handler name="HR-ACCESS-FILE"/>
+    </handlers>
+</logger>

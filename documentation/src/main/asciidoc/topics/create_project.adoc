@@ -6,8 +6,7 @@ NOTE: You don't need to have any experience with or knowledge of Maven's Archety
 
 === Starting a new project
 
-Use the newproject-archetype project.  The simple command below will get you started, and
-
+Use the newproject-archetype project.  The simple command below will get you started:
 
 ----
 $ mvn archetype:generate \
@@ -15,7 +14,6 @@ $ mvn archetype:generate \
     -DarchetypeArtifactId=newproject-archetype \
     -DarchetypeVersion=1.0.23 \
     -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
-
 ----
 
 You will be prompted for a few things, including the _artifactId_ , _groupId_ and _version_ of your new project.  And that's it - you're ready to go!
@@ -72,8 +70,6 @@ The profiles available in the generated sample project are:
 
 ==== Contributing tests back to {brandname}
 If you have written a functional, unit or stress test for {brandname} and want to contribute this back to {brandname}, your best bet is to link:https://github.com/infinispan/infinispan[fork the {brandname} sources on GitHub] .  The test you would have prototyped and tested in an isolated project created using this archetype can be simply dropped in to {brandname}'s test suite.  Make your changes, add your test, prove that it fails even on {brandname}'s upstream source tree and issue a link:http://help.github.com/pull-requests/[pull request] .
-
-TIP: New to working with {brandname} and GitHub?  Want to know how best to work with the repositories and contribute code?  Read link:../contributing/contributing.html#source_control[{brandname} and GitHub]
 
 === Versions
 The archetypes generate poms with dependencies to specific versions of {brandname}.  You should edit these generated poms by hand to point to other versions of {brandname} that you are interested in.

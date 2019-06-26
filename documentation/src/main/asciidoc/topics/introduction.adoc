@@ -5,9 +5,6 @@ Welcome to the official {brandname} documentation.
 This comprehensive document will guide you through every last detail of {brandname}.
 Because of this, it can be a poor starting point if you are new to {brandname}.
 
-TIP: For newbies, starting with the link:../getting_started/getting_started.html[Getting Started Guide]
-or one of the link:http://www.infinispan.org/documentation[Quickstarts] is probably a better bet.
-
 == What is {brandname} ?
 
 {brandname} is a distributed in-memory key/value data store with optional schema, available under the Apache License 2.0.

@@ -4,7 +4,10 @@
 In order to turn on Cloud support for {brandname} library mode, one needs to add a new dependency to the classpath:
 
 .Cloud support in library mode
-include::maven_dependencies/ispn_cloud.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/ispn_cloud.xml[]
+----
 
 The above dependency adds `infinispan-core` to the classpath as well as some default configurations.
 
@@ -20,17 +23,9 @@ The TCPPing approach contains a static list of the IP address of each member of 
 While this works it doesn't really help when cluster nodes are dynamically added to the cluster.
 
 .Sample TCPPing configuration
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<config>
-      <TCP bind_port="7800" />
-      <TCPPING timeout="3000"
-           initial_hosts="${jgroups.tcpping.initial_hosts:localhost[7800],localhost[7801]}"
-           port_range="1"
-           num_initial_members="3"/>
-...
-...
-</config>
+include::config_examples/tcpping.xml[]
 ----
 
 See link:http://community.jboss.org/wiki/JGroupsTCPPING[JGroups TCPPING] for more information about TCPPing.
@@ -44,14 +39,9 @@ To do this pass the gossip routers address as a system property to the JVM e.g. 
 and reference this property in the JGroups configuration that {brandname} is using e.g.
 
 .Sample TCPGOSSIP configuration
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<config>
-    <TCP bind_port="7800" />
-    <TCPGOSSIP timeout="3000" initial_hosts="${GossipRouterAddress}" num_initial_members="3" />
-...
-...
-</config>
+include::config_examples/tcpgossip.xml[]
 ----
 
 More on Gossip Router @ link:http://community.jboss.org/docs/DOC-10890[http://www.jboss.org/community/wiki/JGroupsGossipRouter]
@@ -63,17 +53,10 @@ When running on Amazon Web Service (AWS) platform and similar cloud based enviro
 You can configure your JGroups instances to use a shared storage to exchange the details of the cluster nodes.
 NATIVE_S3_PING allows Amazon S3 to be used as the shared storage. Be sure that you have signed up for Amazon S3 as well as EC2 to use this method.
 
-.Sample NATIVE_S3_PING configuration
-[source,xml]
+.Sample S3PING configuration
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<config>
-    <TCP bind_port="7800" />
-    <org.jgroups.aws.s3.NATIVE_S3_PING
-            region_name="replace this with your region (e.g. eu-west-1)"
-            bucket_name="replace this with your bucket name"
-            bucket_prefix="replace this with a prefix to use for entries in the bucket (optional)" />
-</config>
-
+include::config_examples/s3ping.xml[]
 ----
 
 === JDBC_PING
@@ -86,14 +69,9 @@ discovery protocol:
 === AZURE_PING
 AZURE_PING uses a shared Azure Blob Storage to store discovery information. Configuration is as follows:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<azure.AZURE_PING
-	storage_account_name="replace this with your account name"
-	storage_access_key="replace this with your access key"
-	container="replace this with your container name"
-/>
-
+include::config_examples/azureping.xml[]
 ----
 
 == Google Compute Engine
@@ -104,14 +82,9 @@ discovery protocol:
 === GOOGLE_PING
 GOOGLE_PING uses Google Cloud Storage (GCS) to store information about the cluster members.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<protocol type="GOOGLE_PING">
-  <property name="location">The name of the bucket</property>
-  <property name="access_key">The access key</property>
-  <property name="secret_access_key">The secret access key</property>
-</protocol>
-
+include::config_examples/googleping.xml[]
 ----
 
 [[cloud_services_k8s]]
@@ -123,16 +96,9 @@ GOOGLE_PING uses Google Cloud Storage (GCS) to store information about the clust
 The JGroups link:http://www.jgroups.org/manual4/index.html#_kube_ping[Kube_PING] protocol uses the following configuration:
 
 .Example KUBE_PING configuration
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<config>
-    <TCP bind_addr="${match-interface:eth.*}" />
-    <kubernetes.KUBE_PING />
-...
-...
-</config>
-
+include::config_examples/kubeping.xml[]
 ----
 
 The most important thing is to bind JGroups to `eth0` interface, which is link:https://docs.docker.com/engine/userguide/networking/dockernetworks/[used by Docker containers for network communication].
@@ -144,9 +110,7 @@ Since KUBE_PING uses Kubernetes API for obtaining available Pods, OpenShift requ
 .Adding additional OpenShift privileges
 [source,bash]
 ----
-
-oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default -n $(oc project -q)
-
+include::oc_examples/oc_policy_add_role_user.adoc[]
 ----
 
 After performing all above steps, the clustering should be enabled and all Pods should automatically form a cluster within a single namespace.
@@ -158,12 +122,7 @@ The JGroups link:http://www.jgroups.org/manual4/index.html#_dns_ping[DNS_PING] p
 .Example DNS_PING configuration
 [source, xml]
 ----
-<stack name="dns-ping">
-...
-    <dns.DNS_PING
-      dns_query="myservice.myproject.svc.cluster.local" />
-...
-</stack>
+include::config_examples/dnsping.xml[]
 ----
 
 DNS_PING runs the specified query against the DNS server to get the list of cluster members.
@@ -180,66 +139,7 @@ An example Deployment Configuration (Kubernetes uses very similar concept called
 .DeploymentConfiguration for Rolling Updates
 [source,yaml]
 ----
-- apiVersion: v1
-  kind: DeploymentConfig
-  metadata:
-    name: infinispan-cluster
-  spec:
-    replicas: 3
-    strategy:
-      type: Rolling
-      rollingParams:
-        updatePeriodSeconds: 10
-        intervalSeconds: 20
-        timeoutSeconds: 600
-        maxUnavailable: 1
-        maxSurge: 1
-    template:
-      spec:
-        containers:
-        - args:
-          - -Djboss.default.jgroups.stack=kubernetes
-          image: jboss/infinispan-server:latest
-          name: infinispan-server
-          ports:
-          - containerPort: 8181
-            protocol: TCP
-          - containerPort: 9990
-            protocol: TCP
-          - containerPort: 11211
-            protocol: TCP
-          - containerPort: 11222
-            protocol: TCP
-          - containerPort: 57600
-            protocol: TCP
-          - containerPort: 7600
-            protocol: TCP
-          - containerPort: 8080
-            protocol: TCP
-          env:
-          - name: KUBERNETES_NAMESPACE
-            valueFrom: {fieldRef: {apiVersion: v1, fieldPath: metadata.namespace}}
-          terminationMessagePath: /dev/termination-log
-          terminationGracePeriodSeconds: 90
-          livenessProbe:
-            exec:
-              command:
-              - /usr/local/bin/is_running.sh
-            initialDelaySeconds: 10
-            timeoutSeconds: 80
-            periodSeconds: 60
-            successThreshold: 1
-            failureThreshold: 5
-          readinessProbe:
-             exec:
-                command:
-                - /usr/local/bin/is_healthy.sh
-             initialDelaySeconds: 10
-             timeoutSeconds: 40
-             periodSeconds: 30
-             successThreshold: 2
-             failureThreshold: 5
-
+include::config_examples/rolling_updates.yaml[]
 ----
 
 It is also highly recommended to adjust the JGroups stack to discover new nodes (or leaves) more quickly. One should at least

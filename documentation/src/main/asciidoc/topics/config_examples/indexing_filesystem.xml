@@ -1,0 +1,6 @@
+<replicated-cache name="myCache">
+   <indexing index="ALL">
+      <!-- Optional: define base folder for indexes -->
+      <property name="default.indexBase">${java.io.tmpdir}/baseDir</property>
+   </indexing>
+</replicated-cache>

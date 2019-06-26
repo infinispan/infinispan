@@ -1,0 +1,2 @@
+[jmx://localhost:12000/MyCacheManager/namedCache]> disconnect
+[disconnected//]

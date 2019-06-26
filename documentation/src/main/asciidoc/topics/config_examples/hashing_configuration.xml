@@ -1,0 +1,1 @@
+<distributed-cache name="distributedCache" owners="2" segments="100" capacity-factor="2" />

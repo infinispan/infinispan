@@ -1,0 +1,5 @@
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
+[jmx://localhost:12000/MyCacheManager/namedCache]> put b 100
+[jmx://localhost:12000/MyCacheManager/namedCache]> put c 4139l
+[jmx://localhost:12000/MyCacheManager/namedCache]> put d true
+[jmx://localhost:12000/MyCacheManager/namedCache]> put e { "package.MyClass": {"i": 5, "x": null, "b": true } }

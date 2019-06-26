@@ -1,0 +1,2 @@
+<property name="hibernate.cache.infinispan.com.acme.Person.eviction.strategy"
+   value= "LIRS"/>

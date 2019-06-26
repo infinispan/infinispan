@@ -298,7 +298,7 @@ WARNING: These annotations must only be used on methods.
 To use these annotations, proper interceptors need to be declared in `beans.xml` file:
 
 .Interceptors for managed environments such as Application Servers
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://xmlns.jcp.org/xml/ns/javaee"
@@ -316,7 +316,7 @@ To use these annotations, proper interceptors need to be declared in `beans.xml`
 ----
 
 .Interceptors for unmanaged environments such as standalone applications
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://xmlns.jcp.org/xml/ns/javaee"

@@ -1,0 +1,3 @@
+<persistence>
+   <file-store path="/tmp/myDataStore" max-entries="5000"/>
+</persistence>

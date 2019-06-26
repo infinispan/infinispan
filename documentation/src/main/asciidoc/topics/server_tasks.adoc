@@ -77,13 +77,9 @@ The server is powered by WildFly Application Server, so if using Maven
 https://docs.jboss.org/wildfly/plugins/maven/latest/index.html[Wildfly's Maven plugin]
 can be used for this:
 
-[source, xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<plugin>
-   <groupId>org.wildfly.plugins</groupId>
-   <artifactId>wildfly-maven-plugin</artifactId>
-   <version>1.2.0.Final</version>
-</plugin>
+include::dependencies_maven/wildfly_maven_plugin.xml[]
 ----
 
 Then call the following from command line:

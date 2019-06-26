@@ -1,0 +1,5 @@
+<persistence passivation="false">
+   <file-store fetch-state="true"
+               read-only="false"
+               purge="false" path="${java.io.tmpdir}"/>
+</persistence>

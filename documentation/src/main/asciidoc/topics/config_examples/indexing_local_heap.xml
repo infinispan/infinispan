@@ -1,0 +1,5 @@
+<replicated-cache name="myCache">
+   <indexing index="ALL">
+      <property name="default.directory_provider">local-heap</property>
+   </indexing>
+</replicated-cache>

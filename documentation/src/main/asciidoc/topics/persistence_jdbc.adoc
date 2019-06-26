@@ -54,7 +54,6 @@ org.infinispan.agroal.jdbcUrl=jdbc:h2:mem:PooledConnectionFactoryTest;DB_CLOSE_D
 org.infinispan.agroal.driverClassName=org.h2.Driver.class
 org.infinispan.agroal.principal=sa
 org.infinispan.agroal.credential=sa
-
 ----
 
 *  link:{javadocroot}/org/infinispan/persistence/jdbc/configuration/ManagedConnectionFactoryConfigurationBuilder.html[ManagedConnectionFactoryConfigurationBuilder]
@@ -73,79 +72,26 @@ connection pooling is performed within the `DataSource`.
 Below is a sample configuration for the link:{javadocroot}/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html[JdbcStringBasedStore].
 For detailed description of all the parameters used refer to the link:{javadocroot}/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html[JdbcStringBasedStore].
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<persistence>
-   <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.2" shared="true" fetch-state="false" read-only="false" purge="false">
-      <connection-pool connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driver="org.h2.Driver"/>
-      <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
-         <id-column name="ID_COLUMN" type="VARCHAR(255)" />
-         <data-column name="DATA_COLUMN" type="BINARY" />
-         <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
-      </string-keyed-table>
-   </string-keyed-jdbc-store>
-</persistence>
-
+include::config_examples/persistence_example_jdbc.xml[]
 ----
 
 [source,java]
 ----
-
-ConfigurationBuilder builder = new ConfigurationBuilder();
-builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-      .fetchPersistentState(false)
-      .ignoreModifications(false)
-      .purgeOnStartup(false)
-      .shared(true)
-      .table()
-         .dropOnExit(true)
-         .createOnStart(true)
-         .tableNamePrefix("ISPN_STRING_TABLE")
-         .idColumnName("ID_COLUMN").idColumnType("VARCHAR(255)")
-         .dataColumnName("DATA_COLUMN").dataColumnType("BINARY")
-         .timestampColumnName("TIMESTAMP_COLUMN").timestampColumnType("BIGINT")
-      .connectionPool()
-         .connectionUrl("jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1")
-         .username("sa")
-         .driverClass("org.h2.Driver");
-
+include::code_examples/PersistenceJdbcStringBasedStore.java[]
 ----
 
 Finally, below is an example of a JDBC cache store with a managed connection factory, which is chosen implicitly by specifying a datasource JNDI location:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.2" shared="true" fetch-state="false" read-only="false" purge="false">
-   <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS" />
-   <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
-      <id-column name="ID_COLUMN" type="VARCHAR(255)" />
-      <data-column name="DATA_COLUMN" type="BINARY" />
-      <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
-   </string-keyed-table>
-</string-keyed-jdbc-store>
-
+include::config_examples/persistence_example_ds_jndi.xml[]
 ----
 
 [source,java]
 ----
-
-ConfigurationBuilder builder = new ConfigurationBuilder();
-builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-      .fetchPersistentState(false)
-      .ignoreModifications(false)
-      .purgeOnStartup(false)
-      .shared(true)
-      .table()
-         .dropOnExit(true)
-         .createOnStart(true)
-         .tableNamePrefix("ISPN_STRING_TABLE")
-         .idColumnName("ID_COLUMN").idColumnType("VARCHAR(255)")
-         .dataColumnName("DATA_COLUMN").dataColumnType("BINARY")
-         .timestampColumnName("TIMESTAMP_COLUMN").timestampColumnType("BIGINT")
-      .dataSource()
-         .jndiUrl("java:/StringStoreWithManagedConnectionTest/DS");
-
+include::code_examples/PersistenceDatasourceJndi.java[]
 ----
 
 .Apache Derby users

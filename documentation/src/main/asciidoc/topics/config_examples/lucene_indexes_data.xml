@@ -1,0 +1,7 @@
+<distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
+    <transaction mode="NONE"/>
+    <indexing index="NONE" />
+    <memory>
+       <object size="-1"/>
+    </memory>
+</distributed-cache>

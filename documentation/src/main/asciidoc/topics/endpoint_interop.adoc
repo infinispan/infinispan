@@ -27,14 +27,9 @@ For example, specify `text/plain; charset=UTF-8`, or any other character set, to
 
 The following example configures the cache to store entries with the `text/plain; charset=UTF-8` media type:
 
-[source,xml,options="nowrap"]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<cache>
-   <encoding>
-      <key media-type="text/plain; charset=UTF-8"/>
-      <value media-type="text/plain; charset=UTF-8"/>
-   </encoding>
-</cache>
+include::config_examples/encoding_text_plain.xml[]
 ----
 
 To handle the exchange of data in a text-based format, you must configure Hot Rod clients with the `org.infinispan.commons.marshall.StringMarshaller` marshaller.
@@ -71,14 +66,9 @@ Java Hot Rod clients use the JBoss marshalling storage format as the default to 
 
 The following example configures the cache to store entries with the `application/x-jboss-marshalling` media type:
 
-[source,xml,options=nowrap]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="my-cache">
-   <encoding>
-      <key media-type="application/x-jboss-marshalling"/>
-      <value media-type="application/x-jboss-marshalling"/>
-   </encoding>
-</distributed-cache>
+include::config_examples/encoding_jboss_marshalling.xml[]
 ----
 
 If you use the Protostream marshaller, configure the MediaType as `application/x-protostream`. For UTF8Marshaller, configure the MediaType as `text/plain`.
@@ -126,14 +116,9 @@ If indexing is configured for the cache, {brandname} automatically stores keys a
 
 If indexing is not configured for the cache, you can configure it to store entries with the `application/x-protostream` media type as follows:
 
-[source,xml,options=nowrap]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="my-cache">
-   <encoding>
-      <key media-type="application/x-protostream"/>
-      <value media-type="application/x-protostream"/>
-   </encoding>
-</distributed-cache>
+include::config_examples/encoding_protostream.xml[]
 ----
 
 {brandname} converts between `application/x-protostream` and `application/json`, which allows REST clients to read and write JSON formatted data. However REST clients must send the correct headers, as follows:
@@ -193,14 +178,9 @@ Storing unmarshalled Java objects in the server is not recommended. Doing so req
 
 The following example configures the cache to store entries with the `application/x-java-object` media type:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache name="my-cache">
-   <encoding>
-      <key media-type="application/x-java-object"/>
-      <value media-type="application/x-java-object"/>
-   </encoding>
-</distributed-cache>
+include::config_examples/encoding_java_object.xml[]
 ----
 
 Hot Rod clients must use a supported marshaller when data is stored as POJOs in the cache, either the JBoss marshaller or the default Java serialization mechanism. You must also deploy the classes must be deployed in the server.
@@ -249,14 +229,9 @@ ifndef::productized[]
 endif::productized[]
 * Specify the `JAR` file as a module in the cache manager configuration, as in the following example:
 
-[source,xml,options=nowrap]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<cache-container name="local" default-cache="default">
-   <modules>
-     <module name="deployment.my-entities.jar"/>
-   </modules>
-   ...
-</cache-container>
+include::config_examples/custom_deployment_jar.xml[]
 ----
 
 ifndef::productized[]

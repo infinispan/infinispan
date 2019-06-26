@@ -1,0 +1,11 @@
+<persistence passivation="false">
+   <!-- note that class is missing and is induced by the fileStore element name -->
+   <file-store
+           shared="false" preload="true"
+           fetch-state="true"
+           read-only="false"
+           purge="false"
+           path="${java.io.tmpdir}">
+      <write-behind thread-pool-size="5" />
+   </file-store>
+</persistence>

@@ -37,12 +37,10 @@ One of the major goals of {brandname} is to aim for zero configuration.
 A simple XML configuration file containing nothing more than a single infinispan element is enough to get you started.
 The configuration file listed below provides sensible defaults and is perfectly valid.
 
-[source,xml]
 .infinispan.xml
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<infinispan />
-
+include::config_examples/infinispan.xml[]
 ----
 
 However, that would only give you the most basic, local mode, non-clustered cache manager with no caches.
@@ -54,39 +52,26 @@ Once the configuration file is read you can obtain reference to the default cach
 
 [source,java]
 ----
-
-EmbeddedCacheManager manager = new DefaultCacheManager("my-config-file.xml");
-Cache defaultCache = manager.getCache();
-
+include::code_examples/DefaultCacheManagerXML.java[]
 ----
 
 or any other named instance specified in `my-config-file.xml`.
 
 [source,java]
 ----
-
-Cache someNamedCache = manager.getCache("someNamedCache");
-
+include::code_examples/GetSomeNamedCache.java[]
 ----
+
 The name of the default cache is defined in the `<cache-container>` element of the XML configuration file, and additional
 caches can be configured using the `<local-cache>`,`<distributed-cache>`,`<invalidation-cache>` or `<replicated-cache>` elements.
 
 The following example shows the simplest possible configuration for each of the cache types supported by {brandname}:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/simple_config_cache_types.xml[]
 ----
 
-<infinispan>
-   <cache-container default-cache="local">
-      <transport cluster="mycluster"/>
-      <local-cache name="local"/>
-      <invalidation-cache name="invalidation" mode="SYNC"/>
-      <replicated-cache name="repl-sync" mode="SYNC"/>
-      <distributed-cache name="dist-sync" mode="SYNC"/>
-   </cache-container>
-</infinispan>
-
-----
 [[cache_configuration_templates]]
 === Cache configuration templates
 
@@ -95,44 +80,16 @@ declarations which can be shared among multiple caches or as the basis for more 
 
 The following example shows how a configuration named `local-template` is used to define a cache named `local`.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-   <cache-container default-cache="local">
-      <!-- template configurations -->
-      <local-cache-configuration name="local-template">
-         <expiration interval="10000" lifespan="10" max-idle="10"/>
-      </local-cache-configuration>
-
-      <!-- cache definitions -->
-      <local-cache name="local" configuration="local-template" />
-   </cache-container>
-</infinispan>
+include::config_examples/local_template_config.xml[]
 ----
 
 Templates can inherit from previously defined templates, augmenting and/or overriding some or all of the configuration elements:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-   <cache-container default-cache="local">
-      <!-- template configurations -->
-      <local-cache-configuration name="base-template">
-         <expiration interval="10000" lifespan="10" max-idle="10"/>
-      </local-cache-configuration>
-
-      <local-cache-configuration name="extended-template" configuration="base-template">
-         <expiration lifespan="20"/>
-         <memory>
-            <object size="2000"/>
-         </memory>
-      </local-cache-configuration>
-
-      <!-- cache definitions -->
-      <local-cache name="local" configuration="base-template" />
-      <local-cache name="local-bounded" configuration="extended-template" />
-   </cache-container>
-</infinispan>
+include::config_examples/config_template_inherit.xml[]
 ----
 
 In the above example, `base-template` defines a local cache with a specific _expiration_ configuration. The `extended-template`
@@ -147,17 +104,9 @@ WARNING: Be aware that for multi-valued elements (such as `properties`) the inhe
 
 An alternative way to apply templates to caches is to use wildcards in the template name, e.g. `basecache*`. Any cache whose name matches the template wildcard will inherit that configuration.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-    <cache-container>
-        <local-cache-configuration name="basecache*">
-            <expiration interval="10500" lifespan="11" max-idle="11"/>
-        </local-cache-configuration>
-        <local-cache name="basecache-1"/>
-        <local-cache name="basecache-2"/>
-    </cache-container>
-</infinispan>
+include::config_examples/config_template_wildcard.xml[]
 ----
 
 Above, caches `basecache-1` and `basecache-2` will use the `basecache*` configuration. The configuration will also
@@ -171,18 +120,13 @@ NOTE: If a cache name matches multiple wildcards, i.e. it is ambiguous, an excep
 The configuration parser supports link:https://www.w3.org/TR/xinclude/[XInclude] which means you can split your XML configuration across multiple files:
 
 .infinispan.xml
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan xmlns:xi="http://www.w3.org/2001/XInclude">
-    <cache-container>
-        <local-cache name="cache-1"/>
-        <xi:include href="included.xml" />
-    </cache-container>
-</infinispan>
+include::config_examples/config_xinclude.xml[]
 ----
 
 .included.xml
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <local-cache name="cache-1"/>
 ----
@@ -202,8 +146,7 @@ Although every single aspect of {brandname} configuration could be set programma
 
 [source,java]
 ----
-EmbeddedCacheManager manager = new DefaultCacheManager("my-config-file.xml");
-Cache defaultCache = manager.getCache();
+include::code_examples/DefaultCacheManagerXML.java[]
 ----
 
 Let's assume that a new synchronously replicated cache is to be configured programmatically.
@@ -212,11 +155,7 @@ Finally, the configuration is defined/registered with a manager.
 
 [source,java]
 ----
-Configuration c = new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
-
-String newCacheName = "repl";
-manager.defineConfiguration(newCacheName, c);
-Cache<String, String> cache = manager.getCache(newCacheName);
+include::code_examples/ConfigRegisterManager.java[]
 ----
 
 The default cache configuration (or any other cache configuration) can be used as a starting point for creation of a new cache.
@@ -225,26 +164,14 @@ Therefore, the starting point would be to read an instance of a default Configur
 
 [source,java]
 ----
-EmbeddedCacheManager manager = new DefaultCacheManager("infinispan-config-file.xml");
-Configuration dcc = manager.getDefaultCacheConfiguration();
-Configuration c = new ConfigurationBuilder().read(dcc).clustering().cacheMode(CacheMode.DIST_SYNC).l1().lifespan(60000L).build();
- 
-String newCacheName = "distributedWithL1";
-manager.defineConfiguration(newCacheName, c);
-Cache<String, String> cache = manager.getCache(newCacheName);
+include::code_examples/ConfigDefaultRegisterManager.java[]
 ----
 
 As long as the base configuration is the default named cache, the previous code works perfectly fine. However, other times the base configuration might be another named cache. So, how can new configurations be defined based on other defined caches? Take the previous example and imagine that instead of taking the default cache as base, a named cache called "replicatedCache" is used as base. The code would look something like this:
 
 [source,java]
 ----
-EmbeddedCacheManager manager = new DefaultCacheManager("infinispan-config-file.xml");
-Configuration rc = manager.getCacheConfiguration("replicatedCache");
-Configuration c = new ConfigurationBuilder().read(rc).clustering().cacheMode(CacheMode.DIST_SYNC).l1().lifespan(60000L).build();
- 
-String newCacheName = "distributedWithL1";
-manager.defineConfiguration(newCacheName, c);
-Cache<String, String> cache = manager.getCache(newCacheName);
+include::code_examples/ConfigReplicatedRegisterManager.java[]
 ----
 
 Refer to link:{javadocroot}/org/infinispan/manager/CacheManager.html[CacheManager] , link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[ConfigurationBuilder] , link:{javadocroot}/org/infinispan/configuration/cache/Configuration.html[Configuration] , and link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration] javadocs for more details.
@@ -262,13 +189,7 @@ One of the most commonly configured global option is the transport layer, where 
 
 [source,java]
 ----
-GlobalConfiguration globalConfig = new GlobalConfigurationBuilder().transport()
-        .defaultTransport()
-        .clusterName("qa-cluster")
-        .addProperty("configurationFile", "jgroups-tcp.xml")
-        .machineId("qa-machine").rackId("qa-rack")
-      .build();
-
+include::code_examples/ConfigureTransport.java[]
 ----
 
 === Using a custom JChannel
@@ -278,12 +199,7 @@ NOTE: The JChannel must not be already connected.
 
 [source,java]
 ----
-GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-JChannel jchannel = new JChannel();
-// Configure the jchannel to your needs.
-JGroupsTransport transport = new JGroupsTransport(jchannel);
-global.transport().transport(transport);
-new DefaultCacheManager(global.build());
+include::code_examples/CustomJChannel.java[]
 ----
 
 === Enabling JMX MBeans and statistics
@@ -292,11 +208,7 @@ at cache manager level or get information about the transport. To enable global 
 
 [source,java]
 ----
-GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .globalJmxStatistics()
-  .enable()
-  .build();
-
+include::code_examples/EnableJmxStats.java[]
 ----
 
 Please note that by not enabling (or by explicitly disabling) global JMX statistics your are just turning off statistics
@@ -307,11 +219,7 @@ Further options at the global JMX statistics level allows you to configure the c
 
 [source,java]
 ----
-GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .globalJmxStatistics()
-    .cacheManagerName("SalesCacheManager")
-    .mBeanServerLookup(new JBossMBeanServerLookup())
-  .build();
+include::code_examples/MBeanServerLookup.java[]
 ----
 
 === Configuring the thread pools
@@ -320,36 +228,21 @@ Some of the {brandname} features are powered by a group of the thread pool execu
 
 [source,java]
 ----
-GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-   .replicationQueueThreadPool()
-     .threadPoolFactory(ScheduledThreadPoolExecutorFactory.create())
-  .build();
+include::code_examples/ConfigThreadPools.java[]
 ----
 
 You can not only configure global, cache manager level, options, but you can also configure cache level options such as the cluster mode:
 
 [source,java]
 ----
-Configuration config = new ConfigurationBuilder()
-  .clustering()
-    .cacheMode(CacheMode.DIST_SYNC)
-    .sync()
-    .l1().lifespan(25000L)
-    .hash().numOwners(3)
-  .build();
+include::code_examples/ConfigClustering.java[]
 ----
 
 Or you can configure eviction and expiration settings:
 
 [source,java]
 ----
-Configuration config = new ConfigurationBuilder()
-           .memory()
-             .size(20000)
-          .expiration()
-             .wakeUpInterval(5000L)
-             .maxIdle(120000L)
-           .build();
+include::code_examples/ConfigExpiration.java[]
 ----
 
 === Configuring transactions and locking
@@ -358,16 +251,7 @@ An application might also want to interact with an {brandname} cache within the 
 
 [source,java]
 ----
-Configuration config = new ConfigurationBuilder()
-  .locking()
-    .concurrencyLevel(10000).isolationLevel(IsolationLevel.REPEATABLE_READ)
-    .lockAcquisitionTimeout(12000L).useLockStriping(false).writeSkewCheck(true)
-    .versioning().enable().scheme(VersioningScheme.SIMPLE)
-  .transaction()
-    .transactionManagerLookup(new GenericTransactionManagerLookup())
-    .recovery()
-  .jmxStatistics()
-  .build();
+include::code_examples/ConfigTransactionsLocking.java[]
 ----
 
 === Configuring cache stores
@@ -376,10 +260,7 @@ Configuring {brandname} with chained cache stores is simple too:
 
 [source,java]
 ----
-Configuration config = new ConfigurationBuilder()
-   .persistence().passivation(false)
-   .addSingleFileStore().location("/tmp").async().enable()
-   .preload(false).shared(false).threadPoolSize(20).build();
+include::code_examples/ConfigCacheStores.java[]
 ----
 
 [[cache_configuration_programmatic_advanced]]
@@ -389,25 +270,14 @@ The fluent configuration can also be used to configure more advanced or exotic o
 
 [source,java]
 ----
-GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .serialization()
-    .addAdvancedExternalizer(998, new PersonExternalizer())
-    .addAdvancedExternalizer(999, new AddressExternalizer())
-  .build();
+include::code_examples/ConfigExternalizers.java[]
 ----
 
 Or, add custom interceptors:
 
 [source,java]
 ----
-Configuration config = new ConfigurationBuilder()
-  .customInterceptors().addInterceptor()
-    .interceptor(new FirstInterceptor()).position(InterceptorConfiguration.Position.FIRST)
-    .interceptor(new LastInterceptor()).position(InterceptorConfiguration.Position.LAST)
-    .interceptor(new FixPositionInterceptor()).index(8)
-    .interceptor(new AfterInterceptor()).after(NonTransactionalLockingInterceptor.class)
-    .interceptor(new BeforeInterceptor()).before(CallInterceptor.class)
-  .build();
+include::code_examples/ConfigCustomInterceptors.java[]
 ----
 
 For information on the individual configuration options, please check the link:{configdocroot}[configuration guide].
@@ -419,23 +289,11 @@ by the server. For this reason, when upgrading to schema 7.x or later, you shoul
 _all_ distribution. Simply invoke it from the command-line passing the old configuration file as the first parameter and the name
 of the converted file as the second parameter.
 
-To convert on Unix/Linux/macOS:
+.Unix/Linux/macOS:
+`bin/config-converter.sh oldconfig.xml newconfig.xml`
 
-[source,shell]
-----
-
-bin/config-converter.sh oldconfig.xml newconfig.xml
-
-----
-
-on Windows:
-
-[source,shell]
-----
-
-bin\config-converter.bat oldconfig.xml newconfig.xml
-
-----
+.Windows:
+`bin\config-converter.bat oldconfig.xml newconfig.xml`
 
 TIP: If you wish to help write conversion tools from other caching systems, please contact link:https://lists.jboss.org/mailman/listinfo/infinispan-dev[infinispan-dev].
 
@@ -449,30 +307,14 @@ If you are configuring your cache programmatically, all you need to do is:
 
 [source,java]
 ----
-GlobalConfiguration gc = new GlobalConfigurationBuilder()
-   .transport().defaultTransport()
-   .addProperty("configurationFile", "jgroups.xml")
-   .build();
-
+include::code_examples/ConfigExternalJgroups.java[]
 ----
 
 and if you happen to use an XML file to configure {brandname}, just use:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-  <jgroups>
-     <stack-file name="external-file" path="jgroups.xml"/>
-  </jgroups>
-  <cache-container default-cache="replicatedCache">
-    <transport stack="external-file" />
-    <replicated-cache name="replicatedCache"/>
-  </cache-container>
-
-  ...
-
-</infinispan>
-
+include::config_examples/config_external_jgroups.xml[]
 ----
 
 In both cases above, {brandname} looks for _jgroups.xml_ first in your classpath, and then for an absolute path name if not found in the classpath.
@@ -490,57 +332,18 @@ The configurations available are:
 
 When using the XML configuration, the `tcp` and `udp` stacks are pre-declared for you, so that you don't need to do it yourself. Just reference them directly in the transport:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-  <cache-container default-cache="replicatedCache">
-    <transport stack="tcp" />
-
-    ...
-
-  </cache-container>
-</infinispan>
-
+include::config_examples/config_transport_stack.xml[]
 ----
 
 == Inline JGroups configurations
 
 The Infinispan XML configuration also allows you to embed JGroups configurations without requiring an external file:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-  <jgroups>
-    <stack name="prod">
-      <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"/>
-      <MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"
-             mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
-             mcast_port="${jgroups.mping.mcast_port:43366}"
-             ip_ttl="${jgroups.udp.ip_ttl:2}"/>
-      <MERGE3 />
-      <FD_SOCK />
-      <FD_ALL timeout="3000" interval="1000" timeout_check_interval="1000" />
-      <VERIFY_SUSPECT timeout="1000" />
-      <pbcast.NAKACK2 use_mcast_xmit="false" xmit_interval="100" xmit_table_num_rows="50"
-                      xmit_table_msgs_per_row="1024" xmit_table_max_compaction_time="30000" />
-      <UNICAST3 xmit_interval="100" xmit_table_num_rows="50" xmit_table_msgs_per_row="1024"
-                xmit_table_max_compaction_time="30000" />
-      <RSVP />
-      <pbcast.STABLE stability_delay="200" desired_avg_gossip="2000" max_bytes="1M" />
-      <pbcast.GMS print_local_addr="false" join_timeout="${jgroups.join_timeout:2000}" />
-      <UFC_NB max_credits="3m" min_threshold="0.40" />
-      <MFC_NB max_credits="3m" min_threshold="0.40" />
-      <FRAG3 />
-    </stack>
-  </jgroups>
-  <cache-container default-cache="replicatedCache">
-    <transport stack="mystack" />
-
-    ...
-
-  </cache-container>
-</infinispan>
-
+include::config_examples/config_inline_jgroups.xml[]
 ----
 
 JGroups stacks can be quite complex: most of the time, you only need to use a different discovery mechanism, add security,
@@ -549,26 +352,9 @@ known "good" JGroups stack.
 The following example creates a new `gossip-prod` based on  the `prod` stack defined above, replacing the `MPING` protocol
 with `TCPGOSSIP`, increasing the `VERIFY_SUSPECT` timeout, removing the `FD_SOCK` protocol and adding `SYM_ENCRYPT`:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-  ...
-
-  <jgroups>
-    <stack name="gossip-prod" extends="prod">
-      <TCPGOSSIP initial_hosts="${jgroups.tunnel.gossip_router_hosts:localhost[12001]}"
-               stack.combine="REPLACE" stack.position="MPING" />
-      <FD_SOCK stack.combine="REMOVE"/>
-      <VERIFY_SUSPECT timeout="2000"/>
-      <SYM_ENCRYPT sym_algorithm="AES"
-                   key_store_name="defaultStore.keystore"
-                   store_password="changeit"
-                   alias="myKey" stack.combine="INSERT_AFTER" stack.position="pbcast.NAKACK2" />
-    </stack>
-  </jgroups>
- 
-  ...
-
+include::config_examples/config_jgroups_example.xml[]
 ----
 
 The `stack.combine` attribute determines the type of the operation:

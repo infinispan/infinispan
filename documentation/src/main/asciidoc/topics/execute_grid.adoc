@@ -43,11 +43,10 @@ want to only run a computation on machines in the same rack. Or you may want to 
 once in the local site and again on a different site. A cluster executor can limit what nodes it sends
 requests to at the scope of same or different machine, rack or site level.
 
-[source,java]
 .SameRack.java
+[source,java]
 ----
-   EmbeddedCacheManager manager = ...;
-   manager.executor().filterTargets(ClusterExecutionPolicy.SAME_RACK).submit(...)
+include::code_examples/SameRack.java[]
 ----
 
 To use this topology base filtering you must enable topology aware consistent hashing through Server Hinting.
@@ -63,11 +62,7 @@ is executed within the cluster.
 [source,java]
 .Predicate.java
 ----
-   EmbeddedCacheManager manager = ...;
-   // Just filter
-   manager.executor().filterTargets(a -> a.equals(..)).submit(...)
-   // Filter only those in the desired topology
-   manager.executor().filterTargets(ClusterExecutionPolicy.SAME_SITE, a -> a.equals(..)).submit(...)
+include::code_examples/Predicate.java[]
 ----
 
 === Timeout
@@ -91,8 +86,7 @@ execute the task on. This can be very useful to use the ClusterExecutor as a
 [source,java]
 .SingleNode.java
 ----
-   EmbeddedCacheManager manager = ...;
-   manager.executor().singleNodeSubmission().submit(...)
+include::code_examples/SingleNode.java[]
 ----
 
 ==== Failover
@@ -125,56 +119,5 @@ work in a cluster of 1 was well, but will be slower.
 
 [source,java]
 ----
-public class PiAppx {
-
-   public static void main (String [] arg){
-      EmbeddedCacheManager cacheManager = ..
-      boolean isCluster = ..
-
-      int numPoints = 1_000_000_000;
-      int numServers = isCluster ? cacheManager.getMembers().size() : 1;
-      int numberPerWorker = numPoints / numServers;
-
-      ClusterExecutor clusterExecutor = cacheManager.executor();
-      long start = System.currentTimeMillis();
-      // We receive results concurrently - need to handle that
-      AtomicLong countCircle = new AtomicLong();
-      CompletableFuture<Void> fut = clusterExecutor.submitConsumer(m -> {
-         int insideCircleCount = 0;
-         for (int i = 0; i < numberPerWorker; i++) {
-            double x = Math.random();
-            double y = Math.random();
-            if (insideCircle(x, y))
-               insideCircleCount++;
-         }
-         return insideCircleCount;
-      }, (address, count, throwable) -> {
-         if (throwable != null) {
-            throwable.printStackTrace();
-            System.out.println("Address: " + address + " encountered an error: " + throwable);
-         } else {
-            countCircle.getAndAdd(count);
-         }
-      });
-      fut.whenComplete((v, t) -> {
-         // This is invoked after all nodes have responded with a value or exception
-         if (t != null) {
-            t.printStackTrace();
-            System.out.println("Exception encountered while waiting:" + t);
-         } else {
-            double appxPi = 4.0 * countCircle.get() / numPoints;
-
-            System.out.println("Distributed PI appx is " + appxPi +
-                  " using " + numServers + " node(s), completed in " + (System.currentTimeMillis() - start) + " ms");
-         }
-      });
-
-      // May have to sleep here to keep alive if no user threads left
-   }
-
-   private static boolean insideCircle(double x, double y) {
-      return (Math.pow(x - 0.5, 2) + Math.pow(y - 0.5, 2))
-            <= Math.pow(0.5, 2);
-   }
-}
+include::code_examples/PiAppx.java[]
 ----

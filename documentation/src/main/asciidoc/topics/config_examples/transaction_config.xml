@@ -1,0 +1,16 @@
+<locking
+   isolation="READ_COMMITTED"
+   write-skew="false"/>
+<transaction
+   locking="OPTIMISTIC"
+   auto-commit="true"
+   complete-timeout="60000"
+   mode="NONE"
+   notifications="true"
+   protocol="DEFAULT"
+   reaper-interval="30000"
+   recovery-cache="__recoveryInfoCacheName__"
+   stop-timeout="30000"
+   transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
+<versioning
+   scheme="NONE"/>

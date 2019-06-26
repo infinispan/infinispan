@@ -1,0 +1,10 @@
+<infinispan>
+   <cache-container default-cache="secured">
+      <security>
+         <authorization audit-logger="org.infinispan.security.impl.LoggingAuditLogger">
+            ...
+         </authorization>
+      </security>
+      ...
+   </cache-container>
+</infinispan>

@@ -49,24 +49,9 @@ TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
 Transactions are configured at cache level.
 Below is the configuration that affects a transaction behaviour and a small description of each configuration attribute.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<locking
-   isolation="READ_COMMITTED"
-   write-skew="false"/>
-<transaction
-   locking="OPTIMISTIC"
-   auto-commit="true"
-   complete-timeout="60000"
-   mode="NONE"
-   notifications="true"
-   protocol="DEFAULT"
-   reaper-interval="30000"
-   recovery-cache="__recoveryInfoCacheName__"
-   stop-timeout="30000"
-   transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
-<versioning
-   scheme="NONE"/>
+include::config_examples/transaction_config.xml[]
 ----
 
 or programmatically:
@@ -245,9 +230,9 @@ When operating in `LOCAL` mode, write skew checks rely on Java object references
 
 In clustered environments, you should configure data versioning to ensure reliable write skew checks. {brandname} provides an implementation of the `EntryVersion` interface called `SIMPLE` versioning, which is backed by a long that is incremented each time the entry is updated.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<versioning scheme="SIMPLE|NONE" />
+include::config_examples/versioning_scheme.xml[]
 ----
 
 Or
@@ -532,9 +517,9 @@ So, the transaction is re-sent involving the new nodes.
 To use total order in your cache, you need to add the `TOA` protocol in your `jgroups.xml` configuration file.
 
 .jgroups.xml
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<tom.TOA />
+include::config_examples/toa_protocol.xml[]
 ----
 
 NOTE: Check the link:http://jgroups.org/manual-3.x/html/index.html[JGroups Manual] for more details.

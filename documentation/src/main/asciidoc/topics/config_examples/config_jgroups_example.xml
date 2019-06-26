@@ -1,0 +1,16 @@
+...
+
+<jgroups>
+  <stack name="gossip-prod" extends="prod">
+    <TCPGOSSIP initial_hosts="${jgroups.tunnel.gossip_router_hosts:localhost[12001]}"
+             stack.combine="REPLACE" stack.position="MPING" />
+    <FD_SOCK stack.combine="REMOVE"/>
+    <VERIFY_SUSPECT timeout="2000"/>
+    <SYM_ENCRYPT sym_algorithm="AES"
+                 key_store_name="defaultStore.keystore"
+                 store_password="changeit"
+                 alias="myKey" stack.combine="INSERT_AFTER" stack.position="pbcast.NAKACK2" />
+  </stack>
+</jgroups>
+ 
+...

@@ -1,0 +1,9 @@
+<persistence passivation="false">
+   <file-store fetch-state="true"
+               read-only="false"
+               purge="false" path="${java.io.tmpdir}">
+   <!-- start write-behind configuration -->
+   <write-behind modification-queue-size="123" thread-pool-size="23" />
+   <!-- end write-behind configuration -->
+   </file-store>
+</persistence>

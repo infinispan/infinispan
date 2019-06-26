@@ -1,0 +1,7 @@
+<replicated-cache name="test">
+    <indexing index="ALL" auto-config="true">
+        <key-transformers>
+            <key-transformer key="com.mycompany.CustomKey" transformer="com.mycompany.CustomTransformer"/>
+        </key-transformers>
+    </indexing>
+</replicated-cache>

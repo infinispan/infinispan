@@ -1,0 +1,1 @@
+AdvancedCache advancedCache = cache.getAdvancedCache();

@@ -1,0 +1,3 @@
+<property
+    name="hibernate.cache.infinispan.cfg"
+    value="my-infinispan-configuration.xml" />

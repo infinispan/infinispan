@@ -1,0 +1,6 @@
+<config>
+    <TCP bind_port="7800" />
+    <TCPGOSSIP timeout="3000" initial_hosts="${GossipRouterAddress}" num_initial_members="3" />
+...
+...
+</config>

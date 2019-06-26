@@ -1,0 +1,1 @@
+new GlobalConfigurationBuilder().zeroCapacityNode(true);

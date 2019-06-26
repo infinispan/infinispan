@@ -23,7 +23,10 @@ You can find an example properties file that contains all applicable configurati
 
 See the following example Maven `pom.xml` for `StoreMigrator`:
 
-include::maven_dependencies/persistence_storemigrator.adoc[]
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/persistence_storemigrator.xml[]
+----
 
 == Store Migrator Properties
 All migrator properties are configured within the context of a source or target store. Each property must start with either `source.` or `target.`.

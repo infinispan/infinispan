@@ -1,0 +1,13 @@
+<distributed-cache>
+   <remote-store cache="MyCache" socket-timeout="60000" tcp-no-delay="true" protocol-version="2.5" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
+      <remote-server outbound-socket-binding="remote-store-hotrod-server"/>
+   </remote-store>
+</distributed-cache>
+...
+<socket-binding-group name="standard-sockets" default-interface="public" port-offset="${jboss.socket.binding.port-offset:0}">
+  ...
+  <outbound-socket-binding name="remote-store-hotrod-server">
+     <remote-destination host="198.51.100.0" port="11222"/>
+  </outbound-socket-binding>
+  ...
+</socket-binding-group>

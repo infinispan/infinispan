@@ -65,13 +65,9 @@ Different server groups can also run the same profile and have the same deployme
 
 An example server group definition is as follows:
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<server-group name="main-server-group" profile="clustered">
-    <socket-binding-group ref="standard-sockets"/>
-</server-group>
-
+include::config_examples/server_group.xml[]
 ----
 
 A server-group configuration includes the following required attributes:

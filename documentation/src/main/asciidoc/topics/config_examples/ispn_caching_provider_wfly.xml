@@ -1,0 +1,6 @@
+<property
+    name="hibernate.cache.infinispan._war_or_ear_name_#_unit_name_.com.example.MyEntity.cfg"
+    value="my-entities" />
+<property
+    name="hibernate.cache.infinispan._war_or_ear_name_#_unit_name_.com.example.MyEntity.someCollection.cfg"
+    value="my-entities-some-collection" />

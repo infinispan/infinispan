@@ -1,0 +1,8 @@
+<infinispan>
+  <cache-container default-cache="replicatedCache">
+    <transport stack="tcp" />
+
+    ...
+
+  </cache-container>
+</infinispan>

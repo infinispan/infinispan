@@ -1,0 +1,9 @@
+<infinispan>
+  <cache-container>
+    <serialization>
+      <advanced-externalizer id="123"
+                            class="Person$PersonExternalizer"/>
+    </serialization>
+  </cache-container>
+  ...
+</infinispan>

@@ -1,0 +1,13 @@
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.persistence()
+      .passivation(false)
+      .addSingleFileStore()
+         .preload(true)
+         .shared(false)
+         .fetchPersistentState(true)
+         .ignoreModifications(false)
+         .purgeOnStartup(false)
+         .location(System.getProperty("java.io.tmpdir"))
+         .async()
+            .enabled(true)
+            .threadPoolSize(5)

@@ -1,0 +1,11 @@
+<infinispan>
+   <cache-container default-cache="local">
+      <!-- template configurations -->
+      <local-cache-configuration name="local-template">
+         <expiration interval="10000" lifespan="10" max-idle="10"/>
+      </local-cache-configuration>
+
+      <!-- cache definitions -->
+      <local-cache name="local" configuration="local-template" />
+   </cache-container>
+</infinispan>

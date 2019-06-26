@@ -14,24 +14,9 @@ NOTE: The initial implementation supports only HTTP/1.1, HTTP/2 and Hot Rod prot
 
 Internally, Single-Port is based on the same router component used to enable multi-tenancy, and therefore it shares the same configuration.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<!-- TLS/ALPN negotiation -->
-<router-connector name="router-ssl" single-port-socket-binding="rest-ssl">
-    <single-port security-realm="SSLRealm1">
-        <hotrod name="hotrod" />
-        <rest name="rest" />
-    </single-port>
-</router-connector>
-<!-- HTTP 1.1/Upgrade procedure -->
-<router-connector name="router" single-port-socket-binding="rest">
-    <single-port>
-        <hotrod name="hotrod" />
-        <rest name="rest" />
-    </single-port>
-</router-connector>
-
+include::config_examples/single_port_router.xml[]
 ----
 
 With the configuration above, the Single-Port Router will operate on `rest` and `rest-ssl` socket
@@ -45,9 +30,7 @@ A tool such as `curl` can be used to access cache using both _cleartext upgrade_
 
 [source,bash]
 ----
-
-curl -v -k --http2-prior-knowledge https://127.0.0.1:8443/rest/default/test
-
+$ curl -v -k --http2-prior-knowledge https://127.0.0.1:8443/rest/default/test
 ----
 
 The `--http2-prior-knowledge` can be exchanged with `--http2` switch allowing to control how the switch procedure
@@ -66,34 +49,15 @@ This feature requires that you have configured your endpoint to enable TLS. If y
 supported out-of-the-box. However, if you are using JDK 8, you will need to use
 https://netty.io/wiki/forked-tomcat-native.html[Netty's BoringSSL] library, which leverages native libraries to enable ALPN.
 
-[source,xml]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-
-<dependencyManagement>
-      <dependency>
-         <groupId>io.netty</groupId>
-         <artifactId>netty-bom</artifactId>
-         <!-- Pulled from Infinispan BOM -->
-         <version>${version.netty}</version>
-         <type>pom</type>
-         <scope>import</scope>
-      </dependency>
-   </dependencies>
-</dependencyManagement>
-
-<dependency>
-   <groupId>io.netty</groupId>
-   <artifactId>netty-tcnative-boringssl-static</artifactId>
-   <!-- The version is defined in Netty BOM -->
-</dependency>
-
+include::dependencies_maven/netty_bom.xml[]
 ----
 
 After adding the library, configure your trust store accordingly:
 
 [source,java]
 ----
-
 ConfigurationBuilder builder = new ConfigurationBuilder()
       .addServers("127.0.0.1:8443");
 
@@ -103,5 +67,4 @@ builder.security().ssl().enable()
 
 RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
 RemoteCache<String, String> cache = remoteCacheManager.getCache("default"");
-
 ----

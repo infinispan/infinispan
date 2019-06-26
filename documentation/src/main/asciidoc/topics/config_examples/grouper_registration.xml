@@ -1,0 +1,5 @@
+<distributed-cache>
+   <groups enabled="true">
+      <grouper class="com.acme.KXGrouper" />
+   </groups>
+</distributed-cache>

@@ -1,0 +1,2 @@
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a expires 10s
+[jmx://localhost:12000/MyCacheManager/namedCache]> put a a expires 10m maxidle 1m

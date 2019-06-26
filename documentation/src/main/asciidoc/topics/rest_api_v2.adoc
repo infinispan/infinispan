@@ -27,15 +27,7 @@ the schema and include the `<infinispan>` root element and a
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<infinispan>
-    <cache-container>
-        <distributed-cache name="cacheName" mode="SYNC">
-            <memory>
-                <object size="20"/>
-            </memory>
-        </distributed-cache>
-    </cache-container>
-</infinispan>
+include::config_examples/infinispan_distributed_cache.xml[]
 ----
 
 JSON Configuration::
