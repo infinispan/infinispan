@@ -66,6 +66,8 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
    @Override
    public void shutdown() {
       shutdown = true;
+      controllerThread.interrupt();
+      executorService.shutdown();
    }
 
    @Override
