@@ -45,8 +45,6 @@ public interface RestRequest {
 
    Long getMaxIdleTimeSecondsHeader();
 
-   boolean getPerformAsyncHeader();
-
    Long getTimeToLiveSecondsHeader();
 
    Long getCreatedHeader();

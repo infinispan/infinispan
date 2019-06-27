@@ -4,12 +4,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.operations.exceptions.ServerInternalException;
 
@@ -30,14 +33,15 @@ public class SplashResource implements ResourceHandler {
             .create();
    }
 
-   private NettyRestResponse serveStaticResource(RestRequest request, String resource) throws ServerInternalException {
+   private CompletionStage<RestResponse> serveStaticResource(RestRequest request, String resource) throws ServerInternalException {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       try {
          URL staticResource = SplashResource.class.getClassLoader().getResource(resource);
-         return responseBuilder.entity(loadFile(staticResource))
+         NettyRestResponse response = responseBuilder.entity(loadFile(staticResource))
                .contentType(getMediaType(resource))
                .status(HttpResponseStatus.OK)
                .build();
+         return CompletableFuture.completedFuture(response);
       } catch (Exception e) {
          throw new ServerInternalException(e);
       }

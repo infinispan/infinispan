@@ -31,7 +31,6 @@ public class NettyRestRequest implements RestRequest {
    private static final String CREATED_HEADER = "created";
    private static final String LAST_USED_HEADER = "lastUsed";
    private static final String TTL_SECONDS_HEADER = "timeToLiveSeconds";
-   private static final String PERFORM_ASYNC_HEADER = "performAsync";
    private static final String KEY_CONTENT_TYPE_HEADER = "key-content-type";
 
    private final FullHttpRequest request;
@@ -145,10 +144,6 @@ public class NettyRestRequest implements RestRequest {
       return getHeaderAsLong(MAX_TIME_IDLE_HEADER);
    }
 
-   @Override
-   public boolean getPerformAsyncHeader() {
-      return getHeaderAsBoolean(PERFORM_ASYNC_HEADER);
-   }
 
    @Override
    public Long getTimeToLiveSecondsHeader() {

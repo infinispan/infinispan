@@ -5,6 +5,9 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
 import org.infinispan.rest.NettyRestResponse;
@@ -25,6 +28,9 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  */
 public class ClusterResource implements ResourceHandler {
 
+   private static final CompletionStage<RestResponse> HEAD_RESPONSE = CompletableFuture.completedFuture(
+         new NettyRestResponse.Builder().status(OK).build());
+
    private final Health health;
    private final ObjectMapper mapper;
 
@@ -41,11 +47,11 @@ public class ClusterResource implements ResourceHandler {
             .create();
    }
 
-   private RestResponse headHandler(RestRequest restRequest) {
-      return new NettyRestResponse.Builder().contentType(APPLICATION_JSON).status(OK).build();
+   private CompletionStage<RestResponse> headHandler(RestRequest restRequest) {
+      return HEAD_RESPONSE;
    }
 
-   private RestResponse getInfo(RestRequest restRequest) {
+   private CompletionStage<RestResponse> getInfo(RestRequest restRequest) {
       ClusterHealth clusterHealth = health.getClusterHealth();
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       try {
@@ -56,6 +62,6 @@ public class ClusterResource implements ResourceHandler {
       } catch (JsonProcessingException e) {
          responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
-      return responseBuilder.build();
+      return CompletableFuture.completedFuture(responseBuilder.build());
    }
 }

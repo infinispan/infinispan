@@ -59,6 +59,11 @@ This flag only works when the client and the server version is 9.4.15 or higher.
 Spring Session integration uses this flag when a session id has changed.
 If you are using Spring Session with Infinispan 9.4, consider upgrading the client and the server.
 
+=== performAsync header removed from REST
+
+The `performAsync` header was removed from the REST server. Clients that want to perform async operations with
+the REST server should manage the request and response on their side to avoid blocking.
+
 === Default JGroups stacks in the XML configuration
 
 With the introduction of inline XML JGroups stacks in the configuration, two default stacks are always enabled: `udp` and `tcp`.

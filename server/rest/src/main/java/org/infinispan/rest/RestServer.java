@@ -101,7 +101,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       Health health = cacheManager.getHealth();
       String rootContext = configuration.startTransport() ? configuration.contextPath() : "*";
       ResourceManager resourceManager = new ResourceManagerImpl(rootContext);
-      resourceManager.registerResource(new CacheResource(restCacheManager, configuration));
+      resourceManager.registerResource(new CacheResource(restCacheManager, configuration, getExecutor()));
       resourceManager.registerResource(new SplashResource());
       resourceManager.registerResource(new ConfigResource(cacheManager));
       resourceManager.registerResource(new CounterResource(EmbeddedCounterManagerFactory.asCounterManager(cacheManager)));
@@ -111,7 +111,6 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    @Override
    public int getWorkerThreads() {
-      // Unused for now, so just return the smallest possible valid value
-      return 1;
+      return Integer.getInteger("infinispan.server.rest.workerThreads", configuration.workerThreads());
    }
 }

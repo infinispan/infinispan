@@ -9,6 +9,9 @@ import static org.infinispan.query.remote.json.JSONConstants.QUERY_STRING;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -23,6 +26,7 @@ import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.rest.framework.RestResponse;
 
 /**
  * Helper for handling the 'search' action of the {@link CacheResource}.
@@ -32,42 +36,50 @@ import org.infinispan.rest.framework.RestRequest;
 class CacheResourceQueryAction {
 
    private final RestCacheManager<Object> restCacheManager;
+   private final Executor executor;
 
-   CacheResourceQueryAction(RestCacheManager<Object> restCacheManager) {
+   CacheResourceQueryAction(RestCacheManager<Object> restCacheManager, Executor executor) {
       this.restCacheManager = restCacheManager;
+      this.executor = executor;
    }
 
-   public NettyRestResponse search(RestRequest restRequest) {
+   public CompletionStage<RestResponse> search(RestRequest restRequest) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      try {
-         JsonQueryRequest query = null;
-         if (restRequest.method() == Method.GET) {
-            query = getQueryFromString(restRequest);
-         }
-         if (restRequest.method() == Method.POST || restRequest.method() == Method.PUT) {
+
+      JsonQueryRequest query = null;
+      if (restRequest.method() == Method.GET) {
+         query = getQueryFromString(restRequest);
+      }
+      if (restRequest.method() == Method.POST || restRequest.method() == Method.PUT) {
+         try {
             query = getQueryFromJSON(restRequest);
+         } catch (IOException e) {
+            return CompletableFuture.completedFuture(queryError("Invalid search request", e.getMessage()));
          }
-
-
-         if (query == null || query.getQuery() == null || query.getQuery().isEmpty()) {
-            return queryError("Invalid search request, missing 'query' parameter", null);
-         }
-
-         String cacheName = restRequest.variables().get("cacheName");
-
-         MediaType keyContentType = restRequest.keyContentType();
-         AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON);
-         String queryString = query.getQuery();
-
-         RemoteQueryManager remoteQueryManager = cache.getComponentRegistry().getComponent(RemoteQueryManager.class);
-         byte[] queryResultBytes = remoteQueryManager.executeQuery(queryString, emptyMap(), query.getStartOffset(),
-               query.getMaxResults(), query.getQueryMode(), cache, MediaType.APPLICATION_JSON);
-         responseBuilder.entity(queryResultBytes);
-         return responseBuilder.build();
-      } catch (IllegalArgumentException | ParsingException | IllegalStateException | IOException e) {
-         return queryError("Invalid search request", e.getMessage());
       }
 
+      if (query == null || query.getQuery() == null || query.getQuery().isEmpty()) {
+         return CompletableFuture.completedFuture(queryError("Invalid search request, missing 'query' parameter", null));
+      }
+
+      String cacheName = restRequest.variables().get("cacheName");
+
+      MediaType keyContentType = restRequest.keyContentType();
+      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON);
+      String queryString = query.getQuery();
+
+      RemoteQueryManager remoteQueryManager = cache.getComponentRegistry().getComponent(RemoteQueryManager.class);
+      JsonQueryRequest finalQuery = query;
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            byte[] queryResultBytes = remoteQueryManager.executeQuery(queryString, emptyMap(), finalQuery.getStartOffset(),
+                  finalQuery.getMaxResults(), finalQuery.getQueryMode(), cache, MediaType.APPLICATION_JSON);
+            responseBuilder.entity(queryResultBytes);
+            return responseBuilder.build();
+         } catch (IllegalArgumentException | ParsingException | IllegalStateException e) {
+            return queryError("Invalid search request", e.getMessage());
+         }
+      }, executor);
    }
 
    private JsonQueryRequest getQueryFromString(RestRequest restRequest) {
@@ -93,7 +105,7 @@ class CacheResourceQueryAction {
       return values == null ? null : values.iterator().next();
    }
 
-   private NettyRestResponse queryError(String message, String cause) {
+   private RestResponse queryError(String message, String cause) {
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(BAD_REQUEST);
       builder.entity(new JsonQueryErrorResult(message, cause).asBytes());
       return builder.build();

@@ -1,5 +1,7 @@
 package org.infinispan.rest.framework;
 
+import java.util.concurrent.CompletionStage;
+
 /**
  * Routes a particular {@link RestRequest} to be executed by the correct {link @Invocation}, and produces the {@link RestResponse}.
  *
@@ -7,6 +9,6 @@ package org.infinispan.rest.framework;
  */
 public interface RestDispatcher {
 
-   RestResponse dispatch(RestRequest restRequest);
+   CompletionStage<RestResponse> dispatch(RestRequest restRequest);
 
 }

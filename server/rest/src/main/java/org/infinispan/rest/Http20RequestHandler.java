@@ -3,12 +3,15 @@ package org.infinispan.rest;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.rest.authentication.AuthenticationException;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.ChannelFutureListener;
@@ -51,31 +54,47 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
       this.authenticator = restServer.getAuthenticator();
    }
 
-   @Override
-   public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
-      RestResponse response;
+   private NettyRestResponse.Builder authenticate(ChannelHandlerContext ctx, FullHttpRequest request) {
       NettyRestRequest restRequest = new NettyRestRequest(request);
+      NettyRestResponse.Builder authResponseBuilder = new NettyRestResponse.Builder();
       try {
-         restAccessLoggingHandler.preLog(request);
          authenticator.challenge(restRequest, ctx);
-         response = restServer.getRestDispatcher().dispatch(restRequest);
-         if (response == null) {
-            response = new NettyRestResponse.Builder().status(HttpResponseStatus.NOT_FOUND).build();
-         }
-         addCorrelatedHeaders(request, ((NettyRestResponse) response).getResponse());
       } catch (AuthenticationException authException) {
-         response = new NettyRestResponse.Builder()
-               .status(HttpResponseStatus.UNAUTHORIZED)
+         authResponseBuilder.status(HttpResponseStatus.UNAUTHORIZED)
                .authenticate(authException.getAuthenticationHeader())
                .build();
-
-      } catch (RestResponseException responseException) {
-         logger.errorWhileResponding(responseException);
-         response = new NettyRestResponse.Builder().status(responseException.getStatus()).entity(responseException.getText()).build();
       }
+      return authResponseBuilder;
+   }
 
-      NettyRestResponse nettyRestResponse = (NettyRestResponse) response;
-      sendResponse(ctx, request, nettyRestResponse.getResponse());
+   @Override
+   public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+      restAccessLoggingHandler.preLog(request);
+
+      NettyRestResponse.Builder builder = authenticate(ctx, request);
+      if (builder.getHttpStatus() == HttpResponseStatus.UNAUTHORIZED) {
+         sendResponse(ctx, request, builder.build().getResponse());
+         return;
+      }
+      CompletionStage<RestResponse> response = restServer.getRestDispatcher().dispatch(new NettyRestRequest(request));
+      response.whenComplete((restResponse, throwable) -> {
+         if (throwable == null) {
+            NettyRestResponse nettyRestResponse = (NettyRestResponse) restResponse;
+            addCorrelatedHeaders(request, nettyRestResponse.getResponse());
+            sendResponse(ctx, request, nettyRestResponse.getResponse());
+         } else {
+            Throwable cause = CompletableFutures.extractException(throwable);
+            if (cause instanceof RestResponseException) {
+               RestResponseException responseException = (RestResponseException) throwable;
+               logger.errorWhileResponding(responseException);
+               NettyRestResponse errorResponse = new NettyRestResponse.Builder().status(responseException.getStatus()).entity(responseException.getText()).build();
+               sendResponse(ctx, request, errorResponse.getResponse());
+            } else {
+               NettyRestResponse errorResponse = new NettyRestResponse.Builder().status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(throwable.getCause().getMessage()).build();
+               sendResponse(ctx, request, errorResponse.getResponse());
+            }
+         }
+      });
    }
 
    private void addCorrelatedHeaders(FullHttpRequest request, FullHttpResponse response) {

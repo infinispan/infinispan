@@ -123,11 +123,6 @@ public class SimpleRequest implements RestRequest {
    }
 
    @Override
-   public boolean getPerformAsyncHeader() {
-      return false;
-   }
-
-   @Override
    public Long getTimeToLiveSecondsHeader() {
       return null;
    }

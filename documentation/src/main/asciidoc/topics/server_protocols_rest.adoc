@@ -174,8 +174,6 @@ Exactly the same as PUT, only if a value in a cache/key already exists, it will 
 
 *  Content-Type : OPTIONAL The https://en.wikipedia.org/wiki/Media_type[MediaType] of the Value being sent.
 
-*  performAsync : OPTIONAL true/false (if true, this will return immediately, and then replicate data to the cluster on its own. Can help with bulk data inserts/large clusters.)
-
 *  timeToLiveSeconds : OPTIONAL number (the number of seconds before this entry will automatically be deleted). If no parameter is sent, {brandname} assumes configuration default value. Passing any negative value will create an entry which will live forever.
 
 *  maxIdleTimeSeconds : OPTIONAL number (the number of seconds after last usage of this entry when it will automatically be deleted). If no  parameter is sent, {brandname} configuration default value. Passing any negative value will create an entry which will live forever.
@@ -279,9 +277,6 @@ Removes the given key name from the cache.
 
 ==== `DELETE /{cacheName}`
 Removes ALL the entries in the given cache name (i.e., everything from that path down). If the operation is successful, it returns 200 code.
-
-.Make it quicker!
-TIP: Set the header performAsync to true to return immediately and let the removal happen in the background.
 
 === Querying
 

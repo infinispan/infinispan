@@ -13,14 +13,15 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.CacheSet;
-import org.infinispan.commons.CacheException;
+import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.metadata.Metadata;
@@ -58,11 +59,13 @@ public class CacheResource implements ResourceHandler {
    private final RestCacheManager<Object> restCacheManager;
    private final RestServerConfiguration restServerConfiguration;
    private final CacheResourceQueryAction queryAction;
+   private final Executor executor;
 
-   public CacheResource(RestCacheManager<Object> restCacheManager, RestServerConfiguration restServerConfiguration) {
+   public CacheResource(RestCacheManager<Object> restCacheManager, RestServerConfiguration restServerConfiguration, Executor executor) {
       this.restCacheManager = restCacheManager;
       this.restServerConfiguration = restServerConfiguration;
-      this.queryAction = new CacheResourceQueryAction(restCacheManager);
+      this.queryAction = new CacheResourceQueryAction(restCacheManager, executor);
+      this.executor = executor;
    }
 
    @Override
@@ -77,43 +80,36 @@ public class CacheResource implements ResourceHandler {
             .create();
    }
 
-   private NettyRestResponse getCacheKeys(RestRequest request) throws RestResponseException {
-      try {
-         String cacheName = request.variables().get("cacheName");
+   private CompletionStage<RestResponse> getCacheKeys(RestRequest request) throws RestResponseException {
+      String cacheName = request.variables().get("cacheName");
 
-         String accept = request.getAcceptHeader();
-         if (accept == null) accept = MediaType.MATCH_ALL_TYPE;
+      String accept = request.getAcceptHeader();
+      if (accept == null) accept = MediaType.MATCH_ALL_TYPE;
 
-         MediaType contentType = negotiateMediaType(accept, cacheName);
-         AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN);
-         CacheSet<Object> keys = cache.keySet();
-         Charset charset = Charset.fromMediaType(accept);
-         if (charset == null) charset = Charset.UTF8;
+      MediaType contentType = negotiateMediaType(accept, cacheName);
+      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN);
 
+      Charset mediaCharset = Charset.fromMediaType(accept);
+      Charset charset = mediaCharset == null ? Charset.UTF8 : mediaCharset;
+      return CompletableFuture.supplyAsync(() -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          responseBuilder.contentType(contentType);
          responseBuilder.header(HttpHeaderNames.CACHE_CONTROL.toString(), CacheControl.noCache());
          OutputPrinter outputPrinter = EntrySetFormatter.forMediaType(contentType);
-         responseBuilder.entity(outputPrinter.print(cacheName, keys, charset));
+         responseBuilder.entity(outputPrinter.print(cacheName, cache.keySet(), charset));
          return responseBuilder.build();
-      } catch (CacheException cacheException) {
-         throw new RestResponseException(cacheException);
-      }
+      }, executor);
    }
 
+   private CompletionStage<RestResponse> deleteCacheValue(RestRequest request) throws RestResponseException {
+      String cacheName = request.variables().get("cacheName");
 
-   private RestResponse deleteCacheValue(RestRequest request) throws RestResponseException {
-      try {
-         String cacheName = request.variables().get("cacheName");
+      Object key = request.variables().get("cacheKey");
+      if (key == null) throw new NoKeyException();
 
-         Object key = request.variables().get("cacheKey");
-         if (key == null) throw new NoKeyException();
-         boolean useAsync = request.getPerformAsyncHeader();
+      MediaType keyContentType = request.keyContentType();
 
-         MediaType keyContentType = request.keyContentType();
-
-         CacheEntry<Object, Object> entry = restCacheManager.getInternalEntry(cacheName, key, keyContentType, MediaType.MATCH_ALL);
-
+      return restCacheManager.getInternalEntry(cacheName, key, keyContentType, MediaType.MATCH_ALL).thenCompose(entry -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
@@ -123,95 +119,80 @@ public class CacheResource implements ResourceHandler {
             String clientEtag = request.getEtagIfNoneMatchHeader();
             if (clientEtag == null || clientEtag.equals(etag)) {
                responseBuilder.status(HttpResponseStatus.OK.code());
-               restCacheManager.remove(cacheName, key, keyContentType, useAsync);
+               return restCacheManager.remove(cacheName, key, keyContentType).thenApply(v -> responseBuilder.build());
             } else {
                //ETags don't match, so preconditions failed
                responseBuilder.status(HttpResponseStatus.PRECONDITION_FAILED.code());
             }
          }
-         return responseBuilder.build();
-      } catch (CacheException cacheException) {
-         throw new RestResponseException(cacheException);
-      }
+         return CompletableFuture.completedFuture(responseBuilder.build());
+      });
    }
 
-   private RestResponse putValueToCache(RestRequest request) {
-      try {
-         String cacheName = request.variables().get("cacheName");
+   private CompletionStage<RestResponse> putValueToCache(RestRequest request) {
 
-         MediaType contentType = request.contentType();
-         MediaType keyContentType = request.keyContentType();
+      String cacheName = request.variables().get("cacheName");
 
-         AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType);
-         Object key = request.variables().get("cacheKey");
-         if (key == null) throw new NoKeyException();
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      MediaType contentType = request.contentType();
+      MediaType keyContentType = request.keyContentType();
 
-         if (request.method() == POST && cache.containsKey(key)) {
-            return responseBuilder.status(HttpResponseStatus.CONFLICT.code()).entity("An entry already exists").build();
-         } else {
-            ContentSource contents = request.contents();
-            if (contents == null) throw new NoDataFoundException();
-            byte[] data = request.contents().rawContent();
-            CacheEntry<Object, Object> entry = restCacheManager.getInternalEntry(cacheName, key, true, keyContentType, contentType);
-            if (entry instanceof InternalCacheEntry) {
-               InternalCacheEntry ice = (InternalCacheEntry) entry;
-               String etagNoneMatch = request.getEtagIfNoneMatchHeader();
-               if (etagNoneMatch != null) {
-                  String etag = calcETAG(ice.getValue());
-                  if (etagNoneMatch.equals(etag)) {
-                     //client's and our ETAG match. Nothing to do, an entry is cached on the client side...
-                     responseBuilder.status(HttpResponseStatus.NOT_MODIFIED.code());
-                     return responseBuilder.build();
-                  }
+      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType);
+      Object key = request.variables().get("cacheKey");
+      if (key == null) throw new NoKeyException();
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      ContentSource contents = request.contents();
+      if (contents == null) throw new NoDataFoundException();
+      Long ttl = request.getTimeToLiveSecondsHeader();
+      Long idle = request.getMaxIdleTimeSecondsHeader();
+
+      byte[] data = request.contents().rawContent();
+
+      return restCacheManager.getInternalEntry(cacheName, key, true, keyContentType, contentType).thenCompose(entry -> {
+         if (request.method() == POST && entry != null) {
+            return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.CONFLICT.code()).entity("An entry already exists").build());
+         }
+         if (entry instanceof InternalCacheEntry) {
+            InternalCacheEntry ice = (InternalCacheEntry) entry;
+            String etagNoneMatch = request.getEtagIfNoneMatchHeader();
+            if (etagNoneMatch != null) {
+               String etag = calcETAG(ice.getValue());
+               if (etagNoneMatch.equals(etag)) {
+                  //client's and our ETAG match. Nothing to do, an entry is cached on the client side...
+                  responseBuilder.status(HttpResponseStatus.NOT_MODIFIED.code());
+                  return CompletableFuture.completedFuture(responseBuilder.build());
                }
             }
-
-            boolean useAsync = request.getPerformAsyncHeader();
-            Long ttl = request.getTimeToLiveSecondsHeader();
-            Long idle = request.getMaxIdleTimeSecondsHeader();
-            return putInCache(responseBuilder, useAsync, cache, key, data, ttl, idle);
          }
-      } catch (CacheException | IllegalStateException e) {
-         throw new RestResponseException(e);
-      }
+         return putInCache(responseBuilder, cache, key, data, ttl, idle);
+      });
    }
 
-   private RestResponse clearEntireCache(RestRequest request) throws RestResponseException {
-      try {
-         String cacheName = request.variables().get("cacheName");
-         boolean useAsync = request.getPerformAsyncHeader();
+   private CompletionStage<RestResponse> clearEntireCache(RestRequest request) throws RestResponseException {
+      String cacheName = request.variables().get("cacheName");
 
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         responseBuilder.status(HttpResponseStatus.OK.code());
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      responseBuilder.status(HttpResponseStatus.OK.code());
 
-         if (useAsync) {
-            restCacheManager.getCache(cacheName).clearAsync();
-         } else {
-            restCacheManager.getCache(cacheName).clear();
-         }
+      Cache<Object, Object> cache = restCacheManager.getCache(cacheName);
 
-         return responseBuilder.build();
-      } catch (CacheException cacheException) {
-         throw new RestResponseException(cacheException);
-      }
+      return cache.clearAsync().thenApply(v -> responseBuilder.build());
    }
 
 
-   private NettyRestResponse getCacheValue(RestRequest request) throws RestResponseException {
-      try {
-         String cacheName = request.variables().get("cacheName");
-         String accept = request.getAcceptHeader();
-         if (accept == null) accept = MediaType.MATCH_ALL_TYPE;
-         MediaType keyContentType = request.keyContentType();
-         MediaType requestedMediaType = negotiateMediaType(accept, cacheName);
+   private CompletionStage<RestResponse> getCacheValue(RestRequest request) throws RestResponseException {
+      String cacheName = request.variables().get("cacheName");
+      String accept = request.getAcceptHeader();
+      if (accept == null) accept = MediaType.MATCH_ALL_TYPE;
+      MediaType keyContentType = request.keyContentType();
+      MediaType requestedMediaType = negotiateMediaType(accept, cacheName);
 
-         Object key = request.variables().get("cacheKey");
-         if (key == null) throw new NoKeyException();
+      Object key = request.variables().get("cacheKey");
+      if (key == null) throw new NoKeyException();
 
-         String cacheControl = request.getCacheControlHeader();
-         boolean returnBody = request.method() == GET;
-         CacheEntry<Object, Object> entry = restCacheManager.getInternalEntry(cacheName, key, keyContentType, requestedMediaType);
+      String cacheControl = request.getCacheControlHeader();
+      boolean returnBody = request.method() == GET;
+      return restCacheManager.getInternalEntry(cacheName, key, keyContentType, requestedMediaType).thenApply(entry -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
 
@@ -262,9 +243,7 @@ public class CacheResource implements ResourceHandler {
             }
          }
          return responseBuilder.build();
-      } catch (CacheException cacheException) {
-         throw new RestResponseException(cacheException);
-      }
+      });
    }
 
    private void writeValue(Object value, MediaType requested, MediaType configuredMediaType, NettyRestResponse.Builder
@@ -289,17 +268,12 @@ public class CacheResource implements ResourceHandler {
       return String.valueOf(hashFunc.hash(value));
    }
 
-   private RestResponse putInCache(NettyRestResponse.Builder responseBuilder, boolean useAsync,
-                                   AdvancedCache<Object, Object> cache, Object key, byte[] data, Long ttl,
-                                   Long idleTime) {
+   private CompletionStage<RestResponse> putInCache(NettyRestResponse.Builder responseBuilder,
+                                                    AdvancedCache<Object, Object> cache, Object key, byte[] data, Long ttl,
+                                                    Long idleTime) {
       final Metadata metadata = CacheOperationsHelper.createMetadata(cache.getCacheConfiguration(), ttl, idleTime);
-      if (useAsync) {
-         cache.putAsync(key, data, metadata);
-      } else {
-         cache.put(key, data, metadata);
-      }
       responseBuilder.header("etag", calcETAG(data));
-      return responseBuilder.build();
+      return cache.putAsync(key, data, metadata).thenApply(o -> responseBuilder.build());
    }
 
    private MediaType tryNarrowMediaType(MediaType negotiated, AdvancedCache<?, ?> cache) {
