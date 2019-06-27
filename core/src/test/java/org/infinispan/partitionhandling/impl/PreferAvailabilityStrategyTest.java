@@ -60,12 +60,16 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
       }
    }
 
-   private static final CacheJoinInfo JOIN_INFO =
-      new CacheJoinInfo(new DefaultConsistentHashFactory(), 8, 2, 1000,
-            CacheMode.DIST_SYNC, 1.0f, null, Optional.empty());
+   private static final CacheJoinInfo DIST_INFO =
+         new CacheJoinInfo(new DefaultConsistentHashFactory(), 8, 2, 1000, CacheMode.DIST_SYNC, 1.0f, null,
+                           Optional.empty());
+   private static final CacheJoinInfo REPL_INFO =
+         new CacheJoinInfo(new DefaultConsistentHashFactory(), 8, 2, 1000, CacheMode.REPL_SYNC, 1.0f, null,
+                           Optional.empty());
    private static final Address A = new TestAddress(1, "A");
    private static final Address B = new TestAddress(2, "B");
    private static final Address C = new TestAddress(3, "C");
+   private static final Address D = new TestAddress(4, "D");
    public static final String CACHE_NAME = "test";
 
    private EventLogManagerImpl eventLogManager;
@@ -96,6 +100,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
       persistentUUIDManager.addPersistentAddressMapping(A, persistentUUID(A));
       persistentUUIDManager.addPersistentAddressMapping(B, persistentUUID(B));
       persistentUUIDManager.addPersistentAddressMapping(C, persistentUUID(C));
+      persistentUUIDManager.addPersistentAddressMapping(D, persistentUUID(D));
 
       strategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager,
                                                 ClusterTopologyManagerImpl::distLostDataCheck);
@@ -109,7 +114,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    public void testSinglePartitionOnlyJoiners() {
       // There's no cache topology, so the first cache topology is created with the joiners
       List<Address> joiners = asList(A, B);
-      CacheStatusResponse response = new CacheStatusResponse(JOIN_INFO, null, null, AVAILABLE);
+      CacheStatusResponse response = new CacheStatusResponse(DIST_INFO, null, null, AVAILABLE);
       Map<Address, CacheStatusResponse> statusResponses = mapOf(A, response, B, response);
 
       when(context.getCacheName()).thenReturn(CACHE_NAME);
@@ -125,9 +130,9 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    public void testSinglePartitionJoinersAndMissingNode() {
       // B and C both tried to join, but only B got a response from the old coordinator
       List<Address> mergeMembers = asList(B, C);
-      TestClusterCacheStatus cacheA = start(JOIN_INFO, A);
+      TestClusterCacheStatus cacheA = start(DIST_INFO, A);
       CacheStatusResponse responseB = availableResponse(B, cacheA);
-      CacheStatusResponse responseC = new CacheStatusResponse(JOIN_INFO, null, null, AVAILABLE);
+      CacheStatusResponse responseC = new CacheStatusResponse(DIST_INFO, null, null, AVAILABLE);
       Map<Address, CacheStatusResponse> statusResponses = mapOf(B, responseB, C, responseC);
 
       when(context.getCacheName()).thenReturn(CACHE_NAME);
@@ -145,7 +150,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    public void testSinglePartitionTopologyNotUpdatedAfterLeave() {
       // A crashed and it's the next coordinator's job to remove it from the cache topology
       List<Address> remainingMembers = asList(B, C);
-      TestClusterCacheStatus cacheABC = start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheABC = start(DIST_INFO, A, B, C);
       CacheStatusResponse responseB = availableResponse(B, cacheABC);
       CacheStatusResponse responseC = availableResponse(C, cacheABC);
       Map<Address, CacheStatusResponse> statusResponses = mapOf(B, responseB, C, responseC);
@@ -166,7 +171,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    public void testSinglePartitionTopologyPartiallyUpdatedAfterLeave() {
       // A crashed, but only C has the updated cache topology
       List<Address> remainingMembers = asList(B, C);
-      TestClusterCacheStatus cacheAB = start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheAB = start(DIST_INFO, A, B, C);
       TestClusterCacheStatus cacheC = cacheAB.copy();
       cacheC.removeMembers(A);
       CacheStatusResponse responseB = availableResponse(B, cacheAB);
@@ -191,7 +196,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
       // and the phase change and still have a single partition
       // However, PreferAvailabilityStrategy will not recognize it as a single partition
       List<Address> remainingMembers = asList(B, C);
-      TestClusterCacheStatus cacheAB = start(JOIN_INFO, A, B);
+      TestClusterCacheStatus cacheAB = start(DIST_INFO, A, B);
       TestClusterCacheStatus cacheC = cacheAB.copy();
       cacheC.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, A, B, C);
       cacheC.removeMembers(A);
@@ -211,12 +216,59 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
       verifyNoMoreInteractions(context);
    }
 
+   public void testSinglePartitionRepl2LeaveDuringRebalancePhaseReadOld() {
+      // A and B are running, rebalancing is disabled, then C and D join
+      // Re-enable rebalance, but stop B and A before the rebalance is done
+      // C sees the finished rebalance, D sees the READ_OLD phase
+      // C becomes coordinator and should recover with C's topology
+      List<Address> remainingMembers = asList(C, D);
+      TestClusterCacheStatus cacheAB = start(REPL_INFO, A, B);
+      TestClusterCacheStatus cacheD = cacheAB.copy();
+      cacheD.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, A, B, C, D);
+      TestClusterCacheStatus cacheC = cacheD.copy();
+      cacheC.removeMembers(B);
+      cacheC.removeMembers(A);
+      cacheC.finishRebalance();
+      cacheC.updateStableTopology();
+      CacheStatusResponse responseC = availableResponse(C, cacheC);
+      CacheStatusResponse responseD = availableResponse(D, cacheD);
+      Map<Address, CacheStatusResponse> statusResponses = mapOf(C, responseC, D, responseD);
+
+      when(context.getExpectedMembers()).thenReturn(remainingMembers);
+      when(context.getCacheName()).thenReturn(CACHE_NAME);
+      when(context.resolveConflictsOnMerge()).thenReturn(conflicts.resolve());
+      if (conflicts.resolve()) {
+         when(context.calculateConflictHash(cacheC.readConsistentHash(),
+                                            setOf(cacheC.readConsistentHash(), cacheD.readConsistentHash()),
+                                            remainingMembers))
+               .thenReturn(conflictResolutionConsistentHash(cacheC, cacheD));
+
+      }
+      strategy.onPartitionMerge(context, statusResponses);
+
+      TestClusterCacheStatus expectedCache = cacheC.copy();
+      if (conflicts.resolve()) {
+         expectedCache.startConflictResolution(conflictResolutionConsistentHash(cacheC, cacheD), C, D);
+      } else {
+         expectedCache.incrementIds();
+      }
+
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null);
+      verify(context).updateCurrentTopology(remainingMembers);
+      if (conflicts.resolve()) {
+         verify(context).queueConflictResolution(expectedCache.topology(), setOf(C, D));
+      } else {
+         verify(context).queueRebalance(remainingMembers);
+      }
+      verifyNoMoreInteractions(context);
+   }
+
    public void testSinglePartitionLeaveDuringRebalancePhaseReadNew() {
       // C joins and rebalance starts, but A crashes and B doesn't receive 2 topology updates (rebalance phase + leave)
       // Leave topology updates are fire-and-forget, so it's possible for B to miss both the leave topology
       // and the phase change and still have a single partition
       List<Address> mergeMembers = asList(B, C);
-      TestClusterCacheStatus cacheA = start(JOIN_INFO, A, B);
+      TestClusterCacheStatus cacheA = start(DIST_INFO, A, B);
       cacheA.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, A, B, C);
       cacheA.advanceRebalance(CacheTopology.Phase.READ_ALL_WRITE_ALL);
       TestClusterCacheStatus cacheC = cacheA.copy();
@@ -240,7 +292,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
 
    public void testSinglePartitionOneNodeSplits() {
       // C starts a partition by itself
-      TestClusterCacheStatus cacheABC = start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheABC = start(DIST_INFO, A, B, C);
       List<Address> remainingMembers = singletonList(C);
       CacheStatusResponse responseC = availableResponse(C, cacheABC);
       Map<Address, CacheStatusResponse> statusResponses = mapOf(C, responseC);
@@ -261,7 +313,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    public void testMerge1Paused2Rebalancing() {
       // A was paused and keeps the stable topology, B and C are rebalancing
       List<Address> mergeMembers = asList(A, B, C);
-      TestClusterCacheStatus cacheA = start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheA = start(DIST_INFO, A, B, C);
       TestClusterCacheStatus cacheB = cacheA.copy();
       cacheB.removeMembers(A);
       cacheB.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, B, C);
@@ -287,7 +339,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    public void testMerge1Paused2StableAfterRebalance() {
       // A was paused and keeps the stable topology, B and C finished rebalancing and have a new stable topology
       List<Address> mergeMembers = asList(A, B, C);
-      TestClusterCacheStatus cacheA = start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheA = start(DIST_INFO, A, B, C);
       TestClusterCacheStatus cacheBC = cacheA.copy();
       cacheBC.removeMembers(A);
       cacheBC.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, B, C);
@@ -316,7 +368,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
       // A was paused and keeps the stable topology, B has a new stable topology (no rebalance needed)
       // No conflict resolution needed, because B has all the data
       List<Address> mergeMembers = asList(A, B);
-      TestClusterCacheStatus cacheA = TestClusterCacheStatus.start(JOIN_INFO, A, B);
+      TestClusterCacheStatus cacheA = TestClusterCacheStatus.start(DIST_INFO, A, B);
       TestClusterCacheStatus cacheB = cacheA.copy();
       cacheB.removeMembers(A);
       cacheB.updateStableTopology();
@@ -342,7 +394,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
       // Now A has resumed and merges with C
       // Conflict resolution is needed because A might have changed some keys by talking only to B
       List<Address> mergeMembers = asList(A, C);
-      TestClusterCacheStatus cacheA = start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheA = start(DIST_INFO, A, B, C);
       TestClusterCacheStatus cacheB = cacheA.copy();
       cacheB.removeMembers(A);
       cacheB.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, B, C);
@@ -386,7 +438,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    public void testMerge1HigherTopologyId2MoreNodesSameStableTopology() {
       // Partition A has a higher topology id, but BCD should win because it is larger
       List<Address> mergeMembers = asList(A, B, C);
-      TestClusterCacheStatus cacheA = start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheA = start(DIST_INFO, A, B, C);
       TestClusterCacheStatus cacheBC = cacheA.copy();
       cacheA.removeMembers(B);
       cacheA.removeMembers(C);
@@ -429,9 +481,9 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    public void testMerge1HigherTopologyId2MoreNodesIndependentStableTopology() {
       // Partition A has a higher topology id, but BC should win because it is larger
       List<Address> mergeMembers = asList(A, B, C);
-      TestClusterCacheStatus cacheA = start(JOIN_INFO, A);
+      TestClusterCacheStatus cacheA = start(DIST_INFO, A);
       cacheA.incrementIds();
-      TestClusterCacheStatus cacheBC = start(JOIN_INFO, B, C);
+      TestClusterCacheStatus cacheBC = start(DIST_INFO, B, C);
       CacheStatusResponse responseA = availableResponse(A, cacheA);
       CacheStatusResponse responseB = availableResponse(B, cacheBC);
       CacheStatusResponse responseC = availableResponse(C, cacheBC);
