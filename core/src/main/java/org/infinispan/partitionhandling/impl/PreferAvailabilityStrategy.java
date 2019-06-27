@@ -4,6 +4,7 @@ import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.ownersC
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -263,7 +264,11 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             continue;
          }
          ConsistentHash readCH = ownersConsistentHash(topology, response.getCacheJoinInfo().getConsistentHashFactory());
-         Partition p = new Partition(sender, topology, response.getStableTopology(), readCH);
+         Partition p = new Partition(sender, topology, response.getStableTopology(), readCH, statusResponseMap.keySet());
+         if (p.actualMembers.isEmpty()) {
+            // None of the members of this partition have send status responses, ignore it
+            continue;
+         }
          partitions.add(p);
       }
 
@@ -347,15 +352,20 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       final CacheTopology stableTopology;
       final ConsistentHash readCH;
       final List<Address> actualMembers;
+      final List<Address> actualReadOwners;
       final List<Address> senders = new ArrayList<>();
       private boolean conflictResolutionOnly;
 
-      Partition(Address sender, CacheTopology topology, CacheTopology stableTopology, ConsistentHash readCH) {
+      Partition(Address sender, CacheTopology topology, CacheTopology stableTopology, ConsistentHash readCH,
+                Collection<Address> newMembers) {
          this.topology = topology;
          this.stableTopology = stableTopology;
          // The topologies used here do not have a union CH, so CacheTopology.getReadConsistentHash() doesn't work
          this.readCH = readCH;
-         this.actualMembers = topology.getActualMembers();
+         this.actualMembers = new ArrayList<>(topology.getActualMembers());
+         actualMembers.retainAll(newMembers);
+         this.actualReadOwners = new ArrayList<>(readCH.getMembers());
+         actualReadOwners.retainAll(newMembers);
          this.senders.add(sender);
       }
 
@@ -365,6 +375,10 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          } else if (other.senders.size() < senders.size()) {
             return true;
          } else if (other.senders.size() == senders.size() &&
+                    other.actualReadOwners.size() < actualReadOwners.size()) {
+            return true;
+         } else if (other.senders.size() == senders.size() &&
+                    other.actualReadOwners.size() == actualReadOwners.size() &&
                     other.actualMembers.size() < actualMembers.size()) {
             return true;
          } else if (other.topology.getTopologyId() < topology.getTopologyId()) {
