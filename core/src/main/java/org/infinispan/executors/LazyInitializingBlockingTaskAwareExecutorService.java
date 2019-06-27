@@ -1,7 +1,6 @@
 package org.infinispan.executors;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -13,9 +12,13 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
  * A delegating executor that lazily constructs and initializes the underlying executor.
@@ -23,13 +26,22 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
  * @author Pedro Ruivo
  * @since 5.3
  */
-public final class LazyInitializingBlockingTaskAwareExecutorService extends ManageableExecutorService<ExecutorService> implements BlockingTaskAwareExecutorService {
+@Scope(Scopes.GLOBAL)
+public final class LazyInitializingBlockingTaskAwareExecutorService
+   extends ManageableExecutorService<ExecutorService> implements BlockingTaskAwareExecutorService {
+
+   private static final BlockingTaskAwareExecutorService STOPPED;
+
+   static {
+      STOPPED = new BlockingTaskAwareExecutorServiceImpl("", new WithinThreadExecutor(), null);
+      STOPPED.shutdown();
+   }
 
    private final ThreadPoolExecutorFactory<ExecutorService> executorFactory;
    private final ThreadFactory threadFactory;
    private final TimeService timeService;
    private final String controllerThreadName;
-   private volatile BlockingTaskAwareExecutorServiceImpl blockingExecutor;
+   private volatile BlockingTaskAwareExecutorService blockingExecutor;
 
    public LazyInitializingBlockingTaskAwareExecutorService(ThreadPoolExecutorFactory<ExecutorService> executorFactory,
                                                            ThreadFactory threadFactory,
@@ -55,15 +67,23 @@ public final class LazyInitializingBlockingTaskAwareExecutorService extends Mana
 
    @Override
    public void shutdown() {
-      if (blockingExecutor != null) blockingExecutor.shutdown();
+      synchronized (this) {
+         if (blockingExecutor == null) {
+            blockingExecutor = STOPPED;
+         }
+         blockingExecutor.shutdown();
+      }
    }
 
+   @Stop
    @Override
    public List<Runnable> shutdownNow() {
-      if (blockingExecutor == null)
-         return Collections.emptyList();
-      else
+      synchronized (this) {
+         if (blockingExecutor == null) {
+            blockingExecutor = STOPPED;
+         }
          return blockingExecutor.shutdownNow();
+      }
    }
 
    @Override

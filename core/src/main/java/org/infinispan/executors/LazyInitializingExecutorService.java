@@ -1,7 +1,6 @@
 package org.infinispan.executors;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -12,6 +11,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
  * A delegating executor that lazily constructs and initializes the underlying executor, since unused JDK executors
@@ -20,7 +23,15 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
  * @author Manik Surtani
  * @since 5.1
  */
+@Scope(Scopes.GLOBAL)
 public final class LazyInitializingExecutorService extends ManageableExecutorService<ExecutorService> implements ExecutorService {
+   private static final ExecutorService STOPPED;
+
+   static {
+      STOPPED = new WithinThreadExecutor();
+      STOPPED.shutdown();
+   }
+
    private final ThreadPoolExecutorFactory<ExecutorService> executorFactory;
    private final ThreadFactory threadFactory;
 
@@ -42,15 +53,23 @@ public final class LazyInitializingExecutorService extends ManageableExecutorSer
 
    @Override
    public void shutdown() {
-      if (executor != null) executor.shutdown();
+      synchronized (this) {
+         if (executor == null) {
+            executor = STOPPED;
+         }
+         executor.shutdown();
+      }
    }
 
+   @Stop
    @Override
    public List<Runnable> shutdownNow() {
-      if (executor == null)
-         return Collections.emptyList();
-      else
+      synchronized (this) {
+         if (executor == null) {
+            executor = STOPPED;
+         }
          return executor.shutdownNow();
+      }
    }
 
    @Override

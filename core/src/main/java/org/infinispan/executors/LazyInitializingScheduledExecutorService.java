@@ -1,18 +1,21 @@
 package org.infinispan.executors;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * A delegating scheduled executor that lazily constructs and initializes the underlying scheduled executor, since
@@ -21,7 +24,15 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
  * @author Manik Surtani
  * @since 5.1
  */
+@Scope(Scopes.GLOBAL)
 public class LazyInitializingScheduledExecutorService extends ManageableExecutorService<ScheduledExecutorService> implements ScheduledExecutorService {
+   private static final ScheduledExecutorService STOPPED;
+
+   static {
+      STOPPED = new ScheduledThreadPoolExecutor(0);
+      STOPPED.shutdown();
+   }
+
    private final ThreadPoolExecutorFactory<ScheduledExecutorService> executorFactory;
    private final ThreadFactory threadFactory;
 
@@ -43,15 +54,23 @@ public class LazyInitializingScheduledExecutorService extends ManageableExecutor
 
    @Override
    public void shutdown() {
-      if (executor != null) executor.shutdown();
+      synchronized (this) {
+         if (executor == null) {
+            executor = STOPPED;
+         }
+         executor.shutdown();
+      }
    }
 
+   @Stop
    @Override
    public List<Runnable> shutdownNow() {
-      if (executor == null)
-         return Collections.emptyList();
-      else
+      synchronized (this) {
+         if (executor == null) {
+            executor = STOPPED;
+         }
          return executor.shutdownNow();
+      }
    }
 
    @Override
