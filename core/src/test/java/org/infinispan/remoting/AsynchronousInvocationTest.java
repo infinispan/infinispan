@@ -19,14 +19,14 @@ import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
@@ -81,21 +81,20 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    @BeforeClass
    public void setUp() throws Throwable {
       executorService = new DummyTaskCountExecutorService();
-      final BlockingTaskAwareExecutorService remoteExecutorService = new BlockingTaskAwareExecutorServiceImpl("AsynchronousInvocationTest-Controller", executorService,
-                                                                                                              TIME_SERVICE);
+      BlockingTaskAwareExecutorService remoteExecutorService =
+         new BlockingTaskAwareExecutorServiceImpl("AsynchronousInvocationTest-Controller", executorService,
+                                                  TIME_SERVICE);
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.addModule(TestGlobalConfigurationBuilder.class)
+                   .testGlobalComponent(KnownComponentNames.REMOTE_COMMAND_EXECUTOR, remoteExecutorService);
       ConfigurationBuilder builder = getDefaultCacheConfiguration(false);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      cacheManager = createClusteredCacheManager(builder);
+      cacheManager = createClusteredCacheManager(globalBuilder, builder);
       Cache<Object, Object> cache = cacheManager.getCache();
       ByteString cacheName = ByteString.fromString(cache.getName());
       Transport transport = extractGlobalComponent(cacheManager, Transport.class);
       address = transport.getAddress();
       invocationHandler = TestingUtil.extractGlobalComponent(cacheManager, InboundInvocationHandler.class);
-      GlobalComponentRegistry globalRegistry = cache.getCacheManager().getGlobalComponentRegistry();
-      BasicComponentRegistry gbcr = globalRegistry.getComponent(BasicComponentRegistry.class);
-      gbcr.replaceComponent(KnownComponentNames.REMOTE_COMMAND_EXECUTOR, remoteExecutorService, false);
-      gbcr.rewire();
-      globalRegistry.rewireNamedRegistries();
 
       commandsFactory = extractCommandsFactory(cache);
 
@@ -117,6 +116,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    @AfterClass
    public void tearDown() {
       if (cacheManager != null) {
+         // BlockingTaskAwareExecutorServiceImpl doesn't have a @Stop annotation so we need to stop it manually
          cacheManager.getGlobalComponentRegistry().getComponent(ExecutorService.class, KnownComponentNames.REMOTE_COMMAND_EXECUTOR).shutdownNow();
          cacheManager.stop();
       }
