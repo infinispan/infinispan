@@ -6,6 +6,9 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TY
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
@@ -46,7 +49,7 @@ public class ConfigResource implements ResourceHandler {
             .create();
    }
 
-   private RestResponse getConfiguration(RestRequest restRequest) {
+   private CompletionStage<RestResponse> getConfiguration(RestRequest restRequest) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String configurationName = restRequest.variables().get("name");
 
@@ -55,7 +58,8 @@ public class ConfigResource implements ResourceHandler {
 
       Configuration cacheConfiguration = cacheManager.getCacheConfiguration(configurationName);
 
-      if (cacheConfiguration == null) return responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build();
+      if (cacheConfiguration == null)
+         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
 
       String entity;
       if (accept.getTypeSubtype().equals(APPLICATION_XML_TYPE)) {
@@ -63,7 +67,7 @@ public class ConfigResource implements ResourceHandler {
       } else {
          entity = JSON_WRITER.toJSON(cacheConfiguration);
       }
-      return responseBuilder.entity(entity).build();
+      return CompletableFuture.completedFuture(responseBuilder.entity(entity).build());
    }
 
    private MediaType getAccept(RestRequest restRequest) {
@@ -77,7 +81,7 @@ public class ConfigResource implements ResourceHandler {
       return accept;
    }
 
-   private RestResponse convertToJson(RestRequest restRequest) {
+   private CompletionStage<RestResponse> convertToJson(RestRequest restRequest) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
       ContentSource contents = restRequest.contents();
@@ -85,10 +89,8 @@ public class ConfigResource implements ResourceHandler {
       ConfigurationBuilderHolder builderHolder = PARSER_REGISTRY.parse(new String(contents.rawContent(), UTF_8));
       ConfigurationBuilder builder = builderHolder.getNamedConfigurationBuilders().values().iterator().next();
       Configuration configuration = builder.build();
-
-      return responseBuilder
-            .contentType(APPLICATION_JSON)
-            .entity(JSON_WRITER.toJSON(configuration))
-            .build();
+      responseBuilder.contentType(APPLICATION_JSON)
+            .entity(JSON_WRITER.toJSON(configuration));
+      return CompletableFuture.completedFuture(responseBuilder.build());
    }
 }

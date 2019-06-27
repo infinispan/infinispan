@@ -6,6 +6,11 @@ import static io.netty.handler.codec.http.HttpMethod.HEAD;
 import static io.netty.handler.codec.http.HttpMethod.OPTIONS;
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpMethod.PUT;
+import static org.infinispan.rest.configuration.RestServerConfiguration.COMPRESSION_LEVEL;
+import static org.infinispan.rest.configuration.RestServerConfiguration.CONTEXT_PATH;
+import static org.infinispan.rest.configuration.RestServerConfiguration.CORS_RULES;
+import static org.infinispan.rest.configuration.RestServerConfiguration.EXTENDED_HEADERS;
+import static org.infinispan.rest.configuration.RestServerConfiguration.MAX_CONTENT_LENGTH;
 
 import java.util.List;
 
@@ -17,12 +22,6 @@ import org.infinispan.util.logging.LogFactory;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.cors.CorsConfig;
 import io.netty.handler.codec.http.cors.CorsConfigBuilder;
-
-import static org.infinispan.rest.configuration.RestServerConfiguration.COMPRESSION_LEVEL;
-import static org.infinispan.rest.configuration.RestServerConfiguration.CONTEXT_PATH;
-import static org.infinispan.rest.configuration.RestServerConfiguration.CORS_RULES;
-import static org.infinispan.rest.configuration.RestServerConfiguration.EXTENDED_HEADERS;
-import static org.infinispan.rest.configuration.RestServerConfiguration.MAX_CONTENT_LENGTH;
 
 /**
  * RestServerConfigurationBuilder.
@@ -146,8 +145,4 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       throw logger.unsupportedConfigurationOption();
    }
 
-   @Override
-   public RestServerConfigurationBuilder workerThreads(int workerThreads) {
-      throw logger.unsupportedConfigurationOption();
-   }
 }

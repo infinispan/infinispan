@@ -1,8 +1,10 @@
 package org.infinispan.rest.cachemanager;
 
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
+import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
@@ -65,7 +67,8 @@ public class RestCacheManager<V> {
       tryRegisterMigrationManager(cache);
 
       AdvancedCache<Object, V> encodedCache = (AdvancedCache<Object, V>) cache.getAdvancedCache()
-            .withMediaType(keyContentType.toString(), valueContentType.toString());
+            .withMediaType(keyContentType.toString(), valueContentType.toString())
+            .withFlags(IGNORE_RETURN_VALUES);
 
       knownCaches.putIfAbsent(cacheKey, encodedCache);
       return encodedCache;
@@ -85,29 +88,24 @@ public class RestCacheManager<V> {
       }
    }
 
-   public CacheEntry<Object, V> getInternalEntry(String cacheName, Object key, MediaType keyContentType, MediaType mediaType) {
+   public CompletionStage<CacheEntry<Object, V>> getInternalEntry(String cacheName, Object key, MediaType keyContentType, MediaType mediaType) {
       return getInternalEntry(cacheName, key, false, keyContentType, mediaType);
    }
 
-   public void remove(String cacheName, Object key, MediaType keyContentType, boolean async) {
+   public CompletionStage<V> remove(String cacheName, Object key, MediaType keyContentType) {
       Cache<Object, V> cache = getCache(cacheName, keyContentType, MediaType.MATCH_ALL);
-      if (async) {
-         cache.removeAsync(key);
-      } else {
-         cache.remove(key);
-      }
-
+      return cache.removeAsync(key);
    }
 
    public MediaType getValueConfiguredFormat(String cacheName) {
       return getCache(cacheName).getCacheConfiguration().encoding().valueDataType().mediaType();
    }
 
-   public CacheEntry<Object, V> getInternalEntry(String cacheName, Object key, boolean skipListener, MediaType keyContentType, MediaType mediaType) {
+   public CompletionStage<CacheEntry<Object, V>> getInternalEntry(String cacheName, Object key, boolean skipListener, MediaType keyContentType, MediaType mediaType) {
       AdvancedCache<Object, V> cache =
             skipListener ? getCache(cacheName, keyContentType, mediaType).withFlags(Flag.SKIP_LISTENER_NOTIFICATION) : getCache(cacheName, keyContentType, mediaType);
 
-      return cache.getCacheEntry(key);
+      return cache.getCacheEntryAsync(key);
    }
 
    public String getNodeName() {

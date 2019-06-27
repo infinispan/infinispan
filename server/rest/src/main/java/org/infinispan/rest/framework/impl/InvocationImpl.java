@@ -3,6 +3,7 @@ package org.infinispan.rest.framework.impl;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.rest.framework.Invocation;
@@ -17,11 +18,11 @@ public class InvocationImpl implements Invocation {
 
    private final Set<Method> methods;
    private final Set<String> paths;
-   private final Function<RestRequest, RestResponse> handler;
+   private final Function<RestRequest, CompletionStage<RestResponse>> handler;
    private final String action;
    private final String name;
 
-   private InvocationImpl(Set<Method> methods, Set<String> paths, Function<RestRequest, RestResponse> handler, String action, String name) {
+   private InvocationImpl(Set<Method> methods, Set<String> paths, Function<RestRequest, CompletionStage<RestResponse>> handler, String action, String name) {
       this.methods = methods;
       this.paths = paths;
       this.handler = handler;
@@ -50,7 +51,7 @@ public class InvocationImpl implements Invocation {
    }
 
    @Override
-   public Function<RestRequest, RestResponse> handler() {
+   public Function<RestRequest, CompletionStage<RestResponse>> handler() {
       return handler;
    }
 
@@ -58,7 +59,7 @@ public class InvocationImpl implements Invocation {
       private final Invocations.Builder parent;
       private Set<Method> methods = new HashSet<>();
       private Set<String> paths = new HashSet<>();
-      private Function<RestRequest, RestResponse> handler;
+      private Function<RestRequest, CompletionStage<RestResponse>> handler;
       private String action = null;
       private String name = null;
 
@@ -82,7 +83,7 @@ public class InvocationImpl implements Invocation {
          return this;
       }
 
-      public Builder handleWith(Function<RestRequest, RestResponse> handler) {
+      public Builder handleWith(Function<RestRequest, CompletionStage<RestResponse>> handler) {
          this.handler = handler;
          return this;
       }

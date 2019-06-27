@@ -4,11 +4,13 @@ import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.counter.api.CounterType;
 import org.infinispan.rest.CacheControl;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestResponseException;
@@ -43,33 +45,23 @@ public class CounterResource implements ResourceHandler {
             .create();
    }
 
-   private NettyRestResponse getCounter(RestRequest request) throws RestResponseException {
-      try {
-         String counterName = request.variables().get("counterName");
-         String accept = request.getAcceptHeader();
-         MediaType contentType = accept == null ? MediaType.TEXT_PLAIN : negotiateMediaType(accept);
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         CounterConfiguration configuration = counterManager.getConfiguration(counterName);
-         if (configuration == null) {
-            return responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).entity("Counter not found").build();
-         } else {
-            responseBuilder.contentType(contentType);
-            switch (configuration.type()) {
-               case WEAK:
-                  long value = counterManager.getWeakCounter(counterName).getValue();
-                  responseBuilder.entity(Long.toString(value));
-                  break;
-               case BOUNDED_STRONG:
-               case UNBOUNDED_STRONG:
-                  value = counterManager.getStrongCounter(counterName).getValue().get(1, TimeUnit.MINUTES); // FIXME: make non-blocking in ISPN-10210
-                  responseBuilder.entity(Long.toString(value));
-                  break;
-            }
-         }
-         return responseBuilder.header(HttpHeaderNames.CACHE_CONTROL.toString(), CacheControl.noCache()).build();
-      } catch (Exception e) {
-         throw new RestResponseException(e);
+   private CompletionStage<RestResponse> getCounter(RestRequest request) throws RestResponseException {
+      String counterName = request.variables().get("counterName");
+      String accept = request.getAcceptHeader();
+      MediaType contentType = accept == null ? MediaType.TEXT_PLAIN : negotiateMediaType(accept);
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      CounterConfiguration configuration = counterManager.getConfiguration(counterName);
+      if (configuration == null) {
+         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).entity("Counter not found").build());
       }
+      responseBuilder.contentType(contentType).header(HttpHeaderNames.CACHE_CONTROL.toString(), CacheControl.noCache());
+      CompletionStage<Long> response;
+      if (configuration.type() == CounterType.WEAK) {
+         response = CompletableFuture.completedFuture(counterManager.getWeakCounter(counterName).getValue());
+      } else {
+         response = counterManager.getStrongCounter(counterName).getValue();
+      }
+      return response.thenApply(res -> responseBuilder.entity(Long.toString(res)).build());
    }
 
    private MediaType negotiateMediaType(String accept) {
@@ -79,61 +71,43 @@ public class CounterResource implements ResourceHandler {
    }
 
 
-   private RestResponse addCounter(RestRequest request) {
-      try {
-         String counterName = request.variables().get("counterName");
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         CounterConfiguration configuration = counterManager.getConfiguration(counterName);
-         if (configuration == null) {
-            return responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).entity("Counter not found").build();
-         } else {
-            ContentSource contents = request.contents();
-            long delta;
-            if (contents == null) {
-               delta = 1;
-            } else {
-               String s = contents.asString();
-               delta = Long.parseLong(s);
-            }
-            switch (configuration.type()) {
-               case WEAK:
-                  counterManager.getWeakCounter(counterName).add(delta).get(1, TimeUnit.MINUTES); // FIXME: make non-blocking in ISPN-10210
-                  break;
-               case BOUNDED_STRONG:
-               case UNBOUNDED_STRONG:
-                  long value = counterManager.getStrongCounter(counterName).addAndGet(delta).get(1, TimeUnit.MINUTES); // FIXME: make non-blocking in ISPN-10210
-                  responseBuilder.entity(Long.toString(value));
-                  break;
-            }
-            return responseBuilder.header(HttpHeaderNames.CACHE_CONTROL.toString(), CacheControl.noCache()).build();
-         }
-      } catch (Exception e) {
-         throw new RestResponseException(e);
+   private CompletionStage<RestResponse> addCounter(RestRequest request) {
+      String counterName = request.variables().get("counterName");
+      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+
+      CounterConfiguration configuration = counterManager.getConfiguration(counterName);
+      if (configuration == null) {
+         return CompletableFuture.completedFuture(builder.status(HttpResponseStatus.NOT_FOUND.code()).entity("Counter not found").build());
       }
+      builder.header(HttpHeaderNames.CACHE_CONTROL.toString(), CacheControl.noCache());
+
+      ContentSource contents = request.contents();
+      long delta;
+      if (contents == null) {
+         delta = 1;
+      } else {
+         String s = contents.asString();
+         delta = Long.parseLong(s);
+      }
+      if (configuration.type() == CounterType.WEAK)
+         return counterManager.getWeakCounter(counterName).add(delta).thenApply(v -> builder.build());
+
+      return counterManager.getStrongCounter(counterName).addAndGet(delta).thenApply(value -> builder.entity(Long.toString(value)).build());
    }
 
-   private RestResponse resetCounter(RestRequest request) throws RestResponseException {
-      try {
-         String counterName = request.variables().get("counterName");
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         CounterConfiguration configuration = counterManager.getConfiguration(counterName);
-         if (configuration == null) {
-            return responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).entity("Counter not found").build();
-         } else {
-            switch (configuration.type()) {
-               case WEAK:
-                  counterManager.getWeakCounter(counterName).reset().get(1, TimeUnit.MINUTES); // FIXME: make non-blocking in ISPN-10210
-                  break;
-               case BOUNDED_STRONG:
-               case UNBOUNDED_STRONG:
-                  counterManager.getStrongCounter(counterName).reset().get(1, TimeUnit.MINUTES); // FIXME: make non-blocking in ISPN-10210
-                  break;
-            }
-         }
-         responseBuilder.status(HttpResponseStatus.OK.code());
-         return responseBuilder.build();
-      } catch (Exception e) {
-         throw new RestResponseException(e);
-      }
+   private CompletionStage<RestResponse> resetCounter(RestRequest request) throws RestResponseException {
+      String counterName = request.variables().get("counterName");
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      responseBuilder.status(HttpResponseStatus.OK.code());
+
+      CounterConfiguration configuration = counterManager.getConfiguration(counterName);
+      if (configuration == null) return CompletableFuture.completedFuture(
+            responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).entity("Counter not found").build());
+
+      CompletionStage<Void> result = configuration.type() == CounterType.WEAK ?
+            counterManager.getWeakCounter(counterName).reset() :
+            counterManager.getStrongCounter(counterName).reset();
+
+      return result.thenApply(v -> responseBuilder.build());
    }
 }
