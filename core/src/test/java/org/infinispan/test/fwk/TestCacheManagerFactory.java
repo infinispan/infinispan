@@ -433,6 +433,7 @@ public class TestCacheManagerFactory {
       builder.transport().remoteCommandThreadPool().threadPoolFactory(executorFactoryNoQueue);
       builder.stateTransferThreadPool().threadPoolFactory(executorFactoryNoQueue);
 
+      builder.persistenceThreadPool().threadPoolFactory(executorFactoryWithQueue);
       builder.asyncThreadPool().threadPoolFactory(executorFactoryWithQueue);
       builder.listenerThreadPool().threadPoolFactory(executorFactoryWithQueue);
       builder.transport().transportThreadPool().threadPoolFactory(executorFactoryWithQueue);
