@@ -21,8 +21,8 @@ be available in a future release.
 ====
 endif::productized[]
 
-== Connection management (pooling)
-In order to obtain a connection to the database the JDBC cache store relies on a link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ConnectionFactory.html[ConnectionFactory]
+==== Connection management (pooling)
+In order to obtain a connection to the database the JDBC cache store relies on a link:{javadocroot}/org/infinispan/persistence/jdbc/connectionfactory/ConnectionFactory.html[ConnectionFactory]
 implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource()
 or simpleConnection() methods on the JdbcStringBasedStoreConfigurationBuilder class or declaratively using one of the
 `<connectionPool />`, `<dataSource />` or `<simpleConnection />` elements.
@@ -30,7 +30,7 @@ or simpleConnection() methods on the JdbcStringBasedStoreConfigurationBuilder cl
 {brandname} ships with three ConnectionFactory implementations:
 
 
-*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html[PooledConnectionFactory]
+* link:{javadocroot}/org/infinispan/persistence/jdbc/configuration/PooledConnectionFactoryConfigurationBuilder.html[PooledConnectionFactoryConfigurationBuilder]
 is a factory based on link:https://agroal.github.io/[Agroal], which is configured via the PooledConnectionFactoryConfiguration or
 by specifying a properties file via `PooledConnectionFactoryConfiguration.propertyFile`. Properties must be specified with
 the prefix "org.infinispan.agroal.". An example `agroal.properties` file is shown below:
@@ -57,15 +57,11 @@ org.infinispan.agroal.credential=sa
 
 ----
 
-
-*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html[ManagedConnectionFactory]
+*  link:{javadocroot}/org/infinispan/persistence/jdbc/configuration/ManagedConnectionFactoryConfigurationBuilder.html[ManagedConnectionFactoryConfigurationBuilder]
 is a connection factory that can be used within managed environments, such as application servers. It knows how to look
 into the JNDI tree at a certain location (configurable) and delegate connection management to the DataSource.
-Refer to javadoc link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html[javadoc]
-for details on how this can be configured.
 
-
-*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/SimpleConnectionFactory.html[SimpleConnectionFactory]
+*  link:{javadocroot}/org/infinispan/persistence/jdbc/configuration/SimpleConnectionFactoryConfigurationBuilder.html[SimpleConnectionFactoryConfigurationBuilder]
 is a factory implementation that will create database connection on a per invocation basis. Not recommended in production.
 
 The `PooledConnectionFactory` is generally recommended for stand-alone deployments (i.e. not running within AS or servlet container).
@@ -74,8 +70,8 @@ connection pooling is performed within the `DataSource`.
 
 == Sample configurations
 
-Below is a sample configuration for the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html[JdbcStringBasedStore].
-For detailed description of all the parameters used refer to the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html[JdbcStringBasedStore].
+Below is a sample configuration for the link:{javadocroot}/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html[JdbcStringBasedStore].
+For detailed description of all the parameters used refer to the link:{javadocroot}/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html[JdbcStringBasedStore].
 
 [source,xml]
 ----
