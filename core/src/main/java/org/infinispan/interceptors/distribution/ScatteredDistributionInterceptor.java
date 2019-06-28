@@ -1,8 +1,6 @@
 package org.infinispan.interceptors.distribution;
 
 import static org.infinispan.commands.VisitableCommand.LoadType.DONT_LOAD;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,13 +12,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.MetadataAwareCommand;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -57,6 +56,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ArrayCollector;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -74,7 +74,8 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
-import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.eviction.ActivationManager;
+import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.functional.impl.FunctionalNotifier;
@@ -86,6 +87,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.NotifyHelper;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -110,6 +112,8 @@ import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CommandAckCollector.MultiTargetCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.NonBlockingOrderer;
+import org.infinispan.util.concurrent.NonBlockingOrderer.OPERATION;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -135,18 +139,20 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    @Inject protected CacheNotifier cacheNotifier;
    @Inject protected FunctionalNotifier functionalNotifier;
    @Inject protected KeyPartitioner keyPartitioner;
-   @Inject @ComponentName(ASYNC_OPERATIONS_EXECUTOR)
-   protected ExecutorService cpuExecutor;
-   @Inject @ComponentName(PERSISTENCE_EXECUTOR)
-   protected ExecutorService persistenceExecutor;
+   @Inject PersistenceManager persistenceManager;
+   @Inject Configuration configuration;
+   @Inject NonBlockingOrderer orderer;
+   @Inject EvictionManager evictionManager;
+   @Inject ActivationManager activationManager;
+
+   private boolean hasPassivation;
 
    private volatile Address cachedNextMember;
    private volatile int cachedNextMemberTopology = -1;
-   private boolean passivation;
 
    @Start
-   void start() {
-      passivation = cacheConfiguration.persistence().usingStores() && cacheConfiguration.persistence().passivation();
+   public void start() {
+      hasPassivation = configuration.persistence().passivation();
    }
 
    private final InvocationSuccessFunction putMapCommandHandler = (rCtx, rCommand, rv) -> {
@@ -388,29 +394,52 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       svm.scheduleKeyInvalidation(key, nextVersion, removed);
    }
 
-   private CompletionStage<Void> commitSingleEntryIfNewer(RepeatableReadEntry entry, InvocationContext ctx, VisitableCommand command) {
+   private CompletionStage<Void> commitOperation(RepeatableReadEntry entry, Predicate<RepeatableReadEntry> wasCommitted,
+                                                 InvocationContext ctx, VisitableCommand command) {
       if (!entry.isChanged()) {
          if (trace) {
             log.tracef("Entry has not changed, not committing");
          }
+      } else if (entry.isRemoved()) {
+         // RemoveCommand does not null the entry value
+         entry.setValue(null);
       }
 
-      if (passivation) {
-         CompletionStage<Boolean> stage = CompletableFuture.supplyAsync(() -> updateEntryIfNewer(entry), persistenceExecutor);
-         return stage.thenComposeAsync(committed -> {
-            if (committed) {
-               return NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier, entry.isCreated(), entry.isRemoved(), entry.isExpired(),
-                     entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata());
-            }
-            return CompletableFutures.completedNull();
-         }, cpuExecutor);
-      } else {
-         if (updateEntryIfNewer(entry)) {
+      if (!hasPassivation) {
+         if (wasCommitted.test(entry)) {
             return NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier, entry.isCreated(), entry.isRemoved(), entry.isExpired(),
-                  entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata());
+                  entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata(), evictionManager);
          }
-         return CompletableFutures.completedNull();
       }
+      // Our update cannot use entry.commit and instead uses data container directly - thus we must do the passivation
+      // ourselves
+      Object key = entry.getKey();
+      CompletableFuture<OPERATION> orderingStage = new CompletableFuture<>();
+      CompletionStage<OPERATION> waitStage = orderer.orderOn(key, orderingStage);
+      CompletionStage<Boolean> committedStage;
+      if (waitStage == null) {
+         committedStage = CompletableFutures.booleanStage(wasCommitted, entry);
+      } else {
+         committedStage = waitStage.thenCompose(ignore -> CompletableFutures.booleanStage(wasCommitted, entry));
+      }
+      CompletionStage<Void> lastStage = committedStage.thenCompose(committed -> {
+         if (committed) {
+            CompletionStage<Void> notificationStage = NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier,
+                  entry.isCreated(), entry.isRemoved(), entry.isExpired(), entry, ctx, (FlagAffectedCommand) command,
+                  entry.getOldValue(), entry.getOldMetadata(), evictionManager);
+            return notificationStage.thenCompose(ignore ->
+               activationManager.activateAsync(key, SegmentSpecificCommand.extractSegment(command, key, keyPartitioner))
+            );
+         } else {
+            return CompletableFutures.completedNull();
+         }
+      });
+      return lastStage.whenComplete((ignore, ignoreT) -> orderer.completeOperation(key, orderingStage,
+            entry.isRemoved() ? OPERATION.REMOVE : OPERATION.WRITE));
+   }
+
+   private CompletionStage<Void> commitSingleEntryIfNewer(RepeatableReadEntry entry, InvocationContext ctx, VisitableCommand command) {
+      return commitOperation(entry, this::updateEntryIfNewer, ctx, command);
    }
 
    private boolean updateEntryIfNewer(RepeatableReadEntry entry) {
@@ -458,31 +487,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    }
 
    private CompletionStage<Void> commitSingleEntryIfNoChange(RepeatableReadEntry entry, InvocationContext ctx, VisitableCommand command) {
-      if (!entry.isChanged()) {
-         if (trace) {
-            log.tracef("Entry has not changed, not committing");
-         }
-      }
-      // RemoveCommand does not null the entry value
-      if (entry.isRemoved()) {
-         entry.setValue(null);
-      }
-
-      if (passivation) {
-         CompletionStage<Boolean> stage = CompletableFuture.supplyAsync(() -> updateEntryIfNoChange(entry), persistenceExecutor);
-         return stage.thenComposeAsync(committed -> {
-            if (committed) {
-               NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier, entry.isCreated(), entry.isRemoved(), entry.isExpired(),
-                     entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata());
-            }
-            return CompletableFutures.completedNull();
-         }, cpuExecutor);
-      }
-      if (updateEntryIfNoChange(entry)) {
-         return NotifyHelper.entryCommitted(cacheNotifier, functionalNotifier, entry.isCreated(), entry.isRemoved(), entry.isExpired(),
-               entry, ctx, (FlagAffectedCommand) command, entry.getOldValue(), entry.getOldMetadata());
-      }
-      return CompletableFutures.completedNull();
+      return commitOperation(entry, this::updateEntryIfNoChange, ctx, command);
    }
 
    private boolean updateEntryIfNoChange(RepeatableReadEntry entry) {

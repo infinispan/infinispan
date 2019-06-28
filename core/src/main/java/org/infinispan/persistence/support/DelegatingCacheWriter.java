@@ -8,12 +8,12 @@ import org.infinispan.persistence.spi.InitializationContext;
  * @author Mircea Markus
  * @since 6.0
  */
-public abstract class DelegatingCacheWriter implements CacheWriter {
+public abstract class DelegatingCacheWriter<K, V> implements CacheWriter<K, V> {
 
-   protected final CacheWriter actual;
+   protected final CacheWriter<K, V> actual;
    protected InitializationContext ctx;
 
-   public DelegatingCacheWriter(CacheWriter actual) {
+   public DelegatingCacheWriter(CacheWriter<K, V> actual) {
       this.actual = actual;
    }
 
@@ -39,7 +39,7 @@ public abstract class DelegatingCacheWriter implements CacheWriter {
    }
 
    @Override
-   public void write(MarshallableEntry entry) {
+   public void write(MarshallableEntry<? extends K, ? extends V> entry) {
       actual.write(entry);
    }
 

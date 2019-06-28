@@ -2,16 +2,16 @@ package org.infinispan.container.entries;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import org.infinispan.container.DataContainer;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.container.entries.versioned.Versioned;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.persistence.internal.PersistenceUtil;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.commons.time.TimeService;
+import org.infinispan.persistence.util.EntryLoader;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -32,38 +32,41 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
 
    /**
     *
-    * @param container the data container to check the write skew against
     * @param segment the segment matching this entry
-    * @param persistenceManager the persistence manager to possibly check write skew against
     * @param ctx the invocation context
     * @param versionSeen what version has been seen for this entry
     * @param versionGenerator generator to generate a new version if needed
-    * @param timeService time service to check if entries are expired
     * @return whether a write skew occurred for this entry
     */
-   public boolean performWriteSkewCheck(DataContainer container, int segment, PersistenceManager persistenceManager,
+   public CompletionStage<Boolean> performWriteSkewCheck(EntryLoader entryLoader, int segment,
                                         TxInvocationContext ctx, EntryVersion versionSeen,
-                                        VersionGenerator versionGenerator, TimeService timeService) {
+                                        VersionGenerator versionGenerator) {
       if (versionSeen == null) {
          if (trace) {
             log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!", toStr(key));
          }
          //version seen is null when the entry was not read. In this case, the write skew is not needed.
-         return true;
+         return CompletableFutures.completedTrue();
       }
-      EntryVersion prevVersion;
+      CompletionStage<EntryVersion> entryStage;
       if (ctx.isOriginLocal()) {
-         prevVersion = getCurrentEntryVersion(container, segment, persistenceManager, ctx, versionGenerator, timeService);
+         entryStage = getCurrentEntryVersion(entryLoader, segment, ctx, versionGenerator);
       } else {
          // If this node is an owner and not originator, the entry has been loaded and wrapped under lock,
          // so the version in context should be up-to-date
-         prevVersion = ctx.getCacheTransaction().getVersionsRead().get(key);
+         EntryVersion prevVersion = ctx.getCacheTransaction().getVersionsRead().get(key);
          if (prevVersion == null) {
             // If the command has IGNORE_RETURN_VALUE flags it's possible that the entry was not loaded
             // from cache loader - we have to force load
-            prevVersion = getCurrentEntryVersion(container, segment, persistenceManager, ctx, versionGenerator, timeService);
+            entryStage = getCurrentEntryVersion(entryLoader, segment, ctx, versionGenerator);
+         } else {
+            return CompletableFutures.booleanStage(skewed(prevVersion, versionSeen, versionGenerator));
          }
       }
+      return entryStage.thenApply(prevVersion -> skewed(prevVersion, versionSeen, versionGenerator));
+   }
+
+   private boolean skewed(EntryVersion prevVersion, EntryVersion versionSeen, VersionGenerator versionGenerator) {
       // If it is expired then it is possible the previous version doesn't exist - because entry didn't exist)
       if (isExpired() && prevVersion == versionGenerator.nonExistingVersion()) {
          return true;
@@ -90,24 +93,25 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
       return InequalVersionComparisonResult.EQUAL == result;
    }
 
-   private EntryVersion getCurrentEntryVersion(DataContainer container, int segment, PersistenceManager persistenceManager,
-         TxInvocationContext ctx, VersionGenerator versionGenerator, TimeService timeService) {
-      EntryVersion prevVersion;// on origin, the version seen is acquired without the lock, so we have to retrieve it again
+   private CompletionStage<EntryVersion> getCurrentEntryVersion(EntryLoader entryLoader, int segment, TxInvocationContext ctx, VersionGenerator versionGenerator) {
       // TODO: persistence should be more orthogonal to any entry type - this should be handled in interceptor
-      InternalCacheEntry ice = PersistenceUtil.loadAndStoreInDataContainer(container, segment, persistenceManager, getKey(),
-            ctx, timeService, null);
-      if (ice == null) {
-         if (trace) {
-            log.tracef("No entry for key %s found in data container", toStr(key));
+      CompletionStage<InternalCacheEntry> entry = entryLoader.loadAndStoreInDataContainer(ctx, getKey(), segment, null);
+
+      return entry.thenApply(ice -> {
+         EntryVersion prevVersion;// on origin, the version seen is acquired without the lock, so we have to retrieve it again
+         if (ice == null) {
+            if (trace) {
+               log.tracef("No entry for key %s found in data container", toStr(key));
+            }
+            //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
+            prevVersion = versionGenerator.nonExistingVersion();
+         } else {
+            prevVersion = ice.getMetadata().version();
+            if (prevVersion == null)
+               throw new IllegalStateException("Entries cannot have null versions!");
          }
-         //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
-         prevVersion = versionGenerator.nonExistingVersion();
-      } else {
-         prevVersion = ice.getMetadata().version();
-         if (prevVersion == null)
-            throw new IllegalStateException("Entries cannot have null versions!");
-      }
-      return prevVersion;
+         return prevVersion;
+      });
    }
 
    // This entry is only used when versioning is enabled, and in these

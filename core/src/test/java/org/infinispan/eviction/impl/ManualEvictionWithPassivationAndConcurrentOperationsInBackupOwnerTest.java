@@ -15,6 +15,11 @@ public class ManualEvictionWithPassivationAndConcurrentOperationsInBackupOwnerTe
       extends ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInBackupOwnerTest {
 
    @Override
+   public boolean hasPassivation() {
+      return true;
+   }
+
+   @Override
    protected void configureEviction(ConfigurationBuilder builder) {
       builder.memory().size(-1);
    }

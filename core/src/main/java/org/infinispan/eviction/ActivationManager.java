@@ -20,6 +20,7 @@ public interface ActivationManager {
     * the data container can handle asynchronous passivation/activation.
     * @deprecated since 10.0 - please use {@link #onUpdateAsync(Object, boolean)} instead.
     */
+   @Deprecated
    void onUpdate(Object key, boolean newEntry);
 
    /**
@@ -28,6 +29,7 @@ public interface ActivationManager {
     * the data container can handle asynchronous passivation/activation.
     * @deprecated since 10.0 - please use {@link #onRemoveAsync(Object, boolean)} instead.
     */
+   @Deprecated
    void onRemove(Object key, boolean newEntry);
 
    /**
@@ -36,7 +38,9 @@ public interface ActivationManager {
     * @param key      Key to remove
     * @param newEntry {@code true} if the entry does not exists in-memory
     * @return stage then when complete has updated appropriate stores
+    * @deprecated
     */
+   @Deprecated
    CompletionStage<Void> onUpdateAsync(Object key, boolean newEntry);
 
    /**
@@ -47,8 +51,14 @@ public interface ActivationManager {
     * @param key      Key to activate
     * @param newEntry {@code true} if the entry does not exists in-memory
     * @return stage then when complete has updated appropriate stores
+    * @deprecated
     */
+   @Deprecated
    CompletionStage<Void> onRemoveAsync(Object key, boolean newEntry);
+
+   CompletionStage<Void> activateAsync(Object key, int segment);
+
+   long getPendingActivationCount();
 
    /**
     * Get number of activations executed.

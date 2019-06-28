@@ -1,7 +1,5 @@
 package org.infinispan.interceptors.locking;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.transaction.impl.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
 import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
@@ -10,7 +8,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
@@ -37,18 +34,21 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.eviction.EvictionManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.impl.FunctionalNotifier;
+import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.NotifyHelper;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.remoting.transport.Transport;
@@ -59,8 +59,6 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a
@@ -102,6 +100,11 @@ public interface ClusteringDependentLogic {
          return local;
       }
    }
+
+   /**
+    * Starts the object - must be first wired via component registry
+    */
+   void start();
 
    /**
     * @return information about the location of keys.
@@ -179,6 +182,7 @@ public interface ClusteringDependentLogic {
 
    @Scope(Scopes.NAMED_CACHE)
    abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic {
+      @Inject protected ComponentRegistry componentRegistry;
       @Inject protected DistributionManager distributionManager;
       @Inject protected InternalDataContainer<Object, Object> dataContainer;
       @Inject protected CacheNotifier<Object, Object> notifier;
@@ -188,38 +192,30 @@ public interface ClusteringDependentLogic {
       @Inject protected FunctionalNotifier<Object, Object> functionalNotifier;
       @Inject protected Configuration configuration;
       @Inject protected KeyPartitioner keyPartitioner;
-
-      @Inject @ComponentName(ASYNC_OPERATIONS_EXECUTOR)
-      ExecutorService cpuExecutor;
-      @Inject @ComponentName(PERSISTENCE_EXECUTOR)
-      ExecutorService persistenceExecutor;
+      @Inject protected EvictionManager evictionManager;
 
       protected boolean totalOrder;
       private WriteSkewHelper.KeySpecificLogic keySpecificLogic;
-      private boolean passivationEnabled;
-
-      private static final Log log = LogFactory.getLog(ClusteringDependentLogic.class);
-      private static final boolean trace = log.isTraceEnabled();
+      private EntryLoader entryLoader;
 
       @Start
       public void start() {
          this.totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
          this.keySpecificLogic = initKeySpecificLogic(totalOrder);
-         this.passivationEnabled = configuration.persistence().usingStores() && configuration.persistence().passivation();
+         CacheLoaderInterceptor cli = componentRegistry.getComponent(CacheLoaderInterceptor.class);
+         if (cli != null) {
+            entryLoader = cli;
+         } else {
+            entryLoader = (ctx, key, segment, cmd) -> CompletableFuture.completedFuture(dataContainer.get(segment, key));
+         }
       }
 
       @Override
       public CompletionStage<EntryVersionsMap> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
-         // Write skew is blocking when any store is available
-         if (configuration.persistence().usingStores()) {
-            CompletableFuture<EntryVersionsMap> cf = CompletableFuture.supplyAsync(() ->
-                  createNewVersionsMap(versionGenerator, context, prepareCommand), persistenceExecutor);
-            return CompletionStages.continueOnExecutor(cf, cpuExecutor, prepareCommand);
-         }
-         return CompletableFuture.completedFuture(createNewVersionsMap(versionGenerator, context, prepareCommand));
+         return createNewVersionsMap(versionGenerator, context, prepareCommand);
       }
 
-      private EntryVersionsMap createNewVersionsMap(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+      private CompletionStage<EntryVersionsMap> createNewVersionsMap(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          return totalOrder ?
                totalOrderCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand) :
                clusteredCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
@@ -231,25 +227,6 @@ public interface ClusteringDependentLogic {
             //noinspection unchecked
             return commitClearCommand(dataContainer, ctx, command);
          } else {
-            // If passivation or we have a MergeOnStore entry we will need to hit the store, so do this
-            // on the persistence thread
-            if (passivationEnabled) {
-               CompletableFuture<Void> passivationFuture = new CompletableFuture<>();
-               persistenceExecutor.execute(() -> commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation)
-                     .whenCompleteAsync((v, t) -> {
-                        if (t != null) {
-                           if (trace) {
-                              log.tracef("Continuing with exception after commit operation commit of %s", entry);
-                           }
-                           passivationFuture.completeExceptionally(t);
-                        } else {
-                           if (trace) {
-                              log.tracef("Continuing after commit operation of %s", entry);
-                           }
-                           passivationFuture.complete(v);
-                        }}, cpuExecutor));
-               return passivationFuture;
-            }
             return commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation);
          }
       }
@@ -311,51 +288,55 @@ public interface ClusteringDependentLogic {
 
       protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder);
 
-      private EntryVersionsMap totalOrderCreateNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context,
+      private CompletionStage<EntryVersionsMap> totalOrderCreateNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context,
                                                                                 VersionedPrepareCommand prepareCommand) {
          if (context.isOriginLocal()) {
             throw new IllegalStateException("This must not be reached");
          }
 
-         EntryVersionsMap updatedVersionMap = new EntryVersionsMap();
+         CompletionStage<EntryVersionsMap> updatedVersionMap;
 
          if (!((TotalOrderPrepareCommand) prepareCommand).skipWriteSkewCheck()) {
-            updatedVersionMap = performTotalOrderWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
-                                                                                    persistenceManager, versionGenerator,
-                                                                                    context, keySpecificLogic, timeService,
+            updatedVersionMap = performTotalOrderWriteSkewCheckAndReturnNewVersions(prepareCommand, entryLoader, versionGenerator,
+                                                                                    context, keySpecificLogic,
                                                                                     keyPartitioner);
+         } else {
+            updatedVersionMap = CompletableFuture.completedFuture(new EntryVersionsMap());
          }
 
-         for (WriteCommand c : prepareCommand.getModifications()) {
-            for (Object k : c.getAffectedKeys()) {
-               int segment = SegmentSpecificCommand.extractSegment(c, k, keyPartitioner);
-               if (keySpecificLogic.performCheckOnSegment(segment)) {
-                  if (!updatedVersionMap.containsKey(k)) {
-                     updatedVersionMap.put(k, null);
+         return updatedVersionMap.thenApply(uv -> {
+            for (WriteCommand c : prepareCommand.getModifications()) {
+               for (Object k : c.getAffectedKeys()) {
+                  int segment = SegmentSpecificCommand.extractSegment(c, k, keyPartitioner);
+                  if (keySpecificLogic.performCheckOnSegment(segment)) {
+                     if (!uv.containsKey(k)) {
+                        uv.put(k, null);
+                     }
                   }
                }
             }
-         }
 
-         context.getCacheTransaction().setUpdatedEntryVersions(updatedVersionMap);
-         return updatedVersionMap;
+            context.getCacheTransaction().setUpdatedEntryVersions(uv);
+            return uv;
+         });
       }
 
-      private EntryVersionsMap clusteredCreateNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context,
+      private CompletionStage<EntryVersionsMap> clusteredCreateNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context,
                                                                                VersionedPrepareCommand prepareCommand) {
          // Perform a write skew check on mapped entries.
-         EntryVersionsMap uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
-                                                                         persistenceManager, versionGenerator, context,
-                                                                         keySpecificLogic, timeService, keyPartitioner);
+         CompletionStage<EntryVersionsMap> uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, entryLoader, versionGenerator, context,
+                                                                         keySpecificLogic, keyPartitioner);
 
-         CacheTransaction cacheTransaction = context.getCacheTransaction();
-         EntryVersionsMap uvOld = cacheTransaction.getUpdatedEntryVersions();
-         if (uvOld != null && !uvOld.isEmpty()) {
-            uvOld.putAll(uv);
-            uv = uvOld;
-         }
-         cacheTransaction.setUpdatedEntryVersions(uv);
-         return (uv.isEmpty()) ? null : uv;
+         return uv.thenApply(evm -> {
+            CacheTransaction cacheTransaction = context.getCacheTransaction();
+            EntryVersionsMap uvOld = cacheTransaction.getUpdatedEntryVersions();
+            if (uvOld != null && !uvOld.isEmpty()) {
+               uvOld.putAll(evm);
+               evm = uvOld;
+            }
+            cacheTransaction.setUpdatedEntryVersions(evm);
+            return (evm.isEmpty()) ? null : evm;
+         });
       }
 
       @Override
@@ -415,17 +396,20 @@ public interface ClusteringDependentLogic {
          int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
 
          InternalCacheEntry previousEntry = dataContainer.peek(segment, entry.getKey());
-         Object previousValue = null;
-         Metadata previousMetadata = null;
+         Object previousValue;
+         Metadata previousMetadata;
          if (previousEntry != null) {
             previousValue = previousEntry.getValue();
             previousMetadata = previousEntry.getMetadata();
+         } else {
+            previousValue = null;
+            previousMetadata = null;
          }
-         commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
+         CompletionStage<Void> stage = commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
 
          // Notify after events if necessary
-         return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
-               entry, ctx, command, previousValue, previousMetadata);
+         return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+               entry, ctx, command, previousValue, previousMetadata, evictionManager));
       }
 
       @Override
@@ -462,17 +446,20 @@ public interface ClusteringDependentLogic {
          int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
 
          InternalCacheEntry previousEntry = dataContainer.peek(segment, entry.getKey());
-         Object previousValue = null;
-         Metadata previousMetadata = null;
+         Object previousValue;
+         Metadata previousMetadata;
          if (previousEntry != null) {
             previousValue = previousEntry.getValue();
             previousMetadata = previousEntry.getMetadata();
+         } else {
+            previousValue = null;
+            previousMetadata = null;
          }
-         commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
+         CompletionStage<Void> stage = commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
 
          // Notify after events if necessary
-         return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
-               entry, ctx, command, previousValue, previousMetadata);
+         return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+               entry, ctx, command, previousValue, previousMetadata, evictionManager));
       }
 
       @Override
@@ -518,6 +505,7 @@ public interface ClusteringDependentLogic {
          Object previousValue = null;
          Metadata previousMetadata = null;
 
+         CompletionStage<Void> stage = null;
          // Don't allow the CH to change (and state transfer to invalidate entries)
          // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
@@ -529,7 +517,7 @@ public interface ClusteringDependentLogic {
                   previousValue = previousEntry.getValue();
                   previousMetadata = previousEntry.getMetadata();
                }
-               commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
+               stage =commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
             }
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
@@ -538,15 +526,24 @@ public interface ClusteringDependentLogic {
          if (doCommit.isCommit() && doCommit.isLocal()) {
             boolean created = entry.isCreated();
             boolean removed = entry.isRemoved();
-            boolean expired = false;
+            boolean expired;
             if (removed && entry instanceof MVCCEntry) {
                expired = ((MVCCEntry) entry).isExpired();
+            } else {
+               expired = false;
             }
 
-            return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
-                                        entry, ctx, command, previousValue, previousMetadata);
+            if (stage == null) {
+               return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+                     entry, ctx, command, previousValue, previousMetadata, evictionManager);
+            } else {
+               Object finalPreviousValue = previousValue;
+               Metadata finalPreviousMetadata = previousMetadata;
+               return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+                     entry, ctx, command, finalPreviousValue, finalPreviousMetadata, evictionManager));
+            }
          }
-         return CompletableFutures.completedNull();
+         return stage == null ? CompletableFutures.completedNull() : stage;
       }
 
       @Override
@@ -591,6 +588,7 @@ public interface ClusteringDependentLogic {
          // Don't allow the CH to change (and state transfer to invalidate entries)
          // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
+         CompletionStage<Void> stage = null;
          try {
             doCommit = commitType(command, ctx, segment, entry.isRemoved());
 
@@ -624,7 +622,7 @@ public interface ClusteringDependentLogic {
                // and therefore we have two contexts on one node)
                boolean skipL1Write = isL1Write && previousEntry != null && !previousEntry.isL1Entry();
                if (!skipL1Write) {
-                  commitManager.commit(entry, trackFlag, segment, l1Invalidation || isL1Write, ctx);
+                  stage = commitManager.commit(entry, trackFlag, segment, l1Invalidation || isL1Write, ctx);
                }
             }
          } finally {
@@ -634,15 +632,24 @@ public interface ClusteringDependentLogic {
          if (doCommit.isCommit() && doCommit.isLocal()) {
             boolean created = entry.isCreated();
             boolean removed = entry.isRemoved();
-            boolean expired = false;
+            boolean expired;
             if (removed && entry instanceof MVCCEntry) {
                expired = ((MVCCEntry) entry).isExpired();
+            } else {
+               expired = false;
             }
 
-            return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
-                                        entry, ctx, command, previousValue, previousMetadata);
+            if (stage == null) {
+               return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+                     entry, ctx, command, previousValue, previousMetadata, evictionManager);
+            } else {
+               Object finalPreviousValue = previousValue;
+               Metadata finalPreviousMetadata = previousMetadata;
+               return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier, created,
+                     removed, expired, entry, ctx, command, finalPreviousValue, finalPreviousMetadata, evictionManager));
+            }
          }
-         return CompletableFutures.completedNull();
+         return stage == null ? CompletableFutures.completedNull() : stage;
       }
 
       @Override

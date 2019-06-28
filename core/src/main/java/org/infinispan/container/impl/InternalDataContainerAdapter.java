@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
@@ -19,6 +20,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Wrapper around a {@link DataContainer} to provide operations for use with a {@link InternalDataContainer}. Single
@@ -74,8 +76,9 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
    }
 
    @Override
-   public void evict(int segment, K key) {
+   public CompletionStage<Void> evict(int segment, K key) {
       evict(key);
+      return CompletableFutures.completedNull();
    }
 
    @Override

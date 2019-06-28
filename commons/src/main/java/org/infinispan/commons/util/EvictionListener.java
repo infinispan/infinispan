@@ -7,7 +7,9 @@ import java.util.Map;
  * to the given eviction policy.
  * @author wburns
  * @since 9.0
+ * @deprecated since 10.0 - This class is not used internally anymore
  */
+@Deprecated
 public interface EvictionListener<K, V> {
 
    /**

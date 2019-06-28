@@ -207,13 +207,12 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       Future<Object> get = fork(() -> cache.get(key1));
       readLatch.waitToBlock(30, TimeUnit.SECONDS);
 
+      // Ensures the eviction is complete of key1
+      put.get(30, TimeUnit.SECONDS);
+
       //the first read is blocked. it has check the data container and it didn't found any value
       //this second get should not block anywhere and it should fetch the value from persistence
       assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
-
-      //let the eviction continue and wait for put
-      writeLatch.disable();
-      put.get(30, TimeUnit.SECONDS);
 
       //let the second get continue
       readLatch.disable();
@@ -237,6 +236,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       final Latch writeLatch = new Latch();
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
+
       afterEntryWrappingInterceptor.beforeGet = () -> readLatch.blockIfNeeded();
       final SyncEvictionListener evictionListener = new SyncEvictionListener() {
                @CacheEntriesEvicted
@@ -253,21 +253,16 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       readLatch.enable();
       Future<Object> get;
       try {
-         Future<Object> put = fork(() -> cache.put(key2, "v2"));
+         cache.put(key2, "v2");
          writeLatch.waitToBlock(30, TimeUnit.SECONDS);
 
          //the eviction was trigger and the key is no longer in the map
          get = fork(() -> cache.get(key1));
          readLatch.waitToBlock(30, TimeUnit.SECONDS);
 
-         //let the eviction continue
-         writeLatch.disable();
-
          //the first read is blocked. it has check the data container and it didn't found any value
          //this second get should not block anywhere and it should fetch the value from persistence
          assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.put(key1, "v3"));
-
-         put.get();
       } finally {
 
          //let the get continue
@@ -325,12 +320,10 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          get = fork(() -> cache.get(key1));
          readLatch.waitToBlock(30, TimeUnit.SECONDS);
 
-         //let the eviction continue
-         writeLatch.disable();
+         // Ensures the eviction is complete of key1
+         put.get(30, TimeUnit.SECONDS);
 
          put2 = cache.putAsync(key1, "v3");
-
-         put.get(30, TimeUnit.SECONDS);
 
          //wait until the 2nd put writes to persistence
          writeLatch2.waitToBlock(30, TimeUnit.SECONDS);
@@ -340,7 +333,6 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       }
       assertPossibleValues(key1, get.get(30, TimeUnit.SECONDS), "v1", "v3");
 
-      writeLatch2.disable();
       assertEquals("Wrong value for key " + key1 + " in put operation.", "v1", put2.get(30, TimeUnit.SECONDS));
 
       assertInMemory(key1, "v3");

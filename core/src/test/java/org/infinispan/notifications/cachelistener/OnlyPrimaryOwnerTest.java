@@ -122,6 +122,11 @@ public class OnlyPrimaryOwnerTest {
       public Address getAddress() {
          throw new UnsupportedOperationException();
       }
+
+      @Override
+      public void start() {
+
+      }
    }
 
    public void testOwnership() {

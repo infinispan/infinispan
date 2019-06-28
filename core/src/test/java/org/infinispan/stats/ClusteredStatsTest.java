@@ -1,8 +1,6 @@
 package org.infinispan.stats;
 
 
-import static org.testng.AssertJUnit.assertEquals;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -38,8 +36,10 @@ public class ClusteredStatsTest extends SingleStatsTest {
          cache.put("key" + i, "value" + i);
       }
 
-      refreshClusterStats();
-      assertEquals(CLUSTER_SIZE * (TOTAL_ENTRIES - EVICTION_MAX_ENTRIES), stats.getPassivations());
+      eventuallyEquals(CLUSTER_SIZE * (TOTAL_ENTRIES - EVICTION_MAX_ENTRIES), () -> {
+         refreshClusterStats();
+         return (int) stats.getPassivations();
+      });
    }
 
    protected void refreshClusterStats() {

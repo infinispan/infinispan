@@ -4,10 +4,12 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -17,6 +19,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -82,8 +85,8 @@ public class CommitManager {
     * @param operation if {@code null}, it identifies this commit as originated from a normal operation. Otherwise, it
     * @param ctx
     */
-   public final void commit(final CacheEntry entry, final Flag operation, int segment,
-                            boolean l1Only, InvocationContext ctx) {
+   public final CompletionStage<Void> commit(final CacheEntry entry, final Flag operation, int segment,
+                                             boolean l1Only, InvocationContext ctx) {
       if (trace) {
          log.tracef("Trying to commit. Key=%s. Operation Flag=%s, L1 write/invalidation=%s", toStr(entry.getKey()),
                operation, l1Only);
@@ -95,8 +98,7 @@ public class CommitManager {
             log.tracef("Committing key=%s. It is a L1 invalidation or a normal put and no tracking is enabled!",
                   toStr(entry.getKey()));
          }
-         commitEntry(entry, segment, ctx);
-         return;
+         return commitEntry(entry, segment, ctx);
       }
       if (isTrackDisabled(operation)) {
          //this a put for state transfer but we are not tracking it. This means that the state transfer has ended
@@ -105,8 +107,9 @@ public class CommitManager {
             log.tracef("Not committing key=%s. It is a state transfer key but no track is enabled!",
                   toStr(entry.getKey()));
          }
-         return;
+         return CompletableFutures.completedNull();
       }
+      ByRef<CompletionStage<Void>> byRef = new ByRef<>(null);
       tracker.compute(entry.getKey(), (o, discardPolicy) -> {
          if (discardPolicy != null && discardPolicy.ignore(operation)) {
             if (trace) {
@@ -115,7 +118,7 @@ public class CommitManager {
             }
             return discardPolicy;
          }
-         commitEntry(entry, segment, ctx);
+         byRef.set(commitEntry(entry, segment, ctx));
          DiscardPolicy newDiscardPolicy = calculateDiscardPolicy(operation);
          if (trace) {
             log.tracef("Committed key=%s. Old discard policy=%s. New discard policy=%s", toStr(entry.getKey()),
@@ -123,14 +126,20 @@ public class CommitManager {
          }
          return newDiscardPolicy;
       });
+      CompletionStage<Void> stage = byRef.get();
+      if (stage != null) {
+         return stage;
+      }
+      return CompletableFutures.completedNull();
    }
 
-   private void commitEntry(CacheEntry entry, int segment, InvocationContext ctx) {
+   private CompletionStage<Void> commitEntry(CacheEntry entry, int segment, InvocationContext ctx) {
       if (entry instanceof ReadCommittedEntry) {
-         ((ReadCommittedEntry) entry).commit(segment, dataContainer);
+         return ((ReadCommittedEntry) entry).commit(segment, dataContainer);
       } else {
          entry.commit(dataContainer);
       }
+      return CompletableFutures.completedNull();
    }
 
    /**

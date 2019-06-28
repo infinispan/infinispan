@@ -52,4 +52,9 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    public Address getAddress() {
       return clusteringDependentLogic.getAddress();
    }
+
+   @Override
+   public void start() {
+      clusteringDependentLogic.start();
+   }
 }

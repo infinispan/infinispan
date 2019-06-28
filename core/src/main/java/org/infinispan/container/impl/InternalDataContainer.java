@@ -2,6 +2,7 @@ package org.infinispan.container.impl;
 
 import java.util.Iterator;
 import java.util.Spliterator;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
@@ -89,7 +90,7 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     * @param segment segment for the key
     * @param key The key to evict.
     */
-   void evict(int segment, K key);
+   CompletionStage<Void> evict(int segment, K key);
 
    /**
     * Same as {@link DataContainer#compute(Object, ComputeAction)}  except that the segment of the key can provided to

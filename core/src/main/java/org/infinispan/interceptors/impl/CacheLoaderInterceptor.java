@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
@@ -81,9 +82,12 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.stream.impl.local.AbstractLocalCacheStream;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
@@ -95,6 +99,7 @@ import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.LazyConcatIterator;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -106,7 +111,7 @@ import io.reactivex.Flowable;
  * @since 9.0
  */
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
-public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
+public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor implements EntryLoader<K, V> {
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -366,58 +371,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       CompletionStage<InternalCacheEntry<K, V>> otherCF = pendingLoads.putIfAbsent(key, cf);
 
-      // Another thread is currently retrieving the key from the store
-      if (otherCF == null) {
-         // Make sure we clean up our pendingLoads properly - note this is done before notifying any waiters
-         cf.whenComplete((ignore, t) -> pendingLoads.remove(key));
-         otherCF = cf;
-         int segment = SegmentSpecificCommand.extractSegment(cmd, key, partitioner);
-         CompletionStage<MarshallableEntry<K, V>> stage = PersistenceUtil.loadEntryAsync(persistenceManager, key,
-               segment, ctx, true);
-         stage.whenComplete((me, t) -> {
-            if (t != null) {
-               cf.completeExceptionally(t);
-               return;
-            }
-            try {
-               if (me != null) {
-                  InternalCacheEntry<K, V> ice = PersistenceUtil.convert(me, iceFactory);
-                  if (getStatisticsEnabled()) {
-                     cacheLoads.incrementAndGet();
-                  }
-                  if (trace) {
-                     log.tracef("Loaded entry: %s for key %s from store and attempting to insert into data container",
-                           ice, key);
-                  }
-                  PersistenceUtil.putIfAbsentDataContainer(ice, dataContainer, timeService, segment);
-                  V value = ice.getValue();
-                  CompletionStage<Void> notificationStage = sendNotification(key, value, true, ctx, cmd);
-                  notificationStage = notificationStage.thenCompose(v -> sendNotification(key, value, false, ctx, cmd));
-                  notificationStage.whenComplete((v, innerT) -> {
-                     if (innerT != null) {
-                        cf.completeExceptionally(innerT);
-                     } else {
-                        cf.complete(ice);
-                     }
-                  });
-               } else {
-                  if (trace) {
-                     log.tracef("Missed entry load for key %s from store", key);
-                  }
-                  if (getStatisticsEnabled()) {
-                     cacheMisses.incrementAndGet();
-                  }
-                  cf.complete(null);
-               }
-            } catch (Throwable outerT) {
-               cf.completeExceptionally(outerT);
-            }
-         });
-      }
-
-      // If another thread is completing the request, then resume on a different CPU thread so we don't have to
-      // wait until the other command completes
-      return otherCF.thenAcceptAsync(entry -> {
+      Consumer<? super InternalCacheEntry<K, V>> action = entry -> {
          if (entry != null) {
             entryFactory.wrapExternalEntry(ctx, key, entry, true, cmd instanceof WriteCommand);
          }
@@ -425,7 +379,82 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          if (contextEntry instanceof MVCCEntry) {
             ((MVCCEntry) contextEntry).setLoaded(true);
          }
-      }, cpuExecutor);
+      };
+
+      // If another thread is completing the request, then resume on a different CPU thread so we don't have to
+      // wait until the other command completes
+      if (otherCF != null) {
+         if (trace) {
+            log.tracef("Piggybacking on concurrent cache loader for key %s", key);
+         }
+         return otherCF.thenAcceptAsync(action, cpuExecutor);
+      }
+
+      int segment = SegmentSpecificCommand.extractSegment(cmd, key, partitioner);
+      CompletionStage<InternalCacheEntry<K, V>> result = loadAndStoreInDataContainer(ctx, key, segment, cmd);
+      result.whenComplete((value, throwable) -> {
+         // Make sure we clean up our pendingLoads properly and before completing any responses
+         pendingLoads.remove(key);
+         if (throwable != null) {
+            cf.completeExceptionally(throwable);
+         } else {
+            cf.complete(value);
+         }
+      });
+      return cf.thenAccept(action);
+   }
+
+   public CompletionStage<InternalCacheEntry<K, V>> loadAndStoreInDataContainer(InvocationContext ctx, Object key,
+                                                                                int segment, FlagAffectedCommand cmd) {
+      InternalCacheEntry<K, V> entry = dataContainer.peek(segment, key);
+      boolean includeStores = true;
+      if (entry != null) {
+         if (!entry.canExpire() || !entry.isExpired(timeService.wallClockTime())) {
+            return CompletableFuture.completedFuture(entry);
+         }
+         includeStores = false;
+      }
+
+      if (trace) {
+         log.tracef("Loading entry for key %s", key);
+      }
+      CompletionStage<InternalCacheEntry<K, V>> resultStage = PersistenceUtil.<K, V>loadEntryAsync(persistenceManager, key,
+            segment, ctx, includeStores).thenApply(me -> {
+         if (me != null) {
+            InternalCacheEntry<K, V> ice = PersistenceUtil.convert(me, iceFactory);
+            if (getStatisticsEnabled()) {
+               cacheLoads.incrementAndGet();
+            }
+            if (trace) {
+               log.tracef("Loaded entry: %s for key %s from store and attempting to insert into data container",
+                     ice, key);
+            }
+            PersistenceUtil.putIfAbsentDataContainer(ice, dataContainer, timeService, segment);
+            return ice;
+         } else {
+            if (trace) {
+               log.tracef("Missed entry load for key %s from store", key);
+            }
+            if (getStatisticsEnabled()) {
+               cacheMisses.incrementAndGet();
+            }
+            return null;
+         }
+      });
+
+      if (notifier.hasListener(CacheEntryLoaded.class) || notifier.hasListener(CacheEntryActivated.class)) {
+         return resultStage.thenCompose(ice -> {
+            if (ice != null) {
+               V value = ice.getValue();
+               CompletionStage<Void> notificationStage = sendNotification(key, value, true, ctx, cmd);
+               notificationStage = notificationStage.thenCompose(v -> sendNotification(key, value, false, ctx, cmd));
+               return notificationStage.thenApply(ignore -> ice);
+            } else {
+               return CompletableFutures.completedNull();
+            }
+         });
+      }
+      return resultStage;
    }
 
    private boolean skipLoad(FlagAffectedCommand cmd, Object key, InvocationContext ctx) {

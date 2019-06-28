@@ -3,6 +3,7 @@ package org.infinispan.container.offheap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -17,6 +18,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * @author wburns
@@ -71,7 +73,7 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
 
    @Override
    public void evict(WrappedBytes key) {
-      super.evict(0, key);
+      CompletionStages.join(super.evict(0, key));
    }
 
    @Override
@@ -106,8 +108,8 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
    }
 
    @Override
-   public void evict(int segment, WrappedBytes key) {
-      super.evict(0, key);
+   public CompletionStage<Void> evict(int segment, WrappedBytes key) {
+      return super.evict(0, key);
    }
 
    @Override

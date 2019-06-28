@@ -23,17 +23,16 @@ public interface PassivationManager extends JmxStatisticsExposer {
 
    /**
     * Almost the same as {@link #passivateAsync(InternalCacheEntry)} except that it is performed
-    * synchronously on the same thread that invoked it. This method will eventually be removed when
-    * the data container can handle asynchronous passivation/activation.
+    * synchronously on the same thread that invoked it. This method will be removed very soon!
     * @deprecated since 10.0 - please use {@link #passivateAsync(InternalCacheEntry)} instead.
     */
+   @Deprecated
    void passivate(InternalCacheEntry entry);
 
    /**
-    * This method will block the current thread while passivating the entry. This should be fixed when non blocking
-    * cache stores are implemented. This method does not block while notifying listeners however.
+    * Passivates the entry in a non blocking fashion.
     * @param entry entry to passivate
-    * @return CompletionStage that when complete will have notified all listeners
+    * @return CompletionStage that when complete will have passivated the entry and notified listeners
     */
    CompletionStage<Void> passivateAsync(InternalCacheEntry entry);
 

@@ -31,6 +31,11 @@ public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInP
             .storeName(storeName + storeNamePrefix.getAndIncrement());
    }
 
+   @Override
+   public boolean hasPassivation() {
+      return true;
+   }
+
    @SuppressWarnings("unchecked")
    @Override
    protected void initializeKeyAndCheckData(Object key, Object value) {
@@ -53,8 +58,7 @@ public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInP
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
-      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
-      assertNull("Key " + key + " exists in cache loader.", entryLoaded);
+      eventually(() -> loader.loadEntry(key) == null);
    }
 
    @SuppressWarnings("unchecked")

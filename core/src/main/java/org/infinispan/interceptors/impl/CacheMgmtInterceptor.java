@@ -83,11 +83,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      if (!getStatisticsEnabled(command))
-         return invokeNext(ctx, command);
-
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) ->
-            counters.increment(StripeB.evictionsFieldUpdater, counters.stripeForCurrentThread()));
+      // This is just here to notify that evictions are counted in the data container now by invoking
+      // EvictionManager
+      return super.visitEvictCommand(ctx, command);
    }
 
    @Override

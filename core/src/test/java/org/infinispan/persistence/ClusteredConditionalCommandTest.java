@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.Ownership;
+import org.infinispan.eviction.ActivationManager;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -26,9 +27,11 @@ import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.SkipException;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -73,6 +76,18 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
             .shared(shared);
       builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return builder;
+   }
+
+   @AfterMethod
+   public void afterMethod() {
+      if (passivation) {
+         for (EmbeddedCacheManager cacheManager : cacheManagers) {
+            ActivationManager activationManager = TestingUtil.extractComponent(cacheManager.getCache(PRIVATE_STORE_CACHE_NAME),
+                  ActivationManager.class);
+            // Make sure no passivations are pending, which could leak between tests
+            eventuallyEquals((long) 0, activationManager::getPendingActivationCount);
+         }
+      }
    }
 
    private static <K, V> void writeToStore(CacheHelper<K, V> cacheHelper, Ownership ownership, K key, V value) {

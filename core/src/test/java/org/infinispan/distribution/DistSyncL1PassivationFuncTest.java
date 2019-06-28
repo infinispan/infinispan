@@ -68,7 +68,8 @@ public class DistSyncL1PassivationFuncTest extends BaseDistFunctionalTest {
          keys.add(key);
       }
 
-      assertTrue(ownerCacheStore.size() >= minPassivated);
+      // Passivation is async in the background
+      eventually(() -> ownerCacheStore.size() >= minPassivated);
       assertTrue(MAX_ENTRIES >= ownerCache.getAdvancedCache().getDataContainer().size());
 
       assertEquals(0, nonOwnerCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());

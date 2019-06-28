@@ -34,6 +34,16 @@ public class ActivationManagerStub implements ActivationManager {
    }
 
    @Override
+   public CompletionStage<Void> activateAsync(Object key, int segment) {
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public long getPendingActivationCount() {
+      return 0;
+   }
+
+   @Override
    public long getActivationCount() {
       return 0;
    }

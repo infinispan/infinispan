@@ -3,6 +3,7 @@ package org.infinispan.eviction.impl;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.eviction.EvictionManager;
@@ -24,9 +25,8 @@ public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
    @Inject Configuration cfg;
 
    @Override
-   public CompletionStage<Void> onEntryEviction(Map<K, Map.Entry<K,V>> evicted) {
-      CompletionStage<Void> stage = cacheNotifier.notifyCacheEntriesEvicted(evicted.values(), ImmutableContext.INSTANCE, null);
-
+   public CompletionStage<Void> onEntryEviction(Map<K, Map.Entry<K,V>> evicted, FlagAffectedCommand command) {
+      CompletionStage<Void> stage = cacheNotifier.notifyCacheEntriesEvicted(evicted.values(), ImmutableContext.INSTANCE, command);
       if (cfg.jmxStatistics().enabled()) {
          updateEvictionStatistics(evicted);
       }
