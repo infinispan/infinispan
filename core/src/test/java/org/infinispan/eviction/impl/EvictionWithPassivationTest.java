@@ -2,11 +2,13 @@ package org.infinispan.eviction.impl;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
 
 import java.util.Collections;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
+import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -20,12 +22,14 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -232,12 +236,15 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
    public void testRemovalOfEvictedEntry() throws Exception {
       Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      int phase = evictionListener.phaser.getPhase();
       for (int i = 0; i < EVICTION_MAX_ENTRIES + 1; i++) {
          testCache.put("key" + i, "value" + i);
       }
 
+      // Eviction notifiation can be non blocking async in certain configs - so wait for notification to complete
+      evictionListener.phaser.awaitAdvanceInterruptibly(phase, 10, TimeUnit.SECONDS);
       String evictedKey = evictionListener.getEvictedKey();
-      assertTrue(isEntryInStore(evictedKey));
+      isEntryInStore(evictedKey, true);
       testCache.remove(evictedKey);
       assertFalse(testCache.containsKey(evictedKey));
       assertNull(testCache.get(evictedKey));
@@ -245,27 +252,36 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
    public void testComputeOnEvictedEntry() throws Exception {
       Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      int phase = evictionListener.phaser.getPhase();
       for (int i = 0; i < EVICTION_MAX_ENTRIES + 1; i++) {
          testCache.put("key" + i, "value" + i);
       }
 
+      // Eviction notifiation can be non blocking async in certain configs - so wait for notification to complete
+      evictionListener.phaser.awaitAdvanceInterruptibly(phase, 10, TimeUnit.SECONDS);
       String evictedKey = evictionListener.getEvictedKey();
-      assertTrue(isEntryInStore(evictedKey));
+      isEntryInStore(evictedKey, true);
       testCache.compute(evictedKey, (k ,v) -> v + "-modfied");
-      assertFalse(isEntryInStore(evictedKey));
+      isEntryInStore(evictedKey, false);
    }
 
    public void testRemoveViaComputeOnEvictedEntry() throws Exception {
       Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      int phase = evictionListener.phaser.getPhase();
       for (int i = 0; i < EVICTION_MAX_ENTRIES + 1; i++) {
          testCache.put("key" + i, "value" + i);
       }
 
+      // Eviction notifiation can be non blocking async in certain configs - so wait for notification to complete
+      evictionListener.phaser.awaitAdvanceInterruptibly(phase, 10, TimeUnit.SECONDS);
       String evictedKey = evictionListener.getEvictedKey();
-      assertTrue(isEntryInStore(evictedKey));
+      if (evictedKey == null) {
+         System.currentTimeMillis();
+      }
+      isEntryInStore(evictedKey, true);
       testCache.compute(evictedKey, (k ,v) -> null);
       assertFalse(testCache.containsKey(evictedKey));
-      assertFalse(isEntryInStore(evictedKey));
+      isEntryInStore(evictedKey, false);
    }
 
    public void testCleanStoreOnPut() throws Exception {
@@ -273,18 +289,35 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       testCache.clear();
       putIntoStore("key", "oldValue");
       testCache.put("key", "value");
-      assertFalse(isEntryInStore("key"));
+      isEntryInStore("key", false);
    }
 
-   private boolean isEntryInStore(String key) throws Exception {
+   private void isEntryInStore(String key, boolean expectPresent) throws Exception {
+      assertNotNull(key);
       Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
-      CacheLoader<String, String> loader = TestingUtil.getFirstLoader(testCache);
-      Object loaderKey = key;
+
+      Object loaderKey;
       if (storage == StorageType.OFF_HEAP) {
          GlobalMarshaller gm = TestingUtil.extractGlobalMarshaller(testCache.getCacheManager());
          loaderKey = new WrappedByteArray(gm.objectToByteBuffer(key));
+      } else {
+         loaderKey = key;
       }
-      return loader.contains(loaderKey);
+
+      CompletionStage<MarshallableEntry<String, String>> stage = TestingUtil.extractComponent(testCache, PersistenceManager.class)
+            .loadFromAllStores(loaderKey, true, true);
+      MarshallableEntry<String, String> entry = CompletionStages.join(stage);
+      if (expectPresent) {
+         assertNotNull(entry);
+      } else {
+         assertNull(entry);
+      }
+      CacheLoader<String, String> loader = TestingUtil.getFirstLoader(testCache);
+      if (expectPresent) {
+         eventuallyEquals(entry, () -> loader.loadEntry(loaderKey));
+      } else {
+         assertFalse(loader.contains(loaderKey));
+      }
    }
 
    private void putIntoStore(String key, String value) throws Exception {
@@ -303,12 +336,14 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
    @Listener
    public static class EvictionListener {
-
       private String evictedKey;
+      private final Phaser phaser = new Phaser(1);
 
       @CacheEntriesEvicted
       public void entryEvicted(CacheEntriesEvictedEvent e) {
          evictedKey = (String) e.getEntries().keySet().iterator().next();
+         // Notify main thread we have evicted something
+         phaser.arrive();
       }
 
       public String getEvictedKey() {

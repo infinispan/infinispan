@@ -61,7 +61,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * Puts an entry in the cache along with metadata adding information such lifespan of entry, max idle time, version
     * information...etc.
     * <p/>
-    * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#onUpdate(Object,
+    * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#activateAsync(Object, int)}
     * boolean)}.
     *
     * @param k key under which to store entry
@@ -81,8 +81,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    /**
     * Removes an entry from the cache
     * <p/>
-    * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#onRemove(Object,
-    * boolean)}.
+    * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#activateAsync(Object, int)}
     *
     * @param k key to remove
     * @return entry removed, or null if it didn't exist or had expired
@@ -168,7 +167,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    /**
     * Atomically, it removes the key from {@code DataContainer} and passivates it to persistence.
     * <p/>
-    * The passivation must be done by invoking the method {@link org.infinispan.eviction.PassivationManager#passivate(org.infinispan.container.entries.InternalCacheEntry)}.
+    * The passivation must be done by invoking the method {@link org.infinispan.eviction.PassivationManager#passivateAsync(InternalCacheEntry)}.
     *
     * @param key The key to evict.
     */
@@ -180,8 +179,8 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * See {@link org.infinispan.container.DataContainer.ComputeAction#compute(Object,
     * org.infinispan.container.entries.InternalCacheEntry, InternalEntryFactory)}.
     * <p/>
-    * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#onRemove(Object,
-    * boolean)} or {@link org.infinispan.eviction.ActivationManager#onUpdate(Object, boolean)} depending if the value
+    * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#activateAsync(Object, int)}
+    * depending if the value
     * returned by the {@link org.infinispan.container.DataContainer.ComputeAction} is null or not respectively.
     * <p>
     * Note the entry provided to {@link org.infinispan.container.DataContainer.ComputeAction} may be expired as these

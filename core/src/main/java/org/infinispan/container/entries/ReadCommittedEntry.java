@@ -8,10 +8,13 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EVICTED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -129,20 +132,21 @@ public class ReadCommittedEntry implements MVCCEntry {
       }
    }
 
-   public final void commit(int segment, InternalDataContainer container) {
+   public final CompletionStage<Void> commit(int segment, InternalDataContainer container) {
       if (segment < 0) {
          throw new IllegalArgumentException("Segment must be 0 or greater");
       }
       // only do stuff if there are changes.
       if (shouldCommit()) {
          if (isEvicted()) {
-            container.evict(segment, key);
+            return container.evict(segment, key);
          } else if (isRemoved()) {
             container.remove(segment, key);
          } else if (value != null) {
             container.put(segment, key, value, metadata, created, lastUsed);
          }
       }
+      return CompletableFutures.completedNull();
    }
 
    private boolean shouldCommit() {

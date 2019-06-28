@@ -1,6 +1,5 @@
 package org.infinispan.notifications.cachelistener;
 
-import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.concurrent.CompletionStage;
 
@@ -13,6 +12,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.eviction.EvictionManager;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.metadata.Metadata;
@@ -20,8 +20,9 @@ import org.infinispan.util.concurrent.CompletableFutures;
 
 public class NotifyHelper {
    public static CompletionStage<Void> entryCommitted(CacheNotifier notifier, FunctionalNotifier functionalNotifier,
-                                     boolean created, boolean removed, boolean expired, CacheEntry entry,
-                                     InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+                                                      boolean created, boolean removed, boolean expired, CacheEntry entry,
+                                                      InvocationContext ctx, FlagAffectedCommand command, Object previousValue,
+                                                      Metadata previousMetadata, EvictionManager evictionManager) {
       // We only notify if there is no state transfer flag
       if (FlagBitSets.extractStateTransferFlag(ctx, command) != null) {
          return CompletableFutures.completedNull();
@@ -32,8 +33,7 @@ public class NotifyHelper {
          if (command instanceof RemoveExpiredCommand) {
             stage = notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, entry.getMetadata(), ctx);
          } else if (command instanceof EvictCommand) {
-            stage = notifier.notifyCacheEntriesEvicted(Collections.singleton(
-                  new AbstractMap.SimpleEntry(entry.getKey(), previousValue)), ctx, command);
+            stage = evictionManager.onEntryEviction(Collections.singletonMap(entry.getKey(), entry), command);
          } else if (command instanceof RemoveCommand) {
             stage = notifier.notifyCacheEntryRemoved(entry.getKey(), previousValue, entry.getMetadata(), false, ctx, command);
          } else if (command instanceof InvalidateCommand) {

@@ -30,9 +30,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
-import org.infinispan.eviction.impl.ActivationManagerStub;
 import org.infinispan.eviction.impl.PassivationManagerStub;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
@@ -516,7 +514,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       protected void bootstrapComponents() {
          registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
          registerComponent(new PassivationManagerStub(), PassivationManager.class);
-         registerComponent(new ActivationManagerStub(), ActivationManager.class);
       }
 
       @Override

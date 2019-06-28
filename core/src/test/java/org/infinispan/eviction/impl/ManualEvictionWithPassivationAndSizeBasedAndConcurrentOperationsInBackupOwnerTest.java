@@ -8,9 +8,9 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -24,6 +24,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "eviction.ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInBackupOwnerTest")
 public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInBackupOwnerTest
       extends ManualEvictionWithSizeBasedAndConcurrentOperationsInBackupOwnerTest {
+
+   @Override
+   public boolean hasPassivation() {
+      return true;
+   }
 
    @Override
    protected void configurePersistence(ConfigurationBuilder builder) {
@@ -53,8 +58,7 @@ public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInB
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
-      MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
-      assertNull("Key " + key + " exists in cache loader.", entryLoaded);
+      eventually(() -> loader.loadEntry(key) == null);
    }
 
    @SuppressWarnings("unchecked")

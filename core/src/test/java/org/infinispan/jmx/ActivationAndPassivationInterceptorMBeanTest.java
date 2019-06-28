@@ -4,6 +4,10 @@ import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -14,6 +18,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -114,28 +119,33 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
 
    public void testActivationOnReplace(Method m) throws Exception {
       assertActivationCount(0);
-      assert cache.get(k(m)) == null;
+      assertNull(cache.get(k(m)));
       assertActivationCount(0);
       loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
-      assert loader.contains(k(m));
-      assert cache.replace(k(m), v(m, 2)).equals(v(m));
+      assertTrue(loader.contains(k(m)));
+
+      Object prev = cache.replace(k(m), v(m, 2));
+      assertNotNull(prev);
+      assertEquals(v(m), prev);
       assertActivationCount(1);
-      assert !loader.contains(k(m));
+      assertFalse(loader.contains(k(m)));
    }
 
    public void testActivationOnPutMap(Method m) throws Exception {
       assertActivationCount(0);
-      assert cache.get(k(m)) == null;
+      assertNull(cache.get(k(m)));
       assertActivationCount(0);
       loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
-      assert loader.contains(k(m));
+      assertTrue(loader.contains(k(m)));
 
       Map<String, String> toAdd = new HashMap<String, String>();
       toAdd.put(k(m), v(m, 2));
       cache.putAll(toAdd);
       assertActivationCount(1);
-      assert cache.get(k(m)).equals(v(m, 2));
-      assert !loader.contains(k(m));
+      Object obj = cache.get(k(m));
+      assertNotNull(obj);
+      assertEquals(v(m, 2), obj);
+      assertFalse(loader.contains(k(m)));
    }
 
    public void testPassivationOnEvict(Method m) throws Exception {
@@ -160,9 +170,14 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    }
 
    private void assertActivationCount(int activationCount) throws Exception {
-      assert Integer.valueOf(threadMBeanServer.getAttribute(
-            activationInterceptorObjName, "Activations").toString())
-            .equals(activationCount);
+      eventuallyEquals(activationCount, () -> {
+         try {
+            return Integer.valueOf(threadMBeanServer.getAttribute(
+                  activationInterceptorObjName, "Activations").toString());
+         } catch (Exception e) {
+            throw Util.rewrapAsCacheException(e);
+         }
+      });
    }
 
    private void assertPassivationCount(int activationCount) throws Exception {

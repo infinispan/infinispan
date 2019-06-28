@@ -36,8 +36,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -51,6 +49,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
@@ -60,13 +59,11 @@ import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
-import io.reactivex.Flowable;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
@@ -105,6 +102,7 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.support.DelegatingPersistenceManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
@@ -131,6 +129,8 @@ import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.AssertJUnit;
+
+import io.reactivex.Flowable;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -1571,21 +1571,29 @@ public class TestingUtil {
    }
 
    public static <T extends CacheLoader<K, V>, K, V>  T getFirstLoader(Cache<K, V> cache) {
-      PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
+      PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
       //noinspection unchecked
       return (T) persistenceManager.getAllLoaders().get(0);
    }
 
    @SuppressWarnings("unchecked")
    public static <T extends CacheWriter<K, V>, K, V> T getFirstWriter(Cache<K, V> cache) {
-      PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
+      PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
       return (T) persistenceManager.getAllWriters().get(0);
    }
 
    @SuppressWarnings("unchecked")
    public static <T extends CacheWriter<K, V>, K, V> T getFirstTxWriter(Cache<K, V> cache) {
-      PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
+      PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
       return (T) persistenceManager.getAllTxWriters().get(0);
+   }
+
+   private static PersistenceManagerImpl getActualPersistenceManager(Cache<?, ?> cache) {
+      PersistenceManager persistenceManager = extractComponent(cache, PersistenceManager.class);
+      if (persistenceManager instanceof DelegatingPersistenceManager) {
+         return (PersistenceManagerImpl) ((DelegatingPersistenceManager) persistenceManager).getActual();
+      }
+      return (PersistenceManagerImpl) persistenceManager;
    }
 
    public static <K, V> Set<MarshallableEntry<K, V>> allEntries(AdvancedLoadWriteStore<K, V> cl, Predicate<K> filter) {
@@ -1819,14 +1827,7 @@ public class TestingUtil {
 
    public static void cleanUpDataContainerForCache(Cache<?, ?> cache) {
       InternalDataContainer dataContainer = extractComponent(cache, InternalDataContainer.class);
-      // Anything with passivation has to be done on the persistence thread in the test suite
-      ExecutorService persistenceExecutor = extractComponentRegistry(cache).getComponent(ExecutorService.class,
-            KnownComponentNames.PERSISTENCE_EXECUTOR);
-      try {
-         persistenceExecutor.submit(dataContainer::cleanUp).get(10, TimeUnit.SECONDS);
-      } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
-         throw new CacheException(e);
-      }
+      dataContainer.cleanUp();
    }
 
    // The first call to JbossMarshall::isMarshallable results in an object actually being serialized, the additional

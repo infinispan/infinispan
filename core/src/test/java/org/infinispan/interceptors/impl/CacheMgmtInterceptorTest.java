@@ -12,7 +12,6 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -50,30 +49,6 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
       TestingUtil.inject(interceptor, timeService);
       interceptor.start();
       interceptor.setStatisticsEnabled(true);
-   }
-
-   public void testVisitEvictCommand() throws Throwable {
-      EvictCommand command = new EvictCommand(KEY, 0, 0, null);
-      InvocationStage stage = makeStage(interceptor.visitEvictCommand(ctx, command));
-      assertFalse(stage.isDone());
-
-      timeService.advance(1);
-      nextInterceptor.completeLastInvocation(null);
-
-      assertNull(stage.get());
-      assertEquals(1, interceptor.getEvictions());
-   }
-
-   public void testVisitEvictCommandException() throws Throwable {
-      EvictCommand command = new EvictCommand(KEY, 0, 0, null);
-      InvocationStage stage = makeStage(interceptor.visitEvictCommand(ctx, command));
-      assertFalse(stage.isDone());
-
-      timeService.advance(1);
-      nextInterceptor.completeLastInvocationExceptionally(new TestException());
-
-      expectInvocationException(stage);
-      assertEquals(1, interceptor.getEvictions());
    }
 
    public void testVisitGetKeyValueCommand() throws Throwable {

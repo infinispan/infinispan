@@ -1,7 +1,6 @@
 package org.infinispan.container.offheap;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collections;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -11,6 +10,7 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.AbstractDelegatingInternalDataContainer;
+import org.infinispan.container.impl.AbstractInternalDataContainer;
 import org.infinispan.container.impl.DefaultSegmentedDataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.eviction.EvictionManager;
@@ -24,7 +24,7 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.NonBlockingOrderer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,6 +47,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
 
    @Inject protected EvictionManager evictionManager;
    @Inject protected ComponentRef<PassivationManager> passivator;
+   @Inject protected NonBlockingOrderer orderer;
 
    protected final long maxSize;
    protected final Lock lruLock;
@@ -231,10 +232,9 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             try {
                InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(addressToRemove);
                map.remove(ice.getKey(), addressToRemove);
-               // Note this calls the blocking method as any passivation operations are already invoked
-               // in a blocking thread for safety, thus we don't use the async method
-               passivator.running().passivate(ice);
-               CompletionStages.join(evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice)));
+               // Note this is non blocking now
+               AbstractInternalDataContainer.handleEviction(ice.getKey(), ice, orderer, passivator.running(),
+                     evictionManager, this);
             } finally {
                entryWriteLock.unlock();
             }

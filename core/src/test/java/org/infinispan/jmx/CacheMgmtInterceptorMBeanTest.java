@@ -27,6 +27,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import io.reactivex.exceptions.Exceptions;
+
 /**
  * Test functionality in {@link org.infinispan.interceptors.CacheMgmtInterceptor}.
  *
@@ -82,8 +84,9 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assert cache.get(k(m, "1")).equals(v(m, 1));
       //test implicit eviction
       cache.put(k(m, "2"), v(m, 2));
+      // Evictions of unrelated keys are non blocking now so it may not be updated immediately
+      eventuallyAssertEvictions(2);
       assert loader.contains(k(m, "1")) : "the entry should have been evicted";
-      assertEvictions(2);
    }
 
    public void testGetKeyValue() throws Exception {
@@ -209,9 +212,25 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assertEquals(0.5f, hitRatio);
    }
 
+   private void eventuallyAssertAttributeValue(String attrName, float expectedValue) {
+      eventuallyEquals(expectedValue, () -> {
+         try {
+            String receivedVal = server.getAttribute(mgmtInterceptor, attrName).toString();
+            return Float.parseFloat(receivedVal);
+         } catch (Exception e) {
+            throw Exceptions.propagate(e);
+         }
+      });
+   }
+
    private void assertAttributeValue(String attrName, float expectedValue) throws Exception {
       String receivedVal = server.getAttribute(mgmtInterceptor, attrName).toString();
       assert Float.parseFloat(receivedVal) == expectedValue : "expecting " + expectedValue + " for " + attrName + ", but received " + receivedVal;
+   }
+
+   private void eventuallyAssertEvictions(float expectedValue) {
+      eventuallyAssertAttributeValue("Evictions", expectedValue);
+      assertEquals(expectedValue, (float) advanced.getStats().getEvictions());
    }
 
    private void assertEvictions(float expectedValue) throws Exception {

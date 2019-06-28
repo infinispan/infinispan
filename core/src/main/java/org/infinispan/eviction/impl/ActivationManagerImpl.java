@@ -4,7 +4,7 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.B
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
@@ -36,8 +36,10 @@ import org.infinispan.util.logging.LogFactory;
 public class ActivationManagerImpl implements ActivationManager {
 
    private static final Log log = LogFactory.getLog(ActivationManagerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
-   private final AtomicLong activations = new AtomicLong(0);
+   private final LongAdder activations = new LongAdder();
+   private final LongAdder pendingActivations = new LongAdder();
 
    @Inject PersistenceManager persistenceManager;
    @Inject Configuration cfg;
@@ -64,7 +66,7 @@ public class ActivationManagerImpl implements ActivationManager {
       try {
          if (persistenceManager.deleteFromAllStoresSync(key, keyPartitioner.getSegment(key), PRIVATE)
                && statisticsEnabled) {
-            activations.incrementAndGet();
+            activations.increment();
          }
       } catch (CacheException e) {
          log.unableToRemoveEntryAfterActivation(key, e);
@@ -82,7 +84,7 @@ public class ActivationManagerImpl implements ActivationManager {
          if (throwable != null) {
             log.unableToRemoveEntryAfterActivation(key, throwable);
          } else if (statisticsEnabled && removed != null && removed) {
-            activations.incrementAndGet();
+            activations.increment();
          }
          return null;
       });
@@ -101,14 +103,14 @@ public class ActivationManagerImpl implements ActivationManager {
             //if we are the primary owner
             PersistenceManager.AccessMode mode = primaryOwner ? BOTH : PRIVATE;
             if (persistenceManager.deleteFromAllStoresSync(key, keyPartitioner.getSegment(key), mode) && statisticsEnabled) {
-               activations.incrementAndGet();
+               activations.increment();
             }
          } else {
             //the entry already exists in data container. It may be put during the load by the CacheLoaderInterceptor
             //so it was already activate in the private stores.
             if (primaryOwner && persistenceManager.deleteFromAllStoresSync(key, keyPartitioner.getSegment(key), BOTH) &&
                   statisticsEnabled) {
-               activations.incrementAndGet();
+               activations.increment();
             }
          }
 
@@ -143,7 +145,7 @@ public class ActivationManagerImpl implements ActivationManager {
             if (throwable != null) {
                log.unableToRemoveEntryAfterActivation(key, throwable);
             } else if (statisticsEnabled && removed != null && removed) {
-               activations.incrementAndGet();
+               activations.increment();
             }
             return null;
          });
@@ -152,8 +154,33 @@ public class ActivationManagerImpl implements ActivationManager {
    }
 
    @Override
+   public CompletionStage<Void> activateAsync(Object key, int segment) {
+      if (!passivation) {
+         return CompletableFutures.completedNull();
+      }
+      if (trace) {
+         log.tracef("Activating entry for key %s", key);
+      }
+      if (statisticsEnabled) {
+         pendingActivations.increment();
+      }
+      CompletionStage<Boolean> stage = persistenceManager.deleteFromAllStores(key, segment, PRIVATE);
+      return stage.handle((removed, throwable) -> {
+         if (statisticsEnabled) {
+            pendingActivations.decrement();
+         }
+         if (throwable != null) {
+            log.unableToRemoveEntryAfterActivation(key, throwable);
+         } else if (statisticsEnabled && removed == Boolean.TRUE) {
+            activations.increment();
+         }
+         return null;
+      });
+   }
+
+   @Override
    public long getActivationCount() {
-      return activations.get();
+      return activations.sum();
    }
 
    @ManagedAttribute(
@@ -173,6 +200,11 @@ public class ActivationManagerImpl implements ActivationManager {
          displayName = "Reset statistics"
    )
    public void resetStatistics() {
-      activations.set(0);
+      activations.reset();
+   }
+
+   @Override
+   public long getPendingActivationCount() {
+      return pendingActivations.sum();
    }
 }

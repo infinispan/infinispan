@@ -20,6 +20,7 @@ import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.async.AsyncCacheWriter;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.manager.PassivationPersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.modifications.Modification;
@@ -93,7 +94,7 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
       globalBuilder.defaultCacheName("cache");
       globalBuilder.addModule(TestGlobalConfigurationBuilder.class)
                    .testCacheComponent("cache", PersistenceManager.class.getName(),
-                                       new CustomPersistenceManager());
+                                       new PassivationPersistenceManager(new CustomPersistenceManager()));
       return globalBuilder;
    }
 

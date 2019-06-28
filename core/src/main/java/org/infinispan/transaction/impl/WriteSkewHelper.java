@@ -1,9 +1,11 @@
 package org.infinispan.transaction.impl;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.VersionedRepeatableReadEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -11,12 +13,13 @@ import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.commons.time.TimeService;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Encapsulates write skew logic in maintaining version maps, etc.
@@ -34,18 +37,19 @@ public class WriteSkewHelper {
       }
    }
 
-   public static EntryVersionsMap performWriteSkewCheckAndReturnNewVersions(VersionedPrepareCommand prepareCommand,
-                                                                            DataContainer dataContainer,
-                                                                            PersistenceManager persistenceManager,
-                                                                            VersionGenerator versionGenerator,
-                                                                            TxInvocationContext context,
-                                                                            KeySpecificLogic ksl, TimeService timeService,
-                                                                            KeyPartitioner keyPartitioner) {
+   public static CompletionStage<EntryVersionsMap> performWriteSkewCheckAndReturnNewVersions(VersionedPrepareCommand prepareCommand,
+                                                                                            EntryLoader entryLoader,
+                                                                                            VersionGenerator versionGenerator,
+                                                                                            TxInvocationContext context,
+                                                                                            KeySpecificLogic ksl,
+                                                                                            KeyPartitioner keyPartitioner) {
       EntryVersionsMap uv = new EntryVersionsMap();
       if (prepareCommand.getVersionsSeen() == null) {
          // Do not perform the write skew check if this prepare command is being replayed for state transfer
-         return uv;
+         return CompletableFuture.completedFuture(uv);
       }
+
+      AggregateCompletionStage<EntryVersionsMap> aggregateCompletionStage = CompletionStages.aggregateCompletionStage(uv);
 
       for (WriteCommand c : prepareCommand.getModifications()) {
          for (Object k : c.getAffectedKeys()) {
@@ -57,52 +61,62 @@ public class WriteSkewHelper {
                }
                VersionedRepeatableReadEntry entry = (VersionedRepeatableReadEntry) cacheEntry;
 
-               if (entry.performWriteSkewCheck(dataContainer, segment, persistenceManager, context,
-                                               prepareCommand.getVersionsSeen().get(k), versionGenerator, timeService)) {
-                  IncrementableEntryVersion oldVersion = (IncrementableEntryVersion) entry.getMetadata().version();
-                  IncrementableEntryVersion newVersion = entry.isCreated() || oldVersion == null
-                        ? versionGenerator.generateNew()
-                        : versionGenerator.increment(oldVersion);
-                  uv.put(k, newVersion);
-               } else {
-                  // Write skew check detected!
-                  throw new WriteSkewException("Write skew detected on key " + k + " for transaction " +
-                                                     context.getCacheTransaction(), k);
-               }
+               CompletionStage<Boolean> skewStage = entry.performWriteSkewCheck(entryLoader, segment, context,
+                     prepareCommand.getVersionsSeen().get(k), versionGenerator);
+               aggregateCompletionStage.dependsOn(skewStage.thenAccept(passSkew -> {
+                  if (passSkew) {
+                     IncrementableEntryVersion oldVersion = (IncrementableEntryVersion) entry.getMetadata().version();
+                     IncrementableEntryVersion newVersion = entry.isCreated() || oldVersion == null
+                           ? versionGenerator.generateNew()
+                           : versionGenerator.increment(oldVersion);
+                     // Have to synchronize as we could have returns on different threads due to notifications/loaders etc
+                     synchronized (uv) {
+                        uv.put(entry.getKey(), newVersion);
+                     }
+                  } else {
+                     // Write skew check detected!
+                     throw new WriteSkewException("Write skew detected on key " + k + " for transaction " +
+                           context.getCacheTransaction(), k);
+                  }
+               }));
             }
          }
       }
-      return uv;
+      return aggregateCompletionStage.freeze();
    }
 
-   public static EntryVersionsMap performTotalOrderWriteSkewCheckAndReturnNewVersions(VersionedPrepareCommand prepareCommand,
-                                                                                      DataContainer dataContainer,
-                                                                                      PersistenceManager persistenceManager,
+   public static CompletionStage<EntryVersionsMap> performTotalOrderWriteSkewCheckAndReturnNewVersions(VersionedPrepareCommand prepareCommand,
+                                                                                      EntryLoader entryLoader,
                                                                                       VersionGenerator versionGenerator,
                                                                                       TxInvocationContext context,
                                                                                       KeySpecificLogic ksl,
-                                                                                      TimeService timeService,
                                                                                       KeyPartitioner keyPartitioner) {
       EntryVersionsMap uv = new EntryVersionsMap();
+      AggregateCompletionStage<EntryVersionsMap> aggregateCompletionStage = CompletionStages.aggregateCompletionStage(uv);
       for (WriteCommand c : prepareCommand.getModifications()) {
          for (Object k : c.getAffectedKeys()) {
             int segment = SegmentSpecificCommand.extractSegment(c, k, keyPartitioner);
             if (ksl.performCheckOnSegment(segment)) {
                VersionedRepeatableReadEntry entry = (VersionedRepeatableReadEntry) context.lookupEntry(k);
 
-               if (entry.performWriteSkewCheck(dataContainer, segment, persistenceManager,
-                     context, prepareCommand.getVersionsSeen().get(k), versionGenerator, timeService)) {
-                  //in total order, it does not care about the version returned. It just need the keys validated
-                  uv.put(k, null);
-               } else {
-                  // Write skew check detected!
-                  throw new WriteSkewException("Write skew detected on key " + k + " for transaction " +
-                                                     context.getCacheTransaction(), k);
-               }
+               CompletionStage<Boolean> skewStage = entry.performWriteSkewCheck(entryLoader, segment, context,
+                     prepareCommand.getVersionsSeen().get(k), versionGenerator);
+               aggregateCompletionStage.dependsOn(skewStage.thenAccept(passSkew -> {
+                  if (passSkew) {
+                     //in total order, it does not care about the version returned. It just need the keys validated
+                     synchronized (uv) {
+                        uv.put(k, null);
+                     }
+                  } else {
+                     // Write skew check detected!
+                     throw new WriteSkewException("Write skew detected on key " + k + " for transaction " +
+                           context.getCacheTransaction(), k);
+                  }
+               }));
             }
          }
       }
-      return uv;
+      return aggregateCompletionStage.freeze();
    }
 
    public interface KeySpecificLogic {

@@ -84,7 +84,8 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             cache.put(1, person1);
             cache.put(2, person2);
 
-            assertEquals(cacheListener.numberOfPassivations(), 1);
+            // Notification is non blocking
+            eventuallyEquals(1, cacheListener::numberOfPassivations);
             assertEquals(cacheListener.numberOfActivations(), 0);
             assertTrue(luceneIndexTracker.indexChanged());
 

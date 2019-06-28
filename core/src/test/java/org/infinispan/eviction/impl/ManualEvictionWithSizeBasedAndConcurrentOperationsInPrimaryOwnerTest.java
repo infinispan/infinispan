@@ -4,8 +4,10 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
@@ -26,6 +28,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;
@@ -63,6 +66,10 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
       Cache otherCache = otherCacheManager.getCache();
       TestingUtil.waitForNoRebalance(cache, otherCache);
+   }
+
+   public boolean hasPassivation() {
+      return false;
    }
 
    @Override
@@ -134,14 +141,29 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       Future<Void> evict = evictWithFuture(key1);
       latch.waitToBlock(30, TimeUnit.SECONDS);
 
-      //the eviction was trigger and the key is no longer in the map
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+      if (hasPassivation()) {
+         Future<Object> getFuture = fork(() -> cache.get(key1));
 
-      //let the eviction continue and wait for put
-      latch.disable();
-      evict.get(30, TimeUnit.SECONDS);
+         // Get will be blocked because eviction notification is not yet complete - which is holding orderer
+         // CacheLoader requires acquiring orderer so it can update the data container properly
+         Exceptions.expectException(TimeoutException.class, () -> getFuture.get(50, TimeUnit.MILLISECONDS));
 
-      assertInMemory(key1, "v1");
+         //let the eviction continue and wait for get to complete (which will put it back in memory)
+         latch.disable();
+         evict.get(30, TimeUnit.SECONDS);
+         assertEquals("v1", getFuture.get(10, TimeUnit.SECONDS));
+
+         assertInMemory(key1, "v1");
+      } else {
+         //the eviction was trigger and the key is no longer in the map
+         assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
+
+         //let the eviction continue and wait for put
+         latch.disable();
+         evict.get(30, TimeUnit.SECONDS);
+
+         assertInMemory(key1, "v1");
+      }
    }
 
    @Override
@@ -343,9 +365,9 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
          }
 
          @Override
-         public void evict(int segment, Object key) {
+         public CompletionStage<Void> evict(int segment, Object key) {
             latch.blockIfNeeded();
-            super.evict(segment, key);
+            return super.evict(segment, key);
          }
       };
       TestingUtil.replaceComponent(cache, InternalDataContainer.class, controlledDataContainer, true);

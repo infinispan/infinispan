@@ -77,7 +77,7 @@ public class DataContainerStressTest {
       TimeService timeService = new EmbeddedTimeService();
       TestingUtil.inject(entryFactory, timeService);
       // Mockito cannot be used as it will run out of memory from keeping all the invocations, thus we use blank impls
-      TestingUtil.inject(dc, (EvictionManager) evicted -> CompletableFutures.completedNull(), new PassivationManager() {
+      TestingUtil.inject(dc, (EvictionManager) (evicted, cmd) -> CompletableFutures.completedNull(), new PassivationManager() {
                        @Override
                        public boolean isEnabled() {
                           return false;

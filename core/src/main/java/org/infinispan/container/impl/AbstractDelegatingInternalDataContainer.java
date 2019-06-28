@@ -2,6 +2,7 @@ package org.infinispan.container.impl;
 
 import java.util.Iterator;
 import java.util.Spliterator;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
@@ -43,8 +44,8 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> extends Abst
    }
 
    @Override
-   public void evict(int segment, K key) {
-      delegate().evict(segment, key);
+   public CompletionStage<Void> evict(int segment, K key) {
+      return delegate().evict(segment, key);
    }
 
    @Override

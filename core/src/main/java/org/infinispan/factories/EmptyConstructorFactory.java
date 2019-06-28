@@ -4,6 +4,7 @@ import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CancellationServiceImpl;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.util.concurrent.NonBlockingOrderer;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -32,7 +33,7 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
 
 @DefaultFactoryFor(classes = {BackupReceiverRepository.class, CancellationService.class, EventLogManager.class,
                               InboundInvocationHandler.class, PersistentUUIDManager.class,
-                              RemoteCommandsFactory.class, TimeService.class,
+                              RemoteCommandsFactory.class, TimeService.class, NonBlockingOrderer.class,
                               IteratorHandler.class, GlobalStateManager.class, GlobalConfigurationManager.class})
 
 @Scope(Scopes.GLOBAL)
@@ -61,6 +62,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return new GlobalStateManagerImpl();
       else if (componentName.equals(GlobalConfigurationManager.class.getName()))
          return new GlobalConfigurationManagerImpl();
+      else if (componentName.equals(NonBlockingOrderer.class.getName()))
+         return new NonBlockingOrderer();
 
       throw log.factoryCannotConstructComponent(componentName);
    }

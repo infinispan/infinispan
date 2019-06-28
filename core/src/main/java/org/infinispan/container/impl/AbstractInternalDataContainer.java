@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -24,17 +26,14 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.commons.util.EvictionListener;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.PeekableMap;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
@@ -46,7 +45,10 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.util.CoreImmutables;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.NonBlockingOrderer;
+import org.infinispan.util.concurrent.NonBlockingOrderer.OPERATION;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 import com.github.benmanes.caffeine.cache.CacheWriter;
@@ -69,10 +71,10 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    @Inject protected EvictionManager evictionManager;
    @Inject protected InternalExpirationManager<K, V> expirationManager;
    @Inject protected InternalEntryFactory entryFactory;
-   @Inject protected ActivationManager activator;
    @Inject protected ComponentRef<PassivationManager> passivator;
    @Inject protected Configuration configuration;
    @Inject protected KeyPartitioner keyPartitioner;
+   @Inject protected NonBlockingOrderer orderer;
 
    protected boolean hasPassivation;
 
@@ -157,16 +159,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          if (trace)
             log.tracef("Store %s in container", copy);
 
-         // Passivation should be non blocking at some point in https://issues.jboss.org/browse/ISPN-9723
-         if (hasPassivation) {
-            entries.compute(k, (key, entry) -> {
-               computeEntryWritten(key, copy);
-               activator.onUpdate(key, entry == null);
-               return copy;
-            });
-         } else {
-            entries.put(k, copy);
-         }
+         entries.put(k, copy);
       } else {
          log.tracef("Insertion attempted for key: %s but there was no map created for it at segment: %d", k, segment);
       }
@@ -200,16 +193,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    public InternalCacheEntry<K, V> remove(int segment, Object k) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
       if (entries != null) {
-         final ByRef<InternalCacheEntry<K, V>> reference = new ByRef<>(null);
-         entries.compute((K) k, (key, entry) -> {
-            activator.onRemove(key, entry == null);
-            if (entry != null) {
-               computeEntryRemoved(key, entry);
-            }
-            reference.set(entry);
-            return null;
-         });
-         InternalCacheEntry<K, V> e = reference.get();
+         InternalCacheEntry<K, V> e = entries.remove(k);
          if (trace) {
             log.tracef("Removed %s from container", e);
          }
@@ -225,20 +209,29 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    }
 
    @Override
-   public void evict(int segment, K key) {
+   public CompletionStage<Void> evict(int segment, K key) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
       if (entries != null) {
+         ByRef<CompletionStage<Void>> byRef = new ByRef<>(null);
          entries.computeIfPresent(key, (o, entry) -> {
-            passivator.running().passivate(entry);
+            // Note this is non blocking and we ignore the return value
+            // - we don't need an orderer as it is handled in OrderedClusteringDependentLogic
+            // - we don't need eviction manager either as it is handled in NotifyHelper
+            byRef.set(handleEviction(key, entry, null, passivator.running(), null, this));
             computeEntryRemoved(o, entry);
             return null;
          });
+         CompletionStage<Void> stage = byRef.get();
+         if (stage != null) {
+            return stage;
+         }
       }
+      return CompletableFutures.completedNull();
    }
 
    @Override
    public void evict(K key) {
-      evict(getSegmentForKey(key), key);
+      CompletionStages.join(evict(getSegmentForKey(key), key));
    }
 
    @Override
@@ -250,11 +243,9 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
             return oldEntry;
          } else if (newEntry == null) {
             computeEntryRemoved(k, oldEntry);
-            activator.onRemove(k, false);
             return null;
          }
          computeEntryWritten(k, newEntry);
-         activator.onUpdate(k, oldEntry == null);
          if (trace)
             log.tracef("Store %s in container", newEntry);
          return newEntry;
@@ -488,21 +479,9 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       }
    }
 
-   protected static <K, V> Caffeine<K, InternalCacheEntry<K, V>> applyListener(Caffeine<K, InternalCacheEntry<K, V>> caffeine,
-         EvictionListener<K, InternalCacheEntry<K, V>> listener, CacheWriter<K, InternalCacheEntry<K, V>> additionalWriter) {
-      return caffeine.executor(new WithinThreadExecutor()).removalListener((k, v, c) -> {
-         switch (c) {
-            case SIZE:
-               listener.onEntryEviction(Collections.singletonMap(k, v));
-               break;
-            case EXPLICIT:
-               listener.onEntryRemoved(new ImmortalCacheEntry(k, v));
-               break;
-            case REPLACED:
-               listener.onEntryActivated(k);
-               break;
-         }
-      }).writer(new CacheWriter<K, InternalCacheEntry<K, V>>() {
+   protected Caffeine<K, InternalCacheEntry<K, V>> applyListener(Caffeine<K, InternalCacheEntry<K, V>> caffeine,
+         DefaultEvictionListener listener, CacheWriter<K, InternalCacheEntry<K, V>> additionalWriter) {
+      return caffeine.executor(new WithinThreadExecutor()).writer(new CacheWriter<K, InternalCacheEntry<K, V>>() {
          @Override
          public void write(K key, InternalCacheEntry<K, V> value) {
             if (additionalWriter != null) {
@@ -516,7 +495,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
                additionalWriter.delete(key, value, cause);
             }
             if (cause == RemovalCause.SIZE) {
-               listener.onEntryChosenForEviction(new ImmortalCacheEntry(key, value));
+               listener.onEntryChosenForEviction(key, value);
             }
          }
       });
@@ -526,25 +505,77 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       return (Caffeine<K, V>) Caffeine.newBuilder();
    }
 
-   final class DefaultEvictionListener implements EvictionListener<K, InternalCacheEntry<K, V>> {
-
-      @Override
-      public void onEntryEviction(Map<K, InternalCacheEntry<K, V>> evicted) {
-         CompletionStages.join(evictionManager.onEntryEviction(evicted));
+   /**
+    * Handles eviction logic. That is that it will order notifications, passivation and notify listeners as applicable
+    * @param key key of the evicted entry
+    * @param value evicted entry
+    * @param orderer used to guarantee ordering between other operations. May be null when an operation is already ordered
+    * @param passivator Passivates the entry to the store if necessary
+    * @param evictionManager Handles additional eviction logic. May be null if eviction is also not required
+    * @param <K> key type of the entry
+    * @param <V> value type of the entry
+    * @return stage that when complete all of the eviction logic is complete
+    */
+   public static <K, V> CompletionStage<Void> handleEviction(K key, InternalCacheEntry<K, V> value,
+         NonBlockingOrderer orderer, PassivationManager passivator, EvictionManager<K, V> evictionManager,
+         DataContainer<K, V> dataContainer) {
+      CompletableFuture<OPERATION> future = new CompletableFuture<>();
+      CompletionStage<OPERATION> ordererStage = null;
+      if (orderer != null) {
+         ordererStage = orderer.orderOn(key, future);
       }
-
-      @Override
-      public void onEntryChosenForEviction(Map.Entry<K, InternalCacheEntry<K, V>> entry) {
-         passivator.running().passivate(entry.getValue());
+      if (ordererStage != null) {
+         // This code branch can only occur from 2 different outcomes
+         // 1. Concurrent write operation (put, remove etc.)
+         // 2. Activation where it has written to DataContainer but it was evicted before removing from store
+         return ordererStage.thenCompose(operation -> {
+            // If the entry was removed or was written to before we could get orderer than ignore passivation
+            switch (operation) {
+               case REMOVE:
+                  // If it was a remove operation we always skip the eviction as the entry has been removed
+                  return skipEviction(orderer, key, future, operation);
+               case WRITE:
+                  // During a write we skip the passivation/eviction if the entry is still in the container
+                  // This means we were evicting but had another write concurrently - so the write wins
+                  // If we are here it means this is after the eviction has completed - and thus if the
+                  // entry is in the container it means the write put it there, so we skip eviction
+                  if (dataContainer.containsKey(key)) {
+                     return skipEviction(orderer, key, future, operation);
+                  }
+               default:
+                  // This is a concurrent regular read - in which case we passivate just as normal
+                  return handleNotificationAndOrderer(key, value, passivator.passivateAsync(value), orderer, evictionManager, future);
+            }
+         });
       }
+      return handleNotificationAndOrderer(key, value, passivator.passivateAsync(value), orderer, evictionManager, future);
+   }
 
-      @Override
-      public void onEntryActivated(Object key) {
-         activator.onUpdate(key, true);
+   private static CompletionStage<Void> skipEviction(NonBlockingOrderer orderer, Object key,
+         CompletableFuture<OPERATION> future, OPERATION op) {
+      if (trace) {
+         log.tracef("Skipping passivation for key %s due to %s", key, op);
       }
+      orderer.completeOperation(key, future, OPERATION.READ);
+      return CompletableFutures.completedNull();
+   }
 
-      @Override
-      public void onEntryRemoved(Map.Entry<K, InternalCacheEntry<K, V>> entry) {
+   private static <K, V> CompletionStage<Void> handleNotificationAndOrderer(K key, InternalCacheEntry<K, V> value,
+         CompletionStage<Void> stage, NonBlockingOrderer orderer, EvictionManager<K, V> evictionManager,
+         CompletableFuture<OPERATION> future) {
+      if (evictionManager != null) {
+         stage = stage.thenCompose(ignore -> evictionManager.onEntryEviction(Collections.singletonMap(key, value)));
+      }
+      if (orderer != null) {
+         return stage.whenComplete((ignore, ignoreT) -> orderer.completeOperation(key, future, OPERATION.READ));
+      }
+      return stage;
+   }
+
+   final class DefaultEvictionListener {
+
+      void onEntryChosenForEviction(K key, InternalCacheEntry<K, V> value) {
+         handleEviction(key, value, orderer, passivator.running(), evictionManager, AbstractInternalDataContainer.this);
       }
    }
 

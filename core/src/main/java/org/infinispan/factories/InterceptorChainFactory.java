@@ -247,14 +247,14 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       if (configuration.persistence().usingStores()) {
          if (configuration.persistence().passivation()) {
             if (cacheMode.isClustered()) {
-               interceptorChain.appendInterceptor(createInterceptor(new PassivationClusteredCacheLoaderInterceptor(), PassivationClusteredCacheLoaderInterceptor.class), false);
+               interceptorChain.appendInterceptor(createInterceptor(new PassivationClusteredCacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
             } else {
-               interceptorChain.appendInterceptor(createInterceptor(new PassivationCacheLoaderInterceptor(), PassivationCacheLoaderInterceptor.class), false);
+               interceptorChain.appendInterceptor(createInterceptor(new PassivationCacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
             }
             interceptorChain.appendInterceptor(createInterceptor(new PassivationWriterInterceptor(), PassivationWriterInterceptor.class), false);
          } else {
             if (cacheMode.isClustered()) {
-               interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), ClusteredCacheLoaderInterceptor.class), false);
+               interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
             } else {
                interceptorChain.appendInterceptor(createInterceptor(new CacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
             }

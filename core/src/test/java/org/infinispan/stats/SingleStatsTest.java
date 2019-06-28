@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
+import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -106,9 +107,22 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       refreshStats();
       assertEquals(TOTAL_ENTRIES, stats.getCurrentNumberOfEntries());
       assertEquals(EVICTION_MAX_ENTRIES, stats.getCurrentNumberOfEntriesInMemory());
-      assertEquals(TOTAL_ENTRIES - EVICTION_MAX_ENTRIES, stats.getEvictions());
+      // Eviction stats with passivation can be delayed
+      eventuallyEquals((long) TOTAL_ENTRIES - EVICTION_MAX_ENTRIES, () -> {
+         refreshStats();
+         return stats.getEvictions();
+      });
 
-      cache.evict("key0");
+      int additionalMisses = 0;
+      for (int i = 0; i < TOTAL_ENTRIES; i++) {
+         Cache skipLoaderCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
+         String key = "key" + i;
+         if (skipLoaderCache.containsKey(key)) {
+            cache.evict(key);
+            break;
+         }
+         additionalMisses++;
+      }
 
       refreshStats();
       assertEquals(TOTAL_ENTRIES - EVICTION_MAX_ENTRIES + 1, stats.getEvictions());
@@ -122,11 +136,11 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       assertNull(cache.get("key2"));
 
       refreshStats();
-      assertEquals(2, stats.getHits());
-      assertEquals(2, stats.getMisses());
+      assertEquals(3, stats.getHits());
+      assertEquals(2 + additionalMisses, stats.getMisses());
       assertEquals(2, stats.getRemoveHits());
       assertEquals(1, stats.getRemoveMisses());
-      assertEquals(4, stats.getRetrievals());
+      assertEquals(5 + additionalMisses, stats.getRetrievals());
       assertEquals(TOTAL_ENTRIES, stats.getStores());
 
       cache.put("other-key", "value");

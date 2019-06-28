@@ -1,6 +1,7 @@
 package org.infinispan.persistence;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,9 +13,9 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -23,8 +24,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests the interceptor chain and surrounding logic
@@ -72,7 +71,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    private void assertInCacheNotInStore(Object key, Object value, long lifespanMillis) throws PersistenceException {
       InternalCacheValue se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
       testStoredEntry(se, value, lifespanMillis, "Cache", key);
-      assert !store.contains(key) : "Key " + key + " should not be in store!";
+      eventually(() -> !store.contains(key));
    }
 
    private void assertInStoreNotInCache(Object key, Object value) throws PersistenceException {

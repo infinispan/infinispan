@@ -12,6 +12,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.impl.ImmutableContext;
@@ -22,6 +23,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
+import org.infinispan.persistence.manager.PassivationPersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
@@ -44,6 +46,8 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
    @Inject DistributionManager distributionManager;
    @Inject KeyPartitioner keyPartitioner;
 
+   PassivationPersistenceManager passivationPersistenceManager;
+
    private volatile boolean skipOnStop = false;
 
    boolean statsEnabled = false;
@@ -55,6 +59,11 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
    public void start() {
       enabled = !persistenceManager.isReadOnly() && cfg.persistence().passivation() && cfg.persistence().usingStores();
       if (enabled) {
+         if (!(persistenceManager instanceof PassivationPersistenceManager)) {
+            throw new CacheException("Passivation is enabled, but PersistenceManager is not instanceof " +
+                  "PersistancePassivationManager was " + persistenceManager.getClass());
+         }
+         passivationPersistenceManager = (PassivationPersistenceManager) persistenceManager;
          statsEnabled = cfg.jmxStatistics().enabled();
       }
    }
@@ -68,11 +77,11 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
       return distributionManager != null && !distributionManager.getCacheTopology().isWriteOwner(key);
    }
 
-   private CompletionStage<Boolean> doPassivate(Object key, InternalCacheEntry entry) {
+   private CompletionStage<Boolean> doPassivate(Object key, CacheEntry entry) {
       if (trace) log.tracef("Passivating entry %s", toStr(key));
          MarshallableEntry marshalledEntry = marshalledEntryFactory.create(key, entry.getValue(), entry.getMetadata(),
-               entry.getExpiryTime(), entry.getLastUsed());
-         CompletionStage<Void> stage = persistenceManager.writeToAllNonTxStores(marshalledEntry, keyPartitioner.getSegment(key), BOTH);
+               entry.getCreated(), entry.getLastUsed());
+         CompletionStage<Void> stage = passivationPersistenceManager.passivate(marshalledEntry, keyPartitioner.getSegment(key));
          return stage.handle((v, t) -> {
             if (t != null) {
                log.unableToPassivateEntry(key, t);

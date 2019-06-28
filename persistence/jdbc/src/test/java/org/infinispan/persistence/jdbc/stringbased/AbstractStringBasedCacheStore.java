@@ -1,5 +1,17 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
+import static org.infinispan.test.fwk.UnitTestDatabaseManager.buildTableManipulation;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -13,26 +25,15 @@ import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurat
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.infinispan.test.fwk.UnitTestDatabaseManager.buildTableManipulation;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-
 
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.AbstractStringBasedCacheStore")
-public abstract class AbstractStringBasedCacheStore {
+public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTest {
 
     protected DefaultCacheManager dcm;
     protected ConnectionFactory connectionFactory;
@@ -89,12 +90,13 @@ public abstract class AbstractStringBasedCacheStore {
             assertEquals("v3", cache.get("k3"));
             //now some key is evicted and stored in store
             assertEquals(2, cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size());
-            assertEquals(1, getAllRows().size());
+            // Passivation is async
+            eventuallyEquals(1, () -> getAllRows().size());
             //retrieve from store to cache and remove from store, another key must be evicted
             cache.get("k1");
             cache.get("k2");
             assertEquals(2, cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size());
-            assertEquals(1,  getAllRows().size());
+            eventuallyEquals(1,  () -> getAllRows().size());
 
             cache.stop();
             cache.start();
@@ -111,7 +113,9 @@ public abstract class AbstractStringBasedCacheStore {
     }
 
     public DefaultCacheManager configureCacheManager(boolean passivation, boolean preload, boolean eviction) throws Exception {
-        GlobalConfiguration glob = new GlobalConfigurationBuilder().nonClusteredDefault().defaultCacheName("StringBasedCache").build();
+        GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault().defaultCacheName("StringBasedCache");
+        TestCacheManagerFactory.setNodeName(gcb);
+        GlobalConfiguration glob = gcb.build();
         ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
         JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
                 .persistence()
@@ -163,16 +167,20 @@ public abstract class AbstractStringBasedCacheStore {
 
     }
 
-    private List<String> getAllRows() throws Exception {
-        Connection connection = connectionFactory.getConnection();
-        Statement s = connection.createStatement();
-        ResultSet rs = s.executeQuery(tableManager.getLoadAllRowsSql());
-        List<String> rows = new ArrayList<String>();
-        while (rs.next()) {
-            rows.add(rs.toString());
-        }
-        connectionFactory.releaseConnection(connection);
-        return rows;
+    private List<String> getAllRows() {
+       try {
+          Connection connection = connectionFactory.getConnection();
+          Statement s = connection.createStatement();
+          ResultSet rs = s.executeQuery(tableManager.getLoadAllRowsSql());
+          List<String> rows = new ArrayList<String>();
+          while (rs.next()) {
+             rows.add(rs.toString());
+          }
+          connectionFactory.releaseConnection(connection);
+          return rows;
+       } catch (Throwable t) {
+          throw new AssertionError(t);
+       }
     }
 
     private void deleteAllRows() throws Exception {

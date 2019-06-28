@@ -1,27 +1,23 @@
 package org.infinispan.interceptors.impl;
 
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
-
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.eviction.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.concurrent.NonBlockingOrderer;
 
 public class PassivationClusteredCacheLoaderInterceptor<K, V> extends ClusteredCacheLoaderInterceptor<K, V> {
-   private static final Log log = LogFactory.getLog(PassivationClusteredCacheLoaderInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
-
-   @Inject
-   @ComponentName(PERSISTENCE_EXECUTOR)
-   ExecutorService persistenceExecutor;
+   @Inject NonBlockingOrderer orderer;
+   @Inject ActivationManager activationManager;
 
    @Override
-   protected CompletionStage<Void> loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
-      return PassivationCacheLoaderInterceptor.asyncLoad(persistenceExecutor, this, key, cmd, ctx);
+   public CompletionStage<InternalCacheEntry<K, V>> loadAndStoreInDataContainer(InvocationContext ctx, Object key,
+                                                                                int segment, FlagAffectedCommand cmd) {
+      Supplier<CompletionStage<InternalCacheEntry<K, V>>> supplier = () -> super.loadAndStoreInDataContainer(ctx, key, segment, cmd);
+      return PassivationCacheLoaderInterceptor.handlePassivationLoad(key, segment, orderer, activationManager, supplier);
    }
 }

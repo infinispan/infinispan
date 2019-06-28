@@ -1,5 +1,6 @@
 package org.infinispan.distribution.groups;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import io.reactivex.Flowable;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -31,6 +31,8 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.logging.Log;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+
+import io.reactivex.Flowable;
 
 /**
  * It tests the grouping advanced interface.
@@ -140,7 +142,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
       AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
 
       testCache.testCache.removeGroup(GROUP);
-      AssertJUnit.assertTrue(testCache.testCache.getGroup(GROUP).isEmpty());
+      AssertJUnit.assertEquals(Collections.emptyMap(), testCache.testCache.getGroup(GROUP));
    }
 
    public void testRemoveGroupKeysWithPersistence() {
@@ -151,7 +153,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
       AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
 
       testCache.testCache.removeGroup(GROUP);
-      AssertJUnit.assertTrue(testCache.testCache.getGroup(GROUP).isEmpty());
+      AssertJUnit.assertEquals(Collections.emptyMap(), testCache.testCache.getGroup(GROUP));
    }
 
    public void testRemoveGroupKeysWithPersistenceAndPassivation() {
@@ -162,7 +164,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
       AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
 
       testCache.testCache.removeGroup(GROUP);
-      AssertJUnit.assertTrue(testCache.testCache.getGroup(GROUP).isEmpty());
+      AssertJUnit.assertEquals(Collections.emptyMap(), testCache.testCache.getGroup(GROUP));
    }
 
    public void testRemoveGroupKeysWithPersistenceAndSkipCacheWriter() {

@@ -52,7 +52,7 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
       assert store.contains("k");
 
       assert "v".equals(cache.get("k"));
-      assert !store.contains("k");
+      eventually(() -> !store.contains("k"));
 
       cache.stop();
       cache.start();
@@ -61,6 +61,6 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
 
       assert store.contains("k");
       assert "v".equals(cache.get("k"));
-      assert !store.contains("k");
+      eventually(() -> !store.contains("k"));
    }
 }

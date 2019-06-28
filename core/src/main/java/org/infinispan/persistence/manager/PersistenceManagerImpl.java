@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -638,6 +639,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public CompletionStage<Boolean> deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
+      Objects.requireNonNull(key);
       assert !Thread.currentThread().getName().startsWith("persistence") : "Thread name is: " + Thread.currentThread().getName();
       return supplyOnPersistenceExAndContinue(traceId -> deleteFromAllStoresSync(key, segment, predicate, traceId),
             "Deleting from all stores for id %d");
@@ -838,7 +840,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public CompletionStage<MarshallableEntry> loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+   public <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
       assert !Thread.currentThread().getName().startsWith("persistence") : "Thread name is: " + Thread.currentThread().getName();
       return supplyOnPersistenceExAndContinue(traceId -> loadFromAllStoresSync(key, segment, localInvocation, includeStores, traceId),
             "Loading from first store for id %d");
