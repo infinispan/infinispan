@@ -60,6 +60,6 @@
 // Dependencies
 //
 //Spring Boot 1.5.x
-:sb_starter: 1.0.7.Final-redhat-00004
+:sb_starter: 1.0.7.Final-redhat-00006
 //Spring Boot 2.x
-:sb2_starter: 2.1.5.Final-redhat-00005
+:sb2_starter: 2.1.5.Final-redhat-00007
