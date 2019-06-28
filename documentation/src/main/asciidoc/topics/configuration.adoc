@@ -192,7 +192,7 @@ NOTE: the parser supports a minimal subset of the XInclude spec (no support for 
 [[cache_configuration_declarative_ref]]
 === Declarative configuration reference
 
-For more details on the declarative configuration schema, refer to the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs[configuration reference].
+For more details on the declarative configuration schema, refer to the link:{configdocroot}[configuration reference].
 If you are using XML editing tools for configuration writing you can use the provided {brandname} link:http://infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[schema] to assist you.
 
 [[cache_configuration_programmatic]]
@@ -410,7 +410,7 @@ Configuration config = new ConfigurationBuilder()
   .build();
 ----
 
-For information on the individual configuration options, please check the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/[configuration guide] .
+For information on the individual configuration options, please check the link:{configdocroot}[configuration guide].
 
 [[cache_configuration_migration]]
 ==  Configuration Migration Tools

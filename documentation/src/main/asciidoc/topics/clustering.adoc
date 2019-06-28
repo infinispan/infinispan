@@ -302,7 +302,7 @@ same segments regardless of cluster topology changes. It is important that the
 key-to-segment mapping evenly distributes the number of segments allocated to each node while minimizing the number of segments that must move when the cluster topology changes.
 
 You can customize the key-to-segment mapping by configuring a
-link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner] or by using the
+link:{javadocroot}/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner] or by using the
 link:#grouping_api[Grouping API].
 
 However, {brandname} provides the following implementations:
@@ -683,9 +683,9 @@ Or, if you are using XML:
 
 `AdvancedCache` has two group-specific methods:
 
-link:http://docs.jboss.org/infinispan/{infinispanVersion}/apidocs/org/infinispan/AdvancedCache.html#getGroup-java.lang.String-[getGroup(groupName)]::
+link:{javadocroot}/org/infinispan/AdvancedCache.html#getGroup-java.lang.String-[getGroup(groupName)]::
   Retrieves all keys in the cache that belong to a group.
-link:http://docs.jboss.org/infinispan/{infinispanVersion}/apidocs/org/infinispan/AdvancedCache.html#removeGroup-java.lang.String-[removeGroup(groupName)]::
+link:{javadocroot}/org/infinispan/AdvancedCache.html#removeGroup-java.lang.String-[removeGroup(groupName)]::
   Removes all the keys in the cache that belong to a group.
 
 Both methods iterate over the entire data container and store (if present), so they can
@@ -742,7 +742,7 @@ the performance benefit.
 
 === Asynchronous Communications
 All clustered cache modes can be configured to use asynchronous communications with the
-link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`mode="ASYNC"`]
+link:{configdocroot}[`mode="ASYNC"`]
 attribute on the `<replicated-cache/>`, `<distributed-cache>`, or `<invalidation-cache/>`
 element.
 
