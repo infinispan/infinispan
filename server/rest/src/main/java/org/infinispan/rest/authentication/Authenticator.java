@@ -1,7 +1,12 @@
 package org.infinispan.rest.authentication;
 
-import org.infinispan.rest.NettyRestRequest;
-import org.infinispan.rest.RestResponseException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.rest.NettyRestResponse;
+import org.infinispan.rest.RestServer;
+import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.rest.framework.RestResponse;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -12,13 +17,21 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public interface Authenticator {
 
+   RestResponse VOID_RESPONSE = new NettyRestResponse.Builder().build();
+
+   CompletionStage<RestResponse> COMPLETED_VOID_RESPONSE = CompletableFuture.completedFuture(VOID_RESPONSE);
+
    /**
-    * Challenges specific {@link NettyRestRequest} for authentication.
+    * Challenges specific {@link RestRequest} for authentication.
     *
     * @param request Request to be challenged.
-    * @throws RestResponseException Thrown on error.
-    * @throws AuthenticationException Thrown if authentication fails.
+    * @return a {@link RestResponse} wrapped in a {@link CompletionStage}
     */
-   void challenge(NettyRestRequest request, ChannelHandlerContext ctx) throws RestResponseException;
+   CompletionStage<RestResponse> challenge(RestRequest request, ChannelHandlerContext ctx);
 
+   /**
+    * Invoked by the {@link RestServer} on startup. Can perform additional configuration
+    * @param restServer
+    */
+   default void init(RestServer restServer) {}
 }

@@ -1,8 +1,9 @@
 package org.infinispan.rest.framework.impl;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+
+import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.rest.framework.ContentSource;
@@ -21,7 +22,7 @@ public class SimpleRequest implements RestRequest {
    private final ContentSource contents;
    private Map<String, String> variables;
    private String action;
-   private Principal principal;
+   private Subject subject;
 
    private SimpleRequest(Method method, String path, Map<String, String> headers, ContentSource contents) {
       QueryStringDecoder queryStringDecoder = new QueryStringDecoder(path);
@@ -44,6 +45,21 @@ public class SimpleRequest implements RestRequest {
    @Override
    public String path() {
       return path;
+   }
+
+   @Override
+   public String uri() {
+      return null;
+   }
+
+   @Override
+   public String header(String name) {
+      return null;
+   }
+
+   @Override
+   public List<String> headers(String name) {
+      return null;
    }
 
    @Override
@@ -138,13 +154,13 @@ public class SimpleRequest implements RestRequest {
    }
 
    @Override
-   public Principal getPrincipal() {
-      return principal;
+   public Subject getSubject() {
+      return subject;
    }
 
    @Override
-   public void setPrincipal(Principal principal) {
-      this.principal = principal;
+   public void setSubject(Subject principal) {
+      this.subject = subject;
    }
 
    @Override

@@ -1,8 +1,10 @@
 package org.infinispan.rest.authentication.impl;
 
-import org.infinispan.rest.NettyRestRequest;
-import org.infinispan.rest.RestResponseException;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.rest.authentication.Authenticator;
+import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.rest.framework.RestResponse;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -12,8 +14,8 @@ import io.netty.channel.ChannelHandlerContext;
  * @author Sebastian Łaskawiec
  */
 public class VoidAuthenticator implements Authenticator {
-
    @Override
-   public void challenge(NettyRestRequest request, ChannelHandlerContext ctx) throws RestResponseException {
+   public CompletionStage<RestResponse> challenge(RestRequest request, ChannelHandlerContext ctx) {
+      return COMPLETED_VOID_RESPONSE;
    }
 }

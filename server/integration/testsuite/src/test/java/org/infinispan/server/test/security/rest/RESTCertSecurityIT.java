@@ -37,7 +37,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.security.JBossJSSESecurityDomain;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -95,8 +94,6 @@ public class RESTCertSecurityIT {
        }
     }
 
-
-    @Ignore
     public void testSecuredReadWriteOperations() throws Exception {
         //correct alias for the certificate
         put(client1, keyAddress(KEY_A), HttpStatus.SC_OK);

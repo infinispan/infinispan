@@ -1,8 +1,9 @@
 package org.infinispan.rest.framework;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+
+import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
 
@@ -14,6 +15,8 @@ public interface RestRequest {
    Method method();
 
    String path();
+
+   String uri();
 
    ContentSource contents();
 
@@ -51,12 +54,15 @@ public interface RestRequest {
 
    Long getLastUsedHeader();
 
-   Principal getPrincipal();
+   Subject getSubject();
 
-   void setPrincipal(Principal principal);
+   void setSubject(Subject principal);
 
    void setVariables(Map<String, String> variables);
 
    void setAction(String action);
 
+   String header(String name);
+
+   List<String> headers(String name);
 }
