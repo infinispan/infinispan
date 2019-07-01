@@ -495,7 +495,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private void warnAboutUberJarDuplicates() {
       UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
       scanner.isClasspathCorrectAsync()
-            .thenAcceptAsync(isClasspathCorrect -> {
+            .thenAccept(isClasspathCorrect -> {
                if (!isClasspathCorrect) {
                   log.warnAboutUberJarDuplicates();
                }

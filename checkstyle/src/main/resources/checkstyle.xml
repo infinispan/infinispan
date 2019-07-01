@@ -116,6 +116,16 @@
         <!--&lt;!&ndash; Required to get SuppressionCommentFilter to work &ndash;&gt;-->
         <!--<module name="FileContentsHolder" />-->
 
+        <!-- We don't want to run tasks on the common pool -->
+        <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
+            <property name="methodPattern" value="(acceptEither|applyToEither|runAfterBoth|runAfterEither|thenAcceptBoth|thenCombine)Async"/>
+            <property name="argumentCount" value="2"/>
+        </module>
+        <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
+            <property name="methodPattern" value="(handle|thenAccept|thenApply|thenCompose|thenRun|whenComplete)Async"/>
+            <property name="argumentCount" value="1"/>
+        </module>
+
     </module>
 
     <!-- We are not using NewLineAtEndOfFile because the new line chars change
