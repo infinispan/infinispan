@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,11 +20,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestClassLocal;
@@ -178,7 +181,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
                } catch (InterruptedException | TimeoutException e) {
                   throw new RuntimeException(e);
                }
-            });
+            }, TestingUtil.extractGlobalComponent(cm1, ExecutorService.class, KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR));
             Throwable t = exchanger.exchange(null, 10, TimeUnit.SECONDS);
             assertNotNull(t);
             assertEquals(TestException.class, t.getClass());
@@ -460,7 +463,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
                } catch (InterruptedException | TimeoutException e) {
                   throw new RuntimeException(e);
                }
-            });
+            }, TestingUtil.extractGlobalComponent(cm1, ExecutorService.class, KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR));
             Throwable t = exchanger.exchange(null, 10, TimeUnit.SECONDS);
             assertNotNull(t);
             assertEquals(NullPointerException.class, t.getClass());

@@ -278,7 +278,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    private void warnAboutUberJarDuplicates() {
       UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
       scanner.isClasspathCorrectAsync()
-            .thenAcceptAsync(isClasspathCorrect -> {
+            .thenAccept(isClasspathCorrect -> {
                if(!isClasspathCorrect)
                   log.warnAboutUberJarDuplicates();
             });
