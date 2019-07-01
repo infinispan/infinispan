@@ -113,7 +113,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       }
    }
 
-   protected ThreadPoolExecutor getExecutor() {
+   public ThreadPoolExecutor getExecutor() {
       if (this.executor == null || this.executor.isShutdown()) {
          DefaultThreadFactory factory = new DefaultThreadFactory(getQualifiedName() + "-ServerHandler");
          int workerThreads = getWorkerThreads();

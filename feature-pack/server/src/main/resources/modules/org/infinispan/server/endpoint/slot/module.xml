@@ -7,7 +7,7 @@
    <dependencies>
       <module name="javax.api" />
       <module name="javax.servlet.api" />
-      <module name="io.netty" slot="@infinispan.module.slot@"/>
+      <!-- Netty is exported from org.infinispan.server -->
       <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.scripting" services="import" slot="@infinispan.module.slot@"/>

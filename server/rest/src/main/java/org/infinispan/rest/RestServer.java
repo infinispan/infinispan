@@ -97,6 +97,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    @Override
    protected void startInternal(RestServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
       super.startInternal(configuration, cacheManager);
+      authenticator.init(this);
       restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
       Health health = cacheManager.getHealth();
       String rootContext = configuration.startTransport() ? configuration.contextPath() : "*";

@@ -1,16 +1,19 @@
 package org.infinispan.rest.authentication.impl;
 
-import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
+import javax.security.auth.Subject;
 
-import org.infinispan.rest.NettyRestRequest;
-import org.infinispan.rest.RestResponseException;
-import org.infinispan.rest.authentication.AuthenticationException;
+import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.authentication.Authenticator;
+import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.rest.framework.RestResponse;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslHandler;
 
 /**
@@ -25,15 +28,17 @@ public class ClientCertAuthenticator implements Authenticator {
    }
 
    @Override
-   public void challenge(NettyRestRequest request, ChannelHandlerContext ctx) throws RestResponseException {
+   public CompletionStage<RestResponse> challenge(RestRequest request, ChannelHandlerContext ctx) {
       try {
          SslHandler sslHandler = ctx.pipeline().get(SslHandler.class);
          SSLSession session = sslHandler.engine().getSession();
-         request.setPrincipal(session.getPeerPrincipal());
-         return;
+         Subject subject = new Subject();
+         subject.getPrincipals().add(session.getPeerPrincipal());
+         request.setSubject(subject);
+         return COMPLETED_VOID_RESPONSE;
       } catch (SSLPeerUnverifiedException e) {
          // Ignore any SSLPeerUnverifiedExceptions
       }
-      throw new AuthenticationException(Optional.empty());
+      return CompletableFuture.completedFuture(new NettyRestResponse.Builder().status(HttpResponseStatus.UNAUTHORIZED).build());
    }
 }

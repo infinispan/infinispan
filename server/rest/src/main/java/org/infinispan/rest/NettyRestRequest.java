@@ -1,8 +1,9 @@
 package org.infinispan.rest;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+
+import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.rest.framework.ContentSource;
@@ -14,13 +15,14 @@ import org.infinispan.util.logging.LogFactory;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.util.ReferenceCounted;
 
 /**
  * A {@link RestRequest} backed by Netty.
  *
  * @since 10.0
  */
-public class NettyRestRequest implements RestRequest {
+public class NettyRestRequest implements RestRequest, ReferenceCounted {
 
    private final static Log logger = LogFactory.getLog(NettyRestRequest.class, Log.class);
 
@@ -38,11 +40,11 @@ public class NettyRestRequest implements RestRequest {
    private final String path;
    private final ContentSource contentSource;
    private String action;
-   private Principal principal;
+   private Subject subject;
    private Map<String, String> variables;
 
    NettyRestRequest(FullHttpRequest request) {
-      this.request = request;
+      this.request = request.retain();
       QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.uri());
       this.parameters = queryStringDecoder.parameters();
       this.path = queryStringDecoder.path();
@@ -61,6 +63,21 @@ public class NettyRestRequest implements RestRequest {
    @Override
    public String path() {
       return path;
+   }
+
+   @Override
+   public String uri() {
+      return request.uri();
+   }
+
+   @Override
+   public String header(String name) {
+      return request.headers().get(name);
+   }
+
+   @Override
+   public List<String> headers(String name) {
+      return request.headers().getAll(name);
    }
 
    @Override
@@ -160,14 +177,12 @@ public class NettyRestRequest implements RestRequest {
       return getHeaderAsLong(LAST_USED_HEADER);
    }
 
-   @Override
-   public Principal getPrincipal() {
-      return principal;
+   public Subject getSubject() {
+      return subject;
    }
 
-   @Override
-   public void setPrincipal(Principal principal) {
-      this.principal = principal;
+   public void setSubject(Subject subject) {
+      this.subject = subject;
    }
 
    @Override
@@ -195,5 +210,53 @@ public class NettyRestRequest implements RestRequest {
          logger.warnInvalidNumber(header, headerValue);
          return null;
       }
+   }
+
+   @Override
+   public String toString() {
+      return "NettyRestRequest{" +
+            request.method().name() +
+            " " + request.uri() +
+            ", subject=" + subject +
+            '}';
+   }
+
+   @Override
+   public int refCnt() {
+      return request.refCnt();
+   }
+
+   @Override
+   public NettyRestRequest retain() {
+      request.retain();
+      return this;
+   }
+
+   @Override
+   public NettyRestRequest retain(int increment) {
+      request.retain(increment);
+      return this;
+   }
+
+   @Override
+   public NettyRestRequest touch() {
+      request.touch();
+      return this;
+   }
+
+   @Override
+   public NettyRestRequest touch(Object hint) {
+      request.touch(hint);
+      return this;
+   }
+
+   @Override
+   public boolean release() {
+      return request.release();
+   }
+
+   @Override
+   public boolean release(int decrement) {
+      return request.release();
    }
 }
