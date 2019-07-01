@@ -11,7 +11,6 @@
     <xsl:param name="auth.method" select="'BASIC'"/>
     <xsl:param name="cache.container" select="'${connector.cache.container}'"/>
     <xsl:param name="modifyCertSecRealm" select="false"/>
-    <xsl:param name="modifyDigestSecRealm" select="false"/>
 
     <!-- New rest-connector definition -->
     <xsl:variable name="newRESTEndpointDefinition">
@@ -69,36 +68,6 @@
         <xsl:attribute name="cache-container">
             <xsl:value-of select="$cache.container"/>
         </xsl:attribute>
-    </xsl:template>
-
-
-    <!-- New DIGEST security-domain definition -->
-    <xsl:variable name="newDigestSecurityDomainDefinition">
-        <security-domain name="digest_auth" cache-type="infinispan">
-            <authentication>
-                <login-module code="UsersRoles" flag="required">
-                    <module-option name="hashAlgorithm" value="MD5"/>
-                    <module-option name="hashEncoding" value="rfc2617"/>
-                    <module-option name="hashUserPassword" value="false"/>
-                    <module-option name="hashStorePassword" value="true"/>
-                    <module-option name="passwordIsA1Hash" value="true"/>
-                    <module-option name="storeDigestCallback" value="org.jboss.security.auth.callback.RFC2617Digest"/>
-                    <module-option name="usersProperties" value="${{jboss.server.config.dir}}/application-users.properties"/>
-                    <module-option name="rolesProperties" value="${{jboss.server.config.dir}}/application-roles.properties"/>
-                </login-module>
-            </authentication>
-        </security-domain>
-    </xsl:variable>
-
-    <!-- Add another security domain -->
-    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsS)]
-        /*[local-name()='security-domains' and starts-with(namespace-uri(), $nsS)]">
-        <xsl:copy>
-            <xsl:if test="$modifyDigestSecRealm != 'false'">
-                <xsl:copy-of select="$newDigestSecurityDomainDefinition"/>
-            </xsl:if>
-            <xsl:apply-templates select="@*|node()"/>
-        </xsl:copy>
     </xsl:template>
 
     <!-- Copy everything else. -->

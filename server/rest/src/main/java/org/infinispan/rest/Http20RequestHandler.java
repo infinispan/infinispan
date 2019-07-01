@@ -18,6 +18,7 @@ import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Netty REST handler for HTTP/2.0
@@ -54,6 +55,9 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
          this.checkContext(infinispanRequest);
          authenticator.challenge(infinispanRequest);
          response = infinispanRequest.execute();
+      } catch (SecurityException securityException) {
+         logger.errorWhileResponding(securityException);
+         response = InfinispanErrorResponse.asError(infinispanRequest, HttpResponseStatus.FORBIDDEN, null);
       } catch (RestResponseException responseException) {
          logger.errorWhileResponding(responseException);
          response = responseException.toResponse(infinispanRequest);

@@ -31,11 +31,11 @@ import org.infinispan.rest.RestServer;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.SecurityDomain;
 import org.infinispan.rest.authentication.impl.BasicAuthenticator;
-import org.infinispan.rest.authentication.impl.ClientCertAuthenticator;
 import org.infinispan.rest.authentication.impl.VoidAuthenticator;
 import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.endpoint.subsystem.security.BasicRestSecurityDomain;
+import org.infinispan.server.endpoint.subsystem.security.SecurityRealmRestAuthenticator;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.SocketBinding;
@@ -130,13 +130,14 @@ public class RestService implements Service<RestServer>, EncryptableService {
                authenticator = new BasicAuthenticator(restSecurityDomain, authenticationRealm.getName());
                break;
             }
-            case CLIENT_CERT: {
+            case CLIENT_CERT:
                if (!EncryptableServiceHelper.isSecurityEnabled(this)) {
                   throw ROOT_LOGGER.cannotUseCertificateAuthenticationWithoutEncryption();
                }
-               authenticator = new ClientCertAuthenticator();
+            case DIGEST:
+            case SPNEGO:
+               authenticator = new SecurityRealmRestAuthenticator(authenticationSecurityRealm.getOptionalValue().getHttpAuthenticationFactory(), authMethod.name());
                break;
-            }
             case NONE: {
                authenticator = new VoidAuthenticator();
                break;

@@ -60,7 +60,7 @@ abstract class AbstractOperations {
 
    MediaType negotiateMediaType(String accept, String cacheName) throws UnacceptableDataFormatException {
       try {
-         AdvancedCache<?, ?> cache = restCacheManager.getCache(cacheName);
+         AdvancedCache<?, ?> cache = restCacheManager.getCache(cacheName, null);
          DataConversion valueDataConversion = cache.getValueDataConversion();
 
          Optional<MediaType> negotiated = MediaType.parseList(accept)
