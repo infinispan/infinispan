@@ -231,7 +231,7 @@
         </transform>
         <transform in="standalone.xml" out="testsuite/rest-sec-digest.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
-                <transform-rest-sec authMethod="DIGEST" cacheContainer="security" securityRealm="digest_auth" modifyDigestSecRealm="true" in="@{in}"/>
+                <transform-rest-sec authMethod="DIGEST" cacheContainer="security" in="@{in}"/>
             </rest-sec>
         </transform>
         <transform in="clustered.xml" out="testsuite/clustered-with-sym-encrypt.xml"

@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
+import javax.security.auth.Subject;
 
 import org.infinispan.rest.InfinispanRequest;
 import org.infinispan.rest.RestResponseException;
@@ -28,7 +29,9 @@ public class ClientCertAuthenticator implements Authenticator {
       try {
          SslHandler sslHandler = request.getRawContext().pipeline().get(SslHandler.class);
          SSLSession session = sslHandler.engine().getSession();
-         request.setPrincipal(session.getPeerPrincipal());
+         Subject subject = new Subject();
+         subject.getPrincipals().add(session.getPeerPrincipal());
+         request.setSubject(subject);
          return;
       } catch (SSLPeerUnverifiedException e) {
          // Ignore any SSLPeerUnverifiedExceptions

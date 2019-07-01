@@ -1,7 +1,5 @@
 package org.infinispan.rest;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +37,7 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
 
    @Override
    protected InfinispanResponse execute() {
-      InfinispanResponse response = InfinispanErrorResponse.asError(this, NOT_IMPLEMENTED, null);
+      InfinispanResponse response;
 
       switch (request.method().name()) {
          case "GET":

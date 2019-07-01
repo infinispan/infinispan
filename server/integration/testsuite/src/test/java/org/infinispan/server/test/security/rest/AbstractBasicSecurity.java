@@ -42,4 +42,24 @@ public abstract class AbstractBasicSecurity {
         rest.delete(rest.fullPathKey(KEY_C), HttpStatus.SC_OK);
         rest.clearCredentials();
     }
+
+    protected void authzOperations() throws Exception {
+        rest.setCredentials(WRITER_LOGIN, WRITER_PASSWD);
+        rest.put(rest.fullPathKey(AUTHZ_CACHE, KEY_A), "data", "text/plain", HttpStatus.SC_OK);
+        rest.get(rest.fullPathKey(AUTHZ_CACHE, KEY_A), HttpStatus.SC_FORBIDDEN);
+        rest.setCredentials(READER_LOGIN, READER_PASSWD);
+        rest.put(rest.fullPathKey(AUTHZ_CACHE, KEY_A), "data", "text/plain", HttpStatus.SC_FORBIDDEN);
+        rest.get(rest.fullPathKey(AUTHZ_CACHE, KEY_A), "data");
+        rest.delete(rest.fullPathKey(AUTHZ_CACHE, KEY_A), HttpStatus.SC_FORBIDDEN);
+        rest.setCredentials(WRITER_LOGIN, WRITER_PASSWD);
+        rest.delete(rest.fullPathKey(AUTHZ_CACHE, KEY_A), HttpStatus.SC_OK);
+    }
+
+    protected void schemaCacheAccess() throws Exception {
+        String proto = Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader());
+        rest.setCredentials(WRITER_LOGIN, WRITER_PASSWD);
+        rest.put(rest.fullPathKey(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME, "bank.proto"), proto, "text/plain", HttpStatus.SC_FORBIDDEN);
+        rest.setCredentials(ADMIN_LOGIN, ADMIN_PASSWD);
+        rest.put(rest.fullPathKey(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME, "bank.proto"), proto, "text/plain", HttpStatus.SC_OK);
+    }
 }

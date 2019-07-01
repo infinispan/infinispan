@@ -1,11 +1,14 @@
 package org.infinispan.rest;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+
+import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.security.Security;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,7 +31,7 @@ public abstract class InfinispanRequest {
    private final String cacheName;
    private final String context;
    protected Map<String, List<String>> parameters;
-   private Principal principal;
+   private Subject subject;
 
    protected InfinispanRequest(FullHttpRequest request, ChannelHandlerContext ctx, String cacheName, String context, Map<String, List<String>> parameters) {
       this.request = request;
@@ -130,20 +133,48 @@ public abstract class InfinispanRequest {
       return Optional.empty();
    }
 
-   protected String getParameterValue(String name) {
+   public String getParameterValue(String name) {
       List<String> values = parameters.get(name);
       if (values == null) return null;
       return values.iterator().next();
    }
 
-   public void setPrincipal(Principal principal) {
-      this.principal = principal;
-      if (principal != null) {
-         request.headers().add("X-Principal", principal.getName());
+   public List<String> getParameterValues(String name) {
+      return parameters.get(name);
+   }
+
+   public void setSubject(Subject subject) {
+      this.subject = subject;
+      if (subject != null) {
+         request.headers().add("X-Principal", Security.getSubjectUserPrincipal(subject).getName());
       }
    }
 
-   public Principal getPrincipal() {
-      return principal;
+   public Subject getSubject() {
+      return subject;
+   }
+
+   public String uri() {
+      return request.uri();
+   }
+
+   public String method() {
+      return request.method().name();
+   }
+
+   public List<String> headers(String s) {
+      return request.headers().getAll(s);
+   }
+
+   public String header(String s) {
+      return request.headers().get(s);
+   }
+
+   public Set<String> getParameterNames() {
+      return parameters.keySet();
+   }
+
+   public Map<String, List<String>> getParameters() {
+      return parameters;
    }
 }

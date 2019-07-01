@@ -21,4 +21,11 @@ public class InfinispanErrorResponse extends InfinispanResponse {
       }
       return infinispanResponse;
    }
+
+   public static InfinispanResponse unauthorized(String authenticateHeader) {
+      InfinispanErrorResponse response = new InfinispanErrorResponse(Optional.empty());
+      response.status(HttpResponseStatus.UNAUTHORIZED);
+      response.authenticate(authenticateHeader);
+      return response;
+   }
 }

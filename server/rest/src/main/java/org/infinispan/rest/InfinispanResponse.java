@@ -138,4 +138,7 @@ public abstract class InfinispanResponse {
       this.charset = Optional.ofNullable(charset);
    }
 
+   public Optional<String> authenticateHeader() {
+      return authenticate;
+   }
 }
