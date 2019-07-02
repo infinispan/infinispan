@@ -5,6 +5,8 @@ import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_C;
 
 import org.apache.http.HttpStatus;
+import org.infinispan.commons.util.Util;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.client.rest.RESTHelper;
 
 /**
@@ -13,9 +15,19 @@ import org.infinispan.server.test.client.rest.RESTHelper;
  *
  */
 public abstract class AbstractBasicSecurity {
+
     private static final String TEST_USER_NAME = "testuser";
     //password encoded as is stored in application-users.properties on the server
     private static final String TEST_USER_PASSWORD = "testpassword";
+    public static final String AUTHZ_CACHE = "authzcache";
+    public static final String ADMIN_LOGIN = "admin";
+    public static final String ADMIN_PASSWD = "strongPassword";
+    public static final String READER_LOGIN = "reader";
+    public static final String READER_PASSWD = "password";
+    public static final String WRITER_LOGIN = "writer";
+    public static final String WRITER_PASSWD = "somePassword";
+    public static final String SUPERVISOR_LOGIN = "supervisor";
+    public static final String SUPERVISOR_PASSWD = "lessStrongPassword";
     private static final String KEY_D = "d";
     protected RESTHelper rest;
 
