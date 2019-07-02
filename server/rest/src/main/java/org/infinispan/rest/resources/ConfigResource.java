@@ -63,7 +63,7 @@ public class ConfigResource implements ResourceHandler {
 
       String entity;
       if (accept.getTypeSubtype().equals(APPLICATION_XML_TYPE)) {
-         entity = cacheConfiguration.toXMLString();
+         entity = cacheConfiguration.toXMLString(configurationName);
       } else {
          entity = JSON_WRITER.toJSON(cacheConfiguration);
       }
