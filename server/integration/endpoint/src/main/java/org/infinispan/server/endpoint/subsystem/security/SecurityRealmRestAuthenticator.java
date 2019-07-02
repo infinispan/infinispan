@@ -4,10 +4,13 @@ import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
 
 import java.util.Optional;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.rest.InfinispanRequest;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.authentication.AuthenticationException;
 import org.infinispan.rest.authentication.Authenticator;
+import org.jboss.as.core.security.RealmRole;
 import org.wildfly.security.auth.server.HttpAuthenticationFactory;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.http.HttpAuthenticationException;
@@ -35,7 +38,10 @@ public class SecurityRealmRestAuthenticator implements Authenticator {
          requestAdapter.validateResponse();
          SecurityIdentity securityIdentity = (SecurityIdentity) mechanism.getNegotiatedProperty(SECURITY_IDENTITY);
          if (securityIdentity != null) {
-            securityIdentity.getPrincipal();
+            Subject subject = new Subject();
+            subject.getPrincipals().add(securityIdentity.getPrincipal());
+            securityIdentity.getRoles().forEach(r ->  subject.getPrincipals().add(new RealmRole(r)));
+            request.setSubject(subject);
          }
       } catch (HttpAuthenticationException e) {
          throw new AuthenticationException(Optional.empty());

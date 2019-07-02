@@ -62,7 +62,7 @@ public class CacheOperations extends AbstractOperations {
          String accept = request.getAcceptContentType().orElse(MATCH_ALL_TYPE);
 
          MediaType contentType = negotiateMediaType(accept, cacheName);
-         AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN);
+         AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN, request.getSubject());
          CacheSet<Object> keys = cache.keySet();
          Charset charset = request.getAcceptContentType()
                .map(Charset::fromMediaType)
@@ -95,7 +95,7 @@ public class CacheOperations extends AbstractOperations {
          Object key = request.getKey().orElseThrow(NoKeyException::new);
          String cacheControl = request.getCacheControl().orElse("");
          boolean returnBody = request.getRawRequest().method() == HttpMethod.GET;
-         CacheEntry<Object, Object> entry = restCacheManager.getInternalEntry(cacheName, key, keyContentType, requestedMediaType);
+         CacheEntry<Object, Object> entry = restCacheManager.getInternalEntry(cacheName, key, keyContentType, requestedMediaType, request.getSubject());
          InfinispanCacheResponse response = InfinispanCacheResponse.inReplyTo(request);
          response.status(HttpResponseStatus.NOT_FOUND);
 
@@ -182,8 +182,9 @@ public class CacheOperations extends AbstractOperations {
          Optional<Boolean> useAsync = request.getUseAsync();
 
          MediaType keyContentType = request.getKeyContentType();
+         AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.MATCH_ALL, request.getSubject());
 
-         CacheEntry<Object, Object> entry = restCacheManager.getInternalEntry(cacheName, key, keyContentType, MediaType.MATCH_ALL);
+         CacheEntry<Object, Object> entry = restCacheManager.getPrivilegedInternalEntry(cache, key, false);
 
          InfinispanResponse response = InfinispanCacheResponse.inReplyTo(request);
          response.status(HttpResponseStatus.NOT_FOUND);
@@ -195,7 +196,7 @@ public class CacheOperations extends AbstractOperations {
             if (clientEtag.map(t -> t.equals(etag)).orElse(true)) {
                response.status(HttpResponseStatus.OK);
                boolean async = useAsync.isPresent() && useAsync.get();
-               restCacheManager.remove(cacheName, key, keyContentType, async);
+               restCacheManager.remove(cacheName, key, keyContentType, async, request.getSubject());
             } else {
                //ETags don't match, so preconditions failed
                response.status(HttpResponseStatus.PRECONDITION_FAILED);
@@ -223,9 +224,9 @@ public class CacheOperations extends AbstractOperations {
          response.status(HttpResponseStatus.OK);
 
          if (useAsync.isPresent() && useAsync.get()) {
-            restCacheManager.getCache(cacheName).clearAsync();
+            restCacheManager.getCache(cacheName, request.getSubject()).clearAsync();
          } else {
-            restCacheManager.getCache(cacheName).clear();
+            restCacheManager.getCache(cacheName, request.getSubject()).clear();
          }
 
          return response;
@@ -248,7 +249,7 @@ public class CacheOperations extends AbstractOperations {
          MediaType contentType = request.getContentType().map(MediaType::fromString).orElse(MediaType.MATCH_ALL);
          MediaType keyContentType = request.getKeyContentType();
 
-         AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType);
+         AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType, request.getSubject());
          Object key = request.getKey().orElseThrow(NoKeyException::new);
 
          if (HttpMethod.POST.equals(request.getRawRequest().method()) && cache.containsKey(key)) {
@@ -256,7 +257,7 @@ public class CacheOperations extends AbstractOperations {
          } else {
             InfinispanCacheResponse response = InfinispanCacheResponse.inReplyTo(request);
             byte[] data = request.data().orElseThrow(NoDataFoundException::new);
-            CacheEntry<Object, Object> entry = restCacheManager.getInternalEntry(cacheName, key, true, keyContentType, contentType);
+            CacheEntry<Object, Object> entry = restCacheManager.getPrivilegedInternalEntry(cache, key, true);
             if (entry instanceof InternalCacheEntry) {
                InternalCacheEntry ice = (InternalCacheEntry) entry;
                Optional<String> clientEtag = request.getEtagIfNoneMatch();
@@ -286,7 +287,7 @@ public class CacheOperations extends AbstractOperations {
 
    private InfinispanResponse putInCache(InfinispanCacheResponse response, boolean useAsync, AdvancedCache<Object, Object> cache, Object key,
                                          byte[] data, Optional<Long> ttl, Optional<Long> idleTime) {
-      final Metadata metadata = CacheOperationsHelper.createMetadata(cache.getCacheConfiguration(), ttl, idleTime);
+      final Metadata metadata = CacheOperationsHelper.createMetadata(SecurityActions.getCacheConfiguration(cache), ttl, idleTime);
       if (useAsync) {
          cache.putAsync(key, data, metadata);
       } else {

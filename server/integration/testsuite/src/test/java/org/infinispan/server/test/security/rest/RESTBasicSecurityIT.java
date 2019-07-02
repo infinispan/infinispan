@@ -33,7 +33,7 @@ public class RESTBasicSecurityIT extends AbstractBasicSecurity {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         rest.clearServers();
     }
 
@@ -41,5 +41,7 @@ public class RESTBasicSecurityIT extends AbstractBasicSecurity {
     @WithRunningServer({@RunningServer(name = CONTAINER, config = "testsuite/rest-sec-basic.xml")})
     public void testSecuredReadWriteOperations() throws Exception {
         securedReadWriteOperations();
+        authzOperations();
+        schemaCacheAccess();
     }
 }
