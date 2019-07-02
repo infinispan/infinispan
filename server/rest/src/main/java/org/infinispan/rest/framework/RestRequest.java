@@ -56,7 +56,7 @@ public interface RestRequest {
 
    Subject getSubject();
 
-   void setSubject(Subject principal);
+   void setSubject(Subject subject);
 
    void setVariables(Map<String, String> variables);
 

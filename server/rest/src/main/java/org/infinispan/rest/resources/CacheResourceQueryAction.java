@@ -65,7 +65,7 @@ class CacheResourceQueryAction {
       String cacheName = restRequest.variables().get("cacheName");
 
       MediaType keyContentType = restRequest.keyContentType();
-      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON);
+      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, restRequest.getSubject());
       String queryString = query.getQuery();
 
       RemoteQueryManager remoteQueryManager = cache.getComponentRegistry().getComponent(RemoteQueryManager.class);

@@ -87,7 +87,7 @@ public class CacheResource implements ResourceHandler {
       if (accept == null) accept = MediaType.MATCH_ALL_TYPE;
 
       MediaType contentType = negotiateMediaType(accept, cacheName);
-      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN);
+      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN, request.getSubject());
 
       Charset mediaCharset = Charset.fromMediaType(accept);
       Charset charset = mediaCharset == null ? Charset.UTF8 : mediaCharset;
@@ -108,8 +108,9 @@ public class CacheResource implements ResourceHandler {
       if (key == null) throw new NoKeyException();
 
       MediaType keyContentType = request.keyContentType();
+      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.MATCH_ALL, request.getSubject());
 
-      return restCacheManager.getInternalEntry(cacheName, key, keyContentType, MediaType.MATCH_ALL).thenCompose(entry -> {
+      return restCacheManager.getPrivilegedInternalEntry(cache, key, true).thenCompose(entry -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
@@ -119,7 +120,7 @@ public class CacheResource implements ResourceHandler {
             String clientEtag = request.getEtagIfNoneMatchHeader();
             if (clientEtag == null || clientEtag.equals(etag)) {
                responseBuilder.status(HttpResponseStatus.OK.code());
-               return restCacheManager.remove(cacheName, key, keyContentType).thenApply(v -> responseBuilder.build());
+               return restCacheManager.remove(cacheName, key, keyContentType, request.getSubject()).thenApply(v -> responseBuilder.build());
             } else {
                //ETags don't match, so preconditions failed
                responseBuilder.status(HttpResponseStatus.PRECONDITION_FAILED.code());
@@ -136,7 +137,7 @@ public class CacheResource implements ResourceHandler {
       MediaType contentType = request.contentType();
       MediaType keyContentType = request.keyContentType();
 
-      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType);
+      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType, request.getSubject());
       Object key = request.variables().get("cacheKey");
       if (key == null) throw new NoKeyException();
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
@@ -148,7 +149,7 @@ public class CacheResource implements ResourceHandler {
 
       byte[] data = request.contents().rawContent();
 
-      return restCacheManager.getInternalEntry(cacheName, key, true, keyContentType, contentType).thenCompose(entry -> {
+      return restCacheManager.getPrivilegedInternalEntry(cache, key, true).thenCompose(entry -> {
          if (request.method() == POST && entry != null) {
             return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.CONFLICT.code()).entity("An entry already exists").build());
          }
@@ -174,11 +175,10 @@ public class CacheResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       responseBuilder.status(HttpResponseStatus.OK.code());
 
-      Cache<Object, Object> cache = restCacheManager.getCache(cacheName);
+      Cache<Object, Object> cache = restCacheManager.getCache(cacheName, request.getSubject());
 
       return cache.clearAsync().thenApply(v -> responseBuilder.build());
    }
-
 
    private CompletionStage<RestResponse> getCacheValue(RestRequest request) throws RestResponseException {
       String cacheName = request.variables().get("cacheName");
@@ -192,7 +192,7 @@ public class CacheResource implements ResourceHandler {
 
       String cacheControl = request.getCacheControlHeader();
       boolean returnBody = request.method() == GET;
-      return restCacheManager.getInternalEntry(cacheName, key, keyContentType, requestedMediaType).thenApply(entry -> {
+      return restCacheManager.getInternalEntry(cacheName, key, keyContentType, requestedMediaType, request.getSubject()).thenApply(entry -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
 
@@ -271,7 +271,7 @@ public class CacheResource implements ResourceHandler {
    private CompletionStage<RestResponse> putInCache(NettyRestResponse.Builder responseBuilder,
                                                     AdvancedCache<Object, Object> cache, Object key, byte[] data, Long ttl,
                                                     Long idleTime) {
-      final Metadata metadata = CacheOperationsHelper.createMetadata(cache.getCacheConfiguration(), ttl, idleTime);
+      final Metadata metadata = CacheOperationsHelper.createMetadata(SecurityActions.getCacheConfiguration(cache), ttl, idleTime);
       responseBuilder.header("etag", calcETAG(data));
       return cache.putAsync(key, data, metadata).thenApply(o -> responseBuilder.build());
    }
@@ -289,7 +289,7 @@ public class CacheResource implements ResourceHandler {
 
    private MediaType negotiateMediaType(String accept, String cacheName) throws UnacceptableDataFormatException {
       try {
-         AdvancedCache<?, ?> cache = restCacheManager.getCache(cacheName);
+         AdvancedCache<?, ?> cache = restCacheManager.getCache(cacheName, null);
          DataConversion valueDataConversion = cache.getValueDataConversion();
 
          Optional<MediaType> negotiated = MediaType.parseList(accept)
