@@ -13,7 +13,7 @@
                         timeout="60000" />
                 </replicated-cache>
                 <replicated-cache-configuration
-                        name="compatibilityCacheConfiguration"
+                        name="pojoCacheConfiguration"
                         batching="false"
                         remote-timeout="60000">
                     <state-transfer
@@ -21,7 +21,7 @@
                             timeout="60000"/>
                     <compatibility enabled="true"/>
                 </replicated-cache-configuration>
-                <replicated-cache name="compatibilityCache" configuration="compatibilityCacheConfiguration"/>
+                <replicated-cache name="pojoCache" configuration="pojoCacheConfiguration"/>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
                 <replicated-cache
                     name="memcachedCache"

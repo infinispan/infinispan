@@ -271,11 +271,11 @@ e.g. `kryo.register(ExampleObject.class, new ExampleObjectSerializer())`.  Imple
 via Java's ServiceLoader api, therefore the full path of the implementing class(es) should be provided in a
 `META-INF/services/org/infinispan/marshaller/kryo/SerializerRegistryService` file within your deployment jar.
 
-==== Server Compatibility Mode
-When using the Protostuff/Kryo bridges in compatibility mode, it is necessary for the class files of all custom objects to
+==== Storing deserialized objects
+When using the Protostuff/Kryo bridges in caches configured with _application/x-java-object_ as MediaType (storing POJOs instead of binary content) it is necessary for the class files of all custom objects to
 be placed on the classpath of the server.  To achieve this, you should place a jar containing all of their custom classes on the server's classpath.
 
-When utilising a custom marshaller in compatibility mode, it is also necessary for the marshaller and it's runtime dependencies
+When utilising a custom marshaller, it is also necessary for the marshaller and it's runtime dependencies
 to be on the server's classpath.  To aid with this step we have created a "bundle" jar for each of the bridge implementations
 which includes all of the runtime class files required by the bridge and underlying library. Therefore, it is only
 necessary to include this single jar on the server's classpath.
@@ -291,8 +291,8 @@ then you must also register your custom classes here.
 
 ===== Registering Custom Schemas/Serializers
 Custom serializers/schemas for the Kryo/Protostuff marshallers must be
-registered via their respective service interfaces in compatibility mode. To
-achieve this, it is necessary for a *JAR* that contains the service provider to
+registered via their respective service interfaces in order to store deserialized objects.
+To achieve this, it is necessary for a *JAR* that contains the service provider to
 be registered in the same directory or module as the marshaller bundle and
 custom classes.
 

@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 
 /**
  * Tests Multi-tenancy feature. HotRod client performs write operation and read goes through REST. Note, that
- * compatibility mode is a must here.
+ * the test stores data as unserialized java objects.
  * <p>
  *     Since this test is pretty slow (requires booting up full server with Arquillian), it contains
  *     only high level tests. For more complicated scenarios, see tests from {@link org.infinispan.server.router.integration}.

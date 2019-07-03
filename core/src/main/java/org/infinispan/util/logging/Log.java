@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -1716,9 +1717,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Error while persisting global configuration state", id = 502)
    CacheConfigurationException errorPersistingGlobalConfiguration(@Cause Throwable cause);
 
-   @Message(value = "Compatibility mode requires OBJECT storage type but was: %s", id = 503)
-   CacheConfigurationException compatibilityModeOnlyCompatibleWithObjectStorage(StorageType storageType);
-
    @Message(value = "MEMORY based eviction is not supported with OBJECT storage", id = 504)
    CacheConfigurationException offHeapMemoryEvictionNotSupportedWithObject();
 
@@ -1821,10 +1819,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Grouping requires OBJECT storage type but was: %s", id = 534)
    CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(StorageType storageType);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Cache '%s' uses the deprecated compatibility mode configuration. See 'Embedded/Remote Interoperability' in the user guide for a replacement", id = 536)
-   void warnCompatibilityDeprecated(String cacheName);
-
    @Message(value = "Factory doesn't know how to construct component %s", id = 537)
    CacheConfigurationException factoryCannotConstructComponent(String componentName);
 
@@ -1875,4 +1869,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Module '%s' provides an instance of the deprecated ModuleCommandInitializer. Commands that require initialization should implement the InitializableCommand interface", id = 552)
    void warnModuleCommandInitializerDeprecated(String module);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Ignoring 'marshaller' attribute. Common marshallers are already available at runtime, and to deploy a custom marshaller, consult the 'Encoding' section in the user guide", id = 553)
+   void marshallersNotSupported();
 }

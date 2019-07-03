@@ -1,7 +1,7 @@
 package org.infinispan.marshaller.protostuff;
 
 /**
- * An optional service which can be utilised to register custom protostuff schemas when executing in compatibility mode.
+ * An optional service which can be utilised to register custom protostuff schemas when executing storing data deserialized.
  *
  * N.B. This can also be used on the client, however it is not necessary as you can also register custom schemas in client
  * code, as long as the registration takes place before any Objects are marshalled/unmarshalled.

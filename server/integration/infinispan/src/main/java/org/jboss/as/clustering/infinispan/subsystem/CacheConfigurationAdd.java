@@ -44,7 +44,7 @@ import javax.transaction.TransactionSynchronizationRegistry;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
@@ -57,6 +57,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.EncodingConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
@@ -522,51 +523,10 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
 
             final boolean enabled = CompatibilityConfigurationResource.ENABLED.resolveModelAttribute(context, compatibility).asBoolean();
 
-            builder.compatibility().enabled(enabled);
-
-            if (compatibility.hasDefined(ModelKeys.MARSHALLER)) {
-                String marshaller = CompatibilityConfigurationResource.MARSHALLER.resolveModelAttribute(context, compatibility).asString();
-                String[] split = marshaller.split(":");
-                try {
-                    if (split.length == 1) {
-                        // it's just a class name
-                        String marshallerClassName = split[0];
-                        Injector<EmbeddedCacheManager> injector = new SimpleInjector<EmbeddedCacheManager>() {
-                            @Override
-                            public void inject(EmbeddedCacheManager cacheManager) {
-                                try {
-                                    ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
-                                    Class<?> marshallerClass = Class.forName(marshallerClassName, false, classLoader);
-                                    builder.compatibility().marshaller(marshallerClass.asSubclass(Marshaller.class).newInstance());
-                                } catch (Exception e) {
-                                    throw InfinispanMessages.MESSAGES.unableToInstantiateClass(marshallerClassName);
-                                }
-                            }
-                        };
-                        dependencies.add(new Dependency<>(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName), EmbeddedCacheManager.class, injector));
-                    } else {
-                        // it's an 'extended' class name, including the module id and slot
-                        String marshallerClassName = split[2];
-                        ModuleIdentifier moduleIdentifier = ModuleIdentifier.create(split[0], split[1]);
-                        Injector<Module> injector = new SimpleInjector<Module>() {
-                            @Override
-                            public void inject(Module module) {
-                                try {
-                                    ClassLoader moduleClassLoader = System.getSecurityManager() == null ? module.getClassLoader() :
-                                          AccessController.doPrivileged((PrivilegedAction<ClassLoader>) module::getClassLoader);
-                                    Class<?> marshallerClass = Class.forName(marshallerClassName, false, moduleClassLoader);
-                                    builder.compatibility().marshaller(marshallerClass.asSubclass(Marshaller.class).newInstance());
-                                } catch (Exception e) {
-                                    throw InfinispanMessages.MESSAGES.invalidCompatibilityMarshaller(e, marshaller);
-                                }
-                            }
-                        };
-                        // todo [anistor] only works for dynamic modules (see https://issues.jboss.org/browse/ISPN-8441)
-                        dependencies.add(new Dependency<>(ServiceModuleLoader.moduleServiceName(moduleIdentifier), Module.class, injector));
-                    }
-                } catch (Exception e) {
-                    throw InfinispanMessages.MESSAGES.invalidCompatibilityMarshaller(e, marshaller);
-                }
+            if (enabled) {
+                EncodingConfigurationBuilder encoding = builder.encoding();
+                encoding.key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+                encoding.value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
             }
         }
 

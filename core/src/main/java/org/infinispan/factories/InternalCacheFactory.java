@@ -19,7 +19,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
@@ -84,9 +83,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    public Cache<K, V> createCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
                                   String cacheName) throws CacheConfigurationException {
       try {
-         if (configuration.compatibility().enabled()) {
-            log.warnCompatibilityDeprecated(cacheName);
-         }
          if (configuration.simpleCache()) {
             return createSimpleCache(configuration, globalComponentRegistry, cacheName);
          } else {
@@ -181,15 +177,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
 
       EncoderRegistry encoderRegistry = globalComponentRegistry.getComponent(EncoderRegistry.class);
-
-      // Wraps the compatibility marshaller so that it can be used as a transcoder
-      if (configuration.compatibility().enabled() && configuration.compatibility().marshaller() != null) {
-         Marshaller marshaller = configuration.compatibility().marshaller();
-         componentRegistry.wireDependencies(marshaller);
-         if (!encoderRegistry.isConversionSupported(MediaType.APPLICATION_OBJECT, marshaller.mediaType())) {
-            encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(marshaller));
-         }
-      }
 
       // Wraps the GlobalMarshaller so that it can be used as a transcoder
       encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(globalMarshaller));

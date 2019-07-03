@@ -106,7 +106,6 @@ An example of storage configuration is as follows:
 When no MediaType is configured, {brandname} assumes "application/octet-stream" for both keys and values, with the following exceptions:
 
 * If the cache is indexed, it assumes "application/x-protostream"
-* If the cache is configured with the legacy compatibility mode, it assumes "application/x-java-object"
 
 [[rest_server_data_format_support]]
 === Supported formats

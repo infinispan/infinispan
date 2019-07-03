@@ -29,44 +29,24 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
 
    private final int numNodes = 4;
    private final int numEntries = 100;
-   private boolean compatibility = false;
 
    @Override
    public Object[] factory() {
       return new Object[] {
-         new GetAllCommandTest(false).transactional(false).cacheMode(CacheMode.DIST_SYNC),
-         new GetAllCommandTest(true) .transactional(false).cacheMode(CacheMode.DIST_SYNC),
-         new GetAllCommandTest(false).transactional(false).cacheMode(CacheMode.REPL_SYNC),
-         new GetAllCommandTest(true) .transactional(false).cacheMode(CacheMode.REPL_SYNC),
-         new GetAllCommandTest(false).transactional(false).cacheMode(CacheMode.SCATTERED_SYNC),
-         new GetAllCommandTest(true) .transactional(false).cacheMode(CacheMode.SCATTERED_SYNC),
-         new GetAllCommandTest(false).transactional(true).cacheMode(CacheMode.DIST_SYNC),
-         new GetAllCommandTest(true) .transactional(true).cacheMode(CacheMode.DIST_SYNC),
-         new GetAllCommandTest(false).transactional(true).cacheMode(CacheMode.REPL_SYNC),
-         new GetAllCommandTest(true) .transactional(true).cacheMode(CacheMode.REPL_SYNC),
+            new GetAllCommandTest().transactional(false).cacheMode(CacheMode.DIST_SYNC),
+            new GetAllCommandTest().transactional(false).cacheMode(CacheMode.REPL_SYNC),
+            new GetAllCommandTest().transactional(false).cacheMode(CacheMode.SCATTERED_SYNC),
+            new GetAllCommandTest().transactional(true).cacheMode(CacheMode.DIST_SYNC),
+            new GetAllCommandTest().transactional(true).cacheMode(CacheMode.REPL_SYNC),
       };
-   }
-
-   public GetAllCommandTest() {
-      this(false);
-   }
-
-   public GetAllCommandTest(boolean compatibility) {
-      this.cleanup = CleanupPhase.AFTER_METHOD;
-      this.compatibility = compatibility;
-   }
-
-   public GetAllCommandTest compatibility(boolean enabled) {
-      compatibility = enabled;
-      return this;
    }
 
    @Override
    protected String parameters() {
       return new StringBuilder().append('[')
-         .append(cacheMode)
-         .append(", tx=").append(transactional)
-         .append(", compatibility=").append(compatibility).append("]").toString();
+            .append(cacheMode)
+            .append(", tx=").append(transactional)
+            .append("]").toString();
    }
 
    public void testGetAllKeyNotPresent() {
@@ -116,9 +96,6 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, transactional);
-      if (compatibility) {
-         dcc.compatibility().enable();
-      }
       if (transactional) {
          dcc.transaction().locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       }

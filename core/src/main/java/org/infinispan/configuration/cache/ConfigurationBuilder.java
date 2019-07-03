@@ -1,7 +1,6 @@
 package org.infinispan.configuration.cache;
 
 import static java.util.Arrays.asList;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.configuration.cache.Configuration.SIMPLE_CACHE;
 
 import java.lang.reflect.Constructor;
@@ -40,7 +39,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
    private final UnsafeConfigurationBuilder unsafe;
    private final List<Builder<?>> modules = new ArrayList<>();
    private final SitesConfigurationBuilder sites;
-   private final CompatibilityModeConfigurationBuilder compatibility;
    private final MemoryConfigurationBuilder memory;
    private final AttributeSet attributes;
 
@@ -68,11 +66,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       this.transaction = new TransactionConfigurationBuilder(this);
       this.unsafe = new UnsafeConfigurationBuilder(this);
       this.sites = new SitesConfigurationBuilder(this);
-      this.compatibility = new CompatibilityModeConfigurationBuilder(this);
       this.memory = new MemoryConfigurationBuilder(this);
 
       subElements.addAll(Arrays.asList(clustering, persistence, unsafe, jmxStatistics, locking, indexing, expiration,
-                                       encoding, memory, transaction, sites, customInterceptors, security, sites.backupFor(), compatibility));
+                                       encoding, memory, transaction, sites, customInterceptors, security, sites.backupFor()));
    }
 
 
@@ -167,12 +164,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
    }
 
    @Override
-   @Deprecated
-   public CompatibilityModeConfigurationBuilder compatibility() {
-      return compatibility;
-   }
-
-   @Override
    public MemoryConfigurationBuilder memory() { return memory; }
 
    public List<Builder<?>> modules() {
@@ -213,7 +204,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       for (Builder<?> validatable:
             asList(clustering, customInterceptors, expiration, indexing,
                    invocationBatching, jmxStatistics, persistence, locking, transaction,
-                   unsafe, sites, compatibility, memory)) {
+                   unsafe, sites, memory)) {
          try {
             validatable.validate();
          } catch (RuntimeException e) {
@@ -237,8 +228,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
             || !persistence.stores().isEmpty()
             || invocationBatching.isEnabled()
             || indexing.enabled()
-            || memory.create().storageType() == StorageType.BINARY
-            || compatibility.create().enabled()) {
+            || memory.create().storageType() == StorageType.BINARY) {
          throw log.notSupportedInSimpleCache();
       }
    }
@@ -249,7 +239,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       for (ConfigurationChildBuilder validatable:
             asList(clustering, customInterceptors, expiration, indexing,
                    invocationBatching, jmxStatistics, persistence, locking, transaction,
-                   unsafe, sites, compatibility, security, memory)) {
+                   unsafe, sites, security, memory)) {
          try {
             validatable.validate(globalConfig);
          } catch (RuntimeException e) {
@@ -274,19 +264,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       if (validate) {
          validate();
       }
-      if (compatibility.isEnabled()) {
-         encoding.key().mediaType(APPLICATION_OBJECT_TYPE);
-         encoding.value().mediaType(APPLICATION_OBJECT_TYPE);
-      }
       List<Object> modulesConfig = new LinkedList<>();
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
       return new Configuration(template, attributes.protect(), clustering.create(), customInterceptors.create(),
                expiration.create(), encoding.create(), indexing.create(), invocationBatching.create(),
                jmxStatistics.create(), persistence.create(), locking.create(), security.create(),
-               transaction.create(), unsafe.create(), sites.create(),
-               compatibility.create(), memory.create(),
-               modulesConfig);
+               transaction.create(), unsafe.create(), sites.create(), memory.create(), modulesConfig);
    }
 
    public ConfigurationBuilder read(Configuration template) {
@@ -303,7 +287,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       this.transaction.read(template.transaction());
       this.unsafe.read(template.unsafe());
       this.sites.read(template.sites());
-      this.compatibility.read(template.compatibility());
       this.memory.read(template.memory());
       this.encoding.read(template.encoding());
       this.template = template.isTemplate();
@@ -332,7 +315,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
             ", transaction=" + transaction +
             ", unsafe=" + unsafe +
             ", sites=" + sites +
-            ", compatibility=" + compatibility +
             '}';
    }
 

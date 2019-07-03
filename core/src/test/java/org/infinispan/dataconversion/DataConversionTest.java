@@ -25,7 +25,6 @@ import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -179,7 +178,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
             offHeapConfig.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new TestInterceptor(1));
 
             ConfigurationBuilder compatConfig = new ConfigurationBuilder();
-            compatConfig.compatibility().enable().marshaller(new JavaSerializationMarshaller());
             compatConfig.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new TestInterceptor(1));
 
             cm.defineConfiguration("offheap", offHeapConfig.build());
@@ -420,7 +418,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
             testWith(DataConversion.IDENTITY_VALUE, registry);
 
             ConfigurationBuilder builder = new ConfigurationBuilder();
-            builder.compatibility().enable();
             cm.defineConfiguration("compat", builder.build());
             AdvancedCache<?, ?> compat = cm.getCache("compat").getAdvancedCache();
             ComponentRegistry compatRegistry = compat.getComponentRegistry();

@@ -67,7 +67,7 @@ public class DistributedServerTaskDomainIT extends AbstractDistributedServerTask
         ManagementClient client = ManagementClient.getInstance();
         client.enableJmx();
 
-        //Adding TX configuration & Cache with enabled compatibility
+       //Adding TX configuration
         Map<String, String> txAttrs = new HashMap<>();
         txAttrs.put("mode", "NON_XA");
         txAttrs.put("locking", "PESSIMISTIC");
@@ -75,20 +75,16 @@ public class DistributedServerTaskDomainIT extends AbstractDistributedServerTask
         if (isDistributedMode()) {
             client.addDistributedCacheConfiguration(CUSTOM_TEMPLATE_NAME, "clustered");
             client.addDistributedCache(CACHE_NAME, "clustered", CUSTOM_TEMPLATE_NAME);
-            client.enableCompatibilityForDistConfiguration(CUSTOM_TEMPLATE_NAME, "clustered");
 
             client.addDistributedCacheConfiguration(CUSTOM_TX_TEMPLATE_NAME, "clustered");
             client.enableTransactionForDistConfiguration(CUSTOM_TX_TEMPLATE_NAME, "clustered", txAttrs);
-            client.enableCompatibilityForDistConfiguration(CUSTOM_TX_TEMPLATE_NAME, "clustered");
             client.addDistributedCache(CACHE_NAME_TX, "clustered", CUSTOM_TX_TEMPLATE_NAME);
         } else if (isReplicatedMode()) {
             client.addReplicatedCacheConfiguration(CUSTOM_TEMPLATE_NAME, "clustered");
-            client.enableCompatibilityForReplConfiguration(CUSTOM_TEMPLATE_NAME, "clustered");
             client.addReplicatedCache(CACHE_NAME, "clustered", CUSTOM_TEMPLATE_NAME);
 
             client.addReplicatedCacheConfiguration(CUSTOM_TX_TEMPLATE_NAME, "clustered");
             client.enableTransactionForReplConfiguration(CUSTOM_TX_TEMPLATE_NAME, "clustered", txAttrs);
-            client.enableCompatibilityForReplConfiguration(CUSTOM_TX_TEMPLATE_NAME, "clustered");
             client.addReplicatedCache(CACHE_NAME_TX, "clustered", CUSTOM_TX_TEMPLATE_NAME);
         }
 

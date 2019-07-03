@@ -586,11 +586,6 @@
                     <xs:documentation>The cache expiration configuration.</xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="compatibility" type="tns:compatibility" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>The cache compatibility mode configuration.</xs:documentation>
-                </xs:annotation>
-            </xs:element>
             <xs:element name="persistence" type="tns:persistence" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>The cache persistence configuration where cache stores/loaders should be configured.</xs:documentation>
@@ -759,7 +754,11 @@
             <xs:extension base="tns:cache">
                 <xs:attribute name="simple-cache" type="xs:boolean" default="${Server.Cache.simple-cache}">
                     <xs:annotation>
-                        <xs:documentation>This cache will be using optimized (faster) implementation that does not support transactions/invocation batching, persistence, custom interceptors, indexing, store-as-binary or compatibility. Also, this type of cache does not support Map-Reduce jobs or Distributed Executor framework.</xs:documentation>
+                        <xs:documentation>This cache will be using optimized (faster) implementation that does not
+                            support transactions/invocation batching, persistence, custom interceptors, indexing,
+                            store-as-binary or transcoding. Also, this type of cache does not support Map-Reduce jobs or
+                            Distributed Executor framework.
+                        </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
             </xs:extension>
@@ -958,19 +957,6 @@
         <xs:attribute name="interval" type="xs:long" default="${Server.Expiration.interval}">
             <xs:annotation>
                 <xs:documentation>Interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1.</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-    </xs:complexType>
-
-    <xs:complexType name="compatibility">
-        <xs:attribute name="enabled" type="xs:boolean" default="${Server.Compatibility.enabled}">
-            <xs:annotation>
-                <xs:documentation>Enables compatibility mode for this cache. Disabled by default.</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="marshaller" type="xs:string">
-            <xs:annotation>
-                <xs:documentation>A marshaller to use for compatibility conversions.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>

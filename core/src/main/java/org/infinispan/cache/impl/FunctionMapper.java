@@ -1,4 +1,4 @@
-package org.infinispan.compat;
+package org.infinispan.cache.impl;
 
 import java.io.IOException;
 import java.io.ObjectInput;

@@ -267,8 +267,11 @@
          <locking isolation="REPEATABLE_READ"/>
          <transaction locking="OPTIMISTIC"/>
       </local-cache>
-      <local-cache name="compatibility">
-         <compatibility marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
+      <local-cache name="pojo-cache">
+         <encoding>
+            <key media-type="application/x-java-object"/>
+            <value media-type="application/x-java-object"/>
+         </encoding>
       </local-cache>
       <local-cache name="simple-cache" simple-cache="true">
          <transaction mode="NONE"/>

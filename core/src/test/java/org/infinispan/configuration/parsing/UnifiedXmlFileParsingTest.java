@@ -25,7 +25,6 @@ import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -645,10 +644,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
             c = getConfiguration(holder, "write-skew");
             assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel());
-
-            c = getConfiguration(holder, "compatibility");
-            assertTrue(c.compatibility().enabled());
-            assertTrue(c.compatibility().marshaller() instanceof GenericJBossMarshaller);
 
             // Ignore custom-container (if present)
 

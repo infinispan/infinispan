@@ -2,9 +2,11 @@ package org.infinispan.marshall.core;
 
 import java.util.Set;
 
+import org.infinispan.cache.impl.BiFunctionMapper;
 import org.infinispan.cache.impl.EncoderEntryMapper;
 import org.infinispan.cache.impl.EncoderKeyMapper;
 import org.infinispan.cache.impl.EncoderValueMapper;
+import org.infinispan.cache.impl.FunctionMapper;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.functional.functions.MergeFunction;
 import org.infinispan.commons.hash.MurmurHash3;
@@ -15,8 +17,6 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.exts.EquivalenceExternalizer;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Immutables;
-import org.infinispan.compat.BiFunctionMapper;
-import org.infinispan.compat.FunctionMapper;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;

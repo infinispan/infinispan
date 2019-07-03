@@ -36,6 +36,10 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
       valueContentTypeBuilder.validate();
    }
 
+   public boolean isObjectStorage() {
+      return keyContentTypeBuilder.isObjectStorage() && valueContentTypeBuilder.isObjectStorage();
+   }
+
    public ContentTypeConfigurationBuilder key() {
       return keyContentTypeBuilder;
    }

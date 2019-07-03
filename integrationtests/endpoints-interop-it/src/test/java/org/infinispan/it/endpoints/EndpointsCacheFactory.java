@@ -143,7 +143,8 @@ public class EndpointsCacheFactory<K, V> {
       org.infinispan.configuration.cache.ConfigurationBuilder builder =
             new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(cacheMode)
-            .compatibility().enable().marshaller(marshaller);
+            .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
+            .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
 
       if (cacheMode.isDistributed() && numOwners != DEFAULT_NUM_OWNERS) {
          builder.clustering().hash().numOwners(numOwners);

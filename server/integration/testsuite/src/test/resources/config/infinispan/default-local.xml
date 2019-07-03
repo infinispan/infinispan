@@ -7,10 +7,10 @@
                     batching="false"
                     >
                 </local-cache>
-                <local-cache-configuration name="compatibilityCacheConfiguration">
+                <local-cache-configuration name="pojoCacheConfiguration">
                     <compatibility enabled="true"/>
                 </local-cache-configuration>
-                <local-cache name="compatibilityCache" configuration="compatibilityCacheConfiguration"/>
+                <local-cache name="pojoCache" configuration="pojoCacheConfiguration"/>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
                 <local-cache
                     name="memcachedCache"
@@ -32,7 +32,7 @@
                         <off-heap/>
                     </memory>
                 </local-cache>
-                <local-cache name="compatibilityCache">
+                <local-cache name="pojoCache">
                     <compatibility enabled="true"/>
                 </local-cache>
             </cache-container>

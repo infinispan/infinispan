@@ -68,7 +68,6 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
 
    private void compareConfigurations(String name, Configuration configurationBefore, Configuration configurationAfter) {
       compareAttributeSets(name, configurationBefore.clustering().attributes(), configurationAfter.clustering().attributes());
-      compareAttributeSets(name, configurationBefore.compatibility().attributes(), configurationAfter.compatibility().attributes(), "marshaller");
       compareAttributeSets(name, configurationBefore.memory().attributes(), configurationAfter.memory().attributes());
       compareAttributeSets(name, configurationBefore.expiration().attributes(), configurationAfter.expiration().attributes());
       compareAttributeSets(name, configurationBefore.indexing().attributes(), configurationAfter.indexing().attributes());

@@ -71,11 +71,6 @@ public class SimpleCacheTest extends APINonTxTest {
       new ConfigurationBuilder().simpleCache(true).memory().storageType(StorageType.BINARY).build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testCompatibility() {
-      new ConfigurationBuilder().simpleCache(true).compatibility().enabled(true).build();
-   }
-
    @Test(dataProvider = "lockedStreamActuallyLocks", expectedExceptions = UnsupportedOperationException.class)
    @Override
    public void testLockedStreamActuallyLocks(BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>> consumer,
