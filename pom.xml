@@ -581,7 +581,7 @@
       <versionx.org.jboss.stdio.jboss-stdio>1.0.2.GA</versionx.org.jboss.stdio.jboss-stdio>
       <versionx.org.jboss.threads.jboss-threads>2.3.2.Final</versionx.org.jboss.threads.jboss-threads>
       <versionx.org.jboss.weld.se.weld-se>2.3.4.Final</versionx.org.jboss.weld.se.weld-se>
-      <versionx.org.jboss.weld.se.weld-se-core>1.1.11.Final</versionx.org.jboss.weld.se.weld-se-core>
+      <versionx.org.jboss.weld.se.weld-se-core>2.3.4.Final</versionx.org.jboss.weld.se.weld-se-core>
       <versionx.org.jboss.weld.weld-api>2.3.SP2</versionx.org.jboss.weld.weld-api>
       <versionx.org.jboss.weld.weld-core>2.3.4.Final</versionx.org.jboss.weld.weld-core>
       <versionx.org.jboss.weld.weld-spi>2.3.SP2</versionx.org.jboss.weld.weld-spi>
