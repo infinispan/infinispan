@@ -3,6 +3,7 @@
 
 The {brandname} Server distribution contains a module that implements link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP access to the {brandname} data grid, built on https://github.com/netty/netty[Netty].
 
+[[rest_run_server]]
 ==== Running the REST server
 
 The REST server endpoint is part of the {brandname} Server and by default listens on port 8080. To run the server locally,
@@ -20,6 +21,7 @@ or alternatively, run via docker:
 docker run -it -p 8080:8080 -e "APP_USER=user" -e "APP_PASS=changeme" jboss/infinispan-server
 ----
 
+[[rest_security]]
 ===== Security
 
 The REST server is protected by authentication, so before usage it is necessary to create an application login.
@@ -32,7 +34,7 @@ locally, this can be done with:
 bin/add-user.sh -u user -p changeme -a
 ----
 
-
+[[rest_supported_protocols]]
 ==== Supported protocols
 
 The REST Server supports HTTP/1.1 as well as HTTP/2 protocols. It is possible to switch to HTTP/2 by either performing a link:https://http2.github.io/http2-spec/#discover-http[HTTP/1.1 Upgrade procedure] or
@@ -47,6 +49,7 @@ HTTP PUT and POST methods are used to place data in the cache, with URLs to addr
 [[rest_server_data_format]]
 ===== Data formats
 
+[[rest_server_data_format_config]]
 ====== Configuration
 
 Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType]. More details in the configuration link:#encoding_media_type[here].
@@ -68,6 +71,7 @@ When no MediaType is configured, {brandname} assumes "application/octet-stream" 
 * If the cache is indexed, it assumes "application/x-protostream"
 * If the cache is configured with compatibility mode, it assumes "application/x-java-object"
 
+[[rest_server_data_format_support]]
 ====== Supported formats
 
 Data can be written and read in different formats than the storage format; {brandname} can convert between those formats when required.
@@ -160,12 +164,14 @@ The _type_ parameter for _application/x-java-object_ is restricted to:
 * java.lang.String
 * Bytes, making _application/x-java-object;type=Bytes_ equivalent to _application/octet-stream;encoding=hex_
 
-
+[[rest_server_put_data]]
 ===== Putting data in
 
+[[rest_server_put_request]]
 ====== `PUT /{cacheName}/{cacheKey}`
 A PUT request of the above URL form will place the payload (body) in the given cache, with the given key (the named cache must exist on the server). For example `http://someserver/hr/payRoll-3` (in which case `hr` is the cache name, and `payRoll-3` is the key). Any existing data will be replaced, and Time-To-Live and Last-Modified values etc will updated (if applicable).
 
+[[rest_server_post_request]]
 ====== `POST /{cacheName}/{cacheKey}`
 Exactly the same as PUT, only if a value in a cache/key already exists, it will return a Http CONFLICT status (and the content will not be updated).
 
@@ -223,10 +229,11 @@ A conformant JSON document would be:
 }
 ----
 
-
+[[rest_server_get_data]]
 ===== Getting data back out
 HTTP GET and HEAD are used to retrieve data from entries.
 
+[[rest_server_get_request]]
 ====== `GET /{cacheName}/{cacheKey}`
 This will return the data found in the given cacheName, under the given key - as the body of the response. A Content-Type header will be present in the response according to the Media Type negotiation. Browsers can use the cache directly of course (eg as a CDN). An link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] will be returned unique for each entry, as will the Last-Modified and Expires headers field indicating the state of the data at the given URL. ETags allow browsers (and other clients) to ask for data only in the case where it has changed (to save on bandwidth) - this is standard HTTP and is honoured by {brandname}.
 
@@ -245,6 +252,7 @@ This will return the following custom headers:
 * Cluster-Node-Name: the JGroups node name of the server that has handled the request
 * Cluster-Physical-Address: the physical JGroups address of the server that has handled the request.
 
+[[rest_server_head_request]]
 ====== `HEAD /{cacheName}/{cacheKey}`
 The same as GET, only no content is returned (only the header fields). You will receive the same content that you stored. E.g., if you stored a String, this is what you get back. If you stored some XML or JSON, this is what you will receive. If you stored a binary (base 64 encoded) blob, perhaps a serialized; Java; object - you will need to; deserialize this yourself.
 
@@ -254,7 +262,10 @@ Similarly to the GET method, the HEAD method also supports returning extended in
 
 *  link:#rest_key_content_type[Key-Content-Type]: OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
 
+[[rest_server_list_keys]]
 ===== Listing keys
+
+[[rest_server_list_get]]
 ====== `GET /{cacheName}`
 
 This will return a list of keys present in the given cacheName as the body of the response. The format of the response can be controlled via the Accept header as follows:
@@ -267,9 +278,11 @@ If the cache identified by cacheName is distributed, only the keys owned by the 
 
 `GET /cacheName?global`
 
+[[rest_server_remove_data]]
 ===== Removing data
 Data can be removed at the cache key/element level, or via a whole cache name using the HTTP delete method.
 
+[[rest_server_delete_keys]]
 ====== `DELETE /{cacheName}/{cacheKey}`
 
 Removes the given key name from the cache.
@@ -278,17 +291,20 @@ Removes the given key name from the cache.
 
 *  link:#rest_key_content_type[Key-Content-Type]: OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
 
+[[rest_server_delete_cache]]
 ====== `DELETE /{cacheName}`
 Removes ALL the entries in the given cache name (i.e., everything from that path down). If the operation is successful, it returns 200 code.
 
 .Make it quicker!
 TIP: Set the header performAsync to true to return immediately and let the removal happen in the background.
 
+[[rest_server_query]]
 ===== Querying
 
 The REST server supports Ickle Queries in JSON format. It's important that the cache is configured with
 _application/x-protostream_ for both Keys and Values. If the cache is indexed, no configuration is needed.
 
+[[rest_server_query_get]]
 ====== `GET /{cacheName}?action=search&query={ickle query}`
 
 Will execute an Ickle query in the given cache name.
@@ -331,6 +347,7 @@ Results are JSON documents containing one or more hits. Example:
 * _hits_: ARRAY, list of matches from the query
 * _hit_: OBJECT, each result from the query. Can contain all fields or just a subset of fields in case a _Select_ clause is used.
 
+[[rest_server_query_post]]
 ====== `POST /{cacheName}?action=search`
 
 Similar to que query using GET, but the body of the request is used instead to specify the query parameters.
@@ -346,6 +363,7 @@ Example:
 }
 ----
 
+[[rest_server_cors]]
 ==== CORS
 
 The REST server supports https://en.wikipedia.org/wiki/Cross-origin_resource_sharing[CORS] including preflight and rules based on the request origin.
@@ -385,10 +403,11 @@ The <cors-rule> element can be configured as follows:
 | expose-headers | A comma separated list used to set the CORS 'Access-Control-Expose-Headers' in the preflight response to specify which headers can be exposed to the configured origin(s) | no
 |===
 
-
+[[rest_server_client]]
 ==== Client side code
 Part of the point of a RESTful service is that you don't need to have tightly coupled client libraries/bindings. All you need is a HTTP client library. For Java, Apache HTTP Commons Client works just fine (and is used in the integration tests), or you can use java.net API.
 
+[[rest_server_client_ruby]]
 ===== Ruby example
 
 [source,ruby]
@@ -474,6 +493,7 @@ resp = http.request(get)
 puts "GET Body: " + resp.body
 ----
 
+[[rest_server_client_python]]
 ===== Python 3 example
 
 [source,python]
@@ -505,6 +525,7 @@ print(resp.read().decode('utf-8'))
 
 ----
 
+[[rest_server_client_java]]
 ===== Java example
 
 [source,java]
