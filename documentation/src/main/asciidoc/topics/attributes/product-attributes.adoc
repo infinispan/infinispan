@@ -31,6 +31,7 @@
 :brandname: Red Hat Data Grid
 :wildflybrandname: EAP
 :infinispanversion: 9.4.0
+:brandcli: cli.sh
 :moduleprefix: jdg
 :infinispanslot: jdg-7.3
 :javadocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/api
