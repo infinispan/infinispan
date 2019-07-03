@@ -16,7 +16,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.query.logging.Log;
-import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -33,17 +32,21 @@ final class SearchFactoryHandler {
    private final QueryKnownClasses queryKnownClasses;
    private final TransactionHelper transactionHelper;
    private final Executor listenerExecutor;
+   private final ClassLoader classLoader;
    private final Object cacheListener = new CacheListener();
 
    private final ReentrantLock mutating = new ReentrantLock();
 
    SearchFactoryHandler(final SearchIntegrator searchFactory,
                         final QueryKnownClasses queryKnownClasses,
-                        final TransactionHelper transactionHelper, Executor executor) {
+                        final TransactionHelper transactionHelper,
+                        final Executor executor,
+                        final ClassLoader classLoader) {
       this.searchFactory = searchFactory;
       this.queryKnownClasses = queryKnownClasses;
       this.transactionHelper = transactionHelper;
       this.listenerExecutor = executor;
+      this.classLoader = classLoader;
    }
 
    boolean updateKnownTypesIfNeeded(final Object value) {
@@ -150,17 +153,17 @@ final class SearchFactoryHandler {
    final class CacheListener {
 
       @CacheEntryCreated
-      public CompletionStage<Void> created(CacheEntryCreatedEvent<KeyValuePair<String, Class>, Boolean> e) {
+      public CompletionStage<Void> created(CacheEntryCreatedEvent<QueryKnownClasses.KnownClassKey, Boolean> e) {
          if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
-            return handleClusterRegistryRegistration(e.getKey().getValue());
+            return handleClusterRegistryRegistration(e.getKey().loadClassInstance(classLoader));
          }
          return null;
       }
 
       @CacheEntryModified
-      public CompletionStage<Void> modified(CacheEntryModifiedEvent<KeyValuePair<String, Class>, Boolean> e) {
+      public CompletionStage<Void> modified(CacheEntryModifiedEvent<QueryKnownClasses.KnownClassKey, Boolean> e) {
          if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
-            return handleClusterRegistryRegistration(e.getKey().getValue());
+            return handleClusterRegistryRegistration(e.getKey().loadClassInstance(classLoader));
          }
          return null;
       }

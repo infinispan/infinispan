@@ -7,19 +7,21 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transaction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -66,7 +68,7 @@ public final class QueryKnownClasses {
    /**
     * A replicated cache that is lazily instantiated on first access.
     */
-   private volatile AdvancedCache<KeyValuePair<String, Class<?>>, Boolean> knownClassesCache;
+   private volatile AdvancedCache<KnownClassKey, Boolean> knownClassesCache;
 
    private volatile TransactionHelper transactionHelper;
 
@@ -119,7 +121,7 @@ public final class QueryKnownClasses {
       }
       this.searchFactoryHandler = searchFactoryHandler;
       startInternalCache();
-      knownClassesCache.addListener(searchFactoryHandler.getCacheListener(), key -> key.getKey().equals(cacheName));
+      knownClassesCache.addListener(searchFactoryHandler.getCacheListener(), key -> key.cacheName.equals(cacheName));
    }
 
    void stop() {
@@ -138,15 +140,13 @@ public final class QueryKnownClasses {
       }
 
       startInternalCache();
-      Set<Class<?>> result = new HashSet<>();
       Transaction tx = transactionHelper.suspendTxIfExists();
       try {
-         for (KeyValuePair<String, Class<?>> key : knownClassesCache.keySet()) {
-            if (key.getKey().equals(cacheName)) {
-               result.add(key.getValue());
-            }
-         }
-         return result;
+         ClassLoader classLoader = knownClassesCache.getClassLoader();
+         return knownClassesCache.keySet().stream()
+               .filter(k -> k.cacheName.equals(cacheName))
+               .map(k -> k.loadClassInstance(classLoader))
+               .collect(Collectors.toSet());
       } finally {
          transactionHelper.resume(tx);
       }
@@ -177,7 +177,7 @@ public final class QueryKnownClasses {
       startInternalCache();
       Transaction tx = transactionHelper.suspendTxIfExists();
       try {
-         knownClassesCache.put(new KeyValuePair<>(cacheName, clazz), value);
+         knownClassesCache.put(new KnownClassKey(cacheName, clazz), value);
       } finally {
          transactionHelper.resume(tx);
       }
@@ -208,7 +208,7 @@ public final class QueryKnownClasses {
          synchronized (this) {
             if (knownClassesCache == null) {
                internalCacheRegistry.registerInternalCache(QUERY_KNOWN_CLASSES_CACHE_NAME, getInternalCacheConfig(), EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT));
-               Cache<KeyValuePair<String, Class<?>>, Boolean> knownClassesCache = SecurityActions.getCache(cacheManager, QUERY_KNOWN_CLASSES_CACHE_NAME);
+               Cache<KnownClassKey, Boolean> knownClassesCache = SecurityActions.getCache(cacheManager, QUERY_KNOWN_CLASSES_CACHE_NAME);
                this.knownClassesCache = knownClassesCache.getAdvancedCache().withFlags(Flag.SKIP_LOCKING, Flag.IGNORE_RETURN_VALUES);
                transactionHelper = new TransactionHelper(this.knownClassesCache.getTransactionManager());
             }
@@ -241,5 +241,35 @@ public final class QueryKnownClasses {
             + "', isAutodetectEnabled=" + isAutodetectEnabled()
             + ", indexedEntities=" + indexedEntities
             + ", localCache=" + (localCache != null ? localCache.get() : null) + '}';
+   }
+
+   public static class KnownClassKey {
+
+      @ProtoField(number = 1)
+      String cacheName;
+
+      @ProtoField(number = 2)
+      String clazzName;
+
+      Class<?> clazz;
+
+      KnownClassKey() {}
+
+      KnownClassKey(String cacheName, Class<?> clazz) {
+         this.cacheName = cacheName;
+         this.clazz = clazz;
+         this.clazzName = clazz.getName();
+      }
+
+      Class<?> loadClassInstance(ClassLoader classLoader) {
+         if (clazz == null) {
+            try {
+               clazz = Util.loadClassStrict(clazzName, classLoader);
+            } catch (ClassNotFoundException e) {
+               throw new IllegalStateException(e);
+            }
+         }
+         return clazz;
+      }
    }
 }
