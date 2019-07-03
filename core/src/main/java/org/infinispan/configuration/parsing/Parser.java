@@ -25,6 +25,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
@@ -1422,7 +1423,9 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case COMPATIBILITY: {
-            parseCompatibility(reader, holder);
+            if (!reader.getSchema().since(10, 0)) {
+               parseCompatibility(reader, holder);
+            }
             break;
          }
          case STORE_AS_BINARY: {
@@ -1626,14 +1629,19 @@ public class Parser implements ConfigurationParser {
 
    private void parseCompatibility(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      builder.compatibility().enable();
+      EncodingConfigurationBuilder encoding = builder.encoding();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
+            case ENABLED:
+               if (Boolean.valueOf(value)) {
+                  encoding.key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+                  encoding.value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+               }
             case MARSHALLER_CLASS:
-               builder.compatibility().marshaller(Util.getInstance(value, holder.getClassLoader()));
+               log.marshallersNotSupported();
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

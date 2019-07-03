@@ -12,7 +12,7 @@ So, which features are stripped away? From the configuration perspective, simple
 * persistence (cache stores and loaders)
 * custom interceptors (there's no interceptor stack!)
 * indexing
-* compatibility (embedded/server mode)
+* transcoding
 * store as binary (which is hardly useful for local caches)
 
 From the API perspective these features throw an exception:

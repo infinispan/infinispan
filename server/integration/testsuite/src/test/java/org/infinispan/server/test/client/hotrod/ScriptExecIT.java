@@ -39,7 +39,7 @@ import org.junit.runner.RunWith;
 public class ScriptExecIT {
 
    private static final String SCRIPT_CACHE_NAME = "___script_cache";
-   private static final String COMPATIBILITY_CACHE_NAME = "compatibilityCache";
+   private static final String POJO_CACHE_NAME = "pojoCache";
    private static final String STREAM = "stream.js";
 
    RemoteCacheManager remoteCacheManager;
@@ -65,7 +65,7 @@ public class ScriptExecIT {
    @After
    public void clearCache() {
       remoteCache.clear();
-      remoteCacheManager.getCache(COMPATIBILITY_CACHE_NAME).clear();
+      remoteCacheManager.getCache(POJO_CACHE_NAME).clear();
    }
 
    protected ProtocolVersion getProtocolVersion() {
@@ -90,7 +90,7 @@ public class ScriptExecIT {
 
    @Test
    public void testSimpleScriptExecutionWithParams() throws IOException {
-      RemoteCache<String, String> remoteCache = remoteCacheManager.getCache(COMPATIBILITY_CACHE_NAME);
+      RemoteCache<String, String> remoteCache = remoteCacheManager.getCache(POJO_CACHE_NAME);
       addScripts("test.js");
 
       Map<String, Object> parameters = new HashMap<>();
@@ -105,7 +105,7 @@ public class ScriptExecIT {
 
    @Test
    public void testMapReduceScriptExecution() throws IOException {
-      RemoteCache<String, String> remoteCache = remoteCacheManager.getCache(COMPATIBILITY_CACHE_NAME);
+      RemoteCache<String, String> remoteCache = remoteCacheManager.getCache(POJO_CACHE_NAME);
       addScripts("stream_serverTask.js");
       remoteCache.put("1", "word1 word2 word3");
       remoteCache.put("2", "word1 word2");

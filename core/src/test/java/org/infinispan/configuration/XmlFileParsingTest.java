@@ -18,7 +18,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
@@ -126,46 +125,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(10000, cfg.locking().concurrencyLevel());
       assertEquals(IsolationLevel.REPEATABLE_READ, cfg.locking().isolationLevel());
 
-   }
-
-   public void testCompatibility() {
-      String config = TestingUtil.wrapXMLWithSchema(
-            "<cache-container default-cache=\"default\">" +
-            "   <local-cache name=\"default\">\n" +
-            "   </local-cache>\n" +
-            "</cache-container>"
-      );
-
-      ConfigurationBuilderHolder holder = parseStringConfiguration(config);
-      Configuration cfg = holder.getDefaultConfigurationBuilder().build();
-      assertFalse(cfg.compatibility().enabled());
-      assertNull(cfg.compatibility().marshaller());
-
-      config = TestingUtil.wrapXMLWithSchema(
-            "<cache-container default-cache=\"default\">" +
-            "   <local-cache name=\"default\">\n" +
-            "      <compatibility/>\n" +
-            "   </local-cache>\n" +
-            "</cache-container>"
-      );
-
-      holder = parseStringConfiguration(config);
-      cfg = holder.getDefaultConfigurationBuilder().build();
-      assertTrue(cfg.compatibility().enabled());
-      assertNull(cfg.compatibility().marshaller());
-
-      config = TestingUtil.wrapXMLWithSchema(
-            "<cache-container default-cache=\"default\">" +
-            "   <local-cache name=\"default\">\n" +
-            "      <compatibility marshaller=\"org.infinispan.commons.marshall.jboss.GenericJBossMarshaller\"/>\n" +
-            "   </local-cache>\n" +
-            "</cache-container>"
-      );
-
-      holder = parseStringConfiguration(config);
-      cfg = holder.getDefaultConfigurationBuilder().build();
-      assertTrue(cfg.compatibility().enabled());
-      assertTrue(cfg.compatibility().marshaller() instanceof GenericJBossMarshaller);
    }
 
    public void testOffHeap() {

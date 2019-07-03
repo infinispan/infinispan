@@ -143,30 +143,6 @@ public class ManagementClient {
         }
     }
 
-    public void enableCompatibilityForDistConfiguration(String configurationName, String containerName) throws Exception {
-        enableCompatibilityForConfiguration(configurationName, containerName, CacheTemplate.DIST);
-    }
-
-    public void enableCompatibilityForReplConfiguration(String configurationName, String containerName) throws Exception {
-        enableCompatibilityForConfiguration(configurationName, containerName, CacheTemplate.REPL);
-    }
-
-    private void enableCompatibilityForConfiguration(String configurationName, String containerName, CacheTemplate template) throws Exception {
-        //Adding compatibility conf to created cache configuration
-        ops.add(Address.subsystem("datagrid-infinispan")
-                .and("cache-container", containerName)
-                .and("configurations", "CONFIGURATIONS")
-                .and(template.getType(), configurationName)
-                .and("compatibility", "COMPATIBILITY"));
-
-        //Enabling compatibility
-        ops.writeAttribute(Address.subsystem("datagrid-infinispan")
-                .and("cache-container", containerName)
-                .and("configurations", "CONFIGURATIONS")
-                .and(template.getType(), configurationName)
-                .and("compatibility", "COMPATIBILITY"), "enabled", true);
-    }
-
     public void removeLocalCacheConfiguration(String name, String cacheContainer) throws Exception {
         removeCacheConfiguration(name, cacheContainer, CacheTemplate.LOCAL);
     }

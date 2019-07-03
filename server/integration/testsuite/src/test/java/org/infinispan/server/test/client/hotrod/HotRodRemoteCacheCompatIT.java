@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 @Category({HotRodSingleNode.class, HotRodClustered.class})
 public class HotRodRemoteCacheCompatIT {
 
-   private static final String CACHE_NAME = "compatibilityCache";
+   private static final String CACHE_NAME = "pojoCache";
    private static final int CACHE_SIZE = 1000;
 
    @ClassRule

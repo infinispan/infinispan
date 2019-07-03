@@ -59,7 +59,6 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
    private final Map<Class<?>, ?> moduleConfiguration;
    private final SecurityConfiguration securityConfiguration;
    private final SitesConfiguration sitesConfiguration;
-   private final CompatibilityModeConfiguration compatibilityConfiguration;
    private final AttributeSet attributes;
    private final boolean template;
 
@@ -75,7 +74,6 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
                  SecurityConfiguration securityConfiguration,
                  TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
                  SitesConfiguration sitesConfiguration,
-                 CompatibilityModeConfiguration compatibilityConfiguration,
                  MemoryConfiguration memoryConfiguration,
                  List<?> modules) {
       this.template = template;
@@ -94,14 +92,13 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       this.unsafeConfiguration = unsafeConfiguration;
       this.securityConfiguration = securityConfiguration;
       this.sitesConfiguration = sitesConfiguration;
-      this.compatibilityConfiguration = compatibilityConfiguration;
       this.memoryConfiguration = memoryConfiguration;
       Map<Class<?>, Object> modulesMap = new HashMap<>();
       for(Object module : modules) {
          modulesMap.put(module.getClass(), module);
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
-      this.subElements.addAll(Arrays.asList(clusteringConfiguration, sitesConfiguration, encodingConfiguration, sitesConfiguration.backupFor(), transactionConfiguration, expirationConfiguration, memoryConfiguration, persistenceConfiguration, lockingConfiguration, indexingConfiguration, securityConfiguration, customInterceptorsConfiguration, jmxStatisticsConfiguration, unsafeConfiguration, invocationBatchingConfiguration, compatibilityConfiguration));
+      this.subElements.addAll(Arrays.asList(clusteringConfiguration, sitesConfiguration, encodingConfiguration, sitesConfiguration.backupFor(), transactionConfiguration, expirationConfiguration, memoryConfiguration, persistenceConfiguration, lockingConfiguration, indexingConfiguration, securityConfiguration, customInterceptorsConfiguration, jmxStatisticsConfiguration, unsafeConfiguration, invocationBatchingConfiguration));
    }
 
    public AttributeSet attributes() {
@@ -189,9 +186,6 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       return sitesConfiguration;
    }
 
-   public CompatibilityModeConfiguration compatibility() {
-      return compatibilityConfiguration;
-   }
 
    public boolean isTemplate() {
       return template;
@@ -215,7 +209,6 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
             ", transaction=" + transactionConfiguration +
             ", unsafe=" + unsafeConfiguration +
             ", sites=" + sitesConfiguration +
-            ", compatibility=" + compatibilityConfiguration +
             ", memory=" + memoryConfiguration +
             '}';
    }
@@ -227,7 +220,6 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       result = prime * result + (simpleCache.get() ? 0 : 1);
       result = prime * result + (template ? 1231 : 1237);
       result = prime * result + ((clusteringConfiguration == null) ? 0 : clusteringConfiguration.hashCode());
-      result = prime * result + ((compatibilityConfiguration == null) ? 0 : compatibilityConfiguration.hashCode());
       result = prime * result
             + ((customInterceptorsConfiguration == null) ? 0 : customInterceptorsConfiguration.hashCode());
       result = prime * result + ((encodingConfiguration == null) ? 0 : encodingConfiguration.hashCode());
@@ -265,11 +257,6 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
          if (other.clusteringConfiguration != null)
             return false;
       } else if (!clusteringConfiguration.equals(other.clusteringConfiguration))
-         return false;
-      if (compatibilityConfiguration == null) {
-         if (other.compatibilityConfiguration != null)
-            return false;
-      } else if (!compatibilityConfiguration.equals(other.compatibilityConfiguration))
          return false;
       if (customInterceptorsConfiguration == null) {
          if (other.customInterceptorsConfiguration != null)
@@ -344,8 +331,6 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       if (!simpleCache.get().equals(other.simpleCache.get()))
          return false;
       if (!clusteringConfiguration.matches(other.clusteringConfiguration))
-         return false;
-      if (!compatibilityConfiguration.matches(other.compatibilityConfiguration))
          return false;
       if (!customInterceptorsConfiguration.matches(other.customInterceptorsConfiguration))
          return false;

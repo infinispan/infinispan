@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -30,6 +31,12 @@ public class ContentTypeConfigurationBuilder extends AbstractConfigurationChildB
    @Override
    public ElementDefinition getElementDefinition() {
       return key ? ContentTypeConfiguration.KEY_ELEMENT_DEFINITION : ContentTypeConfiguration.VALUE_ELEMENT_DEFINITION;
+   }
+
+   public boolean isObjectStorage() {
+      String mediaType = attributes.attribute(MEDIA_TYPE).get();
+      return mediaType != null && MediaType.fromString(mediaType)
+            .match(MediaType.APPLICATION_OBJECT);
    }
 
    @Override

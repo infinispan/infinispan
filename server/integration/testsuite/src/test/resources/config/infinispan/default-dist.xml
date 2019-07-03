@@ -16,7 +16,7 @@
                         timeout="600000" />
                 </distributed-cache>
                 <distributed-cache-configuration
-                        name="compatibilityCacheConfiguration"
+                        name="pojoCacheConfiguration"
                         segments="1"
                         owners="2"
                         batching="false"
@@ -27,7 +27,7 @@
                             timeout="600000" />
                     <compatibility enabled="true"/>
                 </distributed-cache-configuration>
-                <distributed-cache name="compatibilityCache" configuration="compatibilityCacheConfiguration"/>
+                <distributed-cache name="pojoCache" configuration="pojoCacheConfiguration"/>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
                 <distributed-cache
                     name="memcachedCache"

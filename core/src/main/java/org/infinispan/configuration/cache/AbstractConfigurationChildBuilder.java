@@ -92,12 +92,6 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
-   @Deprecated
-   public CompatibilityModeConfigurationBuilder compatibility() {
-      return builder.compatibility();
-   }
-
-   @Override
    public MemoryConfigurationBuilder memory() {
       return builder.memory();
    }

@@ -64,7 +64,7 @@ method on the `CacheStream`.  This is applied after the key filter but before an
 
 A stream used with a local or invalidation cache can be used just the same way you would use a stream on a
 regular collection. {brandname} handles all of the translations if necessary behind the scenes and works with all
-of the more interesting options (ie. storeAsBinary, compatibility mode, and a cache loader).  Only data local to
+of the more interesting options (ie. storeAsBinary and a cache loader).  Only data local to
 the node where the stream operation is performed will be used, for example invalidation only uses local entries.
 
 == Example
