@@ -4042,7 +4042,6 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-annotations</artifactId>
-         <optional>true</optional>
       </dependency>
 
       <dependency>

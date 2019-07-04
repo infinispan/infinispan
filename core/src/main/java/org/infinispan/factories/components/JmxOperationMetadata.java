@@ -31,6 +31,10 @@ public class JmxOperationMetadata implements Serializable {
       this.methodParameters = methodParameters;
    }
 
+   /**
+    * @deprecated Since 10.0, will be removed in 11 as the annotation is not available at runtime
+    */
+   @Deprecated
    public JmxOperationMetadata(Method m) {
       methodName = m.getName();
       returnType = m.getReturnType().getName();

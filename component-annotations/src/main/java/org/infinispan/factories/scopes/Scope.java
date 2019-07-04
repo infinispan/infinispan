@@ -17,7 +17,7 @@ import java.lang.annotation.RetentionPolicy;
  * @see Scopes
  * @since 4.0
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 @Inherited
 public @interface Scope {
    Scopes value();
