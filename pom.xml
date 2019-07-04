@@ -88,7 +88,6 @@
       <module>commons</module>
       <module>commons-test</module>
       <module>plugins/infinispan-defaults-maven-plugin</module>
-      <module>plugins/protocol-parser-generator-maven-plugin</module>
       <module>core</module>
       <module>cloud</module>
       <module>extended-statistics</module>
@@ -228,10 +227,6 @@
       <versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-yaml>${version.jackson.dataformat}</versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-yaml>
       <versionx.com.fasterxml.woodstox.woodstox-core>5.0.3</versionx.com.fasterxml.woodstox.woodstox-core>
       <versionx.com.github.ben-manes.caffeine.caffeine>${version.caffeine}</versionx.com.github.ben-manes.caffeine.caffeine>
-      <versionx.com.github.javaparser.javaparser-core>${version.javaparser}</versionx.com.github.javaparser.javaparser-core>
-      <versionx.com.github.javaparser.javaparser-symbol-solver-core>${version.javaparser}</versionx.com.github.javaparser.javaparser-symbol-solver-core>
-      <versionx.com.github.javaparser.javaparser-symbol-solver-logic>${version.javaparser}</versionx.com.github.javaparser.javaparser-symbol-solver-logic>
-      <versionx.com.github.javaparser.javaparser-symbol-solver-model>${version.javaparser}</versionx.com.github.javaparser.javaparser-symbol-solver-model>
       <versionx.com.google.code.findbugs.jsr305>1.3.9</versionx.com.google.code.findbugs.jsr305>
       <versionx.com.google.code.gson.gson>${version.gson}</versionx.com.google.code.gson.gson>
       <versionx.com.google.errorprone.error_prone_annotations>2.1.3</versionx.com.google.errorprone.error_prone_annotations>
@@ -384,10 +379,8 @@
       <versionx.org.apache.maven.maven-aether-provider>3.3.9</versionx.org.apache.maven.maven-aether-provider>
       <versionx.org.apache.maven.maven-artifact>${version.apache.maven}</versionx.org.apache.maven.maven-artifact>
       <versionx.org.apache.maven.maven-builder-support>${version.apache.maven}</versionx.org.apache.maven.maven-builder-support>
-      <versionx.org.apache.maven.maven-core>${version.apache.maven}</versionx.org.apache.maven.maven-core>
       <versionx.org.apache.maven.maven-model>${version.apache.maven}</versionx.org.apache.maven.maven-model>
       <versionx.org.apache.maven.maven-model-builder>${version.apache.maven}</versionx.org.apache.maven.maven-model-builder>
-      <versionx.org.apache.maven.maven-plugin-api>${version.apache.maven}</versionx.org.apache.maven.maven-plugin-api>
       <versionx.org.apache.maven.maven-repository-metadata>${version.apache.maven}</versionx.org.apache.maven.maven-repository-metadata>
       <versionx.org.apache.maven.maven-resolver-provider>${version.apache.maven}</versionx.org.apache.maven.maven-resolver-provider>
       <versionx.org.apache.maven.maven-settings>${version.apache.maven}</versionx.org.apache.maven.maven-settings>
@@ -893,26 +886,6 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>${versionx.com.github.ben-manes.caffeine.caffeine}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.github.javaparser</groupId>
-            <artifactId>javaparser-core</artifactId>
-            <version>${versionx.com.github.javaparser.javaparser-core}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.github.javaparser</groupId>
-            <artifactId>javaparser-symbol-solver-core</artifactId>
-            <version>${versionx.com.github.javaparser.javaparser-symbol-solver-core}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.github.javaparser</groupId>
-            <artifactId>javaparser-symbol-solver-logic</artifactId>
-            <version>${versionx.com.github.javaparser.javaparser-symbol-solver-logic}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.github.javaparser</groupId>
-            <artifactId>javaparser-symbol-solver-model</artifactId>
-            <version>${versionx.com.github.javaparser.javaparser-symbol-solver-model}</version>
          </dependency>
          <dependency>
             <groupId>com.google.code.findbugs</groupId>
@@ -1791,11 +1764,6 @@
          </dependency>
          <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-            <version>${versionx.org.apache.maven.maven-core}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
             <version>${versionx.org.apache.maven.maven-model}</version>
          </dependency>
@@ -1803,11 +1771,6 @@
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model-builder</artifactId>
             <version>${versionx.org.apache.maven.maven-model-builder}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-            <version>${versionx.org.apache.maven.maven-plugin-api}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.maven</groupId>
