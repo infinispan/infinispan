@@ -227,9 +227,8 @@
          </plugin>
 
          <plugin>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-protocol-parser-generator-maven-plugin</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.infinispan.maven-plugins</groupId>
+            <artifactId>protocol-parser-generator</artifactId>
             <configuration>
                <files>
                   <file>${basedir}/src/main/resources/hotrod.gr</file>

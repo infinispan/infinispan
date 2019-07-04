@@ -337,12 +337,6 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-protocol-parser-generator-maven-plugin</artifactId>
-                <version>${version.infinispan}</version>
-                <type>maven-plugin</type>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-query</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
@@ -508,6 +502,11 @@
                         <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files
                         </compilerArgument>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.infinispan.maven-plugins</groupId>
+                    <artifactId>protocol-parser-generator</artifactId>
+                    <version>${version.infinispan.maven-plugins}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
