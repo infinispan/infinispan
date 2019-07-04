@@ -23,7 +23,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.util.PersistenceMockUtil;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.AfterClass;

@@ -7,7 +7,7 @@ import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
 import org.testng.annotations.Test;
 
-import static org.infinispan.test.fwk.UnitTestDatabaseManager.configureUniqueConnectionFactory;
+import static org.infinispan.persistence.jdbc.UnitTestDatabaseManager.configureUniqueConnectionFactory;
 
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.StringStoreWithPooledConnectionFunctionalTest")
 public class StringStoreWithPooledConnectionFunctionalTest extends AbstractStringBasedCacheStore {

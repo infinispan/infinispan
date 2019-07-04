@@ -2,7 +2,7 @@ package org.infinispan.counter.impl.strong;
 
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
 import static org.infinispan.counter.impl.entries.CounterValue.newCounterValue;
-import static org.infinispan.counter.util.Utils.getPersistenceMode;
+import static org.infinispan.counter.impl.Utils.getPersistenceMode;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;

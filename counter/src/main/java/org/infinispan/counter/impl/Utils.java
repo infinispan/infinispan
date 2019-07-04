@@ -1,4 +1,4 @@
-package org.infinispan.counter.util;
+package org.infinispan.counter.impl;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterState;

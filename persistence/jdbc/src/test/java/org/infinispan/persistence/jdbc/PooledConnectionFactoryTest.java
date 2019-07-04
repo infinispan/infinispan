@@ -11,7 +11,6 @@ import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConf
 import org.infinispan.persistence.jdbc.impl.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

@@ -1,7 +1,7 @@
 package org.infinispan.counter.impl.weak;
 
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
-import static org.infinispan.counter.util.Utils.getPersistenceMode;
+import static org.infinispan.counter.impl.Utils.getPersistenceMode;
 
 import java.math.BigInteger;
 import java.util.ArrayList;

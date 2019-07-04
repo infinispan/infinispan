@@ -1,4 +1,4 @@
-package org.infinispan.test.fwk;
+package org.infinispan.persistence.jdbc;
 
 import static org.testng.Assert.assertEquals;
 
@@ -7,8 +7,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.persistence.jdbc.DatabaseType;
-import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;

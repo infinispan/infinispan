@@ -15,7 +15,6 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.impl.connectionfactory.SimpleConnectionFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.infinispan.test.jndi.DummyContextFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

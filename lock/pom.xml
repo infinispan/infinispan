@@ -64,7 +64,9 @@
                 <configuration>
                     <instructions>
                         <Export-Package>
-                            ${project.groupId}.lock.*;version=${project.version};-split-package:=merge-last
+                            !${project.groupId}.lock.api.*;version=${project.version};-split-package:=error,
+                            !${project.groupId}.lock.exception.*;version=${project.version};-split-package:=error
+                            ${project.groupId}.lock.*;version=${project.version};-split-package:=error
                         </Export-Package>
                         <Include-Resource>
                            {maven-resources},
