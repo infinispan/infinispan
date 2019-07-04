@@ -3,7 +3,7 @@ package org.infinispan.persistence.jdbc.stringbased;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
-import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
 @Test(groups = {"functional", "smoke"}, testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreFunctionalTest")

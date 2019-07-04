@@ -1,6 +1,6 @@
 package org.infinispan.counter.configuration;
 
-import static org.infinispan.counter.util.Utils.validateStrongCounterBounds;
+import static org.infinispan.counter.impl.Utils.validateStrongCounterBounds;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;

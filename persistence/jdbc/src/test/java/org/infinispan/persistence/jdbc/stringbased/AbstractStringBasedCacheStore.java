@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import static org.infinispan.test.fwk.UnitTestDatabaseManager.buildTableManipulation;
+import static org.infinispan.persistence.jdbc.UnitTestDatabaseManager.buildTableManipulation;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;

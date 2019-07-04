@@ -12,7 +12,7 @@ import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 

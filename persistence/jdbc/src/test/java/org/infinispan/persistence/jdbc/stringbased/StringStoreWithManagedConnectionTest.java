@@ -14,7 +14,7 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
 /**

@@ -1,7 +1,7 @@
 package org.infinispan.counter.impl.manager;
 
 import static org.infinispan.counter.configuration.ConvertUtil.parsedConfigToConfig;
-import static org.infinispan.counter.util.Utils.validateStrongCounterBounds;
+import static org.infinispan.counter.impl.Utils.validateStrongCounterBounds;
 
 import java.util.Collection;
 import java.util.Collections;

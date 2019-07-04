@@ -8,7 +8,7 @@ import org.infinispan.persistence.jdbc.impl.connectionfactory.SimpleConnectionFa
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.testng.annotations.Test;
 
-import static org.infinispan.test.fwk.UnitTestDatabaseManager.configureSimpleConnectionFactory;
+import static org.infinispan.persistence.jdbc.UnitTestDatabaseManager.configureSimpleConnectionFactory;
 
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.StringStoreWithManagedConnectionFunctionalTest")
 public class StringStoreWithManagedConnectionFunctionalTest extends AbstractStringBasedCacheStore {

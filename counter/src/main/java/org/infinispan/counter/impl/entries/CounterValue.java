@@ -1,6 +1,6 @@
 package org.infinispan.counter.impl.entries;
 
-import static org.infinispan.counter.util.Utils.calculateState;
+import static org.infinispan.counter.impl.Utils.calculateState;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterState;

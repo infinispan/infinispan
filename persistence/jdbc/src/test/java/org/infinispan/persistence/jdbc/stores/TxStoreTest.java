@@ -29,7 +29,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
