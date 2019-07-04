@@ -25,22 +25,22 @@ public class ComponentAccessor<T> {
       this.eagerDependencies = eagerDependencies;
    }
 
-   protected final Integer getScopeOrdinal() {
+   final Integer getScopeOrdinal() {
       return scopeOrdinal;
    }
 
-   protected final boolean getSurvivesRestarts() {
+   final boolean getSurvivesRestarts() {
       return survivesRestarts;
    }
 
    /**
     * Return name of the first class with component annotations going up in the inheritance hierarchy.
     */
-   protected final String getSuperAccessorName() {
+   final String getSuperAccessorName() {
       return superAccessorName;
    }
 
-   protected final List<String> getEagerDependencies() {
+   final List<String> getEagerDependencies() {
       return eagerDependencies;
    }
 

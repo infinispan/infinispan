@@ -32,11 +32,19 @@ public class JmxAttributeMetadata implements Serializable {
       this.is = is;
    }
 
+   /**
+    * @deprecated Since 10.0, will be removed in 11 as the annotation is not available at runtime
+    */
+   @Deprecated
    private JmxAttributeMetadata(ManagedAttribute annotation) {
       description = annotation.description();
       writable = annotation.writable();
    }
 
+   /**
+    * @deprecated Since 10.0, will be removed in 11 as the annotation is not available at runtime
+    */
+   @Deprecated
    public JmxAttributeMetadata(Field field) {
       this(field.getAnnotation(ManagedAttribute.class));
       name = field.getName();

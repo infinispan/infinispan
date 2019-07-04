@@ -17,6 +17,7 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-annotations</artifactId>
+         <scope>compile</scope>
       </dependency>
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>

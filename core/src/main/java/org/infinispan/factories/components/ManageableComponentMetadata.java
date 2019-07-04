@@ -16,8 +16,9 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * by {@link MBean}, {@link ManagedAttribute} and {@link ManagedOperation} annotations.
  *
  * @author Manik Surtani
- * @since 5.1
+ * @deprecated Since 10.0, does not work as the annotations are not available at runtime
  */
+@Deprecated
 public class ManageableComponentMetadata extends ComponentMetadata {
    private static final long serialVersionUID = 0x11A17A6EAB1EL;
    private String jmxObjectName;

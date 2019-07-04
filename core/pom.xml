@@ -220,12 +220,16 @@
                      !${project.groupId}.multimap.*,
                      !${project.groupId}.lock.*,
                      !${project.groupId}.protostream.*,
-                     org.infinispan.marshall.core,
                      ${project.groupId}.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <Import-Package>
-                  !sun.reflect,
-                  *
+                     <!-- These exclusions are needed as long as we reference the annotations in code -->
+                     <!-- Deprecated org.infinispan.factories.components.*Metadata -->
+                     <!-- Making the annotations dependency optional would have also satisfied the verify plugin -->
+                     !org.infinispan.factories.annotations.*,
+                     !org.infinispan.factories.scopes.*,
+                     !org.infinispan.jmx.annotations.*,
+                     *
                   </Import-Package>
                   <Include-Resource>
                      {maven-resources},
