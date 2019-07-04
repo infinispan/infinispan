@@ -30,6 +30,18 @@ pipeline {
             }
         }
 
+        stage('Commit Proto.lock Files') {
+            steps {
+                if ("${version}".endsWith('Final')) {
+                    configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
+                        sh "$MAVEN_HOME/bin/mvn clean install -B -V -e -s $MAVEN_SETTINGS -DskipTests -DcommitProtoLockChanges=true"
+                    }
+                    sh "git add '**/proto.lock'"
+                    sh "git commit -m 'Committing proto.lock files for ${version}'"
+                }
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout scm
