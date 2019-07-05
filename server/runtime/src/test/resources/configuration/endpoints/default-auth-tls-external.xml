@@ -6,5 +6,7 @@
          </sasl>
       </authentication>
    </hotrod-connector>
-   <rest-connector name="rest"/>
+   <rest-connector name="rest">
+      <authentication security-realm="default" mechanisms="CLIENT_CERT"/>
+   </rest-connector>
 </endpoints>

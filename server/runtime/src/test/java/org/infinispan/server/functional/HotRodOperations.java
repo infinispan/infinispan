@@ -14,7 +14,7 @@ import org.junit.Test;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class CacheOperations {
+public class HotRodOperations {
 
    @ClassRule
    public static InfinispanServerRule SERVERS = ClusteredTests.SERVERS;
@@ -23,7 +23,7 @@ public class CacheOperations {
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
    @Test
-   public void testCluster() {
+   public void testOperations() {
       RemoteCache<String, String> cache = SERVER_TEST.getHotRodCache(CacheMode.DIST_SYNC);
       cache.put("k1", "v1");
       assertEquals(1, cache.size());

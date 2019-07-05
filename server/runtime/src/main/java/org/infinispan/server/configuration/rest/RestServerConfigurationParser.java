@@ -19,6 +19,7 @@ import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.infinispan.rest.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
@@ -127,7 +128,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case AUTHENTICATION: {
-               parseAuthentication(reader, builder);
+               parseAuthentication(reader, serverBuilder, builder.authentication().enable());
                break;
             }
             case ENCRYPTION: {
@@ -227,16 +228,18 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       return builder.build();
    }
 
-   private void parseAuthentication(XMLExtendedStreamReader reader, RestServerConfigurationBuilder builder) throws XMLStreamException {
+   private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
+      String securityRealm = ParseUtils.requireAttributes(reader, org.infinispan.server.configuration.hotrod.Attribute.SECURITY_REALM)[0];
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case SECURITY_REALM: {
+               // Already seen
                break;
             }
-            case AUTH_METHOD: {
+            case MECHANISMS: {
+               builder.addMechanisms(reader.getListAttributeValue(i));
                break;
             }
             default: {
@@ -246,6 +249,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
 
       ParseUtils.requireNoContent(reader);
+      builder.authenticator(serverBuilder.getHTTPAuthenticationProvider(securityRealm));
    }
 
    private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {

@@ -200,7 +200,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-      builder.serverAuthenticationProvider(serverBuilder.getAuthenticationProviderForRealm(securityRealm));
+      builder.serverAuthenticationProvider(serverBuilder.getSASLAuthenticationProvider(securityRealm));
    }
 
    private void parseSasl(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {

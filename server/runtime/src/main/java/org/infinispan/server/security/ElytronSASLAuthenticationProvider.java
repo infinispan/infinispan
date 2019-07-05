@@ -23,10 +23,10 @@ import org.wildfly.security.sasl.util.ServerNameSaslServerFactory;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class ElytronAuthenticationProvider implements ServerAuthenticationProvider {
+public class ElytronSASLAuthenticationProvider implements ServerAuthenticationProvider {
    private final SaslAuthenticationFactory saslAuthenticationFactory;
 
-   public ElytronAuthenticationProvider(String name, SecurityDomain domain) {
+   public ElytronSASLAuthenticationProvider(String name, SecurityDomain domain) {
       SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
       AggregateSaslServerFactory factory = new AggregateSaslServerFactory(SaslFactories.getProviderSaslServerFactory());
       builder.setFactory(factory);

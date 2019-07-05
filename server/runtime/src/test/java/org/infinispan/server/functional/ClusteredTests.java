@@ -11,7 +11,7 @@ import org.junit.runners.Suite;
  * @since 10.0
  **/
 @RunWith(Suite.class)
-@Suite.SuiteClasses({CacheOperations.class, CounterOperations.class})
+@Suite.SuiteClasses({HotRodOperations.class, RestOperations.class, MemcachedOperations.class, CounterOperations.class})
 public class ClusteredTests {
 
    @ClassRule
