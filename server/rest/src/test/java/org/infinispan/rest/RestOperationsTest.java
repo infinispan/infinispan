@@ -1,6 +1,7 @@
 package org.infinispan.rest;
 
 import static org.eclipse.jetty.http.HttpHeader.ACCEPT_ENCODING;
+import static org.eclipse.jetty.http.HttpHeader.CONTENT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
@@ -358,7 +359,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    private ContentResponse writeJsonToCache(String key, String json, String cacheName) throws Exception {
       return client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
             .content(new StringContentProvider(json))
-            .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON_TYPE)
+            .header(CONTENT_TYPE, APPLICATION_JSON_TYPE)
             .method(HttpMethod.PUT).send();
    }
 
@@ -376,7 +377,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       ContentResponse response1 = client
             .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "addr1"))
             .content(new BytesContentProvider(jbossMarshalled))
-            .header(HttpHeader.CONTENT_TYPE, APPLICATION_JBOSS_MARSHALLING_TYPE)
+            .header(CONTENT_TYPE, APPLICATION_JBOSS_MARSHALLING_TYPE)
             .method(HttpMethod.PUT)
             .send();
 
@@ -386,7 +387,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       ContentResponse response2 = client
             .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "addr2"))
             .content(new BytesContentProvider(jsonMarshalled))
-            .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON_TYPE)
+            .header(CONTENT_TYPE, APPLICATION_JSON_TYPE)
             .method(HttpMethod.PUT)
             .send();
 
@@ -396,7 +397,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       ContentResponse response3 = client
             .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "addr3"))
             .content(new BytesContentProvider(xmlMarshalled))
-            .header(HttpHeader.CONTENT_TYPE, APPLICATION_XML_TYPE)
+            .header(CONTENT_TYPE, APPLICATION_XML_TYPE)
             .method(HttpMethod.PUT)
             .send();
 
@@ -406,7 +407,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       ContentResponse response4 = client
             .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "objectCache", "addr4"))
             .content(new BytesContentProvider(javaMarshalled))
-            .header(HttpHeader.CONTENT_TYPE, APPLICATION_SERIALIZED_OBJECT_TYPE)
+            .header(CONTENT_TYPE, APPLICATION_SERIALIZED_OBJECT_TYPE)
             .method(HttpMethod.PUT)
             .send();
 
@@ -480,6 +481,99 @@ public class RestOperationsTest extends BaseRestOperationsTest {
             .method(HttpMethod.GET).send();
       ResponseAssertion.assertThat(response).isOk();
       assertEquals(0, Long.parseLong(response.getContentAsString()));
+   }
+
+   @Test
+   public void testCacheV2KeyOps() throws Exception {
+      String urlWithoutCM = String.format("http://localhost:%d/rest/v2/caches/default", restServer().getPort());
+
+      ContentResponse response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.POST).content(new StringContentProvider("value")).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.POST).content(new StringContentProvider("value")).send();
+      ResponseAssertion.assertThat(response).isConflicted();
+
+      response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.PUT).content(new StringContentProvider("value-new")).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.GET).send();
+      ResponseAssertion.assertThat(response).hasReturnedText("value-new");
+
+      response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.HEAD).send();
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasNoContent();
+
+      response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.DELETE).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.GET).send();
+      ResponseAssertion.assertThat(response).isNotFound();
+   }
+
+   @Test
+   public void testCacheV2LifeCycle() throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/", restServer().getPort());
+
+      String xml = getResourceAsString("cache.xml", getClass().getClassLoader());
+      String json = getResourceAsString("cache.json", getClass().getClassLoader());
+
+      ContentResponse response = client.newRequest(url + "cache1").header("Content-type", APPLICATION_XML_TYPE)
+            .method(HttpMethod.POST).content(new StringContentProvider(xml)).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.newRequest(url + "cache2").header("Content-type", APPLICATION_JSON_TYPE)
+            .method(HttpMethod.POST).content(new StringContentProvider(json)).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.newRequest(url + "cache1/config").method(HttpMethod.GET).send();
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).bodyNotEmpty();
+      String cache1Cfg = response.getContentAsString();
+
+
+      response = client.newRequest(url + "cache2/config").method(HttpMethod.GET).send();
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).bodyNotEmpty();
+      String cache2Cfg = response.getContentAsString();
+
+      assertEquals(cache1Cfg, cache2Cfg);
+
+      response = client.newRequest(url + "cache1").method(HttpMethod.DELETE).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.newRequest(url + "cache1/config").method(HttpMethod.GET).send();
+      ResponseAssertion.assertThat(response).isNotFound();
+   }
+
+   @Test
+   public void testCacheV2Stats() throws Exception {
+      ObjectMapper objectMapper = new ObjectMapper();
+      String cacheJson = "{ \"distributed-cache\" : { \"statistics\":true } }";
+      String cacheURL = String.format("http://localhost:%d/rest/v2/caches/statCache", restServer().getPort());
+
+      String url = String.format(cacheURL, restServer().getPort());
+      ContentResponse response = client.newRequest(url)
+            .method(HttpMethod.POST)
+            .header(CONTENT_TYPE, APPLICATION_JSON_TYPE)
+            .content(new StringContentProvider(cacheJson))
+            .send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      putStringValueInCache("statCache", "key1", "data");
+      putStringValueInCache("statCache", "key2", "data");
+
+      response = client.newRequest(cacheURL + "/stats").send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      JsonNode jsonNode = objectMapper.readTree(response.getContent());
+      assertEquals(jsonNode.get("currentNumberOfEntries").asInt(), 2);
+      assertEquals(jsonNode.get("stores").asInt(), 2);
+
+      response = client.newRequest(cacheURL + "?action=clear").send();
+      ResponseAssertion.assertThat(response).isOk();
+      response = client.newRequest(cacheURL + "/stats").send();
+      ResponseAssertion.assertThat(response).isOk();
+      assertEquals(objectMapper.readTree(response.getContent()).get("currentNumberOfEntries").asInt(), 0);
    }
 
    @Test

@@ -56,10 +56,10 @@ public class CacheResource implements ResourceHandler {
 
    private static final MurmurHash3 hashFunc = MurmurHash3.getInstance();
 
-   private final RestCacheManager<Object> restCacheManager;
-   private final RestServerConfiguration restServerConfiguration;
-   private final CacheResourceQueryAction queryAction;
-   private final Executor executor;
+   final RestCacheManager<Object> restCacheManager;
+   final RestServerConfiguration restServerConfiguration;
+   final CacheResourceQueryAction queryAction;
+   final Executor executor;
 
    public CacheResource(RestCacheManager<Object> restCacheManager, RestServerConfiguration restServerConfiguration, Executor executor) {
       this.restCacheManager = restCacheManager;
@@ -101,7 +101,7 @@ public class CacheResource implements ResourceHandler {
       }, executor);
    }
 
-   private CompletionStage<RestResponse> deleteCacheValue(RestRequest request) throws RestResponseException {
+   CompletionStage<RestResponse> deleteCacheValue(RestRequest request) throws RestResponseException {
       String cacheName = request.variables().get("cacheName");
 
       Object key = request.variables().get("cacheKey");
@@ -130,7 +130,7 @@ public class CacheResource implements ResourceHandler {
       });
    }
 
-   private CompletionStage<RestResponse> putValueToCache(RestRequest request) {
+   CompletionStage<RestResponse> putValueToCache(RestRequest request) {
 
       String cacheName = request.variables().get("cacheName");
 
@@ -169,7 +169,7 @@ public class CacheResource implements ResourceHandler {
       });
    }
 
-   private CompletionStage<RestResponse> clearEntireCache(RestRequest request) throws RestResponseException {
+   CompletionStage<RestResponse> clearEntireCache(RestRequest request) throws RestResponseException {
       String cacheName = request.variables().get("cacheName");
 
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
@@ -180,7 +180,8 @@ public class CacheResource implements ResourceHandler {
       return cache.clearAsync().thenApply(v -> responseBuilder.build());
    }
 
-   private CompletionStage<RestResponse> getCacheValue(RestRequest request) throws RestResponseException {
+
+   CompletionStage<RestResponse> getCacheValue(RestRequest request) throws RestResponseException {
       String cacheName = request.variables().get("cacheName");
       String accept = request.getAcceptHeader();
       if (accept == null) accept = MediaType.MATCH_ALL_TYPE;

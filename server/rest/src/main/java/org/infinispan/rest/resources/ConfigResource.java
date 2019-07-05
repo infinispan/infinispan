@@ -70,7 +70,7 @@ public class ConfigResource implements ResourceHandler {
       return CompletableFuture.completedFuture(responseBuilder.entity(entity).build());
    }
 
-   private MediaType getAccept(RestRequest restRequest) {
+   static MediaType getAccept(RestRequest restRequest) {
       String acceptHeader = restRequest.getAcceptHeader();
       if (acceptHeader == null || acceptHeader.equals(MediaType.MATCH_ALL_TYPE)) return MediaType.APPLICATION_JSON;
 
