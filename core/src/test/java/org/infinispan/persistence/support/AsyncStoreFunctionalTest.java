@@ -226,6 +226,59 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
       });
    }
 
+   /**
+    * A test for asynchronous write behind file cache store (passivation true, eviction on). Verifies
+    * https://bugzilla.redhat.com/show_bug.cgi?id=862594
+    */
+   public void testPutRemove() {
+      GlobalConfigurationBuilder globalBuilder = globalBuilderWithCustomPersistenceManager();
+      ConfigurationBuilder builder = asyncStoreWithEvictionBuilder();
+      builder.memory().size(1000L);
+
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(globalBuilder, builder)) {
+         @Override
+         public void call() {
+
+            Cache<String, String> cache = cm.getCache();
+            MockAsyncCacheWriter cacheStore = TestingUtil.getFirstWriter(cache);
+            DummyInMemoryStore dummyStore = (DummyInMemoryStore) cacheStore.undelegate();
+            CountDownLatch lockedWaitLatch = cacheStore.lockedWaitLatch;
+
+            int number = 200;
+            String key = "key";
+            String value = "value";
+
+            for (int i = 0; i < number; i++) {
+               cache.put(key + i, value + i);
+            }
+
+            for (int i = 0; i < number; i++) {
+               String entry = cache.get((key + i));
+               dummyStore.blockUntilCacheStoreContains(key + i, value + i, 60000);
+               assertEquals(value + i, entry);
+            }
+
+            for (int i = 0; i < 200; i++) {
+               cache.remove(key + i);
+            }
+            for (int i = 0; i < number; i++) {
+               MarshallableEntry entry = dummyStore.load(key + i);
+               while (entry != null) {
+
+                  try {
+                     log.trace("Wait for async store to lock keys");
+                     lockedWaitLatch.await(60, TimeUnit.SECONDS);
+                     entry = dummyStore.load(key + i);
+                  } catch (InterruptedException e) {
+                     Thread.currentThread().interrupt();
+                  }
+               }
+            }
+         }
+      });
+   }
+
    private ConfigurationBuilder asyncStoreWithEvictionBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       // Emulate eviction with direct data container eviction
