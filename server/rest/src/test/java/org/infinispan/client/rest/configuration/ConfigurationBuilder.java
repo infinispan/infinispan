@@ -1,0 +1,173 @@
+package org.infinispan.client.rest.configuration;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.function.BiConsumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.TypedProperties;
+
+/**
+ * <p>ConfigurationBuilder used to generate immutable {@link Configuration} objects.
+ *
+ * <p>If you prefer to configure the client declaratively, see {@link org.infinispan.client.rest.configuration}</p>
+ *
+ * @author Tristan Tarrant
+ * @since 10.0
+ */
+public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<Configuration> {
+
+   // Match IPv4 (host:port) or IPv6 ([host]:port) addresses
+   private static final Pattern ADDRESS_PATTERN = Pattern
+         .compile("(\\[([0-9A-Fa-f:]+)\\]|([^:/?#]*))(?::(\\d*))?");
+
+   private int connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
+
+   private final List<ServerConfigurationBuilder> servers = new ArrayList<>();
+   private int socketTimeout = ConfigurationProperties.DEFAULT_SO_TIMEOUT;
+   private final SecurityConfigurationBuilder security;
+   private boolean tcpNoDelay = true;
+   private boolean tcpKeepAlive = false;
+   private Protocol protocol = Protocol.HTTP_11;
+
+   public ConfigurationBuilder() {
+      this.security = new SecurityConfigurationBuilder(this);
+   }
+
+   @Override
+   public ServerConfigurationBuilder addServer() {
+      ServerConfigurationBuilder builder = new ServerConfigurationBuilder(this);
+      this.servers.add(builder);
+      return builder;
+   }
+
+   @Override
+   public ConfigurationBuilder addServers(String servers) {
+      parseServers(servers, (host, port) -> addServer().host(host).port(port));
+      return this;
+   }
+
+   public static final void parseServers(String servers, BiConsumer<String, Integer> c) {
+      for (String server : servers.split(";")) {
+         Matcher matcher = ADDRESS_PATTERN.matcher(server.trim());
+         if (matcher.matches()) {
+            String v6host = matcher.group(2);
+            String v4host = matcher.group(3);
+            String host = v6host != null ? v6host : v4host;
+            String portString = matcher.group(4);
+            int port = portString == null
+                  ? ConfigurationProperties.DEFAULT_REST_PORT
+                  : Integer.parseInt(portString);
+            c.accept(host, port);
+         } else {
+            throw new IllegalArgumentException(server);
+         }
+
+      }
+   }
+
+   @Override
+   public ConfigurationBuilder protocol(Protocol protocol) {
+      this.protocol = protocol;
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder connectionTimeout(int connectionTimeout) {
+      this.connectionTimeout = connectionTimeout;
+      return this;
+   }
+
+   @Override
+   public SecurityConfigurationBuilder security() {
+      return security;
+   }
+
+   @Override
+   public ConfigurationBuilder socketTimeout(int socketTimeout) {
+      this.socketTimeout = socketTimeout;
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
+      this.tcpNoDelay = tcpNoDelay;
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder tcpKeepAlive(boolean keepAlive) {
+      this.tcpKeepAlive = keepAlive;
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder withProperties(Properties properties) {
+      TypedProperties typed = TypedProperties.toTypedProperties(properties);
+      this.protocol(typed.getEnumProperty(ConfigurationProperties.PROTOCOL, Protocol.class, protocol, true));
+      this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
+      String serverList = typed.getProperty(ConfigurationProperties.SERVER_LIST, null, true);
+      if (serverList != null) {
+         this.servers.clear();
+         this.addServers(serverList);
+      }
+      this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
+      this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay, true));
+      this.tcpKeepAlive(typed.getBooleanProperty(ConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive, true));
+      this.security.ssl().withProperties(properties);
+      this.security.authentication().withProperties(properties);
+
+      return this;
+   }
+
+   @Override
+   public void validate() {
+      security.validate();
+   }
+
+   @Override
+   public Configuration create() {
+      List<ServerConfiguration> servers = new ArrayList<>();
+      if (this.servers.size() > 0)
+         for (ServerConfigurationBuilder server : this.servers) {
+            servers.add(server.create());
+         }
+      else {
+         servers.add(new ServerConfiguration("127.0.0.1", ConfigurationProperties.DEFAULT_REST_PORT));
+      }
+
+      return new Configuration(servers, protocol, connectionTimeout, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive);
+   }
+
+
+   @Override
+   public Configuration build() {
+      return build(true);
+   }
+
+   public Configuration build(boolean validate) {
+      if (validate) {
+         validate();
+      }
+      return create();
+   }
+
+   @Override
+   public ConfigurationBuilder read(Configuration template) {
+
+      this.connectionTimeout = template.connectionTimeout();
+      this.servers.clear();
+      for (ServerConfiguration server : template.servers()) {
+         this.addServer().host(server.host()).port(server.port());
+      }
+      this.socketTimeout = template.socketTimeout();
+      this.security.read(template.security());
+      this.tcpNoDelay = template.tcpNoDelay();
+      this.tcpKeepAlive = template.tcpKeepAlive();
+
+      return this;
+   }
+}
