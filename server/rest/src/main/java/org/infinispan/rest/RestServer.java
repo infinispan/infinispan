@@ -3,9 +3,8 @@ package org.infinispan.rest;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.health.Health;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.rest.authentication.Authenticator;
-import org.infinispan.rest.authentication.impl.VoidAuthenticator;
 import org.infinispan.rest.cachemanager.RestCacheManager;
+import org.infinispan.rest.configuration.AuthenticationConfiguration;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.ResourceManager;
 import org.infinispan.rest.framework.RestDispatcher;
@@ -33,8 +32,6 @@ import io.netty.channel.ChannelOutboundHandler;
  * @author Sebastian Łaskawiec
  */
 public class RestServer extends AbstractProtocolServer<RestServerConfiguration> {
-
-   private Authenticator authenticator = new VoidAuthenticator();
    private RestDispatcher restDispatcher;
    private RestCacheManager<Object> restCacheManager;
    private final ObjectMapper mapper = new ObjectMapper();
@@ -67,26 +64,8 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       return new RestChannelInitializer(this, transport);
    }
 
-   /**
-    * Gets Authentication mechanism.
-    *
-    * @return {@link Authenticator} instance.
-    */
-   Authenticator getAuthenticator() {
-      return authenticator;
-   }
-
    RestDispatcher getRestDispatcher() {
       return restDispatcher;
-   }
-
-   /**
-    * Sets Authentication mechanism.
-    *
-    * @param authenticator {@link Authenticator} instance.
-    */
-   public void setAuthenticator(Authenticator authenticator) {
-      this.authenticator = authenticator;
    }
 
    @Override
@@ -97,8 +76,12 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    @Override
    protected void startInternal(RestServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
+      this.configuration = configuration;
+      AuthenticationConfiguration auth = configuration.authentication();
+      if (auth.enabled()) {
+         auth.authenticator().init(this);
+      }
       super.startInternal(configuration, cacheManager);
-      authenticator.init(this);
       restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
       Health health = cacheManager.getHealth();
       String rootContext = configuration.startTransport() ? configuration.contextPath() : "*";

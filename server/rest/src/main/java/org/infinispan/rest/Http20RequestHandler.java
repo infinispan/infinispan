@@ -1,21 +1,14 @@
 package org.infinispan.rest;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
-import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.logging.Log;
-import org.infinispan.rest.logging.RestAccessLoggingHandler;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.unix.Errors;
 import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.DefaultHttpResponse;
@@ -32,65 +25,45 @@ import io.netty.handler.codec.http2.HttpConversionUtil;
  *
  * @author Sebastian Łaskawiec
  */
-public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+public class Http20RequestHandler extends BaseHttpRequestHandler {
 
    protected final static Log logger = LogFactory.getLog(Http20RequestHandler.class, Log.class);
-
-   private final Authenticator authenticator;
-   final RestAccessLoggingHandler restAccessLoggingHandler = new RestAccessLoggingHandler();
    protected final RestServer restServer;
    protected final RestServerConfiguration configuration;
+   private AuthenticationHandler authenticationHandler;
 
    /**
     * Creates new {@link Http20RequestHandler}.
     *
-    * @param restServer    Rest Server.
+    * @param restServer Rest Server.
     */
    public Http20RequestHandler(RestServer restServer) {
       this.restServer = restServer;
       this.configuration = restServer.getConfiguration();
-      this.authenticator = restServer.getAuthenticator();
+   }
+
+   @Override
+   public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+      authenticationHandler = ctx.pipeline().get(AuthenticationHandler.class);
+      super.channelRegistered(ctx);
    }
 
    @Override
    public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
       restAccessLoggingHandler.preLog(request);
       NettyRestRequest restRequest = new NettyRestRequest(request);
-      authenticator.challenge(restRequest, ctx).whenComplete((authResponse, authThrowable) -> {
-         if (authThrowable != null) {
-            restRequest.release();
-            handleError(ctx, request, authThrowable);
-         } else if (authResponse.getStatus() == UNAUTHORIZED.code()) {
-            restRequest.release();
-            sendResponse(ctx, request, ((NettyRestResponse) authResponse).getResponse());
+      if (authenticationHandler != null) {
+         restRequest.setSubject(authenticationHandler.getSubject());
+      }
+      restServer.getRestDispatcher().dispatch(restRequest).whenComplete((restResponse, throwable) -> {
+         if (throwable == null) {
+            NettyRestResponse nettyRestResponse = (NettyRestResponse) restResponse;
+            addCorrelatedHeaders(request, nettyRestResponse.getResponse());
+            sendResponse(ctx, request, nettyRestResponse.getResponse());
          } else {
-            restServer.getRestDispatcher().dispatch(restRequest).whenComplete((restResponse, throwable) -> {
-               restRequest.release();
-               if (throwable == null) {
-                  NettyRestResponse nettyRestResponse = (NettyRestResponse) restResponse;
-                  addCorrelatedHeaders(request, nettyRestResponse.getResponse());
-                  sendResponse(ctx, request, nettyRestResponse.getResponse());
-               } else {
-                  handleError(ctx, request, throwable);
-               }
-            });
+            handleError(ctx, request, throwable);
          }
       });
-   }
-
-   private void handleError(ChannelHandlerContext ctx, FullHttpRequest request, Throwable throwable) {
-      Throwable cause = CompletableFutures.extractException(throwable);
-      NettyRestResponse errorResponse;
-      if (cause instanceof RestResponseException) {
-         RestResponseException responseException = (RestResponseException) throwable;
-         logger.errorWhileResponding(responseException);
-         errorResponse = new NettyRestResponse.Builder().status(responseException.getStatus()).entity(responseException.getText()).build();
-      } else if (cause instanceof SecurityException) {
-         errorResponse = new NettyRestResponse.Builder().status(FORBIDDEN).entity(cause.getMessage()).build();
-      } else {
-         errorResponse = new NettyRestResponse.Builder().status(INTERNAL_SERVER_ERROR).entity(cause.getMessage()).build();
-      }
-      sendResponse(ctx, request, errorResponse.getResponse());
    }
 
    private void addCorrelatedHeaders(FullHttpRequest request, FullHttpResponse response) {
@@ -105,11 +78,9 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
       }
    }
 
-   protected void sendResponse(ChannelHandlerContext ctx, FullHttpRequest request, FullHttpResponse response) {
-      ctx.executor().execute(() -> {
-         restAccessLoggingHandler.log(ctx, request, response);
-         ctx.writeAndFlush(response);
-      });
+   @Override
+   protected Log getLogger() {
+      return logger;
    }
 
    @Override

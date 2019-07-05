@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
@@ -30,19 +30,25 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
    private final Attribute<Integer> maxContentLength;
    private final Attribute<List<CorsConfig>> corsRules;
    private final Attribute<Integer> compressionLevel;
+   private final AuthenticationConfiguration authentication;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RestServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(),
             EXTENDED_HEADERS, CONTEXT_PATH, MAX_CONTENT_LENGTH, CORS_RULES, COMPRESSION_LEVEL);
    }
 
-   RestServerConfiguration(AttributeSet attributes, SslConfiguration ssl) {
+   RestServerConfiguration(AttributeSet attributes, SslConfiguration ssl, AuthenticationConfiguration authentication) {
       super(attributes, ssl);
+      this.authentication = authentication;
       this.extendedHeaders = attributes.attribute(EXTENDED_HEADERS);
       this.contextPath = attributes.attribute(CONTEXT_PATH);
       this.maxContentLength = attributes.attribute(MAX_CONTENT_LENGTH);
       this.corsRules = attributes.attribute(CORS_RULES);
       this.compressionLevel = attributes.attribute(COMPRESSION_LEVEL);
+   }
+
+   public AuthenticationConfiguration authentication() {
+      return authentication;
    }
 
    public ExtendedHeaders extendedHeaders() {

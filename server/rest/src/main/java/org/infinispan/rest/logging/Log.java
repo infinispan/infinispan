@@ -72,4 +72,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Header '%s' will be ignored, expecting a number but got '%s'", id = 12016)
    void warnInvalidNumber(String header, String value);
+
+   @Message(value = "Cannot enable authentication without an authenticator", id = 12017)
+   CacheConfigurationException authenticationWithoutAuthenticator();
 }

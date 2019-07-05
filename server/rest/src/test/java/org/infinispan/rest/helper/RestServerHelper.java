@@ -6,7 +6,6 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.authentication.Authenticator;
-import org.infinispan.rest.authentication.impl.VoidAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -21,8 +20,6 @@ public class RestServerHelper {
    private final EmbeddedCacheManager cacheManager;
    private final RestServer restServer = new RestServer();
    private final RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
-
-   private Authenticator authenticator = new VoidAuthenticator();
 
    public RestServerHelper(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
@@ -44,17 +41,12 @@ public class RestServerHelper {
    }
 
    public RestServerHelper withAuthenticator(Authenticator authenticator) {
-      this.authenticator = authenticator;
+      restServerConfigurationBuilder.authentication().authenticator(authenticator);
       return this;
-   }
-
-   public void defineCache(String cacheName, ConfigurationBuilder configurationBuilder) {
-      cacheManager.defineConfiguration(cacheName, configurationBuilder.build());
    }
 
    public RestServerHelper start(String name) {
       restServerConfigurationBuilder.name(name);
-      restServer.setAuthenticator(authenticator);
       restServer.start(restServerConfigurationBuilder.build(), cacheManager);
       return this;
    }
