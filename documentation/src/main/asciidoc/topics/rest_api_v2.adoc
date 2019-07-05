@@ -1,0 +1,435 @@
+[[rest_v2_api]]
+= REST v2 API
+{brandname} provides a REST v2 (version 2) API that improves upon the REST v1
+API. The REST v2 API gives you all the features of the v1 API in addition to
+support for resources beyond caching.
+
+[[rest_v2_cache_operations]]
+== Working with Caches
+Use the REST API to create and manage caches on your {brandname} cluster and interact with cached entries.
+
+[[rest_v2_create_cache]]
+=== Creating Caches
+To create a named cache across the {brandname} cluster, invoke a `POST` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/{cacheName}
+----
+
+To configure the cache, you supply the configuration in XML or JSON format as
+part of the payload.
+
+XML Configuration::
+If you supply the {brandname} configuration in XML format, it must conform to
+the schema and include the `<infinispan>` root element and a
+`<cache-container>` definition, as in the following example:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+<infinispan>
+    <cache-container>
+        <distributed-cache name="cacheName" mode="SYNC">
+            <memory>
+                <object size="20"/>
+            </memory>
+        </distributed-cache>
+    </cache-container>
+</infinispan>
+----
+
+JSON Configuration::
+If you supply the {brandname} configuration in a JSON payload, it requires only
+the cache definition. However, the JSON payload must follow the structure of an
+XML configuration. XML elements become JSON objects. XML attributes become JSON
+fields.
++
+For example, the preceding XML configuration is represented in JSON as follows:
++
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+  "distributed-cache": {
+    "mode": "SYNC",
+    "memory": {
+      "object": {
+        "size": 20
+      }
+    }
+  }
+}
+----
+
+.Headers
+|===
+|Header |Required or Optional |Parameter
+
+|`Content-Type`
+|REQUIRED
+|Sets the https://en.wikipedia.org/wiki/Media_type[MediaType] for the
+{brandname} configuration payload; either `application/xml` or
+`application/json`.
+|===
+
+
+[[rest_v2_add_entries]]
+=== Adding Entries
+To add entries to a named cache, invoke a `POST` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/{cacheName}/{cacheKey}
+----
+
+The preceding request places the payload, or request body, in the `cacheName`
+cache with the `cacheKey` key. The request replaces any data that already
+exists and updates the `Time-To-Live` and `Last-Modified` values, if they apply.
+
+If the specified key has an existing value, the request returns an HTTP
+`CONFLICT` status and the value is not updated. In this case, you should use a `PUT` request. See link:#rest_v2_replace_entries[Replacing Entries].
+
+.Headers
+|===
+|Header |Required or Optional |Parameter
+
+|`Key-Content-Type`
+|OPTIONAL
+|Sets the content type for the key in the request. See link:#rest_key_content_type[Key-Content-Type] for more information.
+
+|`Content-Type`
+|OPTIONAL
+|Sets the https://en.wikipedia.org/wiki/Media_type[MediaType] of the value for the key.
+
+|`timeToLiveSeconds`
+|OPTIONAL
+|Sets the number of seconds before the entry is automatically deleted. If you do not set this parameter, {brandname} uses the default value from the configuration. If you set a negative value, the entry is never deleted.
+
+|`maxIdleTimeSeconds`
+|OPTIONAL
+|Sets the number of seconds that entries can be idle. If a read or write operation does not occur for an entry after the maximum idle time elapses, the entry is automatically deleted. If you do not set this parameter, {brandname} uses the default value from the configuration. If you set a negative value, the entry is never deleted.
+|===
+
+[NOTE]
+====
+If both `timeToLiveSeconds` and `maxIdleTimeSeconds` have a value of `0`, {brandname} uses the default `lifespan` and `maxIdle` values from the configuration.
+
+If _only_ `maxIdleTimeSeconds` has a value of `0`, {brandname} uses:
+
+* the default `maxIdle` value from the configuration.
+* the value for `timeToLiveSeconds` that you pass as a request parameter or a value of `-1` if you do not pass a value.
+
+If _only_ `timeToLiveSeconds` has a value of `0`, {brandname} uses:
+
+* the default `lifespan` value from the configuration.
+* the value for `maxIdle` that you pass as a request parameter or a value of `-1` if you do not pass a value.
+====
+
+[[rest_v2_replace_entries]]
+=== Replacing Entries
+To replace entries in a named cache, invoke a `PUT` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+PUT /v2/caches/{cacheName}/{cacheKey}
+----
+
+The preceding request is the same as a `POST` request to add entries to the cache. However, if the entry already exists, the `PUT` request replaces it instead of returning an HTTP `CONFLICT` status.
+
+[[rest_v2_retrieve_cache]]
+=== Retrieving Caches By Keys
+To retrieve data for a specific key in a cache, invoke a `GET` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/{cacheKey}
+----
+
+The preceding request returns data from the given cache, `cacheName`, under the given key, `cacheKey`, as the response body. Responses contain a `Content-Type` headers that correspond to the MediaType negotiation.
+
+[NOTE]
+====
+Browsers can also access caches directly, for example as a content delivery network (CDN). {brandname} returns a unique link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] for each entry along with the `Last-Modified` and `Expires` header fields. These fields provide information about the state of the data that is returned in your request. ETags allow browsers and other clients to request only data that has changed, which conserves bandwidth.
+====
+
+.Headers
+|===
+|Header |Required or Optional |Parameter
+
+|`Key-Content-Type`
+|OPTIONAL
+|Sets the content type for the key in the request. The default is `application/x-java-object; type=java.lang.String`. See link:#rest_key_content_type[Key-Content-Type] for more information.
+
+|`Accept`
+|OPTIONAL
+|Sets the required format to return content. See link:#rest_accept[Accept] for more information.
+|===
+
+[TIP]
+====
+Append the `extended` parameter to the query string to get additional information.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /cacheName/cacheKey?extended
+----
+
+The preceding request returns custom headers:
+
+* `Cluster-Primary-Owner` returns the node name that is the primary owner of the key.
+* `Cluster-Node-Name` returns the JGroups node name of the server that handled the request.
+* `Cluster-Physical-Address` returns the physical JGroups address of the server that handled the request.
+====
+
+[[rest_v2_check_entries]]
+=== Checking if Entries Exist
+To check if a specific entry exists in a cache, invoke a `HEAD` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+HEAD /v2/caches/{cacheName}/{cacheKey}
+----
+
+The preceding request returns only the header fields and the same content that you stored with the entry. For example, if you stored a String, the request returns a String. If you stored binary, base64-encoded, blobs or serialized Java objects, {brandname} does not de-serialize the content in the request.
+
+As with `GET` requests, `HEAD` requests also support the `extended` parameter.
+
+.Headers
+|===
+|Header |Required or Optional |Parameter
+
+|`Key-Content-Type`
+|OPTIONAL
+|Sets the content type for the key in the request. The default is `application/x-java-object; type=java.lang.String`. See link:#rest_key_content_type[Key-Content-Type] for more information.
+|===
+
+[[rest_v2_delete_entries]]
+=== Deleting Entries
+To delete entries from a cache, invoke a `DELETE` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /v2/caches/{cacheName}/{cacheKey}
+----
+
+The preceding request removes the entry under `cacheKey` name from the cache.
+
+.Headers
+|===
+|Header |Required or Optional |Parameter
+
+|`Key-Content-Type`
+|OPTIONAL
+|Sets the content type for the key in the request. The default is `application/x-java-object; type=java.lang.String`. See link:#rest_key_content_type[Key-Content-Type] for more information.
+|===
+
+[[rest_v2_remove_cache]]
+=== Removing Caches
+To remove caches, invoke a `DELETE` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /v2/caches/{cacheName}
+----
+
+The preceding request deletes all data and removes the cache named `cacheName` from the cluster.
+
+[[rest_v2_clear_cache]]
+=== Clearing Caches
+To delete all data from a cache, invoke a `GET` request with the `?action=clear` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}?action=clear
+----
+
+[[rest_v2_query_cache]]
+=== Querying Caches
+Invoke a `GET` request to perform and Ickle query on a given cache, as follows:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}?action=search&query={ickle query}
+----
+
+The preceding request returns a `JSON` document that contains one or more query hits, for example:
+
+[source,json]
+----
+{
+  "total_results" : 150,
+  "hits" : [ {
+    "hit" : {
+      "name" : "user1",
+      "age" : 35
+    }
+  }, {
+    "hit" : {
+       "name" : "user2",
+       "age" : 42
+    }
+  }, {
+    "hit" : {
+       "name" : "user3",
+       "age" : 12
+    }
+  } ]
+}
+----
+
+* `total_results` displays the total number of results from the query.
+* `hits` is an array of matches from the query.
+* `hit` is an object that matches the query. Each hit can contain all fields or a subset of fields if you use a `Select` clause.
+
+.Request Parameters
+|===
+|Parameter |Required or Optional |Value
+
+|`query`
+|REQUIRED
+|Specifies the query string.
+
+|`max_results`
+|OPTIONAL
+|Sets the number of results to return. The default is `10`.
+
+|`offset`
+|OPTIONAL
+|Specifies the index of the first result to return. The default is `0`.
+
+|`query_mode`
+|OPTIONAL
+|Specifies how the {brandname} server executes the query. Values are `FETCH` and `BROADCAST`. The default is `FETCH`.
+|===
+
+To use the body of the request instead of specifying query parameters, invoke a `POST` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/{cacheName}?action=search
+----
+
+The following is an example of a query in the request body:
+
+[source,json]
+----
+{
+ "query":"from Entity where name:\"user1\"",
+ "max_results":20,
+ "offset":10
+}
+----
+
+[[rest_server_cluster]]
+=== Monitoring {brandname} Clusters
+Use the REST API to monitor {brandname} clusters.
+
+[[rest_server_cluster_get]]
+==== Retrieving Cluster Information
+To retrieve information about a {brandname} cluster, invoke a `GET` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/cluster
+----
+
+The preceding request returns information such as the following:
+
+[source,json]
+----
+{
+   "clusterName":"ISPN",
+   "healthStatus":"HEALTHY",
+   "numberOfNodes":2,
+   "nodeNames":[
+      "NodeA",
+      "NodeB"
+   ]
+}
+----
+
+* `clusterName` specifies the name of the cluster as defined in the configuration.
+* `healthStatus` provides one of the following:
+** `UNHEALTHY` indicates at least one of the caches is in degraded mode.
+** `REBALANCING` indicates at least one cache is in the rebalancing state.
+** `HEALTHY` indicates all cache instances in the cluster are operating as expected.
+* `numberOfNodes` displays the total number of cluster members. Returns a value of `0` for non-clustered (standalone) servers.
+* `nodeNames` is an array of all cluster members. Empty for standalone servers.
+
+[[rest_server_cluster_head]]
+==== Check availability
+To check that a {brandname} exists and is available, invoke a `HEAD` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+HEAD /v2/cluster
+----
+
+If the preceding request returns a successful response code then the {brandname} REST server is running and serving requests.
+
+[[rest_server_configuration]]
+=== Retrieving Cache Configuration
+To retrieve a {brandname} configuration, invoke a `GET` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/configurations/{name}
+----
+
+.Headers
+|===
+|Header |Required or Optional |Parameter
+
+|`Accept`
+|OPTIONAL
+|Sets the required format to return content. Supported formats are `application/xml` and `application/json`. The default is `application/json`. See link:#rest_accept[Accept] for more information.
+|===
+
+[[rest_server_counters]]
+=== Counter
+Use the REST API to work with counters.
+
+[[rest_server_counters_post]]
+==== Adding Values to Counters
+To add a value to a named counter, invoke a `POST` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/counters/{counterName}
+----
+
+If the request payload is empty, the counter is incremented by one, otherwise the payload is interpreted as a signed long and added to the counter.
+
+Request responses depend on the type of counter, as follows:
+
+* `WEAK` counters return empty responses.
+* `STRONG` counters return their values after the operation is applied.
+
+[NOTE]
+====
+This method processes only `plain/text` content.
+====
+
+[[rest_server_counters_get]]
+==== Getting Counter Values
+To retrieve the value of a counter, invoke a `GET` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/counters/{counterName}
+----
+
+[NOTE]
+====
+This method processes only `plain/text` content.
+====
+
+[[rest_server_counters_delete]]
+==== Resetting Counters
+To reset counters to their initial values, invoke a `DELETE` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /v2/counters/{counterName}
+----
+
+//-
