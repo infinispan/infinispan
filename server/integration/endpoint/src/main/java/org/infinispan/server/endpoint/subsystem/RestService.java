@@ -28,10 +28,8 @@ import java.util.Set;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
-import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.SecurityDomain;
 import org.infinispan.rest.authentication.impl.BasicAuthenticator;
-import org.infinispan.rest.authentication.impl.VoidAuthenticator;
 import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.endpoint.subsystem.security.BasicRestSecurityDomain;
@@ -122,12 +120,13 @@ public class RestService implements Service<RestServer>, EncryptableService {
          builder.corsAllowForLocalhost("https", CROSS_ORIGIN_CONSOLE_PORT);
          builder.addAll(corsConfigList);
 
-         Authenticator authenticator;
          switch (authMethod) {
             case BASIC: {
                SecurityRealm authenticationRealm = authenticationSecurityRealm.getOptionalValue();
                SecurityDomain restSecurityDomain = new BasicRestSecurityDomain(authenticationRealm);
-               authenticator = new BasicAuthenticator(restSecurityDomain, authenticationRealm.getName());
+               builder.authentication().enable()
+                     .authenticator(new BasicAuthenticator(restSecurityDomain, authenticationRealm.getName()))
+                     .addMechanisms(authMethod.name());
                break;
             }
             case CLIENT_CERT:
@@ -136,18 +135,17 @@ public class RestService implements Service<RestServer>, EncryptableService {
                }
             case DIGEST:
             case SPNEGO:
-               authenticator = new SecurityRealmRestAuthenticator(authenticationSecurityRealm.getOptionalValue().getHttpAuthenticationFactory(), authMethod.name());
+               builder.authentication().enable()
+                     .authenticator(new SecurityRealmRestAuthenticator(authenticationSecurityRealm.getOptionalValue().getHttpAuthenticationFactory(), authMethod.name()))
+                     .addMechanisms(authMethod.name());
                break;
             case NONE: {
-               authenticator = new VoidAuthenticator();
                break;
             }
             default:
                throw ROOT_LOGGER.restAuthMethodUnsupported(authMethod.toString());
          }
-
          restServer = new RestServer();
-         restServer.setAuthenticator(authenticator);
       } catch (Exception e) {
          throw ROOT_LOGGER.restContextCreationFailed(e);
       }
