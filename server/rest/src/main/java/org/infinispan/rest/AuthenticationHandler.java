@@ -30,7 +30,6 @@ public class AuthenticationHandler extends BaseHttpRequestHandler {
 
    @Override
    protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) {
-
       if (subject != null) {
          // Ensure that the authorization header, if needed, has not changed
          String authz = request.headers().get(HttpHeaderNames.AUTHORIZATION);

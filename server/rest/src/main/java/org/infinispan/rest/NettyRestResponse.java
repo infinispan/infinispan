@@ -5,7 +5,9 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -78,7 +80,15 @@ public class NettyRestResponse implements RestResponse {
 
       @Override
       public Builder header(String name, Object value) {
-         response.headers().set(name, value);
+         if (response.headers().contains(name)) {
+            List<String> old = response.headers().getAll(name);
+            ArrayList<Object> all = new ArrayList<>(old.size() + 1);
+            all.addAll(old);
+            all.add(value.toString());
+            response.headers().set(name, all);
+         } else {
+            response.headers().add(name, value);
+         }
          return this;
       }
 

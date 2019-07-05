@@ -10,13 +10,15 @@ import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.SinglePortServerConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.network.SocketBinding;
-import org.infinispan.server.security.ElytronAuthenticationProvider;
+import org.infinispan.server.security.ElytronHTTPAuthenticator;
+import org.infinispan.server.security.ElytronSASLAuthenticationProvider;
 import org.wildfly.security.auth.server.SecurityDomain;
 
 /**
@@ -123,8 +125,12 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       }
    }
 
-   public ServerAuthenticationProvider getAuthenticationProviderForRealm(String name) {
-      return new ElytronAuthenticationProvider(name, getSecurityRealm(name));
+   public ServerAuthenticationProvider getSASLAuthenticationProvider(String name) {
+      return new ElytronSASLAuthenticationProvider(name, getSecurityRealm(name));
+   }
+
+   public Authenticator getHTTPAuthenticationProvider(String name) {
+      return new ElytronHTTPAuthenticator(name, getSecurityRealm(name));
    }
 
    public SSLContext getSSLContext(String name) {

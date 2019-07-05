@@ -1,4 +1,4 @@
-package org.infinispan.server.security;
+package org.infinispan.server.security.authentication;
 
 import static org.junit.Assert.assertEquals;
 
@@ -8,8 +8,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.server.security.Common;
 import org.infinispan.server.test.InfinispanServerRule;
-import org.infinispan.server.test.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -23,10 +23,10 @@ import org.junit.runners.Parameterized;
  **/
 
 @RunWith(Parameterized.class)
-public class AuthenticationTest {
+public class HotRodAuthentication {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerTestConfiguration("configuration/AuthenticationServerTest.xml"));
+   public static InfinispanServerRule SERVERS = AuthenticationTests.SERVERS;
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
@@ -38,12 +38,12 @@ public class AuthenticationTest {
       return Common.SASL_MECHS;
    }
 
-   public AuthenticationTest(String mechanism) {
+   public HotRodAuthentication(String mechanism) {
       this.mechanism = mechanism;
    }
 
    @Test
-   public void testReadWrite() {
+   public void testHotRodReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       if (!mechanism.isEmpty()) {
          builder.security().authentication()

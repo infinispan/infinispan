@@ -3,17 +3,23 @@ package org.infinispan.server.test;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.test.Exceptions;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
+import net.spy.memcached.MemcachedClient;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -59,6 +65,10 @@ public class InfinispanServerTestMethodRule implements TestRule {
       resources.clear();
    }
 
+   public String getMethodName() {
+      return methodName;
+   }
+
    public <K, V> RemoteCache<K, V> getHotRodCache(CacheMode mode) {
       return getHotRodCache(new ConfigurationBuilder(), mode);
    }
@@ -68,8 +78,22 @@ public class InfinispanServerTestMethodRule implements TestRule {
       return remoteCacheManager.administration().getOrCreateCache(methodName, "org.infinispan." + mode.name());
    }
 
+   public RestClient getRestClient(CacheMode mode) {
+      return getRestClient(new RestClientConfigurationBuilder(), mode);
+   }
+
+   public RestClient getRestClient(RestClientConfigurationBuilder builder, CacheMode mode) {
+      RestClient restClient = registerResource(infinispanServerRule.newRestClient(builder));
+      Exceptions.unchecked(() -> restClient.createCacheFromTemplate(methodName, "org.infinispan." + mode.name()).toCompletableFuture().get(5, TimeUnit.SECONDS));
+      return restClient;
+   }
+
    public CounterManager getCounterManager() {
       RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient());
       return RemoteCounterManagerFactory.asCounterManager(remoteCacheManager);
+   }
+
+   public MemcachedClient getMemcachedClient() {
+      return registerResource(infinispanServerRule.newMemcachedClient()).getClient();
    }
 }

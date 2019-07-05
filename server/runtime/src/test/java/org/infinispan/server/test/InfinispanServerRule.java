@@ -1,19 +1,24 @@
 package org.infinispan.server.test;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestClientAHC;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 import org.junit.runners.model.Statement;
 
 import net.spy.memcached.MemcachedClient;
@@ -50,7 +55,11 @@ public class InfinispanServerRule implements TestRule {
          @Override
          public void evaluate() throws Throwable {
             String testName = description.getTestClass().getName();
-            TestResourceTracker.testStarted(testName);
+            RunWith runWith = description.getTestClass().getAnnotation(RunWith.class);
+            boolean inSuite = runWith != null && runWith.value() == Suite.class;
+            if (!inSuite) {
+               TestResourceTracker.testStarted(testName);
+            }
             boolean manageServer = serverDriver.getStatus() == ComponentStatus.INSTANTIATED;
             if (manageServer) {
                serverDriver.before(testName);
@@ -63,7 +72,9 @@ public class InfinispanServerRule implements TestRule {
                if (manageServer) {
                   serverDriver.after(testName);
                }
-               TestResourceTracker.testFinished(testName);
+               if (!inSuite) {
+                  TestResourceTracker.testFinished(testName);
+               }
             }
          }
       };
@@ -95,33 +106,41 @@ public class InfinispanServerRule implements TestRule {
       return remoteCacheManager;
    }
 
-   /**
-    * @return a client configured against the first REST endpoint exposed by the server
-    */
-   RestClient restClient() {
-      InetSocketAddress serverAddress = serverDriver.getServerAddress(0, 11222);
-      RestClient restClient = new RestClient(String.format("http://%s:%d", serverAddress.getHostName(), serverAddress.getPort()));
-      return restClient;
+   public RestClient newRestClient() {
+      return newRestClient(new RestClientConfigurationBuilder());
+   }
+
+   public RestClient newRestClient(RestClientConfigurationBuilder builder) {
+      // Add all known server addresses
+      for (int i = 0; i < serverDriver.configuration.numServers(); i++) {
+         InetSocketAddress serverAddress = serverDriver.getServerAddress(i, 11222);
+         builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+      }
+      return new RestClientAHC(builder.build());
    }
 
    /**
     * @return a client configured against the first Memcached endpoint exposed by the server
     */
-   CloseableMemcachedClient newMemcachedClient() throws IOException {
+   CloseableMemcachedClient newMemcachedClient() {
       List<InetSocketAddress> addresses = new ArrayList<>();
       for (int i = 0; i < serverDriver.configuration.numServers(); i++) {
-         addresses.add(serverDriver.getServerAddress(i, 11222));
+         InetSocketAddress unresolved = serverDriver.getServerAddress(i, 11221);
+         addresses.add(new InetSocketAddress(unresolved.getHostName(), unresolved.getPort()));
       }
-      MemcachedClient memcachedClient = new MemcachedClient(addresses);
+      MemcachedClient memcachedClient = Exceptions.unchecked(() -> new MemcachedClient(addresses));
       return new CloseableMemcachedClient(memcachedClient);
    }
-
 
    public static class CloseableMemcachedClient implements Closeable {
       final MemcachedClient client;
 
       public CloseableMemcachedClient(MemcachedClient client) {
          this.client = client;
+      }
+
+      public MemcachedClient getClient() {
+         return client;
       }
 
       @Override

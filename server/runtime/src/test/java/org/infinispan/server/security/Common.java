@@ -5,8 +5,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.test.Exceptions;
+import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
@@ -18,6 +22,8 @@ public class Common {
    public static final Map<String, User> USER_MAP;
 
    public static final Collection<Object[]> SASL_MECHS;
+
+   public static final Collection<Object[]> HTTP_MECHS;
 
    static {
       USER_MAP = new HashMap<>();
@@ -40,6 +46,11 @@ public class Common {
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.SCRAM_SHA_384 });
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.SCRAM_SHA_256 });
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.SCRAM_SHA_1 });
+
+      HTTP_MECHS = new ArrayList<>();
+      HTTP_MECHS.add(new Object[] { "" });
+      HTTP_MECHS.add(new Object[] { HttpConstants.BASIC_NAME });
+      HTTP_MECHS.add(new Object[] { HttpConstants.DIGEST_NAME });
    }
 
    public static class User {
@@ -52,5 +63,9 @@ public class Common {
          this.password = password.toCharArray();
          this.groups = Arrays.asList(groups);
       }
+   }
+
+   public static <T> T sync(CompletionStage<T> stage) {
+      return Exceptions.unchecked(() -> stage.toCompletableFuture().get(5, TimeUnit.SECONDS));
    }
 }
