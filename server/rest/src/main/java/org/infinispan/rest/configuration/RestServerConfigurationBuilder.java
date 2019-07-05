@@ -32,7 +32,9 @@ import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 public class RestServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<RestServerConfiguration, RestServerConfigurationBuilder> implements
       Builder<RestServerConfiguration> {
 
-   private final static Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
+   final static Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
+
+   private final AuthenticationConfigurationBuilder authentication;
 
    public static final String DEFAULT_CONTEXT_PATH = "rest";
    public static final int DEFAULT_PORT = 8080;
@@ -41,6 +43,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    public RestServerConfigurationBuilder() {
       super(DEFAULT_PORT, RestServerConfiguration.attributeDefinitionSet());
       name(DEFAULT_NAME);
+      this.authentication = new AuthenticationConfigurationBuilder(this);
    }
 
    public RestServerConfigurationBuilder extendedHeaders(ExtendedHeaders extendedHeaders) {
@@ -81,8 +84,14 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
+   public AuthenticationConfigurationBuilder authentication() {
+      return authentication;
+   }
+
    @Override
    public void validate() {
+      super.validate();
+      authentication.validate();
       int compressionLevel = attributes.attribute(COMPRESSION_LEVEL).get();
       if (compressionLevel < 0 || compressionLevel > 9) {
          throw logger.illegalCompressionLevel(compressionLevel);
@@ -91,7 +100,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public RestServerConfiguration create() {
-      return new RestServerConfiguration(attributes.protect(), ssl.create());
+      return new RestServerConfiguration(attributes.protect(), ssl.create(), authentication.create());
    }
 
    @Override

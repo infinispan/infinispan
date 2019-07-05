@@ -62,9 +62,16 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
       throw new IllegalStateException("unknown protocol: " + protocol);
    }
 
+   private void configureAuthentication(ChannelPipeline pipeline) {
+      if (restServer.getConfiguration().authentication().enabled()) {
+         pipeline.addLast(new AuthenticationHandler(restServer.getConfiguration().authentication().authenticator()));
+      }
+   }
+
    protected void configureHttp2(ChannelPipeline pipeline) {
       pipeline.addLast(getHttp11To2ConnectionHandler());
-      pipeline.addLast("rest-handler-http2", getHttp2Handler());
+      configureAuthentication(pipeline);
+      pipeline.addLast("rest-handler-http2", new Http20RequestHandler(restServer));
    }
 
    protected void configureHttp1(ChannelPipeline pipeline) {
@@ -78,6 +85,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
       pipeline.addLast(new HttpServerUpgradeHandler(httpCodec, this::upgradeCodecForHttp11));
 
       pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
+      configureAuthentication(pipeline);
       pipeline.addLast("rest-handler", getHttp1Handler());
    }
 
@@ -105,22 +113,8 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
             .build();
    }
 
-   /**
-    * Gets HTTP/1.1 handler.
-    *
-    * @return HTTP/1.1 handler.
-    */
    public ChannelHandler getHttp1Handler() {
       return new Http11RequestHandler(restServer);
-   }
-
-   /**
-    * Gets HTTP/2 handler.
-    *
-    * @return HTTP/2 handler.
-    */
-   private ChannelHandler getHttp2Handler() {
-      return new Http20RequestHandler(restServer);
    }
 
    public ApplicationProtocolConfig getAlpnConfiguration() {
@@ -145,4 +139,5 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
          return null;
       }
    }
+
 }
