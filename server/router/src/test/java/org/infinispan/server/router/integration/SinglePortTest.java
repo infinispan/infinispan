@@ -9,17 +9,19 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
+import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.client.rest.NettyHttpClient;
+import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
-import org.infinispan.rest.http2.NettyHttpClient;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -108,17 +110,17 @@ public class SinglePortTest {
         int port = router.getRouter(EndpointRouter.Protocol.SINGLE_PORT).get().getPort();
 
         //when
-        httpClient = NettyHttpClient.newHttp2ClientWithHttp11Upgrade();
-        httpClient.start("localhost", port);
+        org.infinispan.client.rest.configuration.ConfigurationBuilder builder = new org.infinispan.client.rest.configuration.ConfigurationBuilder();
+        builder.addServer().host("localhost").port(port).protocol(Protocol.HTTP_20);
+        httpClient = new NettyHttpClient(builder.build());
 
         FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/test",
               wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
 
-        httpClient.sendRequest(putValueInCacheRequest);
-        FullHttpResponse responses = httpClient.getResponse();
+        FullHttpResponse response = httpClient.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
         //then
-        assertThat(responses.status()).isEqualTo(HttpResponseStatus.OK);
+        assertThat(response.status()).isEqualTo(HttpResponseStatus.OK);
     }
 
     @Test
@@ -159,14 +161,14 @@ public class SinglePortTest {
         String restPrefix = String.format("/%s/%s", restServer.getConfiguration().contextPath(), cacheManager.getCacheManagerConfiguration().defaultCacheName().get());
 
         // First off we verify that the HTTP side of things works
-        httpClient = NettyHttpClient.newHttp11Client();
-        httpClient.start(host, port);
+        org.infinispan.client.rest.configuration.ConfigurationBuilder builder = new org.infinispan.client.rest.configuration.ConfigurationBuilder();
+        builder.addServer().host(host).port(port).protocol(Protocol.HTTP_11);
+        httpClient = new NettyHttpClient(builder.build());
 
         DefaultFullHttpRequest request = new DefaultFullHttpRequest(HTTP_1_1, POST, restPrefix + "/key", wrappedBuffer("value".getBytes(CharsetUtil.UTF_8)));
         request.trailingHeaders().add(HttpHeaderNames.CONTENT_TYPE, "text/plain");
-        httpClient.sendRequest(request);
-        FullHttpResponse responses = httpClient.getResponse();
-        Assertions.assertThat(responses.status()).isEqualTo(HttpResponseStatus.OK);
+        FullHttpResponse response = httpClient.sendRequest(request).toCompletableFuture().get(5, TimeUnit.SECONDS);
+        Assertions.assertThat(response.status()).isEqualTo(HttpResponseStatus.OK);
         Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
 
         // Next up, the RemoteCacheManager
@@ -202,20 +204,22 @@ public class SinglePortTest {
 
         router = new Router(routerConfigurationBuilder.build());
         router.start();
-        int port = router.getRouter(EndpointRouter.Protocol.SINGLE_PORT).get().getPort();
+
+        EndpointRouter singlePortRouter = router.getRouter(EndpointRouter.Protocol.SINGLE_PORT).get();
 
         //when
-        httpClient = NettyHttpClient.newHttp2ClientWithALPN(TRUST_STORE_PATH, TRUST_STORE_PASSWORD);
-        httpClient.start("localhost", port);
+        org.infinispan.client.rest.configuration.ConfigurationBuilder builder = new org.infinispan.client.rest.configuration.ConfigurationBuilder();
+        builder.addServer().host(singlePortRouter.getHost()).port(singlePortRouter.getPort()).protocol(Protocol.HTTP_20)
+              .security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword("secret".toCharArray());
+        httpClient = new NettyHttpClient(builder.build());
 
         FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/test",
               wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
 
-        httpClient.sendRequest(putValueInCacheRequest);
-        FullHttpResponse responses = this.httpClient.getResponse();
+        FullHttpResponse response = httpClient.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
         //then
-        assertThat(responses.status()).isEqualTo(HttpResponseStatus.OK);
+        assertThat(response.status()).isEqualTo(HttpResponseStatus.OK);
     }
 
     @Test

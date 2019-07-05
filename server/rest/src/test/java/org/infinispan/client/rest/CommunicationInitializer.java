@@ -1,4 +1,4 @@
-package org.infinispan.rest.http2;
+package org.infinispan.client.rest;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
@@ -13,7 +13,7 @@ public abstract class CommunicationInitializer extends ChannelInitializer<Socket
      *
      * @throws Exception Thrown on errors.
      */
-    public void upgradeToHttp2IfNeeded() throws Exception {
+    public void upgradeToHttp2IfNeeded() {
 
     }
 

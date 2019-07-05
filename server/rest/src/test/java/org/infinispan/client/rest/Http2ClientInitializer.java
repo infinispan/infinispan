@@ -12,7 +12,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.infinispan.rest.http2;
+package org.infinispan.client.rest;
 
 import static io.netty.handler.logging.LogLevel.INFO;
 
@@ -118,7 +118,7 @@ public class Http2ClientInitializer extends CommunicationInitializer {
     }
 
     @Override
-    public void upgradeToHttp2IfNeeded() throws Exception {
+    public void upgradeToHttp2IfNeeded() {
         settingsHandler.awaitSettings(15, TimeUnit.SECONDS);
     }
 
