@@ -1,9 +1,7 @@
 package org.infinispan.rest.authentication;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
@@ -16,10 +14,6 @@ import io.netty.channel.ChannelHandlerContext;
  * @author Sebastian Łaskawiec
  */
 public interface Authenticator {
-
-   RestResponse VOID_RESPONSE = new NettyRestResponse.Builder().build();
-
-   CompletionStage<RestResponse> COMPLETED_VOID_RESPONSE = CompletableFuture.completedFuture(VOID_RESPONSE);
 
    /**
     * Challenges specific {@link RestRequest} for authentication.

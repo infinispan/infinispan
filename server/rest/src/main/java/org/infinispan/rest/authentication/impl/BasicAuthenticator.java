@@ -43,8 +43,8 @@ public class BasicAuthenticator implements Authenticator {
             String[] split = cookie.split(":");
             return CompletableFuture.supplyAsync(() -> {
                request.setSubject(domain.authenticate(split[0], split[1]));
-               return VOID_RESPONSE;
-            });
+               return new NettyRestResponse.Builder().build();
+            }, executor);
          }
       }
       return CompletableFuture.completedFuture(new NettyRestResponse.Builder().status(HttpResponseStatus.UNAUTHORIZED).authenticate(authenticateHeader).build());
