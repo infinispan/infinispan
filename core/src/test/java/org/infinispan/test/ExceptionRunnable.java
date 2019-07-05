@@ -6,6 +6,7 @@ package org.infinispan.test;
  * @author Dan Berindei
  * @since 9.2
  */
+@FunctionalInterface
 public interface ExceptionRunnable {
    void run() throws Exception;
 }

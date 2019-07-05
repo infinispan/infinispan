@@ -5,13 +5,17 @@ import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static org.junit.Assert.assertEquals;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.rest.configuration.Protocol;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.junit.Cleanup;
-import org.infinispan.rest.http2.NettyHttpClient;
+import org.infinispan.client.rest.NettyHttpClient;
 import org.infinispan.server.test.category.Security;
 import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.junit.Arquillian;
@@ -47,16 +51,16 @@ public class SinglePortIT {
       FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/" + CACHE_NAME + "/testHttp2SwitchThroughUpgradeHeader",
             wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
 
-      NettyHttpClient client = NettyHttpClient.newHttp2ClientWithHttp11Upgrade();
-      cleanup.add(NettyHttpClient::stop, client);
-      client.start("localhost", 8080);
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.addServer().host("localhost").port(8080).protocol(Protocol.HTTP_20);
+      try (NettyHttpClient client = new NettyHttpClient(builder.build())) {
 
-      //when
-      client.sendRequest(putValueInCacheRequest);
-      FullHttpResponse response = client.getResponse();
+         //when
+         FullHttpResponse response = client.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
-      //then
-      assertEquals(HttpResponseStatus.OK, response.status());
+         //then
+         assertEquals(HttpResponseStatus.OK, response.status());
+      }
    }
 
    @Test
@@ -65,16 +69,18 @@ public class SinglePortIT {
       FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/" + CACHE_NAME + "/testHttp2SwitchThroughALPN",
             wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
 
-      NettyHttpClient client = NettyHttpClient
-            .newHttp2ClientWithALPN(SecurityConfigurationHelper.DEFAULT_TRUSTSTORE_PATH, SecurityConfigurationHelper.DEFAULT_TRUSTSTORE_PASSWORD);
-      client.start("localhost", 8443);
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.addServer().host("localhost").port(8443).protocol(Protocol.HTTP_20)
+            .security().ssl().trustStoreFileName(SecurityConfigurationHelper.DEFAULT_TRUSTSTORE_PATH)
+            .trustStorePassword(SecurityConfigurationHelper.DEFAULT_TRUSTSTORE_PASSWORD.toCharArray());
 
-      //when
-      client.sendRequest(putValueInCacheRequest);
-      FullHttpResponse response = client.getResponse();
+      try (NettyHttpClient client = new NettyHttpClient(builder.build())) {
+         //when
+         FullHttpResponse response = client.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
-      //then
-      assertEquals(HttpResponseStatus.OK, response.status());
+         //then
+         assertEquals(HttpResponseStatus.OK, response.status());
+      }
    }
 
    @Test
@@ -85,6 +91,7 @@ public class SinglePortIT {
 
       //when
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
+      cleanup.add(remoteCacheManager);
       RemoteCache<String, String> cache = remoteCacheManager.getCache(CACHE_NAME);
       cache.put("testHotRodSwitchThroughUpgradeHeader", "test");
 
@@ -101,6 +108,7 @@ public class SinglePortIT {
 
       //when
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
+      cleanup.add(remoteCacheManager);
       RemoteCache<String, String> cache = remoteCacheManager.getCache(CACHE_NAME);
       cache.put("testHotRodSwitchThroughALPN", "test");
 

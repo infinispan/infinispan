@@ -191,6 +191,20 @@ public class Exceptions {
    public static void unchecked(ExceptionRunnable runnable) {
       try {
          runnable.run();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new RuntimeException(e);
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+   }
+
+   public static <T> T unchecked(ExceptionSupplier<T> supplier) {
+      try {
+         return supplier.get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new RuntimeException(e);
       } catch (Exception e) {
          throw new RuntimeException(e);
       }

@@ -85,14 +85,19 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.apache.httpcomponents</groupId>
-         <artifactId>httpclient</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-rest</artifactId>
+         <type>test-jar</type>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.testcontainers</groupId>
          <artifactId>testcontainers</artifactId>
-         <version>1.11.2</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.asynchttpclient</groupId>
+         <artifactId>async-http-client</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
