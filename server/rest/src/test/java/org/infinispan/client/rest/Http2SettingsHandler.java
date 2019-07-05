@@ -12,7 +12,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.infinispan.rest.http2;
+package org.infinispan.client.rest;
 
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +44,7 @@ public class Http2SettingsHandler extends SimpleChannelInboundHandler<Http2Setti
      * @param unit {@link java.util.concurrent.TimeUnit} for {@code timeout}
      * @throws Exception if timeout or other failure occurs
      */
-    public void awaitSettings(long timeout, TimeUnit unit) throws Exception {
+    public void awaitSettings(long timeout, TimeUnit unit) {
         if (!promise.awaitUninterruptibly(timeout, unit)) {
             throw new IllegalStateException("Timed out waiting for settings");
         }
@@ -54,7 +54,7 @@ public class Http2SettingsHandler extends SimpleChannelInboundHandler<Http2Setti
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Http2Settings msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, Http2Settings msg) {
         promise.setSuccess();
 
         // Only care about the first settings message

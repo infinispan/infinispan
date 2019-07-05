@@ -2,6 +2,8 @@ package org.infinispan.rest.profiling;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
@@ -76,14 +78,20 @@ public class Http11VsHttp20Benchmark {
 
          restServer = RestServerHelper.defaultRestServer();
          if (useTLS) {
-            client = new BenchmarkHttpClient(KEY_STORE_PATH, "secret", TRUST_STORE_PATH, "secret");
             restServer.withKeyStore(KEY_STORE_PATH, "secret", "pkcs12");
-         } else {
-            client = new BenchmarkHttpClient();
          }
          restServer.start(this.getClass().getSimpleName());
          restServer.getCacheManager().getCache().put(EXISTING_KEY, "test");
-         client.start(restServer.getHost(), restServer.getPort(), httpClientThreads, useHttp2);
+
+         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+         builder.addServer().host(restServer.getHost()).port(restServer.getPort());
+         if (useTLS) {
+            builder.security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword("secret".toCharArray())
+                  .keyStoreFileName(KEY_STORE_PATH).keyStorePassword("secret".toCharArray());
+         }
+         builder.protocol(useHttp2 ? Protocol.HTTP_20 : Protocol.HTTP_11);
+
+         client = new BenchmarkHttpClient(builder.build(), httpClientThreads);
       }
 
       @TearDown

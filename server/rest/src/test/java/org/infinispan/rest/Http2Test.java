@@ -4,9 +4,13 @@ import static io.netty.buffer.Unpooled.wrappedBuffer;
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import java.util.concurrent.TimeUnit;
+
 import org.assertj.core.api.Assertions;
+import org.infinispan.client.rest.NettyHttpClient;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.rest.helper.RestServerHelper;
-import org.infinispan.rest.http2.NettyHttpClient;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.AfterMethod;
@@ -53,16 +57,18 @@ public final class Http2Test extends AbstractInfinispanTest {
               .withKeyStore(KEY_STORE_PATH, "secret", "pkcs12")
               .start(TestResourceTracker.getCurrentTestShortName());
 
-        client = NettyHttpClient.newHttp2ClientWithALPN(KEY_STORE_PATH, "secret");
-        client.start(restServer.getHost(), restServer.getPort());
+        RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+        builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(Protocol.HTTP_20)
+              .security().ssl().trustStoreFileName(KEY_STORE_PATH).trustStorePassword("secret".toCharArray());
+
+        client = new NettyHttpClient(builder.build());
 
         FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST,
               restServer.getBasePath() + "/test",
               wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
 
         //when
-        client.sendRequest(putValueInCacheRequest);
-        FullHttpResponse response = client.getResponse();
+        FullHttpResponse response = client.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
         //then
         Assertions.assertThat(response.status().code()).isEqualTo(200);
@@ -73,17 +79,17 @@ public final class Http2Test extends AbstractInfinispanTest {
     public void shouldUpgradeUsingHTTP11Upgrade() throws Exception {
         //given
         restServer = RestServerHelper.defaultRestServer().start(TestResourceTracker.getCurrentTestShortName());
+        RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+        builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(Protocol.HTTP_20);
 
-        client = NettyHttpClient.newHttp2ClientWithHttp11Upgrade();
-        client.start(restServer.getHost(), restServer.getPort());
+        client = new NettyHttpClient(builder.build());
 
         FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST,
               restServer.getBasePath() + "/test",
               wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
 
         //when
-        client.sendRequest(putValueInCacheRequest);
-        FullHttpResponse response = client.getResponse();
+        FullHttpResponse response = client.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
         //then
         Assertions.assertThat(response.status().code()).isEqualTo(200);
