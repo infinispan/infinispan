@@ -1,4 +1,4 @@
-package org.infinispan.rest;
+package org.infinispan.rest.resources;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
@@ -19,13 +19,10 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.assertj.core.api.Assertions;
-import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.ByteBufferContentProvider;
@@ -37,10 +34,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
@@ -49,46 +43,12 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.rest.TestClass;
 import org.infinispan.rest.assertion.ResponseAssertion;
-import org.infinispan.rest.helper.RestServerHelper;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.fwk.TestResourceTracker;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
-public abstract class BaseRestOperationsTest extends MultipleCacheManagersTest {
-   protected HttpClient client;
-   private static final int NUM_SERVERS = 2;
-   protected List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
-
-   public ConfigurationBuilder getDefaultCacheBuilder() {
-      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-   }
-
-   @Override
-   protected void createCacheManagers() throws Exception {
-      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
-      globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      GlobalConfigurationBuilder globalConfiguration = globalBuilder.clusteredDefault();
-
-      createCluster(globalConfiguration, getDefaultCacheBuilder(), NUM_SERVERS);
-
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         this.defineCaches(cm);
-         this.defineCounters(cm);
-         String[] cacheNames = cm.getCacheNames().toArray(new String[0]);
-         cm.startCaches(cacheNames);
-         cm.getClassWhiteList().addClasses(TestClass.class);
-         waitForClusterToForm(cacheNames);
-         RestServerHelper restServerHelper = new RestServerHelper(cm);
-         restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
-         restServers.add(restServerHelper);
-      }
-      client = new HttpClient();
-      client.start();
-   }
+public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    private void defineCounters(EmbeddedCacheManager cm) {
       CounterManager counterManager = EmbeddedCounterManagerFactory.asCounterManager(cm);
@@ -96,14 +56,11 @@ public abstract class BaseRestOperationsTest extends MultipleCacheManagersTest {
       counterManager.defineCounter("strong", CounterConfiguration.builder(CounterType.UNBOUNDED_STRONG).build());
    }
 
-   protected RestServerHelper restServer() {
-      return restServers.get(0);
-   }
-
    private static final long DEFAULT_LIFESPAN = 45190;
    private static final long DEFAULT_MAX_IDLE = 1859446;
 
-   void defineCaches(EmbeddedCacheManager cm) {
+   protected void defineCaches(EmbeddedCacheManager cm) {
+      defineCounters(cm);
       ConfigurationBuilder expirationConfiguration = getDefaultCacheBuilder();
       expirationConfiguration.expiration().lifespan(DEFAULT_LIFESPAN).maxIdle(DEFAULT_MAX_IDLE);
 
@@ -141,16 +98,6 @@ public abstract class BaseRestOperationsTest extends MultipleCacheManagersTest {
       cm.defineConfiguration("pojoCache", pojoCache.build());
    }
 
-   @AfterClass
-   public void afterSuite() throws Exception {
-      client.stop();
-      restServers.forEach(RestServerHelper::stop);
-   }
-
-   @AfterMethod
-   public void afterMethod() {
-      restServers.forEach(RestServerHelper::clear);
-   }
 
    @SuppressWarnings("unchecked")
    public InternalCacheEntry<String, byte[]> getCacheEntry(String cacheName, byte[] key) {
@@ -385,28 +332,6 @@ public abstract class BaseRestOperationsTest extends MultipleCacheManagersTest {
       if (keyContentType != null) request.header("Key-Content-type", keyContentType);
 
       ContentResponse response = request.send();
-      ResponseAssertion.assertThat(response).isOk();
-   }
-
-   private void putInCache(String cacheName, Object key, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
-      putInCache(cacheName, key, null, value, contentType);
-   }
-
-   void putStringValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
-      putInCache(cacheName, key, value, "text/plain; charset=utf-8");
-   }
-
-   private void putJsonValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
-      putInCache(cacheName, key, value, "application/json; charset=utf-8");
-   }
-
-   void putBinaryValueInCache(String cacheName, String key, byte[] value, MediaType mediaType) throws InterruptedException, ExecutionException, TimeoutException {
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
-            .content(new BytesContentProvider(value))
-            .header(HttpHeader.CONTENT_TYPE, mediaType.toString())
-            .method(HttpMethod.PUT)
-            .send();
       ResponseAssertion.assertThat(response).isOk();
    }
 
