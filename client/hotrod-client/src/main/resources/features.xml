@@ -17,7 +17,8 @@
       <bundle>wrap:mvn:io.netty/netty-transport-native-epoll/${version.netty}</bundle>
       <bundle>wrap:mvn:io.netty/netty-transport-native-unix-common/${version.netty}</bundle>
       <bundle>wrap:mvn:com.google.code.gson/gson/${version.gson}</bundle>
-      <bundle>wrap:mvn:org.wildfly.security/wildfly-elytron/${version.org.wildfly.elytron}</bundle>
+      <!-- Do not export the jboss-logging classes in the elytron jar -->
+      <bundle>wrap:mvn:org.wildfly.security/wildfly-elytron/${version.org.wildfly.elytron}$Export-Package=org.wildfly.security.*</bundle>
    </feature>
 
    <feature name="infinispan-client-hotrod-with-query" version="${project.version}">
