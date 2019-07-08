@@ -30,7 +30,6 @@ import java.util.regex.Pattern;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionConfigurationConsoleOption;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
-import org.ops4j.pax.exam.options.AbstractUrlProvisionOption;
 import org.ops4j.pax.exam.options.MavenUrlReference;
 import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.ops4j.pax.exam.options.WrappedUrlProvisionOption;
@@ -42,7 +41,6 @@ public class IspnKarafOptions {
    private static final String PROP_VERSION_OBJENESIS = "version.mockito_dep.objenesis";
    private static final String PROP_VERSION_BYTEBUDDY = "version.mockito_dep.bytebuddy";
    private static final String PROP_VERBOSE_KARAF = "verbose.karaf";
-   private static final String PROP_UBER_JAR = "uberjar";
 
    private static Pattern PATTERN_HEADER = Pattern.compile("(.+)=(.+)");
 
@@ -62,9 +60,13 @@ public class IspnKarafOptions {
    }
 
    public static Option verboseKaraf() {
-      LogLevel logLevel = Boolean.getBoolean(PROP_VERBOSE_KARAF) ? LogLevel.TRACE : LogLevel.INFO;
+      boolean isVerbose = Boolean.getBoolean(PROP_VERBOSE_KARAF);
+      LogLevel logLevel = isVerbose ? LogLevel.TRACE : LogLevel.INFO;
+      LogLevel consoleLogLevel = isVerbose ? LogLevel.INFO : LogLevel.ERROR;
 
-      return composite(logLevel(logLevel),
+      return composite(systemProperty("karaf.log").value("."),
+                       systemProperty("karaf.log.console").value(consoleLogLevel.toString()),
+                       logLevel(logLevel),
                        vmOptions("-Dorg.ops4j.pax.logging.DefaultServiceLog.level=" + logLevel,
                                  "-Dorg.apache.logging.log4j.level=" + logLevel));
    }
@@ -106,7 +108,6 @@ public class IspnKarafOptions {
 
    public static Option featureJdbcStoreAndTests() throws Exception {
       return composite(featureJdbcStore(),
-                       bundleTestNG(),
                        mvnTestsAsFragmentBundle("org.infinispan", "infinispan-cachestore-jdbc", "org.infinispan.cachestore-jdbc"));
    }
 
@@ -131,19 +132,7 @@ public class IspnKarafOptions {
 
    public static Option featureJpaStoreAndTests() throws Exception {
       return composite(featureJpaStore(),
-                       bundleMockito(),
-                       mavenBundle().groupId("org.testng").artifactId("testng").versionAsInProject(),
                        mvnTestsAsFragmentBundle("org.infinispan", "infinispan-cachestore-jpa", "org.infinispan.cachestore-jpa"));
-   }
-
-   public static Option featureEmbeddedUberJarAndTests() throws Exception {
-      return composite(mvnFeature("org.infinispan", "infinispan-embedded", "infinispan-embedded"),
-                       mvnFeature("org.infinispan", "infinispan-embedded", "agroal"),
-                       mvnFeature("org.infinispan", "infinispan-embedded", "hibernate"),
-                       mvnFeature("org.infinispan", "infinispan-embedded", "rocksdb"),
-                       mvnTestsAsFragmentBundle("org.infinispan", "infinispan-core", "org.infinispan.embedded"),
-                       mvnTestsAsFragmentBundle("org.infinispan", "infinispan-cachestore-jdbc", "org.infinispan.embedded"),
-                       mvnTestsAsFragmentBundle("org.infinispan", "infinispan-cachestore-jpa", "org.infinispan.embedded"));
    }
 
    public static Option bundleMockito() throws Exception {
@@ -185,7 +174,7 @@ public class IspnKarafOptions {
    public static WrappedUrlProvisionOption mvnTestsAsFragmentBundle(String groupId, String artifactId, String hostBundle, String... instructions) throws Exception {
       PaxURLUtils.registerURLHandlers();
 
-      UrlProvisionOption testBundle = asStreamBundle(testJarAsStreamBundle(groupId, artifactId), "assembly:%s!/!org/infinispan/test/fwk/**");
+      UrlProvisionOption testBundle = testJarAsStreamBundle(groupId, artifactId);
 
       String[] allInstructions = Arrays.copyOf(instructions, instructions.length + 1);
       allInstructions[instructions.length] = String.format("Fragment-Host=%s", hostBundle);
@@ -211,41 +200,6 @@ public class IspnKarafOptions {
       JarOutputStream jar = new JarOutputStream(buf, manifest);
       jar.close();
       return streamBundle(new ByteArrayInputStream(buf.toByteArray()));
-   }
-
-   /**
-    * Some test packages are split across several Maven modules this option repackages them and exposes them through a
-    * single bundle.
-    */
-   public static Option bundleSplitTestPackages() throws Exception {
-      PaxURLUtils.registerURLHandlers();
-
-      UrlProvisionOption splitCoreBundle = asStreamBundle(
-            testJarAsStreamBundle("org.infinispan", "infinispan-core"),
-            "assembly:%s!/org/infinispan/test/fwk/**");
-      UrlProvisionOption splitJDBCBundle = asStreamBundle(
-            testJarAsStreamBundle("org.infinispan", "infinispan-cachestore-jdbc"),
-            "assembly:%s!/org/infinispan/test/fwk/**");
-
-      WrappedUrlProvisionOption wrappedSplitCoreBundle = wrappedBundle(splitCoreBundle)
-            .bundleSymbolicName("split-test-core")
-            .instructions("Export-Package=org.infinispan.test.fwk;partial=true;mandatory:=partial");
-      WrappedUrlProvisionOption wrappedSplitJDBCBundle = wrappedBundle(splitJDBCBundle)
-            .bundleSymbolicName("split-test-jdbc")
-            .instructions("Export-Package=org.infinispan.test.fwk;partial=true;mandatory:=partial");
-
-      UrlProvisionOption wrappedSplitTestBundle = emptyBundle(
-            "Bundle-SymbolicName=split-test",
-            "Export-Package=org.infinispan.test.fwk",
-            "Require-Bundle=split-test-core,split-test-jdbc");
-
-      return composite(wrappedSplitCoreBundle,
-                       wrappedSplitJDBCBundle,
-                       wrappedSplitTestBundle);
-   }
-
-   public static UrlProvisionOption asStreamBundle(AbstractUrlProvisionOption<?> option, String newURLFormat, String... args) throws IOException {
-      return asStreamBundle(option.getURL(), newURLFormat);
    }
 
    public static UrlProvisionOption asStreamBundle(String url) throws IOException {
@@ -315,6 +269,7 @@ public class IspnKarafOptions {
       return composite(karafContainer(),
                        vmOptions("-Djava.net.preferIPv4Stack=true", "-Djgroups.bind_addr=127.0.0.1"),
                        vmOptions("-Xmx500m", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=" + System.getProperty("user.dir")),
+                       // uncomment to debug
 //                       vmOptions("-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=5006"),
                        verboseKaraf(),
                        runWithoutConsole(),
@@ -330,35 +285,16 @@ public class IspnKarafOptions {
    }
 
    public static Option perSuiteOptions() throws Exception {
-      if (!useUberJar()) {
-         return composite(commonOptions(),
-                          featureKarafJNDI(),
-                          featureIspnCoreAndTests(),
-                          featureJdbcStoreAndTests(),
-                          featureJpaStoreAndTests(),
-                          featureRocksDBJNI(),
-                          featureRemoteStore(),
-                          bundleH2Database(),
-                          bundleLog4J(),
-                          hibernatePersistenceH2(),
-                          bundleSplitTestPackages());
-      } else {
-         return composite(commonOptions(),
-                          featureKarafJNDI(),
-                          featureEmbeddedUberJarAndTests(),
-                          bundleSplitTestPackages(),
-                          bundleH2Database(),
-                          hibernatePersistenceH2(),
-                          bundleLog4J(),
-                          bundleTestNG(),
-                          bundleMockito());
-      }
+      return composite(commonOptions(),
+                       featureKarafJNDI(),
+                       bundleTestNG(),
+                       bundleMockito(),
+                       featureIspnCoreAndTests(),
+                       featureJdbcStoreAndTests(),
+                       featureJpaStoreAndTests(),
+                       featureRocksDBJNI(),
+                       featureRemoteStore(),
+                       bundleH2Database(),
+                       hibernatePersistenceH2());
    }
-
-   /* Run tests with uberjar by default */
-   private static boolean useUberJar() {
-      String uberJar = System.getProperty(PROP_UBER_JAR);
-      return uberJar == null || Boolean.parseBoolean(uberJar);
-   }
-
 }
