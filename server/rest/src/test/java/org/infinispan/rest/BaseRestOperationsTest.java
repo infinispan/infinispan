@@ -61,7 +61,7 @@ import org.testng.annotations.Test;
 public abstract class BaseRestOperationsTest extends MultipleCacheManagersTest {
    protected HttpClient client;
    private static final int NUM_SERVERS = 2;
-   private List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
+   protected List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
 
    public ConfigurationBuilder getDefaultCacheBuilder() {
       return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);

@@ -10,6 +10,7 @@ import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -23,6 +24,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -93,12 +95,23 @@ public class CacheResourceV2 extends CacheResource {
 
    private CompletableFuture<RestResponse> createCache(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      ContentSource contents = request.contents();
+      List<String> template = request.parameters().get("template");
       String cacheName = request.variables().get("cacheName");
+      EmbeddedCacheManagerAdmin administration = restCacheManager.getInstance().administration();
+      if (template != null && !template.isEmpty()) {
+         String templateName = template.iterator().next();
+         return CompletableFuture.supplyAsync(() -> {
+            administration.createCache(cacheName, templateName);
+            responseBuilder.status(OK);
+            return responseBuilder.build();
+         }, executor);
+      }
+
+      ContentSource contents = request.contents();
       byte[] bytes = contents.rawContent();
       if (bytes == null || bytes.length == 0) {
          return CompletableFuture.supplyAsync(() -> {
-            restCacheManager.getInstance().administration().createCache(cacheName, (String) null);
+            administration.createCache(cacheName, (String) null);
             responseBuilder.status(OK);
             return responseBuilder.build();
          }, executor);
@@ -119,7 +132,7 @@ public class CacheResourceV2 extends CacheResource {
 
       ConfigurationBuilder finalCfgBuilder = cfgBuilder;
       return CompletableFuture.supplyAsync(() -> {
-         restCacheManager.getInstance().administration().createCache(cacheName, finalCfgBuilder.build());
+         administration.createCache(cacheName, finalCfgBuilder.build());
 
          responseBuilder.status(OK);
          return responseBuilder.build();

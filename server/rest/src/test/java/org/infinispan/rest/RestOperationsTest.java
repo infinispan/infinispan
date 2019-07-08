@@ -27,10 +27,12 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -517,20 +519,23 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       String xml = getResourceAsString("cache.xml", getClass().getClassLoader());
       String json = getResourceAsString("cache.json", getClass().getClassLoader());
 
+      // Create cache1
       ContentResponse response = client.newRequest(url + "cache1").header("Content-type", APPLICATION_XML_TYPE)
             .method(HttpMethod.POST).content(new StringContentProvider(xml)).send();
       ResponseAssertion.assertThat(response).isOk();
 
+      // Create cache1
       response = client.newRequest(url + "cache2").header("Content-type", APPLICATION_JSON_TYPE)
             .method(HttpMethod.POST).content(new StringContentProvider(json)).send();
       ResponseAssertion.assertThat(response).isOk();
 
+      // Get cache1 config
       response = client.newRequest(url + "cache1/config").method(HttpMethod.GET).send();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).bodyNotEmpty();
       String cache1Cfg = response.getContentAsString();
 
-
+      // Get cache2 config
       response = client.newRequest(url + "cache2/config").method(HttpMethod.GET).send();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).bodyNotEmpty();
@@ -538,11 +543,30 @@ public class RestOperationsTest extends BaseRestOperationsTest {
 
       assertEquals(cache1Cfg, cache2Cfg);
 
+      // Delete cache1
       response = client.newRequest(url + "cache1").method(HttpMethod.DELETE).send();
       ResponseAssertion.assertThat(response).isOk();
 
       response = client.newRequest(url + "cache1/config").method(HttpMethod.GET).send();
       ResponseAssertion.assertThat(response).isNotFound();
+
+      // Define a template
+      Configuration templateConfig = new ConfigurationBuilder().template(true).simpleCache(true).build();
+      restServers.forEach(r -> r.getCacheManager().defineConfiguration("test-template", templateConfig));
+
+      // Create cache3 using template
+      response = client.newRequest(url + "cache3?template=test-template").method(HttpMethod.POST).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      // Check cache3 config
+      response = client.newRequest(url + "cache3/config").method(HttpMethod.GET).send();
+      ConfigurationBuilder builder = new ConfigurationBuilder().template(true);
+      new JsonReader().readJson(builder, response.getContentAsString());
+      assertEquals(templateConfig, builder.build());
+
+      // Try to create cache4 with an invalid template
+      response = client.newRequest(url + "cache4?template=unknown-template").method(HttpMethod.POST).send();
+      ResponseAssertion.assertThat(response).isBadRequest();
    }
 
    @Test

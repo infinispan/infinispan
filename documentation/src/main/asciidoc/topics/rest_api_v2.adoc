@@ -71,6 +71,17 @@ For example, the preceding XML configuration is represented in JSON as follows:
 `application/json`.
 |===
 
+[[rest_v2_create_cache_template]]
+==== Creating with Templates
+
+To create a cache across the {brandname} cluster based on a pre-defined template, invoke a `POST` request with
+no payload and an extra request parameter:
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/{cacheName}?template={templateName}
+----
+
 
 [[rest_v2_add_entries]]
 === Adding Entries
