@@ -46,8 +46,17 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
+   @SuppressWarnings("unused")
+   public QueryPhrasesTest(EmbeddedCacheManager cacheManager) {
+      this.cacheManager = cacheManager;
+      cleanup = CleanupPhase.AFTER_METHOD;
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      if (this.cacheManager != null) {
+         return this.cacheManager;
+      }
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
             .indexing().index(Index.ALL)
