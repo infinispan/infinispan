@@ -94,11 +94,11 @@ public class EndpointUtils {
    }
 
    public static void addSocketBindingDependency(OperationContext context, ServiceBuilder<?> builder, String socketBindingName,
-                                                              InjectedValue<SocketBinding> target) {
+                                                 InjectedValue<SocketBinding> target, ServiceBuilder.DependencyType dependencyType) {
       // socket binding can be disabled in multi tenant router scenarios
       if(socketBindingName != null) {
          ServiceName serviceName = context.getCapabilityServiceName(ProtocolServerConnectorResource.SOCKET_CAPABILITY_NAME, socketBindingName, SocketBinding.class);
-         builder.addDependency(serviceName, SocketBinding.class, target);
+         builder.addDependency(dependencyType, serviceName, SocketBinding.class, target);
       }
    }
 
