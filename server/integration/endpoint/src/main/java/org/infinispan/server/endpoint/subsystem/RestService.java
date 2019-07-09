@@ -113,13 +113,16 @@ public class RestService implements Service<RestServer>, EncryptableService {
             builder.port(socketAddress.getPort());
          }
 
-         int mgmtHttpPort = getSocketBindingManagementPlain().getValue().getAbsolutePort();
-         int mgmtHttpsPort = getSocketBindingManagementSecured().getValue().getAbsolutePort();
-
-         builder.corsAllowForLocalhost("http", mgmtHttpPort);
-         builder.corsAllowForLocalhost("https", mgmtHttpsPort);
-         builder.corsAllowForLocalhost("http", CROSS_ORIGIN_CONSOLE_PORT);
-         builder.corsAllowForLocalhost("https", CROSS_ORIGIN_CONSOLE_PORT);
+         SocketBinding mgmtPlain = getSocketBindingManagementPlain().getOptionalValue();
+         if (mgmtPlain != null) {
+            builder.corsAllowForLocalhost("http", mgmtPlain.getAbsolutePort());
+            builder.corsAllowForLocalhost("http", CROSS_ORIGIN_CONSOLE_PORT);
+         }
+         SocketBinding mgmtSecured = getSocketBindingManagementSecured().getOptionalValue();
+         if (mgmtSecured != null) {
+            builder.corsAllowForLocalhost("https", mgmtSecured.getAbsolutePort());
+            builder.corsAllowForLocalhost("https", CROSS_ORIGIN_CONSOLE_PORT);
+         }
          builder.addAll(corsConfigList);
 
          Authenticator authenticator;

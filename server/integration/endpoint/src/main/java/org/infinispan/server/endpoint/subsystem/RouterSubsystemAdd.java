@@ -66,7 +66,7 @@ class RouterSubsystemAdd extends AbstractAddStepHandler {
 
    private void addSinglePortHotRod(OperationContext context, ModelNode operation, ModelNode config, RouterService routerService, ServiceBuilder<?> builder) throws OperationFailedException {
       if (config.isDefined()) {
-         EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.SINGLE_PORT_SOCKET_BINDING).asString(), routerService.getSinglePortSocketBinding());
+         EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.SINGLE_PORT_SOCKET_BINDING).asString(), routerService.getSinglePortSocketBinding(), ServiceBuilder.DependencyType.OPTIONAL);
          // We are parsing this model: {
          //    "security-realm" => "ClientCertRealm",
          //    "hotrod" => {"single-port-hotrod" => {"name" => "single-port-hotrod"}},
@@ -95,7 +95,7 @@ class RouterSubsystemAdd extends AbstractAddStepHandler {
 
    private void addMultiTenantRest(OperationContext context, ModelNode operation, ModelNode config, RouterService routerService, ServiceBuilder<?> builder) throws OperationFailedException {
       if (config.get(ModelKeys.REST).isDefined()) {
-         EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.REST_SOCKET_BINDING).asString(), routerService.getRestSocketBinding());
+         EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.REST_SOCKET_BINDING).asString(), routerService.getRestSocketBinding(), ServiceBuilder.DependencyType.OPTIONAL);
          for (ModelNode r : config.get(ModelKeys.REST).asList()) {
             ModelNode restNode = r.get(0);
             String restName = MultiTenantRestResource.NAME.resolveModelAttribute(context, restNode).asString();
@@ -112,7 +112,7 @@ class RouterSubsystemAdd extends AbstractAddStepHandler {
 
    private void addMultiTenantHotRod(OperationContext context, ModelNode operation, ModelNode config, RouterService routerService, ServiceBuilder<?> builder) throws OperationFailedException {
       if(config.get(ModelKeys.HOTROD).isDefined()) {
-         EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.HOTROD_SOCKET_BINDING).asString(), routerService.getHotrodSocketBinding());
+         EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.HOTROD_SOCKET_BINDING).asString(), routerService.getHotrodSocketBinding(), ServiceBuilder.DependencyType.OPTIONAL);
          for(ModelNode hr : config.get(ModelKeys.HOTROD).asList()) {
             ModelNode hotRod = hr.get(0);
             String hotRodName = MultiTenantHotRodResource.NAME.resolveModelAttribute(context, hotRod).asString();
