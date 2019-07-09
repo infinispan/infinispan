@@ -54,7 +54,7 @@ stream operations, while "standard" users can only perform puts and gets, you wo
 [source,xml]
 ----
 <role name="standard" permission="READ WRITE" />
-<role name="supervisors" permission="READ WRITE EXEC BULK"/>
+<role name="supervisors" permission="READ WRITE EXEC"/>
 ----
 
 [[security_embedded_api]]
