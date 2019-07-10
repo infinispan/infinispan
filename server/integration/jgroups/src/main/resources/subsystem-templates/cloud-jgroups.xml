@@ -46,6 +46,28 @@
                 <protocol type="MFC" />
                 <protocol type="FRAG3" />
             </stack>
+            <stack name="s3-native">
+                <?TCP-TRANSPORT?>
+                <protocol type="org.jgroups.aws.s3.NATIVE_S3_PING">
+                    <property name="region_name">${jgroups.s3.region:}</property>
+                    <property name="bucket_name">${jgroups.s3.bucket_name:}</property>
+                    <property name="bucket_prefix">${jgroups.s3.bucket_prefix:}</property>
+                    <property name="endpoint">${jgroups.s3.endpoint:}</property>
+                </protocol>
+                <protocol type="MERGE3" />
+                <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd" />
+                <protocol type="FD_ALL" />
+                <protocol type="VERIFY_SUSPECT" />
+                <protocol type="pbcast.NAKACK2">
+                    <property name="use_mcast_xmit">false</property>
+                </protocol>
+                <protocol type="UNICAST3" />
+                <protocol type="pbcast.STABLE" />
+                <protocol type="pbcast.GMS" />
+                <protocol type="UFC_NB" />
+                <protocol type="MFC_NB" />
+                <protocol type="FRAG3" />
+            </stack>
             <stack name="s3-private">
                 <?TCP-TRANSPORT?>
                 <protocol type="S3_PING">
