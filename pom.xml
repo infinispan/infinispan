@@ -215,6 +215,7 @@
       <versionx.biz.aQute.bnd.bndlib>2.4.0</versionx.biz.aQute.bnd.bndlib>
       <versionx.ch.qos.logback.logback-classic>${version.logback}</versionx.ch.qos.logback.logback-classic>
       <versionx.ch.qos.logback.logback-core>${version.logback}</versionx.ch.qos.logback.logback-core>
+      <versionx.com.amazonaws>1.11.368</versionx.com.amazonaws>
       <versionx.com.beust.jcommander>1.48</versionx.com.beust.jcommander>
       <versionx.com.carrotsearch.hppc>0.7.2</versionx.com.carrotsearch.hppc>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
@@ -584,6 +585,7 @@
       <versionx.org.jboss.weld.weld-spi>2.3.SP2</versionx.org.jboss.weld.weld-spi>
       <versionx.org.jboss.xnio.xnio-api>${version.jboss.xnio}</versionx.org.jboss.xnio.xnio-api>
       <versionx.org.jboss.xnio.xnio-nio>${version.jboss.xnio}</versionx.org.jboss.xnio.xnio-nio>
+      <versionx.org.jgroups.aws.s3.native-s3-ping>0.9.5.Final</versionx.org.jgroups.aws.s3.native-s3-ping>
       <versionx.org.jgroups.azure.jgroups-azure>1.2.0.Final</versionx.org.jgroups.azure.jgroups-azure>
       <versionx.org.jgroups.jgroups>${version.jgroups}</versionx.org.jgroups.jgroups>
       <versionx.org.jgroups.kubernetes.jgroups-kubernetes>1.0.6.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
@@ -741,6 +743,7 @@
       <versionx.org.wildfly.wildfly-security>${version.org.wildfly}</versionx.org.wildfly.wildfly-security>
       <versionx.org.wildfly.wildfly-transactions>${version.org.wildfly}</versionx.org.wildfly.wildfly-transactions>
       <versionx.org.yaml.snakeyaml>1.17</versionx.org.yaml.snakeyaml>
+      <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
       <versionx.xalan.serializer>${version.xalan}</versionx.xalan.serializer>
       <versionx.xalan.xalan>${version.xalan}</versionx.xalan.xalan>
@@ -810,6 +813,26 @@
             <artifactId>logback-core</artifactId>
             <version>${versionx.ch.qos.logback.logback-core}</version>
             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-core</artifactId>
+            <version>${versionx.com.amazonaws}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>${versionx.com.amazonaws}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-kms</artifactId>
+            <version>${versionx.com.amazonaws}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>jmespath-java</artifactId>
+            <version>${versionx.com.amazonaws}</version>
          </dependency>
          <dependency>
             <groupId>com.beust</groupId>
@@ -3131,6 +3154,11 @@
             <version>${versionx.org.jgroups.jgroups}</version>
          </dependency>
          <dependency>
+            <groupId>org.jgroups.aws.s3</groupId>
+            <artifactId>native-s3-ping</artifactId>
+            <version>${versionx.org.jgroups.aws.s3.native-s3-ping}</version>
+         </dependency>
+         <dependency>
             <groupId>org.jgroups.azure</groupId>
             <artifactId>jgroups-azure</artifactId>
             <version>${versionx.org.jgroups.azure.jgroups-azure}</version>
@@ -3976,6 +4004,11 @@
             <artifactId>snakeyaml</artifactId>
             <version>${versionx.org.yaml.snakeyaml}</version>
             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>software.amazon.ion</groupId>
+            <artifactId>ion-java</artifactId>
+            <version>${versionx.software.amazon.ion.java}</version>
          </dependency>
          <dependency>
             <groupId>sun.jdk</groupId>
