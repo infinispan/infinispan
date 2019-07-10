@@ -15,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
@@ -71,6 +72,7 @@ public class CacheResourceV2 extends CacheResource {
 
             // Operations
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("clear").handleWith(this::clearEntireCache)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("size").handleWith(this::getSize)
 
             // Search
             .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("search").handleWith(queryAction::search)
@@ -175,6 +177,24 @@ public class CacheResourceV2 extends CacheResource {
          entity = JSON_WRITER.toJSON(cacheConfiguration);
       }
       return CompletableFuture.completedFuture(responseBuilder.status(OK).entity(entity).build());
+   }
+
+   private CompletionStage<RestResponse> getSize(RestRequest request) {
+      String cacheName = request.variables().get("cacheName");
+
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, request.getSubject());
+
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            int size = cache.size();
+            responseBuilder.entity(mapper.writeValueAsBytes(size));
+         } catch (JsonProcessingException e) {
+            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+         }
+         return responseBuilder.build();
+      }, executor);
    }
 
 }
